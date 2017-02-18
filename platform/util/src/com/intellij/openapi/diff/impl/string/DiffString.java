@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,22 +91,6 @@ public class DiffString extends CharArrayCharSequence {
   public void copyData(@NotNull char[] dst, int start) {
     checkBounds(start, length(), dst.length);
     System.arraycopy(myChars, myStart, dst, start, length());
-  }
-
-  @Override
-  public boolean equals(@Nullable Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    DiffString that = (DiffString)o;
-
-    if (length() != that.length()) return false;
-    if (hashCode() != that.hashCode()) return false;
-    for (int i = 0; i < length(); i++) {
-      if (data(i) != that.data(i)) return false;
-    }
-
-    return true;
   }
 
   @Nullable

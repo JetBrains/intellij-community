@@ -22,8 +22,6 @@ import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -90,7 +88,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx2");
-    WriteCommandAction.runWriteCommandAction(null, () -> property.delete());
+    WriteCommandAction.runWriteCommandAction(null, property::delete);
 
 
     assertEquals("xxx=yyy\nxxx3=ttt\n\n", propertiesFile.getContainingFile().getText());
@@ -99,7 +97,7 @@ public class PropertiesFileTest extends LightPlatformCodeInsightFixtureTestCase 
     PropertiesFile propertiesFile = PropertiesElementFactory.createPropertiesFile(getProject(), "xxx=yyy\nxxx2=tyrt\nxxx3=ttt\n\n");
 
     final Property property = (Property)propertiesFile.findPropertyByKey("xxx");
-    WriteCommandAction.runWriteCommandAction(null, () -> property.delete());
+    WriteCommandAction.runWriteCommandAction(null, property::delete);
 
 
     assertEquals("xxx2=tyrt\nxxx3=ttt\n\n", propertiesFile.getText());

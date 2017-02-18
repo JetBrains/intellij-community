@@ -15,7 +15,7 @@ public interface VcsLogFilterUi {
 
   /**
    * Sets the given filter to the given value and updates the log view. <br/>
-   * <b>Note:</b> only VcsLogBranchFilter is currently supported.
+   * <b>Note:</b> only VcsLogBranchFilter and VcsLogStructureFilter are currently supported.
    */
   void setFilter(@NotNull VcsLogFilter filter);
 }

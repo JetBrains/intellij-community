@@ -31,7 +31,7 @@ import java.util.Set;
 
 public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
 
-  private static final Set<String> METHOD_NAMES = new HashSet<String>();
+  private static final Set<String> METHOD_NAMES = new HashSet<>();
 
   static {
     METHOD_NAMES.add("stop");
@@ -68,7 +68,7 @@ public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
+    public void visitMethodCallExpression(@NotNull GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
       if (!(methodExpression instanceof GrReferenceExpression)) {

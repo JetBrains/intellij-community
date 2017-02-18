@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -202,6 +203,7 @@ public abstract class ElementPresentation {
   }
 
   private static class ForClass extends ElementPresentation {
+    private static final Logger LOG = Logger.getInstance(ForClass.class);
     private final PsiClass myPsiClass;
 
     public ForClass(PsiClass psiClass) {
@@ -218,7 +220,13 @@ public abstract class ElementPresentation {
     }
 
     public String getComment() {
-      PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(myPsiClass.getContainingFile().getContainingDirectory());
+      PsiFile file = myPsiClass.getContainingFile();
+      PsiDirectory dir = file.getContainingDirectory();
+      if (dir == null) {
+        LOG.info("psiClass: " + myPsiClass + "; in file: " + file);
+        return "";
+      }
+      PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(dir);
       if (psiPackage == null) return "";
       return forElement(psiPackage).getQualifiedName();
     }

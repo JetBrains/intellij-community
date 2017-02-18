@@ -98,8 +98,4 @@ public class Semaphore {
     if (sync.tryAcquireShared(1) >= 0) return true;
     return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(msTimeout));
   }
-
-  public boolean isDown() {
-    return sync.isAcquired();
-  }
 }

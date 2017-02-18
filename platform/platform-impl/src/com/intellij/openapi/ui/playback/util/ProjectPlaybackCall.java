@@ -48,9 +48,9 @@ public class ProjectPlaybackCall {
   }
 
   public static AsyncResult<String> openProject(final PlaybackContext context, final String path) {
-    final AsyncResult<String> result = new AsyncResult<String>();
+    final AsyncResult<String> result = new AsyncResult<>();
     final ProjectManager pm = ProjectManager.getInstance();
-    final Ref<ProjectManagerListener> listener = new Ref<ProjectManagerListener>();
+    final Ref<ProjectManagerListener> listener = new Ref<>();
     listener.set(new ProjectManagerAdapter() {
       @Override
       public void projectOpened(final Project project) {

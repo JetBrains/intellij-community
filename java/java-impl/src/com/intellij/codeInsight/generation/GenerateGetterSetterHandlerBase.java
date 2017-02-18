@@ -56,7 +56,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
   static {
     GenerateAccessorProviderRegistrar.registerProvider(s -> {
       if (s.getLanguage() != StdLanguages.JAVA) return Collections.emptyList();
-      final List<EncapsulatableClassMember> result = new ArrayList<EncapsulatableClassMember>();
+      final List<EncapsulatableClassMember> result = new ArrayList<>();
       for (PsiField field : s.getFields()) {
         if (!(field instanceof PsiEnumConstant)) {
           result.add(new PsiFieldMember(field));
@@ -107,27 +107,28 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
       }
     });
     final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton =
-      new ComponentWithBrowseButton<ComboBox>(comboBox, new ActionListener() {
+      new ComponentWithBrowseButton<>(comboBox, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-            final TemplatesPanel ui = new TemplatesPanel(project, templatesManager) {
-              @Override
-              protected boolean onMultipleFields() {
-                return false;
-              }
-
-              @Nls
-              @Override
-              public String getDisplayName() {
-                return StringUtil.capitalizeWords(UIUtil.removeMnemonic(StringUtil.trimEnd(templatesTitle, ":")), true);
-              }
-            };
-            ui.setHint("Visibility is applied according to File | Settings | Editor | Code Style | Java | Code Generation");
-            ui.selectNodeInTree(templatesManager.getDefaultTemplate());
-            if (ShowSettingsUtil.getInstance().editConfigurable(panel, ui)) {
-              setComboboxModel(templatesManager, comboBox);
+          final TemplatesPanel ui = new TemplatesPanel(project, templatesManager) {
+            @Override
+            protected boolean onMultipleFields() {
+              return false;
             }
-      }});
+
+            @Nls
+            @Override
+            public String getDisplayName() {
+              return StringUtil.capitalizeWords(UIUtil.removeMnemonic(StringUtil.trimEnd(templatesTitle, ":")), true);
+            }
+          };
+          ui.setHint("Visibility is applied according to File | Settings | Editor | Code Style | Java | Code Generation");
+          ui.selectNodeInTree(templatesManager.getDefaultTemplate());
+          if (ShowSettingsUtil.getInstance().editConfigurable(panel, ui)) {
+            setComboboxModel(templatesManager, comboBox);
+          }
+        }
+      });
 
     setComboboxModel(templatesManager, comboBox);
     comboBox.addActionListener(new ActionListener() {

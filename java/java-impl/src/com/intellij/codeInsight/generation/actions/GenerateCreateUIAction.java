@@ -33,7 +33,7 @@ public class GenerateCreateUIAction extends BaseGenerateAction {
     return list != null
            && !list.hasModifierProperty(PsiModifier.ABSTRACT)
            && !hasCreateUIMethod(targetClass)
-           && isComponentUI(targetClass, new HashSet<PsiClass>());
+           && isComponentUI(targetClass, new HashSet<>());
   }
 
   private static boolean hasCreateUIMethod(PsiClass aClass) {

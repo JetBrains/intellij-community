@@ -60,7 +60,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class TypeInferenceHelper {
   private static final Logger LOG = Logger.getInstance(TypeInferenceHelper.class);
-  private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<InferenceContext>();
+  private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
 
   private static <T> T doInference(@NotNull Map<String, PsiType> bindings, @NotNull Computable<T> computation) {
     InferenceContext old = ourInferenceContext.get();
@@ -143,7 +143,7 @@ public class TypeInferenceHelper {
           }
         };
         final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
-        final DFAEngine<DefinitionMap> engine = new DFAEngine<DefinitionMap>(flow, dfaInstance, lattice);
+        final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
         final List<DefinitionMap> dfaResult = engine.performDFAWithTimeout();
         Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> result = dfaResult == null ? null : Pair.create(dfaInstance, dfaResult);
         return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
@@ -302,12 +302,12 @@ public class TypeInferenceHelper {
     InferenceCache(final GrControlFlowOwner scope) {
       this.scope = scope;
       this.flow = scope.getControlFlow();
-      List<TypeDfaState> noTypes = new ArrayList<TypeDfaState>();
+      List<TypeDfaState> noTypes = new ArrayList<>();
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < flow.length; i++) {
         noTypes.add(new TypeDfaState());
       }
-      varTypes = new AtomicReference<List<TypeDfaState>>(noTypes);
+      varTypes = new AtomicReference<>(noTypes);
     }
 
     @Nullable
@@ -338,7 +338,7 @@ public class TypeInferenceHelper {
     private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner, @NotNull Instruction[] flow, @NotNull Set<Instruction> interesting) {
       final TypeDfaInstance dfaInstance = new TypeDfaInstance(owner, flow, interesting, this);
       final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
-      return new DFAEngine<TypeDfaState>(flow, dfaInstance, semilattice).performDFAWithTimeout();
+      return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
     }
 
     @Nullable
@@ -424,7 +424,7 @@ public class TypeInferenceHelper {
 
     @NotNull
     private static List<TypeDfaState> addDfaResult(@NotNull List<TypeDfaState> dfaResult, @NotNull List<TypeDfaState> oldTypes) {
-      List<TypeDfaState> newTypes = new ArrayList<TypeDfaState>(oldTypes);
+      List<TypeDfaState> newTypes = new ArrayList<>(oldTypes);
       for (int i = 0; i < dfaResult.size(); i++) {
         newTypes.set(i, newTypes.get(i).mergeWith(dfaResult.get(i)));
       }

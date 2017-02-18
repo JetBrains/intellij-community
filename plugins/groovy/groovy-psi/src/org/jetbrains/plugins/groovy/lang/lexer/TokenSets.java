@@ -216,10 +216,12 @@ public abstract class TokenSets {
                                                                GroovyTokenTypes.mREGEX_FIND, GroovyTokenTypes.mREGEX_MATCH,
                                                                GroovyTokenTypes.mRANGE_INCLUSIVE, GroovyTokenTypes.mRANGE_EXCLUSIVE);
 
+  public static final TokenSet PARENTHESIZED_BINARY_OP_SET = TokenSet.create(GroovyTokenTypes.mEQUAL, GroovyTokenTypes.mNOT_EQUAL);
+
   public static final TokenSet ASSOCIATIVE_BINARY_OP_SET = TokenSet.create(GroovyTokenTypes.mBAND, GroovyTokenTypes.mBOR,
-                                                                           GroovyTokenTypes.mBXOR, GroovyTokenTypes.mEQUAL,
+                                                                           GroovyTokenTypes.mBXOR,
                                                                            GroovyTokenTypes.mLOR, GroovyTokenTypes.mPLUS,
-                                                                           GroovyTokenTypes.mSTAR, GroovyTokenTypes.mNOT_EQUAL,
+                                                                           GroovyTokenTypes.mSTAR,
                                                                            GroovyTokenTypes.mLAND);
 
 
@@ -244,7 +246,7 @@ public abstract class TokenSets {
 
   public static final TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 
-  public static final Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = new HashMap<IElementType, IElementType>();
+  public static final Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = new HashMap<>();
   static {
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mMINUS_ASSIGN, GroovyTokenTypes.mMINUS);
     ASSIGNMENTS_TO_OPERATORS.put(GroovyTokenTypes.mPLUS_ASSIGN, GroovyTokenTypes.mPLUS);
@@ -295,9 +297,15 @@ public abstract class TokenSets {
                                                                GroovyElementTypes.DISJUNCTION_TYPE_ELEMENT);
 
 
-  public static final TokenSet TYPE_DEFINITIONS = TokenSet.create(GroovyElementTypes.CLASS_DEFINITION, 
+  public static final TokenSet TYPE_DEFINITIONS = TokenSet.create(GroovyElementTypes.CLASS_DEFINITION,
                                                                   GroovyElementTypes.ENUM_DEFINITION,
                                                                   GroovyElementTypes.INTERFACE_DEFINITION,
                                                                   GroovyElementTypes.ANNOTATION_DEFINITION,
                                                                   GroovyElementTypes.TRAIT_DEFINITION);
+
+  public static final TokenSet METHOD_IDENTIFIERS = TokenSet.create(
+    GroovyTokenTypes.mIDENT,
+    GroovyTokenTypes.mGSTRING_LITERAL,
+    GroovyTokenTypes.mSTRING_LITERAL
+  );
 }

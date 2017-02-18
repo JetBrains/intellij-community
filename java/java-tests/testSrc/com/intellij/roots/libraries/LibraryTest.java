@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.NativeLibraryOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -40,18 +42,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+
 /**
  *  @author dsl
  */
 public class LibraryTest extends ModuleRootManagerTestCase {
   public void testModification() throws Exception {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    final Library library = ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      @Override
-      public Library compute() {
-        return libraryTable.createLibrary("NewLibrary");
-      }
-    });
+    final Library library = ApplicationManager.getApplication().runWriteAction(
+      (Computable<Library>)() -> libraryTable.createLibrary("NewLibrary"));
     final boolean[] listenerNotifiedOnChange = new boolean[1];
     library.getRootProvider().addRootSetChangedListener(wrapper -> listenerNotifiedOnChange[0] = true);
     final Library.ModifiableModel model1 = library.getModifiableModel();
@@ -71,8 +71,11 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testLibrarySerialization() {
+    final long moduleModificationCount = ((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount();
     Library library = PsiTestUtil.addProjectLibrary(myModule, "junit", Collections.singletonList(getJDomJar()),
                                                     Collections.singletonList(getJDomSources()));
+
+    assertThat(((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount()).isGreaterThan(moduleModificationCount);
     Element element = serialize(library);
     String classesUrl = getJDomJar().getUrl();
     String sourcesUrl = getJDomSources().getUrl();
@@ -93,14 +96,21 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testFindLibraryByNameAfterRename() {
+    final long moduleModificationCount = ((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount();
+    ProjectLibraryTable table = (ProjectLibraryTable)getLibraryTable();
+    final long projectLibraryModificationCount = table.getStateModificationCount();
     Library a = createLibrary("a", null, null);
-    LibraryTable table = getLibraryTable();
     LibraryTable.ModifiableModel model = table.getModifiableModel();
     assertSame(a, table.getLibraryByName("a"));
     assertSame(a, model.getLibraryByName("a"));
     Library.ModifiableModel libraryModel = a.getModifiableModel();
     libraryModel.setName("b");
     commit(libraryModel);
+
+    // module not marked as to save if project library modified, but module is not affected
+    assertThat(((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount()).isEqualTo(moduleModificationCount);
+    assertThat(table.getStateModificationCount()).isGreaterThan(projectLibraryModificationCount);
+
     assertNull(table.getLibraryByName("a"));
     assertNull(model.getLibraryByName("a"));
     assertSame(a, table.getLibraryByName("b"));
@@ -168,7 +178,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     LibraryTable table = getLibraryTable();
     Library library = new WriteAction<Library>() {
       @Override
-      protected void run(Result<Library> result) throws Throwable {
+      protected void run(@NotNull Result<Library> result) throws Throwable {
         Library res = table.createLibrary("native");
         result.setResult(res);
       }
@@ -192,12 +202,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
   public void testJarDirectoriesSerialization() {
     LibraryTable table = getLibraryTable();
-    Library library = ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      @Override
-      public Library compute() {
-        return table.createLibrary("jarDirs");
-      }
-    });
+    Library library = ApplicationManager.getApplication().runWriteAction((Computable<Library>)() -> table.createLibrary("jarDirs"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addJarDirectory("file://jar-dir", false, OrderRootType.CLASSES);
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);

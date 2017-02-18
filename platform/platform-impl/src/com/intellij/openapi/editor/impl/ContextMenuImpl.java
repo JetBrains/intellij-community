@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +109,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file != null && file.isValid() && (file.isInLocalFileSystem() || file instanceof HttpVirtualFile);
+    return file != null && file.isValid();
   }
 
   private void toggleContextToolbar(final boolean show) {

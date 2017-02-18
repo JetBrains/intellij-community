@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.unwrap;
 
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+
 public class UnwrapMethodParameterTest extends UnwrapTestCase {
   public void testBasic() throws Exception {
     assertOptions("foo(ba<caret>r());",
@@ -68,5 +70,16 @@ public class UnwrapMethodParameterTest extends UnwrapTestCase {
                   "Unwrap '\"path\"'", "Unwrap 'bar(\"path\")'");
     assertUnwrapped("int f = foo(bar(\"path\"<caret>));",
                     "int f = foo(\"path\"<caret>);");
+  }
+
+  public void testHighlightingOfTheExtractedFragment() throws Exception {
+    assertOptions("foo(bar.st<caret>r);",
+                  "Unwrap 'bar.str'");
+    assertUnwrapped("foo(bar.st<caret>r);",
+                    "bar.str;");
+    final RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
+    assertSize(1, highlighters);
+    assertEquals(42, highlighters[0].getStartOffset());
+    assertEquals(49, highlighters[0].getEndOffset());
   }
 }

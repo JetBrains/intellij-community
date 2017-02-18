@@ -33,7 +33,7 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
     return o1.getPath().compareToIgnoreCase(o2.getPath());
   };
   @Tag("state") @AbstractCollection(surroundWithTag = false)
-  protected final Map<String, SchemaInfo> myState = new TreeMap<String, SchemaInfo>();
+  protected final Map<String, SchemaInfo> myState = new TreeMap<>();
 
   @Nullable
   @Override
@@ -71,7 +71,7 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
     private String myName;
     private String myRelativePathToSchema;
     private boolean myApplicationLevel;
-    private List<Item> myPatterns = new ArrayList<Item>();
+    private List<Item> myPatterns = new ArrayList<>();
     @Transient
     private List<Processor<VirtualFile>> myCalculatedPatterns;
 
@@ -84,7 +84,7 @@ public class JsonSchemaMappingsConfigurationBase implements PersistentStateCompo
       myName = name;
       myRelativePathToSchema = relativePathToSchema;
       myApplicationLevel = applicationLevel;
-      myPatterns = new ArrayList<Item>();
+      myPatterns = new ArrayList<>();
       if (patterns != null) {
         myPatterns.addAll(patterns);
       }

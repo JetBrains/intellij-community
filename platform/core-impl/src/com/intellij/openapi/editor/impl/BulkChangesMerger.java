@@ -92,11 +92,11 @@ public class BulkChangesMerger {
   /**
    * Allows to perform 'in-place' merge of the given changes to the given array.
    * <p/>
-   * I.e. it's considered that given array contains particular text at <code>[0; length)</code> region and given changes define
+   * I.e. it's considered that given array contains particular text at {@code [0; length)} region and given changes define
    * offsets against it. It's also assumed that given array length is enough to contain resulting text after applying the changes.
    * <p/>
-   * Example: consider that initial text is <code>'12345'</code> and given changes are <code>'remove text at [1; 3) interval'</code>
-   * and <code>'replace text at [4; 5) interval with 'abcde''</code>. Resulting text is <code>'14abcde'</code> then and given array
+   * Example: consider that initial text is {@code '12345'} and given changes are {@code 'remove text at [1; 3) interval'}
+   * and {@code 'replace text at [4; 5) interval with 'abcde''}. Resulting text is {@code '14abcde'} then and given array
    * length should be not less than 7.
    * 
    * @param data      data array
@@ -212,7 +212,7 @@ public class BulkChangesMerger {
     /**
      * Asks current context to update its state in order to point to the first change in a group.
      * 
-     * @return      <code>true</code> if the first change in a group is found; <code>false</code> otherwise
+     * @return      {@code true} if the first change in a group is found; {@code false} otherwise
      */
     @SuppressWarnings({"ForLoopThatDoesntUseLoopVariable"})
     public boolean startGroup() {

@@ -51,7 +51,7 @@ public class DomElementClassIndex extends StringStubIndexExtension<PsiFile> {
     final int virtualFileId = ((VirtualFileWithId)file).getId();
 
     CommonProcessors.FindFirstProcessor<? super PsiFile> processor =
-      new CommonProcessors.FindFirstProcessor<PsiFile>();
+      new CommonProcessors.FindFirstProcessor<>();
     StubIndex.getInstance().processElements(KEY, clazzName,
                                             domFileElement.getFile().getProject(),
                                             GlobalSearchScope.fileScope(domFileElement.getFile()),

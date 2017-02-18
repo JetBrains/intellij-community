@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class CompositeOperation extends CvsOperation {
-  private final List<CvsOperation> mySubOperations = new ArrayList<CvsOperation>();
+  private final List<CvsOperation> mySubOperations = new ArrayList<>();
   private CvsOperation myCurrentOperation;
 
   public void addOperation(CvsOperation operation) {

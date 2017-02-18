@@ -66,6 +66,8 @@ public class PyExecutionException extends ExecutionException {
     b.append(myStdout);
     b.append("\n");
     b.append(myStderr);
+    b.append("\n");
+    b.append(getMessage());
     return b.toString();
   }
 

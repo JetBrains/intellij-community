@@ -109,7 +109,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
   }
 
   private static void showNavigationPopup(final Project project, final List<String> fileNames, final RelativePoint point) {
-    List<String> listPaths = new ArrayList<String>(fileNames);
+    List<String> listPaths = new ArrayList<>(fileNames);
     final String CREATE_MISSING_OPTION = "Create Missing Files";
     if (fileNames.size() == 2) {
       VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(0));

@@ -1,5 +1,4 @@
 import java.io.*;
-import java.net.*;
 import java.util.*;
 
 public class a  {
@@ -181,7 +180,7 @@ public class a  {
     }
 
     void forEachParam(java.io.File x) {
-        for (java.io.File f: <error descr="Variable 'f' might not have been initialized">f</error>.listFiles()) {
+        for (java.io.File f: <error descr="Cannot resolve symbol 'f'">f</error>.listFiles()) {
            forEachParam(f);
         }
     }
@@ -435,5 +434,36 @@ class ClassInitializerConstantEval {
       x = 1;
       <error descr="Variable 'x' might already have been assigned to">x</error> = 1;
     }
+  }
+}
+
+class AssignInAssert {
+  void f() {
+    boolean a;
+    assert a = true;
+    if(<error descr="Variable 'a' might not have been initialized">a</error>)
+      System.out.println();
+  }
+}
+
+class CompoundAssign {
+  void f() {
+    int i;
+    <error descr="Variable 'i' might not have been initialized">i</error> += i = 2;
+    System.out.println(i);
+  }
+}
+
+class BreakAndFinally {
+  void f() {
+    final int i;
+    t:
+    try {
+      break t;
+    }
+    finally {
+      i = 1;
+    }
+    System.out.println(i);
   }
 }

@@ -32,7 +32,7 @@ public interface Printer {
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
     decoder.escapeText(text, ProcessOutputTypes.STDOUT, new AnsiEscapeDecoder.ColoredTextAcceptor() {
       @Override
-      public void coloredTextAvailable(String text, Key attributes) {
+      public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
         ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(attributes);
         if (contentType == null || contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
           contentType = ConsoleViewContentType.getConsoleViewType(processOutputType);
@@ -46,7 +46,7 @@ public interface Printer {
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
     decoder.escapeText(text, ProcessOutputTypes.STDOUT, new AnsiEscapeDecoder.ColoredTextAcceptor() {
       @Override
-      public void coloredTextAvailable(String text, Key attributes) {
+      public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
         ConsoleViewContentType viewContentType = ConsoleViewContentType.getConsoleViewType(attributes);
         if (viewContentType == null) {
           viewContentType = contentType;

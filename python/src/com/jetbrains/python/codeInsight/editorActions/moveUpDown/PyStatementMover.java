@@ -30,7 +30,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,7 +85,7 @@ public class PyStatementMover extends LineMover {
     if (nearLine >= document.getLineCount() || nearLine <= 0) return false;
     final PyStringLiteralExpression stringLiteralExpression = PsiTreeUtil.getParentOfType(elementToMove1, PyStringLiteralExpression.class);
     if (stringLiteralExpression != null) {
-      final Pair<String,String> quotes = PythonStringUtil.getQuotes(stringLiteralExpression.getText());
+      final Pair<String,String> quotes = PyStringLiteralUtil.getQuotes(stringLiteralExpression.getText());
       if (quotes != null && (quotes.first.equals("'''") || quotes.first.equals("\"\"\""))) {
         final String text1 = document.getText(TextRange.create(start, end)).trim();
         final String text2 = document.getText(TextRange.create(document.getLineStartOffset(nearLine), document.getLineEndOffset(nearLine))).trim();

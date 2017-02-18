@@ -41,7 +41,7 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 class InOutAnalysis extends Analysis<Result> {
 
   static final ResultUtil resultUtil =
-    new ResultUtil(new ELattice<Value>(Value.Bot, Value.Top));
+    new ResultUtil(new ELattice<>(Value.Bot, Value.Top));
 
   final private State[] pending;
   private final InOutInterpreter interpreter;
@@ -210,7 +210,7 @@ class InOutAnalysis extends Analysis<Result> {
     for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<BasicValue>(frame);
+        nextFrame1 = new Frame<>(frame);
         nextFrame1.clearStack();
         nextFrame1.push(ASMUtils.THROWABLE_VALUE);
       }
@@ -233,14 +233,14 @@ class InOutAnalysis extends Analysis<Result> {
       case AbstractInsnNode.FRAME:
         return frame;
       default:
-        Frame<BasicValue> nextFrame = new Frame<BasicValue>(frame);
+        Frame<BasicValue> nextFrame = new Frame<>(frame);
         nextFrame.execute(insnNode, interpreter);
         return nextFrame;
     }
   }
 
   private Conf generalize(Conf conf) {
-    Frame<BasicValue> frame = new Frame<BasicValue>(conf.frame);
+    Frame<BasicValue> frame = new Frame<>(conf.frame);
     for (int i = generalizeShift; i < frame.getLocals(); i++) {
       BasicValue value = frame.getLocal(i);
       Class<?> valueClass = value.getClass();
@@ -422,7 +422,7 @@ class InOutInterpreter extends BasicInterpreter {
           if (!Type.VOID_TYPE.equals(retType)) {
             if (direction instanceof InOut) {
               InOut inOut = (InOut)direction;
-              HashSet<Key> keys = new HashSet<Key>();
+              HashSet<Key> keys = new HashSet<>();
               for (int i = shift; i < values.size(); i++) {
                 if (values.get(i) instanceof ParamValue) {
                   keys.add(new Key(method, new InOut(i - shift, inOut.inValue), stable));
@@ -436,7 +436,7 @@ class InOutInterpreter extends BasicInterpreter {
               }
             }
             else if (isRefRetType) {
-              HashSet<Key> keys = new HashSet<Key>();
+              HashSet<Key> keys = new HashSet<>();
               keys.add(new Key(method, Out, stable));
               return new CallResultValue(retType, keys);
             }

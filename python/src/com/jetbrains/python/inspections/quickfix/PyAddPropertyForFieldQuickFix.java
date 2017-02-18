@@ -36,14 +36,8 @@ public class PyAddPropertyForFieldQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return myName;
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return myName;
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

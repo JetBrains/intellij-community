@@ -19,9 +19,9 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.SystemInfo
 
 internal const val PROJECTS_DIR_NAME: String = "_projects/"
-private val osPrefixes = arrayOf("_mac/", "_windows/", "_linux/", "_freebsd/", "_unix/")
+private val OS_PREFIXES = arrayOf("_mac/", "_windows/", "_linux/", "_freebsd/", "_unix/")
 
-private fun getOsFolderName() = when {
+internal fun getOsFolderName() = when {
   SystemInfo.isMac -> "_mac"
   SystemInfo.isWindows -> "_windows"
   SystemInfo.isLinux -> "_linux"
@@ -37,7 +37,7 @@ internal fun toRepositoryPath(path: String, roamingType: RoamingType, projectKey
 }
 
 internal fun toIdeaPath(path: String): String {
-  for (prefix in osPrefixes) {
+  for (prefix in OS_PREFIXES) {
     val result = path.removePrefix(prefix)
     if (result !== path) {
       return result

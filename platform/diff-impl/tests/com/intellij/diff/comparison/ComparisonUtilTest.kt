@@ -62,64 +62,64 @@ class ComparisonUtilTest : DiffTestCase() {
 
   fun testLineFragment() {
     doTestLineFragment(
-        "", "x",
-        !0 - 0, !0 - 1,
-        !0 - 1, !0 - 1)
+      "", "x",
+      !0 - 0, !0 - 1,
+      !0 - 1, !0 - 1)
 
     doTestLineFragment(
-        "x", "y",
-        !0 - 1, !0 - 1,
-        !0 - 1, !0 - 1)
+      "x", "y",
+      !0 - 1, !0 - 1,
+      !0 - 1, !0 - 1)
 
     doTestLineFragment(
-        "x_", "y_",
-        !0 - 2, !0 - 2,
-        !0 - 1, !0 - 1)
+      "x_", "y_",
+      !0 - 2, !0 - 2,
+      !0 - 1, !0 - 1)
 
     doTestLineFragment(
-        "x", "y_",
-        !0 - 1, !0 - 2,
-        !0 - 1, !0 - 2)
+      "x", "y_",
+      !0 - 1, !0 - 2,
+      !0 - 1, !0 - 2)
 
     doTestLineFragment(
-        "x", "x_",
-        !1 - 1, !2 - 2,
-        !1 - 1, !1 - 2)
+      "x", "x_",
+      !1 - 1, !2 - 2,
+      !1 - 1, !1 - 2)
 
     doTestLineFragment(
-        "x_y_z_", "x_Y_z_",
-        !2 - 4, !2 - 4,
-        !1 - 2, !1 - 2)
+      "x_y_z_", "x_Y_z_",
+      !2 - 4, !2 - 4,
+      !1 - 2, !1 - 2)
 
     doTestLineFragment(
-        "x_y_z_", "x_y_Z_",
-        !4 - 6, !4 - 6,
-        !2 - 3, !2 - 3)
+      "x_y_z_", "x_y_Z_",
+      !4 - 6, !4 - 6,
+      !2 - 3, !2 - 3)
 
     doTestLineFragment(
-        "x_y_z_", "x_y_Z_",
-        !4 - 6, !4 - 6,
-        !2 - 3, !2 - 3)
+      "x_y_z_", "x_y_Z_",
+      !4 - 6, !4 - 6,
+      !2 - 3, !2 - 3)
 
     doTestLineFragment(
-        "x_y_z_", "x_y_Z",
-        !4 - 6, !4 - 5,
-        !2 - 4, !2 - 3)
+      "x_y_z_", "x_y_Z",
+      !4 - 6, !4 - 5,
+      !2 - 4, !2 - 3)
 
     doTestLineFragment(
-        "x_y_z", "x_y_Z_",
-        !4 - 5, !4 - 6,
-        !2 - 3, !2 - 4)
+      "x_y_z", "x_y_Z_",
+      !4 - 5, !4 - 6,
+      !2 - 3, !2 - 4)
 
     doTestLineFragment(
-        " ", "_ ",
-        !0 - 0, !0 - 1,
-        !0 - 0, !0 - 1)
+      " ", "_ ",
+      !0 - 0, !0 - 1,
+      !0 - 0, !0 - 1)
 
     doTestLineFragment(
-        " ", " _",
-        !1 - 1, !2 - 2,
-        !1 - 1, !1 - 2)
+      " ", " _",
+      !1 - 1, !2 - 2,
+      !1 - 1, !1 - 2)
   }
 
   //

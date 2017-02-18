@@ -146,4 +146,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightRefactor
   public void testFormattingInside() throws Exception {
     doTest();
   }
+
+  public void testAssignReturnValueToForeachParameter() throws Exception {
+    doTest();
+  }
 }

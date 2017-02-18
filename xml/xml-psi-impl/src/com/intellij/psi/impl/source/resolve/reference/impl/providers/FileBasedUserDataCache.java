@@ -32,7 +32,7 @@ public abstract class FileBasedUserDataCache<T> extends UserDataCache<CachedValu
   @Override
   protected CachedValue<T> compute(final PsiFile xmlFile, final Object o) {
     return CachedValuesManager.getManager(xmlFile.getProject()).createCachedValue(
-      () -> new CachedValueProvider.Result<T>(doCompute(xmlFile), getDependencies(xmlFile)), false);
+      () -> new CachedValueProvider.Result<>(doCompute(xmlFile), getDependencies(xmlFile)), false);
   }
 
   protected Object[] getDependencies(PsiFile xmlFile) {

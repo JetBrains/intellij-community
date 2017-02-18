@@ -35,7 +35,7 @@ public class CleanProject extends Generator {
   private final Target myTarget;
 
   public CleanProject(Project project, @NotNull GenerationOptions genOptions, @NotNull ArtifactsGenerator artifactsGenerator) {
-    List<String> dependencies = new ArrayList<String>();
+    List<String> dependencies = new ArrayList<>();
     final ModuleChunk[] chunks = genOptions.getModuleChunks();
     for (ModuleChunk chunk : chunks) {
       dependencies.add(BuildProperties.getModuleCleanTargetName(chunk.getName()));

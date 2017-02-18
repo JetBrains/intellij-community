@@ -70,15 +70,9 @@ public class TypeParameterExtendsObjectInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "extends.object.remove.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

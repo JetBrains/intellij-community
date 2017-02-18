@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +45,7 @@ import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,11 +56,12 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 public class IdeaApplication {
-  @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
-  @NonNls public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
+  public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
+  public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
   private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
 
@@ -105,12 +103,12 @@ public class IdeaApplication {
     }
     else {
       Splash splash = null;
-      if (myArgs.length == 0) {
-        myStarter = getStarter();
-        if (myStarter instanceof IdeStarter) {
-          splash = ((IdeStarter)myStarter).showSplash(myArgs);
-        }
+      //if (myArgs.length == 0) {
+      myStarter = getStarter();
+      if (myStarter instanceof IdeStarter) {
+        splash = ((IdeStarter)myStarter).showSplash(myArgs);
       }
+      //}
 
       ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
     }
@@ -136,7 +134,7 @@ public class IdeaApplication {
    */
   @NotNull
   private static String[] processProgramArguments(String[] args) {
-    ArrayList<String> arguments = new ArrayList<String>();
+    ArrayList<String> arguments = new ArrayList<>();
     List<String> safeKeys = Arrays.asList(SAFE_JAVA_ENV_PARAMETERS);
     for (String arg : args) {
       if (arg.startsWith("-D")) {
@@ -158,7 +156,16 @@ public class IdeaApplication {
 
     if (headless) return;
 
-    if (Patches.SUN_BUG_ID_6209673) {
+    /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
+       because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
+
+       At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
+
+       This matters only if swing.bufferPerWindow = true and we don't invoke JComponent.getGraphics() directly.
+
+       True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+       frame buffer content without the usual repainting, even when the EDT is blocked. */
+    if (!SystemProperties.isTrueSmoothScrollingEnabled() && Patches.SUN_BUG_ID_6209673) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
 
@@ -255,10 +262,10 @@ public class IdeaApplication {
       return null;
     }
 
-    private void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {
+    private void updateSplashScreen(@NotNull ApplicationInfoEx appInfo, SplashScreen splashScreen) {
       final Graphics2D graphics = splashScreen.createGraphics();
       final Dimension size = splashScreen.getSize();
-      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor())) {
+      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor(), appInfo)) {
         splashScreen.update();
       }
     }
@@ -298,7 +305,8 @@ public class IdeaApplication {
                 LOG.error("Wrong line number:" + args[2]);
               }
             }
-            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
+            EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
           }
         }
         throw new IncorrectOperationException("Can't find file:" + file);
@@ -328,7 +336,7 @@ public class IdeaApplication {
       WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
       IdeEventQueue.getInstance().setWindowManager(windowManager);
 
-      Ref<Boolean> willOpenProject = new Ref<Boolean>(Boolean.FALSE);
+      Ref<Boolean> willOpenProject = new Ref<>(Boolean.FALSE);
       AppLifecycleListener lifecyclePublisher = app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC);
       lifecyclePublisher.appFrameCreated(args, willOpenProject);
 
@@ -372,11 +380,20 @@ public class IdeaApplication {
     return project;
   }
 
+  /**
+   * Used for GUI tests to stop IdeEventQueue dispatching when Application is disposed already
+   */
+  public void shutdown() {
+    myLoaded = false;
+    IdeEventQueue.applicationClose();
+    ShutDownTracker.getInstance().run();
+  }
+
   public String[] getCommandLineArguments() {
     return myArgs;
   }
 
-  public void setPerformProjectLoad(boolean performProjectLoad) {
-    myPerformProjectLoad = performProjectLoad;
+  public void disableProjectLoad() {
+    myPerformProjectLoad = false;
   }
 }

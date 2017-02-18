@@ -64,7 +64,7 @@ public class GppExpectedTypesContributor extends GroovyExpectedTypesContributor 
                                                                        GrExpression arg) {
     PsiType[] argTypes = ContainerUtil.map2Array(args, PsiType.class, (NullableFunction<GrExpression, PsiType>)grExpression -> grExpression.getType());
 
-    final ArrayList<TypeConstraint> result = new ArrayList<TypeConstraint>();
+    final ArrayList<TypeConstraint> result = new ArrayList<>();
     for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
       if (type instanceof PsiClassType) {
         for (GroovyResolveResult resolveResult : PsiUtil.getConstructorCandidates((PsiClassType)type, argTypes, list)) {

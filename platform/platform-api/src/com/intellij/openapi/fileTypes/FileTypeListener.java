@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface FileTypeListener extends EventListener {
-  class Adapter implements FileTypeListener {
-    @Override public void beforeFileTypesChanged(@NotNull FileTypeEvent event) { }
-    @Override public void fileTypesChanged(@NotNull FileTypeEvent event) { }
+  default void beforeFileTypesChanged(@NotNull FileTypeEvent event) {
   }
 
-  void beforeFileTypesChanged(@NotNull FileTypeEvent event);
-  void fileTypesChanged(@NotNull FileTypeEvent event);
+  default void fileTypesChanged(@NotNull FileTypeEvent event) {
+  }
+
+  /**
+   * @deprecated Use {@link FileTypeListener}
+   */
+  @Deprecated
+  class Adapter implements FileTypeListener {
+  }
 }

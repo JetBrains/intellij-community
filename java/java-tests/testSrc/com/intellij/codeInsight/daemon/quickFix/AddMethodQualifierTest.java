@@ -76,15 +76,16 @@ public class AddMethodQualifierTest extends JavaCodeInsightFixtureTestCase {
       return;
     }
     assertNotNull(addMethodQualifierFix);
-    final Set<String> actualCandidatesNames = new TreeSet<String>(ContainerUtil.map(addMethodQualifierFix.getCandidates(), new Function<PsiNamedElement, String>() {
-      @Override
-      public String fun(final PsiNamedElement psiNamedElement) {
-        final String name = psiNamedElement.getName();
-        assertNotNull(name);
-        return name;
-      }
-    }));
-    final Set<String> expectedCandidatesNames = new TreeSet<String>(ContainerUtil.list(candidatesNames));
+    final Set<String> actualCandidatesNames =
+      new TreeSet<>(ContainerUtil.map(addMethodQualifierFix.getCandidates(), new Function<PsiNamedElement, String>() {
+        @Override
+        public String fun(final PsiNamedElement psiNamedElement) {
+          final String name = psiNamedElement.getName();
+          assertNotNull(name);
+          return name;
+        }
+      }));
+    final Set<String> expectedCandidatesNames = new TreeSet<>(ContainerUtil.list(candidatesNames));
     assertEquals(expectedCandidatesNames, actualCandidatesNames);
   }
 

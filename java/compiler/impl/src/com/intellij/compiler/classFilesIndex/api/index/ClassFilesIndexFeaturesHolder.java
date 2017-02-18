@@ -34,8 +34,8 @@ import java.util.Map;
  */
 public class ClassFilesIndexFeaturesHolder extends AbstractProjectComponent {
   private final Map<ClassFilesIndexConfigure, ClassFilesIndexReaderBase> myEnabledIndexReaders =
-    new HashMap<ClassFilesIndexConfigure, ClassFilesIndexReaderBase>();
-  private final Map<ClassFilesIndexFeature, FeatureState> myEnabledFeatures = new HashMap<ClassFilesIndexFeature, FeatureState>();
+    new HashMap<>();
+  private final Map<ClassFilesIndexFeature, FeatureState> myEnabledFeatures = new HashMap<>();
 
   public static ClassFilesIndexFeaturesHolder getInstance(final Project project) {
     return project.getComponent(ClassFilesIndexFeaturesHolder.class);
@@ -116,7 +116,7 @@ public class ClassFilesIndexFeaturesHolder extends AbstractProjectComponent {
       throw new IllegalStateException(String.format("feature %s already contains", feature.getKey()));
     }
     final Map<ClassFilesIndexConfigure, ClassFilesIndexReaderBase> newIndices =
-      new HashMap<ClassFilesIndexConfigure, ClassFilesIndexReaderBase>();
+      new HashMap<>();
     FeatureState newFeatureState = FeatureState.AVAILABLE;
     for (final ClassFilesIndexConfigure requiredConfigure : feature.getRequiredIndicesConfigures()) {
       boolean isIndexAlreadyLoaded = false;

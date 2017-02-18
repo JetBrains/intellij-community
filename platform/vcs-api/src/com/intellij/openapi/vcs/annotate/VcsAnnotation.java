@@ -38,8 +38,8 @@ public class VcsAnnotation {
   public VcsAnnotation(FilePath filePath, VcsLineAnnotationData basicAnnotation, VcsRevisionNumber lastRevision) {
     myBasicAnnotation = basicAnnotation;
     myLastRevision = lastRevision;
-    myAdditionalAnnotations = new HashMap<Object, VcsLineAnnotationData>();
-    myCachedOtherRevisions = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+    myAdditionalAnnotations = new HashMap<>();
+    myCachedOtherRevisions = new HashMap<>();
     myFilePath = filePath;
   }
 

@@ -58,6 +58,7 @@ public class SpockTestFramework extends GroovyTestFramework {
     return new FileTemplateDescriptor("Spock cleanup Method.groovy");
   }
 
+  @NotNull
   @Override
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("Spock Test Method.groovy");

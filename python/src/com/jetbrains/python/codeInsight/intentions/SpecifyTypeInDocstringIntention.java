@@ -53,7 +53,8 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     return PyBundle.message("INTN.specify.type");
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     final PyExpression problemElement = getProblemElement(elementAt);
     final PsiReference reference = problemElement == null ? null : problemElement.getReference();

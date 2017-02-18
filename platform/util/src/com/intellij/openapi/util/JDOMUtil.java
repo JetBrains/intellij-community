@@ -24,9 +24,12 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.text.StringFactory;
+import com.sun.org.apache.xerces.internal.impl.Constants;
+import org.apache.xerces.util.SecurityManager;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
+import org.jdom.input.SAXHandler;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.Contract;
@@ -34,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
 
 import java.io.*;
 import java.lang.ref.SoftReference;
@@ -241,7 +245,19 @@ public class JDOMUtil {
     SoftReference<SAXBuilder> reference = ourSaxBuilder.get();
     SAXBuilder saxBuilder = com.intellij.reference.SoftReference.dereference(reference);
     if (saxBuilder == null) {
-      saxBuilder = new SAXBuilder();
+      saxBuilder = new SAXBuilder() {
+        @Override
+        protected void configureParser(XMLReader parser, SAXHandler contentHandler) throws JDOMException {
+          super.configureParser(parser, contentHandler);
+          try {
+            SecurityManager manager = new SecurityManager();
+            manager.setEntityExpansionLimit(10000);
+            parser.setProperty(Constants.XERCES_PROPERTY_PREFIX + Constants.SECURITY_MANAGER_PROPERTY, manager);
+          }
+          catch (Exception ignore) {
+          }
+        }
+      };
       saxBuilder.setEntityResolver(new EntityResolver() {
         @Override
         @NotNull

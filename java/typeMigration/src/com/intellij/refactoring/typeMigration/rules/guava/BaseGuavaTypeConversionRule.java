@@ -40,13 +40,13 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     @NotNull
     @Override
     protected Map<String, TypeConversionDescriptorBase> compute() {
-      Map<String, TypeConversionDescriptorBase> map = new HashMap<String, TypeConversionDescriptorBase>();
+      Map<String, TypeConversionDescriptorBase> map = new HashMap<>();
       fillSimpleDescriptors(map);
       return map;
     }
   };
 
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {};
+  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {}
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForMethod(PsiType from,
@@ -56,7 +56,7 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
     return null;
-  };
+  }
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
@@ -101,10 +101,18 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)context).getAnonymousClass();
       return anonymousClass == null ? null : findConversionForAnonymous(anonymousClass, labeler.getSettings(GuavaConversionSettings.class));
     }
-    else if (context instanceof PsiReferenceExpression) {
-      final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
-      if (resolvedElement instanceof PsiVariable) {
-        return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
+    else if (context instanceof PsiMethodReferenceExpression) {
+      final PsiType methodReferenceType = context.getType();
+      if (methodReferenceType != null && to != null && to.isAssignableFrom(methodReferenceType)) {
+        return new TypeConversionDescriptorBase();
+      }
+    }
+    else {
+      if (context instanceof PsiReferenceExpression) {
+        final PsiElement resolvedElement = ((PsiReferenceExpression)context).resolve();
+        if (resolvedElement instanceof PsiVariable) {
+          return findConversionForVariableReference((PsiReferenceExpression)context, (PsiVariable)resolvedElement, context);
+        }
       }
     }
     return null;

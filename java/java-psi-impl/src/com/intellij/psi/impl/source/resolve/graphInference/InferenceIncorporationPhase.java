@@ -126,6 +126,21 @@ public class InferenceIncorporationPhase {
       LOG.assertTrue(gClass != null);
       final InferenceVariable[] parameters = capture.first;
       PsiType[] typeArgs = right.getParameters();
+      PsiSubstitutor restSubst = PsiSubstitutor.EMPTY;
+      if (Registry.is("javac.fresh.variables.for.captured.wildcards.only")) {
+        List<PsiType> args = new ArrayList<PsiType>();
+        PsiTypeParameter[] typeParameters = gClass.getTypeParameters();
+        for (int i = 0; i < typeArgs.length; i++) {
+          PsiType arg = typeArgs[i];
+          if (arg instanceof PsiWildcardType) {
+            args.add(arg);
+          }
+          else {
+            restSubst = restSubst.put(typeParameters[i], arg);
+          }
+        }
+        typeArgs = args.toArray(PsiType.EMPTY_ARRAY);
+      }
       if (parameters.length != typeArgs.length) continue;
       for (int i = 0; i < typeArgs.length; i++) {
         final PsiType aType = typeArgs[i];
@@ -154,6 +169,8 @@ public class InferenceIncorporationPhase {
               glb = GenericsUtil.getGreatestLowerBound(glb, paramBound);
             }
           }
+
+          glb = restSubst.substitute(glb);
 
           if (!((PsiWildcardType)aType).isBounded()) {
 
@@ -296,7 +313,7 @@ public class InferenceIncorporationPhase {
         if (eqBound == null || PsiType.NULL.equals(eqBound) || eqBound instanceof PsiWildcardType) continue;
         if (Registry.is("javac.unchecked.subtyping.during.incorporation", true)) {
           if (TypeCompatibilityConstraint.isUncheckedConversion(upperBound, eqBound)) {
-            if (PsiUtil.resolveClassInType(eqBound) instanceof PsiTypeParameter) {
+            if (PsiUtil.resolveClassInType(eqBound) instanceof PsiTypeParameter && !mySession.isProperType(upperBound)) {
               mySession.setErased();
             }
             continue;

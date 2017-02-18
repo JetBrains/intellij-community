@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.TransactionGuard;
@@ -22,9 +23,11 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PausesStat;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ActionUtil {
@@ -46,7 +48,7 @@ public class ActionUtil {
 
   public static void showDumbModeWarning(@NotNull AnActionEvent... events) {
     Project project = null;
-    List<String> actionNames = new ArrayList<String>();
+    List<String> actionNames = new ArrayList<>();
     for (final AnActionEvent event : events) {
       final String s = event.getPresentation().getText();
       if (StringUtil.isNotEmpty(s)) {
@@ -88,7 +90,6 @@ public class ActionUtil {
            + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
   }
 
-  public static final PausesStat ACTION_UPDATE_PAUSES = new PausesStat("AnAction.update()");
   private static int insidePerformDumbAwareUpdate;
   /**
    * @param action action
@@ -99,7 +100,7 @@ public class ActionUtil {
    * {@link AnAction#update(AnActionEvent)}
    * @return true if update tried to access indices in dumb mode
    */
-  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+  public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
     final boolean dumbMode = isDumbMode(e.getProject());
@@ -110,10 +111,10 @@ public class ActionUtil {
     }
     final boolean enabledBeforeUpdate = presentation.isEnabled();
 
-    final boolean notAllowed = dumbMode && !action.isDumbAware();
+    final boolean notAllowed = dumbMode && !action.isDumbAware() || (Registry.is("actionSystem.honor.modal.context") && isInModalContext && !action.isEnabledInModalContext());
 
     if (insidePerformDumbAwareUpdate++ == 0) {
-      ACTION_UPDATE_PAUSES.started();
+      ActionPauses.STAT.started();
     }
     try {
       if (beforeActionPerformed) {
@@ -133,7 +134,7 @@ public class ActionUtil {
     }
     finally {
       if (--insidePerformDumbAwareUpdate == 0) {
-        ACTION_UPDATE_PAUSES.finished(presentation.getText()+" action update ("+action.getClass()+")");
+        ActionPauses.STAT.finished(presentation.getText() + " action update (" + action.getClass() + ")");
       }
       if (notAllowed) {
         if (wasEnabledBefore == null) {
@@ -144,6 +145,16 @@ public class ActionUtil {
     }
     
     return false;
+  }
+
+  @Deprecated
+  // Use #performDumbAwareUpdate with isModalContext instead
+  public static boolean performDumbAwareUpdate(@NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
+    return performDumbAwareUpdate(false, action, e, beforeActionPerformed);
+  }
+
+  public static class ActionPauses {
+    public static final PausesStat STAT = new PausesStat("AnAction.update()");
   }
 
   /**
@@ -164,7 +175,7 @@ public class ActionUtil {
   }
 
   public static boolean lastUpdateAndCheckDumb(AnAction action, AnActionEvent e, boolean visibilityMatters) {
-    performDumbAwareUpdate(action, e, true);
+    performDumbAwareUpdate(false, action, e, true);
 
     final Project project = e.getProject();
     if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {
@@ -216,7 +227,7 @@ public class ActionUtil {
 
   @NotNull
   public static List<AnAction> getActions(@NotNull JComponent component) {
-    return ObjectUtils.notNull(UIUtil.getClientProperty(component, AnAction.ACTIONS_KEY), Collections.emptyList());
+    return ContainerUtil.notNullize(UIUtil.getClientProperty(component, AnAction.ACTIONS_KEY));
   }
 
   public static void clearActions(@NotNull JComponent component) {
@@ -241,6 +252,17 @@ public class ActionUtil {
           component.registerKeyboardAction(action, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
         }
       }
+    }
+  }
+
+  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
+                                                  @NotNull JComponent component,
+                                                  @Nullable Disposable parentDisposable) {
+    for (AnAction action : group.getChildren(null)) {
+      if (action instanceof ActionGroup) {
+        recursiveRegisterShortcutSet(((ActionGroup)action), component, parentDisposable);
+      }
+      action.registerCustomShortcutSet(component, parentDisposable);
     }
   }
 

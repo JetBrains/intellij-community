@@ -1,0 +1,24 @@
+<component name="libraryTable">
+  <library name="Gradle">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/commons-lang-2.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-cli-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-resources-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-base-services-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-base-services-groovy-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-core-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-dependency-management-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-logging-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-messaging-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-model-core-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-model-groovy-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-native-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-process-services-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-tooling-api-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-wrapper-3.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-reporting-3.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

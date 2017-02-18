@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import java.io.*;
@@ -26,7 +41,7 @@ public class Utils {
       myTempDir = new File(tempFileBase.getPath().replaceAll("marker$", ""));
       delete(myTempDir);
       myTempDir.mkdirs();
-      Runner.logger.info("created temp file: " + myTempDir.getPath());
+      Runner.logger().info("created temp file: " + myTempDir.getPath());
     }
     return File.createTempFile("temp", null, myTempDir);
   }
@@ -34,9 +49,9 @@ public class Utils {
   public static File createTempDir() throws IOException {
     File result = createTempFile();
     delete(result);
-    Runner.logger.info("deleted tmp dir: " + result.getPath());
+    Runner.logger().info("deleted tmp dir: " + result.getPath());
     result.mkdirs();
-    Runner.logger.info("created tmp dir: " + result.getPath());
+    Runner.logger().info("created tmp dir: " + result.getPath());
     if (! result.exists()) throw new IOException("Cannot create temp dir: " + result);
     return result;
   }
@@ -44,7 +59,7 @@ public class Utils {
   public static void cleanup() throws IOException {
     if (myTempDir == null) return;
     delete(myTempDir);
-    Runner.logger.info("deleted file " + myTempDir.getPath());
+    Runner.logger().info("deleted file " + myTempDir.getPath());
     myTempDir = null;
   }
 
@@ -54,7 +69,7 @@ public class Utils {
       if (files != null) {
         for (File each : files) {
           delete(each);
-          Runner.logger.info("deleted file " + each.getPath());
+          Runner.logger().info("deleted file " + each.getPath());
         }
       }
     }
@@ -71,30 +86,49 @@ public class Utils {
 
   public static void setExecutable(File file, boolean executable) throws IOException {
     if (executable && !file.setExecutable(true, false)) {
-      Runner.logger.error("Can't set executable permissions for file");
+      Runner.logger().error("Can't set executable permissions for file");
       throw new IOException("Cannot set executable permissions for: " + file);
     }
   }
 
-  public static void copy(File from, File to) throws IOException {
-    Runner.logger.info("from " + from.getPath() + " to " + to.getPath());
-    if (from.isDirectory()) {
-      to.mkdirs();
-      File[] files = from.listFiles();
-      if (files == null) throw new IOException("Cannot get directory's content: " + from);
-      for (File each : files) {
-        copy(each, new File(to, each.getName()));
+  public static boolean isLink(File file) throws IOException {
+    return Files.isSymbolicLink(Paths.get(file.getAbsolutePath()));
+  }
+
+  public static void createLink(String target, File link) throws IOException {
+    if (target == "") {
+      Runner.logger().error("Can't create link for " +  link.getName());
+    } else {
+      if (link.exists()) {
+        delete(link);
       }
+      Files.createSymbolicLink(Paths.get(link.getAbsolutePath()), Paths.get(target));
     }
-    else {
-      InputStream in = new BufferedInputStream(new FileInputStream(from));
-      try {
-        copyStreamToFile(in, to);
+  }
+
+  public static void copy(File from, File to) throws IOException {
+    if (from.isDirectory()) {
+      if (! to.exists()) {
+        Runner.logger().info("Dir: " + from.getPath() + " to " + to.getPath());
+        to.mkdirs();
+        File[] files = from.listFiles();
+        if (files == null) throw new IOException("Cannot get directory's content: " + from);
+        for (File each : files) {
+          copy(each, new File(to, each.getName()));
+        }
       }
-      finally {
-        in.close();
+    } else {
+      if (! isLink(from) && from.exists()) {
+        Runner.logger().info("File: " + from.getPath() + " to " + to.getPath());
+        InputStream in = new BufferedInputStream(new FileInputStream(from));
+        try {
+          copyStreamToFile(in, to);
+        }
+        finally {
+          in.close();
+        }
+        setExecutable(to, from.canExecute());
       }
-      setExecutable(to, from.canExecute());
     }
   }
 
@@ -175,7 +209,7 @@ public class Utils {
   public static ZipEntry getZipEntry(ZipFile zipFile, String entryPath) throws IOException {
     ZipEntry entry = zipFile.getEntry(entryPath);
     if (entry == null) throw new IOException("Entry " + entryPath + " not found");
-    Runner.logger.info("entryPath: " + entryPath);
+    Runner.logger().info("entryPath: " + entryPath);
     return entry;
   }
 
@@ -190,7 +224,7 @@ public class Utils {
   }
 
   public static LinkedHashSet<String> collectRelativePaths(File dir, boolean includeDirectories) {
-    LinkedHashSet<String> result = new LinkedHashSet<String>();
+    LinkedHashSet<String> result = new LinkedHashSet<>();
     collectRelativePaths(dir, result, null, includeDirectories);
     return result;
   }

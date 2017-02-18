@@ -115,7 +115,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     }
 
     final List<ModuleDescriptor> modules = myModulesLayoutPanel.getChosenEntries();
-    final Map<String, ModuleDescriptor> errors = new LinkedHashMap<String, ModuleDescriptor>();
+    final Map<String, ModuleDescriptor> errors = new LinkedHashMap<>();
     for (ModuleDescriptor module : modules) {
       try {
         final String moduleFilePath = module.computeModuleFilePath();

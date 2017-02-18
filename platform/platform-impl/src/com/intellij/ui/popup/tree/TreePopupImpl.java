@@ -53,7 +53,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup {
   private MouseMotionListener myMouseMotionListener;
   private MouseListener myMouseListener;
 
-  private final List<TreePath> mySavedExpanded = new ArrayList<TreePath>();
+  private final List<TreePath> mySavedExpanded = new ArrayList<>();
   private TreePath mySavedSelected;
 
   private TreePath myShowingChildPath;

@@ -44,7 +44,7 @@ public class HgBranchesCommand {
 
   @NotNull
   public static Set<String> collectNames(@NotNull HgCommandResult result) {
-    Set<String> branches = new TreeSet<String>();
+    Set<String> branches = new TreeSet<>();
     for (final String line : result.getOutputLines()) {
       Matcher matcher = BRANCH_LINE.matcher(line);
       if (matcher.matches()) {

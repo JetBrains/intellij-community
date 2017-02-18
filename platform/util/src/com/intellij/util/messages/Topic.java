@@ -96,7 +96,7 @@ public class Topic<L> {
 
   /**
    * {@link MessageBus Message buses} may be organised into {@link MessageBus#getParent() hierarchies}. That allows to provide
-   * additional messaging features like <code>'broadcasting'</code>. Here it means that messages sent to particular topic within
+   * additional messaging features like {@code 'broadcasting'}. Here it means that messages sent to particular topic within
    * particular message bus may be dispatched to subscribers of the same topic within another message buses.
    * <p/>
    * Current enum holds available broadcasting options.
@@ -114,8 +114,8 @@ public class Topic<L> {
      *    topic1 ---&gt; child-bus1     child-bus2 &lt;--- topic1
      * </pre>
      * <p/>
-     * Here subscribers of the <code>'topic1'</code> registered within the <code>'child-bus1'</code> and <code>'child-bus2'</code>
-     * will receive the message sent to the <code>'topic1'</code> topic at the <code>'parent-bus'</code>.
+     * Here subscribers of the {@code 'topic1'} registered within the {@code 'child-bus1'} and {@code 'child-bus2'}
+     * will receive the message sent to the {@code 'topic1'} topic at the {@code 'parent-bus'}.
      */
     TO_CHILDREN,
 
@@ -134,8 +134,8 @@ public class Topic<L> {
      *            child-bus &lt;--- topic1
      * </pre>
      * <p/>
-     * Here subscribers of the <code>topic1</code> registered within <code>'parent-bus'</code> will receive messages posted
-     * to the same topic within <code>'child-bus'</code>.
+     * Here subscribers of the {@code topic1} registered within {@code 'parent-bus'} will receive messages posted
+     * to the same topic within {@code 'child-bus'}.
      */
     TO_PARENT
   }

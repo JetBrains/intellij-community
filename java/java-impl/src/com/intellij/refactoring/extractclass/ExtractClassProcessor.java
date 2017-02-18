@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,6 +39,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.*;
@@ -66,13 +66,14 @@ import java.util.*;
 
 public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private static final Logger logger = Logger.getInstance("com.siyeh.rpp.extractclass.ExtractClassProcessor");
+  @NonNls public static final String REFACTORING_NAME = "Extract Delegate";
 
   private final PsiClass sourceClass;
   private final List<PsiField> fields;
   private final List<PsiMethod> methods;
   private final List<PsiClass> innerClasses;
-  private final Set<PsiClass> innerClassesToMakePublic = new HashSet<PsiClass>();
-  private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
+  private final Set<PsiClass> innerClassesToMakePublic = new HashSet<>();
+  private final List<PsiTypeParameter> typeParams = new ArrayList<>();
   private final String newPackageName;
   private final MoveDestination myMoveDestination;
   private final String myNewVisibility;
@@ -110,15 +111,15 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     myMoveDestination = moveDestination;
     myNewVisibility = newVisibility;
     myGenerateAccessors = generateAccessors;
-    this.enumConstants = new ArrayList<PsiField>();
+    this.enumConstants = new ArrayList<>();
     for (MemberInfo constant : enumConstants) {
       if (constant.isChecked()) {
         this.enumConstants.add((PsiField)constant.getMember());
       }
     }
-    this.fields = new ArrayList<PsiField>(fields);
-    this.methods = new ArrayList<PsiMethod>(methods);
-    this.innerClasses = new ArrayList<PsiClass>(classes);
+    this.fields = new ArrayList<>(fields);
+    this.methods = new ArrayList<>(methods);
+    this.innerClasses = new ArrayList<>(classes);
     this.newClassName = newClassName;
     delegateFieldName = calculateDelegateFieldName();
     requiresBackpointer = new BackpointerUsageVisitor(fields, innerClasses, methods, sourceClass).backpointerRequired();
@@ -126,7 +127,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       ContainerUtil.addAll(typeParams, sourceClass.getTypeParameters());
     }
     else {
-      final Set<PsiTypeParameter> typeParamSet = new HashSet<PsiTypeParameter>();
+      final Set<PsiTypeParameter> typeParamSet = new HashSet<>();
       final TypeParametersVisitor visitor = new TypeParametersVisitor(typeParamSet);
       for (PsiField field : fields) {
         field.accept(visitor);
@@ -157,7 +158,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     myExtractEnumProcessor.findEnumConstantConflicts(refUsages);
     if (!DestinationFolderComboBox.isAccessible(myProject, sourceClass.getContainingFile().getVirtualFile(),
                                                 myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
@@ -177,13 +178,13 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       calculateInitializersConflicts(conflicts);
       final NecessaryAccessorsVisitor visitor = checkNecessaryGettersSetters4ExtractedClass();
       final NecessaryAccessorsVisitor srcVisitor = checkNecessaryGettersSetters4SourceClass();
-      final Set<PsiField> fieldsNeedingGetter = new LinkedHashSet<PsiField>();
+      final Set<PsiField> fieldsNeedingGetter = new LinkedHashSet<>();
       fieldsNeedingGetter.addAll(visitor.getFieldsNeedingGetter());
       fieldsNeedingGetter.addAll(srcVisitor.getFieldsNeedingGetter());
       for (PsiField field : fieldsNeedingGetter) {
         conflicts.putValue(field, "Field \'" + field.getName() + "\' needs getter");
       }
-      final Set<PsiField> fieldsNeedingSetter = new LinkedHashSet<PsiField>();
+      final Set<PsiField> fieldsNeedingSetter = new LinkedHashSet<>();
       fieldsNeedingSetter.addAll(visitor.getFieldsNeedingSetter());
       fieldsNeedingSetter.addAll(srcVisitor.getFieldsNeedingSetter());
       for (PsiField field : fieldsNeedingSetter) {
@@ -274,7 +275,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       buildDelegate();
     }
     myExtractEnumProcessor.performEnumConstantTypeMigration(usageInfos);
-    final Set<PsiMember> members = new HashSet<PsiMember>();
+    final Set<PsiMember> members = new HashSet<>();
     for (PsiMethod method : methods) {
       final PsiMethod member = psiClass.findMethodBySignature(method, false);
       if (member != null) {
@@ -478,7 +479,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       findUsagesForField(field, usages);
       usages.add(new RemoveField(field));
     }
-    usages.addAll(myExtractEnumProcessor.findEnumConstantUsages(new ArrayList<FixableUsageInfo>(usages)));
+    usages.addAll(myExtractEnumProcessor.findEnumConstantUsages(new ArrayList<>(usages)));
     for (PsiClass innerClass : innerClasses) {
       findUsagesForInnerClass(innerClass, usages);
       usages.add(new RemoveInnerClass(innerClass));
@@ -629,7 +630,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
       if (element instanceof PsiReferenceExpression) {
         final PsiReferenceExpression exp = (PsiReferenceExpression)element;
-        if (RefactoringUtil.isPlusPlusOrMinusMinus(exp.getParent())) {
+        if (PsiUtil.isIncrementDecrementOperation(exp.getParent())) {
           usages.add(isStatic
                      ? new ReplaceStaticVariableIncrementDecrement(exp, qualifiedName)
                      : new ReplaceInstanceVariableIncrementDecrement(exp, delegateFieldName, setter, getter, field.getName()));
@@ -730,7 +731,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   private List<PsiClass> calculateInterfacesSupported() {
-    final List<PsiClass> out = new ArrayList<PsiClass>();
+    final List<PsiClass> out = new ArrayList<>();
     final PsiClass[] supers = sourceClass.getSupers();
     for (PsiClass superClass : supers) {
       if (!superClass.isInterface()) {
@@ -826,8 +827,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   private abstract class NecessaryAccessorsVisitor extends JavaRecursiveElementWalkingVisitor {
-    private final Set<PsiField> fieldsNeedingGetter = new HashSet<PsiField>();
-    private final Set<PsiField> fieldsNeedingSetter = new HashSet<PsiField>();
+    private final Set<PsiField> fieldsNeedingGetter = new HashSet<>();
+    private final Set<PsiField> fieldsNeedingSetter = new HashSet<>();
 
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
@@ -899,7 +900,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     protected abstract boolean hasGetterOrSetter(final PsiMethod[] getters);
 
     protected boolean isProhibitedReference(PsiExpression expression) {
-      return BackpointerUtil.isBackpointerReference(expression, field -> NecessaryAccessorsVisitor.this.isProhibitedReference(field));
+      return BackpointerUtil.isBackpointerReference(expression, field -> this.isProhibitedReference(field));
     }
 
     protected abstract boolean isProhibitedReference(PsiField field);

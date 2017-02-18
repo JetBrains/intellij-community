@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,10 @@ import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatur
 import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterInfo;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
@@ -75,7 +78,7 @@ public class CreateParameterForFieldIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, final Project project, final Editor editor)
+  protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor)
     throws IncorrectOperationException {
     final List<GrField> candidates = findFieldCandidates(element);
     if (candidates != null) {
@@ -141,7 +144,7 @@ public class CreateParameterForFieldIntention extends Intention {
   }
 
   private static void addParameter(final GrField selectedValue, final GrMethod constructor, final Project project) {
-    List<GrParameterInfo> parameters = new ArrayList<GrParameterInfo>();
+    List<GrParameterInfo> parameters = new ArrayList<>();
     GrParameter[] constructorParameters = constructor.getParameters();
     for (int i = 0; i < constructorParameters.length; i++) {
       parameters.add(new GrParameterInfo(constructorParameters[i], i));
@@ -233,7 +236,7 @@ public class CreateParameterForFieldIntention extends Intention {
   }
 
   private static List<GrField> findCandidates(PsiMethod constructor, final GrTypeDefinition clazz) {
-    final List<GrField> usedFields = new ArrayList<GrField>();
+    final List<GrField> usedFields = new ArrayList<>();
     final GrOpenBlock block = constructor instanceof GrMethod ? ((GrMethod)constructor).getBlock() : null;
     if (block == null) {
       return usedFields;
@@ -242,7 +245,7 @@ public class CreateParameterForFieldIntention extends Intention {
     final PsiManager manager = clazz.getManager();
     block.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+      public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         final PsiElement resolved = referenceExpression.resolve();
         if (resolved instanceof GrField &&
@@ -253,15 +256,15 @@ public class CreateParameterForFieldIntention extends Intention {
       }
 
       @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
       }
 
       @Override
-      public void visitClosure(GrClosableBlock closure) {
+      public void visitClosure(@NotNull GrClosableBlock closure) {
       }
     });
 
-    List<GrField> fields = new ArrayList<GrField>();
+    List<GrField> fields = new ArrayList<>();
     for (final GrField field : clazz.getFields()) {
       if (field.getInitializerGroovy() != null) continue;
       if (ContainerUtil.find(usedFields, new Condition<PsiField>() {
@@ -296,7 +299,7 @@ public class CreateParameterForFieldIntention extends Intention {
   }
 
   private static List<GrMethod> findConstructorCandidates(final GrField field, GrTypeDefinition psiClass) {
-    final List<GrMethod> result = new ArrayList<GrMethod>();
+    final List<GrMethod> result = new ArrayList<>();
     final PsiMethod[] constructors = psiClass.getConstructors();
     final PsiManager manager = field.getManager();
     for (PsiMethod constructor : constructors) {

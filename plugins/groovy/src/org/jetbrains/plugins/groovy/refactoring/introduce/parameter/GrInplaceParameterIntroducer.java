@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.codeInsight.template.TextResult;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -33,7 +28,6 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
-import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.usageView.UsageInfo;
@@ -81,6 +75,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
     return GrIntroduceParameterHandler.REFACTORING_NAME;
   }
 
+  @NotNull
   @Override
   protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return ArrayUtil.toStringArray(mySuggestedNames);
@@ -92,20 +87,6 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
     JPanel previewPanel = new JPanel(new BorderLayout());
     previewPanel.add(getPreviewEditor().getComponent(), BorderLayout.CENTER);
     previewPanel.setBorder(new EmptyBorder(2, 2, 6, 2));
-
-    DocumentAdapter documentAdapter = new DocumentAdapter() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-        if (templateState != null) {
-          final TextResult value = templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME);
-          if (value != null) {
-            updateTitle(getVariable(), value.getText());
-          }
-        }
-      }
-    };
-    myEditor.getDocument().addDocumentListener(documentAdapter);
 
     myDelegateCB = new JBCheckBox("Delegate via overloading method");
     myDelegateCB.setMnemonic('l');
@@ -137,7 +118,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
       final StringBuilder buf = new StringBuilder();
       buf.append(psiMethod.getName()).append(" (");
       boolean frst = true;
-      final List<TextRange> ranges2Remove = new ArrayList<TextRange>();
+      final List<TextRange> ranges2Remove = new ArrayList<>();
       TextRange addedRange = null;
 
       int i = 0;

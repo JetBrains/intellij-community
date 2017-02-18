@@ -72,10 +72,10 @@ public class SvnStatusHandler extends DefaultHandler {
 
   public SvnStatusHandler(final ExternalDataCallback dataCallback, File base, final Convertor<File, Info> infoGetter) {
     myBase = base;
-    myParseStack = new ArrayList<ElementHandlerBase>();
+    myParseStack = new ArrayList<>();
     myParseStack.add(new Fake());
 
-    myElementsMap = new HashMap<String, Getter<ElementHandlerBase>>();
+    myElementsMap = new HashMap<>();
     fillElements();
 
     if (dataCallback != null) {
@@ -880,8 +880,8 @@ and no "mod4" under
     private final Set<String> myAwaitedChildrenMultiple;
 
     ElementHandlerBase(String[] awaitedChildren, String[] awaitedChildrenMultiple) {
-      myAwaitedChildren = new HashSet<String>(Arrays.asList(awaitedChildren));
-      myAwaitedChildrenMultiple = new HashSet<String>(Arrays.asList(awaitedChildrenMultiple));
+      myAwaitedChildren = new HashSet<>(Arrays.asList(awaitedChildren));
+      myAwaitedChildrenMultiple = new HashSet<>(Arrays.asList(awaitedChildrenMultiple));
     }
 
     protected abstract void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException;

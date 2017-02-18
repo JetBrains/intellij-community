@@ -143,7 +143,7 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
     private static final String[] UNICODE_BLOCKS;
     static {
         final Field[] fields = Character.UnicodeBlock.class.getFields();
-        final List<String> unicodeBlocks = new ArrayList<String>(fields.length);
+        final List<String> unicodeBlocks = new ArrayList<>(fields.length);
         for (Field field : fields) {
             if (field.getType().equals(Character.UnicodeBlock.class)) {
                 if (Modifier.isStatic(field.getModifiers()) && Modifier.isFinal(field.getModifiers())) {

@@ -2,6 +2,9 @@ package com.intellij.tasks.impl.gson;
 
 import com.google.gson.*;
 import com.intellij.tasks.impl.TaskUtil;
+import org.jetbrains.io.mandatory.Mandatory;
+import org.jetbrains.io.mandatory.NullCheckingFactory;
+import org.jetbrains.io.mandatory.RestModel;
 
 import java.lang.reflect.Type;
 import java.util.Date;

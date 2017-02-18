@@ -47,7 +47,7 @@ public class UnaryMulOperationNode extends ZenCodingNode {
       return myOperand.expand(numberInIteration, totalIterations, null, callback, insertSurroundedTextAtTheEnd, parent);
     }
     String[] lines = LineTokenizer.tokenize(surroundedText, false);
-    List<GenerationNode> result = new ArrayList<GenerationNode>();
+    List<GenerationNode> result = new ArrayList<>();
     for (int i = 0; i < lines.length; i++) {
       result.addAll(myOperand.expand(i, lines.length, lines[i].trim(), callback, insertSurroundedTextAtTheEnd, parent));
     }

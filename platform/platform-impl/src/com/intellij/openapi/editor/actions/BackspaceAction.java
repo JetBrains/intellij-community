@@ -29,7 +29,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class BackspaceAction extends TextComponentEditorAction {
@@ -44,7 +46,7 @@ public class BackspaceAction extends TextComponentEditorAction {
 
     @Override
     public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
-      MacUIUtil.hideCursor();
+      EditorUIUtil.hideCursorInEditor(editor);
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       if (editor instanceof EditorWindow) {
         // manipulate actual document/editor instead of injected
@@ -58,6 +60,13 @@ public class BackspaceAction extends TextComponentEditorAction {
   private static void doBackSpaceAtCaret(@NotNull Editor editor) {
     if(editor.getSelectionModel().hasSelection()) {
       EditorModificationUtil.deleteSelectedText(editor);
+      return;
+    }
+
+    VisualPosition caretPosition = editor.getCaretModel().getVisualPosition();
+    if (caretPosition.column > 0 &&
+        editor.getInlayModel().hasInlineElementAt(new VisualPosition(caretPosition.line, caretPosition.column - 1))) {
+      editor.getCaretModel().moveCaretRelatively(-1, 0, false, false, EditorUtil.isCurrentCaretPrimary(editor));
       return;
     }
 
@@ -80,8 +89,7 @@ public class BackspaceAction extends TextComponentEditorAction {
           editor.getCaretModel().moveToOffset(region.getStartOffset());
         }
         else {
-          document.deleteString(offset - 1, offset);
-          editor.getCaretModel().moveToOffset(offset - 1, true);
+          document.deleteString(DocumentUtil.getPreviousCodePointOffset(document, offset), offset);
         }
       }
     }

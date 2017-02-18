@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor {
+  private static final Logger LOG = Logger.getInstance(RenameAliasingPomTargetProcessor.class);
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
@@ -51,7 +53,10 @@ public class RenameAliasingPomTargetProcessor extends RenamePsiElementProcessor 
 
           String definedName = allRenames.put(psiElement, name);
           if (definedName != null) {
-            assert definedName.equals(name);
+            LOG.assertTrue(definedName.equals(name), "target: " + psiTarget + "; " +
+                                                     "defined name: " + definedName + "; " +
+                                                     "name: " + name + "; " +
+                                                     "mapper: " + mapper);
           }
           else {
             prepareRenaming(psiElement, name, allRenames);

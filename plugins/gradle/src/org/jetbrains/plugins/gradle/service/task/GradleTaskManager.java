@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -39,6 +40,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
+import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -53,6 +55,8 @@ import java.util.Map;
  */
 public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleExecutionSettings>
   implements ExternalSystemTaskManager<GradleExecutionSettings> {
+
+  public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
 
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
@@ -100,6 +104,15 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
         });
       }
 
+      final String initScript = settings == null ? null : settings.getUserData(INIT_SCRIPT_KEY);
+      if (StringUtil.isNotEmpty(initScript)) {
+        ContainerUtil.addAll(
+          initScripts,
+          "//-- Additional script",
+          initScript,
+          "//");
+      }
+
       if (!initScripts.isEmpty()) {
         try {
           File tempFile =
@@ -116,6 +129,13 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
         listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
           id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
       }
+
+      if (settings != null) {
+        for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
+          ContainerUtil.addAll(scriptParameters, GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+        }
+      }
+
       BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener, vmOptions, scriptParameters);
       launcher.forTasks(ArrayUtil.toStringArray(taskNames));
 

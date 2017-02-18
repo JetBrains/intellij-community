@@ -34,7 +34,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,8 +171,13 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       final PsiType[] args = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters).getTypeArguments();
       final PsiTypeParameter[] typeParameters = containingClass.getTypeParameters();
       for (int i = 0; i < typeParameters.length; i++) {
-        if (args != null && i < args.length) {
-          substitutionMap.put(typeParameters[i], args[i]);
+        if (args != null) {
+          if (i < args.length) {
+            substitutionMap.put(typeParameters[i], args[i]);
+          }
+        }
+        else {
+          substitutionMap.put(typeParameters[i], null);
         }
       }
       if (!containingClass.hasModifierProperty(PsiModifier.STATIC)) {
@@ -326,11 +330,6 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     }
   }
 
-  @NonNls
-  public String toString() {
-    return "PsiJavaCodeReferenceElement:" + getText();
-  }
-
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
@@ -355,5 +354,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Override
   public PsiElement getQualifier() {
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiJavaCodeReferenceElement:" + getText();
   }
 }

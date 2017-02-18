@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.emptyList;
+
 /**
  * <p>
  *   Holds information about a remote in Git repository.
@@ -62,19 +64,18 @@ public final class GitRemote implements Comparable<GitRemote> {
    *   remote = .
    *   merge = refs/remotes/git-svn
    */
-  public static final GitRemote DOT = new GitRemote(".", Collections.singletonList("."), Collections.<String>emptyList(),
-                                                         Collections.<String>emptyList(), Collections.<String>emptyList());
+  public static final GitRemote DOT = new GitRemote(".", Collections.singletonList("."), emptyList(), emptyList(), emptyList());
 
   /**
    * Default remote name in Git is "origin".
    * Usually all Git repositories have an "origin" remote, so it can be used as a default value in some cases.
    */
-  public static final String ORIGIN_NAME = "origin";
+  public static final String ORIGIN = "origin";
 
   @NotNull private final String myName;
   @NotNull private final List<String> myUrls;
   @NotNull private final Collection<String> myPushUrls;
-  @NotNull  final List<String> myFetchRefSpecs;
+  @NotNull private final List<String> myFetchRefSpecs;
   @NotNull private final List<String> myPushRefSpecs;
 
   public GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls,

@@ -116,8 +116,9 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   }
 
   public IntentionAction findIntention(@NotNull final String hint) {
+    final List<IntentionAction> allIntentions = myFixture.getAvailableIntentions();
     final List<IntentionAction> intentions =
-      ContainerUtil.findAll(myFixture.getAvailableIntentions(),
+      ContainerUtil.findAll(allIntentions,
                             intentionAction -> intentionAction instanceof QuickFixWrapper &&
                                                intentionAction.getText().equals(hint));
     Assert.assertFalse("\"" + hint + "\" not in " + intentions, intentions.isEmpty());

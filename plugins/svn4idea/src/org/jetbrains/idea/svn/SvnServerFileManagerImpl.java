@@ -29,7 +29,7 @@ public class SvnServerFileManagerImpl implements SvnServerFileManager {
     myFile = file;
     myFile.updateGroups();
 
-    myGroups = new HashMap<String, ProxyGroup>();
+    myGroups = new HashMap<>();
     myGroups.putAll(file.getAllGroups());
     myDefaultGroup = file.getDefaultGroup();
   }
@@ -40,7 +40,7 @@ public class SvnServerFileManagerImpl implements SvnServerFileManager {
 
   public Map<String, ProxyGroup> getGroups() {
     // return deep copy 
-    final Map<String, ProxyGroup> result = new HashMap<String, ProxyGroup>(myGroups);
+    final Map<String, ProxyGroup> result = new HashMap<>(myGroups);
     for (Map.Entry<String, ProxyGroup> entry : myGroups.entrySet()) {
       result.put(entry.getKey(), entry.getValue().copy());
     }
@@ -78,14 +78,14 @@ public class SvnServerFileManagerImpl implements SvnServerFileManager {
       final Map<String, String> oldProperties = oldGroup.getProperties();
       final Map<String, String> newProperties = newGroup.getProperties();
 
-      final Set<String> deletedProperties = new HashSet<String>();
+      final Set<String> deletedProperties = new HashSet<>();
       for (String oldKey : oldProperties.keySet()) {
         if (! newProperties.containsKey(oldKey)) {
           deletedProperties.add(oldKey);
         }
       }
 
-      final Map<String, String> newOrModifiedProperties = new HashMap<String, String>();
+      final Map<String, String> newOrModifiedProperties = new HashMap<>();
       for (Map.Entry<String, String> entry : newProperties.entrySet()) {
         final String oldValue = oldProperties.get(entry.getKey());
         if ((oldValue == null) || (! oldValue.equals(entry.getValue()))) {

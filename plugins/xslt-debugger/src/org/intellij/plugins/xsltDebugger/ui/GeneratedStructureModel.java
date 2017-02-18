@@ -50,8 +50,8 @@ public class GeneratedStructureModel extends DefaultTreeModel {
 
   private static WeakReference<StringInterner> ourSharedInterner;
 
-  private final LinkedList<DefaultMutableTreeNode> myCurrentPath = new LinkedList<DefaultMutableTreeNode>();
-  private final List<DefaultMutableTreeNode> myLastNodes = new LinkedList<DefaultMutableTreeNode>();
+  private final LinkedList<DefaultMutableTreeNode> myCurrentPath = new LinkedList<>();
+  private final List<DefaultMutableTreeNode> myLastNodes = new LinkedList<>();
 
   private final StringInterner myInterner = getInterner();
 
@@ -62,7 +62,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
     StringInterner interner = SoftReference.dereference(ourSharedInterner);
     if (interner == null) {
       interner = new StringInterner();
-      ourSharedInterner = new WeakReference<StringInterner>(interner);
+      ourSharedInterner = new WeakReference<>(interner);
     }
     return interner;
   }
@@ -114,8 +114,8 @@ public class GeneratedStructureModel extends DefaultTreeModel {
       return Collections.emptyList();
     }
     final List<DefaultMutableTreeNode> nodes = checkOnly ?
-                                               new SmartList<DefaultMutableTreeNode>() :
-                                               new ArrayList<DefaultMutableTreeNode>(node.getChildCount());
+                                               new SmartList<>() :
+                                               new ArrayList<>(node.getChildCount());
 
     DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getFirstChild();
     while (child != null) {

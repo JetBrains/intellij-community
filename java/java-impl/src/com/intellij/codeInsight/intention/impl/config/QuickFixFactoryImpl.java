@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.unusedParameters.UnusedParametersInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
@@ -44,6 +44,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -52,11 +53,10 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
-import com.intellij.refactoring.changeSignature.ChangeSignatureGestureDetector;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -340,12 +340,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement element) {
+  public IntentionAction createShowModulePropertiesFix(@NotNull PsiElement element) {
     return new ShowModulePropertiesFix(element);
   }
   @NotNull
   @Override
-  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module) {
+  public IntentionAction createShowModulePropertiesFix(@NotNull Module module) {
     return new ShowModulePropertiesFix(module);
   }
 
@@ -654,11 +654,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public void registerFixesForUnusedParameter(@NotNull PsiParameter parameter, @NotNull Object highlightInfo) {
     Project myProject = parameter.getProject();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
-    UnusedParametersInspection unusedParametersInspection =
-      (UnusedParametersInspection)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME, parameter);
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    UnusedDeclarationInspectionBase unusedParametersInspection =
+      (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, parameter);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
-    List<IntentionAction> options = new ArrayList<IntentionAction>();
+    List<IntentionAction> options = new ArrayList<>();
     HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspectionBase.SHORT_NAME);
     options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, parameter));
     if (unusedParametersInspection != null) {
@@ -684,6 +684,13 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull final String qualifiedName) {
+    EntryPointsManagerBase entryPointsManagerBase = EntryPointsManagerBase.getInstance(project);
+    return entryPointsManagerBase.new AddImplicitlyWriteAnnotation(qualifiedName);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field) {
     return new CreateGetterOrSetterFix(createGetter, createSetter, field);
   }
@@ -703,14 +710,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createSafeDeleteFix(@NotNull PsiElement element) {
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      PsiClass containingClass = method.getContainingClass();
-      if (method.getReturnType() != null || containingClass != null && Comparing.strEqual(containingClass.getName(), method.getName())) {
-        //ignore methods with deleted return types as they are always marked as unused without any reason
-        ChangeSignatureGestureDetector.getInstance(method.getProject()).dismissForElement(method);
-      }
-    }
     return new SafeDeleteFix(element);
   }
 
@@ -725,7 +724,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
     final long stamp = document.getModificationStamp();
-    ApplicationManager.getApplication().invokeLater(() -> {
+    DumbService.getInstance(file.getProject()).smartInvokeLater(() -> {
       if (project.isDisposed() || document.getModificationStamp() != stamp) return;
       //no need to optimize imports on the fly during undo/redo
       final UndoManager undoManager = UndoManager.getInstance(project);
@@ -778,6 +777,25 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     return WrapObjectWithOptionalOfNullableFix.createFix(type, expression);
   }
 
+  @Nullable
+  @Override
+  public IntentionAction createNotIterableForEachLoopFix(@NotNull PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiForeachStatement) {
+      final PsiType type = expression.getType();
+      if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+        return new ReplaceIteratorForEachLoopWithIteratorForLoopFix((PsiForeachStatement)parent);
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
+    return AddAnnotationAttributeNameFix.createFixes(pair);
+  }
+
   private static boolean timeToOptimizeImports(@NotNull PsiFile file) {
     if (!CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
 
@@ -806,5 +824,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       });
 
     return hasErrorsExceptUnresolvedImports;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
+    return new ConvertCollectionToArrayFix(collectionExpression, arrayType);
   }
 }

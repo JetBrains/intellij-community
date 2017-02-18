@@ -34,7 +34,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
@@ -61,7 +60,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   public static final Logger LOG = Logger.getInstance(RemoteProcessSupport.class);
 
   private final Class<EntryPoint> myValueClass;
-  private final HashMap<Pair<Target, Parameters>, Info> myProcMap = new HashMap<Pair<Target, Parameters>, Info>();
+  private final HashMap<Pair<Target, Parameters>, Info> myProcMap = new HashMap<>();
 
   static {
     RemoteServer.setupRMI();
@@ -111,7 +110,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   }
 
   public List<Parameters> getActiveConfigurations(@NotNull Target target) {
-    ArrayList<Parameters> result = new ArrayList<Parameters>();
+    ArrayList<Parameters> result = new ArrayList<>();
     synchronized (myProcMap) {
       for (Pair<Target, Parameters> pair : myProcMap.keySet()) {
         if (pair.first == target) {
@@ -124,7 +123,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   public Set<Pair<Target, Parameters>> getActiveConfigurations() {
     synchronized (myProcMap) {
-      return new HashSet<Pair<Target, Parameters>>(myProcMap.keySet());
+      return new HashSet<>(myProcMap.keySet());
     }
   }
 
@@ -350,7 +349,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           try {
             RemoteDeadHand.TwoMinutesTurkish.startCooking("localhost", result.port);
           }
-          catch (Exception e) {
+          catch (Throwable e) {
             LOG.warn("The cook failed to start due to " + ExceptionUtil.getRootCause(e));
           }
         }

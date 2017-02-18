@@ -24,9 +24,9 @@ import java.util.List;
 
 public class DataPoint {
 
-  private List<VarType> localVariables = new ArrayList<VarType>();
+  private List<VarType> localVariables = new ArrayList<>();
 
-  private ListStack<VarType> stack = new ListStack<VarType>();
+  private ListStack<VarType> stack = new ListStack<>();
 
 
   public void setVariable(int index, VarType value) {
@@ -53,7 +53,7 @@ public class DataPoint {
 
   public DataPoint copy() {
     DataPoint point = new DataPoint();
-    point.setLocalVariables(new ArrayList<VarType>(localVariables));
+    point.setLocalVariables(new ArrayList<>(localVariables));
     point.setStack(stack.clone());
     return point;
   }

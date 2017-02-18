@@ -55,7 +55,7 @@ public class StringScanner {
       return true;
     }
     final char ch = myText.charAt(myPosition);
-    return ch == '\n' || ch == '\r';
+    return ch == '\n';
   }
 
   /**
@@ -69,7 +69,7 @@ public class StringScanner {
       final char ch = myText.charAt(myPosition++);
       if (hasMoreData()) {
         final char ch2 = myText.charAt(myPosition);
-        if (ch == '\n' && ch2 == '\r' || ch == '\r' && ch2 == '\n') {
+        if (ch == '\r' && ch2 == '\n') {
           myPosition++;
         }
       }

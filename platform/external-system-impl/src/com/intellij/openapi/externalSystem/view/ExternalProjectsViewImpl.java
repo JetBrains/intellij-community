@@ -53,9 +53,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
-import com.intellij.util.Consumer;
 import com.intellij.util.DisposeAwareRunnable;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -213,7 +211,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerAdapter() {
+    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerListener() {
       private void changed() {
         scheduleStructureRequest(() -> {
           assert myStructure != null;
@@ -395,7 +393,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   public List<ExternalSystemNode<?>> createNodes(@NotNull ExternalProjectsView externalProjectsView,
                                                  @Nullable ExternalSystemNode<?> parent,
                                                  @NotNull DataNode<?> dataNode) {
-    final List<ExternalSystemNode<?>> result = new SmartList<ExternalSystemNode<?>>();
+    final List<ExternalSystemNode<?>> result = new SmartList<>();
     final MultiMap<Key<?>, DataNode<?>> groups = ExternalSystemApiUtil.group(dataNode.getChildren());
     for (ExternalSystemViewContributor contributor : ExternalSystemViewContributor.EP_NAME.getExtensions()) {
       if (!contributor.getSystemId().equals(ProjectSystemId.IDE) &&
@@ -403,7 +401,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         continue;
       }
 
-      final MultiMap<Key<?>, DataNode<?>> dataNodes = new ContainerUtil.KeyOrderedMultiMap<Key<?>, DataNode<?>>();
+      final MultiMap<Key<?>, DataNode<?>> dataNodes = new ContainerUtil.KeyOrderedMultiMap<>();
       for (Key<?> key : contributor.getKeys()) {
         ContainerUtil.putIfNotNull(key, groups.get(key), dataNodes);
       }
@@ -602,7 +600,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private Object extractVirtualFiles() {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     for (ExternalSystemNode each : getSelectedNodes(ExternalSystemNode.class)) {
       VirtualFile file = each.getVirtualFile();
       if (file != null && file.isValid()) files.add(file);
@@ -611,7 +609,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   private Object extractNavigatables() {
-    final List<Navigatable> navigatables = new ArrayList<Navigatable>();
+    final List<Navigatable> navigatables = new ArrayList<>();
     for (ExternalSystemNode each : getSelectedNodes(ExternalSystemNode.class)) {
       Navigatable navigatable = each.getNavigatable();
       if (navigatable != null) navigatables.add(navigatable);

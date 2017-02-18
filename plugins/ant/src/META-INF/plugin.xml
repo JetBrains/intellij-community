@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <name>Ant Support</name>
   <id>AntSupport</id>
   <version>1.0</version>

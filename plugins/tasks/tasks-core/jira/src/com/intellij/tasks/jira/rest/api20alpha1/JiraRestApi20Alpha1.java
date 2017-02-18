@@ -39,7 +39,7 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
   public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     // REST API of JIRA 4.x for retrieving possible transitions is very limited: we can't fetch possible resolutions and
     // names of transition destinations. So we have no other options than to hardcode them.
-    final HashSet<CustomTaskState> result = new HashSet<CustomTaskState>();
+    final HashSet<CustomTaskState> result = new HashSet<>();
     result.add(new CustomTaskState("4", "In Progress"));
     result.add(new CustomTaskState("5", "Resolved (Fixed)"));
     result.add(new CustomTaskState("3", "Reopened"));
@@ -56,7 +56,7 @@ public class JiraRestApi20Alpha1 extends JiraRestApi {
   protected List<JiraIssue> parseIssues(String response) {
     JiraResponseWrapper.Issues<JiraIssueApi20Alpha1> wrapper = JiraRepository.GSON.fromJson(response, ISSUES_WRAPPER_TYPE);
     List<JiraIssueApi20Alpha1> incompleteIssues = wrapper.getIssues();
-    List<JiraIssue> updatedIssues = new ArrayList<JiraIssue>();
+    List<JiraIssue> updatedIssues = new ArrayList<>();
     for (JiraIssueApi20Alpha1 issue : incompleteIssues) {
       try {
         JiraRestTask task = findTask(issue.getKey());

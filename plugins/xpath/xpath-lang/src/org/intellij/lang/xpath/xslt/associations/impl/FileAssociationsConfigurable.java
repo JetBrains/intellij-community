@@ -124,9 +124,4 @@ public class FileAssociationsConfigurable implements SearchableConfigurable, Con
     public String getId() {
         return getHelpTopic();
     }
-
-    @Override
-    public Runnable enableSearch(final String option) {
-        return null;
-    }
 }

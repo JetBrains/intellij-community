@@ -106,7 +106,7 @@ public class FileTreeStructure extends AbstractTreeStructure {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    Set<FileElement> childrenSet = new HashSet<FileElement>();
+    Set<FileElement> childrenSet = new HashSet<>();
     for (VirtualFile child : children) {
       if (myChooserDescriptor.isFileVisible(child, myShowHidden)) {
         final FileElement childElement = new FileElement(child, child.getName());

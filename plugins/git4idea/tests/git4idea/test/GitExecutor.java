@@ -18,12 +18,12 @@ package git4idea.test;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.Executor;
+import com.intellij.testFramework.vcs.ExecutableHelper;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
@@ -33,19 +33,12 @@ import static org.junit.Assert.assertFalse;
  */
 public class GitExecutor extends Executor {
 
-  private static final String GIT_EXECUTABLE_ENV = "IDEA_TEST_GIT_EXECUTABLE";
-  private static final String TEAMCITY_GIT_EXECUTABLE_ENV = "TEAMCITY_GIT_PATH";
-
   private static final int MAX_RETRIES = 3;
   private static boolean myVersionPrinted;
 
-  private static String findGitExecutable() {
-    return findExecutable("Git", "git", "git.exe", Arrays.asList(GIT_EXECUTABLE_ENV, TEAMCITY_GIT_EXECUTABLE_ENV));
-  }
-
   //using inner class to avoid extra work during class loading of unrelated tests
   public static class PathHolder {
-    public static final String GIT_EXECUTABLE = findGitExecutable();
+    public static final String GIT_EXECUTABLE = ExecutableHelper.findGitExecutable();
   }
 
   public static String git(String command) {

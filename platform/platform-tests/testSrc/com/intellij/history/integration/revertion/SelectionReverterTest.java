@@ -89,7 +89,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
     setBinaryContent(f, "two".getBytes());
     createChildData(myRoot, "foo3.txt");
 
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     myGateway = new IdeaGateway() {
       @Override
       public boolean ensureFilesAreWritable(@NotNull Project p, @NotNull List<VirtualFile> ff) {

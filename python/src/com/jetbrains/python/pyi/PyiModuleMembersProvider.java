@@ -48,7 +48,7 @@ public class PyiModuleMembersProvider extends PyModuleMembersProvider {
     final PsiElement pythonStub = PyiUtil.getPythonStub(module);
     if (pythonStub instanceof PyFile) {
       final PyFile stubFile = (PyFile)pythonStub;
-      final List<PyCustomMember> results = new ArrayList<PyCustomMember>();
+      final List<PyCustomMember> results = new ArrayList<>();
       for (PyElement element : stubFile.iterateNames()) {
         final String name = element.getName();
         if (name != null && isExportedName(stubFile, name)) {
@@ -85,7 +85,7 @@ public class PyiModuleMembersProvider extends PyModuleMembersProvider {
   }
 
   private static List<PyImportElement> getImportElements(@NotNull PyFile file) {
-    final List<PyImportElement> result = new ArrayList<PyImportElement>();
+    final List<PyImportElement> result = new ArrayList<>();
     result.addAll(file.getImportTargets());
     for (PyFromImportStatement statement : file.getFromImports()) {
       result.addAll(Arrays.asList(statement.getImportElements()));

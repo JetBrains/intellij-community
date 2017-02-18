@@ -38,11 +38,11 @@ public class ResourceBundleUtil {
   }
 
   /**
-   * Tries to derive {@link com.intellij.lang.properties.ResourceBundle resource bundle} related to the given context.
+   * Tries to derive {@link ResourceBundle resource bundle} related to the given context.
    *
    * @param dataContext   target context
-   * @return              {@link com.intellij.lang.properties.ResourceBundle resource bundle} related to the given context if any;
-   *                      <code>null</code> otherwise
+   * @return              {@link ResourceBundle resource bundle} related to the given context if any;
+   *                      {@code null} otherwise
    */
   @Nullable
   public static ResourceBundle getResourceBundleFromDataContext(@NotNull DataContext dataContext) {

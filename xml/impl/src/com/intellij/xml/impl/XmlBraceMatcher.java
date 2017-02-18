@@ -46,7 +46,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
   private static final int XML_TAG_TOKEN_GROUP = 1;
   private static final int XML_VALUE_DELIMITER_GROUP = 2;
 
-  private static final BidirectionalMap<IElementType, IElementType> PAIRING_TOKENS = new BidirectionalMap<IElementType, IElementType>();
+  private static final BidirectionalMap<IElementType, IElementType> PAIRING_TOKENS = new BidirectionalMap<>();
 
   static {
     PAIRING_TOKENS.put(XmlTokenType.XML_TAG_END, XmlTokenType.XML_START_TAG_START);

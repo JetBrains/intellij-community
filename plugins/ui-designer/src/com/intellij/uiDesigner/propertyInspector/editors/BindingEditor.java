@@ -74,7 +74,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
   }
 
   private static String[] getFieldNames(final RadComponent component, final String currentName) {
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
     if (currentName != null){
       result.add(currentName);
     }

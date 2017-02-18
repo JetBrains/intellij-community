@@ -1,0 +1,9 @@
+Types:
+PsiMethod:toVoidMethod : void
+PsiMethodCallExpression:toVoidMethod() : void
+
+Conversions:
+
+New expression type changes:
+Fails:
+"" + String.valueOf(999)->void

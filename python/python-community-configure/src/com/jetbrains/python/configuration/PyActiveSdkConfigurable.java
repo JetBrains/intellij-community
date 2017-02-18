@@ -327,7 +327,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     if (selection != null && !sdkList.contains(selection)) {
       sdkList.add(0, selection);
     }
-    List<Object> items = new ArrayList<Object>();
+    List<Object> items = new ArrayList<>();
     items.add(null);
 
     boolean remoteSeparator = true;

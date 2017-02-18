@@ -46,7 +46,7 @@ public class PythonEditorHighlighter extends LexerEditorHighlighter {
 
   private Boolean hadUnicodeImport = false;
 
-  public static final Key<Boolean> KEY = new Key<Boolean>("python.future.import");
+  public static final Key<Boolean> KEY = new Key<>("python.future.import");
   @Override
   public void documentChanged(DocumentEvent e) {
     synchronized (this) {

@@ -69,7 +69,7 @@ public class AddComponentAction extends AnAction {
       null,
       null,
       new GridConstraints(),
-      new HashMap<String, StringDescriptor>(),
+      new HashMap<>(),
       true/*all user defined components are removable*/,
       false,
       false

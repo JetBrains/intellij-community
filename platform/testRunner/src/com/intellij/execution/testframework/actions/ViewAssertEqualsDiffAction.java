@@ -69,7 +69,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   }
 
   private static List<DiffHyperlink> collectAvailableProviders(TestFrameworkRunningModel model) {
-    final List<DiffHyperlink> providers = new ArrayList<DiffHyperlink>();
+    final List<DiffHyperlink> providers = new ArrayList<>();
     if (model != null) {
       final AbstractTestProxy root = model.getRoot();
       final List<? extends AbstractTestProxy> allTests = root.getAllTests();

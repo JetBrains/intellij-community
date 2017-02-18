@@ -15,12 +15,19 @@
  */
 package com.intellij.ide.ui.laf.darcula;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.text.JTextComponent;
+import javax.swing.text.Position;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+
+import static javax.swing.SwingConstants.EAST;
+import static javax.swing.SwingConstants.WEST;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,10 +47,11 @@ public class DarculaUIUtil {
     return new JBColor(new Color(35, 121, 212), new Color(96, 175, 255));
   }
 
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds) {
-    paintSearchFocusRing(g, bounds, -1);
+  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component) {
+    paintSearchFocusRing(g, bounds, component, -1);
   }
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, int maxArcSize) {
+
+  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component, int maxArcSize) {
     int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
     final Color[] colors = new Color[]{
       ColorUtil.toAlpha(getGlow(), 180 - correction),
@@ -66,6 +74,9 @@ public class DarculaUIUtil {
     if (arcSize %2 == 1) arcSize--;
 
 
+    g.setColor(component.getBackground());
+    g.fillRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize - 4, arcSize - 4);
+
     g.setColor(colors[0]);
     g.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize-4, arcSize-4);
 
@@ -87,4 +98,24 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
+  public static boolean isCurrentEventShiftDownEvent() {
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    return (event instanceof KeyEvent && ((KeyEvent)event).isShiftDown());
+  }
+
+  /**
+   * @see javax.swing.plaf.basic.BasicTextUI#getNextVisualPositionFrom(JTextComponent, int, Position.Bias, int, Position.Bias[])
+   * @return -1 if visual position shouldn't be patched, otherwise selection start or selection end
+   */
+  public static int getPatchedNextVisualPositionFrom(JTextComponent t, int pos, int direction) {
+    if (!isCurrentEventShiftDownEvent()) {
+      if (direction == WEST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionEnd() == pos) {
+        return t.getSelectionStart();
+      }
+      if (direction == EAST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionStart() == pos) {
+        return t.getSelectionEnd();
+      }
+    }
+    return -1;
+  }
 }

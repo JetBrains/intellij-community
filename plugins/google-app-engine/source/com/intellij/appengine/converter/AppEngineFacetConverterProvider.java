@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.appengine.converter;
 
 import com.intellij.appengine.facet.AppEngineFacetType;
 import com.intellij.conversion.*;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,6 @@ public class AppEngineFacetConverterProvider extends ConverterProvider {
   }
 
   private static class GoogleAppEngineFacetConversionProcessor extends ConversionProcessor<ModuleSettings> {
-
     @Override
     public boolean isConversionNeeded(ModuleSettings settings) {
       return !getAppEngineFacetTags(settings).isEmpty();
@@ -70,15 +68,15 @@ public class AppEngineFacetConverterProvider extends ConverterProvider {
       if (facetTag != null) {
         String facetName = facetTag.getAttributeValue(JpsFacetSerializer.NAME_ATTRIBUTE);
         Element configuration = facetTag.getChild(JpsFacetSerializer.CONFIGURATION_TAG);
-        settings.addFacetElement(AppEngineFacetType.STRING_ID, facetName, (Element)configuration.clone());
+        settings.addFacetElement(AppEngineFacetType.STRING_ID, facetName, configuration.clone());
       }
     }
 
     @NotNull
     private static List<Element> getAppEngineFacetTags(@NotNull ModuleSettings settings) {
-      List<Element> appEngineFacetTags = new ArrayList<Element>();
+      List<Element> appEngineFacetTags = new ArrayList<>();
       for (Element webFacetTag : settings.getFacetElements("web")) {
-        for (Element childFacetTag : JDOMUtil.getChildren(webFacetTag, JpsFacetSerializer.FACET_TAG)) {
+        for (Element childFacetTag : webFacetTag.getChildren(JpsFacetSerializer.FACET_TAG)) {
           if (AppEngineFacetType.STRING_ID.equals(childFacetTag.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {
             appEngineFacetTags.add(childFacetTag);
           }

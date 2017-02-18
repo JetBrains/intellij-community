@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,8 @@ public class ConvertMethodToClosureIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final GrMethod method;
     if (element.getParent() instanceof GrMethod) {
       method = (GrMethod)element.getParent();
@@ -83,7 +83,7 @@ public class ConvertMethodToClosureIntention extends Intention {
     }
 
     final Collection<PsiReference> references = MethodReferencesSearch.search(method).findAll();
-    final Collection<GrReferenceExpression> usagesToConvert = new HashSet<GrReferenceExpression>(references.size());
+    final Collection<GrReferenceExpression> usagesToConvert = new HashSet<>(references.size());
     for (PsiReference ref : references) {
       final PsiElement psiElement = ref.getElement();
       if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {

@@ -33,9 +33,9 @@ import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToGrayQuickFix;
  * @author Konstantin Bulenkov
  */
 public class UseGrayInspection extends DevKitInspectionBase {
-  @NotNull
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitNewExpression(PsiNewExpression expression) {

@@ -62,7 +62,7 @@ public class SerializableWithUnconstructableAncestorInspection extends BaseInspe
         return;
       }
       PsiClass ancestor = aClass.getSuperClass();
-      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>(8);
+      final Set<PsiClass> visitedClasses = new HashSet<>(8);
       while (ancestor != null && SerializationUtils.isSerializable(ancestor)) {
         if (SerializationUtils.hasWriteReplace(ancestor)) {
           return;

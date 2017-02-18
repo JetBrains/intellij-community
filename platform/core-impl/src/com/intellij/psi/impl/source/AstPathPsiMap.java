@@ -49,7 +49,7 @@ class AstPathPsiMap {
 
   AstPathPsiMap(@NotNull Project project) {
     MyReferenceQueue queue = project.getUserData(STUB_PSI_REFS);
-    myQueue = queue != null ? queue : ((UserDataHolderEx)project).putUserDataIfAbsent(STUB_PSI_REFS, new MyReferenceQueue());
+    myQueue = queue != null ? queue : ((UserDataHolderEx)project).putUserDataIfAbsent(STUB_PSI_REFS, new MyReferenceQueue(project));
   }
 
   void invalidatePsi() {
@@ -100,12 +100,14 @@ class AstPathPsiMap {
   }
 
   private static class MyReferenceQueue extends ReferenceQueue<StubBasedPsiElementBase<?>> {
-    @SuppressWarnings("unused") LowMemoryWatcher watcher = LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        cleanupStaleReferences();
-      }
-    });
+    MyReferenceQueue(Project project) {
+      LowMemoryWatcher.register(new Runnable() {
+        @Override
+        public void run() {
+          cleanupStaleReferences();
+        }
+      },project);
+    }
 
     void cleanupStaleReferences() {
       while (true) {

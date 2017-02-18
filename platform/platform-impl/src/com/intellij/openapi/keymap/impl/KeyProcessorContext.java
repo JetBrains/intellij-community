@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class KeyProcessorContext {
-  private final List<AnAction> myActions = new ArrayList<AnAction>();
+  private final List<AnAction> myActions = new ArrayList<>();
   private WeakReference<JComponent> myFoundComponent;
   private boolean myHasSecondStroke;
 
@@ -49,7 +49,7 @@ public class KeyProcessorContext {
   }
 
   public void setFoundComponent(final JComponent foundComponent) {
-    myFoundComponent = new WeakReference<JComponent>(foundComponent);
+    myFoundComponent = new WeakReference<>(foundComponent);
   }
 
   public void setHasSecondStroke(final boolean hasSecondStroke) {
@@ -82,7 +82,7 @@ public class KeyProcessorContext {
   }
 
   public void setFocusOwner(final Component focusOwner) {
-    myFocusOwner = new WeakReference<Component>(focusOwner);
+    myFocusOwner = new WeakReference<>(focusOwner);
   }
 
   public void setInputEvent(final KeyEvent e) {

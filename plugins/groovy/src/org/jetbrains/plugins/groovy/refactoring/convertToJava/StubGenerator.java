@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class StubGenerator implements ClassItemGenerator {
     /************* parameters **********/
     GenerationUtil.writeParameterList(text, constructor.getParameterList().getParameters(), classNameProvider, null);
 
-    final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
+    final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<>());
     if (!throwsTypes.isEmpty()) {
       text.append("throws ").append(StringUtil.join(throwsTypes, ", ")).append(' ');
     }
@@ -314,7 +314,7 @@ public class StubGenerator implements ClassItemGenerator {
 
   @Override
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition) {
-    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    List<PsiMethod> methods = new ArrayList<>();
     for (PsiMethod method : typeDefinition.getMethods()) {
       if (method instanceof DelegatedMethod) {
         PsiMethod prototype = ((DelegatedMethod)method).getPrototype();
@@ -338,7 +338,7 @@ public class StubGenerator implements ClassItemGenerator {
         final PsiClass baseClass = method.getContainingClass();
         if (baseClass == null) continue;
         final String qname = baseClass.getQualifiedName();
-        if (GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME.equals(qname) || GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname) ||
+        if (GroovyCommonClassNames.GROOVY_OBJECT.equals(qname) || GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(qname) ||
             method.hasModifierProperty(PsiModifier.ABSTRACT) && typeDefinition.isInheritor(baseClass, true)) {
           if (method.isConstructor()) continue;
           methods.add(mirrorMethod(typeDefinition, method, baseClass, signature.getSubstitutor()));
@@ -351,7 +351,7 @@ public class StubGenerator implements ClassItemGenerator {
         final PsiMethod resolved = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
         final PsiClass baseClass = resolved.getContainingClass();
         if (baseClass == null) continue;
-        if (!GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME.equals(baseClass.getQualifiedName())) continue;
+        if (!GroovyCommonClassNames.GROOVY_OBJECT.equals(baseClass.getQualifiedName())) continue;
 
         methods.add(mirrorMethod(typeDefinition, resolved, baseClass, signature.getSubstitutor()));
       }
@@ -434,7 +434,7 @@ public class StubGenerator implements ClassItemGenerator {
 
   @Override
   public void writeImplementsList(StringBuilder text, PsiClass typeDefinition) {
-    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<PsiClassType>();
+    final Collection<PsiClassType> implementsTypes = new LinkedHashSet<>();
     Collections.addAll(implementsTypes, typeDefinition.getImplementsListTypes());
 
     if (implementsTypes.isEmpty()) return;

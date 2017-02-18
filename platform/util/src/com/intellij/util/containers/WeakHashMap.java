@@ -25,8 +25,13 @@ import java.util.Map;
 
 /**
  * Weak keys hash map.
+ * Custom TObjectHashingStrategy is supported.
  * Null keys are NOT allowed
  * Null values are allowed
+ *
+ * Use this class if you need custom TObjectHashingStrategy.
+ * Do not use this class if you have null keys (shame on you).
+ * Otherwise it's the same as java.util.WeakHashMap, you are free to use either.
  */
 public final class WeakHashMap<K, V> extends RefHashMap<K, V> {
   public WeakHashMap(int initialCapacity, float loadFactor) {

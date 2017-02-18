@@ -33,7 +33,7 @@ import com.intellij.refactoring.classMembers.MemberInfoTooltipManager;
 public class InterfaceDependencyMemberInfoModel<T extends PsiMember, M extends MemberInfoBase<T>> extends DependencyMemberInfoModel<T, M> {
 
   public InterfaceDependencyMemberInfoModel(PsiClass aClass) {
-    super(new InterfaceMemberDependencyGraph<T, M>(aClass), WARNING);
+    super(new InterfaceMemberDependencyGraph<>(aClass), WARNING);
     setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
       public String getTooltip(M memberInfo) {
         return ((InterfaceMemberDependencyGraph) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());

@@ -98,7 +98,7 @@ public class MatchUtil {
   }
 
   public static List<ParameterInfoImpl> patchParams(Map<PsiVariable, PsiType> changedParams, final PsiMethod psiMethod) {
-    final ArrayList<ParameterInfoImpl> newParameters = new ArrayList<ParameterInfoImpl>();
+    final ArrayList<ParameterInfoImpl> newParameters = new ArrayList<>();
     final PsiParameter[] oldParameters = psiMethod.getParameterList().getParameters();
     for (int i = 0; i < oldParameters.length; i++) {
       final PsiParameter oldParameter = oldParameters[i];

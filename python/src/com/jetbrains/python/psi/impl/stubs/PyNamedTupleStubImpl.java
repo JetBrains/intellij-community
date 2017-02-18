@@ -24,7 +24,6 @@ import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -250,7 +248,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     // from collections import namedtuple as NT
     // Point = NT(...)
 
-    for (PsiElement element : resolveLocally(referenceExpression)) {
+    for (PsiElement element : PyResolveUtil.resolveLocally(referenceExpression)) {
       if (element instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement)element;
 
@@ -272,7 +270,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
   }
 
   private static boolean resolvesToCollections(@NotNull PyReferenceExpression referenceExpression) {
-    for (PsiElement element : resolveLocally(referenceExpression)) {
+    for (PsiElement element : PyResolveUtil.resolveLocally(referenceExpression)) {
       if (element instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement)element;
 
@@ -285,27 +283,13 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return false;
   }
 
-  @NotNull
-  private static Collection<PsiElement> resolveLocally(@NotNull PyReferenceExpression referenceExpression) {
-    final String referenceName = referenceExpression.getName();
-
-    if (referenceName == null) {
-      return Collections.emptyList();
-    }
-
-    final PyResolveProcessor processor = new PyResolveProcessor(referenceName, true);
-    PyResolveUtil.scopeCrawlUp(processor, referenceExpression, referenceName, null);
-
-    return processor.getElements();
-  }
-
   private static boolean equals(@Nullable QualifiedName qualifiedName, @NotNull String name) {
     return qualifiedName != null && name.equals(qualifiedName.toString());
   }
 
   @Nullable
   private static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
-    for (PsiElement element : resolveLocally(referenceExpression)) {
+    for (PsiElement element : PyResolveUtil.resolveLocally(referenceExpression)) {
       if (element instanceof PyTargetExpression) {
         final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
 
@@ -341,7 +325,7 @@ public class PyNamedTupleStubImpl implements PyNamedTupleStub {
       return null;
     }
 
-    final List<String> result = new ArrayList<String>();
+    final List<String> result = new ArrayList<>();
 
     for (String name : StringUtil.tokenize(fieldsString, ", ")) {
       result.add(name);

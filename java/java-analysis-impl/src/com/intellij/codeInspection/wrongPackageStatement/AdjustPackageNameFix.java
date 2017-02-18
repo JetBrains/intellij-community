@@ -15,14 +15,12 @@
  */
 package com.intellij.codeInspection.wrongPackageStatement;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class AdjustPackageNameFix implements LocalQuickFix {
@@ -50,34 +48,28 @@ public class AdjustPackageNameFix implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
     PsiFile myFile = element.getContainingFile();
-    if (!FileModificationService.getInstance().prepareFileForWrite(myFile)) return;
 
     PsiDirectory directory = myFile.getContainingDirectory();
     if (directory == null) return;
     PsiPackage myTargetPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (myTargetPackage == null) return;
 
-    try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myFile.getProject()).getElementFactory();
-      PsiPackageStatement myStatement = ((PsiJavaFile)myFile).getPackageStatement();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myFile.getProject()).getElementFactory();
+    PsiPackageStatement myStatement = ((PsiJavaFile)myFile).getPackageStatement();
 
-      if (myTargetPackage.getQualifiedName().length() == 0) {
-        if (myStatement != null) {
-          myStatement.delete();
-        }
-      }
-      else {
-        final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
-        if (myStatement != null) {
-          myStatement.getPackageReference().replace(packageStatement.getPackageReference());
-        }
-        else {
-          myFile.addAfter(packageStatement, null);
-        }
+    if (myTargetPackage.getQualifiedName().length() == 0) {
+      if (myStatement != null) {
+        myStatement.delete();
       }
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    else {
+      final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackage.getQualifiedName());
+      if (myStatement != null) {
+        myStatement.getPackageReference().replace(packageStatement.getPackageReference());
+      }
+      else {
+        myFile.addAfter(packageStatement, null);
+      }
     }
   }
 }

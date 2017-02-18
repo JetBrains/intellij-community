@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.treeConflict;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -25,12 +24,9 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vcs.changes.patch.TextFilePatchInProgress;
@@ -45,26 +41,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/17/12
- * Time: 6:02 PM
- */
+import static com.intellij.CommonBundle.getErrorTitle;
+import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static com.intellij.openapi.vcs.VcsBundle.message;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+
 public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ApplyPatchSaveToFileExecutor.class);
 
-  private final Project myProject;
-  private final VirtualFile myBaseForPatch;
+  @NotNull private final Project myProject;
+  @Nullable private final VirtualFile myNewPatchBase;
 
-  public ApplyPatchSaveToFileExecutor(Project project, VirtualFile baseForPatch) {
+  public ApplyPatchSaveToFileExecutor(@NotNull Project project, @Nullable VirtualFile newPatchBase) {
     myProject = project;
-    myBaseForPatch = baseForPatch;
+    myNewPatchBase = newPatchBase;
   }
 
   @Override
@@ -73,61 +70,67 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
   }
 
   @Override
-  public void apply(@NotNull List<FilePatch> remaining, @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
+  public void apply(@NotNull List<FilePatch> remaining,
+                    @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
-                    @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
-    final FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(
-      new FileSaverDescriptor("Save Patch to", ""), myProject);
-    final VirtualFile baseDir = myProject.getBaseDir();
-    final VirtualFileWrapper save = dialog.save(baseDir, "TheirsChanges.patch");
-    if (save != null) {
-      final CommitContext commitContext = new CommitContext();
+                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+    FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(new FileSaverDescriptor("Save Patch to", ""), myProject);
+    VirtualFileWrapper targetFile = dialog.save(myProject.getBaseDir(), "TheirsChanges.patch");
 
-      final VirtualFile baseForPatch = myBaseForPatch == null ? baseDir : myBaseForPatch;
-      try {
-        final List<FilePatch> textPatches = patchGroupsToOneGroup(patchGroupsToApply, baseForPatch);
-        PatchWriter.writePatches(myProject, save.getFile().getPath(), baseForPatch.getPath(), textPatches, commitContext,
-                                 CharsetToolkit.UTF8_CHARSET);
-      }
-      catch (final IOException e) {
-        LOG.info(e);
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", e.getMessage()), CommonBundle.getErrorTitle());
-          }
-        }, null, myProject);
-      }
+    if (targetFile != null) {
+      savePatch(patchGroupsToApply, targetFile);
     }
   }
 
-  public static List<FilePatch> patchGroupsToOneGroup(MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups, VirtualFile baseDir)
-    throws IOException {
-    final List<FilePatch> textPatches = new ArrayList<FilePatch>();
-    final String baseDirPath = baseDir.getPath();
+  private void savePatch(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups, @NotNull VirtualFileWrapper targetFile) {
+    VirtualFile newPatchBase = notNull(myNewPatchBase, myProject.getBaseDir());
+    try {
+      List<FilePatch> textPatches = toOnePatchGroup(patchGroups, newPatchBase);
+      PatchWriter.writePatches(myProject, targetFile.getFile().getPath(), newPatchBase.getPath(), textPatches, new CommitContext(),
+                               CharsetToolkit.UTF8_CHARSET);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+        () -> Messages.showErrorDialog(myProject, message("create.patch.error.title", e.getMessage()), getErrorTitle()), null, myProject);
+    }
+  }
+
+  @NotNull
+  public static List<FilePatch> toOnePatchGroup(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+                                                @NotNull VirtualFile newPatchBase) throws IOException {
+    List<FilePatch> result = newArrayList();
 
     for (Map.Entry<VirtualFile, Collection<TextFilePatchInProgress>> entry : patchGroups.entrySet()) {
-      final VirtualFile vf = entry.getKey();
-      final String currBasePath = vf.getPath();
-      final String relativePath = VfsUtilCore.getRelativePath(vf, baseDir, '/');
-      final boolean toConvert = !StringUtil.isEmptyOrSpaces(relativePath) && !".".equals(relativePath);
+      VirtualFile oldPatchBase = entry.getKey();
+      String relativePath = VfsUtilCore.getRelativePath(oldPatchBase, newPatchBase, '/');
+      boolean toConvert = !isEmptyOrSpaces(relativePath) && !".".equals(relativePath);
+
       for (TextFilePatchInProgress patchInProgress : entry.getValue()) {
-        final TextFilePatch patch = patchInProgress.getPatch();
+        TextFilePatch patch = patchInProgress.getPatch();
         if (toConvert) {
-          //correct paths
-          patch.setBeforeName(convertRelativePath(patch.getBeforeName(), currBasePath, baseDirPath));
-          patch.setAfterName(convertRelativePath(patch.getAfterName(), currBasePath, baseDirPath));
+          patch.setBeforeName(getNewBaseRelativePath(newPatchBase, oldPatchBase, patch.getBeforeName()));
+          patch.setAfterName(getNewBaseRelativePath(newPatchBase, oldPatchBase, patch.getAfterName()));
         }
-        textPatches.add(patch);
+        result.add(patch);
       }
     }
-    return textPatches;
+
+    return result;
   }
 
-  private static String convertRelativePath(String pathInPatch, String currentBase, String baseDirPath) throws IOException {
-    if (StringUtil.isEmptyOrSpaces(pathInPatch)) return pathInPatch;
-    final File currentPath = new File(currentBase, pathInPatch);
-    return FileUtil.getRelativePath(FileUtil.toSystemIndependentName(baseDirPath), FileUtil.toSystemIndependentName(currentPath.getCanonicalPath()), '/');
+  @Nullable
+  private static String getNewBaseRelativePath(@NotNull VirtualFile newBase,
+                                               @NotNull VirtualFile oldBase,
+                                               @Nullable String oldBaseRelativePath) throws IOException {
+    return !isEmptyOrSpaces(oldBaseRelativePath)
+           ? getRelativePath(newBase.getPath(), getCanonicalPath(oldBase, oldBaseRelativePath), '/')
+           : oldBaseRelativePath;
+  }
+
+  @NotNull
+  private static String getCanonicalPath(@NotNull VirtualFile base, @NotNull String relativePath) throws IOException {
+    return toSystemIndependentName(new File(base.getPath(), relativePath).getCanonicalPath());
   }
 }

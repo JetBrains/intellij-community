@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,9 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public abstract class FileAttributesReadingTest {
-
   public static class MainTest extends FileAttributesReadingTest {
     @BeforeClass
-    public static void checkMediator() {
+    public static void setUpClass() {
       FileSystemUtil.resetMediator();
       assertEquals(SystemInfo.isWindows ? "IdeaWin32" : "JnaUnix", FileSystemUtil.getMediatorName());
     }
@@ -46,17 +45,9 @@ public abstract class FileAttributesReadingTest {
   public static class Nio2Test extends FileAttributesReadingTest {
     @BeforeClass
     public static void setUpClass() {
-      assumeTrue(SystemInfo.isJavaVersionAtLeast("1.7"));
-
       System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
       FileSystemUtil.resetMediator();
       assertEquals("Nio2", FileSystemUtil.getMediatorName());
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-      System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
-      FileSystemUtil.resetMediator();
     }
   }
 
@@ -68,12 +59,6 @@ public abstract class FileAttributesReadingTest {
       assertEquals("Fallback", FileSystemUtil.getMediatorName());
     }
 
-    @AfterClass
-    public static void tearDownClass() {
-      System.clearProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY);
-      FileSystemUtil.resetMediator();
-    }
-
     @Override public void linkToFile() { }
     @Override public void doubleLink() { }
     @Override public void linkToDirectory() { }
@@ -82,7 +67,14 @@ public abstract class FileAttributesReadingTest {
     @Override public void junction() { }
   }
 
-  private final byte[] myTestData = new byte[]{'t', 'e', 's', 't'};
+  @AfterClass
+  public static void tearDownClass() {
+    System.clearProperty(FileSystemUtil.FORCE_USE_NIO2_KEY);
+    System.clearProperty(FileSystemUtil.FORCE_USE_FALLBACK_KEY);
+    FileSystemUtil.resetMediator();
+  }
+
+  private final byte[] myTestData = {'t', 'e', 's', 't'};
   private File myTempDirectory;
 
   @Before
@@ -311,7 +303,7 @@ public abstract class FileAttributesReadingTest {
     try {
       FileAttributes attributes = getAttributes(junction);
       assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-      assertEquals(0, attributes.flags);
+      assertEquals(FileAttributes.SYM_LINK, attributes.flags);
       assertTrue(attributes.isWritable());
 
       final String resolved1 = FileSystemUtil.resolveSymLink(junction);
@@ -320,8 +312,8 @@ public abstract class FileAttributesReadingTest {
       FileUtil.delete(target);
 
       attributes = getAttributes(junction);
-      assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-      assertEquals(0, attributes.flags);
+      assertNull(attributes.type);
+      assertEquals(FileAttributes.SYM_LINK, attributes.flags);
       assertTrue(attributes.isWritable());
 
       final String resolved2 = FileSystemUtil.resolveSymLink(junction);

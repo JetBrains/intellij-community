@@ -100,6 +100,9 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
                                     @NotNull List<TerminalAction> actions,
                                     @Nullable final Predicate<KeyEvent> elseAction) {
     for (final TerminalAction action : actions) {
+      if (action.isHidden()) {
+        continue;
+      }
       AnAction a = new DumbAwareAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
@@ -117,7 +120,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
   @Override
   protected JediTermWidget createInnerTerminalWidget(TabbedSettingsProvider settingsProvider) {
-    return new JBTerminalWidget(mySettingsProvider, myParent);
+    return new JBTerminalWidget(myProject, mySettingsProvider, myParent);
   }
 
   @Override
@@ -130,7 +133,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
 
     private TabInfo.DragOutDelegate myDragDelegate = new MyDragOutDelegate();
 
-    private final CopyOnWriteArraySet<TabChangeListener> myListeners = new CopyOnWriteArraySet<TabChangeListener>();
+    private final CopyOnWriteArraySet<TabChangeListener> myListeners = new CopyOnWriteArraySet<>();
 
     public JBTerminalTabs(@NotNull Project project, @NotNull Disposable parent) {
       final ActionManager actionManager = ActionManager.getInstance();

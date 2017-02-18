@@ -56,7 +56,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
       for (int j = begin; j < end; ++j) {
         List<TryCatchBlockNode> insnHandlers = handlers[j];
         if (insnHandlers == null) {
-          insnHandlers = new ArrayList<TryCatchBlockNode>();
+          insnHandlers = new ArrayList<>();
           handlers[j] = insnHandlers;
         }
         insnHandlers.add(tcb);
@@ -65,8 +65,8 @@ public class FramelessAnalyzer extends SubroutineFinder {
 
     // computes the subroutine for each instruction:
     Subroutine main = new Subroutine(null, m.maxLocals, null);
-    List<AbstractInsnNode> subroutineCalls = new ArrayList<AbstractInsnNode>();
-    Map<LabelNode, Subroutine> subroutineHeads = new HashMap<LabelNode, Subroutine>();
+    List<AbstractInsnNode> subroutineCalls = new ArrayList<>();
+    Map<LabelNode, Subroutine> subroutineHeads = new HashMap<>();
 
     findSubroutine(0, main, subroutineCalls);
     while (!subroutineCalls.isEmpty()) {

@@ -426,7 +426,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   public static ComponentItem createAnyComponentItem(final Project project) {
     ComponentItem result = new ComponentItem(project, "", null, null,
-                                             new GridConstraints(), new HashMap<String, StringDescriptor>(),
+                                             new GridConstraints(), new HashMap<>(),
                                              false, false, false);
     result.myAnyComponent = true;
     return result;

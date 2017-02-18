@@ -34,12 +34,6 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
   }
 
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
-    Project currProject = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-
-    if (currProject == null) {
-      return false;
-    }
-
     if (elements.length > 1) return false;
 
     for (PsiElement element : elements) {

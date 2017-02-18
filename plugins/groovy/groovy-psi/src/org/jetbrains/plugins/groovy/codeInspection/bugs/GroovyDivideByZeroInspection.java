@@ -83,8 +83,7 @@ public class GroovyDivideByZeroInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssignmentExpression(
-        GrAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final GrExpression rhs = expression.getRValue();
       if (rhs == null) {

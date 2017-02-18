@@ -46,7 +46,7 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
   }
 
   private static List<String> prepareParameters(File file, Depth depth, boolean makeParents, boolean includeIgnored, boolean force) {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, file);
     CommandUtil.put(parameters, depth);

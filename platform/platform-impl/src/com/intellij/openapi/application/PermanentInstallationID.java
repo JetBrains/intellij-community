@@ -15,12 +15,16 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
 
@@ -32,19 +36,27 @@ public class PermanentInstallationID {
   private static final String INSTALLATION_ID_KEY = "user_id_on_machine";
   private static final String INSTALLATION_ID = calculateInstallationId();
 
+  @NotNull
   public static String get() {
     return INSTALLATION_ID;
   }
 
   private static String calculateInstallationId() {
+    final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     final Preferences oldPrefs = Preferences.userRoot();
-    final String oldValue = oldPrefs.get(OLD_USER_ON_MACHINE_ID_KEY, null); // compatibility with previous versions
-    final Preferences prefs = Preferences.userRoot().node("jetbrains");
+    final String oldValue = appInfo.isVendorJetBrains()? oldPrefs.get(OLD_USER_ON_MACHINE_ID_KEY, null) : null; // compatibility with previous versions
+
+    final String companyName = appInfo.getShortCompanyName();
+    final Preferences prefs = Preferences.userRoot().node(StringUtil.isEmptyOrSpaces(companyName)? "jetbrains" : companyName.toLowerCase(Locale.US));
 
     String installationId = prefs.get(INSTALLATION_ID_KEY, null);
-    if (installationId == null || installationId.isEmpty()) {
-      installationId = oldValue != null && !oldValue.isEmpty() ? oldValue : UUID.randomUUID().toString();
+    if (StringUtil.isEmptyOrSpaces(installationId)) {
+      installationId = !StringUtil.isEmptyOrSpaces(oldValue) ? oldValue : UUID.randomUUID().toString();
       prefs.put(INSTALLATION_ID_KEY, installationId);
+    }
+
+    if (!appInfo.isVendorJetBrains()) {
+      return installationId;
     }
 
     // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
@@ -69,8 +81,7 @@ public class PermanentInstallationID {
               writeToFile(permanentIdFile, installationId);
             }
           }
-          catch (IOException ignored) {
-          }
+          catch (IOException ignored) { }
         }
       }
     }
@@ -85,25 +96,16 @@ public class PermanentInstallationID {
 
   @NotNull
   private static String loadFromFile(@NotNull File file) throws IOException {
-    final FileInputStream is = new FileInputStream(file);
-    try {
+    try (FileInputStream is = new FileInputStream(file)) {
       final byte[] bytes = FileUtilRt.loadBytes(is);
       final int offset = CharsetToolkit.hasUTF8Bom(bytes) ? CharsetToolkit.UTF8_BOM.length : 0;
       return new String(bytes, offset, bytes.length - offset, CharsetToolkit.UTF8_CHARSET);
     }
-    finally {
-      is.close();
-    }
   }
 
   private static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
-    final DataOutputStream stream = new DataOutputStream(new FileOutputStream(file));
-    try {
+    try (DataOutputStream stream = new DataOutputStream(new FileOutputStream(file))) {
       stream.write(text.getBytes(CharsetToolkit.UTF8_CHARSET));
     }
-    finally {
-      stream.close();
-    }
   }
-
 }

@@ -34,7 +34,7 @@ public class MavenRepositoriesProvider {
     return ServiceManager.getService(MavenRepositoriesProvider.class);
   }
 
-  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new THashMap<String, RepositoryBeanInfo>();
+  final Map<String, RepositoryBeanInfo> myRepositoriesMap = new THashMap<>();
 
   public MavenRepositoriesProvider() {
     final RepositoriesBean repositoriesBean =

@@ -65,7 +65,7 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
 
     final XmlFile xmlFile = (XmlFile)getElement().getContainingFile();
     if (xmlFile != null) {
-      final List<PsiElementResolveResult> targets = new SmartList<PsiElementResolveResult>();
+      final List<PsiElementResolveResult> targets = new SmartList<>();
       XsltIncludeIndex.processBackwardDependencies(xmlFile, xmlFile1 -> {
         final PsiElement e = ResolveUtil.resolve(new NamedTemplateMatcher(xmlFile1.getDocument(), myName));
         if (e != null) {

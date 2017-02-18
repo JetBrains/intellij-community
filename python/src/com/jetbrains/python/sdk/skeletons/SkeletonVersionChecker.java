@@ -58,7 +58,7 @@ public class SkeletonVersionChecker {
   }
 
   private static TreeMap<QualifiedName, Integer> createTreeMap() {
-    return new TreeMap<QualifiedName, Integer>((left, right) -> {
+    return new TreeMap<>((left, right) -> {
       Iterator<String> lefts = left.getComponents().iterator();
       Iterator<String> rights = right.getComponents().iterator();
       while (lefts.hasNext() && rights.hasNext()) {

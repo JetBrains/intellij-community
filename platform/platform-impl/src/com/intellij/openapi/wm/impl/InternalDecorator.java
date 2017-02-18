@@ -21,6 +21,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
@@ -84,7 +85,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private ToolWindowHeader myHeader;
   private ActionGroup myToggleToolbarGroup;
 
-  InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow) {
+  InternalDecorator(final Project project, @NotNull WindowInfoImpl info, final ToolWindowImpl toolWindow, boolean dumbAware) {
     super(new BorderLayout());
     myProject = project;
     myToolWindow = toolWindow;
@@ -117,7 +118,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
 
       @Override
-      protected void toolWindowTypeChanged(ToolWindowType type) {
+      protected void toolWindowTypeChanged(@NotNull ToolWindowType type) {
         fireTypeChanged(type);
       }
 
@@ -127,7 +128,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
     };
 
-    init();
+    init(dumbAware);
 
     apply(info);
   }
@@ -215,7 +216,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myProject = null;
   }
 
-  private void fireAnchorChanged(ToolWindowAnchor anchor) {
+  private void fireAnchorChanged(@NotNull ToolWindowAnchor anchor) {
     myDispatcher.getMulticaster().anchorChanged(this, anchor);
   }
 
@@ -244,7 +245,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myDispatcher.getMulticaster().activated(this);
   }
 
-  private void fireTypeChanged(ToolWindowType type) {
+  private void fireTypeChanged(@NotNull ToolWindowType type) {
     myDispatcher.getMulticaster().typeChanged(this, type);
   }
 
@@ -256,7 +257,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myDispatcher.getMulticaster().sideStatusChanged(this, isSide);
   }
 
-  private void fireContentUiTypeChanges(ToolWindowContentUiType type) {
+  private void fireContentUiTypeChanges(@NotNull ToolWindowContentUiType type) {
     myDispatcher.getMulticaster().contentUiTypeChanges(this, type);
   }
 
@@ -264,7 +265,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     myDispatcher.getMulticaster().visibleStripeButtonChanged(this, visibleOnPanel);
   }
 
-  private void init() {
+  private void init(boolean dumbAware) {
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
 
     final JPanel contentPane = new JPanel(new BorderLayout());
@@ -272,6 +273,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
     JPanel innerPanel = new JPanel(new BorderLayout());
     JComponent toolWindowComponent = myToolWindow.getComponent();
+    if (!dumbAware) {
+      toolWindowComponent = DumbService.getInstance(myProject).wrapGently(toolWindowComponent, myProject);
+    }
     innerPanel.add(toolWindowComponent, BorderLayout.CENTER);
 
     final NonOpaquePanel inner = new NonOpaquePanel(innerPanel);
@@ -500,6 +504,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return myHeader.getPreferredSize().height;
   }
 
+  public void setHeaderVisible(boolean value) {
+    myHeader.setVisible(value);
+  }
+
   @Override
   protected final void processComponentEvent(final ComponentEvent e) {
     super.processComponentEvent(e);
@@ -509,9 +517,9 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class ChangeAnchorAction extends AnAction implements DumbAware {
-    private final ToolWindowAnchor myAnchor;
+    @NotNull private final ToolWindowAnchor myAnchor;
 
-    public ChangeAnchorAction(final String title, final ToolWindowAnchor anchor) {
+    public ChangeAnchorAction(@NotNull String title, @NotNull ToolWindowAnchor anchor) {
       super(title);
       myAnchor = anchor;
     }

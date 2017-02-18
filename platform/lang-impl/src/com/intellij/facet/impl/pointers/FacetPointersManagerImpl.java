@@ -28,7 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -47,9 +47,9 @@ import java.util.Map;
  * @author nik
  */
 public class FacetPointersManagerImpl extends FacetPointersManager implements ProjectComponent {
-  private final Map<String, FacetPointerImpl> myPointers = new HashMap<String, FacetPointerImpl>();
+  private final Map<String, FacetPointerImpl> myPointers = new HashMap<>();
   private final Map<Class<? extends Facet>, EventDispatcher<FacetPointerListener>> myDispatchers =
-    new HashMap<Class<? extends Facet>, EventDispatcher<FacetPointerListener>>();
+    new HashMap<>();
 
   public FacetPointersManagerImpl(final Project project) {
     super(project);
@@ -64,7 +64,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
       if (!FacetUtil.isRegistered(facet)) {
         return create(id);
       }
-      pointer = new FacetPointerImpl<F>(this, facet);
+      pointer = new FacetPointerImpl<>(this, facet);
       myPointers.put(id, pointer);
     }
     return pointer;
@@ -75,7 +75,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
     //noinspection unchecked
     FacetPointerImpl<F> pointer = myPointers.get(id);
     if (pointer == null) {
-      pointer = new FacetPointerImpl<F>(this, id);
+      pointer = new FacetPointerImpl<>(this, id);
       myPointers.put(id, pointer);
     }
     return pointer;
@@ -95,7 +95,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
   @Override
   public void initComponent() {
     MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         refreshPointers(module);
@@ -134,7 +134,7 @@ public class FacetPointersManagerImpl extends FacetPointersManager implements Pr
 
   private void refreshPointers(@NotNull final Module module) {
     //todo[nik] refresh only pointers related to renamed module/facet?
-    List<Pair<FacetPointerImpl, String>> changed = new ArrayList<Pair<FacetPointerImpl, String>>();
+    List<Pair<FacetPointerImpl, String>> changed = new ArrayList<>();
 
     for (FacetPointerImpl pointer : myPointers.values()) {
       final String oldId = pointer.getId();

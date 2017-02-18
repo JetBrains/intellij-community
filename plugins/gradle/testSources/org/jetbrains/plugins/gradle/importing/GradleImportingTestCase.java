@@ -21,7 +21,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -37,17 +36,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.StartParameter;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
+import org.gradle.wrapper.PathAssembler;
+import org.gradle.wrapper.WrapperConfiguration;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -62,6 +65,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator;
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
@@ -240,6 +245,26 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     properties.store(writer, null);
 
     createProjectSubFile("gradle/wrapper/gradle-wrapper.properties", writer.toString());
+
+    WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(getProjectPath());
+    PathAssembler.LocalDistribution localDistribution = new PathAssembler(
+      StartParameter.DEFAULT_GRADLE_USER_HOME).getDistribution(wrapperConfiguration);
+
+    File zip = localDistribution.getZipFile();
+    try {
+      if (zip.exists()) {
+        ZipFile zipFile = new ZipFile(zip);
+        zipFile.close();
+      }
+    }
+    catch (ZipException e) {
+      e.printStackTrace();
+      System.out.println("Corrupted file will be removed: " + zip.getPath());
+      FileUtil.delete(zip);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @NotNull

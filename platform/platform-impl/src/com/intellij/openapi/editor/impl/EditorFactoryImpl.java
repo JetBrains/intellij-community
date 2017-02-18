@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,20 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.actionSystem.*;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -35,56 +41,59 @@ import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class EditorFactoryImpl extends EditorFactory implements ApplicationComponent {
+public class EditorFactoryImpl extends EditorFactory implements ApplicationComponentAdapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public EditorFactoryImpl(ProjectManager projectManager) {
-    projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
+  public EditorFactoryImpl(EditorActionManager editorActionManager) {
+    Application application = ApplicationManager.getApplication();
+    MessageBus bus = application.getMessageBus();
+    MessageBusConnection connect = bus.connect();
+    connect.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
-      public void projectOpened(final Project project) {
+      public void beforeProjectLoaded(@NotNull final Project project) {
         // validate all editors are disposed after fireProjectClosed() was called, because it's the place where editor should be released
-        Disposer.register(project, new Disposable() {
-          @Override
-          public void dispose() {
-            final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-            final boolean isLastProjectClosed = openProjects.length == 0;
-            validateEditorsAreReleased(project, isLastProjectClosed);
-          }
+        Disposer.register(project, () -> {
+          final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+          final boolean isLastProjectClosed = openProjects.length == 0;
+          validateEditorsAreReleased(project, isLastProjectClosed);
         });
       }
     });
-  }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "EditorFactory";
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        refreshAllEditors();
+      }
+    });
+    TypedAction typedAction = editorActionManager.getTypedAction();
+    TypedActionHandler originalHandler = typedAction.getRawHandler();
+    typedAction.setupRawHandler(new MyTypedHandler(originalHandler));
   }
 
   @Override
   public void initComponent() {
-    ModalityStateListener myModalityStateListener = new ModalityStateListener() {
-      @Override
-      public void beforeModalityStateChanged(boolean entering) {
-        for (Editor editor : myEditors) {
-          ((EditorImpl)editor).beforeModalityStateChanged();
-        }
+    ModalityStateListener myModalityStateListener = entering -> {
+      for (Editor editor : myEditors) {
+        ((EditorImpl)editor).beforeModalityStateChanged();
       }
     };
     LaterInvocator.addModalityStateListener(myModalityStateListener, ApplicationManager.getApplication());
@@ -112,11 +121,6 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
       throw new RuntimeException("Editor of " + editor.getClass() +
                                  " and the following text hasn't been released:\n" + editor.getDocument().getText());
     }
-  }
-
-
-  @Override
-  public void disposeComponent() {
   }
 
   @Override
@@ -196,7 +200,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("number of Editor's:" + myEditors.size());
+      LOG.debug("number of Editors after create: " + myEditors.size());
     }
 
     return editor;
@@ -214,7 +218,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
       finally {
         myEditors.remove(editor);
         if (LOG.isDebugEnabled()) {
-          LOG.debug("number of Editor's:" + myEditors.size());
+          LOG.debug("number of Editors after release: " + myEditors.size());
         }
       }
     }
@@ -227,7 +231,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     for (Editor editor : myEditors) {
       Project project1 = editor.getProject();
       if (editor.getDocument().equals(document) && (project == null || project1 == null || project1.equals(project))) {
-        if (list == null) list = new SmartList<Editor>();
+        if (list == null) list = new SmartList<>();
         list.add(editor);
       }
     }
@@ -267,5 +271,29 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   @NotNull
   public EditorEventMulticaster getEventMulticaster() {
     return myEditorEventMulticaster;
+  }
+
+  private static class MyTypedHandler implements TypedActionHandlerEx {
+    private final TypedActionHandler myDelegate;
+
+    private MyTypedHandler(TypedActionHandler delegate) {
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void execute(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+      editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, Boolean.TRUE);
+      try {
+        myDelegate.execute(editor, charTyped, dataContext);
+      }
+      finally {
+        editor.putUserData(EditorImpl.DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION, null);
+      }
+    }
+
+    @Override
+    public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+      if (myDelegate instanceof TypedActionHandlerEx) ((TypedActionHandlerEx)myDelegate).beforeExecute(editor, c, context, plan);
+    }
   }
 }

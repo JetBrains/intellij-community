@@ -39,7 +39,13 @@ public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
   private static final String TAGS_FILE = "tags.txt";
+  /**
+   * Platform-specific separated list of python interpreters
+   */
   private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
+  /**
+   * Folder with virtual envs (python interpreters).
+   */
   private static final String PYCHARM_PYTHON_VIRTUAL_ENVS = "PYCHARM_PYTHON_VIRTUAL_ENVS";
 
   protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
@@ -145,7 +151,7 @@ public abstract class PyEnvTestCase {
    */
   @NotNull
   private static Collection<String> getAvailableTags() {
-    final Collection<String> allAvailableTags = new HashSet<String>();
+    final Collection<String> allAvailableTags = new HashSet<>();
     for (final String pythonRoot : getPythonRoots()) {
       allAvailableTags.addAll(loadEnvTags(pythonRoot));
     }
@@ -188,7 +194,9 @@ public abstract class PyEnvTestCase {
       return;
     }
 
-    checkStaging();
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
+      checkStaging();
+    }
 
     List<String> roots = getPythonRoots();
 

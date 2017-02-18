@@ -65,7 +65,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "class A implements I, J<I> { }\n" +
            "class B<K, V extends X> extends a/*skip*/.A { class I { } }\n" +
            "@java.lang.Deprecated interface I { }\n" +
-           "/** @deprecated just don't use */ @interface N { }",
+           "/** @deprecated just don't use */ @interface N { }\n" +
+           "/** {@code @deprecated}? nope. */ class X { }",
 
            "PsiJavaFileStub [p]\n" +
            "  IMPORT_LIST:PsiImportListStub\n" +
@@ -96,6 +97,11 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
            "  CLASS:PsiClassStub[interface annotation deprecated name=N fqn=p.N]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
+           "  CLASS:PsiClassStub[name=X fqn=p.X]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
@@ -235,7 +241,8 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      MODIFIER_LIST:PsiModifierListStub[mask=0]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=O.P]\n" +
            "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=Y inqualifnew]\n" +
-           "      ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=R]\n");
+           "      LAMBDA_EXPRESSION:FunctionalExpressionStub\n" +
+           "        ANONYMOUS_CLASS:PsiClassStub[anonymous name=null fqn=null baseref=R]\n");
   }
 
   public void testEnums() {
@@ -435,8 +442,9 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A5]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
-           "      ANNOTATION:PsiAnnotationStub[@A6]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "      METHOD_REF_EXPRESSION:FunctionalExpressionStub\n" +
+           "        ANNOTATION:PsiAnnotationStub[@A6]\n" +
+           "          ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A7]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A8]\n" +
@@ -484,6 +492,18 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+
+  public void testModuleInfo() {
+    doTest("module M. /*ignore me*/ N {\n" +
+           "  requires A.B;\n" +
+           "  exports m.n;\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  MODULE:PsiJavaModuleStub:M.N\n" +
+           "    REQUIRES_STATEMENT:PsiRequiresStatementStub:0:A.B\n" +
+           "    EXPORTS_STATEMENT:PsiExportsStatementStub:m.n\n");
   }
 
   public void testSOEProof() {

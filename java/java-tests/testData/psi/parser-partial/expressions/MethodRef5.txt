@@ -1,5 +1,5 @@
 PsiJavaFile:MethodRef5.java
-  PsiMethodReferenceExpression:(f ? list.map(String::length) : Collections.emptyList())::iterator
+  PsiMethodReferenceExpression
     PsiParenthesizedExpression:(f ? list.map(String::length) : Collections.emptyList())
       PsiJavaToken:LPARENTH('(')
       PsiConditionalExpression:f ? list.map(String::length) : Collections.emptyList()
@@ -22,7 +22,7 @@ PsiJavaFile:MethodRef5.java
             PsiIdentifier:map('map')
           PsiExpressionList
             PsiJavaToken:LPARENTH('(')
-            PsiMethodReferenceExpression:String::length
+            PsiMethodReferenceExpression
               PsiReferenceExpression:String
                 PsiReferenceParameterList
                   <empty list>

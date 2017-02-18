@@ -107,7 +107,7 @@ PsiJavaFile:Receiver.java
     PsiWhiteSpace(' ')
     PsiJavaToken:EQ('=')
     PsiWhiteSpace(' ')
-    PsiLambdaExpression:(T this) -> { }
+    PsiLambdaExpression
       PsiParameterList:(T this)
         PsiJavaToken:LPARENTH('(')
         PsiReceiverParameter
@@ -146,7 +146,7 @@ PsiJavaFile:Receiver.java
     PsiWhiteSpace(' ')
     PsiJavaToken:EQ('=')
     PsiWhiteSpace(' ')
-    PsiLambdaExpression:(T T.this) -> { }
+    PsiLambdaExpression
       PsiParameterList:(T T.this)
         PsiJavaToken:LPARENTH('(')
         PsiReceiverParameter

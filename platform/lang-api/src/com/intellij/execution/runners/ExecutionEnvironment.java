@@ -201,7 +201,7 @@ public class ExecutionEnvironment extends UserDataHolderBase implements Disposab
 
   private static class CachingDataContext implements DataContext {
     private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
-    private final Map<String, Object> values = new HashMap<String, Object>();
+    private final Map<String, Object> values = new HashMap<>();
 
     @NotNull
     static CachingDataContext cacheIfNeed(@NotNull DataContext context) {

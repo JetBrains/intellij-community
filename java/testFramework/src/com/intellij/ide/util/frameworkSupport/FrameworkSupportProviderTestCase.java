@@ -38,7 +38,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
     super.setUp();
     final Project project = getProject();
     myFrameworkSupportModel = new FrameworkSupportModelImpl(project, "", LibrariesContainerFactory.createContainer(project));
-    myNodes = new LinkedHashMap<FrameworkType, FrameworkSupportNode>();
+    myNodes = new LinkedHashMap<>();
     final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getAllProviders();
     Collections.sort(providers, FrameworkSupportUtil.getFrameworkSupportProvidersComparator(providers));
     for (FrameworkSupportInModuleProvider provider : providers) {
@@ -46,7 +46,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
       myNodes.put(provider.getFrameworkType(), node);
       myFrameworkSupportModel.registerComponent(provider, node);
     }
-    myConfigurables = new HashMap<FrameworkType, FrameworkSupportInModuleConfigurable>();
+    myConfigurables = new HashMap<>();
   }
 
   protected void addSupport() {
@@ -57,7 +57,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
         PsiTestUtil.addContentRoot(myModule, root);
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         try {
-          List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
+          List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<>();
           final IdeaModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
           for (FrameworkSupportNode node : myNodes.values()) {
             if (node.isChecked()) {

@@ -23,10 +23,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtil;
-
-import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -67,19 +63,13 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       if (containingClass != null) {
         String expectedName = firstInfo instanceof ExpectedTypeInfoImpl ? ((ExpectedTypeInfoImpl)firstInfo).getExpectedName() : null;
         String contextPrefix = expectedName == null ? "" : "expectedName=" + expectedName + "###";
-        String context = contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass);
 
         if (o instanceof PsiMethod) {
           String memberValue = JavaStatisticsManager.getMemberUseKey2(RecursionWeigher.findDeepestSuper((PsiMethod)o));
-
-          List<StatisticsInfo> superMethodInfos = ContainerUtil.newArrayList(new StatisticsInfo(contextPrefix + context, memberValue));
-          for (PsiClass superClass : InheritanceUtil.getSuperClasses(containingClass)) {
-            superMethodInfos.add(new StatisticsInfo(contextPrefix + JavaStatisticsManager.getMemberUseKey2(superClass), memberValue));
-          }
-          return StatisticsInfo.createComposite(superMethodInfos);
+          return new StatisticsInfo(contextPrefix, memberValue);
         }
 
-        return new StatisticsInfo(context, key2);
+        return new StatisticsInfo(contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass), key2);
       }
     }
 

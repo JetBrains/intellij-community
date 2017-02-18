@@ -59,7 +59,7 @@ public class HgMergeCommand {
   private HgCommandResult executeInCurrentThread() {
     HgPromptCommandExecutor commandExecutor = new HgPromptCommandExecutor(project);
     commandExecutor.setShowOutput(true);
-    List<String> arguments = new LinkedList<String>();
+    List<String> arguments = new LinkedList<>();
     if (!StringUtil.isEmptyOrSpaces(revision)) {
       arguments.add("--rev");
       arguments.add(revision);
@@ -81,10 +81,7 @@ public class HgMergeCommand {
     try {
       HgUtil.markDirectoryDirty(project, repo.getRoot());
     }
-    catch (InvocationTargetException e) {
-      throwException(e);
-    }
-    catch (InterruptedException e) {
+    catch (InvocationTargetException | InterruptedException e) {
       throwException(e);
     }
 

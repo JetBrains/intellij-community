@@ -36,7 +36,7 @@ public class PackageUtil {
                                             @Nullable Module module,
                                             final boolean searchInLibraries) {
     final GlobalSearchScope scopeToShow = getScopeToShow(aPackage.getProject(), module, searchInLibraries);
-    List<PsiPackage> result = new ArrayList<PsiPackage>();
+    List<PsiPackage> result = new ArrayList<>();
     for (PsiPackage psiPackage : aPackage.getSubPackages(scopeToShow)) {
       // skip "default" subpackages as they should be attributed to other modules
       // this is the case when contents of one module is nested into contents of another
@@ -121,8 +121,8 @@ public class PackageUtil {
                                                                               final boolean inLibrary) {
     final PsiManager psiManager = PsiManager.getInstance(project);
 
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-    final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
+    final Set<PsiPackage> topLevelPackages = new HashSet<>();
 
     for (final VirtualFile root : sourceRoots) {
       final PsiDirectory directory = psiManager.findDirectory(root);

@@ -274,7 +274,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
       public void actionPerformed(@NotNull final ActionEvent e) {
         final List<String> variableNames = ContainerUtil.newArrayList(myConfiguration.getMatchOptions().getVariableConstraintNames());
         variableNames.add(ScriptLog.SCRIPT_LOG_VAR_NAME);
-        variableNames.remove(CompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();
         if (dialog.getExitCode() == OK_EXIT_CODE) {
@@ -541,7 +540,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     regexp = createRegexComponent();
     regexprForExprType = createRegexComponent();
     formalArgType = createRegexComponent();
-    customScriptCode = new ComponentWithBrowseButton<EditorTextField>(createScriptComponent(), null);
+    customScriptCode = new ComponentWithBrowseButton<>(createScriptComponent(), null);
 
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));

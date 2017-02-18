@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>2</line>
+    <description>Method has one usage but it is not reachable from entry points.</description>
+  </problem>
+
+  <problem>
+    <file>Main.java</file>
+    <line>6</line>
+    <description>Method is never used.</description>
+  </problem>
+
+</problems>
+

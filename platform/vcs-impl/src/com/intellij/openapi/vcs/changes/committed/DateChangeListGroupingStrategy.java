@@ -86,7 +86,7 @@ public class DateChangeListGroupingStrategy implements ChangeListGroupingStrateg
     private final Map<Integer, String> myCache;
 
     private MonthsCache(final Calendar calendarForInit) {
-      myCache = new HashMap<Integer, String>();
+      myCache = new HashMap<>();
       for (int i = 0; i < 12; i++) {
         calendarForInit.set(Calendar.MONTH, i);
         myCache.put(i, myMonthFormat.format(calendarForInit.getTime()));
@@ -103,7 +103,7 @@ public class DateChangeListGroupingStrategy implements ChangeListGroupingStrateg
     private final Map<Integer, String> myCache;
 
     private WeekDayFormatCache(final Calendar calendarForInit) {
-      myCache = new HashMap<Integer, String>();
+      myCache = new HashMap<>();
       for (int i = 1; i < 8; i++) {
         calendarForInit.set(Calendar.DAY_OF_WEEK, i);
         myCache.put(i, myWeekdayFormat.format(calendarForInit.getTime()));

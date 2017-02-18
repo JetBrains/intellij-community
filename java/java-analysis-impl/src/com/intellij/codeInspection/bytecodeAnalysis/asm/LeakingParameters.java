@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.*;
@@ -42,8 +43,8 @@ public class LeakingParameters {
   @NotNull
   public static LeakingParameters build(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     Frame<ParamsValue>[] frames = jsr ?
-                                  new Analyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode) :
-                                  new LiteAnalyzer<ParamsValue>(new ParametersUsage(methodNode)).analyze(className, methodNode);
+                                  new Analyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode) :
+                                  new LiteAnalyzer<>(new ParametersUsage(methodNode)).analyze(className, methodNode);
     InsnList insns = methodNode.instructions;
     LeakingParametersCollector collector = new LeakingParametersCollector(methodNode);
     for (int i = 0; i < frames.length; i++) {
@@ -56,7 +57,7 @@ public class LeakingParameters {
           case AbstractInsnNode.FRAME:
             break;
           default:
-            new Frame<ParamsValue>(frame).execute(insnNode, collector);
+            new Frame<>(frame).execute(insnNode, collector);
         }
       }
     }
@@ -72,8 +73,8 @@ public class LeakingParameters {
   public static LeakingParameters buildFast(String className, MethodNode methodNode, boolean jsr) throws AnalyzerException {
     IParametersUsage parametersUsage = new IParametersUsage(methodNode);
     Frame<?>[] frames = jsr ?
-                        new Analyzer<IParamsValue>(parametersUsage).analyze(className, methodNode) :
-                        new LiteAnalyzer<IParamsValue>(parametersUsage).analyze(className, methodNode);
+                        new Analyzer<>(parametersUsage).analyze(className, methodNode) :
+                        new LiteAnalyzer<>(parametersUsage).analyze(className, methodNode);
     int leakingMask = parametersUsage.leaking;
     int nullableLeakingMask = parametersUsage.nullableLeaking;
     boolean[] notNullParameters = new boolean[parametersUsage.arity];
@@ -153,7 +154,7 @@ class ParametersUsage extends Interpreter<ParamsValue> {
   final int shift;
 
   ParametersUsage(MethodNode methodNode) {
-    super(ASM5);
+    super(API_VERSION);
     arity = Type.getArgumentTypes(methodNode.desc).length;
     boolean[] emptyParams = new boolean[arity];
     val1 = new ParamsValue(emptyParams, 1);
@@ -308,7 +309,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
   final int shift;
 
   IParametersUsage(MethodNode methodNode) {
-    super(ASM5);
+    super(Opcodes.API_VERSION);
     arity = Type.getArgumentTypes(methodNode.desc).length;
     shift = (methodNode.access & ACC_STATIC) == 0 ? 2 : 1;
     rangeStart = shift;

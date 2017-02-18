@@ -42,13 +42,13 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
 
   public VcsAbstractHistorySession(List<? extends VcsFileRevision> revisions) {
     myLock = new Object();
-    myRevisions = new ArrayList<VcsFileRevision>(revisions);
+    myRevisions = new ArrayList<>(revisions);
     myCachedRevisionNumber = calcCurrentRevisionNumber();
   }
 
   protected VcsAbstractHistorySession(List<? extends VcsFileRevision> revisions, VcsRevisionNumber currentRevisionNumber) {
     myLock = new Object();
-    myRevisions = new ArrayList<VcsFileRevision>(revisions);
+    myRevisions = new ArrayList<>(revisions);
     myCachedRevisionNumber = currentRevisionNumber;
   }
 
@@ -97,7 +97,7 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
   }
 
   public Map<VcsRevisionNumber, VcsFileRevision> getHistoryAsMap() {
-    final Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<VcsRevisionNumber, VcsFileRevision>();
+    final Map<VcsRevisionNumber, VcsFileRevision> map = new HashMap<>();
     for (VcsFileRevision revision : myRevisions) {
       map.put(revision.getRevisionNumber(), revision);
     }

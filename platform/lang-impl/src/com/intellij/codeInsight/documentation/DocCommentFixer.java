@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface DocCommentFixer {
 
-  LanguageExtension<DocCommentFixer> EXTENSION = new LanguageExtension<DocCommentFixer>("com.intellij.lang.documentationFixer");
+  LanguageExtension<DocCommentFixer> EXTENSION = new LanguageExtension<>("com.intellij.lang.documentationFixer");
 
   // TODO den add doc
   void fixComment(@NotNull Project project, @NotNull Editor editor, @NotNull PsiComment comment);

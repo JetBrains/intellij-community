@@ -37,7 +37,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
   final static class State {
     @Tag("counts")
     @MapAnnotation(surroundWithTag = false, keyAttributeName = "feature", valueAttributeName = "count")
-    public Map<String, Integer> myValues = new HashMap<String, Integer>();
+    public Map<String, Integer> myValues = new HashMap<>();
   }
 
   private State myState = new State();

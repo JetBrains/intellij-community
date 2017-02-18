@@ -103,7 +103,7 @@ public class Substring implements CharSequence {
 
   @NotNull
   public List<Substring> split(@NotNull Pattern pattern, int maxSplits) {
-    final List<Substring> result = new ArrayList<Substring>();
+    final List<Substring> result = new ArrayList<>();
     final Matcher m = pattern.matcher(myString);
     int start = myStartOffset;
     int end = myEndOffset;

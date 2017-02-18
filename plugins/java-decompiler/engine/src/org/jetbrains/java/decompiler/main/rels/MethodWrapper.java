@@ -31,7 +31,7 @@ public class MethodWrapper {
   public final VarProcessor varproc;
   public final StructMethod methodStruct;
   public final CounterContainer counter;
-  public final HashSet<String> setOuterVarNames = new HashSet<String>();
+  public final HashSet<String> setOuterVarNames = new HashSet<>();
 
   public DirectGraph graph;
   public List<VarVersionPair> signatureFields;

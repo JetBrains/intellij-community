@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class ClassNameConvertor implements TreeStructureProvider {
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
     for (final AbstractTreeNode aChildren : children) {
       ProjectViewNode treeNode = (ProjectViewNode)aChildren;
@@ -82,10 +82,5 @@ class ClassNameConvertor implements TreeStructureProvider {
       }
     }
     return result;
-  }
-
-  @Override
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    return null;
   }
 }

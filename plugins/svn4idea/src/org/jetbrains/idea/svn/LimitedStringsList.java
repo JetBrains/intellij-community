@@ -24,7 +24,7 @@ public class LimitedStringsList {
   private final List<String> myList;
 
   public LimitedStringsList(final List<String> list) {
-    myList = new ArrayList<String>((list.size() > ourMaxTypedUrls ? list.subList(0, ourMaxTypedUrls) : list));
+    myList = new ArrayList<>((list.size() > ourMaxTypedUrls ? list.subList(0, ourMaxTypedUrls) : list));
   }
 
   public void add(final String value) {

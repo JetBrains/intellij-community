@@ -98,7 +98,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   private void initEncodingCombo() {
-    final DefaultComboBoxModel<Charset> encodingsModel = new DefaultComboBoxModel<Charset>(CharsetToolkit.getAvailableCharsets());
+    final DefaultComboBoxModel<Charset> encodingsModel = new DefaultComboBoxModel<>(CharsetToolkit.getAvailableCharsets());
     myEncoding.setModel(encodingsModel);
     Charset projectCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
     myEncoding.setSelectedItem(projectCharset);
@@ -113,7 +113,7 @@ public class CreatePatchConfigurationPanel {
     myFileNameField = new TextFieldWithBrowseButton();
     myBasePathField = new TextFieldWithBrowseButton();
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
-    myEncoding = new ComboBox<Charset>();
+    myEncoding = new ComboBox<>();
     myWarningLabel = new JLabel();
 
     myMainPanel = FormBuilder.createFormBuilder()

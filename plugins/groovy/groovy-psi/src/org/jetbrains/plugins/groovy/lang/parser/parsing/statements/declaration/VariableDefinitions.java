@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class VariableDefinitions {
 
       if (declarator == GroovyElementTypes.TUPLE_DECLARATION) {
         varAssMarker.drop();
-        if (!wasAssignment && !hasModifiers) {
+        if (!wasAssignment) {
           builder.error(GroovyBundle.message("assignment.expected"));
           return GroovyElementTypes.WRONGWAY;
         }
@@ -111,11 +111,14 @@ public class VariableDefinitions {
         varAssMarker.done(GroovyElementTypes.VARIABLE);
       }
 
-      while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA)) {
-        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+      if (declarator != GroovyElementTypes.TUPLE_DECLARATION) {
+        while (ParserUtils.getToken(builder, GroovyTokenTypes.mCOMMA)) {
+          ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-        if (GroovyElementTypes.WRONGWAY.equals(parseVariableOrField(builder, isInClass, parser)) && declarator == GroovyTokenTypes.mIDENT) {
-          return GroovyElementTypes.VARIABLE_DEFINITION_ERROR; //parse b = d
+          if (GroovyElementTypes.WRONGWAY.equals(parseVariableOrField(builder, isInClass, parser)) &&
+              declarator == GroovyTokenTypes.mIDENT) {
+            return GroovyElementTypes.VARIABLE_DEFINITION_ERROR; //parse b = d
+          }
         }
       }
 

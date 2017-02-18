@@ -36,7 +36,7 @@ public interface PackagingCompiler extends FileProcessingCompiler{
    *
    * @param context the current compile context.
    * @param url     the URL of a file in the output directory which will be recompiled.
-   * @param state   the validity state of the file specified by <code>url</code>.
+   * @param state   the validity state of the file specified by {@code url}.
    */
   void processOutdatedItem(CompileContext context, String url, @Nullable ValidityState state);
 }

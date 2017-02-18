@@ -36,7 +36,7 @@ public class SvnUpdateContext implements SequentialUpdatesContext {
     myVcs = vcs;
     myContentRoots = Arrays.asList(contentRoots);
     Collections.sort(myContentRoots, FilePathByPathComparator.getInstance());
-    myUpdatedExternals = new HashSet<File>();
+    myUpdatedExternals = new HashSet<>();
   }
 
   @NotNull

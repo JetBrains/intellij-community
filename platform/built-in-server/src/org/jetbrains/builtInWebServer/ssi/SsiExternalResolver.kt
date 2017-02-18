@@ -17,9 +17,9 @@ package org.jetbrains.builtInWebServer.ssi
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.exists
-import com.intellij.util.lastModified
-import com.intellij.util.size
+import com.intellij.util.io.exists
+import com.intellij.util.io.lastModified
+import com.intellij.util.io.size
 import gnu.trove.THashMap
 import io.netty.handler.codec.http.HttpRequest
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager

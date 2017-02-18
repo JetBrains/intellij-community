@@ -34,14 +34,14 @@ internal abstract class GitTestCase : IcsTestCase() {
       val mergeSession = mergeProvider.createMergeSession(files)
       for (file in files) {
         val mergeData = mergeProvider.loadRevisions(file)
-        if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_THEIRS)) {
+        if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_THEIRS)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedYours)
         }
-        else if (Arrays.equals(mergeData.CURRENT, AM.MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
+        else if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_THEIRS) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
         }
-        else if (Arrays.equals(mergeData.LAST, AM.MARKER_ACCEPT_MY)) {
-          file.setBinaryContent(mergeData.LAST!!)
+        else if (Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
+          file.setBinaryContent(mergeData.LAST)
           mergeProvider.conflictResolvedForFile(file)
         }
         else {
@@ -51,7 +51,7 @@ internal abstract class GitTestCase : IcsTestCase() {
     }
   }
 
-  data class FileInfo(val name: String, val data: ByteArray)
+  class FileInfo(val name: String, val data: ByteArray)
 
   protected fun addAndCommit(path: String): FileInfo {
     val data = """<file path="$path" />""".toByteArray()

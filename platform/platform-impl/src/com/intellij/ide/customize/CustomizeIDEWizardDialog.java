@@ -15,7 +15,9 @@
  */
 package com.intellij.ide.customize;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.startup.StartupActionScriptManager;
+import com.intellij.internal.statistic.ideSettings.IdeInitialConfigButtonUsages;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +45,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private final JButton myNextButton = new JButton("Next");
 
   private final JBCardLayout myCardLayout = new JBCardLayout();
-  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<AbstractCustomizeWizardStep>();
+  private final List<AbstractCustomizeWizardStep> mySteps = new ArrayList<>();
   private int myIndex = 0;
   private final JBLabel myNavigationLabel = new JBLabel();
   private final JBLabel myHeaderLabel = new JBLabel();
@@ -58,6 +60,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     getPeer().setAppIcons();
 
     stepsProvider.initSteps(this, mySteps);
+
+    CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+    if (configProvider != null) {
+      myIndex = configProvider.initSteps(mySteps);
+    }
+
     if (mySteps.isEmpty()) {
       throw new IllegalArgumentException(stepsProvider + " provided no steps");
     }
@@ -172,6 +180,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
         return;
       }
     }
+    IdeInitialConfigButtonUsages.setSkipRemainingPressedScreen(mySteps.get(myIndex).getClass().getName());
     super.doOKAction();
   }
 

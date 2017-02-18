@@ -221,6 +221,16 @@ public abstract class JBPopupFactory {
                                                    int maxRowCount);
 
   @NotNull
+  public ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
+                                          @NotNull ActionGroup actionGroup,
+                                          @NotNull DataContext dataContext,
+                                          boolean showDisabledActions,
+                                          @Nullable Runnable disposeCallback,
+                                          int maxRowCount) {
+    return createActionGroupPopup(title, actionGroup, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, showDisabledActions, disposeCallback, maxRowCount);
+  }
+
+  @NotNull
   public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,

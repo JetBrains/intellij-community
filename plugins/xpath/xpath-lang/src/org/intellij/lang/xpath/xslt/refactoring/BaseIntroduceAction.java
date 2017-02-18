@@ -106,8 +106,8 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         final HighlightManager highlightManager = HighlightManager.getInstance(expression.getProject());
 
         final Set<XPathExpression> matchingExpressions = RefactoringUtil.collectMatchingExpressions(expression);
-        final List<XmlTag> otherMatches = new ArrayList<XmlTag>(matchingExpressions.size());
-        final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>(matchingExpressions.size() + 1);
+        final List<XmlTag> otherMatches = new ArrayList<>(matchingExpressions.size());
+        final ArrayList<RangeHighlighter> highlighters = new ArrayList<>(matchingExpressions.size() + 1);
         if (matchingExpressions.size() > 0) {
             final SelectionModel selectionModel = editor.getSelectionModel();
           highlightManager.addRangeHighlight(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(),

@@ -59,7 +59,7 @@ public class RestStructureViewElement implements StructureViewTreeElement {
 
   @NotNull
   public StructureViewTreeElement[] getChildren() {
-    final Set<RestElement> childrenElements = new LinkedHashSet<RestElement>();
+    final Set<RestElement> childrenElements = new LinkedHashSet<>();
     myElement.acceptChildren(new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {

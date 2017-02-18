@@ -40,7 +40,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
   private boolean myInStopEditing = false;
 
   public TableView() {
-    this(new ListTableModel<Item>(ColumnInfo.EMPTY_ARRAY));
+    this(new ListTableModel<>(ColumnInfo.EMPTY_ARRAY));
   }
 
   public TableView(final ListTableModel<Item> model) {
@@ -212,7 +212,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       return Collections.emptyList();
     }
 
-    List<Item> result = new SmartList<Item>();
+    List<Item> result = new SmartList<>();
     ListTableModel<Item> model = getListTableModel();
     for (int i = minSelectionIndex; i <= maxSelectionIndex; i++) {
       if (selectionModel.isSelectedIndex(i)) {

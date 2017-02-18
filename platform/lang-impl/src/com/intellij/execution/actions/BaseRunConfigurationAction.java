@@ -95,7 +95,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       return Collections.emptyList();
     }
 
-    final List<ConfigurationFromContext> enabledConfigurations = new ArrayList<ConfigurationFromContext>();
+    final List<ConfigurationFromContext> enabledConfigurations = new ArrayList<>();
     for (ConfigurationFromContext configurationFromContext : fromContext) {
       if (isEnabledFor(configurationFromContext.getConfiguration())) {
         enabledConfigurations.add(configurationFromContext);

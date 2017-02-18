@@ -27,7 +27,7 @@ import java.util.List;
 
 public class FileStatusFactory {
   private static final FileStatusFactory ourInstance = new FileStatusFactory();
-  private final List<FileStatus> myStatuses = new ArrayList<FileStatus>();
+  private final List<FileStatus> myStatuses = new ArrayList<>();
 
   private FileStatusFactory() {
   }
@@ -75,7 +75,7 @@ public class FileStatusFactory {
 
     @Override
     public Color getColor() {
-      return EditorColorsManager.getInstance().getGlobalScheme().getColor(getColorKey());
+      return EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(getColorKey());
     }
 
     @NotNull

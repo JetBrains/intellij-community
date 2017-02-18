@@ -38,7 +38,7 @@ import java.util.List;
 public class RunContentExecutor implements Disposable {
   private final Project myProject;
   private final ProcessHandler myProcess;
-  private final List<Filter> myFilterList = new ArrayList<Filter>();
+  private final List<Filter> myFilterList = new ArrayList<>();
   private Runnable myRerunAction;
   private Runnable myStopAction;
   private Runnable myAfterCompletion;
@@ -92,8 +92,8 @@ public class RunContentExecutor implements Disposable {
     return this;
   }
 
-  private ConsoleView createConsole(@NotNull Project project) {
-    TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+  private ConsoleView createConsole() {
+    TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
     consoleBuilder.filters(myFilterList);
     final ConsoleView console = consoleBuilder.getConsole();
 
@@ -126,13 +126,13 @@ public class RunContentExecutor implements Disposable {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     // Use user-provided console if exist. Create new otherwise
-    ConsoleView view = (myUserProvidedConsole != null ? myUserProvidedConsole :  createConsole(myProject));
+    ConsoleView view = (myUserProvidedConsole != null ? myUserProvidedConsole :  createConsole());
     view.attachToProcess(myProcess);
     if (myAfterCompletion != null) {
       myProcess.addProcessListener(new ProcessAdapter() {
         @Override
         public void processTerminated(ProcessEvent event) {
-          SwingUtilities.invokeLater(myAfterCompletion);
+          ApplicationManager.getApplication().invokeLater(myAfterCompletion);
         }
       });
     }

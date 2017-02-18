@@ -1,7 +1,7 @@
 """Skeletons for Python 2 built-in symbols."""
 
-from __future__ import unicode_literals
 
+from __future__ import unicode_literals
 import sys
 
 
@@ -202,9 +202,39 @@ def map(function, sequence, *sequence_1):
     """Return a list of the results of applying the function to the items of
     the argument sequence(s).
 
-    :type function: ((T) -> V) | None
+    :type function: None | (T) -> V
     :type sequence: collections.Iterable[T]
-    :rtype: list[V] | bytes | unicode
+    :rtype: list[V]
+    """
+    pass
+
+
+def min(*args, key=None, default=None):
+    """Return the smallest item in an iterable or the smallest of two or more
+    arguments.
+
+    :type args: T
+    :rtype: T
+    """
+    pass
+
+
+def max(*args, key=None, default=None):
+    """Return the largest item in an iterable or the largest of two or more
+    arguments.
+
+    :type args: T
+    :rtype: T
+    """
+    pass
+
+
+def sum(iterable, start=0):
+    """Sums start and the items of an iterable from left to right and returns
+    the total.
+
+    :type iterable: collections.Iterable[T]
+    :rtype: T
     """
     pass
 
@@ -1071,6 +1101,15 @@ class float(object):
         """
         return 0.0
 
+    @staticmethod
+    def fromhex(string):
+        """Create a floating-point number from a hexadecimal string.
+
+        :type string: str
+        :rtype: float
+        """
+        pass
+
 
 class complex(object):
     """Complex numeric type."""
@@ -1269,9 +1308,9 @@ class str(basestring):
         return b''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: str
         """
         return b''
@@ -1659,9 +1698,9 @@ class unicode(basestring):
         return ''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: unicode
         """
         return ''
@@ -2349,6 +2388,12 @@ class set(object):
         """
         return False
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
 
 class frozenset(object):
     """frozenset object."""
@@ -2488,6 +2533,12 @@ class frozenset(object):
         """
         return False
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[T]
+        """
+        pass
+
 
 class tuple(object):
     """Tuple object."""
@@ -2541,6 +2592,12 @@ class tuple(object):
         :rtype: int
         """
         return 0
+
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[object | unknown]
+        """
+        pass
 
 
 class dict(object):
@@ -2697,7 +2754,7 @@ class dict(object):
         """
         pass
 
-    def values():
+    def values(self):
         """Return a copy of the dictionary's list of values.
 
         :rtype: list[V]
@@ -2815,6 +2872,12 @@ class file(object):
         """
         pass
 
+    def __iter__(self):
+        """
+        :rtype: collections.Iterator[bytes]
+        """
+        pass
+
 
 class __generator(object):
     """A mock class representing the generator function type."""
@@ -2901,3 +2964,19 @@ class __method(object):
         if sys.version_info >= (2, 6):
             self.__func__ = None
             self.__self__ = None
+
+
+def input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: Any
+    """
+    pass
+
+
+def raw_input(prompt=None):
+    """
+    :type prompt: Any
+    :rtype: str
+    """
+    pass

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
@@ -102,7 +104,12 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
   }
 
   @Override
-  public boolean isVisible() {
+  public String getEventMessage(LocatableEvent event) {
+    return DebuggerBundle.message("status.stopped.at.cursor");
+  }
+
+  @Override
+  protected boolean isVisible() {
     return false;
   }
 
@@ -133,7 +140,7 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
     VirtualFile file = position.getFile().getVirtualFile();
     int line = position.getLine();
     for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
-      if (type instanceof JavaLineBreakpointType && type.canPutAt(file, line, getProject())) {
+      if (type instanceof JavaLineBreakpointType && type.canPutAt(file, line, myProject)) {
         return ((JavaLineBreakpointType)type);
       }
     }
@@ -143,11 +150,9 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
   @Nullable
   protected static RunToCursorBreakpoint create(@NotNull Project project, @NotNull XSourcePosition position, boolean restoreBreakpoints) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(position.getFile());
+    if (psiFile == null) {
+      return null;
+    }
     return new RunToCursorBreakpoint(project, SourcePosition.createFromOffset(psiFile, position.getOffset()), restoreBreakpoints);
-  }
-
-  @Override
-  protected boolean shouldCreateRequest(DebugProcessImpl debugProcess) {
-    return debugProcess.isAttached() && debugProcess.getRequestsManager().findRequests(this).isEmpty();
   }
 }

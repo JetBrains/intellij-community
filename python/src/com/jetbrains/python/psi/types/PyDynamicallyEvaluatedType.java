@@ -32,7 +32,7 @@ public class PyDynamicallyEvaluatedType extends PyUnionType {
 
   @NotNull
   public static PyDynamicallyEvaluatedType create(@NotNull PyType type) {
-    final List<PyType> members = new ArrayList<PyType>();
+    final List<PyType> members = new ArrayList<>();
     if (type instanceof PyUnionType) {
       final PyUnionType unionType = (PyUnionType)type;
       members.addAll(unionType.getMembers());

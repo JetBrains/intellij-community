@@ -55,7 +55,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
                      TodoTreeBuilder builder) {
     super(project, directory, ViewSettings.DEFAULT);
     myBuilder = builder;
-    myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
+    myHighlightedRegions = new ArrayList<>(2);
   }
 
   @Override

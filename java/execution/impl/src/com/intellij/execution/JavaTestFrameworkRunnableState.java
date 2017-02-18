@@ -19,12 +19,17 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testDiscovery.JavaAutoRunManager;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.autotest.AbstractAutoTestManager;
+import com.intellij.execution.testframework.autotest.ToggleAutoTestAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -45,7 +50,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.JavaPsiFacade;
@@ -119,12 +123,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return module != null;
   }
 
-  protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
-    if (!isSmRunnerUsed()) {
-      return null;
-    }
-    getJavaParameters().getVMParametersList().addProperty("idea." + getFrameworkId() + ".sm_runner");
-
+  @NotNull
+  @Override
+  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -135,7 +136,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
-    
+
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
     if (root instanceof TestProxyRoot) {
@@ -153,7 +154,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       @Override
       public void processTerminated(ProcessEvent event) {
         Runnable runnable = () -> {
-          root.flush();
+          root.flushOutputFile();
           deleteTempFiles();
           clear();
         };
@@ -167,14 +168,20 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     rerunFailedTestsAction.setModelProvider(() -> viewer);
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
-    result.setRestartActions(rerunFailedTestsAction);
+    result.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction() {
+      @Override
+      public boolean isDelayApplicable() {
+        return false;
+      }
+
+      @Override
+      public AbstractAutoTestManager getAutoTestManager(Project project) {
+        return JavaAutoRunManager.getInstance(project);
+      }
+    });
 
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, runnerSettings);
     return result;
-  }
-
-  protected boolean isSmRunnerUsed() {
-    return Registry.is(getFrameworkId() + "_sm");
   }
 
   protected abstract void configureRTClasspath(JavaParameters javaParameters);
@@ -212,6 +219,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     if (!StringUtil.isEmptyOrSpaces(parameters)) {
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
+    }
+
+    if (ConsoleBuffer.useCycleBuffer()) {
+      javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
     }
 
     return javaParameters;
@@ -369,12 +380,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
-      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp");
-      myWorkingDirsFile.deleteOnExit();
+      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
       javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
       
-      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp");
-      myTempFile.deleteOnExit();
+      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp", true);
       passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
     }
     catch (Exception e) {

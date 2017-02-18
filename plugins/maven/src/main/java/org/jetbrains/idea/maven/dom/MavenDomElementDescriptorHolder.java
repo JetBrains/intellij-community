@@ -65,7 +65,7 @@ public class MavenDomElementDescriptorHolder {
 
   private final Project myProject;
   private final Map<FileKind, CachedValue<XmlNSDescriptorImpl>> myDescriptorsMap =
-    new THashMap<FileKind, CachedValue<XmlNSDescriptorImpl>>();
+    new THashMap<>();
 
   public MavenDomElementDescriptorHolder(Project project) {
     myProject = project;

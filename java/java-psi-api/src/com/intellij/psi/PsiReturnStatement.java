@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>return</code> statement.
+ * Represents a Java {@code return} statement.
  */
 public interface PsiReturnStatement extends PsiStatement {
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
         try {
           return (String)content.getTransferData(DataFlavor.stringFlavor);
         }
-        catch (UnsupportedFlavorException e1) {
-          return "";
-        }
-        catch (IOException e1) {
+        catch (UnsupportedFlavorException | IOException e1) {
           return "";
         }
       }

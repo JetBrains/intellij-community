@@ -30,8 +30,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Base class for build targets which produce *.class files and copies resources from Java modules. <strong>It isn't supposed to be used from
+ * plugins.</strong>
  * @author Eugene Zhuravlev
- *         Date: 11/12/12
  */
 public abstract class JVMModuleBuildTarget<R extends BuildRootDescriptor> extends ModuleBasedTarget<R> {
 

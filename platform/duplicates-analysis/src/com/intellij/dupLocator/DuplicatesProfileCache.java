@@ -18,7 +18,7 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class DuplicatesProfileCache {
-  private static final Map<DupInfo, TIntObjectHashMap<DuplicatesProfile>> ourProfileCache = new HashMap<DupInfo, TIntObjectHashMap<DuplicatesProfile>>();
+  private static final Map<DupInfo, TIntObjectHashMap<DuplicatesProfile>> ourProfileCache = new HashMap<>();
 
   private DuplicatesProfileCache() {
   }
@@ -31,7 +31,7 @@ public class DuplicatesProfileCache {
   public static DuplicatesProfile getProfile(@NotNull DupInfo dupInfo, int index) {
     TIntObjectHashMap<DuplicatesProfile> patternCache = ourProfileCache.get(dupInfo);
     if (patternCache == null) {
-      patternCache = new TIntObjectHashMap<DuplicatesProfile>();
+      patternCache = new TIntObjectHashMap<>();
       ourProfileCache.put(dupInfo, patternCache);
     }
     DuplicatesProfile result = patternCache.get(index);

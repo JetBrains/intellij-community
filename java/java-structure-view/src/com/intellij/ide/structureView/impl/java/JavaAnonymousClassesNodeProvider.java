@@ -54,9 +54,9 @@ public class JavaAnonymousClassesNodeProvider implements FileStructureNodeProvid
         for (AnonymousElementProvider provider : Extensions.getExtensions(AnonymousElementProvider.EP_NAME)) {
           final PsiElement[] elements = provider.getAnonymousElements(el);
           if (elements.length > 0) {
-            List<JavaAnonymousClassTreeElement> result = new ArrayList<JavaAnonymousClassTreeElement>(elements.length);
+            List<JavaAnonymousClassTreeElement> result = new ArrayList<>(elements.length);
             for (PsiElement element : elements) {
-              result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element, new HashSet<PsiClass>()));
+              result.add(new JavaAnonymousClassTreeElement((PsiAnonymousClass)element, new HashSet<>()));
             }
             return result;
           }

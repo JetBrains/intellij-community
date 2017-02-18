@@ -75,7 +75,7 @@ public class InvalidFacetManagerImpl extends InvalidFacetManager implements Pers
   }
 
   public static class InvalidFacetManagerState {
-    private Set<String> myIgnoredFacets = new HashSet<String>();
+    private Set<String> myIgnoredFacets = new HashSet<>();
 
     @Tag("ignored-facets")
     @AbstractCollection(surroundWithTag = false, elementTag = "facet", elementValueAttribute = "id")

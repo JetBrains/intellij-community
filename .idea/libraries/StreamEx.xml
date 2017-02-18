@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="StreamEx">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/streamex-0.6.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/streamex-0.6.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

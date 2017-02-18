@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
     CharArrayUtil.getChars(myChars, dest, start + myStart, destPos, end - start);
   }
 
-  private int hash;
+  private transient int hash;
   @Override
   public int hashCode() {
     int h = hash;

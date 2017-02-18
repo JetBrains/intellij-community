@@ -143,7 +143,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     if (myValueList.getSelectedIndex() == 0 || selection.length == 0) {
       return changeLists;
     }
-    List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+    List<CommittedChangeList> result = new ArrayList<>();
     for (CommittedChangeList changeList : changeLists) {
       if (myProviderClass == null || myProviderClass.isInstance(changeList.getVcs().getCommittedChangesProvider())) {
         for (Object value : selection) {
@@ -166,7 +166,7 @@ public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
     }
 
     public <T> void addNext(final Collection<T> values, final Convertor<T, String> convertor) {
-      final TreeSet<String> set = new TreeSet<String>(Arrays.asList(myValues));
+      final TreeSet<String> set = new TreeSet<>(Arrays.asList(myValues));
       for (T value : values) {
         final String converted = convertor.convert(value);
         if (converted != null) {

@@ -69,7 +69,7 @@ public class GroovyFallthroughInspection extends BaseInspection {
     private static final Pattern commentPattern = Pattern.compile("(?i)falls?\\s*thro?u");
 
     @Override
-    public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+    public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
       final GrCaseSection[] caseSections = switchStatement.getCaseSections();
       for (int i = 1; i < caseSections.length; i++) {

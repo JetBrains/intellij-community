@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,25 @@
 package com.intellij.ide;
 
 import com.apple.eawt.Application;
-import com.apple.eawt.ApplicationAdapter;
-import com.apple.eawt.ApplicationEvent;
 import com.intellij.ide.actions.AboutAction;
+import com.intellij.ide.actions.ExitAction;
 import com.intellij.ide.actions.OpenFileAction;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.ide.actions.ShowSettingsAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
@@ -49,12 +50,15 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author max
  */
-public class MacOSApplicationProvider implements ApplicationComponent {
+public class MacOSApplicationProvider {
   private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
+  private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
   private static final Callback IMPL = new Callback() {
     @SuppressWarnings("unused")
     public void callback(ID self, String selector) {
@@ -100,82 +104,52 @@ public class MacOSApplicationProvider implements ApplicationComponent {
     }
   }
 
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "MACOSApplicationProvider";
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() { }
-
   @Nullable
   public ColorSpace getGenericRgbColorSpace() {
     return genericRgbColorSpace;
   }
 
   private static class Worker {
-    @SuppressWarnings("deprecation")
     public static void initMacApplication() {
-      Application application = new Application();
-      application.addApplicationListener(new ApplicationAdapter() {
-        @Override
-        public void handleAbout(ApplicationEvent applicationEvent) {
-          AboutAction.showAbout();
-          applicationEvent.setHandled(true);
-        }
-
-        @Override
-        public void handlePreferences(ApplicationEvent applicationEvent) {
-          Project project = getNotNullProject();
-          ShowSettingsUtilImpl showSettingsUtil = (ShowSettingsUtilImpl)ShowSettingsUtil.getInstance();
-          if (!showSettingsUtil.isAlreadyShown()) {
-            TransactionGuard.submitTransaction(project, () ->
-              showSettingsUtil.showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true)));
-          }
-          applicationEvent.setHandled(true);
-        }
-
-        @NotNull
-        private Project getNotNullProject() {
-          Project project = getProject();
-          return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
-        }
-
-        @Override
-        public void handleQuit(ApplicationEvent applicationEvent) {
-          ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-          TransactionGuard.submitTransaction(app, app::exit);
-        }
-
-        @Override
-        public void handleOpenFile(ApplicationEvent applicationEvent) {
-          Project project = getProject();
-          String filename = applicationEvent.getFilename();
-          if (filename == null) return;
-
-          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-            File file = new File(filename);
+      Application application = Application.getApplication();
+      application.setAboutHandler(event -> AboutAction.perform(getProject(false)));
+      application.setPreferencesHandler(event -> {
+        Project project = getProject(true);
+        submit("Preferences", () -> ShowSettingsAction.perform(project));
+      });
+      application.setQuitHandler((event, response) -> {
+        submit("Quit", ExitAction::perform);
+        response.cancelQuit();
+      });
+      application.setOpenFileHandler(event -> {
+        Project project = getProject(false);
+        List<File> list = event.getFiles();
+        if (list.isEmpty()) return;
+        submit("OpenFile", () -> {
+          for (File file : list) {
             if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
-              IdeaApplication.getInstance().setPerformProjectLoad(false);
+              LOG.debug("MacMenu: load project from ", file);
+              IdeaApplication.getInstance().disableProjectLoad();
               return;
             }
-            if (project != null && file.exists()) {
-              OpenFileAction.openFile(filename, project);
-              applicationEvent.setHandled(true);
+          }
+          for (File file : list) {
+            if (file.exists()) {
+              LOG.debug("MacMenu: open file ", file);
+              String path = file.getAbsolutePath();
+              if (project != null) {
+                OpenFileAction.openFile(path, project);
+              } else {
+                PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
+                if (processor != null) {
+                  VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+                  if (virtualFile != null && virtualFile.isValid()) processor.doOpenProject(virtualFile, null, false);
+                }
+              }
             }
-          });
-        }
+          }
+        });
       });
-
-      application.addAboutMenuItem();
-      application.addPreferencesMenuItem();
-      application.setEnabledAboutMenu(true);
-      application.setEnabledPreferencesMenu(true);
-
       installAutoUpdateMenu();
     }
 
@@ -204,9 +178,46 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       Foundation.invoke(pool, Foundation.createSelector("release"));
     }
 
-    @SuppressWarnings("deprecation")
-    private static Project getProject() {
-      return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    private static Project getProject(boolean useDefault) {
+      @SuppressWarnings("deprecation")
+      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      if (project == null) {
+        LOG.debug("MacMenu: no project in data context");
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        project = projects.length > 0 ? projects[0] : null;
+        if (project == null && useDefault) {
+          LOG.debug("MacMenu: use default project instead");
+          project = ProjectManager.getInstance().getDefaultProject();
+        }
+      }
+      LOG.debug("MacMenu: project = ", project);
+      return project;
+    }
+
+    private static void submit(@NotNull String name, @NotNull Runnable task) {
+      LOG.debug("MacMenu: on EDT = ", SwingUtilities.isEventDispatchThread(), "; ENABLED = ", ENABLED.get());
+      if (!ENABLED.get()) {
+        LOG.debug("MacMenu: disabled");
+      }
+      else {
+        Component component = IdeFocusManager.getGlobalInstance().getFocusOwner();
+        if (component != null && IdeKeyEventDispatcher.isModalContext(component)) {
+          LOG.debug("MacMenu: component in modal context");
+        }
+        else {
+          ENABLED.set(false);
+          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+            try {
+              LOG.debug("MacMenu: init ", name);
+              task.run();
+            }
+            finally {
+              LOG.debug("MacMenu: done ", name);
+              ENABLED.set(true);
+            }
+          });
+        }
+      }
     }
   }
 }

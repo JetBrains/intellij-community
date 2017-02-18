@@ -57,7 +57,7 @@ public class ProblemDescriptorUtil {
     }
     ref = StringUtil.replaceChar(ref, '\n', ' ').trim();
     ref = StringUtil.first(ref, 100, true);
-    return ref;
+    return ref.trim().replaceAll("\\s+", " ");
   }
 
   @NotNull
@@ -78,8 +78,7 @@ public class ProblemDescriptorUtil {
         message.contains("#loc")) {
       final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
       if (lineNumber >= 0) {
-        message = StringUtil
-          .replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + lineNumber + ")");
+        message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
       }
     }
     message = StringUtil.replace(message, "<code>", "'");
@@ -110,7 +109,7 @@ public class ProblemDescriptorUtil {
   }
 
   private static String unescapeXmlCode(final String message) {
-    List<String> strings = new ArrayList<String>();
+    List<String> strings = new ArrayList<>();
     for (String string : StringUtil.split(message, XML_CODE_MARKER.first)) {
       if (string.contains(XML_CODE_MARKER.second)) {
         strings.addAll(StringUtil.split(string, XML_CODE_MARKER.second, false));

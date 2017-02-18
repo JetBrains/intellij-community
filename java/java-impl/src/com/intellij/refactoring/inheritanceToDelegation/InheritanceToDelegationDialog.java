@@ -138,8 +138,8 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     JavaRefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER = myCbGenerateGetter.isSelected();
 
     final Collection<MemberInfo> selectedMemberInfos = getSelectedMemberInfos();
-    final ArrayList<PsiClass> implementedInterfaces = new ArrayList<PsiClass>();
-    final ArrayList<PsiMethod> delegatedMethods = new ArrayList<PsiMethod>();
+    final ArrayList<PsiClass> implementedInterfaces = new ArrayList<>();
+    final ArrayList<PsiMethod> delegatedMethods = new ArrayList<>();
 
     for (MemberInfo memberInfo : selectedMemberInfos) {
       final PsiElement member = memberInfo.getMember();
@@ -287,9 +287,9 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     final HashMap<PsiClass,InterfaceMemberDependencyGraph<PsiMember, MemberInfo>> myGraphs;
 
     public MyMemberInfoModel() {
-      myGraphs = new HashMap<PsiClass, InterfaceMemberDependencyGraph<PsiMember, MemberInfo>>();
+      myGraphs = new HashMap<>();
       for (PsiClass superClass : mySuperClasses) {
-        myGraphs.put(superClass, new InterfaceMemberDependencyGraph<PsiMember, MemberInfo>(superClass));
+        myGraphs.put(superClass, new InterfaceMemberDependencyGraph<>(superClass));
       }
     }
 

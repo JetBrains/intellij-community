@@ -73,7 +73,7 @@ public class CommittedChangesBrowser extends JPanel {
       }
     }
 
-    myChangeListsView = new TableView<CommittedChangeList>(myTableModel);
+    myChangeListsView = new TableView<>(myTableModel);
     myChangeListsView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myChangesView = new RepositoryChangesBrowser(project, tableModel.getItems());
@@ -206,7 +206,7 @@ public class CommittedChangesBrowser extends JPanel {
     CommittedChangeList list = (idx >= 0 && idx < items.size()) ? items.get(idx) : null;
     if (list != mySelectedChangeList) {
       mySelectedChangeList = list;
-      myChangesView.setChangesToDisplay(list != null ? new ArrayList<Change>(list.getChanges()) : Collections.<Change>emptyList());
+      myChangesView.setChangesToDisplay(list != null ? new ArrayList<>(list.getChanges()) : Collections.<Change>emptyList());
       myCommitMessageArea.setText(list != null ? formatText(list) : "");
       myCommitMessageArea.select(0, 0);
     }

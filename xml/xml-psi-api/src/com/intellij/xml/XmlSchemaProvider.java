@@ -38,7 +38,7 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public abstract class XmlSchemaProvider {
-  public static final ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<XmlSchemaProvider>("com.intellij.xml.schemaProvider");
+  public static final ExtensionPointName<XmlSchemaProvider> EP_NAME = new ExtensionPointName<>("com.intellij.xml.schemaProvider");
 
   @Nullable
   public static XmlFile findSchema(@NotNull @NonNls String namespace, @Nullable Module module, @NotNull PsiFile file) {
@@ -97,7 +97,7 @@ public abstract class XmlSchemaProvider {
    * Provides specific namespaces for given xml file.
    * @param file an xml or jsp file.
    * @param tagName optional
-   * @return available namespace uris, or <code>null</code> if the provider did not recognize the file.
+   * @return available namespace uris, or {@code null} if the provider did not recognize the file.
    */
   @NotNull
   public Set<String> getAvailableNamespaces(@NotNull final XmlFile file, @Nullable final String tagName) {

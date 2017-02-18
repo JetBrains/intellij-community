@@ -83,8 +83,6 @@ public class DialogBuilder implements Disposable {
   }
 
   private MyDialogWrapper showImpl(boolean isModal) {
-    LOG.assertTrue(!StringUtil.isEmptyOrSpaces(myTitle),
-                   String.format("Dialog title shouldn't be empty or null: [%s]", myTitle));
     myDialogWrapper.setTitle(myTitle);
     myDialogWrapper.init();
     myDialogWrapper.setModal(isModal);
@@ -154,7 +152,7 @@ public class DialogBuilder implements Disposable {
   }
 
   public void removeAllActions() {
-    myActions = new ArrayList<ActionDescriptor>();
+    myActions = new ArrayList<>();
   }
 
   public Window getWindow() {
@@ -456,7 +454,7 @@ public class DialogBuilder implements Disposable {
     @NotNull
     protected Action[] createActions() {
       if (myActions == null) return super.createActions();
-      ArrayList<Action> actions = new ArrayList<Action>(myActions.size());
+      ArrayList<Action> actions = new ArrayList<>(myActions.size());
       for (ActionDescriptor actionDescriptor : myActions) {
         actions.add(actionDescriptor.getAction(this));
       }

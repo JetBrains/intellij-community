@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,13 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ModulePointerManager {
-  public static ModulePointerManager getInstance(Project project) {
+  public static ModulePointerManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ModulePointerManager.class);
   }
 
   @NotNull
   public abstract ModulePointer create(@NotNull Module module);
+
   @NotNull
   public abstract ModulePointer create(@NotNull String moduleName);
 }

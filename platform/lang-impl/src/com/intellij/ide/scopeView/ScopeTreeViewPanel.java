@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,10 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -71,6 +70,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
@@ -108,7 +108,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private final IdeView myIdeView = new MyIdeView();
   private final MyPsiTreeChangeAdapter myPsiTreeChangeAdapter = new MyPsiTreeChangeAdapter();
 
-  private final DnDAwareTree myTree = new JBTreeWithHintProvider(){
+  private final DnDAwareTree myTree = new DnDAwareTree() {
     @Override
     public boolean isFileColorsEnabled() {
       return ProjectViewTree.isFileColorsEnabledFor(this);
@@ -121,7 +121,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         return null;
       }
       return ProjectViewTree.getColorForObject(((PackageDependenciesNode)node).getPsiElement(), myProject,
-                                               FunctionUtil.<PsiElement>id());
+                                               FunctionUtil.id());
     }
   };
   @NotNull
@@ -258,6 +258,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   private void initTree() {
+    HintUpdateSupply.installDataContextHintUpdateSupply(myTree);
     myTree.setCellRenderer(new MyTreeCellRenderer());
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -300,7 +301,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private PsiElement[] getSelectedPsiElements() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      Set<PsiElement> result = new HashSet<PsiElement>();
+      Set<PsiElement> result = new HashSet<>();
       for (TreePath path : treePaths) {
         final Object component = path.getLastPathComponent();
         if (component instanceof PackageDependenciesNode) {
@@ -321,7 +322,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     if (scope == null) { //was deleted
       scope = CustomScopesProviderEx.getAllScope();
     }
-    LOG.assertTrue(scope != null);
     final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager);
     final PackageSet packageSet = scope.getValue() != null ? scope.getValue() : new InvalidPackageSet("");
     final DependenciesPanel.DependencyPanelSettings settings = new DependenciesPanel.DependencyPanelSettings();
@@ -343,7 +343,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myBuilder.setTree(myTree);
     myTree.getEmptyText().setText("Loading...");
     myActionCallback = new ActionCallback();
-    myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
+    myTree.putClientProperty(TreeState.CALLBACK, new WeakReference<>(myActionCallback));
     myTree.setModel(myBuilder.build(myProject, true, () -> {
       myTree.setPaintBusy(false);
       myTree.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -359,7 +359,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     if (scope == null) {
       scope = CustomScopesProviderEx.getAllScope();
     }
-    LOG.assertTrue(scope != null);
     return scope;
   }
 
@@ -384,7 +383,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
       if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        Set<PsiElement> psiElements = new HashSet<PsiElement>();
+        Set<PsiElement> psiElements = new HashSet<>();
         for (TreePath treePath : treePaths) {
           final PackageDependenciesNode node = (PackageDependenciesNode)treePath.getLastPathComponent();
           if (node.isValid()) {
@@ -431,7 +430,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private Module[] getSelectedModules() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
-      Set<Module> result = new HashSet<Module>();
+      Set<Module> result = new HashSet<>();
       for (TreePath path : treePaths) {
         PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
         if (node instanceof ModuleNode) {
@@ -500,7 +499,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     private WolfTheProblemSolver myWolfTheProblemSolver = WolfTheProblemSolver.getInstance(myProject);
 
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,
@@ -615,7 +614,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         if (child instanceof PsiFileSystemItem && (!(child instanceof PsiFile) || !isInjected((PsiFile)child))) {
           queueUpdate(() -> {
             final DefaultMutableTreeNode rootToReload =
-              myBuilder.removeNode(child, child instanceof PsiDirectory ? (PsiDirectory)child : (PsiDirectory)oldParent);
+              myBuilder.removeNode(child, (PsiDirectory)(child instanceof PsiDirectory ? child : oldParent));
             if (rootToReload != null) {
               reload(rootToReload);
             }
@@ -771,7 +770,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     }
   }
 
-  private class MyModuleRootListener extends ModuleRootAdapter {
+  private class MyModuleRootListener implements ModuleRootListener {
     @Override
     public void rootsChanged(ModuleRootEvent event) {
       myUpdateQueue.cancelAllUpdates();
@@ -864,7 +863,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getSelectedPsiElements());
-      ArrayList<PsiElement> validElements = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> validElements = new ArrayList<>();
       for (PsiElement psiElement : allElements) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
@@ -964,7 +963,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Override
     public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
       final String name = fromList.getName();
-      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      final Set<VirtualFile> files = new HashSet<>();
       collectFiles(changes, files);
       for (VirtualFile file : files) {
         removeNode(file, name);
@@ -974,7 +973,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     @Override
     public void changesAdded(Collection<Change> changes, ChangeList toList) {
       final String name = toList.getName();
-      final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      final Set<VirtualFile> files = new HashSet<>();
       collectFiles(changes, files);
       for (VirtualFile file : files) {
         addNode(file, name);

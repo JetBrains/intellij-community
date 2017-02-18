@@ -41,6 +41,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
     super(debugName);
   }
 
+  @NotNull
   @Override
   public GrMethodStub createStub(@NotNull GrMethod psi, StubElement parentStub) {
 

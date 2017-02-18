@@ -59,7 +59,7 @@ public class PsiSelectionSearcher {
     if (file == null || file instanceof PsiCompiledElement) {
       return Collections.emptyList();
     }
-    final List<T> results = new ArrayList<T>();
+    final List<T> results = new ArrayList<>();
 
     final PsiElementVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override

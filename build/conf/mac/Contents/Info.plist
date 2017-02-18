@@ -74,7 +74,7 @@
       <string>1.8*,1.8+</string>
 
       <key>MainClass</key>
-      <string>@@main_class_name@@</string>
+      <string>com.intellij.idea.Main</string>
       <key>Properties</key>
       <dict>
         @@idea_properties@@

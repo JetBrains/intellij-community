@@ -28,13 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyAddExceptionSuperClassQuickFix implements LocalQuickFix {
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.add.exception.base");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.add.exception.base");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

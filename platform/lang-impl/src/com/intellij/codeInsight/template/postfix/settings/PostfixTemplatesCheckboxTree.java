@@ -195,7 +195,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree {
   public void selectTemplate(@NotNull final PostfixTemplate postfixTemplate, @NotNull final String lang) {
     Consumer<PostfixTemplateCheckedTreeNode> consumer = template -> {
       if (lang.equals(template.getLang()) && postfixTemplate.getKey().equals(template.getTemplate().getKey())) {
-        TreeUtil.selectInTree(template, true, PostfixTemplatesCheckboxTree.this, true);
+        TreeUtil.selectInTree(template, true, this, true);
       }
     };
     visit(consumer);

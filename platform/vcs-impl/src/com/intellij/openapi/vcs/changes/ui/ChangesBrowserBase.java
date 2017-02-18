@@ -67,7 +67,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   protected final ChangesTreeList<T> myViewer;
   protected final JScrollPane myViewerScrollPane;
   protected ChangeList mySelectedChangeList;
-  protected Collection<T> myChangesToDisplay;
+  protected List<T> myChangesToDisplay;
   protected final Project myProject;
   private final boolean myCapableOfExcludingChanges;
   protected final JPanel myHeaderPanel;
@@ -91,14 +91,14 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     myViewer.setChangeDecorator(decorator);
   }
 
-  protected ChangesBrowserBase(final Project project,
+  protected ChangesBrowserBase(@NotNull final Project project,
                                @NotNull List<T> changes,
                                final boolean capableOfExcludingChanges,
                                final boolean highlightProblems,
                                @Nullable final Runnable inclusionListener,
-                               ChangesBrowser.MyUseCase useCase,
+                               @NotNull ChangesBrowser.MyUseCase useCase,
                                @Nullable VirtualFile toSelect,
-                               Class<T> clazz) {
+                               @NotNull Class<T> clazz) {
     super(new BorderLayout());
     setFocusable(false);
 
@@ -336,7 +336,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   }
 
   protected List<AnAction> createDiffActions() {
-    List<AnAction> actions = new ArrayList<AnAction>();
+    List<AnAction> actions = new ArrayList<>();
     if (myCapableOfExcludingChanges) {
       actions.add(new ToggleChangeAction());
     }
@@ -395,7 +395,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   @NotNull
   public List<Change> getCurrentDisplayedChanges() {
-    return mySelectedChangeList != null ? sortChanges(mySelectedChangeList.getChanges()) : Collections.<Change>emptyList();
+    return mySelectedChangeList != null ? ContainerUtil.newArrayList(mySelectedChangeList.getChanges()) : Collections.emptyList();
   }
 
   @NotNull
@@ -408,19 +408,6 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   public int getUnversionedFilesCount() {
     return 0;
-  }
-
-  @NotNull
-  protected List<Change> sortChanges(@NotNull Collection<Change> changes) {
-    List<Change> result;
-    try {
-      result = ContainerUtil.sorted(changes, ChangesComparator.getInstance(myViewer.isShowFlatten()));
-    }
-    catch (IllegalArgumentException e) {
-      result = ContainerUtil.newArrayList(changes);
-      LOG.error("Couldn't sort these changes: " + changes, e);
-    }
-    return result;
   }
 
   public ChangeList getSelectedChangeList() {
@@ -440,7 +427,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   private File[] getSelectedIoFiles() {
     final List<Change> changes = getSelectedChanges();
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     for (Change change : changes) {
       final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
@@ -459,7 +446,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   public abstract List<Change> getAllChanges();
 
   @NotNull
-  private Stream<VirtualFile> getSelectedFiles() {
+  protected Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
       getAfterRevisionsFiles(getSelectedChanges().stream()),
       getVirtualFiles(myViewer.getSelectionPaths(), null)

@@ -34,7 +34,7 @@ class GroovyTraitCoercionTest extends GroovyResolveTestCase {
     'add necessary classes'()
   }
 
-  public void 'add necessary classes'() {
+  void 'add necessary classes'() {
     fixture.addFileToProject 'classes.groovy', '''\
 trait T1 {
     String foo() {}

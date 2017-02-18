@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -18,7 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
@@ -77,7 +92,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private static final String SUITE = "SUITE";
 
   private final Project myProject;
-  private final Set<CoverageSuite> myCoverageSuites = new HashSet<CoverageSuite>();
+  private final Set<CoverageSuite> myCoverageSuites = new HashSet<>();
   private boolean myIsProjectClosing = false;
 
   private final Object myLock = new Object();
@@ -90,17 +105,25 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private CoverageSuitesBundle myCurrentSuitesBundle;
 
   private final Object ANNOTATORS_LOCK = new Object();
-  private final Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<Editor, SrcFileAnnotator>();
+  private final Map<Editor, SrcFileAnnotator> myAnnotators = new HashMap<>();
 
-  public CoverageDataManagerImpl(final Project project) {
+  public CoverageDataManagerImpl(@NotNull Project project) {
     myProject = project;
-    EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsAdapter() {
+    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         chooseSuitesBundle(myCurrentSuitesBundle);
       }
-    }, project);
-    addSuiteListener(new CoverageViewSuiteListener(this, myProject), myProject);
+    });
+    final CoverageViewSuiteListener coverageViewListener = createCoverageViewListener();
+    if (coverageViewListener != null) {
+      addSuiteListener(coverageViewListener, myProject);
+    }
+  }
+
+  @Nullable
+  protected CoverageViewSuiteListener createCoverageViewListener() {
+    return new CoverageViewSuiteListener(this, myProject);
   }
 
 
@@ -448,7 +471,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     final ProjectData data = suite.getCoverageData();
     if (data == null) return;
     mySubCoverageIsActive = true;
-    final Map<String, Set<Integer>> executionTrace = new HashMap<String, Set<Integer>>();
+    final Map<String, Set<Integer>> executionTrace = new HashMap<>();
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       final String fileName = coverageSuite.getCoverageDataFileName();
       final File tracesDir = getTracesDirectory(fileName);
@@ -464,7 +487,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
               final int linesSize = in.readInt();
               Set<Integer> lines = executionTrace.get(className);
               if (lines == null) {
-                lines = new HashSet<Integer>();
+                lines = new HashSet<>();
                 executionTrace.put(className, lines);
               }
               for(int l = 0; l < linesSize; l++) {
@@ -624,8 +647,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   private class CoverageEditorFactoryListener implements EditorFactoryListener {
-    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
-    private final Map<Editor, Runnable> myCurrentEditors = new HashMap<Editor, Runnable>();
+    private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
+    private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       synchronized (myLock) {

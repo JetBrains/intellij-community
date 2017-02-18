@@ -47,14 +47,14 @@ public class DefaultXmlExtension extends XmlExtension {
   @NotNull
   public List<TagInfo> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
-    final Set<String> namespaces = new HashSet<String>(Arrays.asList(context.knownNamespaces()));
+    final Set<String> namespaces = new HashSet<>(Arrays.asList(context.knownNamespaces()));
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
     for (XmlSchemaProvider provider : providers) {
       namespaces.addAll(provider.getAvailableNamespaces(file, null));
     }
-    List<String> nsInfo = new ArrayList<String>();
+    List<String> nsInfo = new ArrayList<>();
     List<XmlElementDescriptor> descriptors = TagNameVariantCollector.getTagDescriptors(context, namespaces, nsInfo);
-    final List<TagInfo> set = new ArrayList<TagInfo>();
+    final List<TagInfo> set = new ArrayList<>();
     for (int i = 0; i < descriptors.size(); i++) {
       final XmlElementDescriptor descriptor = descriptors.get(i);
       String qualifiedName = descriptor.getName(context);
@@ -76,7 +76,7 @@ public class DefaultXmlExtension extends XmlExtension {
     if (tagName == null) {
       return namespaces;
     }
-    final HashSet<String> set = new HashSet<String>();
+    final HashSet<String> set = new HashSet<>();
     for (String namespace : namespaces) {
       final XmlFile xmlFile = XmlUtil.findNamespace(context, namespace);
       if (xmlFile != null) {
@@ -87,7 +87,7 @@ public class DefaultXmlExtension extends XmlExtension {
         final XmlElementDescriptor[] elementDescriptors = nsDescriptor.getRootElementsDescriptors(document);
         for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
           LOG.assertTrue(elementDescriptor != null, "Null returned from " + nsDescriptor);
-          if (hasTag(elementDescriptor, tagName, new HashSet<XmlElementDescriptor>())) {
+          if (hasTag(elementDescriptor, tagName, new HashSet<>())) {
             set.add(namespace);
             break;
           }

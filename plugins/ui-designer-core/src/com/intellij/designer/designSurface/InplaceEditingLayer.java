@@ -122,7 +122,7 @@ public class InplaceEditingLayer extends JComponent {
         }
       }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myInplaceComponent);
 
-      myEditors = new ArrayList<PropertyEditor>();
+      myEditors = new ArrayList<>();
 
       JComponent componentToFocus = null;
       Font font = null;

@@ -60,7 +60,7 @@ public abstract class AntDomFileList extends AntDomFilesProviderImpl{
       return Collections.emptyList();
     }
 
-    final ArrayList<File> files = new ArrayList<File>();
+    final ArrayList<File> files = new ArrayList<>();
 
     final String filenames = getFilesString().getStringValue();
     if (filenames != null) {

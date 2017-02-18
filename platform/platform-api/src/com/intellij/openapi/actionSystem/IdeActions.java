@@ -55,6 +55,8 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_MOVE_CARET_RIGHT = "EditorRight";
   @NonNls String ACTION_EDITOR_MOVE_CARET_PAGE_UP = "EditorPageUp";
   @NonNls String ACTION_EDITOR_MOVE_CARET_PAGE_DOWN = "EditorPageDown";
+  @NonNls String ACTION_EDITOR_MOVE_CARET_PAGE_UP_WITH_SELECTION = "EditorPageUpWithSelection";
+  @NonNls String ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION = "EditorPageDownWithSelection";
   @NonNls String ACTION_EDITOR_NEXT_WORD = "EditorNextWord";
   @NonNls String ACTION_EDITOR_PREVIOUS_WORD = "EditorPreviousWord";
   @NonNls String ACTION_EDITOR_NEXT_WORD_WITH_SELECTION = "EditorNextWordWithSelection";
@@ -78,7 +80,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_PREVIOUS_TEMPLATE_VARIABLE = "PreviousTemplateVariable";
 
   @NonNls String ACTION_EDITOR_REFORMAT = "ReformatCode";
-
+  @NonNls String ACTION_EDITOR_AUTO_INDENT_LINES = "AutoIndentLines";
 
   @NonNls String ACTION_COMMENT_LINE = "CommentByLineComment";
   @NonNls String ACTION_COMMENT_BLOCK = "CommentByBlockComment";
@@ -87,6 +89,7 @@ public interface IdeActions {
   @NonNls String ACTION_CUT = "$Cut";
   @NonNls String ACTION_DELETE = "$Delete";
   @NonNls String ACTION_PASTE = "$Paste";
+  @NonNls String ACTION_SELECT_ALL = "$SelectAll";
   @NonNls String ACTION_CONTEXT_HELP = "ContextHelp";
   @NonNls String ACTION_EDIT_SOURCE = "EditSource";
   @NonNls String ACTION_VIEW_SOURCE = "ViewSource";
@@ -310,6 +313,7 @@ public interface IdeActions {
   String MOVE_ELEMENT_RIGHT = "MoveElementRight";
   
   String ACTION_MOVE_LINE_UP_ACTION = "MoveLineUp";
+  String ACTION_MOVE_LINE_DOWN_ACTION = "MoveLineDown";
 
   String ACTION_COMPARE_CLIPBOARD_WITH_SELECTION = "CompareClipboardWithSelection";
 

@@ -37,8 +37,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.*;
-import com.intellij.util.Alarm;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -88,11 +88,10 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private State myState = new State();
 
-  private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
   private final BoundedTaskExecutor changedDocumentExecutor =
-    new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
+    new BoundedTaskExecutor("EncodingManagerImpl document pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
 
   public EncodingManagerImpl(@NotNull EditorFactory editorFactory) {
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
@@ -168,7 +167,6 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @Override
   public void dispose() {
-    updateEncodingFromContent.cancelAllRequests();
     clearDocumentQueue();
   }
 

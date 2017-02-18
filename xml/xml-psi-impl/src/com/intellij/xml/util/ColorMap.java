@@ -25,8 +25,8 @@ import java.util.*;
 import java.util.List;
 
 public class ColorMap {
-  private static final Map<String, String> ourColorNameToHexCodeMap = new HashMap<String, String>(25);
-  private static final Map<String, String> ourHexCodeToColorNameMap = new HashMap<String, String>(25);
+  private static final Map<String, String> ourColorNameToHexCodeMap = new HashMap<>(25);
+  private static final Map<String, String> ourHexCodeToColorNameMap = new HashMap<>(25);
 
   @NonNls static final String systemColorsString = "ActiveBorder\n" +
                                                            "    Active window border.\n" +
@@ -240,7 +240,7 @@ public class ColorMap {
   private static final List<String> ourStandardColors;
 
   static {
-    ourSystemColors = new ArrayList<String>();
+    ourSystemColors = new ArrayList<>();
     StringTokenizer tokenizer = new StringTokenizer(systemColorsString, "\n");
 
     while (tokenizer.hasMoreTokens()) {
@@ -249,7 +249,7 @@ public class ColorMap {
       tokenizer.nextToken();
     }
 
-    ourStandardColors = new ArrayList<String>();
+    ourStandardColors = new ArrayList<>();
     tokenizer = new StringTokenizer(standardColorsString, ", \n");
 
     while (tokenizer.hasMoreTokens()) {
@@ -263,7 +263,7 @@ public class ColorMap {
 
   public static synchronized void getColors() {
     StringTokenizer tokenizer = new StringTokenizer(standardColorsString, ", \n");
-    HashMap<String, String> standardColors = new HashMap<String, String>();
+    HashMap<String, String> standardColors = new HashMap<>();
 
     while (tokenizer.hasMoreTokens()) {
       String name = tokenizer.nextToken();

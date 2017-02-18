@@ -16,13 +16,11 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.google.common.primitives.Ints;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class ChangeListUtil {
@@ -31,25 +29,16 @@ public class ChangeListUtil {
   public static LocalChangeList getPredefinedChangeList(@NotNull String defaultName, @NotNull ChangeListManager changeListManager) {
     final LocalChangeList sameNamedList = changeListManager.findChangeList(defaultName);
     if (sameNamedList != null) return sameNamedList;
-    LocalChangeList list = tryToMatchWithExistingChangelist(changeListManager, defaultName);
-    return list == null ? changeListManager.getDefaultChangeList() : list;
+    return tryToMatchWithExistingChangelist(changeListManager, defaultName);
   }
 
   @Nullable
   private static LocalChangeList tryToMatchWithExistingChangelist(@NotNull ChangeListManager changeListManager,
                                                                   @NotNull final String defaultName) {
-    List<LocalChangeList> matched = ContainerUtil.findAll(changeListManager.getChangeListsCopy(), new Condition<LocalChangeList>() {
-      @Override
-      public boolean value(LocalChangeList list) {
-        return defaultName.contains(list.getName().trim());
-      }
-    });
+    List<LocalChangeList> matched = ContainerUtil.findAll(changeListManager.getChangeListsCopy(),
+                                                          list -> defaultName.contains(list.getName().trim()));
 
-    return matched.isEmpty() ? null : Collections.max(matched, new Comparator<LocalChangeList>() {
-      @Override
-      public int compare(LocalChangeList o1, LocalChangeList o2) {
-        return Ints.compare(o1.getName().trim().length(), o2.getName().trim().length());
-      }
-    });
+    return matched.isEmpty() ? null : Collections.max(matched,
+                                                      (o1, o2) -> Ints.compare(o1.getName().trim().length(), o2.getName().trim().length()));
   }
 }

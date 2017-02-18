@@ -39,14 +39,8 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.make.static");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.make.static");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
@@ -60,7 +54,7 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
       parameters[0].delete();
     }
     final PyDecoratorList problemDecoratorList = problemFunction.getDecoratorList();
-    List<String> decoTexts = new ArrayList<String>();
+    List<String> decoTexts = new ArrayList<>();
     decoTexts.add("@staticmethod");
     if (problemDecoratorList != null) {
       final PyDecorator[] decorators = problemDecoratorList.getDecorators();

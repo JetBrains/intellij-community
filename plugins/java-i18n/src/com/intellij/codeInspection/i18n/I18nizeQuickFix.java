@@ -60,14 +60,8 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
 
   @Override
   @NotNull
-  public String getName() {
-    return CodeInsightBundle.message("inspection.i18n.quickfix");
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return CodeInsightBundle.message("inspection.i18n.quickfix");
   }
 
   @Override

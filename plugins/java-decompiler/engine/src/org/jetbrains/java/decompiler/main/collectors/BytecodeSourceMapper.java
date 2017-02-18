@@ -26,21 +26,21 @@ public class BytecodeSourceMapper {
   private int offset_total;
 
   // class, method, bytecode offset, source line
-  private final Map<String, Map<String, Map<Integer, Integer>>> mapping = new LinkedHashMap<String, Map<String, Map<Integer, Integer>>>();
+  private final Map<String, Map<String, Map<Integer, Integer>>> mapping = new LinkedHashMap<>();
 
   // original line to decompiled line
-  private final Map<Integer, Integer> linesMapping = new HashMap<Integer, Integer>();
-  private final Set<Integer> unmappedLines = new TreeSet<Integer>();
+  private final Map<Integer, Integer> linesMapping = new HashMap<>();
+  private final Set<Integer> unmappedLines = new TreeSet<>();
 
   public void addMapping(String className, String methodName, int bytecodeOffset, int sourceLine) {
     Map<String, Map<Integer, Integer>> class_mapping = mapping.get(className);
     if (class_mapping == null) {
-      mapping.put(className, class_mapping = new LinkedHashMap<String, Map<Integer, Integer>>()); // need to preserve order
+      mapping.put(className, class_mapping = new LinkedHashMap<>()); // need to preserve order
     }
 
     Map<Integer, Integer> method_mapping = class_mapping.get(methodName);
     if (method_mapping == null) {
-      class_mapping.put(methodName, method_mapping = new HashMap<Integer, Integer>());
+      class_mapping.put(methodName, method_mapping = new HashMap<>());
     }
 
     // don't overwrite
@@ -78,7 +78,7 @@ public class BytecodeSourceMapper {
 
         buffer.appendIndent(1).append("method '" + method_entry.getKey() + "' {" + lineSeparator);
 
-        List<Integer> lstBytecodeOffsets = new ArrayList<Integer>(method_mapping.keySet());
+        List<Integer> lstBytecodeOffsets = new ArrayList<>(method_mapping.keySet());
         Collections.sort(lstBytecodeOffsets);
 
         for (Integer offset : lstBytecodeOffsets) {
@@ -97,7 +97,7 @@ public class BytecodeSourceMapper {
 
     // lines mapping
     buffer.append("Lines mapping:").appendLineSeparator();
-    Map<Integer, Integer> sorted = new TreeMap<Integer, Integer>(linesMapping);
+    Map<Integer, Integer> sorted = new TreeMap<>(linesMapping);
     for (Entry<Integer, Integer> entry : sorted.entrySet()) {
       buffer.append(entry.getKey()).append(" <-> ").append(entry.getValue() + offset_total + 1).appendLineSeparator();
     }

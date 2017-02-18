@@ -327,7 +327,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
 
     StringBuilder builder1 = new StringBuilder();
     StringBuilder builder2 = new StringBuilder();
-    List<DiffChange> diffChanges = new ArrayList<DiffChange>();
+    List<DiffChange> diffChanges = new ArrayList<>();
 
     int totalLines = 0;
     for (PropertyRecord record : records) {
@@ -366,8 +366,8 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     List<PropertyData> properties1 = getProperties(originalContents.get(0));
     List<PropertyData> properties2 = getProperties(originalContents.get(1));
 
-    Map<String, PropertyValue> before = new HashMap<String, PropertyValue>();
-    Map<String, PropertyValue> after = new HashMap<String, PropertyValue>();
+    Map<String, PropertyValue> before = new HashMap<>();
+    Map<String, PropertyValue> after = new HashMap<>();
     if (properties1 != null) {
       for (PropertyData data : properties1) {
         before.put(data.getName(), data.getValue());
@@ -379,7 +379,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       }
     }
 
-    List<PropertyRecord> records = new ArrayList<PropertyRecord>();
+    List<PropertyRecord> records = new ArrayList<>();
     for (String name : ContainerUtil.union(before.keySet(), after.keySet())) {
       records.add(createRecord(name, before.get(name), after.get(name)));
     }

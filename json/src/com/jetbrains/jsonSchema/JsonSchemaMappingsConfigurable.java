@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -77,7 +92,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Nullable
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
@@ -145,7 +160,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @NotNull
   private List<JsonSchemaMappingsConfigurationBase.SchemaInfo> getStoredList() {
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list = new ArrayList<JsonSchemaMappingsConfigurationBase.SchemaInfo>();
+    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> list = new ArrayList<>();
     if (myProject != null) {
       final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> projectState = JsonSchemaMappingsProjectConfiguration
         .getInstance(myProject).getStateMap();
@@ -162,7 +177,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   public void apply() throws ConfigurationException {
     final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> uiList = getUiList(true);
     validate(uiList);
-    final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> projectMap = new HashMap<String, JsonSchemaMappingsConfigurationBase.SchemaInfo>();
+    final Map<String, JsonSchemaMappingsConfigurationBase.SchemaInfo> projectMap = new HashMap<>();
     for (JsonSchemaMappingsConfigurationBase.SchemaInfo info : uiList) {
       if (!info.isApplicationLevel()) {
         projectMap.put(info.getName(), info);
@@ -252,7 +267,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @NotNull
   private List<JsonSchemaMappingsConfigurationBase.SchemaInfo> getUiList(boolean applyChildren) throws ConfigurationException {
-    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> uiList = new ArrayList<JsonSchemaMappingsConfigurationBase.SchemaInfo>();
+    final List<JsonSchemaMappingsConfigurationBase.SchemaInfo> uiList = new ArrayList<>();
     final Enumeration children = myRoot.children();
     while (children.hasMoreElements()) {
       final MyNode node = (MyNode)children.nextElement();
@@ -325,12 +340,6 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @Override
   public String getHelpTopic() {
     return SETTINGS_JSON_SCHEMA;
-  }
-
-  @Nullable
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 
   public static class JsonSchemaChecker {

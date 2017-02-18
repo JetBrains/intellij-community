@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -39,6 +40,15 @@ public class SelectInAction extends AnAction implements DumbAware {
     SelectInContext context = SelectInContextImpl.createContext(e);
     if (context == null) return;
     invoke(e.getDataContext(), context);
+  }
+
+  @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
+    super.beforeActionPerformedUpdate(e);
   }
 
   @Override
@@ -77,7 +87,7 @@ public class SelectInAction extends AnAction implements DumbAware {
 
     public SelectInActionsStep(@NotNull final Collection<SelectInTarget> targetVector, @NotNull SelectInContext selectInContext) {
       mySelectInContext = selectInContext;
-      myVisibleTargets = new ArrayList<SelectInTarget>();
+      myVisibleTargets = new ArrayList<>();
       for (SelectInTarget target : targetVector) {
         myVisibleTargets.add(target);
       }
@@ -100,11 +110,12 @@ public class SelectInAction extends AnAction implements DumbAware {
     @Override
     public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
       if (finalChoice) {
+        PsiDocumentManager.getInstance(mySelectInContext.getProject()).commitAllDocuments();
         target.selectIn(mySelectInContext, true);
         return FINAL_CHOICE;
       }
       if (target instanceof CompositeSelectInTarget) {
-        final ArrayList<SelectInTarget> subTargets = new ArrayList<SelectInTarget>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
+        final ArrayList<SelectInTarget> subTargets = new ArrayList<>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
         if (subTargets.size() > 0) {
           Collections.sort(subTargets, new SelectInManager.SelectInTargetComparator());
           return new SelectInActionsStep(subTargets, mySelectInContext);

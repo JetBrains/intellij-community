@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>CStyleArrayDeclaration.java</file>
+    <line>6</line>
+    <problem_class>C-style array declaration</problem_class>
+    <description>C-style array declaration of field &lt;code&gt;m_bar&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>CStyleArrayDeclaration.java</file>
+    <line>21</line>
+    <problem_class>C-style array declaration</problem_class>
+    <description>C-style array declaration of local variable &lt;code&gt;foo&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>CStyleArrayDeclaration.java</file>
+    <line>30</line>
+    <problem_class>C-style array declaration</problem_class>
+    <description>C-style array declaration of parameter &lt;code&gt;foo&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>CStyleArrayDeclaration.java</file>
+    <line>35</line>
+    <problem_class >C-style array declaration</problem_class>
+    <description>C-style array declaration of the return type of method &lt;code&gt;ohGod()&lt;/code&gt;#loc</description>
+  </problem>
+
+</problems>

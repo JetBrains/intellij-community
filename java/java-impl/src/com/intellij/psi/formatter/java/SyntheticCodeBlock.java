@@ -19,12 +19,14 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +58,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
     if (subBlocks.isEmpty()) {
       LOG.assertTrue(false);
     }
-    mySubBlocks = new ArrayList<Block>(subBlocks);
+    mySubBlocks = new ArrayList<>(subBlocks);
     myAlignment = alignment;
     mySettings = settings;
     myWrap = wrap;
@@ -145,8 +147,54 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
         Block block = mySubBlocks.get(newChildIndex);
         alignment = block.getAlignment();
       }
+      else if (mySubBlocks.size() == newChildIndex) {
+        if (isRParenth(getRightMostBlock())) {
+          alignment = getDotAlignment();
+        }
+      }
+      
       return new ChildAttributes(getIndent(), alignment);
     }
+  }
+
+  private static boolean isRParenth(Block sibling) {
+    if (sibling instanceof LeafBlock) {
+      ASTNode node = ((LeafBlock)sibling).getNode();
+      return node != null && node.getElementType() == JavaTokenType.RPARENTH;
+    }
+    return false;
+  }
+
+  @Nullable
+  private Alignment getDotAlignment() {
+    if (mySubBlocks.size() > 1) {
+      Block block = mySubBlocks.get(1);
+      if (isDotFirst(block)) {
+        return block.getAlignment();
+      }
+    }
+    return null;
+  }
+
+  private static boolean isDotFirst(final Block block) {
+    Block current = block;
+    while (!current.getSubBlocks().isEmpty()) {
+      current = block.getSubBlocks().get(0);
+    }
+    ASTNode node = current instanceof LeafBlock ? ((LeafBlock)current).getNode() : null;
+    return node != null && node.getElementType() == JavaTokenType.DOT;
+  }
+
+  @Nullable
+  private Block getRightMostBlock() {
+    Block rightMost = null;
+    List<Block> subBlocks = getSubBlocks();
+    while (!subBlocks.isEmpty()) {
+      int lastIndex = subBlocks.size() - 1;
+      rightMost = subBlocks.get(lastIndex);
+      subBlocks = rightMost.getSubBlocks();
+    }
+    return rightMost;
   }
 
   @Override

@@ -54,7 +54,7 @@ public class GroovyNestedAssignmentInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
+    public void visitAssignmentExpression(@NotNull GrAssignmentExpression grAssignmentExpression) {
       super.visitAssignmentExpression(grAssignmentExpression);
       final PsiElement parent = grAssignmentExpression.getParent();
       if (!(parent instanceof GrAssignmentExpression)) {

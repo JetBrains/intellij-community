@@ -70,7 +70,7 @@ public abstract class CustomAnnotationChecker {
                                               @NotNull GrCodeReferenceElement refToHighlight,
                                               @NotNull GrAnnotationNameValuePair[] attributes,
                                               boolean checkMissedAttributes) {
-    Set<String> usedAttrs = new HashSet<String>();
+    Set<String> usedAttrs = new HashSet<>();
 
     if (attributes.length > 0) {
       final PsiElement identifier = attributes[0].getNameIdentifierGroovy();
@@ -89,7 +89,7 @@ public abstract class CustomAnnotationChecker {
       }
     }
 
-    List<String> missedAttrs = new ArrayList<String>();
+    List<String> missedAttrs = new ArrayList<>();
     final PsiMethod[] methods = annotation.getMethods();
     for (PsiMethod method : methods) {
       final String name = method.getName();

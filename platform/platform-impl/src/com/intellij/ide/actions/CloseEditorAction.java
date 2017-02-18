@@ -34,7 +34,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
     EditorWindow window = e.getData(EditorWindow.DATA_KEY);
     VirtualFile file = null;
     if (window == null) {
-      window = editorManager.getActiveWindow().getResult();
+      window = editorManager.getCurrentWindow();
       if (window != null) {
         file = window.getSelectedFile();
       }
@@ -64,7 +64,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
     }
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
     if (window == null) {
-      window = getEditorManager(project).getActiveWindow().getResult();
+      window = getEditorManager(project).getCurrentWindow();
     }
     presentation.setEnabled(window != null && window.getTabCount() > 0);
   }

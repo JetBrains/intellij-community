@@ -34,9 +34,11 @@ import static com.intellij.util.FontUtil.spaceAndThinSpace;
 public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   public ChangesBrowserFilePathNode(FilePath userObject) {
     super(userObject);
-    if (!userObject.isDirectory()) {
-      myCount = 1;
-    }
+  }
+
+  @Override
+  protected boolean isFile() {
+    return !getUserObject().isDirectory();
   }
 
   @Override
@@ -48,8 +50,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final FilePath path = (FilePath)userObject;
     if (path.isDirectory() || !isLeaf()) {
-      renderer.append(getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path),
-             SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       if (!isLeaf()) {
         appendCount(renderer);
       }
@@ -62,16 +63,20 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
         renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath.getPresentableUrl()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else {
-        renderer.append(getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path),
-                        SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(getRelativePath(path), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       renderer.setIcon(path.getFileType().getIcon());
     }
   }
 
+  @NotNull
+  protected String getRelativePath(FilePath path) {
+    return getRelativePath(safeCastToFilePath(((ChangesBrowserNode)getParent()).getUserObject()), path);
+  }
+
   @Override
   public String getTextPresentation() {
-    return getUserObject().getName();
+    return getRelativePath(getUserObject());
   }
 
   @Override
@@ -100,8 +105,8 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
   }
 
   public int getSortWeight() {
-    if (((FilePath)userObject).isDirectory()) return 4;
-    return 5;
+    if (((FilePath)userObject).isDirectory()) return DIRECTORY_PATH_SORT_WEIGHT;
+    return FILE_PATH_SORT_WEIGHT;
   }
 
   public int compareUserObjects(final Object o2) {

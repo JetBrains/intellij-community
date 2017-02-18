@@ -15,18 +15,12 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.CharsetUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
@@ -50,6 +44,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 
 public final class LoadTextUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
 
   private LoadTextUtil() { }
@@ -103,17 +98,7 @@ public final class LoadTextUtil {
       detectedLineSeparator = "\n";
     }
 
-    CharSequence result;
-    if (buffer.length() == dst) {
-      result = buffer;
-    }
-    else {
-      // in Mac JDK CharBuffer.subSequence() signature differs from Oracle's
-      // more than that, the signature has changed between jd6 and jdk7,
-      // so use more generic CharSequence.subSequence() just in case
-      @SuppressWarnings("UnnecessaryLocalVariable") CharSequence seq = buffer;
-      result = seq.subSequence(0, dst);
-    }
+    CharSequence result = buffer.length() == dst ? buffer : buffer.subSequence(0, dst);
     return Pair.create(result, detectedLineSeparator);
   }
 
@@ -147,13 +132,9 @@ public final class LoadTextUtil {
 
   @NotNull
   public static Charset detectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
-    return doDetectCharsetAndSetBOM(virtualFile, content, true).getFirst();
+    return doDetectCharsetAndSetBOM(virtualFile, content, true, virtualFile.getFileType()).getFirst();
   }
 
-  @NotNull
-  private static Pair.NonNull<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM) {
-    return doDetectCharsetAndSetBOM(virtualFile, content, saveBOM, virtualFile.getFileType());
-  }
   @NotNull
   private static Pair.NonNull<Charset, byte[]> doDetectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, boolean saveBOM, @NotNull FileType fileType) {
     @NotNull Charset charset = virtualFile.isCharsetSet() ? virtualFile.getCharset() : detectCharset(virtualFile, content,fileType);
@@ -237,9 +218,9 @@ public final class LoadTextUtil {
    * Normally you should not use this method.
    *
    * @param requestor            any object to control who called this method. Note that
-   *                             it is considered to be an external change if <code>requestor</code> is <code>null</code>.
+   *                             it is considered to be an external change if {@code requestor} is {@code null}.
    *                             See {@link com.intellij.openapi.vfs.VirtualFileEvent#getRequestor}
-   * @param newModificationStamp new modification stamp or -1 if no special value should be set @return <code>Writer</code>
+   * @param newModificationStamp new modification stamp or -1 if no special value should be set @return {@code Writer}
    * @throws IOException if an I/O error occurs
    * @see VirtualFile#getModificationStamp()
    */
@@ -279,7 +260,7 @@ public final class LoadTextUtil {
     return chosen;
   }
 
-  public static void setDetectedFromBytesFlagBack(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
+  private static void setDetectedFromBytesFlagBack(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
     if (virtualFile.getBOM() == null) {
       guessFromContent(virtualFile, content, content.length);
     }
@@ -343,8 +324,6 @@ public final class LoadTextUtil {
     return CharsetUtil.extractCharsetFromFileContent(project, virtualFile, virtualFile.getFileType(), text);
   }
 
-  private static boolean ourDecompileProgressStarted = false;
-
   @NotNull
   public static CharSequence loadText(@NotNull final VirtualFile file) {
     if (file instanceof LightVirtualFile) {
@@ -359,33 +338,13 @@ public final class LoadTextUtil {
     if (fileType.isBinary()) {
       final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType);
       if (decompiler != null) {
-        CharSequence text;
-
-        Application app = ApplicationManager.getApplication();
-        if (app != null && app.isDispatchThread() && !app.isWriteAccessAllowed() && !ourDecompileProgressStarted) {
-          ourDecompileProgressStarted = true;
-          try {
-            text = ProgressManager.getInstance().run(new Task.WithResult<CharSequence, RuntimeException>(null, "Decompiling " + file.getName(), true) {
-              @Override
-              protected CharSequence compute(@NotNull ProgressIndicator indicator) {
-                return ApplicationUtil.runWithCheckCanceled(new Computable<CharSequence>() {
-                  @Override
-                  public CharSequence compute() {
-                    return decompiler.decompile(file);
-                  }
-                }, indicator);
-              }
-            });
-          }
-          finally {
-            ourDecompileProgressStarted = false;
-          }
+        CharSequence text = decompiler.decompile(file);
+        try {
+          StringUtil.assertValidSeparators(text);
         }
-        else {
-          text = decompiler.decompile(file);
+        catch (AssertionError e) {
+          LOG.error(e);
         }
-
-        StringUtil.assertValidSeparators(text);
         return text;
       }
 

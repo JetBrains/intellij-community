@@ -167,7 +167,7 @@ public final class LookupElementBuilder extends LookupElement {
   }
   @Contract(value="", pure=true)
   public LookupElementBuilder withLookupString(@NotNull String another) {
-    final THashSet<String> set = new THashSet<String>(myAllLookupStrings);
+    final THashSet<String> set = new THashSet<>(myAllLookupStrings);
     set.add(another);
     return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, myRenderer, myHardcodedPresentation,
                                     Collections.unmodifiableSet(set), myCaseSensitive);

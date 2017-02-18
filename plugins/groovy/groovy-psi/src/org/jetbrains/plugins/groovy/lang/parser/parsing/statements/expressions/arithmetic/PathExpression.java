@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class PathExpression {
 
 
     // Property reference
-    if (DOTS.contains(builder.getTokenType()) || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mDOT)) {
+    if (isQualificationDot(builder)) {
       if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mDOT)) {
         ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       }
@@ -141,6 +141,18 @@ public class PathExpression {
       marker.drop();
       return result;
     }
+  }
+
+  public static boolean isQualificationDotAhead(@NotNull PsiBuilder builder) {
+    PsiBuilder.Marker mark = builder.mark();
+    builder.advanceLexer();
+    boolean result = isQualificationDot(builder);
+    mark.rollbackTo();
+    return result;
+  }
+
+  public static boolean isQualificationDot(@NotNull PsiBuilder builder) {
+    return DOTS.contains(builder.getTokenType()) || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mDOT);
   }
 
   @NotNull

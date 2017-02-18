@@ -75,7 +75,7 @@ public class GroovyFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
               doSearch = true;
             }
             if (doSearch) {
-              final List<PsiElement> elements = new ArrayList<PsiElement>();
+              final List<PsiElement> elements = new ArrayList<>();
               for (PsiMethod getter : getters) {
                 ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(getter, ACTION_STRING));
               }

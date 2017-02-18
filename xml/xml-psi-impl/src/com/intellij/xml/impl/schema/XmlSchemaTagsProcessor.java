@@ -31,9 +31,9 @@ import java.util.Set;
  */
 public abstract class XmlSchemaTagsProcessor {
 
-  public final static ThreadLocal<Boolean> PROCESSING_FLAG = new ThreadLocal<Boolean>();
+  public final static ThreadLocal<Boolean> PROCESSING_FLAG = new ThreadLocal<>();
 
-  private final Set<XmlTag> myVisited = new HashSet<XmlTag>();
+  private final Set<XmlTag> myVisited = new HashSet<>();
   protected final XmlNSDescriptorImpl myNsDescriptor;
   private final String[] myTagsToIgnore;
 

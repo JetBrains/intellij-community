@@ -41,7 +41,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    myInfos = new ArrayList<HighlightInfo>();
+    myInfos = new ArrayList<>();
 
     myFile.accept(new GrDeclarationHighlightingVisitor(myInfos));
     myFile.accept(new ResolveHighlightingVisitor(myFile, myProject, myInfos));

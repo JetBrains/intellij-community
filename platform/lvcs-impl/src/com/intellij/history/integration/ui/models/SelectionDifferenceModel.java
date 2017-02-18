@@ -17,7 +17,6 @@
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.history.core.revisions.Revision;
@@ -98,8 +97,7 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
     int fromOffset = d.getLineStartOffset(myFrom);
     int toOffset = d.getLineEndOffset(myTo);
 
-    DocumentContent documentContent = DiffContentFactory.getInstance().create(myProject, d);
-    return new DocumentFragmentContent(myProject, documentContent, new TextRange(fromOffset, toOffset));
+    return DiffContentFactory.getInstance().createFragment(myProject, d, new TextRange(fromOffset, toOffset));
   }
 
   private DocumentContent getDiffContent(Revision r, RevisionProcessingProgress p) {

@@ -52,7 +52,7 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 
-  private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<Runnable>();
+  private final FullscreenQueue<Runnable> myFullscreenQueue = new FullscreenQueue<>();
 
   private final EventDispatcher<FSListener> myDispatcher = EventDispatcher.create(FSListener.class);
 
@@ -61,7 +61,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private static class FullscreenQueue <T extends Runnable> {
     private boolean waitingForAppKit = false;
-    private LinkedList<Runnable> queueModel = new LinkedList<Runnable>();
+    private LinkedList<Runnable> queueModel = new LinkedList<>();
 
     synchronized void runOrEnqueue (final T runnable) {
       if (waitingForAppKit) {
@@ -199,7 +199,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       SHOWN = CURRENT_GETTER.fun(null);
     }
 
-    UISettings.getInstance().addUISettingsListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, this);
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 
@@ -268,16 +268,21 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         Foundation.addMethod(ownToolbar, Foundation.createSelector("setVisible:"), SET_VISIBLE_CALLBACK, "v*");
         Foundation.addMethod(ownToolbar, Foundation.createSelector("isVisible"), IS_VISIBLE, "B*");
 
-        Foundation.executeOnMainThread(() -> {
+        Foundation.executeOnMainThread(true, true, () -> {
           invoke(window, "setToolbar:", toolbar);
           invoke(window, "setShowsToolbarButton:", 1);
-        }, true, true);
+        });
       }
     }
     finally {
       invoke(pool, "release");
     }
 
+    // extract to static method for exclude this from OpenURIHandler() {} anonymous class
+    createProtocolHandler();
+  }
+
+  private static void createProtocolHandler() {
     if (ourProtocolHandler == null) {
       // install uri handler
       final ID mainBundle = invoke("NSBundle", "mainBundle");
@@ -319,7 +324,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   }
 
   @Override
-  public void uiSettingsChanged(final UISettings source) {
+  public void uiSettingsChanged(final UISettings uiSettings) {
     if (CURRENT_GETTER != null) {
       SHOWN = CURRENT_GETTER.fun(null);
     }

@@ -384,7 +384,7 @@ public class SplitterTest {
   }
 
   private static List<String> wordsToCheck(Splitter splitter, final String text) {
-    final List<String> words = new ArrayList<String>();
+    final List<String> words = new ArrayList<>();
     splitter.split(text, TextRange.allOf(text), textRange -> words.add(textRange.substring(text)));
     return words;
   }

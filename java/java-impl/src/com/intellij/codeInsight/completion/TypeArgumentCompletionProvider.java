@@ -99,7 +99,7 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
     assert currentSubstitutor != null;
 
     PsiTypeParameter[] params = actualClass.getTypeParameters();
-    final List<PsiTypeLookupItem> typeItems = new ArrayList<PsiTypeLookupItem>();
+    final List<PsiTypeLookupItem> typeItems = new ArrayList<>();
     for (int i = index; i < params.length; i++) {
       PsiType arg = getExpectedTypeArg(context, i, expectedType, currentSubstitutor, params);
       if (arg == null) {

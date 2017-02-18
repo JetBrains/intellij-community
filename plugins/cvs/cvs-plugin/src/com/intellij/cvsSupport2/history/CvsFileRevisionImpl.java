@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
 import org.netbeans.lib.cvsclient.command.log.Revision;
@@ -58,8 +59,8 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
   }
 
   private Collection<String> getBranchList(final boolean includeRevisionNumbers) {
-    final ArrayList<String> result = new ArrayList<String>();
-    final Set<SymbolicName> processedSymbolicNames = new HashSet<SymbolicName>();
+    final ArrayList<String> result = new ArrayList<>();
+    final Set<SymbolicName> processedSymbolicNames = new HashSet<>();
 
     final String branches = myCvsRevision.getBranches();
     if (branches != null && branches.length() != 0) {
@@ -140,7 +141,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
   }
 
   private List<String> collectSymNamesForRevision() {
-    ArrayList<String> result = new ArrayList<String>();
+    ArrayList<String> result = new ArrayList<>();
     //noinspection unchecked
     List<SymbolicName> symNames = myLogInformation.getSymNamesForRevision(myCvsRevision.getNumber());
     for (final SymbolicName symName : symNames) {
@@ -149,6 +150,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
     return result;
   }
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     if (myCvsRevision != null) {
       return new CvsRevisionNumber(myCvsRevision.getNumber());

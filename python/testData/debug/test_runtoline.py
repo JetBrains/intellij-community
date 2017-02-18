@@ -1,3 +1,5 @@
+from time import sleep
+
 x = 0
 print(x)
 while x<2:
@@ -6,3 +8,5 @@ while x<2:
 
 x+=10
 print("x = %d" % x)
+while True:
+    sleep(0.1)

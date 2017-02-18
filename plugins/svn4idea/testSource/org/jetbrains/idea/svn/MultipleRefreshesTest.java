@@ -46,7 +46,7 @@ public class MultipleRefreshesTest {
 
   @Parameterized.Parameters
   public static List<Object[]> data() {
-    final ArrayList<Object[]> result = new ArrayList<Object[]>(10);
+    final ArrayList<Object[]> result = new ArrayList<>(10);
     for (int i = 0; i < 100; i++) {
       result.add(new Object[]{i});
     }

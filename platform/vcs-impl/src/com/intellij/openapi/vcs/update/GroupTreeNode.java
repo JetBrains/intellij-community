@@ -39,7 +39,7 @@ import java.util.*;
 public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private final String myName;
   private final boolean mySupportsDeletion;
-  private final List<String> myFilePaths = new ArrayList<String>();
+  private final List<String> myFilePaths = new ArrayList<>();
   private final Map<String, String> myErrorsMap;
   private final SimpleTextAttributes myInvalidAttributes;
   private final Project myProject;
@@ -77,7 +77,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   @NotNull
   @Override
   public Collection<VirtualFile> getVirtualFiles() {
-    ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
+    ArrayList<VirtualFile> result = new ArrayList<>();
     for (int i = 0; i < getChildCount(); i++) {
       result.addAll(((AbstractTreeNode)getChildAt(i)).getVirtualFiles());
     }
@@ -87,7 +87,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   @NotNull
   @Override
   public Collection<File> getFiles() {
-    ArrayList<File> result = new ArrayList<File>();
+    ArrayList<File> result = new ArrayList<>();
     for (int i = 0; i < getChildCount(); i++) {
       result.addAll(((AbstractTreeNode)getChildAt(i)).getFiles());
     }
@@ -174,7 +174,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   }
 
   private void buildPackages() {
-    Collection<File> files = new LinkedHashSet<File>();
+    Collection<File> files = new LinkedHashSet<>();
     for (final String myFilePath : myFilePaths) {
       files.add(new File(myFilePath));
     }

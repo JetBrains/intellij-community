@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +35,7 @@ public class ChangeToAppendFix implements IntentionAction {
   private final IElementType myTokenType;
   private final PsiType myLhsType;
   private final PsiAssignmentExpression myAssignmentExpression;
+  private volatile TypeInfo myTypeInfo;
 
   public ChangeToAppendFix(@NotNull IElementType eqOpSign, @NotNull PsiType lType, @NotNull PsiAssignmentExpression assignmentExpression) {
     myTokenType = eqOpSign;
@@ -47,9 +48,8 @@ public class ChangeToAppendFix implements IntentionAction {
   public String getText() {
     return QuickFixBundle.message("change.to.append.text",
                                   ChangeToAppendUtil.buildAppendExpression(myAssignmentExpression.getRExpression(),
-                                                                           myLhsType.equalsToText("java.lang.Appendable"),
-                                                                           new StringBuilder(
-                                                                             myAssignmentExpression.getLExpression().getText())));
+                                                                           getTypeInfo().myUseStringValueOf,
+                                                                           new StringBuilder(myAssignmentExpression.getLExpression().getText())));
   }
 
   @NotNull
@@ -63,9 +63,7 @@ public class ChangeToAppendFix implements IntentionAction {
     return JavaTokenType.PLUSEQ == myTokenType &&
            myAssignmentExpression.isValid() &&
            PsiManager.getInstance(project).isInProject(myAssignmentExpression) &&
-           (myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER) ||
-            myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER) ||
-            myLhsType.equalsToText("java.lang.Appendable"));
+           getTypeInfo().myAppendable;
   }
 
   @Override
@@ -75,10 +73,38 @@ public class ChangeToAppendFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiExpression appendExpression =
       ChangeToAppendUtil.buildAppendExpression(myAssignmentExpression.getLExpression(), myAssignmentExpression.getRExpression());
     if (appendExpression == null) return;
     myAssignmentExpression.replace(appendExpression);
+  }
+
+  @NotNull
+  private TypeInfo getTypeInfo() {
+    if (myTypeInfo != null) return myTypeInfo;
+    myTypeInfo = calculateTypeInfo();
+    return myTypeInfo;
+  }
+
+  @NotNull
+  private TypeInfo calculateTypeInfo() {
+    if (myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER) ||
+        myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
+      return new TypeInfo(true, false);
+    }
+    if (InheritanceUtil.isInheritor(myLhsType, "java.lang.Appendable")) {
+      return new TypeInfo(true, true);
+    }
+    return new TypeInfo(false, false);
+  }
+
+  private static class TypeInfo {
+    private final boolean myAppendable;
+    private final boolean myUseStringValueOf;
+
+    TypeInfo(boolean appendable, boolean useStringValueOf) {
+      myAppendable = appendable;
+      myUseStringValueOf = useStringValueOf;
+    }
   }
 }

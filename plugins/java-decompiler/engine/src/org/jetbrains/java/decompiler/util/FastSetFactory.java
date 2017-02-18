@@ -22,7 +22,7 @@ import java.util.Set;
 
 public class FastSetFactory<E> {
 
-  private final VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<int[], E>();
+  private final VBStyleCollection<int[], E> colValuesInternal = new VBStyleCollection<>();
 
   private int lastBlock;
 
@@ -71,7 +71,7 @@ public class FastSetFactory<E> {
   }
 
   public FastSet<E> spawnEmptySet() {
-    return new FastSet<E>(this);
+    return new FastSet<>(this);
   }
 
   public int getLastBlock() {
@@ -103,7 +103,7 @@ public class FastSetFactory<E> {
 
     public FastSet<E> getCopy() {
 
-      FastSet<E> copy = new FastSet<E>(factory);
+      FastSet<E> copy = new FastSet<>(factory);
 
       int arrlength = data.length;
       int[] cpdata = new int[arrlength];
@@ -363,11 +363,11 @@ public class FastSetFactory<E> {
     }
 
     public Iterator<E> iterator() {
-      return new FastSetIterator<E>(this);
+      return new FastSetIterator<>(this);
     }
 
     public Set<E> toPlainSet() {
-      HashSet<E> set = new HashSet<E>();
+      HashSet<E> set = new HashSet<>();
 
       int[] intdata = data;
 

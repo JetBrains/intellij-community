@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   public void setDividerMouseZoneSize(int size) {
-    myDividerZone = size;
+    myDividerZone = JBUI.scale(size);
   }
 
   public boolean isHonorMinimumSize() {
@@ -612,7 +612,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     private boolean isInside(Point p) {
       if (!isVisible()) return false;
 
-      int dndOff = myIsOnePixel ? Registry.intValue("ide.splitter.mouseZone") / 2 : 0;
+      int dndOff = myIsOnePixel ? JBUI.scale(Registry.intValue("ide.splitter.mouseZone")) / 2 : 0;
       if (myVerticalSplit) {
         if (p.x >= 0 && p.x < getWidth()) {
           if (getHeight() > 0) {

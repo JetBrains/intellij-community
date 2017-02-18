@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -31,10 +32,12 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBRectangle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,40 +50,41 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx {
-  private String myCodeName = null;
-  private String myMajorVersion = null;
-  private String myMinorVersion = null;
-  private String myMicroVersion = null;
-  private String myPatchVersion = null;
-  private String myFullVersion = null;
-  private String myBuildNumber = null;
-  private String myApiVersion = null;
+  private String myCodeName;
+  private String myMajorVersion;
+  private String myMinorVersion;
+  private String myMicroVersion;
+  private String myPatchVersion;
+  private String myFullVersionFormat;
+  private String myBuildNumber;
+  private String myApiVersion;
   private String myCompanyName = "JetBrains s.r.o.";
+  private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private Color myProgressColor = null;
+  private Color myProgressColor;
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
-  private Color myAboutLinkColor = null;
-  private String myProgressTailIconName = null;
-  private Icon myProgressTailIcon = null;
+  private Color myAboutLinkColor;
+  private String myProgressTailIconName;
+  private Icon myProgressTailIcon;
 
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
   private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
-  private String mySplashImageUrl = null;
-  private String myAboutImageUrl = null;
+  private String mySplashImageUrl;
+  private String myAboutImageUrl;
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
-  private String myBigIconUrl = null;
+  private String myBigIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
-  private String myWelcomeScreenLogoUrl = null;
-  private String myEditorBackgroundImageUrl = null;
+  private String myWelcomeScreenLogoUrl;
+  private String myEditorBackgroundImageUrl;
 
-  private Calendar myBuildDate = null;
-  private Calendar myMajorReleaseBuildDate = null;
-  private String myPackageCode = null;
+  private Calendar myBuildDate;
+  private Calendar myMajorReleaseBuildDate;
+  private String myPackageCode;
   private boolean myShowLicensee = true;
   private String myCustomizeIDEWizardStepsProvider;
   private UpdateUrls myUpdateUrls;
@@ -284,7 +288,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private String doGetFullVersion() {
-    if (myFullVersion == null) {
+    if (myFullVersionFormat == null) {
       if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
         if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
           return myMajorVersion + "." + myMinorVersion;
@@ -297,7 +301,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         return getVersionName();
       }
     } else {
-      return MessageFormat.format(myFullVersion, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
+      return MessageFormat.format(myFullVersionFormat, myMajorVersion, myMinorVersion, myMicroVersion, myPatchVersion);
     }
   }
 
@@ -318,6 +322,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getHelpURL() {
     return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
+  }
+
+  @Override
+  public String getShortCompanyName() {
+    return myShortCompanyName;
   }
 
   @Override
@@ -519,6 +528,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutForeground;
   }
 
+  @Nullable
   public Color getAboutLinkColor() {
     return myAboutLinkColor;
   }
@@ -613,6 +623,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return false;
   }
 
+  @NotNull
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {
       ourShadowInstance = new ApplicationInfoImpl();
@@ -620,25 +631,29 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return ourShadowInstance;
   }
 
+  /**
+   * Behavior of this method must be consistent with idea/ApplicationInfo.xsd schema.
+   */
   private void loadState(Element parentNode) {
-    Element versionElement = parentNode.getChild(ELEMENT_VERSION);
+    Element versionElement = getChild(parentNode, ELEMENT_VERSION);
     if (versionElement != null) {
       myMajorVersion = versionElement.getAttributeValue(ATTRIBUTE_MAJOR);
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
       myMicroVersion = versionElement.getAttributeValue(ATTRIBUTE_MICRO);
       myPatchVersion = versionElement.getAttributeValue(ATTRIBUTE_PATCH);
-      myFullVersion = versionElement.getAttributeValue(ATTRIBUTE_FULL);
+      myFullVersionFormat = versionElement.getAttributeValue(ATTRIBUTE_FULL);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
     }
 
-    Element companyElement = parentNode.getChild(ELEMENT_COMPANY);
+    Element companyElement = getChild(parentNode, ELEMENT_COMPANY);
     if (companyElement != null) {
       myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
+      myShortCompanyName = companyElement.getAttributeValue("shortName", shortenCompanyName(myCompanyName));
       myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
     }
 
-    Element buildElement = parentNode.getChild(ELEMENT_BUILD);
+    Element buildElement = getChild(parentNode, ELEMENT_BUILD);
     if (buildElement != null) {
       myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
       myApiVersion = buildElement.getAttributeValue(ATTRIBUTE_API_VERSION);
@@ -676,7 +691,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       ", eap:" + myEAP + ", os:" + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
       ", java-version:" + SystemProperties.getJavaVendor() + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
-    Element logoElement = parentNode.getChild(ELEMENT_LOGO);
+    Element logoElement = getChild(parentNode, ELEMENT_LOGO);
     if (logoElement != null) {
       mySplashImageUrl = logoElement.getAttributeValue(ATTRIBUTE_URL);
       mySplashTextColor = parseColor(logoElement.getAttributeValue(ATTRIBUTE_TEXT_COLOR));
@@ -711,7 +726,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element aboutLogoElement = parentNode.getChild(ELEMENT_ABOUT);
+    Element aboutLogoElement = getChild(parentNode, ELEMENT_ABOUT);
     if (aboutLogoElement != null) {
       myAboutImageUrl = aboutLogoElement.getAttributeValue(ATTRIBUTE_URL);
 
@@ -736,7 +751,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       if (logoX != null && logoY != null && logoW != null && logoH != null) {
         try {
           myAboutLogoRect =
-            new Rectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
+            new JBRectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
         }
         catch (NumberFormatException nfe) {
           // ignore
@@ -744,7 +759,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element iconElement = parentNode.getChild(ELEMENT_ICON);
+    Element iconElement = getChild(parentNode, ELEMENT_ICON);
     if (iconElement != null) {
       myIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE32);
       mySmallIconUrl = iconElement.getAttributeValue(ATTRIBUTE_SIZE16);
@@ -755,32 +770,32 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element packageElement = parentNode.getChild(ELEMENT_PACKAGE);
+    Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);
     if (packageElement != null) {
       myPackageCode = packageElement.getAttributeValue(ATTRIBUTE_CODE);
     }
 
-    Element showLicensee = parentNode.getChild(ELEMENT_LICENSEE);
+    Element showLicensee = getChild(parentNode, ELEMENT_LICENSEE);
     if (showLicensee != null) {
       myShowLicensee = Boolean.valueOf(showLicensee.getAttributeValue(ATTRIBUTE_SHOW)).booleanValue();
     }
 
-    Element welcomeScreen = parentNode.getChild(WELCOME_SCREEN_ELEMENT_NAME);
+    Element welcomeScreen = getChild(parentNode, WELCOME_SCREEN_ELEMENT_NAME);
     if (welcomeScreen != null) {
       myWelcomeScreenLogoUrl = welcomeScreen.getAttributeValue(LOGO_URL_ATTR);
     }
 
-    Element wizardSteps = parentNode.getChild(CUSTOMIZE_IDE_WIZARD_STEPS);
+    Element wizardSteps = getChild(parentNode, CUSTOMIZE_IDE_WIZARD_STEPS);
     if (wizardSteps != null) {
       myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
     }
 
-    Element editor = parentNode.getChild(ELEMENT_EDITOR);
+    Element editor = getChild(parentNode, ELEMENT_EDITOR);
     if (editor != null) {
       myEditorBackgroundImageUrl = editor.getAttributeValue(BACKGROUND_URL_ATTR);
     }
 
-    Element helpElement = parentNode.getChild(HELP_ELEMENT_NAME);
+    Element helpElement = getChild(parentNode, HELP_ELEMENT_NAME);
     if (helpElement != null) {
       myHelpFileName = helpElement.getAttributeValue(ATTRIBUTE_HELP_FILE);
       myHelpRootName = helpElement.getAttributeValue(ATTRIBUTE_HELP_ROOT);
@@ -796,31 +811,31 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myHasContextHelp = attValue == null || Boolean.parseBoolean(attValue); // Default is true
     }
 
-    Element updateUrls = parentNode.getChild(UPDATE_URLS_ELEMENT_NAME);
+    Element updateUrls = getChild(parentNode, UPDATE_URLS_ELEMENT_NAME);
     myUpdateUrls = new UpdateUrlsImpl(updateUrls);
 
-    Element documentationElement = parentNode.getChild(ELEMENT_DOCUMENTATION);
+    Element documentationElement = getChild(parentNode, ELEMENT_DOCUMENTATION);
     if (documentationElement != null) {
       myDocumentationUrl = documentationElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element supportElement = parentNode.getChild(ELEMENT_SUPPORT);
+    Element supportElement = getChild(parentNode, ELEMENT_SUPPORT);
     if (supportElement != null) {
       mySupportUrl = supportElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element feedbackElement = parentNode.getChild(ELEMENT_FEEDBACK);
+    Element feedbackElement = getChild(parentNode, ELEMENT_FEEDBACK);
     if (feedbackElement != null) {
       myEAPFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_EAP_URL);
       myReleaseFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_RELEASE_URL);
     }
 
-    Element whatsnewElement = parentNode.getChild(ELEMENT_WHATSNEW);
+    Element whatsnewElement = getChild(parentNode, ELEMENT_WHATSNEW);
     if (whatsnewElement != null) {
       myWhatsNewUrl = whatsnewElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element pluginsElement = parentNode.getChild(ELEMENT_PLUGINS);
+    Element pluginsElement = getChild(parentNode, ELEMENT_PLUGINS);
     if (pluginsElement != null) {
       String url = pluginsElement.getAttributeValue(ATTRIBUTE_URL);
       myPluginManagerUrl = url != null ? url : DEFAULT_PLUGINS_HOST;
@@ -853,19 +868,18 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
     }
 
-    Element keymapElement = parentNode.getChild(ELEMENT_KEYMAP);
+    Element keymapElement = getChild(parentNode, ELEMENT_KEYMAP);
     if (keymapElement != null) {
       myWinKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_WINDOWS_URL);
       myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
     }
 
     myPluginChooserPages = new ArrayList<PluginChooserPage>();
-    final List children = parentNode.getChildren(PLUGINS_PAGE_ELEMENT_NAME);
-    for(Object child: children) {
-      myPluginChooserPages.add(new PluginChooserPageImpl((Element) child));
+    for (Element child : getChildren(parentNode, PLUGINS_PAGE_ELEMENT_NAME)) {
+      myPluginChooserPages.add(new PluginChooserPageImpl(child));
     }
 
-    List<Element> essentialPluginsElements = JDOMUtil.getChildren(parentNode, ESSENTIAL_PLUGIN);
+    List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
     Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
       @Override
       public String fun(Element element) {
@@ -875,7 +889,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     });
     myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
 
-    Element statisticsElement = parentNode.getChild(ELEMENT_STATISTICS);
+    Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {
       myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
       myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
@@ -887,17 +901,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myStatisticsServiceKey  = null;
     }
 
-    Element thirdPartyElement = parentNode.getChild(ELEMENT_THIRD_PARTY);
+    Element thirdPartyElement = getChild(parentNode, ELEMENT_THIRD_PARTY);
     if (thirdPartyElement != null) {
       myThirdPartySoftwareUrl = thirdPartyElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element tvElement = parentNode.getChild(ELEMENT_JB_TV);
+    Element tvElement = getChild(parentNode, ELEMENT_JB_TV);
     if (tvElement != null) {
       myJetbrainsTvUrl = tvElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
-    Element evaluationElement = parentNode.getChild(ELEMENT_EVALUATION);
+    Element evaluationElement = getChild(parentNode, ELEMENT_EVALUATION);
     if (evaluationElement != null) {
       final String url = evaluationElement.getAttributeValue(ATTRIBUTE_EVAL_LICENSE_URL);
       if (url != null && !url.isEmpty()) {
@@ -905,7 +919,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
  
-    Element licensingElement = parentNode.getChild(ELEMENT_LICENSING);
+    Element licensingElement = getChild(parentNode, ELEMENT_LICENSING);
     if (licensingElement != null) {
       final String url = licensingElement.getAttributeValue(ATTRIBUTE_KEY_CONVERSION_URL);
       if (url != null && !url.isEmpty()) {
@@ -913,7 +927,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
-    Element subscriptionsElement = parentNode.getChild(ELEMENT_SUBSCRIPTIONS);
+    Element subscriptionsElement = getChild(parentNode, ELEMENT_SUBSCRIPTIONS);
     if (subscriptionsElement != null) {
       mySubscriptionFormId = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_FORM_ID);
       mySubscriptionNewsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY);
@@ -924,25 +938,42 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
+  @NotNull
+  private static List<Element> getChildren(Element parentNode, String name) {
+    return parentNode.getChildren(name, parentNode.getNamespace());
+  }
+
+  private static Element getChild(Element parentNode, String version) {
+    return parentNode.getChild(version, parentNode.getNamespace());
+  }
+
+  //copy of ApplicationInfoProperties.shortenCompanyName
+  @VisibleForTesting
+  static String shortenCompanyName(String name) {
+    return StringUtil.trimEnd(StringUtil.trimEnd(name, " s.r.o."), " Inc.");
+  }
+
   private static void setBuildNumber(String apiVersion, String buildNumber) {
     PluginManagerCore.BUILD_NUMBER = apiVersion != null ? apiVersion : buildNumber;
   }
 
   private static GregorianCalendar parseDate(final String dateString) {
-    @SuppressWarnings("MultipleVariablesInDeclaration")
-    int year = 0, month = 0, day = 0, hour = 0, minute = 0;
+    GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     try {
-      year = Integer.parseInt(dateString.substring(0, 4));
-      month = Integer.parseInt(dateString.substring(4, 6));
-      day = Integer.parseInt(dateString.substring(6, 8));
+      calendar.set(Calendar.YEAR, Integer.parseInt(dateString.substring(0, 4)));
+      calendar.set(Calendar.MONTH, Integer.parseInt(dateString.substring(4, 6)) - 1);
+      calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateString.substring(6, 8)));
       if (dateString.length() > 8) {
-        hour = Integer.parseInt(dateString.substring(8, 10));
-        minute = Integer.parseInt(dateString.substring(10, 12));
+        calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(dateString.substring(8, 10)));
+        calendar.set(Calendar.MINUTE, Integer.parseInt(dateString.substring(10, 12)));
+      }
+      else {
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
       }
     }
     catch (Exception ignore) { }
-    if (month > 0) month--;
-    return new GregorianCalendar(year, month, day, hour, minute);
+    return calendar;
   }
 
   @SuppressWarnings("UseJBColor")
@@ -994,6 +1025,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myDependentPlugin = e.getAttributeValue("depends");
     }
 
+    @NotNull
     @Override
     public String getTitle() {
       return myTitle;
@@ -1014,6 +1046,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   public static boolean isInPerformanceTest() {
     return myInPerformanceTest;
   }
+  @TestOnly
   public static void setInPerformanceTest(boolean inPerformanceTest) {
     myInPerformanceTest = inPerformanceTest;
   }

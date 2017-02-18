@@ -42,8 +42,8 @@ public class PsiArrayType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return getText(myComponentType.getPresentableText(), "[]", false, true);
+  public String getPresentableText(boolean annotated) {
+    return getText(myComponentType.getPresentableText(), "[]", false, annotated);
   }
 
   @NotNull

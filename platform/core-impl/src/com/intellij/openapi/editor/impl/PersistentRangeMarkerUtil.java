@@ -30,8 +30,8 @@ class PersistentRangeMarkerUtil {
    * @param e             event that describes document change
    * @param rangeStart    target range marker start, for which update strategy should be selected
    * @param rangeEnd      target range marker end
-   * @return              <code>true</code> if target document range referenced by the given range marker should be translated via
-   *                      diff algorithm; <code>false</code> otherwise
+   * @return              {@code true} if target document range referenced by the given range marker should be translated via
+   *                      diff algorithm; {@code false} otherwise
    */
   static boolean shouldTranslateViaDiff(@NotNull DocumentEvent e, int rangeStart, int rangeEnd) {
     if (e.isWholeTextReplaced()) {

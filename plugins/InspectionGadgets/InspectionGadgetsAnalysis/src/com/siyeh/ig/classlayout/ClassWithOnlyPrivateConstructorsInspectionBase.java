@@ -68,7 +68,7 @@ public class ClassWithOnlyPrivateConstructorsInspectionBase extends BaseInspecti
       }
       final PsiClass[] innerClasses = aClass.getInnerClasses();
       for (PsiClass innerClass : innerClasses) {
-        if (isExtendedByInnerClass(innerClass, aClass, new HashSet<PsiClass>())) {
+        if (isExtendedByInnerClass(innerClass, aClass, new HashSet<>())) {
           return;
         }
       }

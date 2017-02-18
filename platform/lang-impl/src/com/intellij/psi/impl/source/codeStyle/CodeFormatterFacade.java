@@ -70,12 +70,12 @@ public class CodeFormatterFacade {
   private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
   /**
-   * This key is used as a flag that indicates if <code>'wrap long line during formatting'</code> activity is performed now.
+   * This key is used as a flag that indicates if {@code 'wrap long line during formatting'} activity is performed now.
    *
    * @see CodeStyleSettings#WRAP_LONG_LINES
    */
   public static final Key<Boolean> WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY
-    = new Key<Boolean>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");
+    = new Key<>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");
 
   private final CodeStyleSettings mySettings;
   private final FormatterTagHandler myTagHandler;
@@ -168,11 +168,11 @@ public class CodeFormatterFacade {
   public void processText(PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
     final Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-    final List<FormatTextRanges.FormatTextRange> textRanges = ranges.getRanges();
+    final List<FormatTextRange> textRanges = ranges.getRanges();
     if (document instanceof DocumentWindow) {
       file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       final DocumentWindow documentWindow = (DocumentWindow)document;
-      for (FormatTextRanges.FormatTextRange range : textRanges) {
+      for (FormatTextRange range : textRanges) {
         range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
       }
       document = documentWindow.getDelegate();
@@ -198,14 +198,14 @@ public class CodeFormatterFacade {
           if (node == null) {
             node = file.getNode();
           }
-          for (FormatTextRanges.FormatTextRange range : ranges.getRanges()) {
+          for (FormatTextRange range : ranges.getRanges()) {
             TextRange rangeToUse = preprocess(node, range.getTextRange());
             range.setTextRange(rangeToUse);
           }
           if (doPostponedFormatting) {
             RangeMarker[] markers = new RangeMarker[textRanges.size()];
             int i = 0;
-            for (FormatTextRanges.FormatTextRange range : textRanges) {
+            for (FormatTextRange range : textRanges) {
               TextRange textRange = range.getTextRange();
               int start = textRange.getStartOffset();
               int end = textRange.getEndOffset();
@@ -220,7 +220,7 @@ public class CodeFormatterFacade {
             FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
             component.doPostponedFormatting(file.getViewProvider());
             i = 0;
-            for (FormatTextRanges.FormatTextRange range : textRanges) {
+            for (FormatTextRange range : textRanges) {
               RangeMarker marker = markers[i];
               if (marker != null) {
                 range.setTextRange(TextRange.create(marker));
@@ -247,7 +247,7 @@ public class CodeFormatterFacade {
             mySettings.getIndentOptionsByFile(file, textRanges.size() == 1 ? textRanges.get(0).getTextRange() : null);
 
           formatter.format(model, mySettings, indentOptions, ranges, myReformatContext);
-          for (FormatTextRanges.FormatTextRange range : textRanges) {
+          for (FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();
             wrapLongLinesIfNecessary(file, document, textRange.getStartOffset(), textRange.getEndOffset());
           }
@@ -359,7 +359,7 @@ public class CodeFormatterFacade {
 
   @NotNull
   private static Collection<PsiLanguageInjectionHost> collectInjectionHosts(@NotNull PsiFile file, @NotNull TextRange range) {
-    Stack<PsiElement> toProcess = new Stack<PsiElement>();
+    Stack<PsiElement> toProcess = new Stack<>();
     for (PsiElement e = file.findElementAt(range.getStartOffset()); e != null; e = e.getNextSibling()) {
       if (e.getTextRange().getStartOffset() >= range.getEndOffset()) {
         break;
@@ -387,12 +387,12 @@ public class CodeFormatterFacade {
         }
       }
     }
-    return result == null ? Collections.<PsiLanguageInjectionHost>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
 
   /**
-   * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#getRightMargin(com.intellij.lang.Language)}
+   * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#getRightMargin(Language)}
    * right margin}.
    * <p/>
    * I.e. the algorithm is to do the following for every line:
@@ -400,7 +400,7 @@ public class CodeFormatterFacade {
    * <pre>
    * <ol>
    *   <li>
-   *      Check if the line exceeds {@link CodeStyleSettings#getRightMargin(com.intellij.lang.Language)}  right margin}. Go to the next line in the case of
+   *      Check if the line exceeds {@link CodeStyleSettings#getRightMargin(Language)}  right margin}. Go to the next line in the case of
    *      negative answer;
    *   </li>
    *   <li>Determine line wrap position; </li>
@@ -547,7 +547,7 @@ public class CodeFormatterFacade {
   }
 
   /**
-   * Emulates pressing <code>Enter</code> at current caret position.
+   * Emulates pressing {@code Enter} at current caret position.
    *
    * @param editor       target editor
    * @param project      target project

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Nadya Zabrodina
- */
+import java.util.Objects;
 
 /**
  * Used for storing branch information from repository internal hg files, f.e.  branchheads, bookmarks
- * see HgRepositoryReader
+ *
+ * @see org.zmlx.hg4idea.repo.HgRepositoryReader
+ * @author Nadya Zabrodina
  */
 public class HgNameWithHashInfo {
 
@@ -61,6 +60,6 @@ public class HgNameWithHashInfo {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myName, myHash);
+    return Objects.hash(myName, myHash);
   }
 }

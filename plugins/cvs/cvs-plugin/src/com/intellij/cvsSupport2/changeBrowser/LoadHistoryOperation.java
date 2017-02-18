@@ -45,7 +45,7 @@ public class LoadHistoryOperation extends LocalPathIndifferentOperation {
 
   @NonNls private static final String INVALID_OPTION_S = "invalid option -- S";
   @NonNls private static final SyncDateFormat DATE_FORMAT = new SyncDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ", Locale.US));
-  private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<String>();
+  private static final Collection<String> ourDoNotSupportingSOptionServers = new HashSet<>();
 
   private final String myModule;
   private final Date myDateFrom;

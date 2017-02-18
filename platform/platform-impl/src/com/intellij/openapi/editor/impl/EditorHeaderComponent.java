@@ -40,9 +40,9 @@ public class EditorHeaderComponent extends JPanel implements UISettingsListener 
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
-    boolean topBorderRequired = source.EDITOR_TAB_PLACEMENT != SwingConstants.TOP &&
-                                (source.SHOW_NAVIGATION_BAR || source.SHOW_MAIN_TOOLBAR);
+  public void uiSettingsChanged(UISettings uiSettings) {
+    boolean topBorderRequired = uiSettings.EDITOR_TAB_PLACEMENT != SwingConstants.TOP &&
+                                (uiSettings.SHOW_NAVIGATION_BAR || uiSettings.SHOW_MAIN_TOOLBAR);
     setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
   }
 }

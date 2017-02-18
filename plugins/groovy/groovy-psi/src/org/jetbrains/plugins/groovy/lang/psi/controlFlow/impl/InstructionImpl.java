@@ -31,8 +31,8 @@ import java.util.LinkedHashSet;
  * @author ven
  */
 public class InstructionImpl implements Instruction {
-  private final LinkedHashSet<InstructionImpl> myPredecessors = new LinkedHashSet<InstructionImpl>(1);
-  private final LinkedHashSet<InstructionImpl> mySuccessors = new LinkedHashSet<InstructionImpl>(1);
+  private final LinkedHashSet<InstructionImpl> myPredecessors = new LinkedHashSet<>(1);
+  private final LinkedHashSet<InstructionImpl> mySuccessors = new LinkedHashSet<>(1);
   private LinkedHashSet<NegatingGotoInstruction> myNegations;
 
   protected final PsiElement myPsiElement;
@@ -121,7 +121,7 @@ public class InstructionImpl implements Instruction {
 
   void addNegationsFrom(Instruction instruction) {
     if (myNegations == null) {
-      myNegations = new LinkedHashSet<NegatingGotoInstruction>(1);
+      myNegations = new LinkedHashSet<>(1);
     }
     for (NegatingGotoInstruction negation : instruction.getNegatingGotoInstruction()) {
       myNegations.add(negation);

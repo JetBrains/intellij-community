@@ -28,7 +28,7 @@ public class ForwardDeclaration<R, T> extends FunctionalParserBase<R, T> {
 
   @NotNull
   public static <R, T> ForwardDeclaration<R, T> create() {
-    return new ForwardDeclaration<R, T>();
+    return new ForwardDeclaration<>();
   }
 
   @NotNull

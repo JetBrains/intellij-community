@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -82,8 +82,8 @@ public class ModuleVcsDetector implements ProjectComponent {
     });
   }
 
-  private class MyModulesListener extends ModuleAdapter implements ModuleRootListener {
-    private final List<Pair<String, VcsDirectoryMapping>> myMappingsForRemovedModules = new ArrayList<Pair<String, VcsDirectoryMapping>>();
+  private class MyModulesListener implements ModuleRootListener, ModuleListener {
+    private final List<Pair<String, VcsDirectoryMapping>> myMappingsForRemovedModules = new ArrayList<>();
 
     @Override
     public void beforeRootsChange(ModuleRootEvent event) {
@@ -137,8 +137,8 @@ public class ModuleVcsDetector implements ProjectComponent {
   }
 
   private void autoDetectVcsMappings(final boolean tryMapPieces) {
-    Set<AbstractVcs> usedVcses = new HashSet<AbstractVcs>();
-    Map<VirtualFile, AbstractVcs> vcsMap = new HashMap<VirtualFile, AbstractVcs>();
+    Set<AbstractVcs> usedVcses = new HashSet<>();
+    Map<VirtualFile, AbstractVcs> vcsMap = new HashMap<>();
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     for(Module module: moduleManager.getModules()) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
@@ -154,7 +154,7 @@ public class ModuleVcsDetector implements ProjectComponent {
       // todo I doubt this is correct, see IDEA-50527
       final AbstractVcs[] abstractVcses = usedVcses.toArray(new AbstractVcs[1]);
       final Module[] modules = moduleManager.getModules();
-      final Set<String> contentRoots = new HashSet<String>();
+      final Set<String> contentRoots = new HashSet<>();
       for (Module module : modules) {
         final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
         for (VirtualFile root : roots) {
@@ -163,7 +163,7 @@ public class ModuleVcsDetector implements ProjectComponent {
       }
 
       if (abstractVcses [0] != null) {
-        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<VcsDirectoryMapping>(myVcsManager.getDirectoryMappings());
+        final List<VcsDirectoryMapping> vcsDirectoryMappings = new ArrayList<>(myVcsManager.getDirectoryMappings());
         for (Iterator<VcsDirectoryMapping> iterator = vcsDirectoryMappings.iterator(); iterator.hasNext();) {
           final VcsDirectoryMapping mapping = iterator.next();
           if (! contentRoots.contains(mapping.getDirectory())) {
@@ -201,7 +201,7 @@ public class ModuleVcsDetector implements ProjectComponent {
   }
 
   private List<Pair<String, VcsDirectoryMapping>> getMappings(final Module module) {
-    List<Pair<String, VcsDirectoryMapping>> result = new ArrayList<Pair<String, VcsDirectoryMapping>>();
+    List<Pair<String, VcsDirectoryMapping>> result = new ArrayList<>();
     final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
     final String moduleName = module.getName();
     for(final VirtualFile file: files) {

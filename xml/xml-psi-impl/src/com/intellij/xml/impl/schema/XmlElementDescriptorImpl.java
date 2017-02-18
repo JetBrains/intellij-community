@@ -251,7 +251,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
       if (context instanceof XmlTag && elements.length > 0) {
         String[] namespaces = ((XmlTag)context).knownNamespaces();
         if (namespaces.length > 1) {
-          List<XmlElementDescriptor> result = new ArrayList<XmlElementDescriptor>(Arrays.asList(elements));
+          List<XmlElementDescriptor> result = new ArrayList<>(Arrays.asList(elements));
           for (String namespace : namespaces) {
             if (namespace.equals(typeDescriptor.getNsDescriptor().getDefaultNamespace())) {
               continue;

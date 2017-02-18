@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -32,6 +33,7 @@ import java.util.Collections;
  *
  * Please note it is an experimental API that is subject to incompatible changes, or even removal, in a future release.
  */
+@ApiStatus.Experimental
 public abstract class AdditionalLibraryRootsProvider {
   public static final ExtensionPointName<AdditionalLibraryRootsProvider> EP_NAME = ExtensionPointName.create("com.intellij.additionalLibraryRootsProvider");
 

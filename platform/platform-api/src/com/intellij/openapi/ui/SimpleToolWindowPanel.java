@@ -18,7 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.ui.switcher.QuickActionProvider;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +29,13 @@ import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
 import java.util.List;
 
-public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider, DataProvider {
+public class SimpleToolWindowPanel extends JPanel implements DataProvider {
 
   private JComponent myToolbar;
   private JComponent myContent;
 
   private boolean myBorderless;
   protected boolean myVertical;
-  private boolean myProvideQuickActions;
 
   public SimpleToolWindowPanel(boolean vertical) {
     this(vertical, false);
@@ -46,7 +45,6 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     setLayout(new BorderLayout(vertical ? 0 : 1, vertical ? 1 : 0));
     myBorderless = borderless;
     myVertical = vertical;
-    setProvideQuickActions(true);
 
     addContainerListener(new ContainerAdapter() {
       @Override
@@ -96,25 +94,23 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    return QuickActionProvider.KEY.is(dataId) && myProvideQuickActions ? this : null;
+    return null;
   }
 
+  @Deprecated
   public SimpleToolWindowPanel setProvideQuickActions(boolean provide) {
-    myProvideQuickActions = provide;
     return this;
   }
 
-  public List<AnAction> getActions(boolean originalProvider) {
-    ActionToolbar toolbar = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class).first();
-    return toolbar == null ? null : toolbar.getActions(originalProvider);
+  public List<AnAction> getActions() {
+    JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class);
+    if (toolbars.size() == 0)
+      return null;
+    return toolbars.flatten(toolbar -> toolbar.getActions()).toList();
   }
 
   public JComponent getComponent() {
     return this;
-  }
-
-  public boolean isCycleRoot() {
-    return false;
   }
 
   public void setContent(JComponent c) {

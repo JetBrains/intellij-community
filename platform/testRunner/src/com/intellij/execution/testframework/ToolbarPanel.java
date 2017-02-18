@@ -54,7 +54,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   protected final ScrollToTestSourceAction myScrollToSource;
   private @Nullable ExportTestResultsAction myExportAction;
 
-  private final ArrayList<ToggleModelAction> myActions = new ArrayList<ToggleModelAction>();
+  private final ArrayList<ToggleModelAction> myActions = new ArrayList<>();
 
   public ToolbarPanel(final TestConsoleProperties properties,
                       final JComponent parent) {
@@ -156,7 +156,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       public void onChanged(Boolean value) {
         final AbstractTestTreeBuilder builder = model.getTreeBuilder();
         if (builder != null) {
-          builder.setTestsComparator(value);
+          builder.setTestsComparator(model.getProperties());
         }
       }
     }, model, true); 
@@ -165,7 +165,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
       public void onChanged(Boolean value) {
         final AbstractTestTreeBuilder builder = model.getTreeBuilder();
         if (builder != null) {
-          builder.setStatisticsComparator(model.getProperties(), value);
+          builder.setTestsComparator(model.getProperties());
         }
       }
     }, model, true);

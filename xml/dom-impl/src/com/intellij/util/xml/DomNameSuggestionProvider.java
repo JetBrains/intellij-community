@@ -36,7 +36,7 @@ public class DomNameSuggestionProvider implements NameSuggestionProvider {
       if (psiMetaData instanceof DomMetaData) {
         final DomMetaData domMetaData = (DomMetaData)psiMetaData;
         final GenericDomValue value = domMetaData.getNameElement(domMetaData.getElement());
-        ContainerUtil.addIfNotNull(getNameFromNameValue(value, true), result);
+        ContainerUtil.addIfNotNull(result, getNameFromNameValue(value, true));
       }
     }
     return null;

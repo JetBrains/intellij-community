@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class ArtifactEditorSettings implements PersistentStateComponent<ArtifactEditorSettings.ArtifactEditorSettingsState> {
   private boolean mySortElements = true;
-  private final List<ComplexPackagingElementType<?>> myTypesToShowContent = new ArrayList<ComplexPackagingElementType<?>>();
+  private final List<ComplexPackagingElementType<?>> myTypesToShowContent = new ArrayList<>();
 
   public ArtifactEditorSettings() {
   }
@@ -86,6 +86,6 @@ public class ArtifactEditorSettings implements PersistentStateComponent<Artifact
     public boolean mySortElements = true;
     @Tag("show-content")
     @AbstractCollection(surroundWithTag = false, elementTag = "type", elementValueAttribute = "id")
-    public List<String> myTypesToShowContentIds = new ArrayList<String>();
+    public List<String> myTypesToShowContentIds = new ArrayList<>();
   }
 }

@@ -36,10 +36,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Krasilschikov
@@ -76,12 +77,9 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
       return Collections.emptyList();
     }
 
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-
     // scan folder's children
-    for (PsiDirectory subDir : directory.getSubdirectories()) {
-      children.add(createFolderNode(subDir));
-    }
+    final List<AbstractTreeNode> children = Arrays.stream(directory.getSubdirectories())
+      .map(this::createFolderNode).collect(Collectors.toList());
 
     for (PsiFile file : directory.getFiles()) {
       processNotDirectoryFile(children, file);

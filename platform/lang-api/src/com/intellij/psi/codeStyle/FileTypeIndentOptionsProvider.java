@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * Allows to specify indent options for specific file types as opposed to languages. For a language it is highly recommended to use
- * <code>LanguageCodeStyleSettingsProvider</code>.
+ * {@code LanguageCodeStyleSettingsProvider}.
  * @see LanguageCodeStyleSettingsProvider
  * @see com.intellij.psi.codeStyle.CodeStyleSettings#getIndentOptions(FileType)
  */

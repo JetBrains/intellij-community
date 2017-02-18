@@ -40,7 +40,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
 
   @Override
   public boolean isOnDemand(){
-    final PsiImportStatementStub stub = getStub();
+    final PsiImportStatementStub stub = getGreenStub();
     if (stub != null) {
       return stub.isOnDemand();
     }

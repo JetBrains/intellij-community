@@ -33,7 +33,7 @@ import java.util.List;
  */
 public abstract class VcsBackgroundTask<T> extends Task.ConditionalModal {
   private final Collection<T> myItems;
-  private final List<VcsException> myExceptions = new ArrayList<VcsException>();
+  private final List<VcsException> myExceptions = new ArrayList<>();
 
   public VcsBackgroundTask(final Project project, @NotNull final String title, @NotNull final PerformInBackgroundOption backgroundOption,
                            final Collection<T> itemsToProcess, final boolean canBeCanceled) {

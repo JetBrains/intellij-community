@@ -46,7 +46,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                                                     @NotNull final GraphColorManager<CommitId> graphColorManager,
                                                                     @NotNull Set<CommitId> branchesCommitId) {
     PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
-    NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<CommitId>();
+    NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<>();
     PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(idsGenerator);
 
     final PermanentCommitsInfoImpl<CommitId> commitIdPermanentCommitsInfo =
@@ -61,8 +61,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       }
     });
 
-    return new PermanentGraphImpl<CommitId>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
-                                            branchesCommitId);
+    return new PermanentGraphImpl<>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
+                                    branchesCommitId);
   }
 
   @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
@@ -108,9 +108,14 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       baseController = new BekBaseController(this, myBekIntMap.get());
     }
 
-    LinearGraphController controller;
+    // TODO this code is unclear and obviously needs some refactoring
+    // I'll leave it for later to reorganize, and add some duplication for now, in order just to fix stuff
+    CascadeController controller;
     if (matchingCommits != null) {
       controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
+      if (visibleHeads != null) {
+        controller = new BranchFilterController(controller, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
+      }
     }
     else if (sortType == SortType.LinearBek) {
       if (visibleHeads != null) {
@@ -128,7 +133,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       controller = new CollapsedController(baseController, this, idOfVisibleBranches);
     }
 
-    return new VisibleGraphImpl<CommitId>(controller, this, myGraphColorManager);
+    return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
   }
 
   @NotNull
@@ -140,7 +145,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       List<Integer> downNodes = LinearGraphUtils.getDownNodesIncludeNotLoad(myPermanentLinearGraph, index);
       List<CommitId> parentsCommitIds = myPermanentCommitsInfo.convertToCommitIdList(downNodes);
       GraphCommit<CommitId> graphCommit =
-        new GraphCommitImpl<CommitId>(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
+        new GraphCommitImpl<>(commitId, parentsCommitIds, myPermanentCommitsInfo.getTimestamp(index));
       result.add(graphCommit);
     }
 
@@ -178,7 +183,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
           branchNodes.add((Integer)myPermanentCommitsInfo.getCommitId(node));
         }
       });
-      return new IntContainedInBranchCondition<CommitId>(branchNodes);
+      return new IntContainedInBranchCondition<>(branchNodes);
     }
     else {
       final Set<CommitId> branchNodes = ContainerUtil.newHashSet();
@@ -188,7 +193,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
           branchNodes.add(myPermanentCommitsInfo.getCommitId(node));
         }
       });
-      return new ContainedInBranchCondition<CommitId>(branchNodes);
+      return new ContainedInBranchCondition<>(branchNodes);
     }
   }
 

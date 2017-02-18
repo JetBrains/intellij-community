@@ -24,17 +24,22 @@ import org.jetbrains.annotations.NotNull;
 public class PyResolveContext {
   private final boolean myAllowImplicits;
   private final boolean myAllowProperties;
+  private final boolean myAllowRemote;
   private final TypeEvalContext myTypeEvalContext;
+
 
   private PyResolveContext(boolean allowImplicits, boolean allowProperties) {
     myAllowImplicits = allowImplicits;
     myAllowProperties = allowProperties;
     myTypeEvalContext = null;
+    myAllowRemote = false;
   }
 
-  private PyResolveContext(boolean allowImplicits, boolean allowProperties, TypeEvalContext typeEvalContext) {
+
+  private PyResolveContext(boolean allowImplicits, boolean allowProperties, boolean allowRemote, TypeEvalContext typeEvalContext) {
     myAllowImplicits = allowImplicits;
     myAllowProperties = allowProperties;
+    myAllowRemote = allowRemote;
     myTypeEvalContext = typeEvalContext;
   }
 
@@ -44,6 +49,10 @@ public class PyResolveContext {
 
   public boolean allowProperties() {
     return myAllowProperties;
+  }
+
+  public boolean allowRemote() {
+    return myAllowRemote;
   }
 
   private static final PyResolveContext ourDefaultContext = new PyResolveContext(true, true);
@@ -63,11 +72,15 @@ public class PyResolveContext {
   }
 
   public PyResolveContext withTypeEvalContext(@NotNull TypeEvalContext context) {
-    return new PyResolveContext(myAllowImplicits, myAllowProperties, context);
+    return new PyResolveContext(myAllowImplicits, myAllowProperties, myAllowRemote, context);
   }
 
   public PyResolveContext withoutImplicits() {
-    return new PyResolveContext(false, myAllowProperties, myTypeEvalContext);
+    return new PyResolveContext(false, myAllowProperties, myAllowRemote, myTypeEvalContext);
+  }
+
+  public PyResolveContext withRemote() {
+    return new PyResolveContext(myAllowImplicits, myAllowProperties, true, myTypeEvalContext);
   }
 
   public TypeEvalContext getTypeEvalContext() {

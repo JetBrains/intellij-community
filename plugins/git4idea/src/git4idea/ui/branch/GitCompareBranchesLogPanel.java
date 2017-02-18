@@ -134,11 +134,11 @@ class GitCompareBranchesLogPanel extends JPanel {
   }
 
   private ArrayList<GitCommit> getBranchToHeadCommits(GitRepository selectedRepo) {
-    return new ArrayList<GitCommit>(myCompareInfo.getBranchToHeadCommits(selectedRepo));
+    return new ArrayList<>(myCompareInfo.getBranchToHeadCommits(selectedRepo));
   }
 
   private ArrayList<GitCommit> getHeadToBranchCommits(GitRepository selectedRepo) {
-    return new ArrayList<GitCommit>(myCompareInfo.getHeadToBranchCommits(selectedRepo));
+    return new ArrayList<>(myCompareInfo.getHeadToBranchCommits(selectedRepo));
   }
 
   private GitCommitCompareInfo.InfoType getInfoType() {

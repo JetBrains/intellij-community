@@ -17,6 +17,8 @@ package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -33,6 +35,8 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 
 public class MergeWindow {
+  private static final Logger LOG = Logger.getInstance(MergeWindow.class);
+
   @Nullable private final Project myProject;
   @NotNull private final MergeRequest myMergeRequest;
 
@@ -66,6 +70,10 @@ public class MergeWindow {
   }
 
   public void show() {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      LOG.error("Merge dialog should not be shown under a write action, as it will disable any background activity.");
+    }
+
     init();
     myWrapper.show();
   }

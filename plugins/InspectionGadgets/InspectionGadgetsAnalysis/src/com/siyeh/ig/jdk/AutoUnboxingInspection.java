@@ -48,7 +48,7 @@ public class AutoUnboxingInspection extends BaseInspection {
   /**
    * @noinspection StaticCollection
    */
-  @NonNls static final Map<String, String> s_unboxingMethods = new HashMap<String, String>(8);
+  @NonNls static final Map<String, String> s_unboxingMethods = new HashMap<>(8);
 
   static {
     s_unboxingMethods.put("byte", "byteValue");
@@ -122,13 +122,8 @@ public class AutoUnboxingInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("auto.unboxing.make.unboxing.explicit.quickfix");
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHas
   public Map<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> map(final ClassReader inputData, final Mappings mappings) {
     final Map<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>> map =
       new HashMap<Integer, TObjectIntHashMap<EnumeratedMethodIncompleteSignature>>();
-    final MethodVisitor methodVisitor = new MethodVisitor(Opcodes.ASM5) {
+    final MethodVisitor methodVisitor = new MethodVisitor(Opcodes.API_VERSION) {
       @Override
       public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         final Type returnType = Type.getReturnType(desc);
@@ -68,7 +68,7 @@ public class MethodsUsageIndexer extends ClassFileIndexer<Integer, TObjectIntHas
         }
       }
     };
-    inputData.accept(new ClassVisitor(Opcodes.ASM5) {
+    inputData.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public MethodVisitor visitMethod(final int access,
                                        final String name,

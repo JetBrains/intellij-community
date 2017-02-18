@@ -18,7 +18,6 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -147,14 +146,14 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project, @NotNull final Map<GitRepository, List<GitCommit>> history,
-                                                  @NotNull final String unmergedBranch, @NotNull final List<String> mergedToBranches,
-                                                  @NotNull final String baseBranch) {
-    final AtomicBoolean forceDelete = new AtomicBoolean();
-    ApplicationManager.getApplication().invokeAndWait(() -> forceDelete.set(
-      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, unmergedBranch, mergedToBranches, baseBranch)),
-      ModalityState.defaultModalityState());
-    return forceDelete.get();
+  public boolean showBranchIsNotFullyMergedDialog(@NotNull Project project,
+                                                  @NotNull Map<GitRepository, List<GitCommit>> history,
+                                                  @NotNull Map<GitRepository, String> baseBranches,
+                                                  @NotNull String removedBranch) {
+    AtomicBoolean restore = new AtomicBoolean();
+    ApplicationManager.getApplication().invokeAndWait(() -> restore.set(
+      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, baseBranches, removedBranch)));
+    return restore.get();
   }
 
   @NotNull

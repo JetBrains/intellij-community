@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -142,11 +141,14 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   public abstract static class RendererComponent extends CellRendererPanel implements Disposable {
     private final EditorEx myEditor;
+    private final EditorTextField myTextField;
     protected TextAttributes myTextAttributes;
     private boolean mySelected;
 
     public RendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
-      myEditor = createEditor(project, fileType, inheritFontFromLaF);
+      Pair<EditorTextField, EditorEx> pair = createEditor(project, fileType, inheritFontFromLaF);
+      myTextField = pair.first;
+      myEditor = pair.second;
       add(myEditor.getContentComponent());
     }
 
@@ -155,7 +157,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     @NotNull
-    private static EditorEx createEditor(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+    private static Pair<EditorTextField, EditorEx> createEditor(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
       EditorTextField field = new EditorTextField(new MyDocument(), project, fileType, false, false);
       field.setSupplementary(true);
       field.setFontInheritedFromLAF(inheritFontFromLaF);
@@ -169,7 +171,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
       editor.getScrollPane().setBorder(null);
 
-      return editor;
+      return Pair.create(field, editor);
     }
 
     public void setText(String text, @Nullable TextAttributes textAttributes, boolean selected) {
@@ -191,8 +193,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public void dispose() {
-      myEditor.getComponent().removeNotify();
-      EditorFactory.getInstance().releaseEditor(myEditor);
+      remove(myEditor.getContentComponent());
+      myTextField.removeNotify();
     }
 
     protected void setTextToEditor(String text) {
@@ -383,7 +385,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override public void removeEditReadOnlyListener(@NotNull EditReadOnlyListener listener) { }
     @Override public void replaceText(@NotNull CharSequence chars, long newModificationStamp) { }
     @Override public void moveText(int srcStart, int srcEnd, int dstOffset) { }
-    @Override public int getListenersCount() { return 0; }
+
     @Override public void suppressGuardedExceptions() { }
     @Override public void unSuppressGuardedExceptions() { }
     @Override public boolean isInEventsHandling() { return false; }
@@ -403,8 +405,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override public boolean isInBulkUpdate() { return false; }
     @Override public void setInBulkUpdate(boolean value) { }
     @NotNull @Override public List<RangeMarker> getGuardedBlocks() { return Collections.emptyList(); }
-    @Override public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) { return myRangeMarkers.process(processor); }
-    @Override public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) { return myRangeMarkers.processOverlappingWith(start, end, processor); }
+    @Override public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.process(processor); }
+    @Override public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.processOverlappingWith(start, end, processor); }
     @NotNull
     @Override public String getText() { return myString; }
     @NotNull @Override public String getText(@NotNull TextRange range) { return range.substring(getText()); }

@@ -51,10 +51,10 @@ import java.util.*;
  */
 public class PaletteWindow extends JPanel implements LightToolWindowContent, DataProvider {
   private final Project myProject;
-  private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<PaletteGroupHeader>();
+  private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<>();
   private final PaletteItemProvider[] myProviders;
   private final MyPropertyChangeListener myPropertyChangeListener = new MyPropertyChangeListener();
-  private final Set<PaletteGroup> myGroups = new HashSet<PaletteGroup>();
+  private final Set<PaletteGroup> myGroups = new HashSet<>();
   private final JTabbedPane myTabbedPane = new JBTabbedPane();
   private final JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane();
   private final MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
@@ -119,7 +119,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     }
 
     VirtualFile file = designer == null ? null : designer.getFile();
-    Set<PaletteGroup> currentGroups = new HashSet<PaletteGroup>(collectCurrentGroups(file));
+    Set<PaletteGroup> currentGroups = new HashSet<>(collectCurrentGroups(file));
     if (!currentGroups.equals(myGroups)) {
       refreshPalette(file);
     }
@@ -189,7 +189,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   private static String[] collectTabNames(final Collection<PaletteGroup> groups) {
-    Set<String> result = new TreeSet<String>();
+    Set<String> result = new TreeSet<>();
     for (PaletteGroup group : groups) {
       result.add(group.getTabName());
     }
@@ -197,7 +197,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   private ArrayList<PaletteGroup> collectCurrentGroups(@Nullable VirtualFile selectedFile) {
-    ArrayList<PaletteGroup> result = new ArrayList<PaletteGroup>();
+    ArrayList<PaletteGroup> result = new ArrayList<>();
     if (selectedFile != null) {
       for (PaletteItemProvider provider : myProviders) {
         PaletteGroup[] groups = provider.getActiveGroups(selectedFile);

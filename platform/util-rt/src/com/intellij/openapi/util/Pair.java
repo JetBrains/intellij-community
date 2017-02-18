@@ -37,7 +37,7 @@ public class Pair<A, B> {
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static <A, B> Pair<A, B> pair(A first, B second) {
     //noinspection DontUsePairConstructor
-    return new Pair<A, B>(first, second);
+    return create(first, second);
   }
 
   @NotNull

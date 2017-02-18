@@ -68,7 +68,7 @@ public class CharsetEP implements PatchEP {
     if (commitContext == null) return;
     Map<String, String> map = commitContext.getUserData(ourName);
     if (map == null) {
-      map = new HashMap<String, String>();
+      map = new HashMap<>();
       commitContext.putUserData(ourName, map);
     }
     final File file = new File(myBaseDir, path);

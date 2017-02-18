@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,15 @@ package com.intellij.ui.plaf.gtk;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.basic.BasicMenuUI;
+import javax.swing.plaf.synth.SynthMenuUI;
 import java.awt.*;
 
 public class GtkMenuUI extends BasicMenuUI {
-  private final BasicMenuUI myOriginalUI;
+  private final SynthMenuUI myOriginalUI;
 
-  public GtkMenuUI(final MenuItemUI originalUI) {
-    assert isUiAcceptable(originalUI) : originalUI;
-    myOriginalUI = (BasicMenuUI)originalUI;
-  }
-
-  public static boolean isUiAcceptable(final MenuItemUI ui) {
-    return ui instanceof BasicMenuUI && GtkPaintingUtil.isSynthUI(ui);
+  public GtkMenuUI(SynthMenuUI originalUI) {
+    myOriginalUI = originalUI;
   }
 
   @Override
@@ -55,8 +50,9 @@ public class GtkMenuUI extends BasicMenuUI {
   protected void paintText(final Graphics g, final JMenuItem menuItem, final Rectangle textRect, final String text) {
     if (!menuItem.isEnabled() && UIUtil.isMurrineBasedTheme()) {
       GtkPaintingUtil.paintDisabledText(myOriginalUI, g, menuItem, textRect, text);
-      return;
     }
-    super.paintText(g, menuItem, textRect, text);
+    else {
+      super.paintText(g, menuItem, textRect, text);
+    }
   }
 }

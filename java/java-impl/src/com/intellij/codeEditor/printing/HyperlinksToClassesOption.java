@@ -41,7 +41,7 @@ public class HyperlinksToClassesOption extends PrintOption {
     if (isGenerateHyperlinksToClasses) {
       FileType fileType = psiFile.getFileType();
       if (StdFileTypes.JAVA == fileType || StdFileTypes.JSP == fileType) {
-        final TreeMap<Integer, PsiReference> refMap = new TreeMap<Integer, PsiReference>();
+        final TreeMap<Integer, PsiReference> refMap = new TreeMap<>();
         findClassReferences(psiFile, refMap, filesMap, psiFile);
         return refMap;
       }

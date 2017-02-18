@@ -27,15 +27,9 @@ import org.jetbrains.annotations.NotNull;
 
 class ConvertOctalLiteralToDecimalFix extends InspectionGadgetsFix {
 
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
-
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix");
   }
 

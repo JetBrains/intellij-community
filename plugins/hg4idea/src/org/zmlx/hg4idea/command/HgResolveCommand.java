@@ -73,7 +73,7 @@ public class HgResolveCommand {
   }
 
   private static Map<HgFile, HgResolveStatusEnum> handleResult(VirtualFile repo, HgCommandResult result) {
-    final Map<HgFile, HgResolveStatusEnum> resolveStatus = new HashMap<HgFile, HgResolveStatusEnum>();
+    final Map<HgFile, HgResolveStatusEnum> resolveStatus = new HashMap<>();
     for (String line : result.getOutputLines()) {
       if (StringUtil.isEmptyOrSpaces(line) || line.length() < ITEM_COUNT) {
         continue;
@@ -93,7 +93,7 @@ public class HgResolveCommand {
 
   public void markResolved(@NotNull VirtualFile repo, @NotNull Collection<FilePath> paths) {
     for (List<String> chunk : VcsFileUtil.chunkPaths(repo, paths)) {
-      final List<String> args = new ArrayList<String>();
+      final List<String> args = new ArrayList<>();
       args.add("--mark");
       args.addAll(chunk);
       new HgCommandExecutor(myProject).execute(repo, "resolve", args, null);

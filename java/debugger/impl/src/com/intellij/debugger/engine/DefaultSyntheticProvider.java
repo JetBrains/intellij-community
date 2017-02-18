@@ -26,7 +26,7 @@ public class DefaultSyntheticProvider implements SyntheticTypeComponentProvider 
   @Override
   public boolean isSynthetic(TypeComponent typeComponent) {
     String name = typeComponent.name();
-    if (LambdaMethodFilter.isLambdaName(name)) {
+    if (DebuggerUtilsEx.isLambdaName(name)) {
       return false;
     }
     else {

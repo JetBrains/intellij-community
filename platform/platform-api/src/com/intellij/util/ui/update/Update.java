@@ -19,6 +19,12 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 
+/**
+ * Describes a task for {@link MergingUpdateQueue}. Equal tasks (instances with the equal {@code identity} objects) are merged, i.e.
+ * only the first of them is executed. If some tasks are more generic than others override {@link #canEat(Update)} method.
+ *
+ * @see MergingUpdateQueue
+ */
 public abstract class Update extends ComparableObject.Impl implements Runnable {
 
   public static final int LOW_PRIORITY = 999;
@@ -77,6 +83,11 @@ public abstract class Update extends ComparableObject.Impl implements Runnable {
     return myPriority;
   }
 
+  /**
+   * Override this method and return {@code true} if this task is more generic than the passed {@code update}, e.g. this tasks repaint the
+   * whole frame and the passed task repaint some component on the frame. In that case the less generic tasks will be removed from the queue
+   * before execution.
+   */
   public boolean canEat(Update update) {
     return false;
   }

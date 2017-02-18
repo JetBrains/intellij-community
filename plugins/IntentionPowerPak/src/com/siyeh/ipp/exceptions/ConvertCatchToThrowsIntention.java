@@ -16,11 +16,12 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.VariableSearchUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,11 @@ public class ConvertCatchToThrowsIntention extends Intention {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiCatchSection catchSection = (PsiCatchSection)element.getParent();
     final NavigatablePsiElement owner = PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class, PsiLambdaExpression.class);
@@ -45,11 +51,11 @@ public class ConvertCatchToThrowsIntention extends Intention {
     }
     else if (owner instanceof PsiLambdaExpression) {
       method = LambdaUtil.getFunctionalInterfaceMethod(owner);
-      if (method == null || !FileModificationService.getInstance().preparePsiElementsForWrite(method)) {
-        return;
-      }
     }
     else {
+      return;
+    }
+    if (method == null || !FileModificationService.getInstance().preparePsiElementsForWrite(method)) {
       return;
     }
     // todo warn if method implements or overrides some base method
@@ -57,32 +63,34 @@ public class ConvertCatchToThrowsIntention extends Intention {
     // "Method xx() of class XX implements/overrides method of class
     // YY. Do you want to modify the base method?"
     //                                             [Yes][No][Cancel]
-    final PsiReferenceList throwsList = method.getThrowsList();
-    final PsiType catchType = catchSection.getCatchType();
-    addToThrowsList(throwsList, catchType);
-    final PsiTryStatement tryStatement = catchSection.getTryStatement();
-    final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-    if (catchSections.length > 1 || tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) {
-      catchSection.delete();
-    }
-    else {
-      final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-      if (tryBlock == null) {
-        return;
-      }
-      final PsiCodeBlock parentCodeBlock = PsiTreeUtil.getParentOfType(tryStatement, PsiCodeBlock.class);
-      if (parentCodeBlock == null || !VariableSearchUtils.containsConflictingDeclarations(tryBlock, parentCodeBlock)) {
-        final PsiElement first = tryBlock.getFirstBodyElement();
-        final PsiElement last = tryBlock.getLastBodyElement();
-        if (first != null && last != null) {
-          tryStatement.getParent().addRangeAfter(first, last, tryStatement);
-        }
-        tryStatement.delete();
+    WriteAction.run(() -> {
+      final PsiReferenceList throwsList = method.getThrowsList();
+      final PsiType catchType = catchSection.getCatchType();
+      addToThrowsList(throwsList, catchType);
+      final PsiTryStatement tryStatement = catchSection.getTryStatement();
+      final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+      if (catchSections.length > 1 || tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) {
+        catchSection.delete();
       }
       else {
-        tryStatement.replace(tryBlock);
+        final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+        if (tryBlock == null) {
+          return;
+        }
+        final PsiCodeBlock parentCodeBlock = PsiTreeUtil.getParentOfType(tryStatement, PsiCodeBlock.class);
+        if (parentCodeBlock == null || !DeclarationSearchUtils.containsConflictingDeclarations(tryBlock, parentCodeBlock)) {
+          final PsiElement first = tryBlock.getFirstBodyElement();
+          final PsiElement last = tryBlock.getLastBodyElement();
+          if (first != null && last != null) {
+            tryStatement.getParent().addRangeAfter(first, last, tryStatement);
+          }
+          tryStatement.delete();
+        }
+        else {
+          tryStatement.replace(tryBlock);
+        }
       }
-    }
+    });
   }
 
   private static void addToThrowsList(PsiReferenceList throwsList, PsiType catchType) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.components.impl;
 
 import com.intellij.application.options.ReplacePathToMacroMap;
@@ -26,20 +25,17 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 public class ModulePathMacroManager extends BasePathMacroManager {
   private final Module myModule;
 
-  public ModulePathMacroManager(PathMacros pathMacros, Module module) {
+  public ModulePathMacroManager(@NotNull PathMacros pathMacros, @NotNull Module module) {
     super(pathMacros);
+
     myModule = module;
   }
 
   @NotNull
   @Override
   public ExpandMacroToPathMap getExpandMacroMap() {
-    final ExpandMacroToPathMap result = new ExpandMacroToPathMap();
-    if (!myModule.isDisposed()) {
-      addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModule.getModuleFilePath()));
-    }
-
-    result.putAll(super.getExpandMacroMap());
+    ExpandMacroToPathMap result = super.getExpandMacroMap();
+    addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacroUtil.getModuleDir(myModule.getModuleFilePath()));
     return result;
   }
 
@@ -47,10 +43,8 @@ public class ModulePathMacroManager extends BasePathMacroManager {
   @Override
   public ReplacePathToMacroMap getReplacePathMap() {
     final ReplacePathToMacroMap result = super.getReplacePathMap();
-    if (!myModule.isDisposed()) {
-      final String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
-      addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath, PathMacroUtil.getUserHomePath());
-    }
+    final String modulePath = PathMacroUtil.getModuleDir(myModule.getModuleFilePath());
+    addFileHierarchyReplacements(result, PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath, PathMacroUtil.getUserHomePath());
     return result;
   }
 }

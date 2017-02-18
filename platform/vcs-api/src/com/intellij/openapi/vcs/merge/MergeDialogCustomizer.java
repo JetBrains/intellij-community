@@ -58,7 +58,7 @@ public class MergeDialogCustomizer {
    * @return title that is shown above the center panel in the 3-way merge dialog. "Merge result" by default.
    */
   @Nullable public String getCenterPanelTitle(@NotNull VirtualFile file) {
-    return VcsBundle.message("merge.version.title.merge.result");
+    return VcsBundle.message("merge.version.title.base.version");
   }
 
   /**

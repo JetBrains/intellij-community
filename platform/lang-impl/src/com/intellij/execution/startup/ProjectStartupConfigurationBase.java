@@ -37,7 +37,7 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
   private final List<ConfigurationDescriptor> myList;
 
   protected ProjectStartupConfigurationBase() {
-    myList = new ArrayList<ConfigurationDescriptor>();
+    myList = new ArrayList<>();
   }
 
   @Nullable
@@ -94,7 +94,7 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     for (ConfigurationDescriptor descriptor : list) {
       if (descriptor.getId().equals(oldId)) {
         final List<ConfigurationDescriptor> newList =
-          new ArrayList<ConfigurationDescriptor>(list);
+          new ArrayList<>(list);
         newList.remove(descriptor);
         newList.add(new ConfigurationDescriptor(settings.getUniqueID(), settings.getName()));
         setList(newList);

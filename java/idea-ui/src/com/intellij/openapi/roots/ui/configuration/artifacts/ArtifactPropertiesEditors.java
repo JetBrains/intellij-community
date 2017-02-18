@@ -44,8 +44,8 @@ public class ArtifactPropertiesEditors {
   public ArtifactPropertiesEditors(ArtifactEditorContext context, Artifact originalArtifact, Artifact artifact) {
     myContext = context;
     myOriginalArtifact = originalArtifact;
-    myMainPanels = new HashMap<String, JPanel>();
-    myEditors = new ArrayList<PropertiesEditorInfo>();
+    myMainPanels = new HashMap<>();
+    myEditors = new ArrayList<>();
     for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
       final PropertiesEditorInfo editorInfo = new PropertiesEditorInfo(provider);
       myEditors.add(editorInfo);
@@ -68,7 +68,7 @@ public class ArtifactPropertiesEditors {
   }
 
   public void addTabs(TabbedPaneWrapper tabbedPane) {
-    List<String> sortedTabs = new ArrayList<String>(myMainPanels.keySet());
+    List<String> sortedTabs = new ArrayList<>(myMainPanels.keySet());
     Collections.sort(sortedTabs, (o1, o2) -> {
       int i1 = STANDARD_TABS_ORDER.indexOf(o1);
       if (i1 == -1) i1 = STANDARD_TABS_ORDER.size();

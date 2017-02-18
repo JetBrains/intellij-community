@@ -19,6 +19,7 @@ import com.intellij.ide.CutProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PasteProvider;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -91,6 +92,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
       @Override
       public Point magnify(double scale, Point at) {
+        if (myEditor.isDisposed()) return at;
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
         double currentSize = myEditor.getColorsScheme().getEditorFontSize();
         int defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
@@ -224,7 +226,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     try {
       Graphics2D gg = (Graphics2D)g;
       UIUtil.setupComposite(gg);
-      EditorUIUtil.setupAntialiasing(gg);
+      if (myEditor.useEditorAntialiasing()) {
+        EditorUIUtil.setupAntialiasing(gg);
+      }
+      else {
+        UISettings.setupAntialiasing(gg);
+      }
       myEditor.paint(gg);
     }
     finally {
@@ -232,23 +239,14 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
   }
 
-  @Override
-  public void revalidate() {
-    // Null-check necessary because JTextView constructor invokes overridden method (updateUI, which calls revalidate)
-    // before our own constructor has had a chance to run
-    //noinspection ConstantConditions
-    if (myEditor != null) {
-      myEditor.resetPaintersWidth();
-    }
-    super.revalidate();
-  }
-
   public void repaintEditorComponent() {
     repaint();
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
-    repaint(x, y, width, height);
+    int topOverhang = Math.max(0, myEditor.myView.getTopOverhang());
+    int bottomOverhang = Math.max(0, myEditor.myView.getBottomOverhang());
+    repaint(x, y - topOverhang, width, height + topOverhang + bottomOverhang);
   }
 
   //--implementation of Scrollable interface--------------------------------------
@@ -368,6 +366,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // work. We do however need to provide a TextUI implementation since some
     // screen reader support code will invoke it
     setUI(new EditorAccessibilityTextUI());
+    UISettings.setupEditorAntialiasing(this);
     invalidate();
   }
 
@@ -474,7 +473,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Override
     public void addDocumentListener(javax.swing.event.DocumentListener documentListener) {
       if (myListeners == null) {
-        myListeners = new ArrayList<javax.swing.event.DocumentListener>(2);
+        myListeners = new ArrayList<>(2);
       }
       myListeners.add(documentListener);
     }

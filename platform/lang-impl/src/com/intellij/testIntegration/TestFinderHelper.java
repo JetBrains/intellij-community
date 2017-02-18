@@ -23,12 +23,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.NameUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class TestFinderHelper {
-  public static PsiElement findSourceElement(PsiElement from) {
+  public static PsiElement findSourceElement(@NotNull final PsiElement from) {
     for (TestFinder each : getFinders()) {
       PsiElement result = each.findSourceElement(from);
       if (result != null) return result;
@@ -36,18 +37,20 @@ public class TestFinderHelper {
     return null;
   }
 
-  public static Collection<PsiElement> findTestsForClass(PsiElement element) {
-    Collection<PsiElement> result = new LinkedHashSet<PsiElement>();
+  public static Collection<PsiElement> findTestsForClass(@NotNull final PsiElement element) {
+    Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
-      result.addAll(each.findTestsForClass(element));
+      final PsiElement selectedElement = each.findSelectedElement(element);
+      if (selectedElement != null) result.addAll(each.findTestsForClass(selectedElement));
     }
     return result;
   }
 
-  public static Collection<PsiElement> findClassesForTest(PsiElement element) {
-    Collection<PsiElement> result = new LinkedHashSet<PsiElement>();
+  public static Collection<PsiElement> findClassesForTest(@NotNull final PsiElement element) {
+    Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
-      result.addAll(each.findClassesForTest(element));
+      final PsiElement selectedElement = each.findSelectedElement(element);
+      if (selectedElement != null) result.addAll(each.findClassesForTest(selectedElement));
     }
     return result;
   }
@@ -87,7 +90,7 @@ public class TestFinderHelper {
       return result;
     });
 
-    final List<PsiElement> result = new ArrayList<PsiElement>(elementsWithWeights.size());
+    final List<PsiElement> result = new ArrayList<>(elementsWithWeights.size());
     for (Pair<? extends PsiNamedElement, Integer> each : elementsWithWeights) {
       result.add(each.first);
     }
@@ -97,12 +100,12 @@ public class TestFinderHelper {
 
   public static List<Pair<String, Integer>> collectPossibleClassNamesWithWeights(String testName) {
     String[] words = NameUtil.splitNameIntoWords(testName);
-    List<Pair<String, Integer>> result = new ArrayList<Pair<String, Integer>>();
+    List<Pair<String, Integer>> result = new ArrayList<>();
 
     for (int from = 0; from < words.length; from++) {
       for (int to = from; to < words.length; to++) {
-        result.add(new Pair<String, Integer>(StringUtil.join(words, from, to + 1, ""),
-                                             words.length - from + to));
+        result.add(new Pair<>(StringUtil.join(words, from, to + 1, ""),
+                              words.length - from + to));
       }
     }
 

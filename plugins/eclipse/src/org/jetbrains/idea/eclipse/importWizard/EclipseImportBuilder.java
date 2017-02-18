@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -54,8 +55,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
-import com.intellij.util.Function;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -84,7 +83,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     public String root;
     public List<String> workspace;
     public boolean linkConverted;
-    public List<String> projectsToConvert = new ArrayList<String>();
+    public List<String> projectsToConvert = new ArrayList<>();
     public boolean openModuleSettings;
     public Options converterOptions = new Options();
     public Set<String> existingModuleNames;
@@ -93,24 +92,29 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   private Parameters parameters;
 
 
+  @Override
   @NotNull
   public String getName() {
     return EclipseBundle.message("eclipse.name");
   }
 
+  @Override
   public Icon getIcon() {
     return EclipseIcons.Eclipse;
   }
 
+  @Override
   @Nullable
   public String getRootDirectory() {
     return getParameters().root;
   }
 
+  @Override
   public boolean setRootDirectory(final String path) {
     ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        final ArrayList<String> roots = new ArrayList<String>();
+        final ArrayList<String> roots = new ArrayList<>();
         EclipseProjectFinder.findModuleRoots(roots, path, path12 -> {
           final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
           if (progressIndicator != null) {
@@ -128,6 +132,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         getParameters().root = path;
       }
 
+      @Override
       public void onCancel() {
         getParameters().workspace = null;
         getParameters().root = null;
@@ -138,10 +143,12 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     return getParameters().workspace != null;
   }
 
+  @Override
   public List<String> getList() {
     return getParameters().workspace;
   }
 
+  @Override
   public boolean isMarked(final String element) {
     if (getParameters().projectsToConvert != null) {
       return getParameters().projectsToConvert.contains(element);
@@ -149,27 +156,32 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     return !getParameters().existingModuleNames.contains(EclipseProjectFinder.findProjectName(element));
   }
 
+  @Override
   public void setList(List<String> list) {
     getParameters().projectsToConvert = list;
   }
 
+  @Override
   public boolean isOpenProjectSettingsAfter() {
     return getParameters().openModuleSettings;
   }
 
+  @Override
   public void setOpenProjectSettingsAfter(boolean on) {
     getParameters().openModuleSettings = on;
   }
 
+  @Override
   public void cleanup() {
     super.cleanup();
     parameters = null;
   }
 
+  @Override
   public boolean validate(final Project currentProject, final Project dstProject) {
-    final Ref<Exception> refEx = new Ref<Exception>();
-    final Set<String> variables = new THashSet<String>();
-    final Map<String, String> naturesNames = new THashMap<String, String>();
+    final Ref<Exception> refEx = new Ref<>();
+    final Set<String> variables = new THashSet<>();
+    final Map<String, String> naturesNames = new THashMap<>();
     final List<String> projectsToConvert = getParameters().projectsToConvert;
     final boolean oneProjectToConvert = projectsToConvert.size() == 1;
     final String separator = oneProjectToConvert ? "<br>" : ", ";
@@ -183,10 +195,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           collectUnknownNatures(path, naturesNames, separator);
         }
       }
-      catch (IOException e) {
-        refEx.set(e);
-      }
-      catch (JDOMException e) {
+      catch (IOException | JDOMException e) {
         refEx.set(e);
       }
     }, EclipseBundle.message("eclipse.import.converting"), false, currentProject);
@@ -220,17 +229,17 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   public List<Module> commit(final Project project, ModifiableModuleModel model, ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
 
-    final Collection<String> unknownLibraries = new TreeSet<String>();
-    final Collection<String> unknownJdks = new TreeSet<String>();
-    final Set<String> refsToModules = new HashSet<String>();
-    final List<Module> result = new ArrayList<Module>();
-    final Map<Module, Set<String>> module2NatureNames = new HashMap<Module, Set<String>>();
+    final Collection<String> unknownLibraries = new TreeSet<>();
+    final Collection<String> unknownJdks = new TreeSet<>();
+    final Set<String> refsToModules = new HashSet<>();
+    final List<Module> result = new ArrayList<>();
+    final Map<Module, Set<String>> module2NatureNames = new HashMap<>();
 
     try {
       final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
       final ModifiableRootModel[] rootModels = new ModifiableRootModel[getParameters().projectsToConvert.size()];
-      final Set<File> files = new HashSet<File>();
-      final Set<String> moduleNames = new THashSet<String>(getParameters().projectsToConvert.size());
+      final Set<File> files = new HashSet<>();
+      final Set<String> moduleNames = new THashSet<>(getParameters().projectsToConvert.size());
       for (String path : getParameters().projectsToConvert) {
         String modulesDirectory = getParameters().converterOptions.commonModulesDirectory;
         if (modulesDirectory == null) {
@@ -238,7 +247,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         }
         final String moduleName = EclipseProjectFinder.findProjectName(path);
         moduleNames.add(moduleName);
-        final File imlFile = new File(modulesDirectory + File.separator + moduleName + IdeaXml.IML_EXT);
+        final File imlFile = new File(modulesDirectory + File.separator + moduleName + ModuleManagerImpl.IML_EXTENSION);
         if (imlFile.isFile()) {
           files.add(imlFile);
         }
@@ -282,7 +291,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         if (modulesDirectory == null) {
           modulesDirectory = path;
         }
-        final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + IdeaXml.IML_EXT,
+        final Module module = moduleModel.newModule(modulesDirectory + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerImpl.IML_EXTENSION,
                                                     StdModuleTypes.JAVA.getId());
         result.add(module);
         final Set<String> natures = collectNatures(path);
@@ -391,7 +400,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> DumbService.getInstance(project).smartInvokeLater(() -> {
       for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
         final String importerNatureName = importer.getNatureName();
-        final List<Module> modulesToImport = new ArrayList<Module>();
+        final List<Module> modulesToImport = new ArrayList<>();
 
         for (Map.Entry<Module, Set<String>> entry : module2NatureNames.entrySet()) {
           final Module module = entry.getKey();
@@ -412,7 +421,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   private static void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
     if (libraries.contains(libraryName)) {
       final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
-
+        @Override
         public Icon getIcon(final VirtualFile file) {
           return looksLikeEclipse(file) ? dressIcon(file, EclipseIcons.Eclipse) : super.getIcon(file);
         }
@@ -448,7 +457,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   public Parameters getParameters() {
     if (parameters == null) {
       parameters = new Parameters();
-      parameters.existingModuleNames = new THashSet<String>();
+      parameters.existingModuleNames = new THashSet<>();
       if (isUpdate()) {
         Project project = getCurrentProject();
         if (project != null) {
@@ -476,7 +485,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
   @NotNull
   public static Set<String> collectNatures(@NotNull String path) {
-    Set<String> naturesNames = new THashSet<String>();
+    Set<String> naturesNames = new THashSet<>();
     try {
       Element natures = JDOMUtil.load(new File(path, EclipseXml.DOT_PROJECT_EXT)).getChild("natures");
       if (natures != null) {

@@ -48,7 +48,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
   public HighlightableComponent() {
     myIconTextGap = 4;
-    myFontMetrics = new TIntObjectHashMap<FontMetrics>();
+    myFontMetrics = new TIntObjectHashMap<>();
     setText("");
     fillFontMetricsMap();
     setOpaque(true);
@@ -74,7 +74,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
       text = "";
     }
     myText = text;
-    myHighlightedRegions = new ArrayList<HighlightedRegion>(4);
+    myHighlightedRegions = new ArrayList<>(4);
 
     if ((accessibleContext != null) && !StringUtil.equals(accessibleContext.getAccessibleName(), oldAccessibleName)) {
       accessibleContext.firePropertyChange(

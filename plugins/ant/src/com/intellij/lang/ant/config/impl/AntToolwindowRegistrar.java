@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     super(project);
   }
 
+  @Override
   public void projectOpened() {
     
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
@@ -51,7 +52,7 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     final ActionManager actionManager = ActionManager.getInstance();
 
     for (Keymap keymap : keymapManager.getAllKeymaps()) {
-      for (String id : keymap.getActionIds()) {
+      for (String id : keymap.getActionIdList()) {
         if (id.startsWith(prefix) && actionManager.getAction(id) == null) {
           actionManager.registerAction(id, new TargetActionStub(id, myProject));
         }
@@ -60,6 +61,7 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     compilerManager.addBeforeTask(new CompileTask() {
+      @Override
       public boolean execute(CompileContext context) {
         final AntConfiguration config = AntConfiguration.getInstance(myProject);
         ((AntConfigurationBase)config).ensureInitialized();
@@ -67,6 +69,7 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
       }
     });
     compilerManager.addAfterTask(new CompileTask() {
+      @Override
       public boolean execute(CompileContext context) {
         final AntConfigurationBase config = (AntConfigurationBase)AntConfiguration.getInstance(myProject);
         config.ensureInitialized();
@@ -94,9 +97,12 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     if (modules.length == 1) {
       dataMap.put(LangDataKeys.MODULE.getName(), modules[0]);
     }
+    dataMap.put(LangDataKeys.MODULE_CONTEXT_ARRAY.getName(), modules);
+    dataMap.put("COMPILER_CONTEXT_MAKE", context.isMake());
     return SimpleDataContext.getSimpleContext(dataMap, null);
   }
 
+  @Override
   public void projectClosed() {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(myProject));
@@ -105,6 +111,7 @@ public class AntToolwindowRegistrar extends AbstractProjectComponent {
     }
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {

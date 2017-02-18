@@ -62,11 +62,11 @@ public class JavaSourceRootDetectionTest extends PlatformTestCase {
     final String dirPath = JavaTestUtil.getJavaTestDataPath() + FileUtil.toSystemDependentName("/ide/sourceRootDetection/" + getTestName(true));
     final File dir = new File(dirPath);
     assertTrue(dir.isDirectory());
-    final List<Pair<File, String>> actual = new ArrayList<Pair<File, String>>();
+    final List<Pair<File, String>> actual = new ArrayList<>();
     for (JavaModuleSourceRoot root : JavaSourceRootDetectionUtil.suggestRoots(dir)) {
       actual.add(Pair.create(root.getDirectory(), root.getPackagePrefix()));
     }
-    List<Pair<File, String>> expectedList = new ArrayList<Pair<File, String>>();
+    List<Pair<File, String>> expectedList = new ArrayList<>();
     for (int i = 0; i < expected.length / 2; i++) {
       expectedList.add(Pair.create(new File(dir, expected[2 * i]), expected[2 * i + 1]));
     }

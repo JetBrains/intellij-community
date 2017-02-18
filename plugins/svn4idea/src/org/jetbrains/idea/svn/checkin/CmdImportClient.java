@@ -30,7 +30,7 @@ public class CmdImportClient extends BaseSvnClient implements ImportClient {
                        @Nullable ISVNCommitHandler commitHandler) throws VcsException {
     // TODO: ISVNFileFilter from ISVNCommitHandler is not currently implemented
 
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, path, false);
     CommandUtil.put(parameters, SvnTarget.fromURL(url), false);

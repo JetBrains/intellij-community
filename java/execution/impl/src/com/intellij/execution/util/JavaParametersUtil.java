@@ -139,7 +139,7 @@ public class JavaParametersUtil {
     parameters.configureByProject(project, classPathType, createProjectJdk(project, jreHome));
   }
 
-  private static Sdk createModuleJdk(final Module module, boolean productionOnly, @Nullable String jreHome) throws CantRunException {
+  public static Sdk createModuleJdk(final Module module, boolean productionOnly, @Nullable String jreHome) throws CantRunException {
     return jreHome == null ? JavaParameters.getValidJdkToRunModule(module, productionOnly) : createAlternativeJdk(jreHome);
   }
 

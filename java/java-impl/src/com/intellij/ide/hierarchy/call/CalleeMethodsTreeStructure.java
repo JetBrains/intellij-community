@@ -45,7 +45,7 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     }
     final PsiMethod method = (PsiMethod)enclosingElement;
 
-    final ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
+    final ArrayList<PsiMethod> methods = new ArrayList<>();
 
     final PsiCodeBlock body = method.getBody();
     if (body != null) {
@@ -55,9 +55,9 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     final PsiMethod baseMethod = (PsiMethod)((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
     final PsiClass baseClass = baseMethod.getContainingClass();
 
-    final HashMap<PsiMethod,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMethod, CallHierarchyNodeDescriptor>();
+    final HashMap<PsiMethod,CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
 
-    final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<CallHierarchyNodeDescriptor>();
+    final ArrayList<CallHierarchyNodeDescriptor> result = new ArrayList<>();
 
     for (final PsiMethod calledMethod : methods) {
       if (!isInScope(baseClass, calledMethod, myScopeType)) continue;

@@ -29,9 +29,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -75,6 +77,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarFile;
 
@@ -87,6 +90,8 @@ public class PlatformTestUtil {
 
   public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
+  
+  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -180,7 +185,7 @@ public class PlatformTestUtil {
                                                 boolean withSelection,
                                                 @Nullable Queryable.PrintInfo printInfo,
                                                 Condition<String> nodePrintCondition) {
-    Collection<String> strings = new ArrayList<String>();
+    Collection<String> strings = new ArrayList<>();
     printImpl(tree, root, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
   }
@@ -263,6 +268,7 @@ public class PlatformTestUtil {
     final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
     final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    ModalityState initialModality = ModalityState.current();
 
     alarm.addRequest(() -> {
       alarmInvoked1.set(true);
@@ -284,8 +290,14 @@ public class PlatformTestUtil {
       if (System.currentTimeMillis() - start > 100 * 1000) {
         throw new AssertionError("Couldn't await alarm" +
                                  "; alarm1 passed=" + alarmInvoked1.get() +
+                                 "; modality1=" + initialModality +
+                                 "; modality2=" + ModalityState.current() +
                                  "; invokeLater passed=" + runnableInvoked.get() +
-                                 "; app.disposed=" + app.isDisposed());
+                                 "; app.disposed=" + app.isDisposed() +
+                                 "; alarm.disposed=" + alarm.isDisposed() +
+                                 "; alarm.requests=" + alarm.getActiveRequestCount() +
+                                 "\n queued=" + LaterInvocator.getLaterInvocatorQueue()
+        );
       }
     }
     UIUtil.dispatchAllInvocationEvents();
@@ -309,6 +321,7 @@ public class PlatformTestUtil {
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    //noinspection StatementWithEmptyBody
     while (dispatchNextEventIfAny(eventQueue) != null);
   }
 
@@ -366,7 +379,7 @@ public class PlatformTestUtil {
     Object[] children = structure.getChildElements(node);
 
     if (comparator != null) {
-      ArrayList<?> list = new ArrayList<Object>(Arrays.asList(children));
+      ArrayList<?> list = new ArrayList<>(Arrays.asList(children));
       @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) Comparator<Object> c = comparator;
       Collections.sort(list, c);
       children = ArrayUtil.toObjectArray(list);
@@ -425,7 +438,7 @@ public class PlatformTestUtil {
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
-    action.update(event);
+    action.beforeActionPerformedUpdate(event);
     Assert.assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
   }
@@ -497,8 +510,13 @@ public class PlatformTestUtil {
   }
 
   @NotNull
+  public static String getJavaExe() {
+    return SystemProperties.getJavaHome() + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
+  }
+
+  @NotNull
   public static String getRtJarPath() {
-    String home = System.getProperty("java.home");
+    String home = SystemProperties.getJavaHome();
     return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
   }
 
@@ -583,10 +601,10 @@ public class PlatformTestUtil {
         String logMessage = message;
         if (duration > expectedOnMyMachine) {
           int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-          logMessage += ": " + percentage + "% longer";
+          logMessage += ": " + "\u001B[31;1m " + percentage + "% longer" + "\u001B[0m";
         }
         logMessage +=
-          ". Expected: " + formatTime(expectedOnMyMachine) + ". Actual: " + formatTime(duration) + "." + Timings.getStatistics();
+          "\n  Expected: " + formatTime(expectedOnMyMachine) + "\n  Actual: " + formatTime(duration) + "\n " + Timings.getStatistics();
         final double acceptableChangeFactor = 1.1;
         if (duration < expectedOnMyMachine) {
           int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
@@ -616,7 +634,9 @@ public class PlatformTestUtil {
           System.gc();
           String s = "Another epic fail (remaining attempts: " + attempts + "): " + logMessage;
           TeamCityLogger.warning(s, null);
-          System.err.println(s);
+          if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+            System.err.println(s);
+          }
           //if (attempts == 1) {
           //  try {
           //    Class.forName("com.intellij.util.ProfilingUtil").getMethod("startCPUProfiling").invoke(null);
@@ -690,7 +710,7 @@ public class PlatformTestUtil {
   }
 
   private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
-    HashMap<String, VirtualFile> map = new HashMap<String, VirtualFile>();
+    HashMap<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
       map.put(file.getName(), file);
@@ -739,12 +759,12 @@ public class PlatformTestUtil {
   }
 
   private static void shallowCompare(VirtualFile[] vfs, @Nullable File[] io) {
-    List<String> vfsPaths = new ArrayList<String>();
+    List<String> vfsPaths = new ArrayList<>();
     for (VirtualFile file : vfs) {
       vfsPaths.add(file.getPath());
     }
 
-    List<String> ioPaths = new ArrayList<String>();
+    List<String> ioPaths = new ArrayList<>();
     if (io != null) {
       for (File file : io) {
         ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
@@ -830,7 +850,7 @@ public class PlatformTestUtil {
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      Assert.assertEquals(printElement(expected), printElement(actual));
+      Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
@@ -841,12 +861,6 @@ public class PlatformTestUtil {
     catch (IOException | JDOMException e) {
       throw new AssertionError(e);
     }
-  }
-
-  public static String printElement(final Element element) throws IOException {
-    final StringWriter writer = new StringWriter();
-    JDOMUtil.writeElement(element, writer, "\n");
-    return writer.getBuffer().toString();
   }
 
   public static String getCommunityPath() {
@@ -860,7 +874,6 @@ public class PlatformTestUtil {
   public static String getPlatformTestDataPath() {
     return getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/";
   }
-
 
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
     return (o1, o2) -> {
@@ -948,5 +961,16 @@ public class PlatformTestUtil {
       }
     });
     return refs;
+  }
+  
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    ourProjectCleanups.add(cleanup);
+  }
+  
+  public static void cleanupAllProjects() {
+    for (Runnable each : ourProjectCleanups) {
+      each.run();
+    }
+    ourProjectCleanups.clear();
   }
 }

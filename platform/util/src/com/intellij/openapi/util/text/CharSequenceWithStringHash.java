@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 package com.intellij.openapi.util.text;
 
 /**
- * This interface implementations must have hashCode values equal to those for String
- * @see com.intellij.openapi.util.text.StringUtil#stringHashCode(CharSequence)  
+ * This interface implementations must have {@code hashCode} values equal to those for String.
+ *
+ * @see StringUtil#stringHashCode(CharSequence)
  */
-public interface CharSequenceWithStringHash extends CharSequence{
+public interface CharSequenceWithStringHash extends CharSequence {
   @Override
   int hashCode();
 }

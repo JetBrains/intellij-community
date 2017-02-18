@@ -23,13 +23,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConsoleFontOptions extends FontOptions {
   public ConsoleFontOptions(ColorAndFontOptions options) {
-    super(options, "Console Font");
+    super(options);
   }
 
   @NotNull
   @Override
   protected FontPreferences getFontPreferences() {
     return getCurrentScheme().getConsoleFontPreferences();
+  }
+
+  @Override
+  protected void setFontSize(int fontSize) {
+    getCurrentScheme().setConsoleFontSize(fontSize);
   }
 
   @Override

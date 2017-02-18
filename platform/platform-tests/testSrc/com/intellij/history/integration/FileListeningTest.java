@@ -37,7 +37,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class FileListeningTest extends IntegrationTestCase {
   public void testCreatingFiles() throws Exception {
@@ -80,12 +83,12 @@ public class FileListeningTest extends IntegrationTestCase {
     myRoot.refresh(false, true);
 
     List<Change> changes = getVcs().getChangeListInTests().getChangesInTests().get(0).getChanges();
-    List<String> actual = new SmartList<String>();
+    List<String> actual = new SmartList<>();
     for (Change each : changes) {
       actual.add(((StructuralChange)each).getPath());
     }
 
-    List<String> expected = new ArrayList<String>(Arrays.asList(dir, subsubdir1, dir1_file, subsubdir1_file));
+    List<String> expected = new ArrayList<>(Arrays.asList(dir, subsubdir1, dir1_file, subsubdir1_file));
 
     Collections.sort(actual);
     Collections.sort(expected);
@@ -140,11 +143,6 @@ public class FileListeningTest extends IntegrationTestCase {
       public void beforePropertyChange(@NotNull VirtualFilePropertyEvent e) {
         log[0] = getRevisionsFor(f).size();
       }
-
-      @Override
-      public void propertyChanged(@NotNull VirtualFilePropertyEvent e) {
-        log[1] = getRevisionsFor(f).size();
-      }
     };
 
     assertEquals(2, getRevisionsFor(f).size());
@@ -157,7 +155,7 @@ public class FileListeningTest extends IntegrationTestCase {
     });
 
     assertEquals(2, log[0]);
-    assertEquals(3, log[1]);
+    assertEquals(3, getRevisionsFor(f).size());
   }
 
   public void testRenamingFilteredFileToNonFiltered() throws Exception {

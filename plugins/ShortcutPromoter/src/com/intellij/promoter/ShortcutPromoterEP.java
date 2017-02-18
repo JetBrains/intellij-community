@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Konstantin Bulenkov
  */
 public class ShortcutPromoterEP extends AbstractExtensionPointBean {
-  public static final ExtensionPointName<ShortcutPromoterEP> EP_NAME = new ExtensionPointName<ShortcutPromoterEP>("com.intellij.shortcutPromoter");
+  public static final ExtensionPointName<ShortcutPromoterEP> EP_NAME = new ExtensionPointName<>("com.intellij.shortcutPromoter");
 
   @Attribute("actionId")
   public String actionId;

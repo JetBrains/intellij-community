@@ -31,7 +31,7 @@ public class FilterDescendantVirtualFileConvertible<T> extends AbstractFilterChi
 
   public FilterDescendantVirtualFileConvertible(final Convertor<T, VirtualFile> convertor, final Comparator<VirtualFile> comparator) {
     myConvertor = convertor;
-    myComparator = new ComparatorDelegate<T, VirtualFile>(myConvertor, comparator);
+    myComparator = new ComparatorDelegate<>(myConvertor, comparator);
   }
 
   @Override

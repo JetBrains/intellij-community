@@ -15,26 +15,22 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.util.InstanceofCheckerGenerator;
-
 /**
  * @author peter
  */
 public class ClassConditionKey<T> {
-  private final Condition<Object> myCondition;
   private final Class<T> myConditionClass;
 
   private ClassConditionKey(Class<T> aClass) {
-    myCondition = InstanceofCheckerGenerator.getInstance().getInstanceofChecker(aClass);
     myConditionClass = aClass;
   }
 
   public static <T> ClassConditionKey<T> create(Class<T> aClass) {
-    return new ClassConditionKey<T>(aClass);
+    return new ClassConditionKey<>(aClass);
   }
 
   public boolean isInstance(Object o) {
-    return myCondition.value(o);
+    return myConditionClass.isInstance(o);
   }
 
   @Override

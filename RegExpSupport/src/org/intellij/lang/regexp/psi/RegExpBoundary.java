@@ -23,7 +23,7 @@ public interface RegExpBoundary extends RegExpAtom {
      */
     enum Type  {
         LINE_START, LINE_END,
-        WORD, NON_WORD,
+        WORD, UNICODE_EXTENDED_GRAPHEME, NON_WORD,
         BEGIN, END, END_NO_LINE_TERM,
         PREVIOUS_MATCH
     }

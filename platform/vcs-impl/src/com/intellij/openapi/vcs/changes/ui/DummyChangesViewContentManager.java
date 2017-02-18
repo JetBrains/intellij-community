@@ -15,12 +15,23 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 
 /**
  * @author irengrig
  */
 public class DummyChangesViewContentManager implements ChangesViewContentI {
+  @Override
+  public void setUp(ToolWindow toolWindow) {
+
+  }
+
+  @Override
+  public boolean isAvailable() {
+    return false;
+  }
+
   @Override
   public void addContent(final Content content) {
   }

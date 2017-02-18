@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -55,7 +54,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
   private CheckBoxList<GutterIconDescriptor> myList;
   private JBCheckBox myShowGutterIconsJBCheckBox;
   private List<GutterIconDescriptor> myDescriptors;
-  private Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<GutterIconDescriptor, PluginDescriptor>();
+  private Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
 
   @Nls
   @Override
@@ -83,7 +82,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
     MultiMap<PluginDescriptor, LanguageExtensionPoint<LineMarkerProvider>> map = ContainerUtil.groupBy(Arrays.asList(extensions), function);
     Map<GutterIconDescriptor, PluginDescriptor> pluginDescriptorMap = ContainerUtil.newHashMap();
     Set<String> ids = new HashSet<>();
-    myDescriptors = new ArrayList<GutterIconDescriptor>();
+    myDescriptors = new ArrayList<>();
     for (final PluginDescriptor descriptor : map.keySet()) {
       Collection<LanguageExtensionPoint<LineMarkerProvider>> points = map.get(descriptor);
       for (LanguageExtensionPoint<LineMarkerProvider> extensionPoint : points) {
@@ -128,7 +127,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
       }
     }
 
-    myList.setItems(myDescriptors, descriptor -> descriptor.getName());
+    myList.setItems(myDescriptors, GutterIconDescriptor::getName);
     myShowGutterIconsJBCheckBox.addChangeListener(e -> myList.setEnabled(myShowGutterIconsJBCheckBox.isSelected()));
     return myPanel;
   }
@@ -213,6 +212,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
         return super.findPointRelativeToCheckBoxWithAdjustedRendering(x, y, checkBox, index);
       }
     };
+    myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myList.setBorder(BorderFactory.createEmptyBorder());
   }
   

@@ -33,6 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
+import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   private final Set<String> myInstalledPackages;
   @Nullable private final PackageManagementService.Listener myPackageListener;
 
-  private Set<String> myCurrentlyInstalling = new HashSet<String>();
+  private Set<String> myCurrentlyInstalling = new HashSet<>();
   protected final ListSpeedSearch myListSpeedSearch;
 
   public ManagePackagesDialog(@NotNull Project project, final PackageManagementService packageManagementService,
@@ -164,7 +165,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myInstallButton.setEnabled(false);
     myDescriptionTextArea.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
     addInstallAction();
-    myInstalledPackages = new HashSet<String>();
+    myInstalledPackages = new HashSet<>();
     updateInstalledPackages();
     addManageAction();
     myPackages.setCellRenderer(new MyTableRenderer());
@@ -337,6 +338,7 @@ public class ManagePackagesDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myFilter = new MyPackageFilter();
+    myDescriptionTextArea = SwingHelper.createHtmlViewer(true, null, null, null);
   }
 
   public void setOptionsText(@NotNull String optionsText) {
@@ -366,8 +368,8 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private class PackagesModel extends CollectionListModel<RepoPackage> {
-    protected final List<RepoPackage> myFilteredOut = new ArrayList<RepoPackage>();
-    protected List<RepoPackage> myView = new ArrayList<RepoPackage>();
+    protected final List<RepoPackage> myFilteredOut = new ArrayList<>();
+    protected List<RepoPackage> myView = new ArrayList<>();
 
     public PackagesModel(List<RepoPackage> packages) {
       super(packages);
@@ -384,7 +386,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       toProcess.addAll(myFilteredOut);
       myFilteredOut.clear();
 
-      final ArrayList<RepoPackage> filtered = new ArrayList<RepoPackage>();
+      final ArrayList<RepoPackage> filtered = new ArrayList<>();
 
       RepoPackage toSelect = null;
       for (RepoPackage repoPackage : toProcess) {
@@ -418,7 +420,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
 
     protected ArrayList<RepoPackage> toProcess() {
-      return new ArrayList<RepoPackage>(myView);
+      return new ArrayList<>(myView);
     }
 
     @Override

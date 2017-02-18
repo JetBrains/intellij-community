@@ -33,24 +33,14 @@ public class AlignmentImpl extends Alignment {
   private AlignmentImpl myParentAlignment;
   private ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper> myOffsetRespBlocksCalculator;
 
-  /**
-   * Creates new <code>AlignmentImpl</code> object with <code>'false'</code> as <code>'allows backward shift'</code> argument flag.
-   */
   AlignmentImpl() {
     this(false, Anchor.LEFT);
   }
 
-  /**
-   * Creates new <code>AlignmentImpl</code> object with the given <code>'allows backward shift'</code> argument flag.
-   *
-   * @param allowBackwardShift    flag that indicates if it should be possible to shift former aligned block to right
-   *                              in order to align to subsequent aligned block (see {@link Alignment#createAlignment(boolean, Anchor)})
-   * @param anchor                alignment anchor (see {@link Alignment#createAlignment(boolean, Anchor)})
-   */
   AlignmentImpl(boolean allowBackwardShift, @NotNull Anchor anchor) {
     myAllowBackwardShift = allowBackwardShift;
     myAnchor = anchor;
-    myOffsetRespBlocksCalculator = new ProbablyIncreasingLowerboundAlgorithm<LeafBlockWrapper>(myOffsetRespBlocks);
+    myOffsetRespBlocksCalculator = new ProbablyIncreasingLowerboundAlgorithm<>(myOffsetRespBlocks);
   }
 
   public boolean isAllowBackwardShift() {
@@ -107,7 +97,7 @@ public class AlignmentImpl extends Alignment {
    *
    * @param block     target block to use during blocks filtering
    * @return          block {@link #setOffsetRespBlock(LeafBlockWrapper) registered} for the current alignment object or
-   *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; <code>null</code> otherwise
+   *                  {@link #setParent(Alignment) its parent} using the algorithm above if any; {@code null} otherwise
    */
   @Nullable
   public LeafBlockWrapper getOffsetRespBlockBefore(@Nullable final AbstractBlockWrapper block) {
@@ -140,7 +130,7 @@ public class AlignmentImpl extends Alignment {
       return;
     }
     if (myOffsetRespBlocks == EMPTY) {
-      myOffsetRespBlocks = new ArrayList<LeafBlockWrapper>(1);
+      myOffsetRespBlocks = new ArrayList<>(1);
       myOffsetRespBlocksCalculator.setBlocksList(myOffsetRespBlocks);
     }
     myOffsetRespBlocks.add(block);

@@ -23,9 +23,4 @@ import com.intellij.refactoring.util.AbstractVariableData;
 public interface ExtractMethodSettings {
   String getMethodName();
   AbstractVariableData[] getAbstractVariableData();
-
-  @Deprecated
-  default com.intellij.refactoring.extractMethod.AbstractVariableData[] getVariableData() {
-    return com.intellij.refactoring.extractMethod.AbstractVariableData.copy(getAbstractVariableData());
-  }
 }

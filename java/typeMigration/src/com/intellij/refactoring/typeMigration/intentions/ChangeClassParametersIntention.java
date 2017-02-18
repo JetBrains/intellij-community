@@ -1,6 +1,5 @@
 package com.intellij.refactoring.typeMigration.intentions;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -60,8 +59,6 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
-
     final PsiTypeElement typeElement = PsiTreeUtil.getTopmostParentOfType(element, PsiTypeElement.class);
     final PsiReferenceParameterList parameterList = PsiTreeUtil.getParentOfType(typeElement, PsiReferenceParameterList.class);
     if (parameterList != null) {

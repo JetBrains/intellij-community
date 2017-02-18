@@ -1,0 +1,17 @@
+Backward Hierarchy:
+java.lang.Object -> pack.Bar
+
+Backward References:
+java.io.PrintStream.println(1) in Bar
+java.lang.Object.<init>(0) in Bar
+java.lang.System in Bar
+java.lang.System.out in Bar
+pack.Bar in Bar
+pack.Bar.<init>(0) in Bar
+pack.Bar.m(0) in Bar
+pack.Foo in Bar Foo
+pack.Foo.CONST in Bar Foo
+
+Class Definitions:
+pack.Bar in Bar
+pack.Foo in Foo

@@ -18,7 +18,6 @@ package org.jetbrains.ide;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.platform.ProjectSetReader;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -68,7 +67,7 @@ public class ProjectSetRequestHandler extends RestService {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       new ProjectSetReader().readDescriptor(descriptor, null);
       activateLastFocusedFrame();
-    }, ModalityState.defaultModalityState());
+    });
     sendOk(request, context);
     return null;
   }

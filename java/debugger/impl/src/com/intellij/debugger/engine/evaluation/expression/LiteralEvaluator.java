@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,12 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.openapi.util.registry.Registry;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Method;
+import com.sun.jdi.StringReference;
+
+import java.util.Collections;
 
 class LiteralEvaluator implements Evaluator {
   private final Object myValue;
@@ -34,10 +40,6 @@ class LiteralEvaluator implements Evaluator {
   public LiteralEvaluator(Object value, String expectedType) {
     myValue = value;
     myExpectedType = expectedType;
-  }
-
-  public Modifier getModifier() {
-    return null;
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
@@ -61,7 +63,17 @@ class LiteralEvaluator implements Evaluator {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Number)myValue).longValue());
     }
     if (myValue instanceof String) {
-      return vm.mirrorOf((String)myValue);
+      return vm.mirrorOfStringLiteral(((String)myValue), () -> {
+        StringReference str = vm.mirrorOf((String)myValue);
+        // intern starting from jdk 7
+        if (Registry.is("debugger.intern.string.literals") && vm.versionHigher("1.7")) {
+          Method internMethod = ((ClassType)str.referenceType()).concreteMethodByName("intern", "()Ljava/lang/String;");
+          if (internMethod != null) {
+            return (StringReference)context.getDebugProcess().invokeMethod(context, str, internMethod, Collections.emptyList());
+          }
+        }
+        return str;
+      });
     }
     throw EvaluateExceptionUtil
       .createEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.type", myExpectedType));
@@ -69,6 +81,6 @@ class LiteralEvaluator implements Evaluator {
 
   @Override
   public String toString() {
-    return myValue.toString();
+    return myValue != null ? myValue.toString() : "null";
   }
 }

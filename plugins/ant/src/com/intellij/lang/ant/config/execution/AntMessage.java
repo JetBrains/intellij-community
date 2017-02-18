@@ -38,7 +38,7 @@ public final class AntMessage {
     myLine = line;
     myColumn = column;
     myText = text;
-    ArrayList<String> lines = new ArrayList<String>();
+    ArrayList<String> lines = new ArrayList<>();
     StringTokenizer tokenizer = new StringTokenizer(myText, "\r\n");
     while (tokenizer.hasMoreTokens()) {
       lines.add(tokenizer.nextToken());

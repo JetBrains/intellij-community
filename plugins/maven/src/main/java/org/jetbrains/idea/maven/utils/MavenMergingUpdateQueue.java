@@ -161,7 +161,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
           }
         }
       };
-      LaterInvocator.addModalityStateListener(listener, MavenMergingUpdateQueue.this);
+      LaterInvocator.addModalityStateListener(listener, this);
       if (MavenUtil.isInModalContext()) {
         suspend();
       }

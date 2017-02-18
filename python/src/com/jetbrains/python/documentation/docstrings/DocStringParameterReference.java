@@ -27,7 +27,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -145,7 +144,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
     if (owner instanceof PyFunction) {
       List<PyNamedParameter> result = Lists.newArrayList();
       final List<PyNamedParameter> namedParameters = ParamHelper.collectNamedParameters(((PyFunction)owner).getParameterList());
-      Set<String> usedParameters = new HashSet<String>();
+      Set<String> usedParameters = new HashSet<>();
       PyStringLiteralExpression expression = PsiTreeUtil.getParentOfType(getElement(), PyStringLiteralExpression.class, false);
       if (expression != null) {
         PsiReference[] references = expression.getReferences();
@@ -188,7 +187,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     TextRange range = getRangeInElement();
-    Pair<String, String> quotes = PythonStringUtil.getQuotes(range.substring(myElement.getText()));
+    Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(range.substring(myElement.getText()));
 
     if (quotes != null) {
       range = TextRange.create(range.getStartOffset() + quotes.first.length(), range.getEndOffset() - quotes.second.length());

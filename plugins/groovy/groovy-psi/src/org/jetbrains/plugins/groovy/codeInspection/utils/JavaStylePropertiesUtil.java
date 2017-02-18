@@ -70,7 +70,7 @@ public class JavaStylePropertiesUtil {
 
     GrReferenceExpression lvalueRef = (GrReferenceExpression)assignment.getLValue();
     lvalueRef.setQualifier(refExpr.getQualifier());
-    lvalueRef.handleElementRenameSimple(name);
+    lvalueRef.handleElementRename(name);
     assignment.getRValue().replaceWithExpression(value, true);
 
     return assignment;

@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class JsonPsiImplUtils {
-  private static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<List<Pair<TextRange, String>>>("JSON string fragments");
+  private static final Key<List<Pair<TextRange, String>>> STRING_FRAGMENTS = new Key<>("JSON string fragments");
 
   @NotNull
   public static String getName(@NotNull JsonProperty property) {
@@ -135,7 +135,7 @@ public class JsonPsiImplUtils {
   public static List<Pair<TextRange, String>> getTextFragments(@NotNull JsonStringLiteral literal) {
     List<Pair<TextRange, String>> result = literal.getUserData(STRING_FRAGMENTS);
     if (result == null) {
-      result = new ArrayList<Pair<TextRange, String>>();
+      result = new ArrayList<>();
       final String text = literal.getText();
       final int length = text.length();
       int pos = 1, unescapedSequenceStart = 1;

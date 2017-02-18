@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
@@ -67,12 +65,19 @@ public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
-  private void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+  public void testEnsureApplicabilityForDiamondCallIsCheckedBasedOnStaticFactoryApplicability() throws Exception {
+    doTest();
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
+  public void testConflictingNamesInConstructorAndClassTypeParameters() throws Exception {
+    doTest();
+  }
+
+  public void testParameterizedConstructorWithDiamonds() throws Exception {
+    doTest();
+  }
+
+  private void doTest() throws Exception {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 }

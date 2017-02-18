@@ -165,7 +165,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @Override
   public int getIndex() {
-    final PsiTypeParameterStub stub = getStub();
+    final PsiTypeParameterStub stub = getGreenStub();
     if (stub != null) {
       final PsiTypeParameterListStub parentStub = (PsiTypeParameterListStub)stub.getParentStub();
       return parentStub.getChildrenStubs().indexOf(stub);
@@ -198,7 +198,7 @@ public class PsiTypeParameterImpl extends JavaStubPsiElement<PsiTypeParameterStu
 
   @Override
   public String getName() {
-    final PsiTypeParameterStub stub = getStub();
+    final PsiTypeParameterStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }

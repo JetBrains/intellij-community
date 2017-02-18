@@ -34,12 +34,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -78,6 +76,7 @@ public class UnscrambleDialog extends DialogWrapper {
   private JPanel myUnscramblePanel;
   private JCheckBox myOnTheFly;
   private JPanel myBottomPanel;
+  private JPanel mySettingsPanel;
   protected AnalyzeStacktraceUtil.StacktraceEditorPanel myStacktraceEditorPanel;
   private VcsContentAnnotationConfigurable myConfigurable;
 
@@ -91,6 +90,7 @@ public class UnscrambleDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         UnscrambleSupport unscrambleSupport = getSelectedUnscrambler();
         GuiUtils.enableChildren(myLogFileChooserPanel, unscrambleSupport != null);
+        updateUnscramblerSettings();
       }
     });
     myUseUnscrambler.addActionListener(new ActionListener() {
@@ -117,6 +117,20 @@ public class UnscrambleDialog extends DialogWrapper {
   private void useUnscramblerChanged() {
     boolean selected = myUseUnscrambler.isSelected();
     GuiUtils.enableChildren(myUnscramblePanel, selected, myUseUnscrambler);
+    if (selected) {
+      updateUnscramblerSettings();
+    }
+  }
+
+  private void updateUnscramblerSettings() {
+    UnscrambleSupport unscrambleSupport = (UnscrambleSupport)myUnscrambleChooser.getSelectedItem();
+
+    JComponent settingsComponent = unscrambleSupport == null ? null : unscrambleSupport.createSettingsComponent();
+    mySettingsPanel.removeAll();
+    if (settingsComponent != null) {
+      mySettingsPanel.add(settingsComponent, BorderLayout.CENTER);
+    }
+    myUnscramblePanel.validate();
   }
 
   private void reset() {
@@ -155,6 +169,7 @@ public class UnscrambleDialog extends DialogWrapper {
     }
 
     useUnscramblerChanged();
+    updateUnscramblerSettings();
     myStacktraceEditorPanel.pasteTextFromClipboard();
   }
 
@@ -181,7 +196,7 @@ public class UnscrambleDialog extends DialogWrapper {
 
   @NotNull
   public static List<String> getSavedLogFileUrls() {
-    final List<String> res = new ArrayList<String>();
+    final List<String> res = new ArrayList<>();
     final String savedUrl = PropertiesComponent.getInstance().getValue(PROPERTY_LOG_FILE_HISTORY_URLS);
     final String[] strings = savedUrl == null ? ArrayUtil.EMPTY_STRING_ARRAY : savedUrl.split(":::");
     for (int i = 0; i != strings.length; ++i) {
@@ -386,15 +401,17 @@ public class UnscrambleDialog extends DialogWrapper {
 
   private boolean performUnscramble() {
     UnscrambleSupport selectedUnscrambler = getSelectedUnscrambler();
-    return showUnscrambledText(selectedUnscrambler, myLogFile.getText(), myProject, myStacktraceEditorPanel.getText()) != null;
+    JComponent settings = mySettingsPanel.getComponentCount() == 0 ? null : (JComponent)mySettingsPanel.getComponent(0);
+    return showUnscrambledText(selectedUnscrambler, myLogFile.getText(), settings, myProject, myStacktraceEditorPanel.getText()) != null;
   }
 
   @Nullable
-  static RunContentDescriptor showUnscrambledText(@Nullable UnscrambleSupport unscrambleSupport,
-                                                  String logName,
-                                                  Project project,
-                                                  String textToUnscramble) {
-    String unscrambledTrace = unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project,textToUnscramble, logName);
+  static <T extends JComponent> RunContentDescriptor showUnscrambledText(@Nullable UnscrambleSupport<T> unscrambleSupport,
+                                                                         String logName,
+                                                                         @Nullable T settings,
+                                                                         Project project,
+                                                                         String textToUnscramble) {
+    String unscrambledTrace = unscrambleSupport == null ? textToUnscramble : unscrambleSupport.unscramble(project,textToUnscramble, logName, settings);
     if (unscrambledTrace == null) return null;
     List<ThreadState> threadStates = ThreadDumpParser.parse(unscrambledTrace);
     return addConsole(project, threadStates, unscrambledTrace);

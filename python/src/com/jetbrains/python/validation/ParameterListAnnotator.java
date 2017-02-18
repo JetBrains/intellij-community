@@ -32,7 +32,7 @@ public class ParameterListAnnotator extends PyAnnotator {
     ParamHelper.walkDownParamArray(
       paramlist.getParameters(),
       new ParamHelper.ParamVisitor() {
-        Set<String> parameterNames = new HashSet<String>();
+        Set<String> parameterNames = new HashSet<>();
         boolean hadPositionalContainer = false;
         boolean hadKeywordContainer = false;
         boolean hadDefaultValue = false;

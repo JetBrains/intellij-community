@@ -65,7 +65,7 @@ final class CommandModeConsumer implements Consumer<String> {
                       @NotNull final Module module,
                       @NotNull final LanguageConsoleImpl console,
                       @Nullable final CommandExecutor defaultExecutor) {
-    myCommands = commands != null ? new ArrayList<Command>(commands) : Collections.<Command>emptyList();
+    myCommands = commands != null ? new ArrayList<>(commands) : Collections.<Command>emptyList();
     myModule = module;
     myConsole = console;
     myDefaultExecutor = defaultExecutor;

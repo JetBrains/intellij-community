@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Handles tooltip links in format <code>#assignment/escaped_full_tooltip_text</code>.
+ * Handles tooltip links in format {@code #assignment/escaped_full_tooltip_text}.
  * On a click comparison table opens.
  */
 public class AssignmentTooltipLinkHandler extends TooltipLinkHandler {

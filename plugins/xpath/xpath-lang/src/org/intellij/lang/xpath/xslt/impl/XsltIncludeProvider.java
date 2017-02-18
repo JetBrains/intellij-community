@@ -52,7 +52,7 @@ public class XsltIncludeProvider extends FileIncludeProvider {
   public FileIncludeInfo[] getIncludeInfos(FileContent content) {
     CharSequence contentAsText = content.getContentAsText();
     if (CharArrayUtil.indexOf(contentAsText, XsltSupport.XSLT_NS, 0) == -1) return FileIncludeInfo.EMPTY;
-    final ArrayList<FileIncludeInfo> infos = new ArrayList<FileIncludeInfo>();
+    final ArrayList<FileIncludeInfo> infos = new ArrayList<>();
     NanoXmlUtil.IXMLBuilderAdapter builder = new NanoXmlUtil.IXMLBuilderAdapter() {
 
       boolean isXslt;

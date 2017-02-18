@@ -49,15 +49,15 @@ import java.util.List;
 public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.CodeStyleSpacesPanel");
   protected JTree myOptionsTree;
-  private final ArrayList<BooleanOptionKey> myKeys = new ArrayList<BooleanOptionKey>();
+  protected final ArrayList<BooleanOptionKey> myKeys = new ArrayList<>();
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
   private boolean myShowAllStandardOptions = false;
-  private Set<String> myAllowedOptions = new HashSet<String>();
-  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<String, CustomBooleanOptionInfo>();
+  private Set<String> myAllowedOptions = new HashSet<>();
+  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
-  private final Map<String, String> myRemappedGroups = new THashMap<String, String>();
+  private final Map<String, String> myRenamedFields = new THashMap<>();
+  private final Map<String, String> myRemappedGroups = new THashMap<>();
 
 
   public OptionTreeWithPreviewPanel(CodeStyleSettings settings) {
@@ -230,7 +230,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   private List<BooleanOptionKey> orderByGroup(final List<BooleanOptionKey> options) {
     final List<String> groupOrder = getGroupOrder(options);
-    List<BooleanOptionKey> result = new ArrayList<BooleanOptionKey>(options.size());
+    List<BooleanOptionKey> result = new ArrayList<>(options.size());
     result.addAll(options);
     Collections.sort(result, (key1, key2) -> {
       String group1 = key1.groupName;
@@ -250,7 +250,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   protected List<String> getGroupOrder(List<BooleanOptionKey> options) {
-    List<String> groupOrder = new ArrayList<String>();
+    List<String> groupOrder = new ArrayList<>();
     for (BooleanOptionKey each : options) {
       if (each.groupName != null && !groupOrder.contains(each.groupName)) {
         groupOrder.add(each.groupName);
@@ -282,6 +282,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     TreeModel treeModel = myOptionsTree.getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
+    ((DefaultTreeModel)treeModel).nodeChanged(root);
   }
 
   private void resetNode(TreeNode node, final CodeStyleSettings settings) {
@@ -301,10 +302,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       childNode.setSelected(key.getValue(settings));
       childNode.setEnabled(key.isEnabled());
     }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (IllegalArgumentException | IllegalAccessException e) {
       LOG.error(e);
     }
   }
@@ -362,10 +360,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
       return childNode.isSelected() != key.getValue(settings);
     }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (IllegalArgumentException | IllegalAccessException e) {
       LOG.error(e);
     }
     return false;
@@ -388,10 +383,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                                   getRenamedTitle(fieldName, title), field);
       myKeys.add(key);
     }
-    catch (NoSuchFieldException e) {
-      LOG.error(e);
-    }
-    catch (SecurityException e) {
+    catch (NoSuchFieldException | SecurityException e) {
       LOG.error(e);
     }
   }
@@ -406,10 +398,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                               option.anchor, option.anchorFieldName,
                                               option.settingClass, field));
       }
-      catch (NoSuchFieldException e) {
-        LOG.error(e);
-      }
-      catch (SecurityException e) {
+      catch (NoSuchFieldException | SecurityException e) {
         LOG.error(e);
       }
     }
@@ -616,7 +605,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   @Override
   public Set<String> processListOptions() {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
     for (BooleanOptionKey key : myKeys) {
       result.add(key.title);
       if (key.groupName != null) {

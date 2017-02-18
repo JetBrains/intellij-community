@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,43 @@
  */
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 public class EqualsReplaceableByObjectsCallInspectionTest extends LightInspectionTestCase {
+  private EqualsReplaceableByObjectsCallInspection myInspection = new EqualsReplaceableByObjectsCallInspection();
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    final InspectionProfileImpl profile = InspectionProfileManager.getInstance(getProject()).getCurrentProfile();
+    profile.setErrorLevel(HighlightDisplayKey.find("EqualsReplaceableByObjectsCall"), HighlightDisplayLevel.WARNING, getProject());
+  }
 
   public void testEqualsReplaceableByObjectsCall() {
     doTest();
   }
 
+  public void testEqualsReplaceableByObjectsCallCheckNull() {
+    try {
+      myInspection.checkNotNull = true;
+      doTest();
+    } finally {
+      myInspection.checkNotNull = false;
+    }
+  }
+
   @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
-    return new EqualsReplaceableByObjectsCallInspection();
+  protected LocalInspectionTool getInspection() {
+    return myInspection;
   }
 }

@@ -29,12 +29,9 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
-import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -50,18 +47,21 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implements ValidateableNode, DropTargetNode {
   public ResourceBundleNode(Project project, ResourceBundle resourceBundle, final ViewSettings settings) {
     super(project, resourceBundle, settings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     List<PropertiesFile> propertiesFiles = getValue().getPropertiesFiles();
-    Collection<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> children = new ArrayList<>();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       AbstractTreeNode node = new PsiFileNode(myProject, propertiesFile.getContainingFile(), getSettings());
       children.add(node);
@@ -69,6 +69,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     return children;
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     if (!file.isValid()) return false;
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
@@ -76,6 +77,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     return propertiesFile != null && getValue().getPropertiesFiles().contains(propertiesFile);
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     final List<PropertiesFile> list = getValue().getPropertiesFiles();
     if (!list.isEmpty()) {
@@ -84,28 +86,34 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     return null;
   }
 
+  @Override
   public void update(PresentationData presentation) {
     presentation.setIcon(AllIcons.Nodes.ResourceBundle);
     presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getValue().getBaseName()));
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return true;
   }
 
+  @Override
   public boolean canNavigate() {
     return true;
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), new ResourceBundleAsVirtualFile(getValue()));
     FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, requestFocus);
   }
 
+  @Override
   public boolean isSortByFirstChild() {
     return true;
   }
 
+  @Override
   public Comparable getTypeSortKey() {
     return new PsiFileNode.ExtensionSortKey(StdFileTypes.PROPERTIES.getDefaultExtension());
   }
@@ -165,9 +173,11 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
 
     toAddInResourceBundle.addAll(resourceBundle.getPropertiesFiles());
     final String baseName = resourceBundle.getBaseName();
+    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(getProject());
+    fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
     resourceBundleManager.dissociateResourceBundle(resourceBundle);
-    resourceBundleManager.combineToResourceBundle(toAddInResourceBundle, baseName);
-
+    final ResourceBundle updatedBundle = resourceBundleManager.combineToResourceBundleAndGet(toAddInResourceBundle, baseName);
+    FileEditorManager.getInstance(myProject).openFile(new ResourceBundleAsVirtualFile(updatedBundle), true);
     ProjectView.getInstance(myProject).refresh();
   }
 

@@ -60,7 +60,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   private VariableInfo[] myVariableInfos;
   protected boolean myMakeStatic;
-  private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<PsiTypeParameter>();
+  private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<>();
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length == 1 && elements[0] instanceof PsiAnonymousClass) {
@@ -114,7 +114,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myTargetClass)) return;
 
-    Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<PsiVariable, VariableInfo>();
+    Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<>();
     collectUsedVariables(variableInfoMap, myAnonClass);
     final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
     myVariableInfos = infos;
@@ -389,7 +389,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     PsiCodeBlock constructorBody = constructor.getBody();
     assert constructorBody != null;
 
-    List<PsiElement> toAdd = new ArrayList<PsiElement>();
+    List<PsiElement> toAdd = new ArrayList<>();
     for (PsiClassInitializer initializer : myAnonClass.getInitializers()) {
       if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
         toAdd.add(initializer);

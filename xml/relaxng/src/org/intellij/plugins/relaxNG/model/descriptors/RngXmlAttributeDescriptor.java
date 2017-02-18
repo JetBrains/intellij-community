@@ -63,7 +63,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   private final Map<String, String> myValues;
   private final boolean myOptional;
   private final RngElementDescriptor myElementDescriptor;
-  private final THashSet<Locator> myDeclarations = new THashSet<Locator>(HASHING_STRATEGY);
+  private final THashSet<Locator> myDeclarations = new THashSet<>(HASHING_STRATEGY);
   private final QName myName;
 
   RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor, DAttributePattern pattern, Map<String, String> values, boolean optional) {
@@ -86,10 +86,10 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   public RngXmlAttributeDescriptor mergeWith(RngXmlAttributeDescriptor d) {
     final QName name = d.myName.equals(UNKNOWN) ? myName : d.myName;
 
-    final HashMap<String, String> values = new HashMap<String, String>(myValues);
+    final HashMap<String, String> values = new HashMap<>(myValues);
     values.putAll(d.myValues);
 
-    final THashSet<Locator> locations = new THashSet<Locator>(myDeclarations, HASHING_STRATEGY);
+    final THashSet<Locator> locations = new THashSet<>(myDeclarations, HASHING_STRATEGY);
     locations.addAll(d.myDeclarations);
 
     return new RngXmlAttributeDescriptor(myElementDescriptor, name, values, myOptional || d.myOptional, locations.toArray(new Locator[locations.size()]));
@@ -131,7 +131,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
     if (myValues.size() > 0) {
       final Map<String, String> copy;
       if (myValues.get(null) != null) {
-        copy = new HashMap<String, String>(myValues);
+        copy = new HashMap<>(myValues);
         copy.remove(null);
       } else {
         copy = myValues;

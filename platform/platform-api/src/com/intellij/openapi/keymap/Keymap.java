@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.options.Scheme;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public interface Keymap extends Scheme {
@@ -35,59 +36,67 @@ public interface Keymap extends Scheme {
   //think about name
   String getPresentableName();
 
+  @Nullable
   Keymap getParent();
 
   boolean canModify();
 
   /**
-   * @return Action ids including ids of parent keymap
+   * @return Action ids including parent keymap ids
    */
+  @NotNull
+  Collection<String> getActionIdList();
+
+  @NotNull
   String[] getActionIds();
 
   /**
    * @return all keyboard shortcuts for the action with the specified <code>actionId</code>
    * or an empty array if the action doesn't have any keyboard shortcut.
    */
+  // 60 external usages — actionId cannot be marked as NotNull
   @NotNull
-  Shortcut[] getShortcuts(@NonNls String actionId);
+  Shortcut[] getShortcuts(@Nullable String actionId);
 
   /**
-   * @return all actions that have the specified first keystroke. If there are no
+   * @return all actions including parent keymap that have the specified first keystroke. If there are no
    * such actions then the method returns an empty array.
    */
-  String[] getActionIds(KeyStroke firstKeyStroke);
+  @NotNull
+  String[] getActionIds(@NotNull KeyStroke firstKeyStroke);
 
   /**
    * @return all actions that have the specified first and second keystrokes. If there are no
    * such actions then the method returns an empty array.
    */
-  String[] getActionIds(KeyStroke firstKeyStroke, KeyStroke secondKeyStroke);
+  String[] getActionIds(@NotNull KeyStroke firstKeyStroke, @Nullable KeyStroke secondKeyStroke);
 
-  String[] getActionIds(Shortcut shortcut);
+  String[] getActionIds(@NotNull Shortcut shortcut);
 
   /**
    * @return all actions with specified mouse shortcut.  If there are no
    * such action then the method returns an empty array.
    */
-  String[] getActionIds(MouseShortcut shortcut);
+  @NotNull
+  String[] getActionIds(@NotNull MouseShortcut shortcut);
 
-  void addShortcut(String actionId, Shortcut shortcut);
+  void addShortcut(@NotNull String actionId, @NotNull Shortcut shortcut);
 
-  void removeShortcut(String actionId, Shortcut shortcut);
+  void removeShortcut(@NotNull String actionId, @NotNull Shortcut shortcut);
 
-  Map<String, ArrayList<KeyboardShortcut>> getConflicts(String actionId, KeyboardShortcut keyboardShortcut);
+  @NotNull
+  Map<String, List<KeyboardShortcut>> getConflicts(@NotNull String actionId, @NotNull KeyboardShortcut keyboardShortcut);
 
-  void addShortcutChangeListener(Listener listener);
+  void addShortcutChangeListener(@NotNull Listener listener);
 
-  void removeShortcutChangeListener(Listener listener);
+  void removeShortcutChangeListener(@NotNull Listener listener);
 
-  void removeAllActionShortcuts(String actionId);
+  void removeAllActionShortcuts(@NotNull String actionId);
 
-  String[] getAbbreviations();
+  @NotNull
+  Keymap deriveKeymap(@NotNull String newName);
 
-  void addAbbreviation(String actionId, String abbreviation);
-
-  void removeAbbreviation(String actionId, String abbreviation);
+  boolean hasActionId(@NotNull String actionId, @NotNull MouseShortcut shortcut);
 
   interface Listener {
     void onShortcutChanged(String actionId);

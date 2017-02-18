@@ -17,16 +17,15 @@ package com.intellij.vcs.log;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
-import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
+import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -161,7 +160,8 @@ public abstract class VcsLogUserFilterTest {
   private void checkTurkishAndEnglishLocales(@NotNull VcsUser user,
                                              @NotNull Collection<VcsUser> synonymUsers,
                                              @NotNull MultiMap<VcsUser, String> commits,
-                                             @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder builder) throws VcsException {
+                                             @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder builder)
+    throws VcsException {
     Set<String> expectedCommits = ContainerUtil.newHashSet(commits.get(user));
     for (VcsUser synonym : synonymUsers) {
       expectedCommits.addAll(commits.get(synonym));
@@ -233,29 +233,14 @@ public abstract class VcsLogUserFilterTest {
 
   @NotNull
   private List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
-    VcsLogFilterCollectionImpl filters = new VcsLogFilterCollectionImpl(null, filter, null, null, null, null, null);
+    VcsLogFilterCollection filters = new VcsLogFilterCollectionBuilder().with(filter).build();
     List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProject.getBaseDir(), filters, -1);
-    return ContainerUtil.map(commits, new Function<TimedVcsCommit, String>() {
-      @Override
-      public String fun(TimedVcsCommit commit) {
-        return commit.getId().asString();
-      }
-    });
+    return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
 
   @NotNull
   private static List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter, @NotNull List<VcsCommitMetadata> metadata) {
-    return ContainerUtil.map(ContainerUtil.filter(metadata, new Condition<VcsCommitMetadata>() {
-      @Override
-      public boolean value(VcsCommitMetadata t) {
-        return filter.matches(t);
-      }
-    }), new Function<VcsCommitMetadata, String>() {
-      @Override
-      public String fun(VcsCommitMetadata metadata) {
-        return metadata.getId().asString();
-      }
-    });
+    return ContainerUtil.map(ContainerUtil.filter(metadata, filter::matches), metadata1 -> metadata1.getId().asString());
   }
 
   @NotNull

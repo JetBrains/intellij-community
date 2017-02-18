@@ -42,7 +42,7 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
 
   @Override
   public String getQualifiedName() {
-    PsiImportStatementStub stub = getStub();
+    PsiImportStatementStub stub = getGreenStub();
     if (stub != null) {
       return stub.getImportReferenceText();
     }

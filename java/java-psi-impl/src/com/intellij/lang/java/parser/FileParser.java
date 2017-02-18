@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
@@ -53,6 +54,11 @@ public class FileParser {
                         @NotNull final TokenSet importListStoppers,
                         @NotNull final AbstractBundle bundle,
                         @NotNull final String errorMessageKey) {
+    if (PsiKeyword.MODULE.equals(builder.getTokenText())) {
+      ModuleParser.parseModule(builder);
+      return;
+    }
+
     parsePackageStatement(builder);
 
     Pair<PsiBuilder.Marker, Boolean> impListInfo = parseImportList(builder, importListStoppers);

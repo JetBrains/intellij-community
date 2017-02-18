@@ -27,7 +27,7 @@ public interface Refreshable {
   DataKey<Refreshable> PANEL_KEY = DataKey.create("Panel");
 
   /**
-   * The data ID which can be used to retrieve the active <code>Refreshable</code>
+   * The data ID which can be used to retrieve the active {@code Refreshable}
    * instance from {@link com.intellij.openapi.actionSystem.DataContext}.
    *
    * @see com.intellij.openapi.actionSystem.DataContext#getData(String)

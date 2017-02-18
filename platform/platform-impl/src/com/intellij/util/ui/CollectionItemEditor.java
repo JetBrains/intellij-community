@@ -17,25 +17,25 @@ package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CollectionItemEditor<T> {
+public interface CollectionItemEditor<T> {
   /**
    * Class must have an empty constructor.
    */
   @NotNull
-  public abstract Class<? extends T> getItemClass();
+  Class<? extends T> getItemClass();
 
   /**
    * Used for "copy" and "in place edit" actions.
    *
    * You must perform deep clone in case of "add" operation, but in case of "in place edit" you should copy only exposed (via column) properties.
    */
-  public abstract T clone(@NotNull T item, boolean forInPlaceEditing);
+  T clone(@NotNull T item, boolean forInPlaceEditing);
 
-  public boolean isRemovable(@NotNull T item) {
+  default boolean isRemovable(@NotNull T item) {
     return true;
   }
 
-  public boolean isEmpty(@NotNull T item) {
+  default boolean isEmpty(@NotNull T item) {
     return false;
   }
 }

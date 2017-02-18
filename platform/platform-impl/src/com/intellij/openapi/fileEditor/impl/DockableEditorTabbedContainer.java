@@ -42,7 +42,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
   private final EditorsSplitters mySplitters;
   private final Project myProject;
 
-  private final CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<Listener>();
+  private final CopyOnWriteArraySet<Listener> myListeners = new CopyOnWriteArraySet<>();
 
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;

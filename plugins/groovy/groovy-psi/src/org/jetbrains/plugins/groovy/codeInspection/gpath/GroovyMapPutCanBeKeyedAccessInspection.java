@@ -74,12 +74,12 @@ public class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Replace with keyed access";
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement referenceName = descriptor.getPsiElement();
       final GrReferenceExpression invokedExpression = (GrReferenceExpression) referenceName.getParent();
@@ -93,7 +93,7 @@ public class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
+    public void visitMethodCallExpression(@NotNull GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrArgumentList args = grMethodCallExpression.getArgumentList();
       if (args.getExpressionArguments().length != 2) {

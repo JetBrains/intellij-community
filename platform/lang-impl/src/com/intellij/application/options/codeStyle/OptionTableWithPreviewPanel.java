@@ -33,6 +33,7 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -60,10 +61,10 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   protected TreeTable myTreeTable;
   private final JPanel myPanel = new JPanel();
 
-  private final List<Option> myOptions = new ArrayList<Option>();
-  private final List<Option> myCustomOptions = new ArrayList<Option>();
-  private final Set<String> myAllowedOptions = new THashSet<String>();
-  private final Map<String, String> myRenamedFields = new THashMap<String, String>();
+  private final List<Option> myOptions = new ArrayList<>();
+  private final List<Option> myCustomOptions = new ArrayList<>();
+  private final Set<String> myAllowedOptions = new THashSet<>();
+  private final Map<String, String> myRenamedFields = new THashMap<>();
   private boolean myShowAllStandardOptions;
   protected boolean isFirstUpdate = true;
 
@@ -180,7 +181,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
 
   protected TreeTable createOptionsTree(CodeStyleSettings settings) {
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
-    Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<String, DefaultMutableTreeNode>();
+    Map<String, DefaultMutableTreeNode> groupsMap = new THashMap<>();
 
     List<Option> sorted = sortOptions(ContainerUtil.concat(myOptions, myCustomOptions));
     for (Option each : sorted) {
@@ -256,7 +257,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     treeTable.setTableHeader(null);
 
-    expandTree(tree);
+    TreeUtil.expandAll(tree);
 
     treeTable.getColumnModel().getSelectionModel().setAnchorSelectionIndex(1);
     treeTable.getColumnModel().getSelectionModel().setLeadSelectionIndex(1);
@@ -285,19 +286,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   private String getRenamedTitle(String fieldOrGroupName, String defaultName) {
     String result = myRenamedFields.get(fieldOrGroupName);
     return result == null ? defaultName : result;
-  }
-
-  public static void expandTree(final JTree tree) {
-    int oldRowCount = 0;
-    do {
-      int rowCount = tree.getRowCount();
-      if (rowCount == oldRowCount) break;
-      oldRowCount = rowCount;
-      for (int i = 0; i < rowCount; i++) {
-        tree.expandRow(i);
-      }
-    }
-    while (true);
   }
 
   protected abstract void initTables();
@@ -946,11 +934,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
+    ((DefaultTreeModel)treeModel).nodeChanged(root);
   }
 
   @Override
   public Set<String> processListOptions() {
-    Set<String> options = new HashSet<String>();
+    Set<String> options = new HashSet<>();
     collectOptions(options, myOptions);
     collectOptions(options, myCustomOptions);
     return options;

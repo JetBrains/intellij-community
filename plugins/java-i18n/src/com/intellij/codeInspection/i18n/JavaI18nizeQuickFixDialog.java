@@ -245,7 +245,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     String templateName = getTemplateName();
     LOG.assertTrue(templateName != null);
     FileTemplate template = FileTemplateManager.getInstance(myProject).getCodeTemplate(templateName);
-    Map<String, String> attributes = new THashMap<String, String>();
+    Map<String, String> attributes = new THashMap<>();
     attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
     attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));

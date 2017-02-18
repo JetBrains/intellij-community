@@ -37,7 +37,7 @@ import java.util.*;
 public class ConfigFileContainerImpl extends SimpleModificationTracker implements ConfigFileContainer {
   private final Project myProject;
   private final EventDispatcher<ConfigFileListener> myDispatcher = EventDispatcher.create(ConfigFileListener.class);
-  private final MultiValuesMap<ConfigFileMetaData, ConfigFile> myConfigFiles = new MultiValuesMap<ConfigFileMetaData, ConfigFile>();
+  private final MultiValuesMap<ConfigFileMetaData, ConfigFile> myConfigFiles = new MultiValuesMap<>();
   private ConfigFile[] myCachedConfigFiles;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
   private final ConfigFileInfoSetImpl myConfiguration;
@@ -128,12 +128,12 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
   }
 
   public void updateDescriptors(@NotNull MultiValuesMap<ConfigFileMetaData, ConfigFileInfo> descriptorsMap) {
-    Set<ConfigFile> toDelete = myConfigFiles.isEmpty() ? Collections.<ConfigFile>emptySet() : new HashSet<ConfigFile>(myConfigFiles.values());
+    Set<ConfigFile> toDelete = myConfigFiles.isEmpty() ? Collections.<ConfigFile>emptySet() : new HashSet<>(myConfigFiles.values());
     Set<ConfigFile> added = null;
 
     for (Map.Entry<ConfigFileMetaData, Collection<ConfigFileInfo>> entry : descriptorsMap.entrySet()) {
       ConfigFileMetaData metaData = entry.getKey();
-      Set<ConfigFileInfo> newDescriptors = new HashSet<ConfigFileInfo>(entry.getValue());
+      Set<ConfigFileInfo> newDescriptors = new HashSet<>(entry.getValue());
       final Collection<ConfigFile> oldDescriptors = myConfigFiles.get(metaData);
       if (oldDescriptors != null) {
         for (ConfigFile descriptor : oldDescriptors) {
@@ -147,7 +147,7 @@ public class ConfigFileContainerImpl extends SimpleModificationTracker implement
         Disposer.register(this, configFile);
         myConfigFiles.put(metaData, configFile);
         if (added == null) {
-          added = new THashSet<ConfigFile>();
+          added = new THashSet<>();
         }
         added.add(configFile);
       }

@@ -77,8 +77,10 @@ public class StudyBrowserWindow extends JFrame {
   private void updateIntellijAndGTKLaf() {
     Platform.runLater(() -> {
       final URL scrollBarStyleUrl = getClass().getResource("/style/javaFXBrowserScrollBar.css");
+      final URL engineStyleUrl = getClass().getResource("/style/javaFXBrowser.css");
       myPane.getStylesheets().add(scrollBarStyleUrl.toExternalForm());
-      myEngine.setUserStyleSheetLocation(null);
+      myEngine.setUserStyleSheetLocation(engineStyleUrl.toExternalForm());
+      myPanel.getScene().getStylesheets().add(engineStyleUrl.toExternalForm());
       myEngine.reload();
     });
   }

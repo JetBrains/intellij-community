@@ -46,12 +46,12 @@ public class VisibilityIcons {
         setVisibilityIcon(PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL, baseIcon);
       }
       else {
-        Icon emptyIcon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
+        Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
         baseIcon.setIcon(emptyIcon, 1);
       }
     }
     else if (PlatformIcons.PUBLIC_ICON != null) {
-        Icon emptyIcon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
+        Icon emptyIcon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
         baseIcon.setIcon(emptyIcon, 1);
       }
   }
@@ -73,7 +73,7 @@ public class VisibilityIcons {
         break;
       default:
         if (PlatformIcons.PUBLIC_ICON != null) {
-          icon = new EmptyIcon(PlatformIcons.PUBLIC_ICON.getIconWidth(), PlatformIcons.PUBLIC_ICON.getIconHeight());
+          icon = EmptyIcon.create(PlatformIcons.PUBLIC_ICON);
         }
         else {
           return;

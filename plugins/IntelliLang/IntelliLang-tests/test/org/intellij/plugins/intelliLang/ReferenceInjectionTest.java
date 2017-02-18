@@ -102,7 +102,17 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("Foo.java", "class Foo {\n" +
                                           "    void bar() {\n" +
                                           "        @org.intellij.lang.annotations.Language(\"encoding-reference\")\n" +
-                                          "        String cset = true ? \"<error descr=\"Cannot resolve symbol 'cp1252345'\">cp1252345</error>\" : \"utf-8\";//\n" +
+                                          "        String cset = true ? \"<error descr=\"Unknown encoding: 'cp1252345'\">cp1252345</error>\" : \"utf-8\";//\n" +
+                                          "    }\n" +
+                                          "}");
+    myFixture.testHighlighting();
+  }
+
+  public void testEmptyLiteral() throws Exception {
+    myFixture.configureByText("Foo.java", "class Foo {\n" +
+                                          "    void bar() {\n" +
+                                          "        @org.intellij.lang.annotations.Language(\"encoding-reference\")\n" +
+                                          "        String cset = true ? <error descr=\"Unknown encoding: ''\">\"\"</error> : \"utf-8\";//\n" +
                                           "    }\n" +
                                           "}");
     myFixture.testHighlighting();

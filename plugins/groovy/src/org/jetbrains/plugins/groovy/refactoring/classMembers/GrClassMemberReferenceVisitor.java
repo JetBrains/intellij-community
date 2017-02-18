@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public abstract class GrClassMemberReferenceVisitor extends GroovyRecursiveEleme
   }
 
   @Override
-  public void visitReferenceExpression(GrReferenceExpression ref) {
+  public void visitReferenceExpression(@NotNull GrReferenceExpression ref) {
     GrExpression qualifier = ref.getQualifier();
 
     if (qualifier != null && !(PsiUtil.isThisOrSuperRef(qualifier))) {
@@ -61,7 +61,7 @@ public abstract class GrClassMemberReferenceVisitor extends GroovyRecursiveEleme
   }
 
   @Override
-  public void visitCodeReferenceElement(GrCodeReferenceElement reference) {
+  public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement reference) {
     PsiElement referencedElement = reference.resolve();
     if (referencedElement instanceof GrTypeDefinition) {
       final GrTypeDefinition referencedClass = (GrTypeDefinition)referencedElement;

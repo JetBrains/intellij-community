@@ -45,7 +45,12 @@ public interface ApplicationListener extends EventListener {
   void writeActionStarted(@NotNull Object action);
 
   /**
-   *  Is called on action finish.
+   *  Is called on before action finish, while while lock is still being hold 
    */
   void writeActionFinished(@NotNull Object action);
+
+  /**
+   *  Is called after action finish and lock is released
+   */
+  void afterWriteActionFinished(@NotNull Object action);
 }

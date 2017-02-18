@@ -87,7 +87,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   @Override
   @NotNull
   protected UsageInfo[] findUsages() {
-    final List<UsageInfo> result = new ArrayList<UsageInfo>();
+    final List<UsageInfo> result = new ArrayList<>();
     for (MemberInfo memberInfo : myMembersToMove) {
       final PsiMember member = memberInfo.getMember();
       if (member.hasModifierProperty(PsiModifier.STATIC)) {
@@ -142,7 +142,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       if (!myTargetSuperClass.isValid()) return;
       final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
-      final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
+      final Set<VirtualFile> hierarchyFiles = new HashSet<>();
       for (PsiClass aClass : search) {
         final PsiFile containingFile = aClass.getContainingFile();
         if (containingFile != null) {
@@ -152,7 +152,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
           }
         }
       }
-      final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
+      final Set<PsiMember> methodsToSearchDuplicates = new HashSet<>();
       for (PsiMember psiMember : myMembersAfterMove) {
         if (psiMember instanceof PsiMethod && psiMember.isValid() && ((PsiMethod)psiMember).getBody() != null) {
           methodsToSearchDuplicates.add(psiMember);
@@ -251,7 +251,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   public void moveFieldInitializations() throws IncorrectOperationException {
     LOG.assertTrue(myMembersAfterMove != null);
 
-    final LinkedHashSet<PsiField> movedFields = new LinkedHashSet<PsiField>();
+    final LinkedHashSet<PsiField> movedFields = new LinkedHashSet<>();
     for (PsiMember member : myMembersAfterMove) {
       if (member instanceof PsiField) {
         movedFields.add((PsiField)member);

@@ -16,6 +16,7 @@
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -100,8 +101,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   }
 
   public interface PluginChooserPage {
+    @NotNull
     String getTitle();
+    @Nullable
     String getCategory();
+    @Nullable
     String getDependentPlugin();
   }
 
@@ -132,7 +136,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * @return true if the product's vendor is JetBrains
    */
   public final boolean isVendorJetBrains() {
-    String companyName = getCompanyName();
-    return companyName != null && companyName.startsWith("JetBrains");
+    return "JetBrains".equals(getShortCompanyName());
   }
 }

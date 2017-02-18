@@ -48,6 +48,8 @@ import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -118,6 +120,25 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     installComparator();
     initTree();
 
+    Disposer.register(getTreeBuilder(), new UiNotifyConnector(myTree, new Activatable() {
+      private boolean showing;
+
+      @Override
+      public void showNotify() {
+        if (!showing) {
+          showing = true;
+          restoreExpandedPaths();
+        }
+      }
+
+      @Override
+      public void hideNotify() {
+        if (showing) {
+          showing = false;
+          saveExpandedPaths();
+        }
+      }
+    }));
     return myComponent;
   }
 
@@ -200,8 +221,8 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   @Override
   public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
-    final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
-    final ArrayList<Object> selectionPaths = new ArrayList<Object>();
+    final ArrayList<Object> pathsToExpand = new ArrayList<>();
+    final ArrayList<Object> selectionPaths = new ArrayList<>();
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
     if (restoreExpandedPaths) {
@@ -232,7 +253,10 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      return ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus);
+      BaseProjectTreeBuilder builder = (BaseProjectTreeBuilder)getTreeBuilder();
+      // actually, getInitialized().doWhenDone() should be called by builder internally
+      // this will be done in 2017
+      return builder.getInitialized().doWhenDone(() -> builder.select(element, file, requestFocus));
     }
     return ActionCallback.DONE;
   }

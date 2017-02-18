@@ -1,4 +1,4 @@
-// "Generate overloaded method with default parameter value" "true"
+// "Generate overloaded method with default parameter values" "true"
 class Test {
     <T> int foo(boolean... args) {
       return foo(<caret>, args);

@@ -41,7 +41,7 @@ public class SvnNativeListsTest extends Svn17TestCase {
   public void tearDown() throws Exception {
     final List<LocalChangeList> changeListList = myChangeListManager.getChangeLists();
     for (LocalChangeList list : changeListList) {
-      if (LocalChangeList.DEFAULT_NAME.equals(list.getName())) continue;
+      if (list.hasDefaultName()) continue;
       final Collection<Change> changes = list.getChanges();
       for (Change change : changes) {
         clearListForRevision(change.getBeforeRevision());

@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-// Class to show the user the request for search
 
 @SuppressWarnings({"RefusedBequest"})
 public class ReplaceDialog extends SearchDialog {
@@ -31,10 +30,12 @@ public class ReplaceDialog extends SearchDialog {
 
   private String mySavedEditorText;
 
+  @Override
   protected String getDefaultTitle() {
     return SSRBundle.message("structural.replace.title");
   }
 
+  @Override
   protected JComponent createEditorContent() {
     JPanel result = new JPanel(new BorderLayout());
     Splitter p;
@@ -53,14 +54,17 @@ public class ReplaceDialog extends SearchDialog {
     return result;
   }
 
+  @Override
   protected int getRowsCount() {
     return super.getRowsCount() + 1;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog";
   }
 
+  @Override
   protected void buildOptions(JPanel searchOptions) {
     super.buildOptions(searchOptions);
     searchOptions.add(UIUtil.createOptionLine(shortenFQN = new JCheckBox(
@@ -81,22 +85,26 @@ public class ReplaceDialog extends SearchDialog {
     super(searchContext, showScope, runFindActionOnClose);
   }
 
+  @Override
   protected void startSearching() {
     new ReplaceCommand(model.getConfig(), searchContext).startSearching();
   }
 
+  @Override
   public Configuration createConfiguration() {
     ReplaceConfiguration configuration = new ReplaceConfiguration();
     configuration.setName(USER_DEFINED);
     return configuration;
   }
 
+  @Override
   protected void disposeEditorContent() {
     mySavedEditorText = replaceCriteriaEdit.getDocument().getText();
     EditorFactory.getInstance().releaseEditor(replaceCriteriaEdit);
     super.disposeEditorContent();
   }
 
+  @Override
   public void setValuesFromConfig(Configuration configuration) {
     //replaceCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, configuration);
 
@@ -127,6 +135,7 @@ public class ReplaceDialog extends SearchDialog {
     }
   }
 
+  @Override
   protected void setValuesToConfig(Configuration config) {
     super.setValuesToConfig(config);
 
@@ -140,14 +149,16 @@ public class ReplaceDialog extends SearchDialog {
     options.setToUseStaticImport(useStaticImport.isSelected());
   }
 
+  @Override
   protected boolean isRecursiveSearchEnabled() {
     return false;
   }
 
-  protected java.util.List<Variable> getVariablesFromListeners() {
-    ArrayList<Variable> vars = getVarsFrom(replaceCriteriaEdit);
+  @Override
+  protected List<Variable> getVariablesFromListeners() {
+    List<Variable> vars = getVarsFrom(replaceCriteriaEdit);
     List<Variable> searchVars = super.getVariablesFromListeners();
-    Map<String, Variable> varsMap = new LinkedHashMap<String, Variable>(searchVars.size());
+    Map<String, Variable> varsMap = new LinkedHashMap<>(searchVars.size());
 
     for(Variable var:searchVars) varsMap.put(var.getName(), var);
     for(Variable var:vars) {
@@ -156,9 +167,10 @@ public class ReplaceDialog extends SearchDialog {
         varsMap.put(newVarName, new Variable(newVarName, null, null, false, false));
       }
     }
-    return new ArrayList<Variable>(varsMap.values());
+    return new ArrayList<>(varsMap.values());
   }
 
+  @Override
   protected boolean isValid() {
     if (!super.isValid()) return false;
 
@@ -177,16 +189,19 @@ public class ReplaceDialog extends SearchDialog {
     return true;
   }
 
+  @Override
   public void show() {
     replaceCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, model.getConfig());
 
     super.show();
   }
 
+  @Override
   protected boolean isReplaceDialog() {
     return true;
   }
 
+  @Override
   protected void addOrReplaceSelection(final String selection) {
     super.addOrReplaceSelection(selection);
     addOrReplaceSelectionForEditor(selection, replaceCriteriaEdit);

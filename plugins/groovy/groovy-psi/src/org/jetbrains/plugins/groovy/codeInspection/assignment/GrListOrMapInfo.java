@@ -59,11 +59,11 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
       GrNamedArgument[] args = myListOrMap.getNamedArguments();
       if (args.length == 0) return new PsiType[]{myListOrMap.getType()};
 
-      return PsiUtil.getArgumentTypes(args, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, true, null, false);
+      return PsiUtil.getArgumentTypes(args, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, true, null);
     }
     else {
       GrExpression[] args = myListOrMap.getInitializers();
-      return PsiUtil.getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, args, GrClosableBlock.EMPTY_ARRAY, true, null, false);
+      return PsiUtil.getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, args, GrClosableBlock.EMPTY_ARRAY, true, null);
     }
   }
 

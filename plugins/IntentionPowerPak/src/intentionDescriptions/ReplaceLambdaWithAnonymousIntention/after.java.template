@@ -1,8 +1,0 @@
-class X {
-  {
-    Runnable r = new Runnable() {
-      public void run() {
-      }
-    };
-  }
-}

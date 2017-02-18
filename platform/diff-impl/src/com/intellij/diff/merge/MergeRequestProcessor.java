@@ -180,9 +180,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     toolbar.setTargetComponent(toolbar.getComponent());
 
     myToolbarPanel.setContent(toolbar.getComponent());
-    for (AnAction action : group.getChildren(null)) {
-      DiffUtil.registerAction(action, myMainPanel);
-    }
+    ActionUtil.recursiveRegisterShortcutSet(group, myMainPanel, null);
   }
 
   @NotNull
@@ -429,6 +427,9 @@ public abstract class MergeRequestProcessor implements Disposable {
         else {
           return "procedures.vcWithIDEA.commonVcsOps.integrateDiffs.resolveConflict";
         }
+      }
+      else if (DiffDataKeys.MERGE_VIEWER.is(dataId)) {
+        return myViewer;
       }
 
       DataProvider requestProvider = myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);

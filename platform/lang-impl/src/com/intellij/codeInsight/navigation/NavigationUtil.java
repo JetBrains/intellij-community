@@ -25,7 +25,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -49,7 +48,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
@@ -107,13 +111,8 @@ public final class NavigationUtil {
                                                                   @Nullable final String title,
                                                                   @NotNull final PsiElementProcessor<T> processor,
                                                                   @Nullable final T selection) {
-    final JList list = new JBListWithHintProvider(elements) {
-      @Nullable
-      @Override
-      protected PsiElement getPsiElementForHint(Object selectedValue) {
-        return (PsiElement)selectedValue;
-      }
-    };
+    final JList list = new JBList(elements);
+    HintUpdateSupply.installSimpleHintUpdateSupply(list);
     list.setCellRenderer(renderer);
 
     list.setFont(EditorUtil.getEditorFont());
@@ -263,7 +262,7 @@ public final class NavigationUtil {
   public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, String title, boolean showContainingModules) {
     Object[] elements = new Object[items.size()];
     //todo[nik] move presentation logic to GotoRelatedItem class
-    final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<PsiElement, GotoRelatedItem>();
+    final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<>();
     for (int i = 0; i < items.size(); i++) {
       GotoRelatedItem item = items.get(i);
       elements[i] = item.getElement() != null ? item.getElement() : item;
@@ -389,7 +388,7 @@ public final class NavigationUtil {
     }) {
     };
     popup.getList().setCellRenderer(new PopupListElementRenderer(popup) {
-      Map<Object, String> separators = new HashMap<Object, String>();
+      Map<Object, String> separators = new HashMap<>();
       {
         final ListModel model = popup.getList().getModel();
         String current = null;

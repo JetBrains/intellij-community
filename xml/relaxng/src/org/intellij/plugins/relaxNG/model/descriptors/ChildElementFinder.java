@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class ChildElementFinder extends RecursionSaveWalker {
-  private final List<DElementPattern> myRoots = new ArrayList<DElementPattern>();
+  private final List<DElementPattern> myRoots = new ArrayList<>();
 
   private final int myTargetDepth;
   private int myDepth;

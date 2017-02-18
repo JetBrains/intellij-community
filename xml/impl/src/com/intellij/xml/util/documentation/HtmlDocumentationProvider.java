@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,10 +123,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       isTag = !(element.getParent() instanceof XmlAttribute);
     } else {
       nameElement = element;
-      if (context == null) {
-        isTag = false;
-      }
-      else {
+      if (context != null) {
         String text = element.getText();
         isTag = text != null && text.startsWith(context.getName());
       }

@@ -42,6 +42,6 @@ public class PyiFile extends PyFileImpl {
 
   @Override
   public LanguageLevel getLanguageLevel() {
-    return LanguageLevel.PYTHON35;
+    return LanguageLevel.PYTHON36;
   }
 }

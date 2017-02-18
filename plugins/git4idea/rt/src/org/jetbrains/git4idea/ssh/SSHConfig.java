@@ -32,7 +32,7 @@ public class SSHConfig {
   /**
    * Entry list for config
    */
-  final List<HostEntry> myEntries = new ArrayList<HostEntry>();
+  final List<HostEntry> myEntries = new ArrayList<>();
   /**
    * User home directory
    */
@@ -46,7 +46,7 @@ public class SSHConfig {
   /**
    * Allowed authentication methods
    */
-  @NonNls private final static HashSet<String> ALLOWED_METHODS = new HashSet<String>();
+  @NonNls private final static HashSet<String> ALLOWED_METHODS = new HashSet<>();
 
   static {
     ALLOWED_METHODS.add(SSHMain.PUBLIC_KEY_METHOD);
@@ -255,7 +255,7 @@ public class SSHConfig {
   }
 
   private static List<String> parseList(final String arg) {
-    List<String> values = new ArrayList<String>();
+    List<String> values = new ArrayList<>();
     for (String a : arg.split("[ \t,]+")) {
       if (a.length() == 0) {
         continue;
@@ -286,15 +286,15 @@ public class SSHConfig {
     /**
      * Negative patterns
      */
-    private final List<Pattern> myNegative = new ArrayList<Pattern>();
+    private final List<Pattern> myNegative = new ArrayList<>();
     /**
      * Positive patterns
      */
-    private final List<Pattern> myPositive = new ArrayList<Pattern>();
+    private final List<Pattern> myPositive = new ArrayList<>();
     /**
      * Exact positive patterns that match host exactly rather than by mask
      */
-    private final List<String> myExactPositive = new ArrayList<String>();
+    private final List<String> myExactPositive = new ArrayList<>();
     /**
      * The host entry
      */

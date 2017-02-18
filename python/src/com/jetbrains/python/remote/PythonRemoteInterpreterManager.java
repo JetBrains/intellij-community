@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remote.*;
@@ -43,10 +44,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author traff
@@ -77,9 +80,9 @@ public abstract class PythonRemoteInterpreterManager {
    */
   @Deprecated
   public abstract PyRemoteProcessHandlerBase startRemoteProcessWithPid(@Nullable Project project,
-                                                                   @NotNull PyRemoteSdkCredentials data,
-                                                                   @NotNull GeneralCommandLine commandLine,
-                                                                   @NotNull PyRemotePathMapper pathMapper)
+                                                                       @NotNull PyRemoteSdkCredentials data,
+                                                                       @NotNull GeneralCommandLine commandLine,
+                                                                       @NotNull PyRemotePathMapper pathMapper)
     throws RemoteSdkException;
 
   public abstract void addRemoteSdk(Project project, Component parentComponent, Collection<Sdk> existingSdks,
@@ -134,9 +137,48 @@ public abstract class PythonRemoteInterpreterManager {
                                         RemoteProjectSettings settings,
                                         RemoteSdkCredentials data);
 
+  /**
+   * @param sdk current sdk
+   * @return project synchronizer for this sdk. See {@link PyProjectSynchronizer} for more info
+   * @see PyProjectSynchronizer
+   */
+  @Nullable
+  public abstract PyProjectSynchronizer getSynchronizer(@NotNull final Sdk sdk);
+
   public abstract void copyFromRemote(Sdk sdk, @NotNull Project project,
                                       RemoteSdkCredentials data,
                                       List<PathMappingSettings.PathMapping> mappings);
+
+  /**
+   * Creates form to browse remote box.
+   * You need to show it to user using dialog.
+   *
+   * @return null if remote sdk can't be browsed.
+   * First argument is consumer to get path, chosen by user.
+   * Second is panel to display to user
+   * @throws ExecutionException   credentials can't be obtained due to remote server error
+   * @throws InterruptedException credentials can't be obtained due to remote server error
+   */
+  @Nullable
+  public abstract Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull final Sdk remoteSdk)
+    throws ExecutionException, InterruptedException;
+
+  /**
+   * Short-cut to get {@link PyProjectSynchronizer} for sdk or null if sdk does not have any
+   */
+  @Nullable
+  public static PyProjectSynchronizer getSynchronizerInstance(@NotNull final Sdk sdk) {
+    final PythonRemoteInterpreterManager remoteManager = getInstance();
+    if (remoteManager == null) {
+      return null;
+    }
+    final PyProjectSynchronizer synchronizer = remoteManager.getSynchronizer(sdk);
+    if (synchronizer == null) {
+      return null;
+    }
+    return synchronizer;
+  }
+
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
@@ -174,10 +216,13 @@ public abstract class PythonRemoteInterpreterManager {
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
   public abstract PyConsoleProcessHandler createConsoleProcessHandler(RemoteProcess process,
-                                                             PythonConsoleView view,
-                                                             PydevConsoleCommunication consoleCommunication,
-                                                             String commandLine,
-                                                             Charset charset, PyRemotePathMapper pathMapper, PyRemoteSocketToLocalHostProvider remoteSocketProvider);
+                                                                      PythonConsoleView view,
+                                                                      PydevConsoleCommunication consoleCommunication,
+                                                                      String commandLine,
+                                                                      Charset charset,
+                                                                      PyRemotePathMapper pathMapper,
+                                                                      PyRemoteSocketToLocalHostProvider remoteSocketProvider);
+
   @NotNull
   public abstract RemoteSdkCredentialsProducer<PyRemoteSdkCredentials> getRemoteSdkCredentialsProducer(Function<RemoteCredentials, PyRemoteSdkCredentials> credentialsTransformer,
                                                                                                        RemoteConnectionCredentialsWrapper connectionWrapper);

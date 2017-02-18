@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.parser;
+package org.jetbrains.plugins.groovy.lang.parser
 
 /**
  * @author peter
  */
-public class PackagingParsingTest extends GroovyParsingTestCase {
+class PackagingParsingTest extends GroovyParsingTestCase {
   @Override
   String getBasePath() {
-    return super.basePath + "packaging";
+    return super.basePath + "packaging"
   }
 
-  public void testPack1() throws Throwable { doTest(); }
-  public void testPack2() throws Throwable { doTest(); }
-  public void testPack3() throws Throwable { doTest(); }
-  public void testPack4() throws Throwable { doTest(); }
-  public void testPack5() throws Throwable { doTest(); }
-  public void testPack6() throws Throwable { doTest(); }
-  public void testPack7() throws Throwable { doTest(); }
-  public void testPack8() throws Throwable { doTest(); }
+  void testPack1() throws Throwable { doTest() }
+
+  void testPack2() throws Throwable { doTest() }
+
+  void testPack3() throws Throwable { doTest() }
+
+  void testPack4() throws Throwable { doTest() }
+
+  void testPack5() throws Throwable { doTest() }
+
+  void testPack6() throws Throwable { doTest() }
+
+  void testPack7() throws Throwable { doTest() }
+
+  void testPack8() throws Throwable { doTest() }
 
 }

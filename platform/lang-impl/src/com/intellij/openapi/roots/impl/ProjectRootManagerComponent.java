@@ -19,9 +19,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
@@ -40,6 +38,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -66,7 +65,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private final BatchUpdateListener myHandler;
   private final MessageBusConnection myConnection;
 
-  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<LocalFileSystem.WatchRequest>();
+  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
   private final boolean myDoLogCachesUpdate;
 
   public ProjectRootManagerComponent(Project project, StartupManager startupManager) {
@@ -222,8 +221,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private Pair<Set<String>, Set<String>> getAllRoots(boolean includeSourceRoots) {
     if (myProject.isDefault()) return null;
 
-    final Set<String> recursive = new HashSet<String>();
-    final Set<String> flat = new HashSet<String>();
+    final Set<String> recursive = new HashSet<>();
+    final Set<String> flat = new HashSet<>();
 
     final String projectFilePath = myProject.getProjectFilePath();
     final File projectDirFile = projectFilePath == null ? null : new File(projectFilePath).getParentFile();
@@ -233,7 +232,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     else {
       flat.add(projectFilePath);
       // may be not existing yet
-      ContainerUtil.addIfNotNull(flat, ((IProjectStore)ServiceKt.getStateStore(myProject)).getWorkspaceFilePath());
+      ContainerUtil.addIfNotNull(flat, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());
     }
 
     for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {
@@ -292,7 +291,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-      dumbService.queueTask(new UnindexedFilesUpdater(myProject, false));
+      dumbService.queueTask(new UnindexedFilesUpdater(myProject));
     }
   }
 

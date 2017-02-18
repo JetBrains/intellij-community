@@ -105,8 +105,8 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
     myProject = project;
     myProjectDataManager = projectDataManager;
     myAutoImportAware = autoImportAware;
-    myVfsAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
-    myDocumentAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
+    myVfsAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
+    myDocumentAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
 
   @SuppressWarnings("unchecked")

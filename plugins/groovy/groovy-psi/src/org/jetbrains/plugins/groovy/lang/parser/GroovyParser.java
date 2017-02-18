@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
@@ -60,7 +61,7 @@ public class GroovyParser implements PsiParser {
 
   @Override
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     //builder.setDebugMode(true);
     if (root == GroovyElementTypes.OPEN_BLOCK) {
       OpenOrClosableBlock.parseOpenBlockDeep(builder, this);
@@ -454,7 +455,7 @@ public class GroovyParser implements PsiParser {
     return GroovyTokenTypes.kCLASS == builder.getTokenType() ||               //class
            GroovyTokenTypes.kINTERFACE == builder.getTokenType() ||           //interface
            GroovyTokenTypes.kENUM == builder.getTokenType() ||                //enum
-           GroovyTokenTypes.kTRAIT == builder.getTokenType() ||               //trait
+           GroovyTokenTypes.kTRAIT == builder.getTokenType() && !PathExpression.isQualificationDotAhead(builder) ||               //trait
            ParserUtils.lookAhead(builder, GroovyTokenTypes.mAT, GroovyTokenTypes.kINTERFACE);  //@interface
   }
 

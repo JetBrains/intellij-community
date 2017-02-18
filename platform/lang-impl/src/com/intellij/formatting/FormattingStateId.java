@@ -70,7 +70,7 @@ public enum FormattingStateId {
   }
 
   /**
-   * @return      <code>'weight'</code> of the current state. Basically, it's assumed that every processing iteration of the state
+   * @return      {@code 'weight'} of the current state. Basically, it's assumed that every processing iteration of the state
    *              with greater weight is executed longer that processing iteration of the state with the lower weight
    */
   public double getProgressWeight() {

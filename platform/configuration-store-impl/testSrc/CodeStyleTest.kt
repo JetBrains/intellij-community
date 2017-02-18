@@ -31,7 +31,7 @@ class CodeStyleTest {
         <option name="ALIGN_OBJECT_PROPERTIES" value="2" />
       </UnknownDoNotRemoveMe>
       <codeStyleSettings language="CoffeeScript">
-        <option name="LINE_COMMENT_AT_FIRST_COLUMN" value="false" />
+        <option name="KEEP_SIMPLE_METHODS_IN_ONE_LINE" value="true" />
       </codeStyleSettings>
       <codeStyleSettings language="Gherkin">
         <indentOptions>
@@ -73,7 +73,7 @@ class CodeStyleTest {
             var extra = parentElement!!.getChild(tagName)
             if (extra == null) {
               extra = Element(tagName)
-              parentElement!!.addContent(extra)
+              parentElement.addContent(extra)
             }
             
             val option = Element("option")
@@ -113,7 +113,7 @@ class CodeStyleTest {
           <option name="EXTRA" value="${param}" />
         </NewComponent-extra>
         <codeStyleSettings language="CoffeeScript">
-          <option name="LINE_COMMENT_AT_FIRST_COLUMN" value="false" />
+          <option name="KEEP_SIMPLE_METHODS_IN_ONE_LINE" value="true" />
         </codeStyleSettings>
         <codeStyleSettings language="Gherkin">
           <indentOptions>

@@ -39,8 +39,8 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   private MyTableModel myTableModel = null;
   private boolean myColorUnmarkedElements = true;
   private final List<ElementsMarkStateListener<T, S>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<T, ElementProperties>();
-  private final Map<T, Boolean> myDisabledMap = new HashMap<T, Boolean>();
+  private final Map<T,ElementProperties> myElementToPropertiesMap = new HashMap<>();
+  private final Map<T, Boolean> myDisabledMap = new HashMap<>();
 
   public interface ElementsMarkStateListener<T, S> {
     void elementMarkChanged(T element, S markState);
@@ -109,7 +109,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
         @Override
         public void actionPerformed(ActionEvent e) {
           final int[] selectedRows = myTable.getSelectedRows();
-          Map<T, S> selectedElements = new LinkedHashMap<T, S>(selectedRows.length);
+          Map<T, S> selectedElements = new LinkedHashMap<>(selectedRows.length);
           for (int selectedRow : selectedRows) {
             selectedElements.put(myTableModel.getElementAt(selectedRow), myTableModel.getElementMarkState(selectedRow));
           }
@@ -346,7 +346,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
 
   @NotNull
   public List<T> getSelectedElements() {
-    final List<T> elements = new ArrayList<T>();
+    final List<T> elements = new ArrayList<>();
     final int[] selectedRows = myTable.getSelectedRows();
     for (int selectedRow : selectedRows) {
       if (selectedRow < 0) {
@@ -384,7 +384,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   @NotNull
   public Map<T, S> getElementMarkStates() {
     final int count = myTableModel.getRowCount();
-    Map<T, S> elements = new LinkedHashMap<T, S>();
+    Map<T, S> elements = new LinkedHashMap<>();
     for (int idx = 0; idx < count; idx++) {
       final T element = myTableModel.getElementAt(idx);
       elements.put(element, myTableModel.getElementMarkState(idx));
@@ -446,8 +446,8 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   }
 
   private final class MyTableModel extends AbstractTableModel {
-    private final List<T> myElements = new ArrayList<T>();
-    private final Map<T, S> myMarkedMap = new HashMap<T, S>();
+    private final List<T> myElements = new ArrayList<>();
+    private final Map<T, S> myMarkedMap = new HashMap<>();
     public final int CHECK_MARK_COLUM_INDEX;
     public final int ELEMENT_COLUMN_INDEX;
     private final boolean myElementsCanBeMarked;
@@ -522,7 +522,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     }
 
     public void removeRows(int[] rows) {
-      final List<T> toRemove = new ArrayList<T>();
+      final List<T> toRemove = new ArrayList<>();
       for (int row : rows) {
         final T element = myElements.get(row);
         toRemove.add(element);

@@ -15,22 +15,22 @@
  */
 package com.intellij.rt.execution.junit;
 
-import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.Packet;
 import junit.framework.ComparisonFailure;
 
-public class FileComparisonFailure extends ComparisonFailure implements KnownException {
+public class FileComparisonFailure extends ComparisonFailure  {
   private final String myExpected;
   private final String myActual;
   private final String myFilePath;
   private final String myActualFilePath;
 
-  public FileComparisonFailure(String message, String expected, String actual, String filePath) {
-    this(message, expected, actual, filePath, null);
+  public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual, String expectedFilePath) {
+    this(message, expected, actual, expectedFilePath, null);
   }
 
-  public FileComparisonFailure(String message, String expected, String actual, String expectedFilePath, String actualFilePath) {
+  public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual, String expectedFilePath, String actualFilePath) {
     super(message, expected, actual);
+    if (expected == null) throw new NullPointerException("'expected' must not be null");
+    if (actual == null) throw new NullPointerException("'actual' must not be null");
     myExpected = expected;
     myActual = actual;
     myFilePath = expectedFilePath;
@@ -51,24 +51,5 @@ public class FileComparisonFailure extends ComparisonFailure implements KnownExc
 
   public String getActual() {
     return myActual;
-  }
-
-  public PacketFactory getPacketFactory() {
-    return new MyPacketFactory(this, myExpected, myActual, myFilePath);
-  }
-
-  private static class MyPacketFactory extends ComparisonDetailsExtractor {
-    private final String myFilePath;
-
-    public MyPacketFactory(ComparisonFailure assertion, String expected, String actual, String filePath) {
-      super(assertion, expected, actual);
-      myFilePath = filePath;
-    }
-
-    public Packet createPacket(OutputObjectRegistry registry, Object test) {
-      Packet packet = super.createPacket(registry, test);
-      packet.addLimitedString(myFilePath);
-      return packet;
-    }
   }
 }

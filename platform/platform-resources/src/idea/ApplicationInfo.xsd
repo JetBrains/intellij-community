@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="http://jetbrains.org/intellij/schema/application-info" xmlns="http://jetbrains.org/intellij/schema/application-info">
+  <xs:element name="component">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element type="versionType" name="version"/>
+        <xs:element type="companyType" name="company"/>
+        <xs:element type="buildType" name="build"/>
+        <xs:element type="logoType" name="logo"/>
+        <xs:element type="aboutType" name="about"/>
+        <xs:element type="iconType" name="icon"/>
+        <xs:element type="packageType" name="package" minOccurs="0"/>
+        <xs:element type="licenseeType" name="licensee" minOccurs="0"/>
+        <xs:element type="namesType" name="names"/>
+        <xs:element type="essentialPluginType" name="essential-plugin" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element type="welcome-screenType" name="welcome-screen"/>
+        <xs:element type="customize-ide-wizardType" name="customize-ide-wizard" minOccurs="0"/>
+        <xs:element type="pluginsPageType" name="plugins-page" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element type="editorType" name="editor" minOccurs="0"/>
+        <xs:element type="pluginsType" name="plugins" minOccurs="0"/>
+        <xs:element type="evaluationType" name="evaluation" minOccurs="0"/>
+        <xs:element type="update-urlsType" name="update-urls" minOccurs="0"/>
+        <xs:element type="helpType" name="help" minOccurs="0"/>
+        <xs:element type="urlType" name="documentation" minOccurs="0"/>
+        <xs:element type="urlType" name="support" minOccurs="0"/>
+        <xs:element type="feedbackType" name="feedback" minOccurs="0"/>
+        <xs:element type="urlType" name="whatsnew" minOccurs="0"/>
+        <xs:element type="keymapType" name="keymap" minOccurs="0"/>
+        <xs:element type="urlType" name="third-party" minOccurs="0"/>
+        <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
+        <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
+        <xs:element type="statisticsType" name="statistics" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="versionType">
+    <xs:attribute type="xs:positiveInteger" name="major" use="required"/>
+    <xs:attribute type="xs:string" name="minor" use="required"/>
+    <xs:attribute type="xs:string" name="micro"/>
+    <xs:attribute type="xs:string" name="patch"/>
+    <xs:attribute type="xs:string" name="full"/>
+    <xs:attribute type="xs:string" name="codename"/>
+    <xs:attribute type="xs:boolean" name="eap"/>
+  </xs:complexType>
+  <xs:complexType name="namesType">
+    <xs:attribute type="xs:string" name="product">
+      <xs:annotation>
+        <xs:documentation>
+          Shortened name of the product if the full name contains two words (e.g. "IDEA" for IntelliJ IDEA).
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="fullname">
+      <xs:annotation>
+        <xs:documentation>
+          Name of the product without vendor name (e.g. "IntelliJ IDEA").
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="script">
+      <xs:annotation>
+        <xs:documentation>
+          Base name of the script files (*.exe, *.bat, *.sh) from the product 'bin' directory without extension.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="default-launcher-name">
+      <xs:annotation>
+        <xs:documentation>
+          Default name of the command-line launcher to be suggested in 'Create Launcher Script' dialog.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="companyType">
+    <xs:attribute type="xs:string" name="name" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Full name of the product vendor, e.g. "JetBrains s.r.o." for JetBrains products.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="url"/>
+    <xs:attribute type="xs:string" name="shortName">
+      <xs:annotation>
+        <xs:documentation>
+          Shortened name of the product vendor without "Inc." or similar suffixes, e.g. "JetBrains" for JetBrains products.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="buildType">
+    <xs:attribute type="xs:string" name="number" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          In sources this attribute should be set to __BUILD_NUMBER__ placeholder which is replaced by real build number (two or more numbers separated by dots) by the build scripts.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="apiVersion">
+      <xs:annotation>
+        <xs:documentation>
+          This attribute allows to set an alternative build number which will be used instead the real one to detect compatible plugins.
+          Since 162.* builds it is recommended to use composite build numbers instead, i.e. take the build number of IntelliJ sources
+          the product is based on and append a sequential counter to it.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="date">
+      <xs:annotation>
+        <xs:documentation>
+          In sources this attribute should be set to __BUILD_DATE__ placeholder which is replaced by real build number (date and UTC time in
+          yyyyMMddHHmm format) by the build scripts.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="majorReleaseDate">
+      <xs:annotation>
+        <xs:documentation>
+          Date when the current major version was firstly released, in yyyyMMdd format. It is used to determine if a user have a valid subscription.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="logoType">
+    <xs:annotation>
+      <xs:documentation>
+        Describes the splash screen which is shown when the product is starting.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute type="xs:string" name="url" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Path inside a JAR file (in PRODUCT_HOME/lib directory) to a file with the splash screen image.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:hexBinary" name="textcolor" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint text on the splash screen. Currently it is used to
+          show information about licensee only.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:hexBinary" name="progressColor">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint progress bar on the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="progressX">
+      <xs:annotation>
+        <xs:documentation>
+          The X coordinate of the top left corner of the progress bar on the splash screen. The progress bar will end at the right side of
+          the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="progressY">
+      <xs:annotation>
+        <xs:documentation>
+          The Y coordinate of the top left corner of the progress bar on the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="progressHeight">
+      <xs:annotation>
+        <xs:documentation>
+          Height of the progress bar on the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="progressTailIcon">
+      <xs:annotation>
+        <xs:documentation>
+          Path inside a JAR file (in PRODUCT_HOME/lib directory) to a file containing a small image with 'flame effect'. The image will be
+          painted on the progress bar, its center will be located at the current right end of the progress bar.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="licenseOffsetY">
+      <xs:annotation>
+        <xs:documentation>
+          The Y coordinate of a position on the splash screen where information about licensee will be shown. The X coordinate is 15.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="aboutType">
+    <xs:attribute type="xs:string" name="url" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Path inside a JAR file (in PRODUCT_HOME/lib directory) to a file containing image for 'About' popup.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="foreground">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to print main text (version, build number, information
+          about JRE, etc) on 'About' popup. If not specified black color will be used.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="copyrightForeground">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to print 'Copyright' text on 'About' popup. If not specified
+          black color will be used.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="linkColor">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint links on 'About' popup.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="logoX">
+      <xs:annotation>
+        <xs:documentation>
+          The X coordinate of the top left corner of the company logo on 'About' popup. Clicking on the logo will open the company site in browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="logoY">
+      <xs:annotation>
+        <xs:documentation>
+          The Y coordinate of the top left corner of the company logo on 'About' popup. Clicking on the logo will open the company site in
+          browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="logoW">
+      <xs:annotation>
+        <xs:documentation>
+          Width of the company logo on 'About' popup. Clicking on the logo will open the company site in browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="logoH">
+      <xs:annotation>
+        <xs:documentation>
+          Height of the company logo on 'About' popup. Clicking on the logo will open the company site in browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="iconType">
+    <xs:attribute type="xs:string" name="size12"/>
+    <xs:attribute type="xs:string" name="size16"/>
+    <xs:attribute type="xs:string" name="size32"/>
+    <xs:attribute type="xs:string" name="size128"/>
+    <xs:attribute type="xs:string" name="ico"/>
+  </xs:complexType>
+  <xs:complexType name="packageType">
+    <xs:attribute type="xs:string" name="code"/>
+  </xs:complexType>
+  <xs:complexType name="licenseeType">
+    <xs:attribute type="xs:boolean" name="show">
+      <xs:annotation>
+        <xs:documentation>
+          If 'true' information about licensee will be shown on the splash screen.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="essentialPluginType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:annotation>
+          <xs:documentation>
+            Specifies ID of a plugin which is essential part of the IDE so it cannot be disabled and shouldn't be shown in Settings |
+            Plugins.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="welcome-screenType">
+    <xs:attribute type="xs:string" name="logo-url" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="customize-ide-wizardType">
+    <xs:attribute type="xs:string" name="provider" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="editorType">
+    <xs:attribute type="xs:string" name="background-url" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="helpType">
+    <xs:attribute type="xs:string" name="file"/>
+    <xs:attribute type="xs:string" name="root"/>
+    <xs:attribute type="xs:string" name="webhelp-url"/>
+    <xs:attribute type="xs:boolean" name="has-help"/>
+    <xs:attribute type="xs:boolean" name="has-context-help"/>
+  </xs:complexType>
+  <xs:complexType name="update-urlsType">
+    <xs:attribute type="xs:anyURI" name="check"/>
+    <xs:attribute type="xs:anyURI" name="patches"/>
+  </xs:complexType>
+  <xs:complexType name="urlType">
+    <xs:attribute type="xs:string" name="url" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="pluginsType">
+    <xs:attribute type="xs:anyURI" name="url"/>
+    <xs:attribute type="xs:string" name="list-url"/>
+    <xs:attribute type="xs:string" name="channel-list-url"/>
+    <xs:attribute type="xs:string" name="download-url"/>
+    <xs:attribute type="xs:string" name="builtin-url"/>
+  </xs:complexType>
+  <xs:complexType name="keymapType">
+    <xs:attribute type="xs:string" name="win" use="required"/>
+    <xs:attribute type="xs:string" name="mac" use="required"/>
+  </xs:complexType>
+  <xs:complexType name="evaluationType">
+    <xs:attribute type="xs:string" name="license-url"/>
+  </xs:complexType>
+  <xs:complexType name="subscriptionsType">
+    <xs:attribute type="xs:string" name="formid"/>
+    <xs:attribute type="xs:string" name="news-key"/>
+    <xs:attribute type="xs:string" name="news-value"/>
+    <xs:attribute type="xs:string" name="tips-key"/>
+    <xs:attribute type="xs:boolean" name="tips-available"/>
+    <xs:attribute type="xs:string" name="additional-form-data"/>
+  </xs:complexType>
+  <xs:complexType name="feedbackType">
+    <xs:attribute type="xs:string" name="eap-url"/>
+    <xs:attribute type="xs:string" name="release-url"/>
+  </xs:complexType>
+  <xs:complexType name="pluginsPageType">
+    <xs:attribute type="xs:string" name="title" use="required"/>
+    <xs:attribute type="xs:string" name="category"/>
+    <xs:attribute type="xs:string" name="depends"/>
+  </xs:complexType>
+  <xs:complexType name="statisticsType">
+    <xs:attribute type="xs:string" name="settings"/>
+    <xs:attribute type="xs:string" name="service"/>
+    <xs:attribute type="xs:string" name="service-key"/>
+  </xs:complexType>
+</xs:schema>

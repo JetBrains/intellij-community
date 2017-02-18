@@ -47,6 +47,6 @@ public class InstanceofLink<Parent extends PsiElement, Child extends PsiElement,
 
   public static <Parent extends PsiElement, Child extends PsiElement, CastTo extends Child> InstanceofLink<Parent, Child, CastTo> create(
     PsiChildLink<Parent, Child> delegate, Class<CastTo> castTo) {
-    return new InstanceofLink<Parent, Child, CastTo>(delegate, castTo);
+    return new InstanceofLink<>(delegate, castTo);
   }
 }

@@ -50,7 +50,7 @@ public class TextEditorLocation implements FileEditorLocation {
   }
 
   @Override
-  public int compareTo(FileEditorLocation fileEditorLocation) {
+  public int compareTo(@NotNull FileEditorLocation fileEditorLocation) {
     TextEditorLocation otherLocation = (TextEditorLocation)fileEditorLocation;
     if (myEditor != otherLocation.myEditor) {
       LOG.error("Different editors: " + myEditor + "; and " + otherLocation.myEditor);

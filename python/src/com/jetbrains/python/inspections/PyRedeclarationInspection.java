@@ -149,7 +149,7 @@ public class PyRedeclarationInspection extends PyInspection {
         });
         final PsiElement writeElement = writeElementRef.get();
         if (writeElement != null && readElementRef.get() == null) {
-          final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+          final List<LocalQuickFix> quickFixes = new ArrayList<>();
           if (suggestRename(element, writeElement)) {
             quickFixes.add(new PyRenameElementQuickFix());
           }

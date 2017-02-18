@@ -128,7 +128,7 @@ public class GitCucumberWorld {
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
 
     virtualCommits = new GitTestVirtualCommitsHolder();
-    myAsyncTasks = new ArrayList<Future>();
+    myAsyncTasks = new ArrayList<>();
 
     cd(myProjectRoot);
     myRepository = GitTestUtil.createRepository(myProject, myProjectRoot);
@@ -209,7 +209,7 @@ public class GitCucumberWorld {
   }
 
   private static void edt(@NotNull final ThrowableRunnable<Exception> runnable) throws Exception {
-    final AtomicReference<Exception> exception = new AtomicReference<Exception>();
+    final AtomicReference<Exception> exception = new AtomicReference<>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

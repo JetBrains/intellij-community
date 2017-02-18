@@ -42,7 +42,7 @@ public class CommentLanguageInjector implements MultiHostInjector {
 
   /** @noinspection UnusedParameters*/
   public CommentLanguageInjector(Configuration configuration) {
-    List<LanguageInjectionSupport> supports = new ArrayList<LanguageInjectionSupport>(InjectorUtils.getActiveInjectionSupports());
+    List<LanguageInjectionSupport> supports = new ArrayList<>(InjectorUtils.getActiveInjectionSupports());
     supports.add(myInjectorSupport);
     mySupports = ArrayUtil.toObjectArray(supports, LanguageInjectionSupport.class);
   }

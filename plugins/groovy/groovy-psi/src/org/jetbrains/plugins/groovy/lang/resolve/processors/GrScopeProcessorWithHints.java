@@ -23,17 +23,17 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Created by Max Medvedev on 31/03/14
  */
 public abstract class GrScopeProcessorWithHints implements PsiScopeProcessor, NameHint, ElementClassHint {
-  protected final @Nullable EnumSet<DeclarationKind> myResolveTargetKinds;
+  protected final @Nullable Set<DeclarationKind> myResolveTargetKinds;
   protected final @Nullable String myName;
 
   public GrScopeProcessorWithHints(@Nullable String name,
-                                   @Nullable EnumSet<DeclarationKind> resolveTargets) {
+                                   @Nullable Set<DeclarationKind> resolveTargets) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,19 +35,19 @@ class StringExtractingTest extends LightGroovyTestCase {
     return TestUtils.testDataPath + "refactoring/stringExtracting/"
   }
 
-  public void testStringExtractingFromQuote() { doTest() }
+  void testStringExtractingFromQuote() { doTest() }
 
-  public void testStringExtractingFromDoubleQuotes() { doTest() }
+  void testStringExtractingFromDoubleQuotes() { doTest() }
 
-  public void testStringExtractingFromSlashyString() { doTest() }
+  void testStringExtractingFromSlashyString() { doTest() }
 
-  public void testStringExtractingFromDollarSlashyString() { doTest() }
+  void testStringExtractingFromDollarSlashyString() { doTest() }
 
-  public void testSlashyWithSlash() { doTest() }
+  void testSlashyWithSlash() { doTest() }
 
-  public void testDollarSlashyWithDollar() { doTest() }
+  void testDollarSlashyWithDollar() { doTest() }
 
-  public void testSlashyWithSlashInsideExtractedPart() { doTest() }
+  void testSlashyWithSlashInsideExtractedPart() { doTest() }
 
   private void doTest() {
     GroovyFile file = myFixture.configureByFile(getTestName(true) + '.groovy') as GroovyFile

@@ -27,13 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyRemoveAssignmentQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.remove.assignment");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.remove.assignment");
   }
 
   @Override

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("UnnecessaryQualifierForThis")
 public class UnnecessaryQualifierForThisInspectionLightTest extends LightInspectionTestCase {
 
   public void testFinalWithoutInnerClass() throws Exception {

@@ -118,7 +118,7 @@ public class PyExceptionBreakpointType
             return PyUtil.isExceptionClass(pyClass);
           }
         });
-        processedElements.put(key, Pair.create(new WeakReference<PyClass>(pyClass), isException));
+        processedElements.put(key, Pair.create(new WeakReference<>(pyClass), isException));
       }
       else {
         isException = pair.second;

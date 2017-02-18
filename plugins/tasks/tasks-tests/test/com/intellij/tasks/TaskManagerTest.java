@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
         count.set(count.get() + 1);
       }
     };
-    myTaskManager.addTaskListener(listener, myTestRootDisposable);
+    myTaskManager.addTaskListener(listener, getTestRootDisposable());
     LocalTask localTask = myTaskManager.createLocalTask("foo");
     myTaskManager.activateTask(localTask, false);
     assertEquals(1, count.get().intValue());
@@ -58,7 +58,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
   public void testNotifications() throws Exception {
 
-    final Ref<Notification> notificationRef = new Ref<Notification>();
+    final Ref<Notification> notificationRef = new Ref<>();
     getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
@@ -108,7 +108,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   }
 
   public void testIssuesCacheSurvival() throws Exception {
-    final Ref<Boolean> stopper = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> stopper = new Ref<>(Boolean.FALSE);
     TestRepository repository = new TestRepository(new LocalTaskImpl("foo", "bar")) {
       @Override
       public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {

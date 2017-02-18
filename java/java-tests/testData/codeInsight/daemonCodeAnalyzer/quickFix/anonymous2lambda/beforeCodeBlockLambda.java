@@ -1,4 +1,4 @@
-// "Replace with lambda" "false"
+// "Replace with lambda" "true"
 class A {
   {
     bar(new Throwabl<caret>eComputable<String, Exception>() {

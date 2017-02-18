@@ -34,7 +34,7 @@ public class FeaturesUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() {
-    Set<UsageDescriptor> usages = new HashSet<UsageDescriptor>();
+    Set<UsageDescriptor> usages = new HashSet<>();
 
     final ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
     for (String featureId : registry.getFeatureIds()) {

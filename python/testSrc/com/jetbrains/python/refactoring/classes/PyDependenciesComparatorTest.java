@@ -25,7 +25,7 @@ public class PyDependenciesComparatorTest extends PyTestCase {
     PyFunction method = clazz.getMethods()[0];
     PsiElement classField = clazz.getClassAttributes().get(0).getParent();
 
-    final List<PyStatement> elementList = new ArrayList<PyStatement>();
+    final List<PyStatement> elementList = new ArrayList<>();
     elementList.addAll(Arrays.asList(clazz.getStatementList().getStatements()));
     Collections.sort(elementList, PyDependenciesComparator.INSTANCE);
 

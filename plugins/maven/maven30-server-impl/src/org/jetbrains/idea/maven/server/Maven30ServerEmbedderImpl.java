@@ -95,7 +95,7 @@ import java.util.*;
  * <p/>
  * maven-compat:
  * org.jetbrains.idea.maven.server.embedder.CustomMaven3RepositoryMetadataManager <-> org.apache.maven.artifact.repository.metadata.DefaultRepositoryMetadataManager
- * org.jetbrains.idea.maven.server.embedder.CustomMaven3ArtifactResolver <-> org.apache.maven.artifact.resolver.DefaultArtifactResolver
+ * org.jetbrains.idea.maven.server.embedder.CustomMaven30ArtifactResolver <-> org.apache.maven.artifact.resolver.DefaultArtifactResolver
  * org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator <-> org.apache.maven.project.interpolation.StringSearchModelInterpolator
  * <p/>
  * maven-core:
@@ -295,6 +295,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return (List<Exception>)((List)list);
   }
 
+  @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
     Model result = MavenModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
@@ -492,7 +493,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       customizeComponents();
 
       ((CustomMaven3ArtifactFactory)getComponent(ArtifactFactory.class)).customize();
-      ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+      ((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
       ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
       //((CustomMaven3WagonManager)getComponent(WagonManager.class)).customize(failOnUnresolvedDependency);
 
@@ -837,7 +838,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, unresolvedArtifacts);
 
-    MavenModel model = null;
+    MavenModel model = new MavenModel();
     try {
       if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
         //noinspection unchecked
@@ -925,7 +926,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     Set<MavenId> result = new THashSet<MavenId>();
     // TODO collect unresolved artifacts
     //((CustomMaven3WagonManager)getComponent(WagonManager.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
-    //((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
+    //((CustomMaven30ArtifactResolver)getComponent(ArtifactResolver.class)).getUnresolvedCollector().retrieveUnresolvedIds(result);
     return result;
   }
 
@@ -1133,8 +1134,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         ((CustomMaven3ArtifactFactory)artifactFactory).reset();
       }
       final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-      if(artifactResolver instanceof CustomMaven3ArtifactResolver) {
-        ((CustomMaven3ArtifactResolver)artifactResolver).reset();
+      if(artifactResolver instanceof CustomMaven30ArtifactResolver) {
+        ((CustomMaven30ArtifactResolver)artifactResolver).reset();
       }
       final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
       if(repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {

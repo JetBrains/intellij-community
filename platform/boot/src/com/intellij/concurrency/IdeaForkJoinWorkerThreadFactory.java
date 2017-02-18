@@ -41,6 +41,7 @@ public class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWor
       }
     };
     thread.setName("JobScheduler FJ pool " + n + "/" + PARALLELISM);
+    thread.setPriority(Thread.NORM_PRIORITY - 1);
     return thread;
   }
 

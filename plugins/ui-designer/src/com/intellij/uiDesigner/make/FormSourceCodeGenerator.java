@@ -64,11 +64,11 @@ public final class FormSourceCodeGenerator {
   private boolean myNeedLoadLabelText;
   private boolean myNeedLoadButtonText;
 
-  private static final Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<Class, LayoutSourceGenerator>();
-  private static final Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<String, LayoutSourceGenerator>();
-  @NonNls private static final TIntObjectHashMap<String> ourFontStyleMap = new TIntObjectHashMap<String>();
-  @NonNls private static final TIntObjectHashMap<String> ourTitleJustificationMap = new TIntObjectHashMap<String>();
-  @NonNls private static final TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<String>();
+  private static final Map<Class, LayoutSourceGenerator> ourComponentLayoutCodeGenerators = new HashMap<>();
+  private static final Map<String, LayoutSourceGenerator> ourContainerLayoutCodeGenerators = new HashMap<>();
+  @NonNls private static final TIntObjectHashMap<String> ourFontStyleMap = new TIntObjectHashMap<>();
+  @NonNls private static final TIntObjectHashMap<String> ourTitleJustificationMap = new TIntObjectHashMap<>();
+  @NonNls private static final TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<>();
 
   private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
     PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
@@ -102,7 +102,7 @@ public final class FormSourceCodeGenerator {
 
   public FormSourceCodeGenerator(@NotNull final Project project){
     myProject = project;
-    myErrors = new ArrayList<FormErrorInfo>();
+    myErrors = new ArrayList<>();
   }
 
   public void generate(final VirtualFile formFile) {
@@ -190,11 +190,11 @@ public final class FormSourceCodeGenerator {
 
   private void _generate(final LwRootContainer rootContainer, final Module module) throws CodeGenerationException, IncorrectOperationException{
     myBuffer = new StringBuffer();
-    myIsFirstParameterStack = new Stack<Boolean>();
+    myIsFirstParameterStack = new Stack<>();
 
-    final HashMap<LwComponent,String> component2variable = new HashMap<LwComponent,String>();
-    final TObjectIntHashMap<String> class2variableIndex = new TObjectIntHashMap<String>();
-    final HashMap<String,LwComponent> id2component = new HashMap<String, LwComponent>();
+    final HashMap<LwComponent,String> component2variable = new HashMap<>();
+    final TObjectIntHashMap<String> class2variableIndex = new TObjectIntHashMap<>();
+    final HashMap<String,LwComponent> id2component = new HashMap<>();
 
     if (rootContainer.getComponentCount() != 1) {
       throw new CodeGenerationException(null, UIDesignerBundle.message("error.one.toplevel.component.required"));
@@ -309,7 +309,7 @@ public final class FormSourceCodeGenerator {
     final PsiClass classToBind = constructor.getContainingClass();
     final PsiStatement[] statements = psiCodeBlock.getStatements();
     PsiElement anchor = psiCodeBlock.getRBrace();
-    Ref<Boolean> callsThisConstructor = new Ref<Boolean>(Boolean.FALSE);
+    Ref<Boolean> callsThisConstructor = new Ref<>(Boolean.FALSE);
     for(PsiStatement statement: statements) {
       if (containsMethodIdentifier(statement, setupUIMethod)) {
         return;
@@ -336,7 +336,7 @@ public final class FormSourceCodeGenerator {
                                                                final PsiClass classToBind,
                                                                final LwRootContainer rootContainer,
                                                                @Nullable final Ref<Boolean> callsThisConstructor) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
+    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     element.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceElement(expression);

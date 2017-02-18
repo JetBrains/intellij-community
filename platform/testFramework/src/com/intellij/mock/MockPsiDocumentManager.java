@@ -3,6 +3,7 @@
  */
 package com.intellij.mock;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Computable;
@@ -137,6 +138,11 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
 
   @Override
   public void performLaterWhenAllCommitted(@NotNull final Runnable runnable) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void performLaterWhenAllCommitted(@NotNull Runnable runnable, ModalityState modalityState) {
     throw new UnsupportedOperationException();
   }
 }

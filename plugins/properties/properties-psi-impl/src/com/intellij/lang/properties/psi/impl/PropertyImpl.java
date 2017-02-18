@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.lang.properties.psi.PropertyStub;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -359,7 +358,9 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return unescape(getKey());
   }
 
-  public Icon getIcon(int flags) {
+  @Nullable
+  @Override
+  protected Icon getElementIcon(@IconFlags int flags) {
     return PlatformIcons.PROPERTY_ICON;
   }
 
@@ -452,11 +453,6 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     final String text = delimiter.getText();
     LOG.assertTrue(text.length() == 1);
     return text.charAt(0);
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return getParentByStub();
   }
 
   public void replaceKeyValueDelimiterWithDefault() {

@@ -46,7 +46,7 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
 
     GrExpression resolvedQualifier = qualifier;
     PsiElement resolveResult = resolve;
-    List<String> path = new ArrayList<String>();
+    List<String> path = new ArrayList<>();
 
     while (resolveResult == null) {
       if (!(resolvedQualifier instanceof GrReferenceExpression)) return null;
@@ -85,7 +85,7 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
     Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> info = getInfo(qualifier, resolve);
     if (info == null) return Collections.emptyList();
 
-    final Set<String> res = new HashSet<String>();
+    final Set<String> res = new HashSet<>();
 
     info.first.collectVariants(info.second, (variant, isFinal) -> res.add(variant));
 
@@ -97,7 +97,7 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
     Pair<ConfigSlurperSupport.PropertiesProvider, List<String>> info = getInfo(qualifier, resolve);
     if (info == null) return null;
 
-    final Ref<Boolean> res = new Ref<Boolean>();
+    final Ref<Boolean> res = new Ref<>();
 
     info.first.collectVariants(info.second, (variant, isFinal) -> {
       if (variant.equals(key)) {

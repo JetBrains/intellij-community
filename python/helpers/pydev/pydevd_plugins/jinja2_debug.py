@@ -122,13 +122,20 @@ class Jinja2TemplateFrame:
         self.f_locals = self.collect_context(frame)
         self.f_trace = None
 
+    def _get_real_var_name(self, orig_name):
+        # replace leading number for local variables
+        parts = orig_name.split('_')
+        if len(parts) > 1 and parts[0].isdigit():
+            return parts[1]
+        return orig_name
+
     def collect_context(self, frame):
         res = {}
         for k, v in frame.f_locals.items():
             if not k.startswith('l_'):
                 res[k] = v
             elif v and not _is_missing(v):
-                res[k[2:]] = v
+                res[self._get_real_var_name(k[2:])] = v
         if self.back_context is not None:
             for k, v in self.back_context.items():
                 res[k] = v

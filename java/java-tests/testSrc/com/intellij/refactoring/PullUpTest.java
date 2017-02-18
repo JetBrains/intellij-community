@@ -16,7 +16,6 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,7 +25,6 @@ import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -207,6 +205,10 @@ public class PullUpTest extends LightRefactoringTestCase {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("test", PsiMethod.class, true));
   }
 
+  public void testPullUpFromAnonymousToInterface() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
+  }
+
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) {
     doTest(true, membersToFind);
   }
@@ -276,10 +278,5 @@ public class PullUpTest extends LightRefactoringTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

@@ -189,7 +189,7 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
   }
 
   private class MyProjectsTreeListener extends MavenProjectsTree.ListenerAdapter implements MavenProjectsManager.Listener {
-    private final Map<MavenProject, Boolean> mySheduledProjects = new THashMap<MavenProject, Boolean>();
+    private final Map<MavenProject, Boolean> mySheduledProjects = new THashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue(getComponentName() + ": Keymap Update",
                                                                                  500, true, myProject);
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,8 @@ class FakeRerunAction extends AnAction  {
     Presentation presentation = event.getPresentation();
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
-      presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", environment.getRunProfile().getName()));
+      presentation.setText(ExecutionBundle.message("rerun.configuration.action.name",
+                                                   StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
       presentation.setIcon(ExecutionManagerImpl.isProcessRunning(getDescriptor(event)) ? AllIcons.Actions.Restart : environment.getExecutor().getIcon());
       presentation.setEnabled(isEnabled(event));
       return;

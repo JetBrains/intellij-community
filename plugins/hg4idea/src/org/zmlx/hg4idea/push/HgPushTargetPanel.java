@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +65,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
     }
     String targetText = myDestTargetPanel.getText();
     if (StringUtil.isEmptyOrSpaces(targetText)) {
-      renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, this);
+      renderer.append(ENTER_REMOTE, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES, myTargetRenderedComponent);
     }
     myTargetRenderedComponent.setSelected(isSelected);
     myTargetRenderedComponent.setTransparent(!isActive);

@@ -52,9 +52,9 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
     if ((changes == null) || (changes.length == 0)) return;
     String commitMessage = null;
-    ShelvedChangeList[] shelvedChangeLists = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    if (shelvedChangeLists != null && shelvedChangeLists.length > 0) {
-      commitMessage = shelvedChangeLists [0].DESCRIPTION;
+    List<ShelvedChangeList> shelvedChangeLists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
+    if (!shelvedChangeLists.isEmpty()) {
+      commitMessage = shelvedChangeLists.get(0).DESCRIPTION;
     }
     else {
       ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
@@ -68,7 +68,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     if (commitMessage == null) {
       commitMessage = "";
     }
-    List<Change> changeCollection = new ArrayList<Change>();
+    List<Change> changeCollection = new ArrayList<>();
     Collections.addAll(changeCollection, changes);
     createPatch(project, commitMessage, changeCollection);
   }
@@ -120,15 +120,12 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
   public void update(final AnActionEvent e) {
     final Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
     Change[] changes;
-    ChangeList[] data1 = e.getData(VcsDataKeys.CHANGE_LISTS);
-    ShelvedChangeList[] data2 = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
-    ShelvedChangeList[] data3 = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    List<ShelvedChangeList> shelveChangelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
+    int changelistNum = changeLists == null ? 0 : changeLists.length;
+    changelistNum += shelveChangelists.size();
 
-    int sum = data1 == null ? 0 : data1.length;
-    sum += data2 == null ? 0 : data2.length;
-    sum += data3 == null ? 0 : data3.length;
-
-    e.getPresentation().setEnabled(Boolean.TRUE.equals(haveSelectedChanges) && (sum == 1) &&
+    e.getPresentation().setEnabled(Boolean.TRUE.equals(haveSelectedChanges) && (changelistNum == 1) &&
                                    ((changes = e.getData(VcsDataKeys.CHANGES)) != null && changes.length > 0));
   }
 }

@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
@@ -38,6 +39,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor {
 
+  private static final Logger LOG = Logger.getInstance(PyStructuralTypeAttributesCompletionContributor.class);
+
   private static final Set<String> COMMON_OBJECT_ATTRIBUTES = ImmutableSet.of(
     "__init__",
     "__new__",
@@ -70,11 +73,14 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(refExpr.getProject(), parameters.getOriginalFile());
       //noinspection ConstantConditions
       final PyStructuralType structType = as(typeEvalContext.getType(refExpr.getQualifier()), PyStructuralType.class);
+      LOG.debug("Structural type: " + structType);
       if (structType != null) {
         final Set<String> names = Sets.newHashSet(structType.getAttributeNames());
         // Remove "dummy" identifier from the set of attributes
         names.remove(refExpr.getReferencedName());
-        for (PyClass pyClass : suggestClassesFromUsedAttributes(refExpr, names, typeEvalContext)) {
+        final Set<PyClass> suitableClasses = suggestClassesFromUsedAttributes(refExpr, names, typeEvalContext);
+        LOG.debug("Classes that contain attributes " + names + ": ", suitableClasses);
+        for (PyClass pyClass : suitableClasses) {
           final PsiElement origPosition = parameters.getOriginalPosition();
           final String prefix;
           if (origPosition != null && origPosition.getNode().getElementType() == PyTokenTypes.IDENTIFIER) {

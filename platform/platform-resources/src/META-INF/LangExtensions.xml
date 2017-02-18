@@ -2,6 +2,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.codeInspection.InspectionMain"/>
     <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
+    <appStarter implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
+
+    <preloadingActivity implementation="com.intellij.codeInsight.completion.CompletionPreloader"/>
 
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
@@ -105,6 +108,8 @@
     <applicationService serviceInterface="com.intellij.find.FindSettings"
                         serviceImplementation="com.intellij.find.impl.FindSettingsImpl"/>
     <applicationService serviceImplementation="com.intellij.find.impl.FindSettingsImpl$FindRecents"/>
+    <projectService serviceInterface="com.intellij.find.FindInProjectSettings" serviceImplementation="com.intellij.find.impl.FindInProjectRecents"/>
+    <pathMacroFilter implementation="com.intellij.find.impl.FindInProjectSettingsBase$FindInProjectPathMacroFilter"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.CodeInsightSettings"/>
 
@@ -320,6 +325,7 @@
                     serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
+    <testSourcesFilter implementation="com.intellij.openapi.roots.ProjectRootTestSourcesFilter"/>
     <moduleService serviceInterface="com.intellij.openapi.roots.ModuleFileIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ModuleFileIndexImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.source.resolve.ResolveCache"
@@ -358,10 +364,15 @@
     <fileIconProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
     <editorTabTitleProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
     <syntaxHighlighter factoryClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Highlighter" order="first"/>
+    <indexedRootsProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$IndexSetContributor"/>
+    <useScopeEnlarger implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$UseScopeExtension"/>
+    <usageTypeProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$UsageTypeExtension" order="last"/>
 
     <scratch.rootType implementation="com.intellij.ide.scratch.ScratchRootType" />
     <scratch.rootType implementation="com.intellij.execution.console.HistoryRootType"/>
     <scratch.rootType implementation="com.intellij.execution.console.IdeConsoleRootType"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
 
     <!-- Extension resources -->
     <applicationService serviceInterface="com.intellij.ide.extensionResources.ResourceVersions"
@@ -385,6 +396,8 @@
     <applicationConfigurable groupId="editor" groupWeight="190" instance="com.intellij.application.options.editor.EditorOptions" id="preferences.editor" key="title.editor"
                              bundle="messages.ApplicationBundle" order="after preferences.lookFeel"
                              childrenEPName="com.intellij.editorOptionsProvider"/>
+    <applicationConfigurable parentId="preferences.editor" instance="com.intellij.execution.console.ConsoleConfigurable" id="Console"
+                             displayName="Console"/>
 
     <projectService serviceInterface="com.intellij.semantic.SemService" serviceImplementation="com.intellij.semantic.SemServiceImpl"/>
 
@@ -477,6 +490,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SnakeCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$LowercaseAndDash"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SplitWordsMacro$SpaceSeparated"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConcatMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>
@@ -488,8 +502,10 @@
     <internalFileTemplate name="XHTML File"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
     <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.id.IdIndexImpl"/>
-    <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndex"/>
-    <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndex"/>
+    <fileBasedIndex implementation="com.intellij.psi.search.FilenameIndexImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.search.FileNameIndexService"
+                        serviceImplementation="com.intellij.psi.search.FileNameIndexServiceImpl"/>
+    <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
     <fileBasedIndex implementation="com.intellij.psi.stubs.StubUpdatingIndex"/>
 
     <fileBasedIndex implementation="com.intellij.find.ngrams.TrigramIndex"/>
@@ -508,8 +524,6 @@
 
     <applicationService serviceInterface="com.intellij.ide.macro.MacroManager" serviceImplementation="com.intellij.ide.macro.MacroManager"/>
     <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorProvider"/>
-
-    <programRunner implementation="com.intellij.tools.ToolProgramRunner"/>
 
     <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
@@ -554,11 +568,9 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor"
                             id="liveTemplates" order="first"/>
 
-    <completion.skip implementation="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor$Skipper"
-                     id="skipLiveTemplate"/>
-
     <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings"
                         serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
+
     <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
 
     <lookup.charFilter implementation="com.intellij.codeInsight.template.impl.LiveTemplateCharFilter" order="first" id="liveTemplate"/>
@@ -608,6 +620,7 @@
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.NaturalLanguageTextSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.WordSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.LineCommentSelectioner"/>
+    <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.BlockCommentSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.InjectedReferenceSelectioner"/>
     <extendWordSelectionHandler implementation="com.intellij.ide.highlighter.custom.impl.CustomFileTypeSelectWordHandler"/>
 
@@ -638,6 +651,7 @@
 
     <codeInsight.linkHandler prefix="#inspection/" handlerClass="com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler"/>
     <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
+    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.ui.ColorLineMarkerProvider"/>
 
     <codeFoldingOptionsProvider instance="com.intellij.application.options.editor.BaseCodeFoldingOptionsProvider" order="first"/>
     <search.topHitProvider implementation="com.intellij.application.options.editor.EditorSmartKeysOptionsTopHitProvider"/>
@@ -666,7 +680,6 @@
                          id="editor.preferences.import"
                          parentId="preferences.editor"
                          key="auto.import" bundle="messages.ApplicationBundle"
-                         groupId="editor"
                          groupWeight="1"/>
 
     <editorTabColorProvider implementation="com.intellij.ui.tabs.EditorTabColorProviderImpl"/>
@@ -676,6 +689,9 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.formatting.contextConfiguration.ConfigureCodeStyleOnSelectedFragment</className>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.hints.BlacklistCurrentMethodIntention</className>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
@@ -752,6 +768,8 @@
                     serviceImplementation="com.intellij.codeInspection.ex.InspectionManagerEx"/>
     <projectService serviceInterface="com.intellij.usageView.UsageViewManager"
                     serviceImplementation="com.intellij.usageView.impl.UsageViewManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.ide.projectView.impl.ProjectViewSharedSettings"
+                    serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewSharedSettings"/>
     <projectService serviceInterface="com.intellij.ide.projectView.ProjectView"
                     serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
@@ -924,10 +942,11 @@
     <editorOptionsProvider instance="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable"
                            id="reference.settingsdialog.IDE.editor.postfix.templates"
                            displayName="Postfix Completion"/>
-    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor" order="last"/>
 
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
+    <projectService serviceInterface="com.intellij.execution.dashboard.RuntimeDashboardManager" serviceImplementation="com.intellij.execution.dashboard.RuntimeDashboardManagerImpl"/>
     <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.find.UsagesPreviewPanelProvider"/>
@@ -938,12 +957,12 @@
 
     <fileIndentOptionsProvider implementation="com.intellij.psi.codeStyle.DetectableIndentOptionsProvider" order="last"/>
     <editorNotificationProvider implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider"/>
-    <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.AnchorElementInfoFactory"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
     <projectService serviceImplementation="com.intellij.execution.TestStateStorage"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.inplace.EscapeHandler" id="changeSignatureEscape" order="before hide-search"/>
 
     <schemeExporter
-      name="Code Style XML File"
+      name="Intellij IDEA code style XML"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
       implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeCopyExporter"/>
     <schemeImporter
@@ -953,8 +972,16 @@
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>
-    <lineIndentProvider implementation="com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedLineIndentProvider"/>
+    <lineIndentProvider
+        implementation="com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedLineIndentProvider"
+        order="last"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.psi.codeStyle.KeepTrailingSpacesOnEmptyLinesFilterFactory"/>
+
+    <treeStructureProvider implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider" order="last"/>
+    <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.RelatedFilesSafeDeleteProcessorDelegate"/>
+    <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>
+    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
+                             order="before moveFileOrDir"/>
   </extensions>
 </idea-plugin>
 

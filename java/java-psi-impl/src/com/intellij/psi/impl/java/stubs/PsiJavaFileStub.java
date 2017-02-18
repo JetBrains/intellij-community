@@ -19,15 +19,20 @@
  */
 package com.intellij.psi.impl.java.stubs;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.stubs.PsiClassHolderFileStub;
 
 public interface PsiJavaFileStub extends PsiClassHolderFileStub<PsiJavaFile> {
+  PsiJavaModule getModule();
+
   String getPackageName();
+  LanguageLevel getLanguageLevel();
   boolean isCompiled();
+
   StubPsiFactory getPsiFactory();
 
-  /** @deprecated override {@link #getPsiFactory()} instead (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
+  /** @deprecated override {@link #getPsiFactory()} instead (to be removed in IDEA 18) */
   void setPsiFactory(StubPsiFactory factory);
 }

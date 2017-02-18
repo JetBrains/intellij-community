@@ -36,7 +36,7 @@ class Html5SectionsProcessor {
 
   private static class SectionHolder {
     private final XmlTag myTag;
-    private final LinkedList<Section> myChildren = new LinkedList<Section>();
+    private final LinkedList<Section> myChildren = new LinkedList<>();
 
     private SectionHolder(final XmlTag tag) {
       myTag = tag;
@@ -87,12 +87,12 @@ class Html5SectionsProcessor {
   private static final String[] HEADER_ELEMENTS = {"h1", "h2", "h3", "h4", "h5", "h6"};
   private static final String HGROUP_ELEMENT = "hgroup";
 
-  private final Collection<SectionHolder> myRootSectionHolders = new SortedList<SectionHolder>(
+  private final Collection<SectionHolder> myRootSectionHolders = new SortedList<>(
     (first, second) -> first.getTag().getTextRange().getStartOffset() - second.getTag().getTextRange().getStartOffset());
 
   private SectionHolder myCurrentOutlinee = null;
   private Section myCurrentSection = null;
-  private final Stack<SectionHolder> myStack = new Stack<SectionHolder>();
+  private final Stack<SectionHolder> myStack = new Stack<>();
 
   public static Collection<Html5SectionTreeElement> processAndGetRootSections(final XmlTag rootTag) {
     final Html5SectionsProcessor processor = new Html5SectionsProcessor();
@@ -197,7 +197,7 @@ class Html5SectionsProcessor {
   }
 
   private Collection<Html5SectionTreeElement> getRootSections() {
-    final Collection<Html5SectionTreeElement> result = new ArrayList<Html5SectionTreeElement>();
+    final Collection<Html5SectionTreeElement> result = new ArrayList<>();
     for (SectionHolder sectionHolder : myRootSectionHolders) {
       for (Section section : sectionHolder.getChildren()) {
         result.add(createHtml5SectionTreeElement(section));
@@ -214,7 +214,7 @@ class Html5SectionsProcessor {
 
   private static Computable<Collection<StructureViewTreeElement>> createChildrenComputable(final Collection<Section> children) {
     return () -> {
-      final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+      final Collection<StructureViewTreeElement> result = new ArrayList<>();
       for (Section section : children) {
         result.add(createHtml5SectionTreeElement(section));
       }

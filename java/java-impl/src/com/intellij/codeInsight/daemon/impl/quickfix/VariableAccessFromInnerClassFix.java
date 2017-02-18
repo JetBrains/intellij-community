@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -103,25 +104,27 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext, myVariable)) return;
-    try {
-      switch (myFixType) {
-        case MAKE_FINAL:
-          makeFinal();
-          break;
-        case MAKE_ARRAY:
-          makeArray();
-          break;
-        case COPY_TO_FINAL:
-          copyToFinal();
-          break;
+    WriteAction.run(() -> {
+      try {
+        switch (myFixType) {
+          case MAKE_FINAL:
+            makeFinal();
+            break;
+          case MAKE_ARRAY:
+            makeArray();
+            break;
+          case COPY_TO_FINAL:
+            copyToFinal();
+            break;
+        }
       }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    finally {
-      getVariablesToFix().clear();
-    }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      finally {
+        getVariablesToFix().clear();
+      }
+    });
   }
 
   private void makeArray() {
@@ -190,7 +193,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
     PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
     if (outerCodeBlock == null) return;
-    List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
+    List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
     replaceReferences(outerReferences, newExpression);
     variable.replace(newVariable);
@@ -290,7 +293,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static int getQuickFixType(@NotNull PsiVariable variable) {
     PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
     if (outerCodeBlock == null) return -1;
-    List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
+    List<PsiReferenceExpression> outerReferences = new ArrayList<>();
     collectReferences(outerCodeBlock, variable, outerReferences);
 
     int type = MAKE_FINAL;
@@ -317,8 +320,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   private static boolean canBeFinal(@NotNull PsiVariable variable, @NotNull List<PsiReferenceExpression> references) {
     // if there is at least one assignment to this variable, it cannot be final
-    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<PsiElement, Collection<PsiReferenceExpression>>();
-    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>();
+    Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new THashMap<>();
+    Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
       HighlightInfo highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,
@@ -356,6 +359,6 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 }

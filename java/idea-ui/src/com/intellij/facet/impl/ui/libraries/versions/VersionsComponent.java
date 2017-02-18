@@ -50,7 +50,7 @@ public abstract class VersionsComponent {
 
   private final ButtonGroup myButtonGroup = new ButtonGroup();
 
-  private final Map<String, Pair<JRadioButton, JComboBox>> myButtons = new HashMap<String, Pair<JRadioButton, JComboBox>>();
+  private final Map<String, Pair<JRadioButton, JComboBox>> myButtons = new HashMap<>();
 
   private Artifact myCurrentVersion = null;
 
@@ -133,7 +133,7 @@ public abstract class VersionsComponent {
   }
 
   private List<Artifact> getSupportedVersions(@NotNull String ri) {
-    List<Artifact> versions = new ArrayList<Artifact>();
+    List<Artifact> versions = new ArrayList<>();
     for (Artifact version : getLibraries()) {
       if (ri.equals(version.getName())) {
         versions.add(version);
@@ -272,7 +272,7 @@ public abstract class VersionsComponent {
   }
 
   public Set<String> getRIs() {
-    Set<String> ris = new HashSet<String>();
+    Set<String> ris = new HashSet<>();
     for (Artifact version : getLibraries()) {
       String ri = version.getName();
       if (!StringUtil.isEmptyOrSpaces(ri)) {

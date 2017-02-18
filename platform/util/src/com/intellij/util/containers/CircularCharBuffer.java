@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  * A single threaded, resizable, circular char queue backed by an array.
  */
 public class CircularCharBuffer {
-
   private char[] myArray;
   private final int myMaxCapacity;
   private int mySize;
@@ -30,11 +29,13 @@ public class CircularCharBuffer {
   private int myHead;
 
   public CircularCharBuffer(int initialCapacity) {
-    this(initialCapacity, -1);
+    this(initialCapacity, Integer.MAX_VALUE);
   }
 
   public CircularCharBuffer(int initialCapacity, int maxCapacity) {
-    assert maxCapacity < 0 || initialCapacity <= maxCapacity;
+    if (maxCapacity <= 0 || initialCapacity > maxCapacity) {
+      throw new IllegalArgumentException( "There must be 0 < initialCapacity <= maxCapacity, but got initialCapacity=" + initialCapacity + "; maxCapacity=" + maxCapacity);
+    }
     myArray = new char[initialCapacity];
     myMaxCapacity = maxCapacity;
     mySize = 0;
@@ -70,15 +71,11 @@ public class CircularCharBuffer {
     }
     mySize++;
     if (mySize > length) {
-      doPoll();
+      poll();
     }
   }
 
   public int poll() {
-    return doPoll();
-  }
-
-  public int doPoll() {
     if (mySize == 0) {
       return -1;
     }
@@ -110,14 +107,11 @@ public class CircularCharBuffer {
     if (newSize <= length) {
       return true;
     }
-    if (myMaxCapacity > -1 && length == myMaxCapacity) {
+    if (length == myMaxCapacity) {
       return false;
     }
     normalize();
-    int newLength = Math.max(length << 1, newSize);
-    if (myMaxCapacity > -1) {
-      newLength = Math.min(myMaxCapacity, newLength);
-    }
+    int newLength = Math.min(myMaxCapacity, Math.max(length << 1, newSize));
     char[] newArray = new char[newLength];
     System.arraycopy(myArray, myHead, newArray, 0, mySize);
     myArray = newArray;

@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class ElementStub extends DomStub {
 
-  private final List<DomStub> myChildren = new SmartList<DomStub>();
+  private final List<DomStub> myChildren = new SmartList<>();
   private final int myIndex;
   private final boolean myCustom;
 

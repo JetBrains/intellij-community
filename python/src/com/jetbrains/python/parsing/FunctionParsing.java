@@ -230,7 +230,7 @@ public class FunctionParsing extends Parsing {
     return true;
   }
 
-  protected void parseParameterAnnotation() {
+  public void parseParameterAnnotation() {
     if (myContext.getLanguageLevel().isPy3K() && atToken(PyTokenTypes.COLON)) {
       PsiBuilder.Marker annotationMarker = myBuilder.mark();
       nextToken();

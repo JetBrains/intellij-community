@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -80,7 +81,7 @@ public class GroovyRefRenderer extends NodeRendererImpl {
   @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
     throws EvaluateException {
-    ValueDescriptor fieldDescriptor = getWrappedDescriptor(descriptor.getValue(), evaluationContext.getProject());
+    ValueDescriptor fieldDescriptor = getWrappedDescriptor(descriptor.getValue(), evaluationContext.getProject(), descriptor);
     return getDelegateRenderer(evaluationContext.getDebugProcess(), fieldDescriptor).calcLabel(fieldDescriptor, evaluationContext, listener);
   }
 
@@ -89,6 +90,10 @@ public class GroovyRefRenderer extends NodeRendererImpl {
   }
 
   private static ValueDescriptor getWrappedDescriptor(Value ref, final Project project) {
+    return getWrappedDescriptor(ref, project, null);
+  }
+
+  private static ValueDescriptor getWrappedDescriptor(Value ref, final Project project, @Nullable ValueDescriptor originalDescriptor) {
     final Field field = ((ObjectReference)ref).referenceType().fieldByName("value");
     final Value wrapped = ((ObjectReference)ref).getValue(field);
     return new ValueDescriptorImpl(project, wrapped) {
@@ -96,6 +101,13 @@ public class GroovyRefRenderer extends NodeRendererImpl {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
         return wrapped;
+      }
+
+      @Override
+      public void setValueLabel(@NotNull String label) {
+        if (originalDescriptor != null) {
+          originalDescriptor.setValueLabel(label);
+        }
       }
 
       @Override

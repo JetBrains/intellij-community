@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
-
   public SimpleAccessorReferenceSearcher() {
     super(true);
   }
@@ -47,14 +46,15 @@ public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiRefere
     addPropertyAccessUsages((PsiMethod)refElement, queryParameters.getEffectiveSearchScope(), queryParameters.getOptimizer());
   }
 
-  static void addPropertyAccessUsages(PsiMethod method, SearchScope scope, SearchRequestCollector collector) {
+  static void addPropertyAccessUsages(@NotNull PsiMethod method, @NotNull SearchScope scope, @NotNull SearchRequestCollector collector) {
     final String propertyName = PropertyUtil.getPropertyName(method);
     if (StringUtil.isNotEmpty(propertyName)) {
       SearchScope additional = GlobalSearchScope.EMPTY_SCOPE;
       for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
         additional = additional.union(provider.getScope(method.getProject()));
       }
-      final SearchScope propScope = scope.intersectWith(method.getUseScope()).intersectWith(additional);
+
+      SearchScope propScope = scope.intersectWith(method.getUseScope()).intersectWith(additional);
       collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, method);
     }
   }

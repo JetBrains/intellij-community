@@ -42,8 +42,8 @@ public class UnversionedAndNotTouchedFilesGroupCollector extends EmptyChangelist
   private Set<String> myAlsoReverted;
 
   UnversionedAndNotTouchedFilesGroupCollector() {
-    myFromTo = new HashMap<File, ThroughRenameInfo>();
-    myToBeDeleted = new ArrayList<Couple<File>>();
+    myFromTo = new HashMap<>();
+    myToBeDeleted = new ArrayList<>();
   }
 
   @Override

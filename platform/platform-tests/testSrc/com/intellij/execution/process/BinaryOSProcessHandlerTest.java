@@ -16,8 +16,8 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -49,15 +49,13 @@ public class BinaryOSProcessHandlerTest {
   }
 
   private static Process launchTest() throws URISyntaxException, IOException {
-    String java = System.getProperty("java.home") + (SystemInfo.isWindows ? "\\bin\\java.exe" : "/bin/java");
-
     String className = Runner.class.getName();
     URL url = Runner.class.getClassLoader().getResource(className.replace('.', '/') + ".class");
     assertNotNull(url);
     File dir = new File(url.toURI());
     for (int i = 0; i < StringUtil.countChars(className, '.') + 1; i++) dir = dir.getParentFile();
 
-    String[] cmd = {java, "-cp", dir.getPath(), className};
+    String[] cmd = {PlatformTestUtil.getJavaExe(), "-cp", dir.getPath(), className};
     return new ProcessBuilder(cmd).redirectErrorStream(false).start();
   }
 

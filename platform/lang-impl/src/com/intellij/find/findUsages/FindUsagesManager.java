@@ -58,7 +58,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.*;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -330,24 +329,16 @@ public class FindUsagesManager {
                                                    final PsiFile scopeFile) {
     final FindUsagesOptions optionsClone = options.clone();
     return processor -> {
-      Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-        @Override
-        public Project compute() {
-          return scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject();
-        }
-      });
+      Project project = ApplicationManager.getApplication().runReadAction(
+        (Computable<Project>)() -> scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject());
       dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), project);
 
       if (scopeFile != null) {
         optionsClone.searchScope = new LocalSearchScope(scopeFile);
       }
       final Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<>(usageInfo -> {
-        Usage usage = ApplicationManager.getApplication().runReadAction(new Computable<Usage>() {
-          @Override
-          public Usage compute() {
-            return UsageInfoToUsageConverter.convert(primaryElements, usageInfo);
-          }
-        });
+        Usage usage = ApplicationManager.getApplication().runReadAction(
+          (Computable<Usage>)() -> UsageInfoToUsageConverter.convert(primaryElements, usageInfo));
         return processor.process(usage);
       });
       final Iterable<PsiElement> elements = ContainerUtil.concat(primaryElements, secondaryElements);
@@ -359,7 +350,6 @@ public class FindUsagesManager {
       }
       try {
         for (final PsiElement element : elements) {
-          ApplicationManager.getApplication().runReadAction(() -> PsiUtilCore.ensureValid(element));
           handler.processElementUsages(element, usageInfoProcessor, optionsClone);
           for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
             try {
@@ -379,12 +369,9 @@ public class FindUsagesManager {
 
         PsiSearchHelper.SERVICE.getInstance(project)
           .processRequests(optionsClone.fastTrack, ref -> {
-            UsageInfo info = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
-              @Override
-              public UsageInfo compute() {
-                if (!ref.getElement().isValid()) return null;
-                return new UsageInfo(ref);
-              }
+            UsageInfo info = ApplicationManager.getApplication().runReadAction((Computable<UsageInfo>)() -> {
+              if (!ref.getElement().isValid()) return null;
+              return new UsageInfo(ref);
             });
             return info == null || usageInfoProcessor.process(info);
           });

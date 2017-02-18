@@ -394,7 +394,7 @@ public abstract class CvsCommandOperation extends CvsOperation implements IFileI
     private final IClientEnvironment myClientEnvironment;
     private final CvsEntriesManager myCvsEntriesManager;
     private final UpdatedFilesManager myUpdatedFilesManager;
-    private final Map<File, Entry> myFileToPreviousEntryMap = new HashMap<File, Entry>();
+    private final Map<File, Entry> myFileToPreviousEntryMap = new HashMap<>();
 
     public MergeSupportingEntryListener(IClientEnvironment clientEnvironment,
                                         CvsEntriesManager cvsEntriesManager,

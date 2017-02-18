@@ -16,6 +16,7 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -32,6 +33,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -102,7 +104,7 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
 
     @Override
     public void actionPerformed() {
-      final InspectionProfileImpl inspectionProfile = getInspectionProfile();
+      InspectionProfileModifiableModel inspectionProfile = getInspectionProfile();
       if (inspectionProfile == null) {
         return;
       }
@@ -178,7 +180,7 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
     }
   }
 
-  protected abstract InspectionProfileImpl getInspectionProfile();
+  protected abstract InspectionProfileModifiableModel getInspectionProfile();
 
   protected abstract void postProcessModification();
 
@@ -190,7 +192,7 @@ public abstract class AdvancedSettingsAction extends DumbAwareAction {
       icon = UIManager.getIcon("CheckBox.icon");
     }
     if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      icon = EmptyIcon.create(20, 18);
+      icon = JBUI.scale(EmptyIcon.create(20, 18));
     }
     if (icon != null) {
       final Rectangle r1 = new Rectangle(checkBox.getWidth(), checkBox.getHeight());

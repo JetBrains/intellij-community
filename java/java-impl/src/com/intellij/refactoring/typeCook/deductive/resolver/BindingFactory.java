@@ -57,7 +57,7 @@ public class BindingFactory {
       return new PsiClass[]{bClass};
     }
 
-    final Set<PsiClass> descendants = new LinkedHashSet<PsiClass>();
+    final Set<PsiClass> descendants = new LinkedHashSet<>();
 
     new Object() {
       public void getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass, final Set<PsiClass> descendants) {
@@ -81,14 +81,14 @@ public class BindingFactory {
     private boolean myCyclic;
 
     BindingImpl(final PsiTypeVariable var, final PsiType type) {
-      myBindings = new TIntObjectHashMap<PsiType>();
+      myBindings = new TIntObjectHashMap<>();
       myCyclic = type instanceof PsiTypeVariable;
 
       myBindings.put(var.getIndex(), type);
     }
 
     BindingImpl(final int index, final PsiType type) {
-      myBindings = new TIntObjectHashMap<PsiType>();
+      myBindings = new TIntObjectHashMap<>();
       myCyclic = type instanceof PsiTypeVariable;
 
       myBindings.put(index, type);
@@ -105,7 +105,7 @@ public class BindingFactory {
     }
 
     BindingImpl() {
-      myBindings = new TIntObjectHashMap<PsiType>();
+      myBindings = new TIntObjectHashMap<>();
       myCyclic = false;
     }
 
@@ -993,7 +993,7 @@ public class BindingFactory {
   }
 
   public LinkedList<Pair<PsiType, Binding>> union(final PsiType x, final PsiType y) {
-    final LinkedList<Pair<PsiType, Binding>> list = new LinkedList<Pair<PsiType, Binding>>();
+    final LinkedList<Pair<PsiType, Binding>> list = new LinkedList<>();
 
     new Object() {
       void union(final PsiType x, final PsiType y, final LinkedList<Pair<PsiType, Binding>> list) {
@@ -1044,7 +1044,7 @@ public class BindingFactory {
   }
 
   public LinkedList<Pair<PsiType, Binding>> intersect(final PsiType x, final PsiType y) {
-    final LinkedList<Pair<PsiType, Binding>> list = new LinkedList<Pair<PsiType, Binding>>();
+    final LinkedList<Pair<PsiType, Binding>> list = new LinkedList<>();
 
     new Object() {
       void intersect(final PsiType x, final PsiType y, final LinkedList<Pair<PsiType, Binding>> list) {

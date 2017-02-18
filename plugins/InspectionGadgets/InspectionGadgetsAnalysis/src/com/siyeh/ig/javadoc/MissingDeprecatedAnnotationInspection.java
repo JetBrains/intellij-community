@@ -76,14 +76,8 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("missing.deprecated.annotation.add.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("missing.deprecated.annotation.add.quickfix");
     }
 
     @Override

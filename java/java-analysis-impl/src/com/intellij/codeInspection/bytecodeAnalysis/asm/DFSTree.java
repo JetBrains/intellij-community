@@ -47,8 +47,8 @@ public final class DFSTree {
   // Graphs: Theory and Algorithms. by K. Thulasiraman , M. N. S. Swamy (1992)
   // 11.7.2 DFS of a directed graph
   public static DFSTree build(int[][] transitions, int edgeCount) {
-    HashSet<Edge> nonBack = new HashSet<Edge>();
-    HashSet<Edge> back = new HashSet<Edge>();
+    HashSet<Edge> nonBack = new HashSet<>();
+    HashSet<Edge> back = new HashSet<>();
 
     boolean[] marked = new boolean[transitions.length];
     boolean[] scanned = new boolean[transitions.length];

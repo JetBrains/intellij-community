@@ -28,11 +28,9 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -122,8 +120,9 @@ class UndoableGroup {
     final boolean wrapInBulkUpdate = myActions.size() > 50;
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
-    final Set<DocumentEx> bulkDocuments = new THashSet<DocumentEx>();
+    final Set<DocumentEx> bulkDocuments = new THashSet<>();
     ApplicationManager.getApplication().runWriteAction(() -> {
+      UnexpectedUndoException exception = null;
       try {
         for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
           if (wrapInBulkUpdate) {
@@ -148,13 +147,14 @@ class UndoableGroup {
         }
       }
       catch (UnexpectedUndoException e) {
-        reportUndoProblem(e, isUndo);
+        exception = e;
       }
       finally {
         for (DocumentEx bulkDocument : bulkDocuments) {
           bulkDocument.setInBulkUpdate(false);
         }
       }
+      if (exception != null) reportUndoProblem(exception, isUndo);
     });
     commitAllDocuments();
   }
@@ -172,8 +172,8 @@ class UndoableGroup {
   }
 
   boolean isInsideStartFinishGroup(boolean isUndo, boolean isInsideStartFinishGroup) {
-    final List<FinishMarkAction> finishMarks = new ArrayList<FinishMarkAction>();
-    final List<StartMarkAction> startMarks = new ArrayList<StartMarkAction>();
+    final List<FinishMarkAction> finishMarks = new ArrayList<>();
+    final List<StartMarkAction> startMarks = new ArrayList<>();
     for (UndoableAction action : myActions) {
       if (action instanceof StartMarkAction) {
         startMarks.add((StartMarkAction)action);
@@ -274,9 +274,13 @@ class UndoableGroup {
     }
   }
 
+  public List<UndoableAction> getActions() {
+    return myActions;
+  }
+
   @NotNull
   public Collection<DocumentReference> getAffectedDocuments() {
-    Set<DocumentReference> result = new THashSet<DocumentReference>();
+    Set<DocumentReference> result = new THashSet<>();
     for (UndoableAction action : myActions) {
       DocumentReference[] refs = action.getAffectedDocuments();
       if (refs != null) Collections.addAll(result, refs);

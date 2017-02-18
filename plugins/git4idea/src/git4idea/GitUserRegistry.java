@@ -17,6 +17,7 @@ package git4idea;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -48,6 +49,10 @@ public class GitUserRegistry implements Disposable, VcsListener {
     myProject = project;
     myVcsManager = vcsManager;
     myFactory = factory;
+  }
+
+  public static GitUserRegistry getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, GitUserRegistry.class);
   }
 
   public void activate() {

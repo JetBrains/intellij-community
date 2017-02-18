@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
@@ -38,7 +39,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class MockCodeStyleManager extends CodeStyleManager {
-  private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<PsiFile, ChangedLines[]>();
+  private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<>();
 
   @NotNull
   public ChangedLines[] getFormattedLinesFor(@NotNull PsiFile file) {
@@ -72,8 +73,9 @@ public class MockCodeStyleManager extends CodeStyleManager {
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull Collection<TextRange> ranges) throws IncorrectOperationException {
-    reformatText(file, ranges);
+  public void reformatTextWithContext(@NotNull PsiFile file, 
+                                      @NotNull ChangedRangesInfo ranges) throws IncorrectOperationException {
+    reformatText(file, ranges.allChangedRanges);
   }
 
   @NotNull

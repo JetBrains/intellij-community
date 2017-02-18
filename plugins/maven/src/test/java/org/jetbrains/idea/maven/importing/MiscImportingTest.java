@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.ProjectTopics;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -31,7 +30,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.List;
 
 public class MiscImportingTest extends MavenImportingTestCase {
@@ -317,7 +315,6 @@ public class MiscImportingTest extends MavenImportingTestCase {
     }
   }
 
-  @Bombed(user = "Vladislav.Soroka", year=2020, month = Calendar.APRIL, day = 1, description = "temporary disabled")
   public void testExceptionsFromMavenExtensionsAreReportedAsProblems() throws Exception {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
     setRepositoryPath(helper.getTestDataPath("plugins"));

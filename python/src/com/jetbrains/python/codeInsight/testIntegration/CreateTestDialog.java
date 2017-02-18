@@ -139,7 +139,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   public List<String> getMethods() {
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
 
     for (int i = 0; i != myTableModel.getRowCount(); ++i) {
       Object val = myTableModel.getValueAt(i, 0);

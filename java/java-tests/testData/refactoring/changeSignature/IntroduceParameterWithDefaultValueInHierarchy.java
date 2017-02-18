@@ -5,5 +5,9 @@ class Foo {
      void foo(){
        super.foo();
      }
+
+     {
+       super.foo();
+     }
    }
 }

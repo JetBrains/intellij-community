@@ -105,6 +105,7 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     boolean localTagsFileChanged = false;
     boolean currentBookmarkFileChanged = false;
     boolean mqChanged = false;
+    boolean hgIgnoreChanged = false;
 
     boolean configHgrcChanged = false;
     for (VFileEvent event : events) {
@@ -150,6 +151,9 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       else if (myRepositoryFiles.isConfigHgrcFile(filePath)) {
         configHgrcChanged = true;
       }
+      else if (myRepositoryFiles.isHgIgnore(filePath)) {
+        hgIgnoreChanged = true;
+      }
     }
 
     if (branchHeadsChanged || branchFileChanged || dirstateFileChanged || mergeFileChanged || rebaseFileChanged ||
@@ -160,11 +164,14 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     if (configHgrcChanged) {
       myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"));
     }
-    if (dirstateFileChanged) {
+    if (dirstateFileChanged || hgIgnoreChanged) {
+      myRepository.getLocalIgnoredHolder().startRescan();
       final VirtualFile root = myRepository.getRoot();
       myDirtyScopeManager.dirDirtyRecursively(root);
-      //update async incoming/outgoing model
-      myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
+      if (dirstateFileChanged) {
+        //update async incoming/outgoing model
+        myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
+      }
     }
   }
 

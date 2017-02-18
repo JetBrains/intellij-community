@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.maven.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -17,7 +32,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     myFixture.enableInspections(MavenRedundantGroupIdInspection)
   }
 
-  public void testHighlighting1() {
+  void testHighlighting1() {
     createProjectPom("""
   <groupId>my.group</groupId>
   <artifactId>childA</artifactId>
@@ -27,7 +42,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
-  public void testHighlighting2() {
+  void testHighlighting2() {
     createProjectPom("""
   <groupId>childGroupId</groupId>
   <artifactId>childA</artifactId>
@@ -43,7 +58,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
-  public void testHighlighting3() {
+  void testHighlighting3() {
     createProjectPom("""
   <warning><groupId>my.group</groupId></warning>
   <artifactId>childA</artifactId>
@@ -59,7 +74,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     checkHighlighting()
   }
 
-  public void testQuickFix() {
+  void testQuickFix() {
     createProjectPom("""
     <artifactId>childA</artifactId>
     <groupId>mavenParen<caret>t</groupId>
@@ -73,7 +88,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
 """)
 
     myFixture.configureFromExistingVirtualFile(myProjectPom)
-    myFixture.doHighlighting();
+    myFixture.doHighlighting()
 
     for (IntentionAction intention : myFixture.getAvailableIntentions()) {
       if (intention.getText().startsWith("Remove ") && intention.getText().contains("<groupId>")) {
@@ -83,7 +98,7 @@ class MavenRedundantGroupIdTest extends MavenDomTestCase {
     }
 
     //doPostponedFormatting(myProject)
-    PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting()
 
     myFixture.checkResult(createPomXml("""
     <artifactId>childA</artifactId>

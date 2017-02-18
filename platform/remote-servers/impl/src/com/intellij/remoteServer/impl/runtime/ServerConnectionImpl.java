@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionData;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnectionDataNotAvailableException;
 import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import com.intellij.util.Consumer;
-import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +54,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   private volatile ConnectionStatus myStatus = ConnectionStatus.DISCONNECTED;
   private volatile String myStatusText;
   private volatile ServerRuntimeInstance<D> myRuntimeInstance;
-  private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<String, DeploymentImpl>();
-  private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<String, LocalDeploymentImpl>();
+  private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<>();
+  private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<>();
   private final Map<String, DeploymentLogManagerImpl> myLogManagers = ContainerUtil.newConcurrentMap();
 
   public ServerConnectionImpl(RemoteServer<?> server,
@@ -125,7 +124,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   @Override
-  public void deploy(@NotNull final DeploymentTask<D> task, @NotNull final ParameterizedRunnable<String> onDeploymentStarted) {
+  public void deploy(@NotNull final DeploymentTask<D> task, @NotNull final java.util.function.Consumer<String> onDeploymentStarted) {
     connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {
@@ -144,7 +143,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         LoggingHandlerImpl handler = logManager.getMainLoggingHandler();
         myLogManagers.put(deploymentName, logManager);
         handler.printlnSystemMessage("Deploying '" + deploymentName + "'...");
-        onDeploymentStarted.run(deploymentName);
+        onDeploymentStarted.accept(deploymentName);
         instance
           .deploy(task, logManager, new DeploymentOperationCallbackImpl(deploymentName, (DeploymentTaskImpl<D>)task, handler, deployment));
       }
@@ -179,7 +178,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
   private void computeDeployments(ServerRuntimeInstance<D> instance, final Runnable onFinished) {
     instance.computeDeployments(new ServerRuntimeInstance.ComputeDeploymentsCallback() {
-      private final List<DeploymentImpl> myDeployments = new ArrayList<DeploymentImpl>();
+      private final List<DeploymentImpl> myDeployments = new ArrayList<>();
 
       @Override
       public void addDeployment(@NotNull String deploymentName) {
@@ -320,9 +319,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @NotNull
   @Override
   public Collection<Deployment> getDeployments() {
-    Set<Deployment> result = new LinkedHashSet<Deployment>();
+    Set<Deployment> result = new LinkedHashSet<>();
     Map<Deployment, DeploymentImpl> orderedDeployments
-      = new TreeMap<Deployment, DeploymentImpl>(getServer().getType().getDeploymentComparator());
+      = new TreeMap<>(getServer().getType().getDeploymentComparator());
     synchronized (myLocalDeployments) {
       synchronized (myRemoteDeployments) {
 

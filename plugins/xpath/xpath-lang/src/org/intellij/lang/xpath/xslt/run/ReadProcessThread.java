@@ -15,20 +15,21 @@
  */
 package org.intellij.lang.xpath.xslt.run;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 
-import java.io.Reader;
 import java.io.IOException;
+import java.io.Reader;
 
 /* Copied from com.intellij.execution.process.OSProcessHandler.ReadProcessThread */
 @SuppressWarnings({"ALL"})
-abstract class ReadProcessThread extends Thread {
+abstract class ReadProcessThread extends Thread implements Disposable {
   private static final int NOTIFY_TEXT_DELAY = 300;
 
   private final Reader myReader;
 
   private final StringBuffer myBuffer = new StringBuffer();
-  private final Alarm myAlarm;
 
   private boolean myIsClosed = false;
 
@@ -37,10 +38,10 @@ abstract class ReadProcessThread extends Thread {
     super("ReadProcessThread "+reader.getClass().getName());
     setPriority(Thread.MAX_PRIORITY);
     myReader = reader;
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   }
 
   public void run() {
+    final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     myAlarm.addRequest(new Runnable() {
       public void run() {
         if(!isClosed()) {
@@ -67,8 +68,14 @@ abstract class ReadProcessThread extends Thread {
     catch (Exception e) {
       e.printStackTrace();
     }
-
-    close();
+    finally {
+      try {
+        close();
+      }
+      finally {
+        Disposer.dispose(this);
+      }
+    }
   }
 
   private int readNextByte() {
@@ -122,4 +129,7 @@ abstract class ReadProcessThread extends Thread {
     return myIsClosed;
   }
 
+  @Override
+  public void dispose() {
+  }
 }

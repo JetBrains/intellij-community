@@ -30,7 +30,6 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -47,8 +46,6 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
-  public static final Logger LOG = Logger.getInstance(SimpleOnesideDiffViewer.class);
-
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
@@ -131,13 +128,6 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
         TextDiffType type = getSide().select(TextDiffType.DELETED, TextDiffType.INSERTED);
 
         myHighlighters.addAll(DiffDrawUtil.createHighlighter(getEditor(), 0, getLineCount(document), type, false));
-
-        int startLine = 0;
-        int endLine = getLineCount(document);
-
-        if (startLine != endLine) {
-          myHighlighters.addAll(DiffDrawUtil.createLineMarker(getEditor(), startLine, endLine, type, false));
-        }
       }
 
       myInitialScrollHelper.onRediff();

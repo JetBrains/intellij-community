@@ -20,6 +20,7 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,8 +43,8 @@ public class ComparisonMergeUtil {
     @NotNull
     public List<MergeRange> execute(@NotNull FairDiffIterable fragments1,
                                     @NotNull FairDiffIterable fragments2) {
-      PeekIterator<Range> unchanged1 = new PeekIterator<Range>(fragments1.unchanged());
-      PeekIterator<Range> unchanged2 = new PeekIterator<Range>(fragments2.unchanged());
+      PeekIterator<Range> unchanged1 = new PeekIterator<>(fragments1.unchanged());
+      PeekIterator<Range> unchanged2 = new PeekIterator<>(fragments2.unchanged());
 
       while (!unchanged1.atEnd() && !unchanged2.atEnd()) {
         Side side = add(unchanged1.peek(), unchanged2.peek());
@@ -160,6 +161,11 @@ public class ComparisonMergeUtil {
   public static CharSequence tryResolveConflict(@NotNull CharSequence leftText,
                                                 @NotNull CharSequence baseText,
                                                 @NotNull CharSequence rightText) {
-    return MergeResolveUtil.tryResolveConflict(leftText, baseText, rightText);
+    if (Registry.is("diff.merge.resolve.conflict.action.use.greedy.approach")) {
+      return MergeResolveUtil.tryGreedyResolve(leftText, baseText, rightText);
+    }
+    else {
+      return MergeResolveUtil.tryResolve(leftText, baseText, rightText);
+    }
   }
 }

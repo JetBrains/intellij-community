@@ -45,7 +45,7 @@ public class ClassHolder<T> implements Serializable {
 
   @NotNull
   public static <T> ClassHolder<T> from(@NotNull Class<T> clazz) {
-    return new ClassHolder<T>(clazz);
+    return new ClassHolder<>(clazz);
   }
 
   @SuppressWarnings("unchecked")

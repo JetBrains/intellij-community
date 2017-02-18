@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +47,11 @@ import java.util.List;
  * Date: 24-Feb-2006
  */
 public class SeverityRegistrar implements Comparator<HighlightSeverity> {
+  /**
+   * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
+   */
+  public static final int SHOWN_SEVERITIES_OFFSET = 1;
+
   private final static Logger LOG = Logger.getInstance(SeverityRegistrar.class);
 
   @NonNls private static final String INFO_TAG = "info";
@@ -73,6 +77,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     registerStandard(HighlightInfoType.INFO, HighlightSeverity.INFO);
     registerStandard(HighlightInfoType.WEAK_WARNING, HighlightSeverity.WEAK_WARNING);
     registerStandard(HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER, HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
+    STANDARD_SEVERITIES.put(HighlightDisplayLevel.DO_NOT_SHOW.getName(), HighlightInfoType.INFORMATION);
   }
 
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {
@@ -83,7 +88,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   public static SeverityRegistrar getSeverityRegistrar(@Nullable Project project) {
     return project == null
            ? InspectionProfileManager.getInstance().getSeverityRegistrar()
-           : InspectionProjectProfileManager.getInstance(project).getSeverityRegistrar();
+           : InspectionProfileManager.getInstance(project).getSeverityRegistrar();
   }
 
   public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor) {
@@ -134,7 +139,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
 
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     myMap.clear();
     myRendererColors.clear();
     for (Element infoElement : element.getChildren(INFO_TAG)) {
@@ -146,13 +151,19 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     }
     myReadOrder = new JDOMExternalizableStringList();
     myReadOrder.readExternal(element);
-    List<HighlightSeverity> read = new ArrayList<HighlightSeverity>(myReadOrder.size());
+    List<HighlightSeverity> read = new ArrayList<>(myReadOrder.size());
     final List<HighlightSeverity> knownSeverities = getDefaultOrder();
     for (String name : myReadOrder) {
       HighlightSeverity severity = getSeverity(name);
-      if (severity == null || !knownSeverities.contains(severity)) continue;
-      read.add(severity);
+      if (severity != null && knownSeverities.contains(severity)) {
+        read.add(severity);
+      }
     }
+    myOrderMap = ensureAllStandardIncluded(read, knownSeverities);
+    severitiesChanged();
+  }
+
+  private OrderMap ensureAllStandardIncluded(List<HighlightSeverity> read, final List<HighlightSeverity> knownSeverities) {
     OrderMap orderMap = fromList(read);
     if (orderMap.isEmpty()) {
       orderMap = fromList(knownSeverities);
@@ -176,8 +187,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
       }
       orderMap = fromList(list);
     }
-    myOrderMap = orderMap;
-    severitiesChanged();
+    return orderMap;
   }
 
   public void writeExternal(Element element) {
@@ -214,7 +224,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @NotNull
   private static List<HighlightSeverity> getOrderAsList(@NotNull final OrderMap orderMap) {
-    List<HighlightSeverity> list = new ArrayList<HighlightSeverity>();
+    List<HighlightSeverity> list = new ArrayList<>();
     for (Object o : orderMap.keys()) {
       list.add((HighlightSeverity)o);
     }
@@ -260,7 +270,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @NotNull
   private List<String> createCurrentSeverityNames() {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     list.addAll(STANDARD_SEVERITIES.keySet());
     list.addAll(myMap.keySet());
     ContainerUtil.sort(list);
@@ -292,7 +302,6 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return o1 - o2;
   }
 
-
   @NotNull
   private OrderMap getOrderMap() {
     OrderMap orderMap;
@@ -314,10 +323,10 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @NotNull
   private static OrderMap fromList(@NotNull List<HighlightSeverity> orderList) {
-    if (orderList.size() != new HashSet<HighlightSeverity>(orderList).size()) {
+    if (orderList.size() != new HashSet<>(orderList).size()) {
       LOG.error("Severities order list MUST contain only unique severities: " + orderList);
     }
-    TObjectIntHashMap<HighlightSeverity> map = new TObjectIntHashMap<HighlightSeverity>();
+    TObjectIntHashMap<HighlightSeverity> map = new TObjectIntHashMap<>();
     for (int i = 0; i < orderList.size(); i++) {
       HighlightSeverity severity = orderList.get(i);
       map.put(severity, i);
@@ -328,7 +337,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   @NotNull
   private List<HighlightSeverity> getDefaultOrder() {
     Collection<SeverityBasedTextAttributes> values = myMap.values();
-    List<HighlightSeverity> order = new ArrayList<HighlightSeverity>(STANDARD_SEVERITIES.size() + values.size());
+    List<HighlightSeverity> order = new ArrayList<>(STANDARD_SEVERITIES.size() + values.size());
     for (HighlightInfoType type : STANDARD_SEVERITIES.values()) {
       order.add(type.getSeverity(null));
     }
@@ -340,7 +349,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   public void setOrder(@NotNull List<HighlightSeverity> orderList) {
-    myOrderMap = fromList(orderList);
+    myOrderMap = ensureAllStandardIncluded(orderList, getDefaultOrder());
     myReadOrder = null;
     severitiesChanged();
   }
@@ -467,7 +476,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @NotNull
   Collection<SeverityBasedTextAttributes> allRegisteredAttributes() {
-    return new ArrayList<SeverityBasedTextAttributes>(myMap.values());
+    return new ArrayList<>(myMap.values());
   }
   @NotNull
   Collection<HighlightInfoType> standardSeverities() {

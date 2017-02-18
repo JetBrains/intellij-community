@@ -21,6 +21,7 @@ import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.OptionsPanelImpl;
 import com.intellij.diff.util.TextDiffTypeFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
@@ -95,7 +96,10 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
     myInheritIgnoredCheckBox.setSelected(false);
   }
 
-  public void reset(@NotNull ColorAndFontDescription description) {
+  public void reset(@NotNull EditorSchemeAttributeDescriptor attrDescription) {
+    if (!(attrDescription instanceof ColorAndFontDescription)) return;
+    ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+
     Color backgroundColor = getBackgroundColor(description);
     Color ignoredColor = getIgnoredColor(description);
     Color stripeMarkColor = getStripeMarkColor(description);
@@ -112,7 +116,10 @@ class DiffColorDescriptionPanel extends JPanel implements OptionsPanelImpl.Color
     myInheritIgnoredCheckBox.setSelected(inheritIgnored);
   }
 
-  public void apply(@NotNull ColorAndFontDescription description, EditorColorsScheme scheme) {
+  public void apply(@NotNull EditorSchemeAttributeDescriptor attrDescription, EditorColorsScheme scheme) {
+    if (!(attrDescription instanceof ColorAndFontDescription)) return;
+    ColorAndFontDescription description = (ColorAndFontDescription)attrDescription;
+
     description.setBackgroundChecked(true);
     description.setForegroundChecked(true);
     description.setErrorStripeChecked(true);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
  */
 class MavenDontExcludeTargetTest extends MavenImportingTestCase {
 
-  public void testDontExcludeTargetTest() {
+  void testDontExcludeTargetTest() {
     MavenProjectsManager.getInstance(myProject).importingSettings.excludeTargetFolder = false
 
     def classA = createProjectSubFile("target/classes/A.class")
@@ -46,7 +46,7 @@ class MavenDontExcludeTargetTest extends MavenImportingTestCase {
     assert fileIndex.isInContent(aaa)
   }
 
-  public void testDontExcludeTargetTest2() {
+  void testDontExcludeTargetTest2() {
     MavenProjectsManager.getInstance(myProject).importingSettings.excludeTargetFolder = false
 
     def realClassA = createProjectSubFile("customOutput/A.class")

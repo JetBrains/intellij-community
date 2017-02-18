@@ -166,8 +166,8 @@ public class XSDModelLoader implements ModelLoader {
     Map<String, NamespaceDesc> nsdMap = model.nsdMap;
     Map<String, TypeDesc> jtMap = model.jtMap;
     final NamespaceDesc nsdDef = nsdMap.get("");
-    final ArrayList<XSModel> models = new ArrayList<XSModel>();
-    final HashMap<String, XSTypeDefinition> types = new HashMap<String, XSTypeDefinition>();
+    final ArrayList<XSModel> models = new ArrayList<>();
+    final HashMap<String, XSTypeDefinition> types = new HashMap<>();
     for (File schemaFile : schemas) {
       String fileName = schemaFile.getPath();
       if (schemaFile.isDirectory() || !fileName.endsWith(".xsd")) {
@@ -211,8 +211,8 @@ public class XSDModelLoader implements ModelLoader {
       }
     }
     Util.log(types.size() + " elements loaded, processing..");
-    ArrayList<XSTypeDefinition> toProcess = new ArrayList<XSTypeDefinition>(types.values());
-    ArrayList<XSComplexTypeDefinition> toAdd = new ArrayList<XSComplexTypeDefinition>();
+    ArrayList<XSTypeDefinition> toProcess = new ArrayList<>(types.values());
+    ArrayList<XSComplexTypeDefinition> toAdd = new ArrayList<>();
     for (ListIterator<XSTypeDefinition> it = toProcess.listIterator(); it.hasNext();) {
       XSTypeDefinition td = it.next();
       Util.log("processing " + td.getName() + "," + td.getNamespace() + "..");
@@ -353,7 +353,7 @@ public class XSDModelLoader implements ModelLoader {
         fd1.simpleTypesString = getSimpleTypesString(ad.getTypeDefinition());
       }
     }
-    LinkedList<PEntry> plist = new LinkedList<PEntry>();
+    LinkedList<PEntry> plist = new LinkedList<>();
     if (def.getParticle() != null) {
       plist.add(new PEntry(def.getParticle(), false));
     }
@@ -424,7 +424,7 @@ public class XSDModelLoader implements ModelLoader {
     td.documentation = parseAnnotationString("Type " + def.getNamespace() + ":" + def.getName() + " documentation",
             ann == null ? null : ann.getAnnotationString());
     td.type = TypeDesc.TypeEnum.GROUP_INTERFACE;
-    LinkedList<PEntry> plist = new LinkedList<PEntry>();
+    LinkedList<PEntry> plist = new LinkedList<>();
     for (int i = 0; i < def.getModelGroup().getParticles().getLength(); i++) {
       XSParticle p = (XSParticle) def.getModelGroup().getParticles().item(i);
       plist.add(new PEntry(p, false));
@@ -436,9 +436,9 @@ public class XSDModelLoader implements ModelLoader {
 
   private void processParticles(XSObject def, LinkedList<PEntry> plist, Map<String, NamespaceDesc> nsdMap, Map<String, TypeDesc> jtMap, TypeDesc td, List<XSModel> models, ArrayList<XSComplexTypeDefinition> toAdd, TypeDesc baseClass) {
     final boolean globalMerge = jtMap.containsKey(model.toJavaQualifiedTypeName(def, nsdMap, td.type == TypeDesc.TypeEnum.ENUM));
-    final HashMap<XSParticle, String> globalChoice = new HashMap<XSParticle, String>();
-    final ArrayList<XSObjectList> choiceList = new ArrayList<XSObjectList>();
-    final ArrayList<TypeDesc> supers = new ArrayList<TypeDesc>();
+    final HashMap<XSParticle, String> globalChoice = new HashMap<>();
+    final ArrayList<XSObjectList> choiceList = new ArrayList<>();
+    final ArrayList<TypeDesc> supers = new ArrayList<>();
     if (baseClass != null) {
       supers.add(baseClass);
     }
@@ -587,8 +587,8 @@ public class XSDModelLoader implements ModelLoader {
       fd.idx = i;
     }
     for (XSObjectList l : choiceList) {
-      final ArrayList<XSParticle> clist = new ArrayList<XSParticle>();
-      final LinkedList<XSParticle> elist = new LinkedList<XSParticle>();
+      final ArrayList<XSParticle> clist = new ArrayList<>();
+      final LinkedList<XSParticle> elist = new LinkedList<>();
       for (i = 0; i < l.getLength(); i++) {
         elist.add((XSParticle) l.item(i));
       }

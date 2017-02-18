@@ -35,14 +35,14 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
 
   private boolean myNameIsGenerated;
 
-  protected LocatableConfigurationBase(Project project, @NotNull ConfigurationFactory factory, String name) {
+  protected LocatableConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, String name) {
     super(project, factory, name);
   }
 
   @Override
   @Attribute("nameIsGenerated")
   public boolean isGeneratedName() {
-    return suggestedName() != null && myNameIsGenerated;
+    return myNameIsGenerated && suggestedName() != null;
   }
 
   /**
@@ -51,11 +51,6 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
   public void setGeneratedName() {
     setName(suggestedName());
     myNameIsGenerated = true;
-  }
-
-  @Override
-  public String suggestedName() {
-    return null;
   }
 
   public void setNameChangedByUser(boolean nameChangedByUser) {

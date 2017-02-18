@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +133,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
 
       //already performed checks, so if inference failed, error message should be saved  
-      if (myInferenceError != null || !isPotentiallyCompatible()) {
+      if (myInferenceError != null || isPotentiallyCompatible() != ThreeState.YES) {
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
       return isVarargs() ? ApplicabilityLevel.VARARGS : ApplicabilityLevel.FIXED_ARITY;
@@ -176,7 +177,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   /**
    * 15.12.2.1 Identify Potentially Applicable Methods
    */
-  public boolean isPotentiallyCompatible() {
+  public ThreeState isPotentiallyCompatible() {
     if (myArgumentList instanceof PsiExpressionList) {
       final PsiMethod method = getElement();
       final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -184,18 +185,20 @@ public class MethodCandidateInfo extends CandidateInfo{
 
       if (!isVarargs() &&  myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         if (expressions.length != parameters.length) {
-          return false;
+          return ThreeState.NO;
         }
       }
       else {
         if (expressions.length < parameters.length - 1) {
-          return false;
+          return ThreeState.NO;
         }
 
         if (parameters.length == 0 && expressions.length != parameters.length) {
-          return false;
+          return ThreeState.NO;
         }
       }
+
+      boolean unsure = false;
 
       for (int i = 0; i < expressions.length; i++) {
         final PsiExpression expression = expressions[i];
@@ -205,35 +208,54 @@ public class MethodCandidateInfo extends CandidateInfo{
           formalParameterType = ((PsiEllipsisType)formalParameterType).getComponentType();
         }
 
-        if (!isPotentialCompatible(expression, getSiteSubstitutor().substitute(formalParameterType), method)) {
-          return false;
+        ThreeState compatible = isPotentialCompatible(expression, getSiteSubstitutor().substitute(formalParameterType), method);
+        if (compatible == ThreeState.NO) {
+          return ThreeState.NO;
+        }
+
+        if (compatible == ThreeState.UNSURE) {
+          unsure = true;
         }
       }
+
+      if (unsure) return ThreeState.UNSURE;
+
       if (method.hasTypeParameters() && myTypeArguments != null) {
-        return method.getTypeParameters().length == myTypeArguments.length; //todo
+        return ThreeState.fromBoolean(method.getTypeParameters().length == myTypeArguments.length); //todo
       }
     }
-    return true;
+    return ThreeState.YES;
   }
 
-  private static boolean isPotentialCompatible(PsiExpression expression, PsiType formalType, PsiMethod method) {
+  private static ThreeState isPotentialCompatible(PsiExpression expression, PsiType formalType, PsiMethod method) {
     if (expression instanceof PsiFunctionalExpression) {
       final PsiClass targetTypeParameter = PsiUtil.resolveClassInClassTypeOnly(formalType);
       if (targetTypeParameter instanceof PsiTypeParameter && method.equals(((PsiTypeParameter)targetTypeParameter).getOwner())) {
-        return true;
+        return ThreeState.YES;
       }
+
+      if (!LambdaUtil.isFunctionalType(formalType)) {
+        return ThreeState.NO;
+      }
+
       if (!((PsiFunctionalExpression)expression).isPotentiallyCompatible(formalType)) {
-        return false;
+        return ThreeState.UNSURE;
       }
     }
     else if (expression instanceof PsiParenthesizedExpression) {
       return isPotentialCompatible(((PsiParenthesizedExpression)expression).getExpression(), formalType, method);
     }
     else if (expression instanceof PsiConditionalExpression) {
-      return isPotentialCompatible(((PsiConditionalExpression)expression).getThenExpression(), formalType, method) &&
-             isPotentialCompatible(((PsiConditionalExpression)expression).getElseExpression(), formalType, method);
+      ThreeState thenCompatible = isPotentialCompatible(((PsiConditionalExpression)expression).getThenExpression(), formalType, method);
+      ThreeState elseCompatible = isPotentialCompatible(((PsiConditionalExpression)expression).getElseExpression(), formalType, method);
+      if (thenCompatible == ThreeState.NO || elseCompatible == ThreeState.NO) {
+        return ThreeState.NO;
+      }
+      if (thenCompatible == ThreeState.UNSURE || elseCompatible == ThreeState.UNSURE) {
+        return ThreeState.UNSURE;
+      }
     }
-    return true;
+    return ThreeState.YES;
   }
 
   private <T> T computeForOverloadedCandidate(final Computable<T> computable,
@@ -282,10 +304,6 @@ public class MethodCandidateInfo extends CandidateInfo{
   public PsiSubstitutor getSubstitutor(boolean includeReturnConstraint) {
     PsiSubstitutor substitutor = myCalcedSubstitutor;
     if (substitutor == null || !includeReturnConstraint && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) || isOverloadCheck()) {
-
-      if (includeReturnConstraint) {
-        myInferenceError = null;
-      }
 
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();

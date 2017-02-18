@@ -28,7 +28,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 public class CacheBuilderEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.cacheBuilder.CacheBuilderEP");
 
-  public static final ExtensionPointName<CacheBuilderEP> EP_NAME = new ExtensionPointName<CacheBuilderEP>("com.intellij.cacheBuilder");
+  public static final ExtensionPointName<CacheBuilderEP> EP_NAME = new ExtensionPointName<>("com.intellij.cacheBuilder");
 
 
   @Attribute("fileType")

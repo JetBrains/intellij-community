@@ -83,13 +83,13 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
     PropertiesComponent.getInstance().setValue(ANNOTATE_LOCAL_VARIABLES, myAnnotateLocalVariablesCb.isSelected());
 
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final Set<Module> modulesWithoutAnnotations = new HashSet<Module>();
-    final Set<Module> modulesWithLL = new HashSet<Module>();
+    final Set<Module> modulesWithoutAnnotations = new HashSet<>();
+    final Set<Module> modulesWithLL = new HashSet<>();
     final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
     final String defaultNullable = NullableNotNullManager.getInstance(project).getDefaultNullable();
     final int[] fileCount = new int[] {0};
     if (!progressManager.runProcessWithProgressSynchronously(() -> scope.accept(new PsiElementVisitor() {
-      final private Set<Module> processed = new HashSet<Module>();
+      final private Set<Module> processed = new HashSet<>();
 
       @Override
       public void visitFile(PsiFile file) {
@@ -213,7 +213,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       searchForUsages.run();
     }
 
-    final List<UsageInfo> usages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> usages = new ArrayList<>();
     inferrer.collect(usages);
     return usages.toArray(new UsageInfo[usages.size()]);
   }
@@ -232,7 +232,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
             final UsageInfo[] infos = computable.compute();
             if (infos.length > 0) {
 
-              final Set<PsiElement> elements = new LinkedHashSet<PsiElement>();
+              final Set<PsiElement> elements = new LinkedHashSet<>();
               for (UsageInfo info : infos) {
                 final PsiElement element = info.getElement();
                 if (element != null) {
@@ -272,7 +272,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
   private void showUsageView(@NotNull Project project, final UsageInfo[] usageInfos, @NotNull AnalysisScope scope) {
     final UsageTarget[] targets = UsageTarget.EMPTY_ARRAY;
-    final Ref<Usage[]> convertUsagesRef = new Ref<Usage[]>();
+    final Ref<Usage[]> convertUsagesRef = new Ref<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos))), "Preprocess Usages", true, project)) return;
 
     if (convertUsagesRef.isNull()) return;

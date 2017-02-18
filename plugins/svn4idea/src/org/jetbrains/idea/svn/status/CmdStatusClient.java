@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                        @Nullable final Collection changeLists) throws SvnBindException {
     File base = CommandUtil.requireExistingParent(path);
     final Info infoBase = myFactory.createInfoClient().doInfo(base, revision);
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
 
@@ -121,10 +121,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
     }
     catch (SvnExceptionWrapper e) {
       throw new SvnBindException(e.getCause());
-    } catch (IOException e) {
-      throw new SvnBindException(e);
-    }
-    catch (ParserConfigurationException e) {
+    } catch (IOException | ParserConfigurationException e) {
       throw new SvnBindException(e);
     }
     catch (SAXException e) {
@@ -180,7 +177,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                                                                             final File base,
                                                                             final Info infoBase,
                                                                             final SvnStatusHandler[] svnHandl) {
-    final Map<File, Info> externalsMap = new HashMap<File, Info>();
+    final Map<File, Info> externalsMap = new HashMap<>();
     final String[] changelistName = new String[1];
 
     return new SvnStatusHandler.ExternalDataCallback() {

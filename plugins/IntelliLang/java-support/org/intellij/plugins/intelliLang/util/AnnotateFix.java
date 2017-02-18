@@ -44,13 +44,8 @@ public class AnnotateFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return "Annotate with @" + StringUtil.getShortName(myAnnotationName);
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return "Annotate with @" + StringUtil.getShortName(myAnnotationName);
   }
 
   public boolean canApply() {

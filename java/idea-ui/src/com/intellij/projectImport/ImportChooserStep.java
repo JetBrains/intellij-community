@@ -153,7 +153,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
   }
 
   private static List<ProjectImportProvider> sorted(ProjectImportProvider[] providers) {
-    List<ProjectImportProvider> result = new ArrayList<ProjectImportProvider>();
+    List<ProjectImportProvider> result = new ArrayList<>();
     Collections.addAll(result, providers);
     Collections.sort(result, (l, r) -> l.getName().compareToIgnoreCase(r.getName()));
     return result;

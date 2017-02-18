@@ -49,14 +49,14 @@ public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> 
 
     final Set<String> resultNames = getResultNames(ins);
     if (resultNames == null || resultNames.isEmpty()) {
-      return new DFAMap<ScopeVariable>();
+      return new DFAMap<>();
     }
 
-    final DFAMap<ScopeVariable> result = new DFAMap<ScopeVariable>();
+    final DFAMap<ScopeVariable> result = new DFAMap<>();
     for (String name : resultNames) {
 
       boolean isParameter = true;
-      Set<PsiElement> declarations = new HashSet<PsiElement>();
+      Set<PsiElement> declarations = new HashSet<>();
 
       // iterating over all maps
       for (DFAMap<ScopeVariable> map : ins) {

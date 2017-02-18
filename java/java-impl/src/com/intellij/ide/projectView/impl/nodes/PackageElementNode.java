@@ -83,7 +83,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public Collection<AbstractTreeNode> getChildren() {
     final PackageElement value = getValue();
     if (value == null) return Collections.emptyList();
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    final List<AbstractTreeNode> children = new ArrayList<>();
     final Module module = value.getModule();
     final PsiPackage aPackage = value.getPackage();
 

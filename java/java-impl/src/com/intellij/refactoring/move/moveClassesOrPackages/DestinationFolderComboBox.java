@@ -203,14 +203,14 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                 final Project project,
                                 final boolean forceIncludeAll,
                                 final Pass<String> updateErrorMessage) {
-    final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<PsiDirectory>();
-    final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<PsiDirectory, String>();
+    final LinkedHashSet<PsiDirectory> targetDirectories = new LinkedHashSet<>();
+    final HashMap<PsiDirectory, String> pathsToCreate = new HashMap<>();
     MoveClassesOrPackagesUtil
       .buildDirectoryList(new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()), sourceRoots, targetDirectories, pathsToCreate);
     if (!forceIncludeAll && targetDirectories.size() > pathsToCreate.size()) {
       targetDirectories.removeAll(pathsToCreate.keySet());
     }
-    final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<DirectoryChooser.ItemWrapper>();
+    final ArrayList<DirectoryChooser.ItemWrapper> items = new ArrayList<>();
     DirectoryChooser.ItemWrapper initial = null;
     DirectoryChooser.ItemWrapper oldOne = null;
     for (PsiDirectory targetDirectory : targetDirectories) {

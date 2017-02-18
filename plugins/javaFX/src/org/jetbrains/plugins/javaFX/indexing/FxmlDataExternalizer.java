@@ -42,7 +42,7 @@ public class FxmlDataExternalizer implements DataExternalizer<Set<String>> {
   @Override
   public Set<String> read(@NotNull DataInput in) throws IOException {
     final int size = DataInputOutputUtil.readINT(in);
-    final Set<String> result = new HashSet<String>(size);
+    final Set<String> result = new HashSet<>(size);
 
     for (int i = 0; i < size; i++) {
       final String s = IOUtil.readUTF(in);

@@ -25,13 +25,13 @@ public class PyCCSettingsEditor extends SettingsEditor<PyCCRunTestConfiguration>
   }
 
   @Override
-  protected void resetEditorFrom(PyCCRunTestConfiguration s) {
+  protected void resetEditorFrom(@NotNull PyCCRunTestConfiguration s) {
     AbstractPythonRunConfiguration.copyParams(s, myForm);
     myPathToTestFileField.setText(s.getPathToTest());
   }
 
   @Override
-  protected void applyEditorTo(PyCCRunTestConfiguration s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull PyCCRunTestConfiguration s) throws ConfigurationException {
     AbstractPythonRunConfiguration.copyParams(myForm, s);
     s.setPathToTest(myPathToTestFileField.getText());
   }

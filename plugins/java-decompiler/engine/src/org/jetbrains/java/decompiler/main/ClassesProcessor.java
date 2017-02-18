@@ -42,7 +42,7 @@ import java.util.Map.Entry;
 public class ClassesProcessor {
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
 
-  private final Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
+  private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
 
   private static class Inner {
     private String simpleName;
@@ -55,10 +55,10 @@ public class ClassesProcessor {
   }
 
   public ClassesProcessor(StructContext context) {
-    Map<String, Inner> mapInnerClasses = new HashMap<String, Inner>();
-    Map<String, Set<String>> mapNestedClassReferences = new HashMap<String, Set<String>>();
-    Map<String, Set<String>> mapEnclosingClassReferences = new HashMap<String, Set<String>>();
-    Map<String, String> mapNewSimpleNames = new HashMap<String, String>();
+    Map<String, Inner> mapInnerClasses = new HashMap<>();
+    Map<String, Set<String>> mapNestedClassReferences = new HashMap<>();
+    Map<String, Set<String>> mapEnclosingClassReferences = new HashMap<>();
+    Map<String, String> mapNewSimpleNames = new HashMap<>();
 
     boolean bDecompileInner = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_INNER);
 
@@ -116,14 +116,14 @@ public class ClassesProcessor {
                   // reference to the nested class
                   Set<String> set = mapNestedClassReferences.get(enclClassName);
                   if (set == null) {
-                    mapNestedClassReferences.put(enclClassName, set = new HashSet<String>());
+                    mapNestedClassReferences.put(enclClassName, set = new HashSet<>());
                   }
                   set.add(innerName);
 
                   // reference to the enclosing class
                   set = mapEnclosingClassReferences.get(innerName);
                   if (set == null) {
-                    mapEnclosingClassReferences.put(innerName, set = new HashSet<String>());
+                    mapEnclosingClassReferences.put(innerName, set = new HashSet<>());
                   }
                   set.add(enclClassName);
                 }
@@ -143,8 +143,8 @@ public class ClassesProcessor {
       for (Entry<String, ClassNode> ent : mapRootClasses.entrySet()) {
         // root class?
         if (!mapInnerClasses.containsKey(ent.getKey())) {
-          Set<String> setVisited = new HashSet<String>();
-          LinkedList<String> stack = new LinkedList<String>();
+          Set<String> setVisited = new HashSet<>();
+          LinkedList<String> stack = new LinkedList<>();
 
           stack.add(ent.getKey());
           setVisited.add(ent.getKey());
@@ -347,10 +347,10 @@ public class ClassesProcessor {
     private ClassWrapper wrapper;
     public String enclosingMethod;
     public InvocationExprent superInvocation;
-    public final Map<String, VarVersionPair> mapFieldsToVars = new HashMap<String, VarVersionPair>();
+    public final Map<String, VarVersionPair> mapFieldsToVars = new HashMap<>();
     public VarType anonymousClassType;
-    public final List<ClassNode> nested = new ArrayList<ClassNode>();
-    public final Set<String> enclosingClasses = new HashSet<String>();
+    public final List<ClassNode> nested = new ArrayList<>();
+    public final Set<String> enclosingClasses = new HashSet<>();
     public ClassNode parent;
     public LambdaInformation lambdaInformation;
     public boolean namelessConstructorStub = false;

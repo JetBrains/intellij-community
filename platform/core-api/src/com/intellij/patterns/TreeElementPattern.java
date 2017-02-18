@@ -61,6 +61,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
     return withParent(StandardPatterns.instanceOf(type));
   }
 
+  @NotNull
   public Self withParent(@NotNull final ElementPattern<? extends ParentType> pattern) {
     return withSuperParent(1, pattern);
   }

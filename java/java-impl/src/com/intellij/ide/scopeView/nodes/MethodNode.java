@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiFormatUtil;
  * User: anna
  * Date: 30-Jan-2006
  */
-public class MethodNode extends BasePsiNode<PsiMethod> {
+public class MethodNode extends MemberNode<PsiMethod> {
 
   public MethodNode(final PsiMethod element) {
     super(element);
@@ -50,11 +50,5 @@ public class MethodNode extends BasePsiNode<PsiMethod> {
 
   public int getWeight() {
     return 5;
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    final PsiMethod psiMethod = (PsiMethod)getPsiElement();
-    return psiMethod != null && psiMethod.isDeprecated();
   }
 }

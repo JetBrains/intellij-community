@@ -27,6 +27,10 @@ public class YAMLFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
     defaultTest();
   }
 
+  public void testRuby18677() {
+    defaultTest();
+  }
+
   public void defaultTest() {
     myFixture.testFolding(getTestDataPath() + getTestName(true) + ".yaml");
   }

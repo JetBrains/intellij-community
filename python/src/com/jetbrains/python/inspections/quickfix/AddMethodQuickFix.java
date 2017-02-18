@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       PyFunctionBuilder builder = new PyFunctionBuilder(myIdentifier, cls);
       PsiElement pe = problemElement.getParent();
       String decoratorName = null; // set to non-null to add a decorator
-      PyExpression[] args = new PyExpression[0];
+      PyExpression[] args = PyExpression.EMPTY_ARRAY;
       if (pe instanceof PyCallExpression) {
         PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
         if (arglist == null) return;

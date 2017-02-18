@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleSourceOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.CellAppearanceEx;
@@ -75,7 +75,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
    * The cached analyzed classpaths for this module
    */
   private final HashMap<Pair<ClasspathType, Boolean>, ModuleDependenciesAnalyzer> myClasspaths =
-    new HashMap<Pair<ClasspathType, Boolean>, ModuleDependenciesAnalyzer>();
+    new HashMap<>();
 
   /**
    * The message bus connection to use
@@ -94,7 +94,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     init();
     getSplitter().setProportion(0.3f);
     myMessageBusConnection = myModule.getProject().getMessageBus().connect();
-    myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myMessageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         myClasspaths.clear();
@@ -148,7 +148,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   @Override
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
     if (!fromPopup) {
-      ArrayList<AnAction> rc = new ArrayList<AnAction>();
+      ArrayList<AnAction> rc = new ArrayList<>();
       rc.add(new ClasspathTypeAction());
       rc.add(new SdkFilterAction());
       rc.add(new UrlModeAction());

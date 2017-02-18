@@ -15,11 +15,25 @@
  */
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
+import org.jetbrains.annotations.NotNull;
 
 public class MoveElementRightAction extends EditorAction {
   public MoveElementRightAction() {
     super(new MoveElementLeftRightActionHandler(false));
     setInjectedContext(true);
   }
+
+  @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+    }
+    super.beforeActionPerformedUpdate(e);
+  }
+
 }

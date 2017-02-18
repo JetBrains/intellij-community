@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 
 public class FlipConditionalIntention extends Intention {
 
@@ -37,7 +37,7 @@ public class FlipConditionalIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
+  public void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor)
       throws IncorrectOperationException {
     final GrConditionalExpression exp =
         (GrConditionalExpression) element;

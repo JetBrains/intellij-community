@@ -74,7 +74,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     }
     addStep(sequence, new RootsDetectionStep(projectBuilder, context, sequence, icon, "reference.dialogs.new.project.fromCode.source"), specific);
 
-    Set<String> detectorTypes = new HashSet<String>();
+    Set<String> detectorTypes = new HashSet<>();
     for (ProjectStructureDetector detector : ProjectStructureDetector.EP_NAME.getExtensions()) {
       detectorTypes.add(detector.getDetectorId());
       for (ModuleWizardStep step : detector.createWizardSteps(projectBuilder, projectBuilder.getProjectDescriptor(detector), icon)) {
@@ -85,7 +85,7 @@ public abstract class CreateFromSourcesMode extends WizardMode {
     if (FrameworkDetectionStep.isEnabled()) {
       FrameworkDetectionStep frameworkDetectionStep = new FrameworkDetectionStep(icon, projectBuilder) {
         public List<ModuleDescriptor> getModuleDescriptors() {
-          final List<ModuleDescriptor> moduleDescriptors = new ArrayList<ModuleDescriptor>();
+          final List<ModuleDescriptor> moduleDescriptors = new ArrayList<>();
           for (ProjectDescriptor descriptor : projectBuilder.getSelectedDescriptors()) {
             moduleDescriptors.addAll(descriptor.getModules());
           }

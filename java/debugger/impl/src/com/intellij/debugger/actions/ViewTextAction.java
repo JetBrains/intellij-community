@@ -50,6 +50,7 @@ public class ViewTextAction extends XFetchValueActionBase {
   @NotNull
   @Override
   protected ValueCollector createCollector(@NotNull AnActionEvent e) {
+    XValueNodeImpl node = getStringNode(e);
     return new ValueCollector(XDebuggerTree.getTree(e.getDataContext())) {
       MyDialog dialog = null;
 
@@ -57,7 +58,6 @@ public class ViewTextAction extends XFetchValueActionBase {
       public void handleInCollector(Project project, String value, XDebuggerTree tree) {
         String text = StringUtil.unquoteString(value);
         if (dialog == null) {
-          XValueNodeImpl node = getStringNode(e);
           dialog = new MyDialog(project, text, node);
           dialog.setTitle(ActionsBundle.message(node != null ? "action.Debugger.ViewEditText.text" : "action.Debugger.ViewText.text"));
           dialog.show();

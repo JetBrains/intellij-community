@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -25,6 +24,8 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
+
+import java.awt.event.KeyEvent;
 
 /**
  * @author nik
@@ -40,7 +41,7 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
       return session.isPaused();
     }
     // Android Studio: we don't want the resume action to ever start and show the debug config popup
-    // return !ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace());
+    //return e.getInputEvent() instanceof KeyEvent;
     return false;
   }
 

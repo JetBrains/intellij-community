@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.intellij.psi.PsiClass
  */
 class GroovyGoToTypeDeclarationTest extends LightCodeInsightFixtureTestCase {
 
-  public void testGoToTypeDeclarationMethod() {
+  void testGoToTypeDeclarationMethod() {
     myFixture.configureByText("g.groovy", """
 class A {
 
@@ -47,7 +47,7 @@ class B {
     assertEquals("B", ((PsiClass)res).getName())
   }
 
-  public void testGoToTypeDeclarationVariable() {
+  void testGoToTypeDeclarationVariable() {
     myFixture.configureByText("g.groovy", """
 class A {
 

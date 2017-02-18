@@ -5,5 +5,5 @@ class Test {
   }
 }
 
-<caret>public class Generic<T> {
+public class <caret>Generic<T> {
 }

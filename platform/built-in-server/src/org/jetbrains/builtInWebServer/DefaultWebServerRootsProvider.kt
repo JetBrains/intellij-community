@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.rootManager
 import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.computeOrNull
 
@@ -45,8 +46,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
         if (module != null && !module.isDisposed) {
           effectivePath = effectivePath.substring(index + 1)
           val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
-          val moduleRootManager = ModuleRootManager.getInstance(module)
-          val result = RootProvider.values().computeOrNull { findByRelativePath(effectivePath, it.getRoots(moduleRootManager), resolver, moduleName) }
+          val result = RootProvider.values().computeOrNull { findByRelativePath(effectivePath, it.getRoots(module.rootManager), resolver, moduleName) }
             ?: findInModuleLibraries(effectivePath, module, resolver)
           if (result != null) {
             return result
@@ -56,19 +56,39 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
     }
 
     val resolver = WebServerPathToFileManager.getInstance(project).getResolver(effectivePath)
-    return RootProvider.values().computeOrNull { rootProvider ->
-      runReadAction { ModuleManager.getInstance(project).modules }
-        .computeOrNull { module ->
-          if (!module.isDisposed) {
-            findByRelativePath(path, rootProvider.getRoots(ModuleRootManager.getInstance(module)), resolver, null)?.let {
+    val modules = runReadAction { ModuleManager.getInstance(project).modules }
+    for (rootProvider in RootProvider.values()) {
+      for (module in modules) {
+        if (module.isDisposed) {
+          continue
+        }
+
+        findByRelativePath(path, rootProvider.getRoots(module.rootManager), resolver, null)?.let {
+          it.moduleName = getModuleNameQualifier(project, module)
+          return it
+        }
+      }
+    }
+
+    // https://youtrack.jetbrains.com/issue/WEB-24283
+    for (rootProvider in RootProvider.values()) {
+      for (module in modules) {
+        if (module.isDisposed) {
+          continue
+        }
+
+        for (root in rootProvider.getRoots(module.rootManager)) {
+          if (resolver.resolve("/config.json", root) != null) {
+            resolver.resolve("/index.html", root)?.let {
               it.moduleName = getModuleNameQualifier(project, module)
               return it
             }
           }
-          null
         }
+      }
     }
-      ?: findInLibraries(project, effectivePath, resolver)
+
+    return findInLibraries(project, effectivePath, resolver)
   }
 
   override fun getPathInfo(file: VirtualFile, project: Project): PathInfo? {
@@ -120,13 +140,13 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
 
 private enum class RootProvider {
   SOURCE {
-    override fun getRoots(rootManager: ModuleRootManager) = rootManager.sourceRoots
+    override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> = rootManager.sourceRoots
   },
   CONTENT {
-    override fun getRoots(rootManager: ModuleRootManager) = rootManager.contentRoots
+    override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> = rootManager.contentRoots
   },
   EXCLUDED {
-    override fun getRoots(rootManager: ModuleRootManager) = rootManager.excludeRoots
+    override fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile> = rootManager.excludeRoots
   };
 
   abstract fun getRoots(rootManager: ModuleRootManager): Array<VirtualFile>
@@ -214,7 +234,7 @@ private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootTy
 }
 
 private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
-  return ModuleRootManager.getInstance(module).orderEntries.computeOrNull {
+  return module.rootManager.orderEntries.computeOrNull {
     if (it is LibraryOrderEntry && it.isModuleLevel) it.getFiles(rootType).computeOrNull { fileProcessor(it, module) } else null
   }
 }

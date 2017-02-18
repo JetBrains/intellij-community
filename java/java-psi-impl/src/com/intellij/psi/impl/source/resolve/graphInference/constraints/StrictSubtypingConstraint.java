@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,20 +136,37 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           if (upperBound instanceof PsiClassType) {
             sType = (PsiClassType)upperBound;
           }
+          else if (upperBound instanceof PsiIntersectionType) {
+            for (PsiType type : ((PsiIntersectionType)upperBound).getConjuncts()) {
+              PsiClass sCandidate = PsiUtil.resolveClassInClassTypeOnly(type);
+              if (sCandidate != null && InheritanceUtil.isInheritorOrSelf(sCandidate, CClass, true)) {
+                sType = (PsiClassType)type;
+                break;
+              }
+            }
+          }
         }
 
         if (sType == null) return false;
         final PsiClassType.ClassResolveResult SResult = sType.resolveGenerics();
         PsiClass SClass = SResult.getElement();
+
+        if (SClass == null) return false;
+
+        PsiSubstitutor substitutor = SResult.getSubstitutor();
+        for (PsiTypeParameter typeParameter : SClass.getTypeParameters()) {
+          substitutor = substitutor.put(typeParameter, substitutor.substituteWithBoundsPromotion(typeParameter));
+        }
+
         if (((PsiClassType)myT).isRaw()) {
-          return SClass != null && InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
+          return InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
         }
         final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
-        final PsiSubstitutor sSubstitutor = SClass != null ? TypeConversionUtil.getClassSubstitutor(CClass, SClass, SResult.getSubstitutor()) : null;
+        final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(CClass, SClass, substitutor);
         if (sSubstitutor != null) {
           for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
             final PsiType tSubstituted = tSubstitutor.substitute(parameter);
-            final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(parameter);
+            final PsiType sSubstituted = sSubstitutor.substitute(parameter);
             if (tSubstituted == null ^ sSubstituted == null) {
               return false;
             }

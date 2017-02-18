@@ -30,7 +30,7 @@ public class BlockRangesMap {
   }
 
   private static TIntObjectHashMap<LeafBlockWrapper> buildTextRangeToInfoMap(final LeafBlockWrapper first) {
-    final TIntObjectHashMap<LeafBlockWrapper> result = new TIntObjectHashMap<LeafBlockWrapper>();
+    final TIntObjectHashMap<LeafBlockWrapper> result = new TIntObjectHashMap<>();
     LeafBlockWrapper current = first;
     while (current != null) {
       result.put(current.getStartOffset(), current);

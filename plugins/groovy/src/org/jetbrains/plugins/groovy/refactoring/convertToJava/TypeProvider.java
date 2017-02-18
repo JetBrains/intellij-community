@@ -43,7 +43,7 @@ import java.util.Map;
  * @author Medvedev Max
  */
 public class TypeProvider {
-  private final Map<GrMethod, PsiType[]> inferredTypes = new HashMap<GrMethod, PsiType[]>();
+  private final Map<GrMethod, PsiType[]> inferredTypes = new HashMap<>();
 
   public TypeProvider() {
   }

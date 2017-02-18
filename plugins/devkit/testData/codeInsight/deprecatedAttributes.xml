@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin <error descr="Attribute 'version' not used anymore">version="666"</error>>
   <id>com.intellij.myPlugin</id>
 
   <vendor <error descr="Attribute 'logo' not used anymore">logo="deprecated"</error>/>

@@ -60,7 +60,7 @@ public class CompositeDiffPanel implements DiffViewer {
     myUi.getComponent().setBorder(null);
     myUi.getOptions().setMinimizeActionEnabled(false);
     //myUi.getOptions().setTopToolbar()
-    myMap = new HashMap<String, Pair<DiffViewer, Content>>();
+    myMap = new HashMap<>();
   }
 
   @Override
@@ -72,7 +72,7 @@ public class CompositeDiffPanel implements DiffViewer {
   public void setDiffRequest(DiffRequest request) {
     final Map<String, DiffRequest> requestMap = myRequest.discloseRequest(request);
 
-    HashMap<String, Pair<DiffViewer, Content>> mapCopy = new HashMap<String, Pair<DiffViewer, Content>>(myMap);
+    HashMap<String, Pair<DiffViewer, Content>> mapCopy = new HashMap<>(myMap);
     myMap.clear();
 
     for (Map.Entry<String, DiffRequest> entry : requestMap.entrySet()) {

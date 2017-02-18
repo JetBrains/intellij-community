@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@ class SameNamesJoiner implements TreeStructureProvider {
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
     if (parent instanceof JoinedNode) return children;
 
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
-    MultiValuesMap<Object, AbstractTreeNode> executed = new MultiValuesMap<Object, AbstractTreeNode>();
+    MultiValuesMap<Object, AbstractTreeNode> executed = new MultiValuesMap<>();
     for (Iterator<AbstractTreeNode> iterator = children.iterator(); iterator.hasNext();) {
       ProjectViewNode treeNode = (ProjectViewNode)iterator.next();
       Object o = treeNode.getValue();
@@ -65,11 +65,6 @@ class SameNamesJoiner implements TreeStructureProvider {
     }
 
     return result;
-  }
-
-  @Override
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    return null;
   }
 
   public PsiElement getTopLevelElement(final PsiElement element) {

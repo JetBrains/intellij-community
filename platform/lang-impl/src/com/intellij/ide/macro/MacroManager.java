@@ -40,7 +40,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 public final class MacroManager {
-  private final HashMap<String, Macro> myMacrosMap = new HashMap<String, Macro>();
+  private final HashMap<String, Macro> myMacrosMap = new HashMap<>();
 
   public static MacroManager getInstance() {
     return ServiceManager.getService(MacroManager.class);
@@ -70,10 +70,13 @@ public final class MacroManager {
     registerMacro(new ProjectFileDirMacro());
     registerMacro(new ProjectNameMacro());
     registerMacro(new ProjectPathMacro());
+    registerMacro(new ContentRootMacro());
 
     registerMacro(new ModuleFilePathMacro());
     registerMacro(new ModuleFileDirMacro());
     registerMacro(new ModuleNameMacro());
+    registerMacro(new AffectedModuleNamesMacro());
+    registerMacro(new CompilerContextMakeMacro());
     registerMacro(new ModulePathMacro());
     registerMacro(new ModuleSdkPathMacro());
 
@@ -137,7 +140,7 @@ public final class MacroManager {
   }
 
   /**
-   * Expands all macros that are found in the <code>str</code>.
+   * Expands all macros that are found in the {@code str}.
    */
   @Nullable
   public String expandMacrosInString(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
@@ -174,7 +177,7 @@ public final class MacroManager {
           int j = str.indexOf(macroNameWithParamEnd, i + macroNameWithParamStart.length());
           if(j > i) {
             String param = str.substring(i + macroNameWithParamStart.length(), j);
-            if(toReplace == null) toReplace = new THashMap<String, String>();
+            if(toReplace == null) toReplace = new THashMap<>();
             String expanded = macro.expand(dataContext, param);
             if (expanded == null) {
               expanded = "";

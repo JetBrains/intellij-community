@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerExImpl.addTestResource(url, location, myTestRootDisposable);
+    ExternalResourceManagerExImpl.addTestResource(url, location, getTestRootDisposable());
   }
 
   @Override
@@ -345,7 +345,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInsertExtraRequiredAttributeSingleQuote() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
@@ -357,7 +357,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInsertExtraRequiredAttributeNoneQuote() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
@@ -787,6 +787,14 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.type('?');
     myFixture.type('\n');
     myFixture.checkResult("<?xml version=\"1.0\" encoding=\"<caret>\" ?>");
+  }
+
+  public void testAttributeValueToken() throws Exception {
+    myFixture.configureByText("foo.xml", "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
+                                         "    <element name=\"a\" abstract=<caret>\"\"/>\n" +
+                                         "</schema>");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(0, elements.length);
   }
 }
 

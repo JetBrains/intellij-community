@@ -105,7 +105,7 @@ public class GradleStartupActivity implements StartupActivity {
               final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
               GradleProjectImportBuilder gradleProjectImportBuilder = new GradleProjectImportBuilder(projectDataManager);
               final GradleProjectImportProvider gradleProjectImportProvider = new GradleProjectImportProvider(gradleProjectImportBuilder);
-              AddModuleWizard wizard = new AddModuleWizard(null, gradleFile.getPath(), gradleProjectImportProvider);
+              AddModuleWizard wizard = new AddModuleWizard(project, gradleFile.getPath(), gradleProjectImportProvider);
               if ((wizard.getStepCount() <= 0 || wizard.showAndGet())) {
                 ImportModuleAction.createFromWizard(project, wizard);
               }

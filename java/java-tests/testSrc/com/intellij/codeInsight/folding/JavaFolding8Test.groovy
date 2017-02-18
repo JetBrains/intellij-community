@@ -22,21 +22,24 @@ import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
-public class JavaFolding8Test extends LightCodeInsightFixtureTestCase {
+class JavaFolding8Test extends LightCodeInsightFixtureTestCase {
 
-  def JavaCodeFoldingSettingsImpl myFoldingSettings
-  def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
+  JavaCodeFoldingSettingsImpl myFoldingSettings
+  JavaCodeFoldingSettingsImpl myFoldingStateToRestore
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8
   }
 
   @Override
-  public void setUp() {
+  void setUp() {
     super.setUp()
     myFoldingSettings = JavaCodeFoldingSettings.instance as JavaCodeFoldingSettingsImpl
     myFoldingStateToRestore = new JavaCodeFoldingSettingsImpl()
@@ -49,7 +52,7 @@ public class JavaFolding8Test extends LightCodeInsightFixtureTestCase {
     super.tearDown()
   }
 
-  public void "test no plain lambda folding where anonymous class can be real lambda but fold otherwise"() {
+  void "test no plain lambda folding where anonymous class can be real lambda but fold otherwise"() {
     myFixture.addClass('interface Runnable2 { void run(); }')
     myFixture.addClass('abstract class MyAction { public void run(); public void update() {} }')
     def text = """\
@@ -75,9 +78,28 @@ class Test {
     assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2("))
   }
 
+  void "test closure folding when implementing a single abstract method in a class"() {
+    myFixture.addClass('abstract class MyAction { public abstract void run(); }')
+    def text = """\
+class Test {
+  void test() {
+    MyAction action = new MyAction() {
+      public void run() {
+        System.out.println();
+      }
+    }
+  }
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction("))?.placeholderText == '() ' + JavaFoldingBuilder.rightArrow + ' { '
+  }
+
   private def configure(String text) {
     myFixture.configureByText("a.java", text)
-    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
+    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor)
     def foldingModel = myFixture.editor.foldingModel as FoldingModelEx
     foldingModel.rebuild()
     myFixture.doHighlighting()

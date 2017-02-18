@@ -28,7 +28,7 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
   @NotNull
   @Override
   public List<TextRange> getContentRanges() {
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
 
     final List<String> lines = StringUtil.split(getText(), "\n", true, false);
     // First line has opening quote

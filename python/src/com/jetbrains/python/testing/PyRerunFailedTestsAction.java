@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -78,7 +79,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       // If configuration wants to take care about rerun itself
       if (configuration instanceof TestRunConfigurationReRunResponsible) {
         // TODO: Extract method
-        final Set<PsiElement> failedTestElements = new HashSet<PsiElement>();
+        final Set<PsiElement> failedTestElements = new HashSet<>();
         for (final AbstractTestProxy proxy : getFailedTests(getProject())) {
           final Location<?> location = proxy.getLocation(getProject(), GlobalSearchScope.allScope(getProject()));
           if (location != null) {
@@ -93,7 +94,6 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   }
 
   private class FailedPythonTestCommandLineStateBase extends PythonTestCommandLineStateBase {
-
     private final PythonTestCommandLineStateBase myState;
     private final Project myProject;
 
@@ -110,6 +110,12 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
       return myState.getRunner();
     }
 
+    @Nullable
+    @Override
+    protected SMTestLocator getTestLocator() {
+      return myState.getTestLocator();
+    }
+
     @Override
     public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
       // Insane rerun tests with out of spec.
@@ -122,7 +128,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     @NotNull
     @Override
     protected List<String> getTestSpecs() {
-      List<String> specs = new ArrayList<String>();
+      List<String> specs = new ArrayList<>();
       List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (AbstractTestProxy failedTest : failedTests) {
         if (failedTest.isLeaf()) {
@@ -155,8 +161,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
     @Override
     public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
-      myState.customizeEnvironmentVars(envs,
-                                       passParentEnvs);
+      myState.customizeEnvironmentVars(envs, passParentEnvs);
     }
   }
 }

@@ -30,7 +30,8 @@ public abstract class AbstractAction {
   private static final String SERVER_URL = Registry.get("frameworks.download.libraries.server.url").asString();
   private final Pair<String, String>[] myParams;
 
-  protected AbstractAction(Pair<String, String>... params) {
+  @SafeVarargs
+  protected AbstractAction(@NotNull Pair<String, String>... params) {
     myParams = params;
   }
 

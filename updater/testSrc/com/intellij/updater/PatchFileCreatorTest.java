@@ -75,7 +75,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     File target = new File(myOlderDir, "bin");
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, target, TEST_UI);
     preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction(patch));
-    assertNothingHasChanged(patch, preparationResult, new HashMap<String, ValidationResult.Option>());
+    assertNothingHasChanged(patch, preparationResult, new HashMap<>());
   }
 
   @Test
@@ -84,7 +84,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction(patch));
-    assertNothingHasChanged(patch, preparationResult, new HashMap<String, ValidationResult.Option>());
+    assertNothingHasChanged(patch, preparationResult, new HashMap<>());
   }
 
   @Test
@@ -106,7 +106,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
       Map<String, Long> original = patch.digestFiles(myOlderDir, Collections.<String>emptyList(), TEST_UI);
 
       File backup = getTempFile("backup");
-      PatchFileCreator.apply(preparationResult, new HashMap<String, ValidationResult.Option>(), backup, TEST_UI);
+      PatchFileCreator.apply(preparationResult, new HashMap<>(), backup, TEST_UI);
 
       assertEquals(original, patch.digestFiles(myOlderDir, Collections.<String>emptyList(), TEST_UI));
     }
@@ -162,7 +162,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
     preparationResult.patch.getActions().add(new MyFailOnApplyPatchAction(patch));
-    assertNothingHasChanged(patch, preparationResult, new HashMap<String, ValidationResult.Option>());
+    assertNothingHasChanged(patch, preparationResult, new HashMap<>());
   }
 
   @Test
@@ -170,7 +170,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     PatchFileCreator.create(myPatchSpec, myFile, TEST_UI);
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
 
-    assertTrue(PatchFileCreator.apply(preparationResult, new HashMap<String, ValidationResult.Option>(), TEST_UI));
+    assertTrue(PatchFileCreator.apply(preparationResult, new HashMap<>(), TEST_UI));
   }
 
   @Test
@@ -256,7 +256,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     Patch patch = createPatch();
 
     PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI);
-    Map<String, ValidationResult.Option> options = new HashMap<String, ValidationResult.Option>();
+    Map<String, ValidationResult.Option> options = new HashMap<>();
     for (PatchAction each : preparationResult.patch.getActions()) {
       options.put(each.getPath(), ValidationResult.Option.IGNORE);
     }
@@ -459,7 +459,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     PatchFileCreator.apply(preparationResult, options, TEST_UI);
     Map<String, Long> after = patch.digestFiles(myOlderDir, Collections.<String>emptyList(), TEST_UI);
 
-    DiffCalculator.Result diff = DiffCalculator.calculate(before, after, new LinkedList<String>(), false);
+    DiffCalculator.Result diff = DiffCalculator.calculate(before, after, new LinkedList<>(), false);
     assertTrue(diff.filesToCreate.isEmpty());
     assertTrue(diff.filesToDelete.isEmpty());
     assertTrue(diff.filesToUpdate.isEmpty());
@@ -472,7 +472,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     Map<String, Long> target = patch.digestFiles(myNewerDir, Collections.<String>emptyList(), TEST_UI);
     File backup = getTempFile("backup");
 
-    HashMap<String, ValidationResult.Option> options = new HashMap<String, ValidationResult.Option>();
+    HashMap<String, ValidationResult.Option> options = new HashMap<>();
     for (ValidationResult each : preparationResult.validationResults) {
       if (patch.isStrict()) {
         assertFalse(each.options.contains(ValidationResult.Option.NONE));

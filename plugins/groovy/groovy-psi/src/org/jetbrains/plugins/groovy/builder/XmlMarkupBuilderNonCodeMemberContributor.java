@@ -25,8 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import static com.intellij.psi.CommonClassNames.*;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrDelegatesToUtil.DELEGATES_TO_KEY;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
+import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.DELEGATES_TO_KEY;
 
 public class XmlMarkupBuilderNonCodeMemberContributor extends BuilderMethodsContributor {
 

@@ -92,7 +92,7 @@ public class FacetLibraryConfigurator {
     for (String root : lib.getUrls(OrderRootType.CLASSES)) {
       modifiableModel.removeRoot(root, OrderRootType.CLASSES);
     }
-    Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    Set<VirtualFile> roots = new HashSet<>();
     ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
     Collections.addAll(roots, rootManager.getContentRoots());
     Collections.addAll(roots, rootManager.getContentSourceRoots());

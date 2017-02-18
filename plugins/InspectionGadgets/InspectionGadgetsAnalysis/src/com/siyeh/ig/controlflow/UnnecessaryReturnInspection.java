@@ -16,6 +16,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -85,48 +87,59 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
-      if (statement.getReturnValue() != null) {
-        return;
+      final Ref<Boolean> constructorRef = Ref.create();
+      if (isReturnRedundant(statement, ignoreInThenBranch, constructorRef)) {
+        registerStatementError(statement, constructorRef.get());
       }
-      final PsiElement methodParent = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
-      PsiCodeBlock codeBlock = null;
-      final boolean constructor;
-      if (methodParent instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)methodParent;
-        codeBlock = method.getBody();
-        constructor = method.isConstructor();
-      }
-      else if (methodParent instanceof PsiLambdaExpression) {
-        constructor = false;
-        final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)methodParent;
-        final PsiElement lambdaBody = lambdaExpression.getBody();
-        if (lambdaBody instanceof PsiCodeBlock) {
-          codeBlock = (PsiCodeBlock)lambdaBody;
-        }
-      }
-      else {
-        return;
-      }
-      if (codeBlock == null) {
-        return;
-      }
-      if (!ControlFlowUtils.blockCompletesWithStatement(codeBlock, statement)) {
-        return;
-      }
-      if (ignoreInThenBranch && isInThenBranch(statement)) {
-        return;
-      }
-      registerStatementError(statement, Boolean.valueOf(constructor));
     }
 
-    private boolean isInThenBranch(PsiStatement statement) {
-      final PsiIfStatement ifStatement =
-        PsiTreeUtil.getParentOfType(statement, PsiIfStatement.class, true, PsiMethod.class, PsiLambdaExpression.class);
-      if (ifStatement == null) {
-        return false;
-      }
-      final PsiStatement elseBranch = ifStatement.getElseBranch();
-      return elseBranch != null && !PsiTreeUtil.isAncestor(elseBranch, statement, true);
+  }
+
+  public static boolean isReturnRedundant(@NotNull PsiReturnStatement statement,
+                                          boolean ignoreInThenBranch,
+                                          @Nullable Ref<Boolean> isInConstructorRef) {
+    if (statement.getReturnValue() != null) {
+      return false;
     }
+    final PsiElement methodParent = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
+    PsiCodeBlock codeBlock = null;
+    if (methodParent instanceof PsiMethod) {
+      final PsiMethod method = (PsiMethod)methodParent;
+      codeBlock = method.getBody();
+      if (isInConstructorRef != null) {
+        isInConstructorRef.set(method.isConstructor());
+      }
+    }
+    else if (methodParent instanceof PsiLambdaExpression) {
+      isInConstructorRef.set(false);
+      final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)methodParent;
+      final PsiElement lambdaBody = lambdaExpression.getBody();
+      if (lambdaBody instanceof PsiCodeBlock) {
+        codeBlock = (PsiCodeBlock)lambdaBody;
+      }
+    }
+    else {
+      return false;
+    }
+    if (codeBlock == null) {
+      return false;
+    }
+    if (!ControlFlowUtils.blockCompletesWithStatement(codeBlock, statement)) {
+      return false;
+    }
+    if (ignoreInThenBranch && isInThenBranch(statement)) {
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean isInThenBranch(PsiStatement statement) {
+    final PsiIfStatement ifStatement =
+      PsiTreeUtil.getParentOfType(statement, PsiIfStatement.class, true, PsiMethod.class, PsiLambdaExpression.class);
+    if (ifStatement == null) {
+      return false;
+    }
+    final PsiStatement elseBranch = ifStatement.getElseBranch();
+    return elseBranch != null && !PsiTreeUtil.isAncestor(elseBranch, statement, true);
   }
 }

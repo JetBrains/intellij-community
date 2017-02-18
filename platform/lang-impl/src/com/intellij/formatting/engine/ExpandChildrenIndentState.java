@@ -33,7 +33,7 @@ public class ExpandChildrenIndentState extends State {
   private LeafBlockWrapper myCurrentBlock;
 
   private Iterator<ExpandableIndent> myIterator;
-  private MultiMap<Alignment, LeafBlockWrapper> myBlocksToRealign = new MultiMap<Alignment, LeafBlockWrapper>();
+  private MultiMap<Alignment, LeafBlockWrapper> myBlocksToRealign = new MultiMap<>();
 
   public ExpandChildrenIndentState(Document document, WrapBlocksState state) {
     myDocument = document;

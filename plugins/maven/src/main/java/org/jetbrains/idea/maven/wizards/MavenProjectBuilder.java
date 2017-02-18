@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -34,8 +36,6 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
@@ -53,8 +53,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     private VirtualFile myImportRoot;
     private List<VirtualFile> myFiles;
-    private List<String> myProfiles = new ArrayList<String>();
-    private List<String> myActivatedProfiles = new ArrayList<String>();
+    private List<String> myProfiles = new ArrayList<>();
+    private List<String> myActivatedProfiles = new ArrayList<>();
     private MavenExplicitProfiles mySelectedProfiles = MavenExplicitProfiles.NONE;
 
     private MavenProjectsTree myMavenProjectTree;
@@ -134,7 +134,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
                                   : new IdeModifiableModelsProviderImpl(project));
   }
 
-  private void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
+  private static void appendProfilesFromString(Collection<String> selectedProfiles, String profilesList) {
     if (profilesList == null) return;
 
     for (String profile : StringUtil.split(profilesList, ",")) {
@@ -151,7 +151,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().myActivatedProfiles.clear();
     getParameters().myMavenProjectTree = null;
 
-    getParameters().myProjectToUpdate = projectToUpdate; // We cannot determinate project in non-EDT thread.
+    // We cannot determinate project in non-EDT thread.
+    getParameters().myProjectToUpdate = projectToUpdate != null ? projectToUpdate : ProjectManager.getInstance().getDefaultProject();
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
@@ -166,7 +167,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
         getParameters().myFiles = FileFinder.findPomFiles(file.getChildren(),
                                                           getImportingSettings().isLookForNested(),
                                                           indicator,
-                                                          new ArrayList<VirtualFile>());
+                                                          new ArrayList<>());
 
         collectProfiles(indicator);
         if (getParameters().myProfiles.isEmpty()) {
@@ -182,9 +183,9 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   private void collectProfiles(MavenProgressIndicator process) {
     process.setText(ProjectBundle.message("maven.searching.profiles"));
 
-    Set<String> availableProfiles = new LinkedHashSet<String>();
-    Set<String> activatedProfiles = new LinkedHashSet<String>();
-    MavenProjectReader reader = new MavenProjectReader();
+    Set<String> availableProfiles = new LinkedHashSet<>();
+    Set<String> activatedProfiles = new LinkedHashSet<>();
+    MavenProjectReader reader = new MavenProjectReader(getProjectToUpdate());
     MavenGeneralSettings generalSettings = getGeneralSettings();
     MavenProjectReaderProjectLocator locator = new MavenProjectReaderProjectLocator() {
       public VirtualFile findProjectFile(MavenId coordinates) {
@@ -198,8 +199,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
       availableProfiles.addAll(project.getProfilesIds());
       activatedProfiles.addAll(project.getActivatedProfilesIds().getEnabledProfiles());
     }
-    getParameters().myProfiles = new ArrayList<String>(availableProfiles);
-    getParameters().myActivatedProfiles = new ArrayList<String>(activatedProfiles);
+    getParameters().myProfiles = new ArrayList<>(availableProfiles);
+    getParameters().myActivatedProfiles = new ArrayList<>(activatedProfiles);
   }
 
   public List<String> getProfiles() {
@@ -218,6 +219,8 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().myMavenProjectTree = null;
     getParameters().mySelectedProfiles = profiles;
 
+    // We cannot determinate project in non-EDT thread.
+    getParameters().myProjectToUpdate = getProjectOrDefault();
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
         readMavenProjectTree(indicator);
@@ -237,7 +240,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   }
 
   private void readMavenProjectTree(MavenProgressIndicator process) throws MavenProcessCanceledException {
-    MavenProjectsTree tree = new MavenProjectsTree();
+    MavenProjectsTree tree = new MavenProjectsTree(getProjectOrDefault());
     tree.addManagedFilesWithProfiles(getParameters().myFiles, getParameters().mySelectedProfiles);
     tree.updateAll(false, getGeneralSettings(), process);
 
@@ -310,6 +313,13 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
       getParameters().myProjectToUpdate = getCurrentProject();
     }
     return getParameters().myProjectToUpdate;
+  }
+
+  @NotNull
+  public Project getProjectOrDefault() {
+    Project project = getProjectToUpdate();
+    if (project == null || project.isDisposed()) project = ProjectManager.getInstance().getDefaultProject();
+    return project;
   }
 
   @Nullable

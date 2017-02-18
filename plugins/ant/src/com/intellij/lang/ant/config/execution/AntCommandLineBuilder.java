@@ -45,15 +45,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AntCommandLineBuilder {
-  private final List<String> myTargets = new ArrayList<String>();
+  private final List<String> myTargets = new ArrayList<>();
   private final JavaParameters myCommandLine = new JavaParameters();
   private String myBuildFilePath;
   private List<BuildFileProperty> myProperties;
   private boolean myDone = false;
-  @NonNls private final List<String> myExpandedProperties = new ArrayList<String>();
+  @NonNls private final List<String> myExpandedProperties = new ArrayList<>();
   @NonNls private static final String INPUT_HANDLER_PARAMETER = "-inputhandler";
   @NonNls private static final String LOGFILE_PARAMETER = "-logfile";
   @NonNls private static final String LOGFILE_SHORT_PARAMETER = "-l";
+  @NonNls private static final String LOGGER_PARAMETER = "-logger";
 
   public void calculateProperties(final DataContext dataContext, Project project, List<BuildFileProperty> additionalProperties) throws Macro.ExecutionCancelledException {
     for (BuildFileProperty property : myProperties) {
@@ -154,8 +155,8 @@ public class AntCommandLineBuilder {
       }
     }
 
-    if (!(programParameters.getList().contains(LOGFILE_SHORT_PARAMETER) || programParameters.getList().contains(LOGFILE_PARAMETER)) ) {
-      programParameters.add("-logger", IdeaAntLogger2.class.getName());
+    if (!(programParameters.getList().contains(LOGGER_PARAMETER))) {
+      programParameters.add(LOGGER_PARAMETER, IdeaAntLogger2.class.getName());
     }
     if (!programParameters.getList().contains(INPUT_HANDLER_PARAMETER)) {
       programParameters.add(INPUT_HANDLER_PARAMETER, IdeaInputHandler.class.getName());

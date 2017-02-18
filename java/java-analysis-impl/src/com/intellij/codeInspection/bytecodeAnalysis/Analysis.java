@@ -230,7 +230,7 @@ abstract class Analysis<Res> {
   }
 
   final State createStartState() {
-    return new State(0, new Conf(0, createStartFrame()), new ArrayList<Conf>(), false, false);
+    return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false);
   }
 
   static boolean stateEquiv(State curr, State prev) {
@@ -260,7 +260,7 @@ abstract class Analysis<Res> {
   protected abstract Equation analyze() throws AnalyzerException;
 
   final Frame<BasicValue> createStartFrame() {
-    Frame<BasicValue> frame = new Frame<BasicValue>(methodNode.maxLocals, methodNode.maxStack);
+    Frame<BasicValue> frame = new Frame<>(methodNode.maxLocals, methodNode.maxStack);
     Type returnType = Type.getReturnType(methodNode.desc);
     BasicValue returnValue = Type.VOID_TYPE.equals(returnType) ? null : new BasicValue(returnType);
     frame.setReturn(returnValue);
@@ -295,7 +295,7 @@ abstract class Analysis<Res> {
   }
 
   static <A> List<A> append(List<A> xs, A x) {
-    ArrayList<A> result = new ArrayList<A>();
+    ArrayList<A> result = new ArrayList<>();
     if (xs != null) {
       result.addAll(xs);
     }
@@ -306,7 +306,7 @@ abstract class Analysis<Res> {
   protected void addComputed(int i, State s) {
     List<State> states = computed[i];
     if (states == null) {
-      states = new ArrayList<State>();
+      states = new ArrayList<>();
       computed[i] = states;
     }
     states.add(s);

@@ -63,7 +63,7 @@ public class PyStdlibCanonicalPathProvider implements PyCanonicalPathProvider {
         return QualifiedName.fromComponents(components);
       }
       else if (head.equals("ntpath") || head.equals("posixpath") || head.equals("path")) {
-        final List<String> result = new ArrayList<String>();
+        final List<String> result = new ArrayList<>();
         result.add("os");
         components.set(0, "path");
         result.addAll(components);

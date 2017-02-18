@@ -62,7 +62,7 @@ public abstract class BuildProperties extends CompositeGenerator {
   protected abstract void createJdkGenerators(Project project);
 
   public static Sdk[] getUsedJdks(Project project) {
-    final Set<Sdk> jdks = new HashSet<Sdk>();
+    final Set<Sdk> jdks = new HashSet<>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
       Sdk jdk = ModuleRootManager.getInstance(module).getSdk();

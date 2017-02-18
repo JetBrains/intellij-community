@@ -20,7 +20,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -96,10 +95,10 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
         if (psiParameters.length > idx) {
           final PsiType paramType = psiParameters[idx].getType();
           if (paramType instanceof PsiArrayType) {
-            final PsiType expressionType = expression.getType();
+            final PsiType expressionType = TypeConversionUtil.erasure(expression.getType());
             if (expressionType != null) {
               final PsiType componentType = ((PsiArrayType)paramType).getComponentType();
-              if (expressionType.isAssignableFrom(componentType)) {
+              if (TypeConversionUtil.isAssignable(componentType, expressionType)) {
                 return expression;
               }
               final PsiClass psiClass = PsiUtil.resolveClassInType(componentType);
@@ -119,7 +118,6 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiExpression expression = getExpression(element);
     assert expression != null;
@@ -131,6 +129,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
   private static String getArrayCreation(@NotNull PsiExpression expression) {
     final PsiType expressionType = expression.getType();
     assert expressionType != null;
-    return "new " + expressionType.getCanonicalText() + "[]{" + expression.getText()+ "}";
+    final PsiType arrayComponentType = TypeConversionUtil.erasure(expressionType);
+    return "new " + arrayComponentType.getCanonicalText() + "[]{" + expression.getText()+ "}";
   }
 }

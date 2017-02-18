@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -37,14 +37,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
-import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.ExternalOptionHelper;
 import org.jetbrains.annotations.Nls;
@@ -90,14 +86,10 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Override
   protected void processRemovedItems() {
     Map<String, CopyrightProfile> profiles = getAllProfiles();
-    final List<CopyrightProfile> deleted = new ArrayList<CopyrightProfile>();
-    for (CopyrightProfile profile : myManager.getCopyrights()) {
+    for (CopyrightProfile profile : new ArrayList<>(myManager.getCopyrights())) {
       if (!profiles.containsValue(profile)) {
-        deleted.add(profile);
+        myManager.removeCopyright(profile);
       }
-    }
-    for (CopyrightProfile profile : deleted) {
-      myManager.removeCopyright(profile);
     }
   }
 
@@ -127,7 +119,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
   @Override
   public void apply() throws ConfigurationException {
-    final Set<String> profiles = new HashSet<String>();
+    final Set<String> profiles = new HashSet<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       MyNode node = (MyNode)myRoot.getChildAt(i);
       final String profileName = ((CopyrightConfigurable)node.getConfigurable()).getEditableObject().getName();
@@ -141,7 +133,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   }
 
   public Map<String, CopyrightProfile> getAllProfiles() {
-    final Map<String, CopyrightProfile> profiles = new HashMap<String, CopyrightProfile>();
+    final Map<String, CopyrightProfile> profiles = new HashMap<>();
     if (!myInitialized.get()) {
       for (CopyrightProfile profile : myManager.getCopyrights()) {
         profiles.put(profile.getName(), profile);
@@ -166,7 +158,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @Override
   @Nullable
   protected ArrayList<AnAction> createActions(boolean fromPopup) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>();
+    ArrayList<AnAction> result = new ArrayList<>();
     result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
@@ -174,10 +166,10 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
       @Override
       public void actionPerformed(AnActionEvent event) {
-        final String name = askForProfileName("Create Copyright Profile", "");
-        if (name == null) return;
-        final CopyrightProfile copyrightProfile = new CopyrightProfile(name);
-        addProfileNode(copyrightProfile);
+        String name = askForProfileName("Create Copyright Profile", "");
+        if (name != null) {
+          addProfileNode(new CopyrightProfile(name));
+        }
       }
     });
     result.add(new MyDeleteAction());
@@ -188,9 +180,12 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
 
       @Override
       public void actionPerformed(AnActionEvent event) {
-        final String profileName = askForProfileName("Copy Copyright Profile", "");
-        if (profileName == null) return;
-        final CopyrightProfile clone = new CopyrightProfile();
+        String profileName = askForProfileName("Copy Copyright Profile", "");
+        if (profileName == null) {
+          return;
+        }
+
+        CopyrightProfile clone = new CopyrightProfile();
         clone.copyFrom((CopyrightProfile)getSelectedObject());
         clone.setName(profileName);
         addProfileNode(clone);
@@ -268,7 +263,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
     });
   }
 
-  private void addProfileNode(CopyrightProfile copyrightProfile) {
+  private void addProfileNode(@NotNull CopyrightProfile copyrightProfile) {
     final CopyrightConfigurable copyrightConfigurable = new CopyrightConfigurable(myProject, copyrightProfile, TREE_UPDATER);
     copyrightConfigurable.setModified(true);
     final MyNode node = new MyNode(copyrightConfigurable);
@@ -323,10 +318,5 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
   @NotNull
   public String getId() {
     return getHelpTopic();
-  }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
   }
 }

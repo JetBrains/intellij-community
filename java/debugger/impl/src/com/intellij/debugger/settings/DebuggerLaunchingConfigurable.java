@@ -31,6 +31,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
   private StateRestoringCheckBox myCbForceClassicVM;
   private JCheckBox myCbDisableJIT;
   private JCheckBox myCbShowAlternativeSource;
+  private JCheckBox myCbKillImmediately;
 
   @Override
   public void reset(@NotNull DebuggerSettings settings) {
@@ -50,6 +51,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     myCbForceClassicVM.setSelected(settings.FORCE_CLASSIC_VM);
     myCbDisableJIT.setSelected(settings.DISABLE_JIT);
     myCbShowAlternativeSource.setSelected(settings.SHOW_ALTERNATIVE_SOURCE);
+    myCbKillImmediately.setSelected(settings.KILL_PROCESS_IMMEDIATELY);
   }
 
   @Override
@@ -67,6 +69,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     settings.FORCE_CLASSIC_VM = myCbForceClassicVM.isSelectedWhenSelectable();
     settings.DISABLE_JIT = myCbDisableJIT.isSelected();
     settings.SHOW_ALTERNATIVE_SOURCE = myCbShowAlternativeSource.isSelected();
+    settings.KILL_PROCESS_IMMEDIATELY = myCbKillImmediately.isSelected();
   }
 
   @Override
@@ -84,6 +87,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     myCbShowAlternativeSource = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.show.alternative.source"));
     myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.socket"));
     myRbShmem = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.shmem"));
+    myCbKillImmediately = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.kill.immediately"));
 
     final ButtonGroup gr = new ButtonGroup();
     gr.add(myRbSocket);
@@ -101,6 +105,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     panel.add(myCbForceClassicVM);
     panel.add(myCbDisableJIT);
     panel.add(myCbShowAlternativeSource);
+    panel.add(myCbKillImmediately);
 
     JPanel result = new JPanel(new BorderLayout());
     result.add(panel, BorderLayout.NORTH);

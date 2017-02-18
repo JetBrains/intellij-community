@@ -40,7 +40,7 @@ public class ImageFileFilter implements TreeFileChooser.PsiFileFilter {
     for(int i=0; i<formatNames.length; i++) {
       formatNames [i] = formatNames [i].toLowerCase();
     }
-    myExtensions = new HashSet<String>(Arrays.asList(formatNames));
+    myExtensions = new HashSet<>(Arrays.asList(formatNames));
     if (module != null) {
       myModuleScope = module.getModuleWithDependenciesAndLibrariesScope(true);
     }

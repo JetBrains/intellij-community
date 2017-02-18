@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   @Override
-  public void resetEditorFrom(AbstractFileType fileType) {
+  public void resetEditorFrom(@NotNull AbstractFileType fileType) {
     myFileTypeName.setText(fileType.getName());
     myFileTypeDescr.setText(fileType.getDescription());
 
@@ -92,23 +92,15 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
       mySupportParens.setSelected(table.isHasParens());
       mySupportEscapes.setSelected(table.isHasStringEscapes());
 
-      for (String s : table.getKeywords1()) {
-        myKeywordModels[0].addElement(s);
-      }
-      for (String s : table.getKeywords2()) {
-        myKeywordModels[1].addElement(s);
-      }
-      for (String s : table.getKeywords3()) {
-        myKeywordModels[2].addElement(s);
-      }
-      for (String s : table.getKeywords4()) {
-        myKeywordModels[3].addElement(s);
-      }
+      table.getKeywords1().stream().sorted().forEach(s -> myKeywordModels[0].addElement(s));
+      table.getKeywords2().stream().sorted().forEach(s -> myKeywordModels[1].addElement(s));
+      table.getKeywords3().stream().sorted().forEach(s -> myKeywordModels[2].addElement(s));
+      table.getKeywords4().stream().sorted().forEach(s -> myKeywordModels[3].addElement(s));
     }
   }
 
   @Override
-  public void applyEditorTo(AbstractFileType type) throws ConfigurationException {
+  public void applyEditorTo(@NotNull AbstractFileType type) throws ConfigurationException {
     if (myFileTypeName.getText().trim().length() == 0) {
       throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"),
                                        CommonBundle.getErrorTitle());

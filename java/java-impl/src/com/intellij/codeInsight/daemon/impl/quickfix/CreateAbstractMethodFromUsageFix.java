@@ -36,7 +36,7 @@ public class CreateAbstractMethodFromUsageFix extends CreateMethodFromUsageFix {
   @NotNull
   @Override
   protected List<PsiClass> getTargetClasses(PsiElement element) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = new ArrayList<>();
     PsiReferenceExpression expr = getMethodCall().getMethodExpression();
     for (PsiClass each : super.getTargetClasses(element)) {
       if (PsiUtil.isAbstractClass(each) && !each.isInterface() && !shouldCreateStaticMember(expr, each)) result.add(each);

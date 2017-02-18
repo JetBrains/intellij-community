@@ -74,7 +74,7 @@ public final class MacrosDialog extends DialogWrapper {
   protected void init() {
     super.init();
 
-    java.util.List<Macro> macros = new ArrayList<Macro>(MacroManager.getInstance().getMacros());
+    java.util.List<Macro> macros = new ArrayList<>(MacroManager.getInstance().getMacros());
     Collections.sort(macros, new Comparator<Macro>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {

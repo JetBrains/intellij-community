@@ -100,7 +100,7 @@ public final class ComponentItemDialog extends DialogWrapper {
 
     myEditorTextField = new EditorTextField("", project, StdFileTypes.JAVA);
     myEditorTextField.setFontInheritedFromLAF(true);
-    myTfClassName = new ComponentWithBrowseButton<EditorTextField>(myEditorTextField, new MyChooseClassActionListener(project));
+    myTfClassName = new ComponentWithBrowseButton<>(myEditorTextField, new MyChooseClassActionListener(project));
 
     PsiFile boundForm = itemToBeEdited.getBoundForm();
     if (boundForm != null) {

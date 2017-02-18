@@ -157,13 +157,13 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
   private int getSelectionCount() {
     final TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
     int count = 0;
-    final List<ChangesBrowserNode> nodes = new ArrayList<ChangesBrowserNode>();
+    final List<ChangesBrowserNode> nodes = new ArrayList<>();
 
     for (final TreePath path : paths) {
       final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
       if (!node.isLeaf()) {
         nodes.add(node);
-        count += node.getCount();
+        count += node.getFileCount();
       }
     }
 
@@ -181,7 +181,7 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
         if (element.isLeaf()) count++;
       }
       else if (!element.isLeaf()) {
-        count -= element.getCount();
+        count -= element.getFileCount();
       }
     }
     return count;

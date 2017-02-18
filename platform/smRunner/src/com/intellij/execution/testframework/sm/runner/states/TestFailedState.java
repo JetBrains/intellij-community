@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class TestFailedState extends AbstractState {
+public class TestFailedState extends AbstractState implements Disposable{
   private final List<String> myPresentationText;
 
   public TestFailedState(@Nullable final String localizedMessage,
@@ -50,6 +51,9 @@ public class TestFailedState extends AbstractState {
       }
     }
   }
+
+  @Override
+  public void dispose() {}
 
   @Nullable
   public static String buildErrorPresentationText(@Nullable final String localizedMessage,

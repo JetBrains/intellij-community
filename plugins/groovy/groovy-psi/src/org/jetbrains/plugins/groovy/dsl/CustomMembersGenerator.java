@@ -143,7 +143,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     Object docUrl = args.get("docUrl");
     Boolean isStatic = (Boolean)args.get("isStatic");
 
-    Map<Object, Object> getter = new HashMap<Object, Object>();
+    Map<Object, Object> getter = new HashMap<>();
     getter.put("name", GroovyPropertyUtils.getGetterNameNonBoolean(name));
     getter.put("type", type);
     getter.put("isStatic", isStatic);
@@ -151,13 +151,13 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     getter.put("docUrl", docUrl);
     method(getter);
 
-    Map<Object, Object> setter = new HashMap<Object, Object>();
+    Map<Object, Object> setter = new HashMap<>();
     setter.put("name", GroovyPropertyUtils.getSetterName(name));
     setter.put("type", "void");
     setter.put("isStatic", isStatic);
     setter.put("doc", doc);
     setter.put("docUrl", docUrl);
-    final HashMap<Object, Object> param = new HashMap<Object, Object>();
+    final HashMap<Object, Object> param = new HashMap<>();
     param.put(name, type);
     setter.put("params", param);
     method(setter);
@@ -201,7 +201,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
 
       generator.setDelegate(this);
 
-      HashMap<String, Object> args = new HashMap<String, Object>();
+      HashMap<String, Object> args = new HashMap<>();
       args.put("name", ref.getReferenceName());
       args.put("argumentTypes", types);
       generator.call(args);
@@ -244,7 +244,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     }
     final Object toThrow = args.get(THROWS);
     if (toThrow instanceof List) {
-      final ArrayList<String> list = new ArrayList<String>();
+      final ArrayList<String> list = new ArrayList<>();
       for (Object o : (List)toThrow) {
         list.add(stringifyType(o));
       }

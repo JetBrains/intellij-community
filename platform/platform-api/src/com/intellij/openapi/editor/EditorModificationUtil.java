@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -188,8 +190,7 @@ public class EditorModificationUtil {
     try {
       return (String)content.getTransferData(DataFlavor.stringFlavor);
     }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
+    catch (UnsupportedFlavorException | IOException ignore) { }
 
     return null;
   }
@@ -367,7 +368,7 @@ public class EditorModificationUtil {
     int endLine = Math.max(Math.min(blockEnd.line, editor.getDocument().getLineCount() - 1), 0);
     int step = endLine < startLine ? -1 : 1;
     int count = 1 + Math.abs(endLine - startLine);
-    List<CaretState> caretStates = new LinkedList<CaretState>();
+    List<CaretState> caretStates = new LinkedList<>();
     boolean hasSelection = false;
     for (int line = startLine, i = 0; i < count; i++, line += step) {
       int startColumn = blockStart.column;
@@ -401,5 +402,13 @@ public class EditorModificationUtil {
       }
     }
     return caretStates;
+  }
+
+  public static boolean requestWriting(@NotNull Editor editor) {
+    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
+      HintManager.getInstance().showInformationHint(editor, EditorBundle.message("editing.read.only.file.hint"));
+      return false;
+    }
+    return true;
   }
 }

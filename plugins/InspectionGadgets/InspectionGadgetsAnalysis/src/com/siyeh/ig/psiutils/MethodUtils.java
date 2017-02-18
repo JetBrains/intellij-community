@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,18 +38,37 @@ public class MethodUtils {
 
   private MethodUtils() {}
 
+  @Contract("null -> false")
   public static boolean isComparatorCompare(@Nullable PsiMethod method) {
     return method != null && methodMatches(method, CommonClassNames.JAVA_UTIL_COMPARATOR, PsiType.INT, "compare", null, null);
   }
 
+  @Contract("null -> false")
   public static boolean isCompareTo(@Nullable PsiMethod method) {
-    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL);
+    return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.COMPARE_TO, PsiType.NULL)
+      && InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_LANG_COMPARABLE);
   }
 
+  @Contract("null -> false")
+  public static boolean isCompareToIgnoreCase(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiClassType stringType = TypeUtils.getStringType(method);
+    return methodMatches(method, "java.lang.String", PsiType.INT, "compareToIgnoreCase", stringType);
+  }
+
+  @Contract("null -> false")
   public static boolean isHashCode(@Nullable PsiMethod method) {
     return method != null && methodMatches(method, null, PsiType.INT, HardcodedMethodConstants.HASH_CODE);
   }
 
+  @Contract("null -> false")
+  public static boolean isFinalize(@Nullable PsiMethod method) {
+    return method != null && methodMatches(method, null, PsiType.VOID, HardcodedMethodConstants.FINALIZE);
+  }
+
+  @Contract("null -> false")
   public static boolean isToString(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
@@ -57,12 +77,22 @@ public class MethodUtils {
     return methodMatches(method, null, stringType, HardcodedMethodConstants.TO_STRING);
   }
 
+  @Contract("null -> false")
   public static boolean isEquals(@Nullable PsiMethod method) {
     if (method == null) {
       return false;
     }
     final PsiClassType objectType = TypeUtils.getObjectType(method);
     return methodMatches(method, null, PsiType.BOOLEAN, HardcodedMethodConstants.EQUALS, objectType);
+  }
+
+  @Contract("null -> false")
+  public static boolean isEqualsIgnoreCase(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
+    final PsiClassType stringType = TypeUtils.getStringType(method);
+    return methodMatches(method, "java.lang.String", PsiType.BOOLEAN, HardcodedMethodConstants.EQUALS_IGNORE_CASE, stringType);
   }
 
   /**
@@ -196,14 +226,19 @@ public class MethodUtils {
 
   @Nullable
   public static PsiMethod getSuper(@NotNull PsiMethod method) {
-    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-      return null;
-    }
-    final MethodSignatureBackedByPsiMethod signature = SuperMethodsSearch.search(method, null, true, false).findFirst();
+    final MethodSignatureBackedByPsiMethod signature = getSuperMethodSignature(method);
     if (signature == null) {
       return null;
     }
     return signature.getMethod();
+  }
+
+  @Nullable
+  public static MethodSignatureBackedByPsiMethod getSuperMethodSignature(@NotNull PsiMethod method) {
+    if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      return null;
+    }
+    return SuperMethodsSearch.search(method, null, true, false).findFirst();
   }
 
   public static boolean isOverridden(PsiMethod method) {
@@ -244,6 +279,9 @@ public class MethodUtils {
    * also when it is a constructor which only calls super, contains empty statements or "if (false)" statements.
    */
   public static boolean isTrivial(PsiMethod method, boolean throwIsTrivial) {
+    if (method.hasModifierProperty(PsiModifier.NATIVE)) {
+      return false;
+    }
     return isTrivial(method.getBody(), throwIsTrivial);
   }
 

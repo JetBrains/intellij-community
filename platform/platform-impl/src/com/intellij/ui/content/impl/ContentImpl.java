@@ -37,7 +37,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
-  private static Icon ourEmptyPinIcon = null;
+  private static Icon ourEmptyPinIcon;
 
   private String myDisplayName;
   private String myDescription;
@@ -45,10 +45,10 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private Icon myIcon;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private ContentManager myManager;
-  private boolean myIsLocked = false;
+  private boolean myIsLocked;
   private boolean myPinnable = true;
   private Icon myLayeredIcon = new LayeredIcon(2);
-  private Disposable myDisposer = null;
+  private Disposable myDisposer;
   private boolean myShouldDisposeContent = true;
   private String myTabName;
   private String myToolwindowTitle;

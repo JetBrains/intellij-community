@@ -15,7 +15,6 @@
  */
 package com.jetbrains.env.python.testing;
 
-import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsoleTestTask<PyUnitTestProcessRunner> {
   @NotNull
-  private final String myScriptName;
+  protected final String myScriptName;
 
   PyUnitTestProcessWithConsoleTestTask(@NotNull final String relativePathToTestData, @NotNull final String scriptName) {
     super(relativePathToTestData, SdkCreationType.EMPTY_SDK);

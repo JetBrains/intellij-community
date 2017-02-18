@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -26,10 +28,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowModulePropertiesFix extends IntentionAndQuickFixAction {
+public class ShowModulePropertiesFix implements QuickFix<CommonProblemDescriptor>, IntentionAction {
   private final String myModuleName;
 
   public ShowModulePropertiesFix(@NotNull PsiElement context) {
@@ -47,10 +51,22 @@ public class ShowModulePropertiesFix extends IntentionAndQuickFixAction {
     return action.getTemplatePresentation().getText();
   }
 
+  @Nls
+  @NotNull
+  @Override
+  public String getText() {
+    return getName();
+  }
+
   @Override
   @NotNull
   public String getFamilyName() {
     return getText();
+  }
+
+  @Override
+  public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
+    invoke(project, null, null);
   }
 
   @Override
@@ -59,7 +75,7 @@ public class ShowModulePropertiesFix extends IntentionAndQuickFixAction {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModuleName, null);
   }
 

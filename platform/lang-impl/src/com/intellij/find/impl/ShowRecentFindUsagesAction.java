@@ -55,7 +55,7 @@ public class ShowRecentFindUsagesAction extends AnAction {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     Project project = e.getData(CommonDataKeys.PROJECT);
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    List<ConfigurableUsageTarget> history = new ArrayList<ConfigurableUsageTarget>(findUsagesManager.getHistory().getAll());
+    List<ConfigurableUsageTarget> history = new ArrayList<>(findUsagesManager.getHistory().getAll());
 
     if (!history.isEmpty()) {
       // skip most recent find usage, it's under your nose

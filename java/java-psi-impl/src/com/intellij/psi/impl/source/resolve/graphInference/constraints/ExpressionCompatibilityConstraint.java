@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -49,6 +51,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         if (!assignmentCompatible) {
           final PsiType type = myExpression.getType();
           session.registerIncompatibleErrorMessage((type != null ? type.getPresentableText() : myExpression.getText()) + " is not compatible with " + session.getPresentableText(myT));
+        }
+        else if (TypeCompatibilityConstraint.isUncheckedConversion(myT, exprType) && !JavaGenericsUtil.isReifiableType(myT)) {
+          session.setErasedDuringApplicabilityCheck();
         }
         return assignmentCompatible;
       }
@@ -142,6 +147,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         if (psiClass != null) {
           returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType(psiClass, PsiSubstitutor.EMPTY);
           typeParams = psiClass.getTypeParameters();
+          if (method != null && method.hasTypeParameters()) {
+            typeParams = ArrayUtil.mergeArrays(typeParams, method.getTypeParameters());
+          }
         }
       }
 

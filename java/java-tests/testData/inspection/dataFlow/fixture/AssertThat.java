@@ -16,9 +16,12 @@ class Contracts {
     int length = test.length();
   }
 
-  public void checkAssertJ(@Nullable Object object) {
+  public void checkAssertJ(@Nullable Object object, @Nullable Object object2) {
     Assertions.assertThat(object).isNotNull();
     System.out.println(object.toString());
+
+    Assertions.assertThat(object2).describedAs("x").isNotNull();
+    System.out.println(object2.toString());
   }
 
 }

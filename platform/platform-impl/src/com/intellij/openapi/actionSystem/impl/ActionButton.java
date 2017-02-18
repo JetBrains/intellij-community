@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
@@ -177,7 +178,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
           }
         }
       });
-      popupMenu.setDataContextProvider(() -> ActionButton.this.getDataContext());
+      popupMenu.setDataContextProvider(() -> this.getDataContext());
       if (ActionPlaces.isToolbarPlace(event.getPlace())) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }
@@ -204,7 +205,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
     }
     AnActionEvent e = new AnActionEvent(null, getDataContext(), myPlace, myPresentation, ActionManager.getInstance(), 0);
-    ActionUtil.performDumbAwareUpdate(myAction, e, false);
+    ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
     updateToolTipText();
     updateIcon();
   }
@@ -281,7 +282,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         y++;
       }
 
-      AllIcons.General.Dropdown.paintIcon(this, g, x, y);
+      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(x), JBUI.scale(y));
     }
   }
 

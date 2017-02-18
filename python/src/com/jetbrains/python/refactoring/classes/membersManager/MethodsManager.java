@@ -79,7 +79,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   @NotNull
   @Override
   protected List<? extends PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return FluentIterable.from(Arrays.asList(pyClass.getMethods())).filter(new NamelessFilter<PyFunction>()).filter(NO_PROPERTIES).toList();
+    return FluentIterable.from(Arrays.asList(pyClass.getMethods())).filter(new NamelessFilter<>()).filter(NO_PROPERTIES).toList();
   }
 
   @Override
@@ -100,8 +100,8 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @param to               classes where abstract method should be created
    */
   private static void makeMethodsAbstract(final Collection<PyFunction> currentFunctions, final PyClass... to) {
-    final Set<PsiFile> filesToCheckImport = new HashSet<PsiFile>();
-    final Set<PyClass> classesToAddMetaAbc = new HashSet<PyClass>();
+    final Set<PsiFile> filesToCheckImport = new HashSet<>();
+    final Set<PyClass> classesToAddMetaAbc = new HashSet<>();
 
     for (final PyFunction function : currentFunctions) {
       for (final PyClass destClass : to) {
@@ -175,10 +175,10 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @return newly added methods
    */
   static List<PyElement> moveMethods(final PyClass from, final Collection<PyFunction> methodsToMove, final boolean skipIfExist, final PyClass... to) {
-    final List<PyElement> result = new ArrayList<PyElement>();
+    final List<PyElement> result = new ArrayList<>();
     for (final PyClass destClass : to) {
       //We move copies here because there may be several destinations
-      final List<PyFunction> copies = new ArrayList<PyFunction>(methodsToMove.size());
+      final List<PyFunction> copies = new ArrayList<>(methodsToMove.size());
       for (final PyFunction element : methodsToMove) {
         final PyFunction newMethod = (PyFunction)element.copy();
         copies.add(newMethod);
@@ -197,8 +197,8 @@ class MethodsManager extends MembersManager<PyFunction> {
     final PyUtil.MethodFlags flags = PyUtil.MethodFlags.of(pyFunction);
     assert flags != null : "No flags return while element is function " + pyFunction;
     final boolean isStatic = flags.isStaticMethod() || flags.isClassMethod();
-    return new PyMemberInfo<PyFunction>(pyFunction, isStatic, buildDisplayMethodName(pyFunction), isOverrides(pyFunction), this,
-                                        couldBeAbstract(pyFunction));
+    return new PyMemberInfo<>(pyFunction, isStatic, buildDisplayMethodName(pyFunction), isOverrides(pyFunction), this,
+                              couldBeAbstract(pyFunction));
   }
 
   /**

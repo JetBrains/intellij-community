@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,12 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Alarm;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class BraceHighlighter implements StartupActivity {
@@ -112,7 +111,7 @@ public class BraceHighlighter implements StartupActivity {
 
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
 
-    fileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
+    fileEditorManager.addFileEditorManagerListener(new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         myAlarm.cancelAllRequests();

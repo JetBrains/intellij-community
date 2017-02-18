@@ -43,7 +43,7 @@ public class SearchTextFieldWithStoredHistory extends SearchTextField {
     final String history = propertiesComponent.getValue(myPropertyName);
     if (history != null) {
       final String[] items = history.split("\n");
-      ArrayList<String> result = new ArrayList<String>();
+      ArrayList<String> result = new ArrayList<>();
       for (String item : items) {
         if (item != null && item.length() > 0) {
           result.add(item);

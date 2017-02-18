@@ -97,7 +97,7 @@ public class BaseRevisionTextPatchEP implements PatchEP {
     if (commitContext == null) return;
     Map<String, String> map = commitContext.getUserData(ourStoredTexts);
     if (map == null) {
-      map = new HashMap<String, String>();
+      map = new HashMap<>();
       commitContext.putUserData(ourStoredTexts, map);
     }
     final File file = new File(myBaseDir, path);

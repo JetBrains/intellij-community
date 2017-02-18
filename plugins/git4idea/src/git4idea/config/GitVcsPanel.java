@@ -226,7 +226,7 @@ public class GitVcsPanel {
       }
     });
     myProtectedBranchesButton.setButtonIcon(AllIcons.Actions.ShowViewer);
-    myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<UpdateMethod>(UpdateMethod.class));
+    myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<>(UpdateMethod.class));
     myUpdateMethodComboBox.setRenderer(new ListCellRendererWrapper<UpdateMethod>() {
       @Override
       public void customize(JList list, UpdateMethod value, int index, boolean selected, boolean hasFocus) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public abstract class ResourceInspection extends BaseInspection {
 
   @Nullable
   public static PsiVariable getVariable(@NotNull PsiExpression expression) {
-    final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+    final PsiElement parent = getParent(expression);
     if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
       final PsiExpression lhs = assignment.getLExpression();
@@ -132,6 +132,30 @@ public abstract class ResourceInspection extends BaseInspection {
     else {
       return null;
     }
+  }
+
+  private static PsiElement getParent(PsiExpression expression) {
+    PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+    if (parent == null) {
+      return null;
+    }
+    PsiElement grandParent = parent.getParent();
+    final PsiType type = expression.getType();
+    if (type == null) {
+      return null;
+    }
+    while (parent instanceof PsiReferenceExpression && grandParent instanceof PsiMethodCallExpression) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      if (!type.equals(methodCallExpression.getType())) {
+        return null;
+      }
+      parent = ParenthesesUtils.getParentSkipParentheses(grandParent);
+      if (parent == null) {
+        return null;
+      }
+      grandParent = parent.getParent();
+    }
+    return parent;
   }
 
   private boolean isSafelyClosed(@Nullable PsiVariable variable, PsiElement context) {
@@ -181,7 +205,7 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   private static boolean isSignificant(@NotNull PsiStatement statement) {
-    final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     statement.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitExpression(PsiExpression expression) {

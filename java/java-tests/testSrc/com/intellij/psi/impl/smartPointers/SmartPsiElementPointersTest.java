@@ -58,10 +58,7 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @PlatformTestCase.WrapInCommand
@@ -439,7 +436,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     ctrlD();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    Set<PsiReferenceExpression> refs = new THashSet<PsiReferenceExpression>();
+    Set<PsiReferenceExpression> refs = new THashSet<>();
     int offset=0;
     while (true) {
       offset = getEditor().getDocument().getText().indexOf("foo();", offset+1);
@@ -535,7 +532,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     SmartPsiFileRange pointer2 = manager.createSmartPsiFileRangePointer(psiFile, range2);
     assertNotNull(FileDocumentManager.getInstance().getCachedDocument(vfile));
 
-    SoftReference<PsiFile> ref = new SoftReference<PsiFile>(psiFile);
+    SoftReference<PsiFile> ref = new SoftReference<>(psiFile);
     psiFile = null;
     while (ref.get() != null) {
       PlatformTestUtil.tryGcSoftlyReachableObjects();
@@ -771,13 +768,11 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   public void testAnchorInfoSurvivesPsiChange() {
     PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, "class C1{}\nclass C2 {}");
 
-    SmartPsiElementPointer<PsiClass> pointer =
-      createPointer(file.getClasses()[1]);
+    SmartPsiElementPointer<PsiClass> pointer = createPointer(file.getClasses()[1]);
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(((SmartPointerEx) pointer).getCachedElement());
 
-    ApplicationManager.getApplication().runWriteAction(() -> file.getClasses()[1].delete());
-
+    ApplicationManager.getApplication().runWriteAction(() -> file.getClasses()[0].delete());
 
     assertNotNull(pointer.getElement());
   }
@@ -877,6 +872,26 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     return (SmartPointerEx<T>)getPointerManager().createSmartPsiElementPointer(element);
   }
 
+  public void testCommentingField() throws Exception {
+    PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class A {\n" +
+                                                         "    int x;\n" +
+                                                         "    int y;\n" +
+                                                         "}");
+    PsiField[] fields = file.getClasses()[0].getFields();
+    SmartPointerEx<PsiField> pointer0 = createPointer(fields[0]);
+    SmartPointerEx<PsiField> pointer1 = createPointer(fields[1]);
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      Document document = file.getViewProvider().getDocument();
+      assert document != null;
+      document.insertString(file.getText().indexOf("int"), "//");
+      commitDocument(document);
+    });
+
+    assertNull(pointer0.getElement());
+    assertEquals("y", pointer1.getElement().getName());
+  }
+
   public void testAnchorInfoHasRange() throws Exception {
     PsiJavaFile file = (PsiJavaFile)createFile("a.java", "class C1{}");
     assertNotNull(((PsiFileImpl) file).getStubTree());
@@ -893,6 +908,27 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     range = createPointer(psiClass).getPsiRange();
     assertNotNull(range);
     assertEquals(psiClass.getNameIdentifier().getTextRange(), TextRange.create(range));
+  }
+
+  public void testManySmartPointersCreationDeletionPerformance() throws Exception {
+    String text = StringUtil.repeatSymbol(' ', 100000);
+    PsiFile file = createFile("a.txt", text);
+
+    PlatformTestUtil.startPerformanceTest("", 2000, () -> {
+      List<SmartPsiFileRange> pointers = new ArrayList<>();
+      for (int i = 0; i < text.length() - 1; i++) {
+        pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));
+      }
+      Collections.shuffle(pointers);
+      for (SmartPsiFileRange pointer : pointers) {
+        getPointerManager().removePointer(pointer);
+      }
+    }).cpuBound().assertTiming();
+  }
+
+  public void testDifferentHashCodesForDifferentElementsInOneFile() throws Exception {
+    PsiClass clazz = ((PsiJavaFile)createFile("a.java", "class Foo { void foo(); }")).getClasses()[0];
+    assertFalse(createPointer(clazz).hashCode() == createPointer(clazz.getMethods()[0]).hashCode());
   }
 
 }

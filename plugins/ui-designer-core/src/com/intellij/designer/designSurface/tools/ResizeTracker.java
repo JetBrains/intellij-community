@@ -128,7 +128,7 @@ public class ResizeTracker extends InputTool {
 
   private void executeCommand() {
     if (myExecuteEnabled) {
-      List<EditOperation> operations = new ArrayList<EditOperation>();
+      List<EditOperation> operations = new ArrayList<>();
       for (EditOperation operation : getOperations()) {
         if (operation.canExecute()) {
           operations.add(operation);
@@ -181,8 +181,8 @@ public class ResizeTracker extends InputTool {
 
   private List<EditOperation> getOperations() {
     if (myOperations == null) {
-      myContext.setComponents(new ArrayList<RadComponent>(myArea.getSelection()));
-      myOperations = new ArrayList<EditOperation>();
+      myContext.setComponents(new ArrayList<>(myArea.getSelection()));
+      myOperations = new ArrayList<>();
 
       for (RadComponent component : myContext.getComponents()) {
         EditOperation operation;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,25 +34,11 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
   @Override
   public String[] getAnnotations(Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    final Collection<String> anns = new ArrayList<String>(manager.getNotNulls());
+    final Collection<String> anns = new ArrayList<>(manager.getNotNulls());
     anns.addAll(manager.getNullables());
     anns.add(AnnotationUtil.NLS);
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    anns.addAll(settings.getRepeatAnnotations());
     return ArrayUtil.toStringArray(anns);
-  }
-
-  @Override
-  @NotNull
-  public String[] annotationsToRemove(Project project, @NotNull final String fqName) {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    if (manager.getNotNulls().contains(fqName)) {
-      return ArrayUtil.toStringArray(manager.getNullables());
-    }
-    if (manager.getNullables().contains(fqName)) {
-      return ArrayUtil.toStringArray(manager.getNotNulls()); 
-    }
-    if (Comparing.strEqual(fqName, AnnotationUtil.NLS)){
-      return new String[]{AnnotationUtil.NON_NLS};
-    }
-    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 }

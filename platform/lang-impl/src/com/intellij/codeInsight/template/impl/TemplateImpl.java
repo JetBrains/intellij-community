@@ -22,7 +22,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +35,8 @@ public class TemplateImpl extends Template implements SchemeElement {
   private String myDescription;
   private String myGroupName;
   private char myShortcutChar = TemplateSettings.DEFAULT_CHAR;
-  private final ArrayList<Variable> myVariables = new ArrayList<Variable>();
-  private ArrayList<Segment> mySegments = null;
+  private final List<Variable> myVariables = new SmartList<>();
+  private List<Segment> mySegments = null;
   private String myTemplateText = null;
   private String myId;
 
@@ -56,7 +56,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     if (!myString.equals(template.myString)) return false;
     if (myTemplateText != null ? !myTemplateText.equals(template.myTemplateText) : template.myTemplateText != null) return false;
 
-    if (!new HashSet<Variable>(myVariables).equals(new HashSet<Variable>(template.myVariables))) return false;
+    if (!new HashSet<>(myVariables).equals(new HashSet<>(template.myVariables))) return false;
     if (isDeactivated != template.isDeactivated) return false;
 
     return true;
@@ -84,8 +84,8 @@ public class TemplateImpl extends Template implements SchemeElement {
   @NonNls public static final String SELECTION_END = "SELECTION_END";
   @NonNls public static final String ARG = "ARG";
 
-  public static final Set<String> INTERNAL_VARS_SET = new HashSet<String>(Arrays.asList(
-      END, SELECTION, SELECTION_START, SELECTION_END));
+  public static final Set<String> INTERNAL_VARS_SET = new HashSet<>(Arrays.asList(
+    END, SELECTION, SELECTION_START, SELECTION_END));
 
   private boolean isDeactivated = false;
 
@@ -103,13 +103,11 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   private boolean myIsInline = false;
 
-
-
   public TemplateImpl(@NotNull String key, @NotNull String group) {
     this(key, null, group);
     toParseSegments = false;
     myTemplateText = "";
-    mySegments = new ArrayList<Segment>();
+    mySegments = new SmartList<>();
   }
 
   public TemplateImpl(@NotNull String key, String string, @NotNull String group) {
@@ -117,7 +115,6 @@ public class TemplateImpl extends Template implements SchemeElement {
     myString = StringUtil.convertLineSeparators(StringUtil.notNullize(string));
     myGroupName = group;
   }
-
 
   @Override
   public void addTextSegment(@NotNull String text) {
@@ -200,7 +197,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     for (Property property : Property.values()) {
       boolean value = another.getValue(property);
       if (value != Template.getDefaultValue(property)) {
-        setValue(property, value);
+        setValue(property, true);
       }
     }
     for (Variable variable : another.myVariables) {
@@ -245,7 +242,8 @@ public class TemplateImpl extends Template implements SchemeElement {
     return isDeactivated;
   }
 
-  @NotNull public TemplateContext getTemplateContext() {
+  @NotNull
+  public TemplateContext getTemplateContext() {
     return myTemplateContext;
   }
 
@@ -270,18 +268,6 @@ public class TemplateImpl extends Template implements SchemeElement {
       }
     }
     return -1;
-  }
-
-  public IntArrayList getVariableSegmentNumbers(String variableName) {
-    IntArrayList result = new IntArrayList();
-    parseSegments();
-    for (int i = 0; i < mySegments.size(); i++) {
-      Segment segment = mySegments.get(i);
-      if (segment.name.equals(variableName)) {
-        result.add(i);
-      }
-    }
-    return result;
   }
 
   @NotNull
@@ -317,7 +303,7 @@ public class TemplateImpl extends Template implements SchemeElement {
       return;
     }
 
-    mySegments = new ArrayList<Segment>();
+    mySegments = new SmartList<>();
     StringBuilder buffer = new StringBuilder("");
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(myString);
@@ -461,7 +447,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   public Map<TemplateOptionalProcessor, Boolean> createOptions() {
-    Map<TemplateOptionalProcessor, Boolean> context = new LinkedHashMap<TemplateOptionalProcessor, Boolean>();
+    Map<TemplateOptionalProcessor, Boolean> context = new LinkedHashMap<>();
     for (TemplateOptionalProcessor processor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
       context.put(processor, processor.isEnabled(this));
     }
@@ -491,7 +477,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   public ArrayList<Variable> getVariables() {
-    return myVariables;
+    return new ArrayList<>(myVariables);
   }
 
   private static class Segment {

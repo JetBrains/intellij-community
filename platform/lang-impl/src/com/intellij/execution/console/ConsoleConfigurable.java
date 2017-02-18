@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.execution.console;
 
 import com.intellij.execution.impl.ConsoleBuffer;
@@ -19,8 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,26 +61,20 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
       myCbUseSoftWrapsAtConsole = new JCheckBox(ApplicationBundle.message("checkbox.use.soft.wraps.at.console"), false);
       myCommandsHistoryLimitField = new JTextField(3);
       myCbOverrideConsoleCycleBufferSize = new JCheckBox(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size", String.valueOf(ConsoleBuffer.getLegacyCycleBufferSize() / 1024)), false);
-      myCbOverrideConsoleCycleBufferSize.addChangeListener(new ChangeListener(){
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected());
-        }
-      });
+      myCbOverrideConsoleCycleBufferSize.addChangeListener(e -> myConsoleCycleBufferSizeField.setEnabled(myCbOverrideConsoleCycleBufferSize.isSelected()));
       myConsoleCycleBufferSizeField = new JTextField(3);
 
       JPanel northPanel = new JPanel(new GridBagLayout());
       GridBag gridBag = new GridBag();
       gridBag.anchor(GridBagConstraints.WEST).setDefaultAnchor(GridBagConstraints.WEST);
-      northPanel
-        .add(myCbUseSoftWrapsAtConsole,
-             gridBag.nextLine().next());
+      northPanel.add(myCbUseSoftWrapsAtConsole, gridBag.nextLine().next());
       northPanel.add(Box.createHorizontalGlue(), gridBag.next().coverLine());
       northPanel.add(new JLabel(ApplicationBundle.message("editbox.console.history.limit")), gridBag.nextLine().next());
       northPanel.add(myCommandsHistoryLimitField, gridBag.next());
       if (ConsoleBuffer.useCycleBuffer()) {
         northPanel.add(myCbOverrideConsoleCycleBufferSize, gridBag.nextLine().next());
         northPanel.add(myConsoleCycleBufferSizeField, gridBag.next());
+        northPanel.add(new JLabel(" KB"), gridBag.next());
       }
       if (!editFoldingsOnly()) {
         JPanel wrapper = new JPanel(new BorderLayout());
@@ -109,10 +116,6 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     }
 
     return isModified;
-  }
-
-  private static boolean isModified(JToggleButton checkBox, boolean value) {
-    return checkBox.isSelected() != value;
   }
 
   private static boolean isModified(JTextField textField, int value) {
@@ -187,11 +190,6 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   }
 
   @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
-
-  @Override
   @Nls
   public String getDisplayName() {
     return "Console";
@@ -205,8 +203,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
     private final String myQuery;
 
-    public MyAddDeleteListPanel(String title, String query) {
-      super(title, new ArrayList<String>());
+    MyAddDeleteListPanel(String title, String query) {
+      super(title, new ArrayList<>());
       myQuery = query;
     }
 
@@ -256,11 +254,6 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
     public void addRule(String rule) {
       addElement(rule);
-    }
-
-    @Override
-    public void setBounds(int x, int y, int width, int height) {
-      super.setBounds(x, y, width, height);
     }
 
     @Override

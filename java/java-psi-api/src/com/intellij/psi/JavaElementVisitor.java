@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.psi.javadoc.*;
 
 public abstract class JavaElementVisitor extends PsiElementVisitor {
-
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
     visitClass(aClass);
   }
@@ -386,5 +385,33 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     visitExpression(expression);
+  }
+
+  public void visitModule(PsiJavaModule module) {
+    visitElement(module);
+  }
+
+  public void visitModuleReferenceElement(PsiJavaModuleReferenceElement refElement) {
+    visitElement(refElement);
+  }
+
+  public void visitModuleStatement(PsiElement statement) {
+    visitElement(statement);
+  }
+
+  public void visitRequiresStatement(PsiRequiresStatement statement) {
+    visitModuleStatement(statement);
+  }
+
+  public void visitExportsStatement(PsiExportsStatement statement) {
+    visitModuleStatement(statement);
+  }
+
+  public void visitUsesStatement(PsiUsesStatement statement) {
+    visitModuleStatement(statement);
+  }
+
+  public void visitProvidesStatement(PsiProvidesStatement statement) {
+    visitModuleStatement(statement);
   }
 }

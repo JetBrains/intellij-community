@@ -134,7 +134,7 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
     return ServiceManager.getService(project, GriffonProjectViewState.class);
   }
 
-  private static final Map<String, GriffonDirectoryMetadata> DIRECTORY_METADATA = new LinkedHashMap<String, GriffonDirectoryMetadata>();
+  private static final Map<String, GriffonDirectoryMetadata> DIRECTORY_METADATA = new LinkedHashMap<>();
 
   static {
     DIRECTORY_METADATA.put("models", new GriffonDirectoryMetadata("Models", JetgroovyIcons.Mvc.ModelsNode, 20));

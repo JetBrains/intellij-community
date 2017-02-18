@@ -54,7 +54,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
       compute(root);
     }
 
-    final List<Pair<String,Integer>> names = new ArrayList<Pair<String, Integer>>(nameCount.size());
+    final List<Pair<String,Integer>> names = new ArrayList<>(nameCount.size());
     nameCount.forEachEntry(new TObjectIntProcedure<String>() {
       @Override
       public boolean execute(String name, int count) {
@@ -81,7 +81,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
     show(suffixes);
 
 
-    final TObjectIntHashMap<String> save = new TObjectIntHashMap<String>();
+    final TObjectIntHashMap<String> save = new TObjectIntHashMap<>();
     // compute economy
     suffixes.forEachEntry(new TObjectIntProcedure<String>() {
       @Override
@@ -95,7 +95,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
     final List<Pair<String, Integer>> saveSorted = show(save);
 
 
-    final List<String> picked = new ArrayList<String>();
+    final List<String> picked = new ArrayList<>();
     //List<String> candidates = new ArrayList<String>();
     //int i =0;
     //for (Pair<String, Integer> pair : sorted) {
@@ -163,7 +163,7 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
   }
 
   private static List<Pair<String,Integer>> show(final TObjectIntHashMap<String> prefixes) {
-    final List<Pair<String,Integer>> prefs = new ArrayList<Pair<String, Integer>>(prefixes.size());
+    final List<Pair<String,Integer>> prefs = new ArrayList<>(prefixes.size());
     prefixes.forEachEntry(new TObjectIntProcedure<String>() {
       @Override
       public boolean execute(String s, int count) {
@@ -185,8 +185,8 @@ public class ComputeVirtualFileNameStatAction extends AnAction implements DumbAw
   }
 
   //TObjectIntHashMap<String> prefixes = new TObjectIntHashMap<String>();
-  TObjectIntHashMap<String> suffixes = new TObjectIntHashMap<String>();
-  TObjectIntHashMap<String> nameCount = new TObjectIntHashMap<String>();
+  TObjectIntHashMap<String> suffixes = new TObjectIntHashMap<>();
+  TObjectIntHashMap<String> nameCount = new TObjectIntHashMap<>();
   private void compute(VirtualFile root) {
     String name = root.getName();
     if (!nameCount.increment(name)) nameCount.put(name, 1);

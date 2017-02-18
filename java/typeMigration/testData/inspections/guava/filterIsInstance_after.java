@@ -6,6 +6,6 @@ class A {
     ArrayList<String> strings = new ArrayList<String>();
     Stream<String> it = strings.stream();
 
-    int i = (int) it.filter(String::isEmpty).filter(String.class::isInstance).count();
+    int i = (int) it.filter(String::isEmpty).filter(String.class::isInstance).map(String.class::cast).count();
   }
 }

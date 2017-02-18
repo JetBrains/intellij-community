@@ -203,7 +203,7 @@ public class SetPropertyDialog extends DialogWrapper {
   }
 
   private void fillPropertyNames(File[] files) {
-    final Collection<String> names = new TreeSet<String>();
+    final Collection<String> names = new TreeSet<>();
     if (files.length == 1) {
       File file = files[0];
       try {

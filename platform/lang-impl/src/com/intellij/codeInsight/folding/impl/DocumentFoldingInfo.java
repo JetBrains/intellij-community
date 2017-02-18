@@ -54,7 +54,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
   private static class SerializedPsiElement {
     private final String mySerializedElement;
     private final FoldingInfo myFoldingInfo;
-    public SerializedPsiElement(@NotNull String serialized, @NotNull FoldingInfo foldingInfo) {
+    SerializedPsiElement(@NotNull String serialized, @NotNull FoldingInfo foldingInfo) {
       mySerializedElement = serialized;
       myFoldingInfo = foldingInfo;
     }
@@ -183,7 +183,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
     final ASTNode node = psiFile.getNode();
     if (node == null) return Collections.emptyMap();
     final FoldingDescriptor[] descriptors = LanguageFolding.buildFoldingDescriptors(foldingBuilder, psiFile, editor.getDocument(), true);
-    Map<PsiElement, FoldingDescriptor> ranges = new HashMap<PsiElement, FoldingDescriptor>();
+    Map<PsiElement, FoldingDescriptor> ranges = new HashMap<>();
     for (FoldingDescriptor descriptor : descriptors) {
       final ASTNode ast = descriptor.getElement();
       final PsiElement psi = ast.getPsi();
@@ -270,7 +270,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
 
       e.setAttribute(DATE_ATT, date);
       e.setAttribute(EXPANDED_ATT, Boolean.toString(state));
-      String signature = Integer.valueOf(marker.getStartOffset()) + ":" + Integer.valueOf(marker.getEndOffset());
+      String signature = marker.getStartOffset() + ":" + marker.getEndOffset();
       e.setAttribute(SIGNATURE_ATT, signature);
       String placeHolderText = fi == null ? DEFAULT_PLACEHOLDER : fi.placeHolder;
       e.setAttribute(PLACEHOLDER_ATT, XmlStringUtil.escapeIllegalXmlChars(placeHolderText));
@@ -288,11 +288,11 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
       final Document document = FileDocumentManager.getInstance().getDocument(myFile);
       if (document == null) return;
 
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (psiFile == null || !psiFile.getViewProvider().isPhysical()) return;
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(document);
 
       String date = null;
-      boolean canRestoreElement = !DumbService.getInstance(myProject).isDumb() || FoldingUpdate.supportsDumbModeFolding(psiFile);
+      boolean canRestoreElement = psiFile != null &&
+                                  (!DumbService.getInstance(myProject).isDumb() || FoldingUpdate.supportsDumbModeFolding(psiFile));
       for (final Object o : element.getChildren()) {
         Element e = (Element)o;
         Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));

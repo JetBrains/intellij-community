@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * plugin.dtd:vendor interface.
- * Type vendor documentation
- * <pre>
- *     <vendor> tag now could have 'url', 'email' and 'logo' attributes;
- *     'logo' should contain path to a 16 x 16 icon that will appear near the plugin name in the IDEA Welcome Screen 
- * </pre>
- */
 public interface Vendor extends DomElement {
 
 	/**
@@ -69,12 +61,12 @@ public interface Vendor extends DomElement {
 
 
 	/**
-	 * Returns the value of the logo child.
-	 * Attribute logo
-	 * @return the value of the logo child.
+	 * @deprecated not used anymore
 	 */
+	@SuppressWarnings("DeprecatedIsStillUsed")
 	@NotNull
         @NoSpellchecking
+	@Deprecated
 	GenericAttributeValue<String> getLogo();
 
 

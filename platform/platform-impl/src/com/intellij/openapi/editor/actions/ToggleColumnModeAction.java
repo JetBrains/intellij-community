@@ -37,6 +37,9 @@ import com.intellij.openapi.project.DumbAware;
 import java.util.List;
 
 public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
+  public ToggleColumnModeAction() {
+    setEnabledInModalContext(true);
+  }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {

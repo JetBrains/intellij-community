@@ -1,12 +1,23 @@
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ThrowableInstanceNeverThrownInspectionTest
-  extends IGInspectionTestCase {
+public class ThrowableInstanceNeverThrownInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/bugs/throwable_instance_never_thrown",
-           new ThrowableInstanceNeverThrownInspection());
+  public void testThrowableInstanceNeverThrown() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ThrowableNotThrownInspection();
+  }
+
+  @Override
+  protected String getBasePath() {
+    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/throwable_instance_never_thrown";
   }
 }

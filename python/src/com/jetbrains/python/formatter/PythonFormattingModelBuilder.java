@@ -95,6 +95,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .betweenInside(MINUS, GT, ANNOTATION).none()
       .beforeInside(ANNOTATION, FUNCTION_DECLARATION).spaces(1)
       .beforeInside(ANNOTATION, NAMED_PARAMETER).none()
+      .beforeInside(ANNOTATION, TYPE_DECLARATION_STATEMENT).none()
+      .beforeInside(ANNOTATION, ASSIGNMENT_STATEMENT).none()
       .afterInside(COLON, ANNOTATION).spaces(1)
       .afterInside(RARROW, ANNOTATION).spaces(1)
 
@@ -119,7 +121,9 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .around(DOT).spaces(0)
       .aroundInside(AT, DECORATOR_CALL).none()
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
+      .betweenInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
+      .betweenInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES)
       .withinPairInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES)
       .withinPairInside(LPAR, RPAR, FROM_IMPORT_STATEMENT).spaces(0)
       .withinPairInside(LPAR, RPAR, GENERATOR_EXPRESSION).spaces(0)

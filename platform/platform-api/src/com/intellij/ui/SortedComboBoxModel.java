@@ -21,7 +21,7 @@ import com.intellij.ui.SortedListModel;
 import javax.swing.*;
 import java.util.Comparator;
 
-public class SortedComboBoxModel<T> extends SortedListModel<T> implements ComboBoxModel {
+public class SortedComboBoxModel<T> extends SortedListModel<T> implements ComboBoxModel<T> {
   private T mySelection;
 
   public SortedComboBoxModel(Comparator<T> comparator) {

@@ -25,7 +25,7 @@ public class FoldersCutDownWorker {
   private final Set<String> myPaths;
 
   public FoldersCutDownWorker() {
-    myPaths = new HashSet<String>();
+    myPaths = new HashSet<>();
   }
 
   public boolean addCurrent(final VirtualFile file) {

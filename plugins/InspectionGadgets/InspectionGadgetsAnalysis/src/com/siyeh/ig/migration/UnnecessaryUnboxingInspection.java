@@ -44,7 +44,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
   public boolean onlyReportSuperfluouslyUnboxed = false;
 
   @NonNls static final Map<String, String> s_unboxingMethods =
-    new HashMap<String, String>(8);
+    new HashMap<>(8);
 
   static {
     s_unboxingMethods.put(CommonClassNames.JAVA_LANG_INTEGER, "intValue");
@@ -92,15 +92,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.unboxing.remove.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

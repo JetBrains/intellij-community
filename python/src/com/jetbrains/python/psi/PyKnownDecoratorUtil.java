@@ -108,7 +108,7 @@ public class PyKnownDecoratorUtil {
     if (decoratorList == null) {
       return Collections.emptyList();
     }
-    final List<KnownDecorator> result = new ArrayList<KnownDecorator>();
+    final List<KnownDecorator> result = new ArrayList<>();
     final boolean allowResolve = context.maySwitchToAST((PsiElement)element);
     for (PyDecorator decorator : decoratorList.getDecorators()) {
       final QualifiedName qualifiedName = decorator.getQualifiedName();

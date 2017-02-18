@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,18 +107,11 @@ public class NanoXmlUtil {
         parser.parse();
       }
       catch (XMLException e) {
-        if (e.getException() instanceof ParserStoppedException) return;
         if (e.getException() instanceof ParserStoppedXmlException) return;
         LOG.debug(e);
       }
     }
-    catch (ClassNotFoundException e) {
-      LOG.error(e);
-    }
-    catch (InstantiationException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
       LOG.error(e);
     }
   }
@@ -240,7 +233,7 @@ public class NanoXmlUtil {
   }
 
   public static class BaseXmlBuilder extends IXMLBuilderAdapter {
-    private final Stack<String> myLocation = new Stack<String>();
+    private final Stack<String> myLocation = new Stack<>();
 
     @Override
     public void startBuilding(String systemID, int lineNr) throws Exception {
@@ -365,22 +358,12 @@ public class NanoXmlUtil {
   }
 
   public static class ParserStoppedXmlException extends XMLException {
-    public static final ParserStoppedException INSTANCE = new ParserStoppedException();
+    public static final ParserStoppedXmlException INSTANCE = new ParserStoppedXmlException();
 
     private ParserStoppedXmlException() {
       super("Parsing stopped");
     }
 
-    @Override
-    public Throwable fillInStackTrace() {
-      return this;
-    }
-  }
-
-  /**
-   * @deprecated throw {@link ParserStoppedXmlException#INSTANCE} instead
-   */
-  public static class ParserStoppedException extends RuntimeException {
     @Override
     public Throwable fillInStackTrace() {
       return this;

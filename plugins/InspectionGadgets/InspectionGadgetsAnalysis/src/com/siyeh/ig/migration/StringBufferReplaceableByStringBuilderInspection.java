@@ -89,14 +89,8 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.replace.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.replace.quickfix");
     }
 
     @Override

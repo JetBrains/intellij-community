@@ -114,7 +114,7 @@ public class SvnRootAboveTest extends Svn16TestCase {
       // correct mappings
       final List<VcsDirectoryMapping> mappings = myProjectLevelVcsManager.getDirectoryMappings();
       final String basePath = base.getPath();
-      final List<VcsDirectoryMapping> newMappings = new ArrayList<VcsDirectoryMapping>(mappings.size());
+      final List<VcsDirectoryMapping> newMappings = new ArrayList<>(mappings.size());
 
       for (VcsDirectoryMapping mapping : mappings) {
         if (! basePath.equals(mapping.getDirectory())) {

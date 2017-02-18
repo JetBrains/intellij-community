@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -151,7 +152,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   @NotNull
   protected UsageInfo[] findUsages() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
 
     PsiMethod[] overridingMethods =
       OverridingMethodsSearch.search(myMethodToSearchFor).toArray(PsiMethod.EMPTY_ARRAY);
@@ -213,7 +214,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private static class ReferencedElementsCollector extends JavaRecursiveElementWalkingVisitor {
-    private final Set<PsiElement> myResult = new HashSet<PsiElement>();
+    private final Set<PsiElement> myResult = new HashSet<>();
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
@@ -230,7 +231,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     AnySameNameVariables anySameNameVariables = new AnySameNameVariables();
     myMethodToReplaceIn.accept(anySameNameVariables);
@@ -415,6 +416,12 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
       IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToReplaceIn), usages, this);
       if (myMethodToSearchFor != myMethodToReplaceIn) {
         IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myMethodToSearchFor), usages, this);
+      }
+      else if (myGenerateDelegate && myMethodToReplaceIn.findSuperMethods().length == 0) {
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myMethodToReplaceIn, true, Override.class.getName());
+        if (annotation != null) {
+          annotation.delete();
+        }
       }
       ChangeContextUtil.clearContextInfo(myParameterInitializer);
 

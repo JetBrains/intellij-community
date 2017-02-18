@@ -81,7 +81,7 @@ public class ListArrayConversionRule extends TypeConversionRule {
       }
     }
 
-    if (member instanceof PsiField && member.getName().equals("length")) {
+    if (member instanceof PsiField && "length".equals(member.getName())) {
       return new TypeConversionDescriptor("$qualifier$.length", "$qualifier$.size()");
     }
 
@@ -102,22 +102,20 @@ public class ListArrayConversionRule extends TypeConversionRule {
   @Nullable
   public static PsiType evaluateCollectionsType(PsiClassType classType, PsiExpression expression) {
     final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(classType);
-    if (classResolveResult != null) {
-      final PsiClass psiClass = classResolveResult.getElement();
-      if (psiClass != null) {
-        final GlobalSearchScope allScope = GlobalSearchScope.allScope(psiClass.getProject());
-        final PsiClass collectionClass =
-          JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, allScope);
-        if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, collectionClass, true)) {
-          final PsiSubstitutor derivedSubstitutor = classResolveResult.getSubstitutor();
-          if (PsiUtil.isRawSubstitutor(psiClass, derivedSubstitutor)) return null;
-          final PsiSubstitutor substitutor =
-            TypeConversionUtil.getClassSubstitutor(collectionClass, psiClass, derivedSubstitutor);
-          assert substitutor != null;
-          final PsiType type = substitutor.substitute(collectionClass.getTypeParameters()[0]);
-          assert type != null;
-          return PsiImplUtil.normalizeWildcardTypeByPosition(type, expression);
-        }
+    final PsiClass psiClass = classResolveResult.getElement();
+    if (psiClass != null) {
+      final GlobalSearchScope allScope = GlobalSearchScope.allScope(psiClass.getProject());
+      final PsiClass collectionClass =
+        JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, allScope);
+      if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, collectionClass, true)) {
+        final PsiSubstitutor derivedSubstitutor = classResolveResult.getSubstitutor();
+        if (PsiUtil.isRawSubstitutor(psiClass, derivedSubstitutor)) return null;
+        final PsiSubstitutor substitutor =
+          TypeConversionUtil.getClassSubstitutor(collectionClass, psiClass, derivedSubstitutor);
+        assert substitutor != null;
+        final PsiType type = substitutor.substitute(collectionClass.getTypeParameters()[0]);
+        assert type != null;
+        return PsiImplUtil.normalizeWildcardTypeByPosition(type, expression);
       }
     }
     return null;

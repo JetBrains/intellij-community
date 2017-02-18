@@ -34,7 +34,7 @@ import java.util.List;
  * author: lesya
  */
 public class LogOperation extends CvsOperationOnFiles implements BranchesProvider{
-  private final List<LogInformation> myLogInformationList = new ArrayList<LogInformation>();
+  private final List<LogInformation> myLogInformationList = new ArrayList<>();
 
   public LogOperation(Collection<FilePath> files){
     for (final FilePath file : files) {

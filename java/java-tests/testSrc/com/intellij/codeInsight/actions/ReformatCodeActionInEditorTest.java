@@ -31,8 +31,12 @@ public class ReformatCodeActionInEditorTest extends LightPlatformCodeInsightFixt
 
   @Override
   public void tearDown() throws Exception {
-    myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
-    super.tearDown();
+    try {
+      myFixture.getFile().putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void doTest(LayoutCodeOptions options) {

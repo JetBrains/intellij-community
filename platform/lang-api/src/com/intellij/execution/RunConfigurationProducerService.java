@@ -51,7 +51,7 @@ public class RunConfigurationProducerService implements PersistentStateComponent
   }
 
   public static class State {
-    public Set<String> ignoredProducers = new HashSet<String>();
+    public Set<String> ignoredProducers = new HashSet<>();
   }
 
   @NotNull

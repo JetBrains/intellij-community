@@ -36,18 +36,14 @@ import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
 
 /**
  * @author oleg
@@ -74,10 +70,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
     if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
-      GithubUtil.setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    GithubUtil.setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   @Override
@@ -113,11 +109,13 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    final Ref<String> url = new Ref<String>();
+    final Ref<String> url = new Ref<>();
     new Task.Backgroundable(project, "Creating Gist...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<FileContent> contents = collectContents(project, editor, file, files);
+        if (contents.isEmpty()) return;
+
         String gistUrl =
           createGist(project, authHolder, indicator, contents, dialog.isPrivate(), dialog.getDescription(), dialog.getFileName());
         url.set(gistUrl);
@@ -146,7 +144,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     else {
       try {
         return GithubUtil.computeValueInModalIO(project, "Access to GitHub", indicator ->
-          GithubUtil.getValidAuthDataHolderFromConfig(project, indicator)
+          GithubUtil.getValidAuthDataHolderFromConfig(project, AuthLevel.LOGGED, indicator)
         );
       }
       catch (IOException e) {
@@ -175,7 +173,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       }
     }
     if (files != null) {
-      List<FileContent> contents = new ArrayList<FileContent>();
+      List<FileContent> contents = new ArrayList<>();
       for (VirtualFile vf : files) {
         contents.addAll(getContentFromFile(vf, project, null));
       }
@@ -208,7 +206,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     try {
       final List<FileContent> finalContents = contents;
-      return GithubUtil.runTask(project, auth, indicator, connection ->
+      return GithubUtil.runTask(project, auth, indicator, AuthLevel.ANY, connection ->
         GithubApiUtil.createGist(connection, finalContents, description, isPrivate)).getHtmlUrl();
     }
     catch (IOException e) {
@@ -236,6 +234,10 @@ public class GithubCreateGistAction extends DumbAwareAction {
   private static List<FileContent> getContentFromFile(@NotNull final VirtualFile file, @NotNull Project project, @Nullable String prefix) {
     if (file.isDirectory()) {
       return getContentFromDirectory(file, project, prefix);
+    }
+    if (file.getFileType().isBinary()) {
+      GithubNotifications.showWarning(project, FAILED_TO_CREATE_GIST, "Can't upload binary file: " + file);
+      return Collections.emptyList();
     }
     String content = ReadAction.compute(() -> {
       try {
@@ -265,7 +267,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @NotNull
   private static List<FileContent> getContentFromDirectory(@NotNull VirtualFile dir, @NotNull Project project, @Nullable String prefix) {
-    List<FileContent> contents = new ArrayList<FileContent>();
+    List<FileContent> contents = new ArrayList<>();
     for (VirtualFile file : dir.getChildren()) {
       if (!isFileIgnored(file, project)) {
         String pref = addPrefix(dir.getName(), prefix, true);

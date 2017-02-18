@@ -37,7 +37,7 @@ import java.util.Map;
  */
 public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> {
   // Use this its own map, because check in PyReachingDefsDfaSemilattice is important
-  public static final DFAMap<ScopeVariable> INITIAL_MAP = new DFAMap<ScopeVariable>();
+  public static final DFAMap<ScopeVariable> INITIAL_MAP = new DFAMap<>();
 
   public DFAMap<ScopeVariable> fun(final DFAMap<ScopeVariable> map, final Instruction instruction) {
     final PsiElement element = instruction.getElement();
@@ -45,7 +45,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
       return processReducedMap(map, instruction, element);
     }
     // Scope reduction
-    final DFAMap<ScopeVariable> reducedMap = new DFAMap<ScopeVariable>();
+    final DFAMap<ScopeVariable> reducedMap = new DFAMap<>();
     for (Map.Entry<String, ScopeVariable> entry : map.entrySet()) {
       final ScopeVariable value = entry.getValue();
       // Support PEP-3110. (PY-1408)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,10 +119,7 @@ public class SvnMergeProvider implements MergeProvider {
       byte[] contents = SvnUtil.getFileContents(vcs, SvnTarget.fromFile(new File(file.getPath())), SVNRevision.BASE, SVNRevision.UNDEFINED);
       bos.write(contents);
     }
-    catch (VcsException e) {
-      LOG.warn(e);
-    }
-    catch (IOException e) {
+    catch (VcsException | IOException e) {
       LOG.warn(e);
     }
     return bos;

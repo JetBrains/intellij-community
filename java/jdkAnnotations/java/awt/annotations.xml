@@ -65,9 +65,6 @@
       <val name="intValues" val="{java.awt.BasicStroke.JOIN_BEVEL, java.awt.BasicStroke.JOIN_MITER, java.awt.BasicStroke.JOIN_ROUND}" />
     </annotation>
   </item>
-  <item name="java.awt.CardLayout void show(Container parent, java.lang.String) 1">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
   <item name="java.awt.CardLayout void show(java.awt.Container, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>

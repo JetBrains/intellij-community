@@ -152,7 +152,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     @Override
     protected void updateHashCodeMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
       if (myHashCodePanel == null) return;
-      List<MemberInfo> hashCodeFields = new ArrayList<MemberInfo>();
+      List<MemberInfo> hashCodeFields = new ArrayList<>();
 
       for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
         hashCodeFields.add(myFieldsToHashCode.get(equalsMemberInfo.getMember()));
@@ -163,7 +163,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
     @Override
     protected void updateNonNullMemberInfos(Collection<MemberInfo> equalsMemberInfos) {
-      final ArrayList<MemberInfo> list = new ArrayList<MemberInfo>();
+      final ArrayList<MemberInfo> list = new ArrayList<>();
 
       for (MemberInfo equalsMemberInfo : equalsMemberInfos) {
         PsiField field = (PsiField)equalsMemberInfo.getMember();
@@ -176,7 +176,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
     private HashMap<PsiMember, MemberInfo> createFieldToMemberInfoMap(boolean checkedByDefault) {
       Collection<MemberInfo> memberInfos = MemberInfo.extractClassMembers(myClass, MEMBER_INFO_FILTER, false);
-      final HashMap<PsiMember, MemberInfo> result = new HashMap<PsiMember, MemberInfo>();
+      final HashMap<PsiMember, MemberInfo> result = new HashMap<>();
       for (MemberInfo memberInfo : memberInfos) {
         memberInfo.setChecked(checkedByDefault);
         result.put(memberInfo.getMember(), memberInfo);
@@ -213,7 +213,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   }
 
   private static PsiField[] memberInfosToFields(Collection<MemberInfo> infos) {
-    ArrayList<PsiField> list = new ArrayList<PsiField>();
+    ArrayList<PsiField> list = new ArrayList<>();
     for (MemberInfo info : infos) {
       list.add((PsiField)info.getMember());
     }
@@ -283,24 +283,24 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   private static class EqualsMemberInfoModel extends AbstractMemberInfoModel<PsiMember, MemberInfo> {
     MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager =
-      new MemberInfoTooltipManager<PsiMember, MemberInfo>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
-      @Override
-      public String getTooltip(MemberInfo memberInfo) {
-        if (checkForProblems(memberInfo) == OK) return null;
-        if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
-        final PsiField field = (PsiField)memberInfo.getMember();
-        if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
-          final PsiType type = field.getType();
-          if (PsiAdapter.isNestedArray(type)) {
-            return CodeInsightBundle .message("generate.equals.warning.equals.for.nested.arrays.not.supported");
+      new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
+        @Override
+        public String getTooltip(MemberInfo memberInfo) {
+          if (checkForProblems(memberInfo) == OK) return null;
+          if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
+          final PsiField field = (PsiField)memberInfo.getMember();
+          if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) {
+            final PsiType type = field.getType();
+            if (PsiAdapter.isNestedArray(type)) {
+              return CodeInsightBundle.message("generate.equals.warning.equals.for.nested.arrays.not.supported");
+            }
+            if (GenerateEqualsHelper.isArrayOfObjects(type)) {
+              return CodeInsightBundle.message("generate.equals.warning.generated.equals.could.be.incorrect");
+            }
           }
-          if (GenerateEqualsHelper.isArrayOfObjects(type)) {
-            return CodeInsightBundle.message("generate.equals.warning.generated.equals.could.be.incorrect");
-          }
+          return null;
         }
-        return null;
-      }
-    });
+      });
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
@@ -329,17 +329,18 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
   }
 
   private static class HashCodeMemberInfoModel extends AbstractMemberInfoModel<PsiMember, MemberInfo> {
-    private final MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager = new MemberInfoTooltipManager<PsiMember, MemberInfo>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
-      @Override
-      public String getTooltip(MemberInfo memberInfo) {
-        if (isMemberEnabled(memberInfo)) return null;
-        if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
-        final PsiField field = (PsiField)memberInfo.getMember();
-        final PsiType type = field.getType();
-        if (!(type instanceof PsiArrayType) || JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) return null;
-        return CodeInsightBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");
-      }
-    });
+    private final MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager =
+      new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
+        @Override
+        public String getTooltip(MemberInfo memberInfo) {
+          if (isMemberEnabled(memberInfo)) return null;
+          if (!(memberInfo.getMember() instanceof PsiField)) return CodeInsightBundle.message("generate.equals.hashcode.internal.error");
+          final PsiField field = (PsiField)memberInfo.getMember();
+          final PsiType type = field.getType();
+          if (!(type instanceof PsiArrayType) || JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_5)) return null;
+          return CodeInsightBundle.message("generate.equals.hashcode.warning.hashcode.for.arrays.is.not.supported");
+        }
+      });
 
     @Override
     public boolean isMemberEnabled(MemberInfo member) {
@@ -364,8 +365,8 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
     
       final ComboBox comboBox = new ComboBox();
-      final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton = 
-        new ComponentWithBrowseButton<ComboBox>(comboBox, new MyEditTemplatesListener(psiClass, myPanel, comboBox));
+      final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton =
+        new ComponentWithBrowseButton<>(comboBox, new MyEditTemplatesListener(psiClass, myPanel, comboBox));
       templateChooserLabel.setLabelFor(comboBox);
       final EqualsHashCodeTemplatesManager manager = EqualsHashCodeTemplatesManager.getInstance();
       setupCombobox(manager, comboBox, psiClass);
@@ -409,9 +410,9 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
                                       PsiClass psiClass) {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiClass.getProject());
       final GlobalSearchScope resolveScope = psiClass.getResolveScope();
-      final Set<String> names = new LinkedHashSet<String>();
+      final Set<String> names = new LinkedHashSet<>();
       
-      final Set<String> invalid = new HashSet<String>();
+      final Set<String> invalid = new HashSet<>();
       for (TemplateResource resource : templatesManager.getAllTemplates()) {
         final String templateBaseName = EqualsHashCodeTemplatesManager.getTemplateBaseName(resource);
         if (names.add(templateBaseName)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement impl
     final SPIClassProvidersElementList firstChild =
       (SPIClassProvidersElementList)PsiFileFactory.getInstance(getProject())
         .createFileFromText("spi_dummy", SPIFileType.INSTANCE, newElementName).getFirstChild();
-    return replace(firstChild.getElements().get(0));
+    PsiTreeUtil.getDeepestLast(this).replace(PsiTreeUtil.getDeepestLast(firstChild.getElements().get(0)));
+    return this;
   }
 
   @Nullable
@@ -72,11 +73,21 @@ public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement impl
 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    String newElementName;
     if (element instanceof PsiPackage) {
-      return handleElementRename(((PsiPackage)element).getQualifiedName());
-    } else if (element instanceof PsiClass) {
-      final String className = ClassUtil.getJVMClassName((PsiClass)element);
-      return className != null ? handleElementRename(className) : null;
+      newElementName = ((PsiPackage)element).getQualifiedName();
+    }
+    else if (element instanceof PsiClass) {
+      newElementName = ClassUtil.getJVMClassName((PsiClass)element);
+    }
+    else {
+      return null;
+    }
+    if (newElementName != null) {
+      final SPIClassProvidersElementList firstChild =
+        (SPIClassProvidersElementList)PsiFileFactory.getInstance(getProject())
+          .createFileFromText("spi_dummy", SPIFileType.INSTANCE, newElementName).getFirstChild();
+      return replace(firstChild.getElements().get(0));
     }
     return null;
   }

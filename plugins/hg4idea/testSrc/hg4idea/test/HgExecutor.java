@@ -18,6 +18,7 @@ package hg4idea.test;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.vcs.ExecutableHelper;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
@@ -38,7 +39,7 @@ public class HgExecutor {
     final String programName = "hg";
     final String unixExec = "hg";
     final String winExec = "hg.exe";
-    String exec = findEnvValue(programName, Collections.singletonList(HG_EXECUTABLE_ENV));
+    String exec = ExecutableHelper.findEnvValue(programName, Collections.singletonList(HG_EXECUTABLE_ENV));
     if (exec != null) {
       return exec;
     }

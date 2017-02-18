@@ -111,7 +111,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     }
 
     final Charset[] charsets = CharsetToolkit.getAvailableCharsets();
-    final List<String> suggestions = new ArrayList<String>(charsets.length);
+    final List<String> suggestions = new ArrayList<>(charsets.length);
     for (Charset charset : charsets) {
       if (charset.canEncode()) {
         String name = charset.name();

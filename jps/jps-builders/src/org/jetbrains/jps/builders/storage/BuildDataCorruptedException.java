@@ -24,8 +24,12 @@ import java.io.IOException;
  * @author nik
  */
 public class BuildDataCorruptedException extends RuntimeException {
-  public BuildDataCorruptedException(IOException cause) {
+  public BuildDataCorruptedException(Exception cause) {
     super(cause);
+  }
+
+  public BuildDataCorruptedException(String message) {
+    super(message);
   }
 
   @Override

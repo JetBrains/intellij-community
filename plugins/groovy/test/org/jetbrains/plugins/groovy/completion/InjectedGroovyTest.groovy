@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,14 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
  */
 class InjectedGroovyTest extends LightCodeInsightFixtureTestCase {
 
-  public void testTabMethodParentheses() {
+  void testTabMethodParentheses() {
     myFixture.configureByText("a.xml", """<groovy>
 String s = "foo"
 s.codePo<caret>charAt(0)
 </groovy>""")
 
     def host = PsiTreeUtil.findElementOfClassAtOffset(myFixture.file, myFixture.editor.caretModel.offset, XmlText, false)
-    TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(GroovyLanguage.INSTANCE, host);
+    TemporaryPlacesRegistry.getInstance(project).getLanguageInjectionSupport().addInjectionInPlace(GroovyLanguage.INSTANCE, host)
 
     myFixture.completeBasic()
     myFixture.type('\t')
@@ -45,29 +45,29 @@ s.codePointAt(<caret>0)
 </groovy>""")
   }
 
-  public void testIntelliLangInjections() throws Exception {
-    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
-    final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate("s = new String()")');
-    assertNotNull(psiFile);
+  void testIntelliLangInjections() throws Exception {
+    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}")
+    final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate("s = new String()")')
+    assertNotNull(psiFile)
 
     def offset = psiFile.getText().indexOf('"') + 1
-    assertNotNull(psiFile.findElementAt(offset));
+    assertNotNull(psiFile.findElementAt(offset))
     assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, offset)
   }
 
-  public void testRegexInjections() {
-    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
-    final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate(/ blah-blah-blah \\ language won\'t be injected here /)');
-    assertNotNull(psiFile);
+  void testRegexInjections() {
+    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}")
+    final PsiFile psiFile = myFixture.configureByText("script.groovy", 'new groovy.lang.GroovyShell().evaluate(/ blah-blah-blah \\ language won\'t be injected here /)')
+    assertNotNull(psiFile)
 
     assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('blah') + 1)
     assert InjectedLanguageUtil.findInjectedPsiNoCommit(psiFile, psiFile.getText().indexOf('injected') + 1)
   }
 
-  public void testResolveAnnotationsInInjectedCode() {
+  void testResolveAnnotationsInInjectedCode() {
     myFixture.addClass("package foo; @interface Bar{}")
 
-    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
+    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}")
     final PsiFile psiFile = myFixture.configureByText("script.groovy", """
 new groovy.lang.GroovyShell().evaluate('''
 import foo.Bar
@@ -75,18 +75,18 @@ import foo.Bar
 @Ba<caret>r
 def abc = null
 ''')
-""");
-    assertNotNull(psiFile);
+""")
+    assertNotNull(psiFile)
     PsiReference ref = psiFile.findReferenceAt(myFixture.editor.caretModel.offset)
     assert ref.resolve() instanceof PsiClass
     assert ref.resolve().qualifiedName == 'foo.Bar'
 
   }
 
-  public void testResolveAnnotationsInInjectedCodeInMethodCall() {
+  void testResolveAnnotationsInInjectedCodeInMethodCall() {
     myFixture.addClass("package foo; @interface Bar{}")
 
-    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}");
+    myFixture.addClass("package groovy.lang; public class GroovyShell { public void evaluate(String s) { }}")
     final PsiFile psiFile = myFixture.configureByText("script.groovy", """
 new groovy.lang.GroovyShell().evaluate '''
 import foo.Bar
@@ -94,8 +94,8 @@ import foo.Bar
 @Ba<caret>r
 def abc = null
 '''
-""");
-    assertNotNull(psiFile);
+""")
+    assertNotNull(psiFile)
     PsiReference ref = psiFile.findReferenceAt(myFixture.editor.caretModel.offset)
     assert ref.resolve() instanceof PsiClass
     assert ref.resolve().qualifiedName == 'foo.Bar'

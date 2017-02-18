@@ -58,7 +58,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
   }
 
   private static Collection<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<Library> predicate) {
-    final HashSet<Library> result = new HashSet<Library>();
+    final HashSet<Library> result = new HashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       for (final Module module : ModuleManager.getInstance(project).getModules()) {
         OrderEnumerator.orderEntries(module).withoutSdk().forEachLibrary(library -> {

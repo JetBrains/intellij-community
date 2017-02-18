@@ -78,8 +78,8 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
    */
   @NotNull
   public Pair<List<Pair<Integer, Integer>>, List<String>> getHighlightedStringsInConsole() {
-    final List<String> resultStrings = new ArrayList<String>();
-    final List<Pair<Integer, Integer>> resultRanges = new ArrayList<Pair<Integer, Integer>>();
+    final List<String> resultStrings = new ArrayList<>();
+    final List<Pair<Integer, Integer>> resultRanges = new ArrayList<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       myConsole.flushDeferredText();
       final Editor editor = myConsole.getEditor();

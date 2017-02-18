@@ -204,7 +204,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     if(!myCustomization.suggestExistingProperties) {
       return Collections.emptyList();
     }
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
 
     // check if property value already exists among properties file values and suggest corresponding key
     PropertiesFile propertiesFile = getPropertiesFile();
@@ -347,7 +347,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
   protected List<String> suggestPropertiesFiles() {
     if (myCustomization.propertiesFiles != null && !myCustomization.propertiesFiles.isEmpty()) {
-      ArrayList<String> list = new ArrayList<String>();
+      ArrayList<String> list = new ArrayList<>();
       for (PropertiesFile propertiesFile : myCustomization.propertiesFiles) {
         final VirtualFile virtualFile = propertiesFile.getVirtualFile();
         if (virtualFile != null) {

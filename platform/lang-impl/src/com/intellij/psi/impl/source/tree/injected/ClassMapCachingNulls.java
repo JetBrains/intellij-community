@@ -16,22 +16,27 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ClassMapCachingNulls<T> {
   private final Map<Class, T[]> myBackingMap;
   private final T[] myEmptyArray;
+  private final List<T> myOrderingArray;
   private final Map<Class, T[]> myMap = ContainerUtil.newConcurrentMap();
 
-  public ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray) {
+  public ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray, @NotNull List<T> orderingArray) {
     myBackingMap = backingMap;
     myEmptyArray = emptyArray;
+    myOrderingArray = orderingArray;
   }
 
   @Nullable
@@ -64,29 +69,29 @@ public class ClassMapCachingNulls<T> {
     return value;
   }
 
+  @Nullable
   private List<T> getFromBackingMap(Class aClass) {
     T[] value = myBackingMap.get(aClass);
-    List<T> result = null;
+    Set<T> result = null;
     if (value != null) {
       assert value.length != 0;
-      result = new ArrayList<T>(Arrays.asList(value));
+      result = new HashSet<>(Arrays.asList(value));
     }
-    for (final Class aClass1 : aClass.getInterfaces()) {
-      result = addFromUpper(result, aClass1);
-    }
-    final Class superclass = aClass.getSuperclass();
-    if (superclass != null) {
+    for (final Class superclass : JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces())) {
       result = addFromUpper(result, superclass);
     }
-    return result;
+    
+    if (result == null) return null;
+    final Set<T> _result = result;
+    return myOrderingArray.stream().filter(_result::contains).collect(Collectors.toList());
   }
 
-  private List<T> addFromUpper(List<T> value, Class superclass) {
+  private Set<T> addFromUpper(Set<T> value, Class superclass) {
     T[] fromUpper = get(superclass);
     if (fromUpper != null) {
       assert fromUpper.length != 0;
       if (value == null) {
-        value = new ArrayList<T>(fromUpper.length);
+        value = new HashSet<>(fromUpper.length);
       }
       for (T t : fromUpper) {
         if (!value.contains(t)) {

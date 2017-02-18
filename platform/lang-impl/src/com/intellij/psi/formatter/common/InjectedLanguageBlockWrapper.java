@@ -107,7 +107,7 @@ public final class InjectedLanguageBlockWrapper implements BlockEx {
     if (list.isEmpty()) return AbstractBlock.EMPTY;
     if (myOffset == 0 && myRange == null) return list;
 
-    final ArrayList<Block> result = new ArrayList<Block>(list.size());
+    final ArrayList<Block> result = new ArrayList<>(list.size());
     if (myRange == null) {
       for (Block block : list) {
         result.add(new InjectedLanguageBlockWrapper(block, myOffset, myRange, null, myLanguage));

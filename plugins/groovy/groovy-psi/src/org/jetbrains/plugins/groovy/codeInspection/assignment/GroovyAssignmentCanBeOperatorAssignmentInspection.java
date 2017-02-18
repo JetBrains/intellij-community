@@ -136,6 +136,13 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
       m_name = "Replace '=' with '" + signText + "='";
     }
 
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify";
+    }
+
     @Override
     @NotNull
     public String getName() {
@@ -144,7 +151,7 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
 
     @Override
     public void doFix(@NotNull Project project,
-                      ProblemDescriptor descriptor)
+                      @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof GrAssignmentExpression)) {

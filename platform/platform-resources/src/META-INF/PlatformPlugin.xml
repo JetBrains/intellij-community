@@ -1,4 +1,4 @@
-<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>com.intellij</id>
   <name>IDEA CORE</name>
 
@@ -48,6 +48,7 @@
                         serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                         serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
+    <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
   </extensions>

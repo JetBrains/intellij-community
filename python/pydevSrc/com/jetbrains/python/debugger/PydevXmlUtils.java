@@ -52,7 +52,7 @@ public class PydevXmlUtils {
   }
 
   public static List<PydevCompletionVariant> decodeCompletions(Object fromServer, String actTok) {
-    final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
+    final List<PydevCompletionVariant> ret = new ArrayList<>();
 
     List completionList = objectToList(fromServer);
 
@@ -109,7 +109,7 @@ public class PydevXmlUtils {
     private List<Object[]> completions;
 
     public XMLToCompletionsInfo() {
-      completions = new ArrayList<Object[]>();
+      completions = new ArrayList<>();
     }
 
     public void startElement(String uri, String localName, String qName,

@@ -148,7 +148,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
         final FileGroup mergedWithConflictsGroup = updatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID);
         final FileGroup binaryMergedGroup = updatedFiles.getGroupById(CvsUpdatePolicy.BINARY_MERGED_ID);
         if (!mergedWithConflictsGroup.isEmpty() || !binaryMergedGroup.isEmpty()) {
-          Collection<String> paths = new ArrayList<String>();
+          Collection<String> paths = new ArrayList<>();
           paths.addAll(mergedWithConflictsGroup.getFiles());
           paths.addAll(binaryMergedGroup.getFiles());
 
@@ -167,8 +167,8 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
   }
 
   private static List<VirtualFile> invokeManualMerging(Collection<String> paths, Project project) {
-    final List<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> readOnlyFiles = new ArrayList<>();
+    final List<VirtualFile> files = new ArrayList<>();
 
     for (final String path : paths) {
       final VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(new File(path));

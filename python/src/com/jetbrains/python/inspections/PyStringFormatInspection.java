@@ -81,13 +81,13 @@ public class PyStringFormatInspection extends PyInspection {
         .put('b', "bytes")
         .build();
 
-      private final Map<String, Boolean> myUsedMappingKeys = new HashMap<String, Boolean>();
+      private final Map<String, Boolean> myUsedMappingKeys = new HashMap<>();
       private int myExpectedArguments = 0;
       private boolean myProblemRegister = false;
       private final Visitor myVisitor;
       private final TypeEvalContext myTypeEvalContext;
 
-      private final Map<String, String> myFormatSpec = new HashMap<String, String>();
+      private final Map<String, String> myFormatSpec = new HashMap<>();
 
       public Inspection(Visitor visitor, TypeEvalContext typeEvalContext) {
         myVisitor = visitor;
@@ -106,8 +106,8 @@ public class PyStringFormatInspection extends PyInspection {
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
-            if (rightType instanceof PySubscriptableType) {
-              final PySubscriptableType tupleType = (PySubscriptableType)rightType;
+            if (rightType instanceof PyTupleType) {
+              final PyTupleType tupleType = (PyTupleType)rightType;
               for (int i = 0; i <= tupleType.getElementCount(); i += 1) {
                 final PyType elementType = tupleType.getElementType(i);
                 if (elementType != null) {
@@ -227,7 +227,7 @@ public class PyStringFormatInspection extends PyInspection {
 
 
       private static Map<PyExpression, PyExpression> addSubscriptions(PsiFile file, String operand) {
-        Map<PyExpression, PyExpression> additionalExpressions = new HashMap<PyExpression,PyExpression>();
+        Map<PyExpression, PyExpression> additionalExpressions = new HashMap<>();
         PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
         for (PySubscriptionExpression expr : subscriptionExpressions) {
           if (expr.getOperand().getText().equals(operand)) {
@@ -256,7 +256,7 @@ public class PyStringFormatInspection extends PyInspection {
             PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)).getElement();
         }
         else {
-          additionalExpressions = new HashMap<PyExpression,PyExpression>();
+          additionalExpressions = new HashMap<>();
           pyElement = rightExpression;
         }
         if (pyElement == null) return 0;

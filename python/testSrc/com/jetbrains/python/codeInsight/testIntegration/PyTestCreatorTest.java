@@ -24,8 +24,8 @@ import org.easymock.IMocksControl;
 
 import java.util.Arrays;
 
-import static org.easymock.classextension.EasyMock.createNiceControl;
-import static org.easymock.classextension.EasyMock.expect;
+import static org.easymock.EasyMock.createNiceControl;
+import static org.easymock.EasyMock.expect;
 
 /**
  * Checks how test classes are created

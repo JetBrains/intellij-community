@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,16 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BatchQuickFix;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +45,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull InspectionToolWrapper toolWrapper) {
     super(fix.getName(), toolWrapper);
     myFix = fix;
-    setText(myFix.getName());
+    setText(StringUtil.escapeMnemonics(myFix.getName()));
   }
 
   public void setText(@NotNull String text) {
@@ -60,24 +64,12 @@ public class LocalQuickFixWrapper extends QuickFixAction {
 
   @Nullable
   private QuickFix getWorkingQuickFix(@NotNull QuickFix[] fixes) {
-    final QuickFix exactResult = getWorkingQuickFix(fixes, true);
-    return exactResult != null ? exactResult : getWorkingQuickFix(fixes, false);
-  }
-  
-  @Nullable
-  private QuickFix getWorkingQuickFix(@NotNull QuickFix[] fixes, boolean exact) {
     for (QuickFix fix : fixes) {
-      if (!checkFix(exact, myFix, fix)) continue;
-      if (myFix instanceof IntentionWrapper && fix instanceof IntentionWrapper) {
-        if (!checkFix(exact, ((IntentionWrapper)myFix).getAction(), ((IntentionWrapper)fix).getAction())) continue;
+      if (fix.getFamilyName().equals(myFix.getFamilyName())) {
+        return fix;
       }
-      return fix;
     }
     return null;
-  }
-
-  private static <T> boolean checkFix(boolean exact, T thisFix, T fix) {
-    return exact ? thisFix.getClass() == fix.getClass() : thisFix.getClass().isInstance(fix);
   }
 
   @Override
@@ -127,6 +119,19 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     }
     if (restart) {
       DaemonCodeAnalyzer.getInstance(project).restart();
+    }
+  }
+
+  @Override
+  protected void performFixesInBatch(@NotNull Project project,
+                                     @NotNull CommonProblemDescriptor[] descriptors,
+                                     @NotNull GlobalInspectionContextImpl context,
+                                     Set<PsiElement> ignoredElements) {
+    if (myFix instanceof BatchQuickFix) {
+      applyFix(project, context, descriptors, ignoredElements);
+    }
+    else {
+      super.performFixesInBatch(project, descriptors, context, ignoredElements);
     }
   }
 

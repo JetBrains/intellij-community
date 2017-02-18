@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
   private static final int ITERATIONS = Timings.adjustAccordingToMySpeed(239, true);
 
   public void testInternalDomLocksReadConsistency() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription(MyElement.class, "a"), myTestRootDisposable);
+    getDomManager().registerFileDescription(new DomFileDescription(MyElement.class, "a"), getTestRootDisposable());
 
     registerExtender(MyElement.class, MyExtender.class);
 
@@ -111,7 +111,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
     final DomExtenderEP extenderEP = new DomExtenderEP();
     extenderEP.domClassName = elementClass.getName();
     extenderEP.extenderClassName = extenderClass.getName();
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, extenderEP, myTestRootDisposable);
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, extenderEP, getTestRootDisposable());
   }
 
   private static void runThreads(int threadCount, final Runnable runnable) throws Throwable {
@@ -187,7 +187,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
   }
 
   public void testBigCustomFile() throws Throwable {
-    getDomManager().registerFileDescription(new DomFileDescription(MyAllCustomElement.class, "component"), myTestRootDisposable);
+    getDomManager().registerFileDescription(new DomFileDescription(MyAllCustomElement.class, "component"), getTestRootDisposable());
 
     registerExtender(MyAllCustomElement.class, MyAllCustomExtender.class);
 

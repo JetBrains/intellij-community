@@ -57,7 +57,7 @@ public class MarkLibraryRootAction extends AnAction {
     final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (project == null || files == null || files.length == 0) return Collections.emptyList();
 
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<>();
     for (VirtualFile file : files) {
       if (file.isDirectory()) {
         roots.add(file);

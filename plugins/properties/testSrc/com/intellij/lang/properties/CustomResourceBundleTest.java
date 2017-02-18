@@ -24,7 +24,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
@@ -178,7 +177,7 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
     final PsiFile someFile = myFixture.addFileToProject("to_remove/asd.txt", "");
     final PsiDirectory toRemove = someFile.getParent();
     assertNotNull(toRemove);
-    ApplicationManager.getApplication().runWriteAction(() -> toRemove.delete());
+    ApplicationManager.getApplication().runWriteAction(toRemove::delete);
 
     final ResourceBundleManagerState state = resourceBundleManager.getState();
     assertNotNull(state);
@@ -187,14 +186,14 @@ public class CustomResourceBundleTest extends LightPlatformCodeInsightFixtureTes
 
     final PsiDirectory directory = propertiesFile.getParent().getParent();
     assertNotNull(directory);
-    ApplicationManager.getApplication().runWriteAction(() -> directory.delete());
+    ApplicationManager.getApplication().runWriteAction(directory::delete);
 
     assertSize(1, state.getCustomResourceBundles());
     assertSize(0, state.getDissociatedFiles());
 
     final PsiDirectory directory1 = propFile1.getParent().getParent();
     assertNotNull(directory1);
-    ApplicationManager.getApplication().runWriteAction(() -> directory1.delete());
+    ApplicationManager.getApplication().runWriteAction(directory1::delete);
 
     assertSize(0, state.getCustomResourceBundles());
     assertSize(0, state.getDissociatedFiles());

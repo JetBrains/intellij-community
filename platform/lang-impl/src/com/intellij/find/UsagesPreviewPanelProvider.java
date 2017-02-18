@@ -34,7 +34,7 @@ public class UsagesPreviewPanelProvider extends PreviewPanelProvider<Pair<UsageV
   public static final PreviewProviderId<Pair<UsageViewImpl, ? extends JTable>, Boolean> ID = PreviewProviderId.create("Usages");
 
   private JComponent myComponent;
-  private Collection<UsageViewImpl> myViews = new ArrayList<UsageViewImpl>();
+  private Collection<UsageViewImpl> myViews = new ArrayList<>();
 
   public UsagesPreviewPanelProvider(Project project) {
     super(ID);

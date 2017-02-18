@@ -58,7 +58,7 @@ public class ChangeRevision extends Revision {
     myName = changeSet.getName();
 
     List<String> allAffectedFiles = changeSet.getAffectedPaths();
-    List<String> someAffectedFiles = new SmartList<String>();
+    List<String> someAffectedFiles = new SmartList<>();
     for (String each : allAffectedFiles.subList(0, Math.min(3, allAffectedFiles.size()))) {
       someAffectedFiles.add(Paths.getNameOf(each));
     }

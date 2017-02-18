@@ -21,10 +21,10 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class MavenTasksManagerState {
-  public Set<MavenCompilerTask> beforeCompileTasks = new TreeSet<MavenCompilerTask>();
-  public Set<MavenCompilerTask> afterCompileTasks = new TreeSet<MavenCompilerTask>();
-  public Set<MavenCompilerTask> afterRebuildTask = new TreeSet<MavenCompilerTask>();
-  public Set<MavenCompilerTask> beforeRebuildTask = new TreeSet<MavenCompilerTask>();
+  public Set<MavenCompilerTask> beforeCompileTasks = new TreeSet<>();
+  public Set<MavenCompilerTask> afterCompileTasks = new TreeSet<>();
+  public Set<MavenCompilerTask> afterRebuildTask = new TreeSet<>();
+  public Set<MavenCompilerTask> beforeRebuildTask = new TreeSet<>();
 
   @NotNull
   public Set<MavenCompilerTask> getTasks(@NotNull MavenTasksManager.Phase phase) {

@@ -74,6 +74,11 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
       val annotations = parse(output.stdoutLines)
       return if (annotations.isNotEmpty()) Result(annotations) else null
     }
+    catch (e: Exception) {
+      val log = Logger.getInstance(JavadocHtmlLintAnnotator::class.java)
+      log.debug(file.path, e)
+      return null
+    }
     finally {
       FileUtil.delete(copy)
     }
@@ -118,7 +123,7 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
       file.virtualFile != null && ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
 
   private fun isToolEnabled(file: PsiFile) =
-      manual || InspectionProjectProfileManager.getInstance(file.project).inspectionProfile.isToolEnabled(key.value, file)
+      manual || InspectionProjectProfileManager.getInstance(file.project).currentProfile.isToolEnabled(key.value, file)
 
   private fun createTempFile(bytes: ByteArray): File {
     val tempFile = FileUtil.createTempFile(File(PathManager.getTempPath()), "javadocHtmlLint", ".java")

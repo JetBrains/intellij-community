@@ -107,7 +107,7 @@ public class GenerationUtil {
       if (classMemberList == null || classMemberList.isEmpty()) {
         return Collections.emptyList();
       }
-      List<PsiMember> psiMemberList = new ArrayList<PsiMember>();
+      List<PsiMember> psiMemberList = new ArrayList<>();
 
       for (PsiElementClassMember classMember : classMemberList) {
           psiMemberList.add(classMember.getElement());
@@ -124,7 +124,7 @@ public class GenerationUtil {
   /**
    * Generates the code using Velocity.
    * <p>
-   * This is used to create the <code>toString</code> method body and it's javadoc.
+   * This is used to create the {@code toString} method body and it's javadoc.
    *
    * @param clazz
    * @param selectedMembers       the selected members as both {@link PsiField} and {@link PsiMethod}.
@@ -147,7 +147,7 @@ public class GenerationUtil {
   /**
    * Generates the code using Velocity.
    * <p/>
-   * This is used to create the <code>toString</code> method body and it's javadoc.
+   * This is used to create the {@code toString} method body and it's javadoc.
    *
    * @param selectedMembers the selected members as both {@link PsiField} and {@link PsiMethod}.
    * @param params          additional parameters stored with key/value in the map.

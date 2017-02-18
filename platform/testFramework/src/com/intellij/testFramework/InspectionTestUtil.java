@@ -17,12 +17,17 @@ package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.InspectionEP;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -32,16 +37,15 @@ import org.junit.Assert;
 import java.io.CharArrayReader;
 import java.io.File;
 import java.io.StreamTokenizer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class InspectionTestUtil {
   private InspectionTestUtil() {
   }
 
   protected static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
-    List<Element> expectedProblems = new ArrayList<Element>(expectedDoc.getRootElement().getChildren("problem"));
-    List<Element> reportedProblems = new ArrayList<Element>(doc.getRootElement().getChildren("problem"));
+    List<Element> expectedProblems = new ArrayList<>(expectedDoc.getRootElement().getChildren("problem"));
+    List<Element> reportedProblems = new ArrayList<>(doc.getRootElement().getChildren("problem"));
 
     Element[] expectedArray = expectedProblems.toArray(new Element[expectedProblems.size()]);
     boolean failed = false;
@@ -163,5 +167,21 @@ expected:
       UIUtil.dispatchAllInvocationEvents();
     }
     while (!globalContext.isFinished());
+  }
+
+  @NotNull
+  public static <T extends InspectionProfileEntry> List<InspectionProfileEntry> instantiateTools(@NotNull Collection<Class<? extends T>> inspections) {
+    Set<String> classNames = JBIterable.from(inspections).transform(Class::getName).toSet();
+    List<InspectionProfileEntry> tools = JBIterable.of(LocalInspectionEP.LOCAL_INSPECTION, InspectionEP.GLOBAL_INSPECTION)
+      .flatten((o) -> Arrays.asList(o.getExtensions()))
+      .filter((o) -> classNames.contains(o.implementationClass))
+      .transform(InspectionEP::instantiateTool)
+      .toList();
+    if (tools.size() != classNames.size()) {
+      Set<String> missing = ContainerUtil.newTreeSet(classNames);
+      missing.removeAll(JBIterable.from(tools).transform((o) -> o.getClass().getName()).toSet());
+      throw new RuntimeException("Unregistered inspections requested: " + missing);
+    }
+    return tools;
   }
 }

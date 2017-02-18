@@ -28,6 +28,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -43,7 +44,7 @@ import java.util.List;
  */
 final class Stripe extends JPanel implements UISettingsListener {
   private final int myAnchor;
-  private final ArrayList<StripeButton> myButtons = new ArrayList<StripeButton>();
+  private final ArrayList<StripeButton> myButtons = new ArrayList<>();
   private final MyKeymapManagerListener myWeakKeymapManagerListener;
 
   private Dimension myPrefSize;
@@ -67,7 +68,7 @@ final class Stripe extends JPanel implements UISettingsListener {
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
+  public void uiSettingsChanged(UISettings uiSettings) {
     updatePresentation();
   }
 
@@ -166,7 +167,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     super.removeNotify();
   }
 
-  void addButton(final StripeButton button, final Comparator<StripeButton> comparator) {
+  void addButton(@NotNull StripeButton button, final Comparator<StripeButton> comparator) {
     myPrefSize = null;
     myButtons.add(button);
     Collections.sort(myButtons, comparator);
@@ -174,7 +175,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     revalidate();
   }
 
-  void removeButton(final StripeButton button) {
+  void removeButton(@NotNull StripeButton button) {
     myPrefSize = null;
     myButtons.remove(button);
     remove(button);
@@ -360,10 +361,10 @@ final class Stripe extends JPanel implements UISettingsListener {
   }
 
   private List<StripeButton> getButtonsToLayOut() {
-    List<StripeButton> result = new ArrayList<StripeButton>();
+    List<StripeButton> result = new ArrayList<>();
 
-    List<StripeButton> tools = new ArrayList<StripeButton>();
-    List<StripeButton> sideTools = new ArrayList<StripeButton>();
+    List<StripeButton> tools = new ArrayList<>();
+    List<StripeButton> sideTools = new ArrayList<>();
 
     for (StripeButton b : myButtons) {
       if (!isConsideredInLayout(b)) continue;
@@ -475,7 +476,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
-  public boolean containsScreen(final Rectangle screenRec) {
+  public boolean containsScreen(@NotNull Rectangle screenRec) {
     final Point point = screenRec.getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
     return new Rectangle(point, screenRec.getSize()).intersects(
@@ -508,7 +509,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   public void processDropButton(final StripeButton button, JComponent buttonImage, Point screenPoint) {
     if (!isDroppingButton()) {
-      final BufferedImage image = UIUtil.createImage(button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage image = UIUtil.createImage(button, button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
       buttonImage.paint(image.getGraphics());
       myDragButton = button;
       myDragButtonImage = buttonImage;

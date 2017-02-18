@@ -22,7 +22,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBDimension extends Dimension {
-  public final float originalScale = JBUI.scale(1f);
+  float myJBUIScale = JBUI.scale(1f);
 
   public JBDimension(int width, int height) {
     super(scale(width), scale(height));
@@ -63,5 +63,13 @@ public class JBDimension extends Dimension {
     size.width = width;
     size.height = scale(height);
     return size;
+  }
+
+  // [tav] todo: may lose precision
+  public void update() {
+    float scale = JBUI.scale(1f);
+    width = (int)(width * scale / myJBUIScale);
+    height = (int)(height * scale / myJBUIScale);
+    myJBUIScale = scale;
   }
 }

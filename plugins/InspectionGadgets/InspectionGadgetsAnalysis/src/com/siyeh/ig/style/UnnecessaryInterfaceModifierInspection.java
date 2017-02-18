@@ -35,15 +35,15 @@ import java.util.Set;
 public class UnnecessaryInterfaceModifierInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
   private static final Set<String> INTERFACE_REDUNDANT_MODIFIERS =
-    new HashSet<String>(Arrays.asList(PsiModifier.ABSTRACT, PsiModifier.STATIC));
+    new HashSet<>(Arrays.asList(PsiModifier.ABSTRACT, PsiModifier.STATIC));
   private static final Set<String> INNER_CLASS_REDUNDANT_MODIFIERS =
-    new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.STATIC));
+    new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.STATIC));
   private static final Set<String> INNER_INTERFACE_REDUNDANT_MODIFIERS =
-    new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.ABSTRACT, PsiModifier.STATIC));
+    new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.ABSTRACT, PsiModifier.STATIC));
   private static final Set<String> FIELD_REDUNDANT_MODIFIERS =
-    new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL));
+    new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL));
   private static final Set<String> METHOD_REDUNDANT_MODIFIERS =
-    new HashSet<String>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.ABSTRACT));
+    new HashSet<>(Arrays.asList(PsiModifier.PUBLIC, PsiModifier.ABSTRACT));
 
   @Override
   @NotNull

@@ -1,5 +1,5 @@
 PsiJavaFile:MethodRef2.java
-  PsiMethodReferenceExpression:C::<T>m
+  PsiMethodReferenceExpression
     PsiReferenceExpression:C
       PsiReferenceParameterList
         <empty list>

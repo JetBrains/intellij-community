@@ -34,8 +34,8 @@ import java.util.*;
  */
 public class FacetModelImpl extends FacetModelBase implements ModifiableFacetModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetModelImpl");
-  private final List<Facet> myFacets = new ArrayList<Facet>();
-  private final Map<Facet, String> myFacet2NewName = new HashMap<Facet, String>();
+  private final List<Facet> myFacets = new ArrayList<>();
+  private final Map<Facet, String> myFacet2NewName = new HashMap<>();
   private final FacetManagerImpl myManager;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -91,7 +91,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
   @Override
   public boolean isModified() {
-    return !new HashSet<Facet>(myFacets).equals(new HashSet<Facet>(Arrays.asList(myManager.getAllFacets()))) || !myFacet2NewName.isEmpty();
+    return !new HashSet<>(myFacets).equals(new HashSet<>(Arrays.asList(myManager.getAllFacets()))) || !myFacet2NewName.isEmpty();
   }
 
   @Override

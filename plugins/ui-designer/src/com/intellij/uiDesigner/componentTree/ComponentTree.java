@@ -213,7 +213,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (paths == null) {
       return RadComponent.EMPTY_ARRAY;
     }
-    final ArrayList<RadComponent> result = new ArrayList<RadComponent>(paths.length);
+    final ArrayList<RadComponent> result = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       if (node != null && node.getUserObject() instanceof ComponentPtrDescriptor) {
@@ -303,7 +303,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (paths == null) {
       return Collections.emptyList();
     }
-    final ArrayList<T> result = new ArrayList<T>(paths.length);
+    final ArrayList<T> result = new ArrayList<>(paths.length);
     for (TreePath path : paths) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object userObject = node.getUserObject();
@@ -323,7 +323,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     Map<SimpleTextAttributes, SimpleTextAttributes> highlightMap = myHighlightAttributes.get(level.getSeverity());
     if (highlightMap == null) {
-      highlightMap = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
+      highlightMap = new HashMap<>();
       myHighlightAttributes.put(level.getSeverity(), highlightMap);
     }
 
@@ -344,7 +344,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     // [vova] we cannot create this hash in constructor and just clear it here. The
     // problem is that setUI is invoked by constructor of superclass.
-    myHighlightAttributes = new HashMap<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>>();
+    myHighlightAttributes = new HashMap<>();
 
     final EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     final TextAttributes attributes = globalScheme.getAttributes(JavaHighlightingColors.STRING);

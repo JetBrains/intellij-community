@@ -142,7 +142,7 @@ public class ArrangementUtil {
    * 
    * @param initialRange  anchor range
    * @param document      target document against which the ranges are built
-   * @return              expanded range if possible; <code>null</code> otherwise
+   * @return              expanded range if possible; {@code null} otherwise
    */
   @NotNull
   public static TextRange expandToLineIfPossible(@NotNull TextRange initialRange, @NotNull Document document) {
@@ -166,7 +166,7 @@ public class ArrangementUtil {
   
   @Nullable
   public static ArrangementSettingsToken parseType(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
-    final Ref<ArrangementSettingsToken> result = new Ref<ArrangementSettingsToken>();
+    final Ref<ArrangementSettingsToken> result = new Ref<>();
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
@@ -230,8 +230,8 @@ public class ArrangementUtil {
 
   @Nullable
   public static ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) {
-    final Ref<ArrangementEntryMatcher> result = new Ref<ArrangementEntryMatcher>();
-    final Stack<CompositeArrangementEntryMatcher> composites = new Stack<CompositeArrangementEntryMatcher>();
+    final Ref<ArrangementEntryMatcher> result = new Ref<>();
+    final Stack<CompositeArrangementEntryMatcher> composites = new Stack<>();
     ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {

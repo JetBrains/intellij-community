@@ -17,9 +17,12 @@ package com.intellij.execution.lineMarker;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public class LineMarkerActionWrapper extends AnAction {
+  public static final Key<Pair<PsiElement, MyDataContext>> LOCATION_WRAPPER = Key.create("LOCATION_WRAPPER");
 
   protected final PsiElement myElement;
   private final AnAction myOrigin;
@@ -42,15 +46,18 @@ public class LineMarkerActionWrapper extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    AnActionEvent event = wrapEvent(e);
-    myOrigin.update(event);
+    myOrigin.update(wrapEvent(e));
   }
 
   @NotNull
-  protected AnActionEvent wrapEvent(AnActionEvent e) {
-    return new AnActionEvent(
-      e.getInputEvent(), new MyDataContext(e.getDataContext()), e.getPlace(), e.getPresentation(), e.getActionManager(),
-      e.getModifiers());
+  private AnActionEvent wrapEvent(AnActionEvent e) {
+    DataContext dataContext = e.getDataContext();
+    Pair<PsiElement, MyDataContext> pair = DataManager.getInstance().loadFromDataContext(dataContext, LOCATION_WRAPPER);
+    if (pair == null || pair.first != myElement) {
+      pair = Pair.pair(myElement, new MyDataContext(dataContext));
+      DataManager.getInstance().saveInDataContext(dataContext, LOCATION_WRAPPER, pair);
+    }
+    return new AnActionEvent(e.getInputEvent(), pair.second, e.getPlace(), e.getPresentation(), e.getActionManager(), e.getModifiers());
   }
 
   @Override
@@ -68,7 +75,7 @@ public class LineMarkerActionWrapper extends AnAction {
     @Nullable
     @Override
     public synchronized Object getData(@NonNls String dataId) {
-      if (Location.DATA_KEY.is(dataId)) return myElement.isValid() ? new PsiLocation<PsiElement>(myElement) : null;
+      if (Location.DATA_KEY.is(dataId)) return myElement.isValid() ? new PsiLocation<>(myElement) : null;
       return myDelegate.getData(dataId);
     }
   }

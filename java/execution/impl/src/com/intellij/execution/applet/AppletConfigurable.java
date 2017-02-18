@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package com.intellij.execution.applet;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.CheckableRunConfigurationEditor;
-import com.intellij.execution.ui.DefaultJreSelector;
-import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -119,7 +119,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myModuleSelector = new ConfigurationModuleSelector(project, getModuleComponent());
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModuleComponent(), true));
     myTablePlace.setLayout(new BorderLayout());
-    myParameters = new ListTableModel<AppletConfiguration.AppletParameter>(PARAMETER_COLUMNS);
+    myParameters = new ListTableModel<>(PARAMETER_COLUMNS);
     myTable = new TableView(myParameters);
     myTable.getEmptyText().setText(ExecutionBundle.message("no.parameters"));
     myTablePlace.add(
@@ -168,7 +168,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
   private void addParameter() {
     final ArrayList<AppletConfiguration.AppletParameter> newItems =
-      new ArrayList<AppletConfiguration.AppletParameter>(myParameters.getItems());
+      new ArrayList<>(myParameters.getItems());
     final AppletConfiguration.AppletParameter parameter = new AppletConfiguration.AppletParameter("newParameter", "");
     newItems.add(parameter);
     myParameters.setItems(newItems);
@@ -187,7 +187,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private static List<AppletConfiguration.AppletParameter> cloneParameters(final List<AppletConfiguration.AppletParameter> items) {
-    final List<AppletConfiguration.AppletParameter> params = new ArrayList<AppletConfiguration.AppletParameter>();
+    final List<AppletConfiguration.AppletParameter> params = new ArrayList<>();
     for (AppletConfiguration.AppletParameter appletParameter : items) {
       params.add(new AppletConfiguration.AppletParameter(appletParameter.getName(), appletParameter.getValue()));
     }
@@ -216,14 +216,14 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return s.length() == 0 ? null : s.replace(File.separatorChar, '/');
   }
 
-  public void applyEditorTo(final AppletConfiguration configuration) {
+  public void applyEditorTo(@NotNull final AppletConfiguration configuration) {
     checkEditorData(configuration);
     myTable.stopEditing();
     final List<AppletConfiguration.AppletParameter> params = cloneParameters(myParameters.getItems());
     configuration.setAppletParameters(params);
   }
 
-  public void resetEditorFrom(final AppletConfiguration configuration) {
+  public void resetEditorFrom(@NotNull final AppletConfiguration configuration) {
     getClassNameComponent().setText(configuration.MAIN_CLASS_NAME);
     String presentableHtmlName = configuration.HTML_FILE_NAME;
     if (presentableHtmlName != null && !StringUtil.startsWithIgnoreCase(presentableHtmlName, HTTP_PREFIX)) {

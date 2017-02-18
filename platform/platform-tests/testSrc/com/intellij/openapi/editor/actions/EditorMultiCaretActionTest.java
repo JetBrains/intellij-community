@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.FileBasedTestCaseHelper;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.*;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,7 +26,7 @@ import org.junit.runner.RunWith;
 public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    edt(() -> {
+    EdtTestUtil.runInEdtAndWait(() -> {
       configureByFile(getBeforeFileName());
       EditorTestUtil.setEditorVisibleSize(myEditor, 120, 20); // some actions require visible area to be defined, like EditorPageUp
       executeAction(getActionName());

@@ -42,7 +42,7 @@ public class RestoreFoldArrangementCallback implements ArrangementCallback {
     Project project = myEditor.getProject();
     if (project != null) {
       final FoldRegion[] regions = myEditor.getFoldingModel().getAllFoldRegions();
-      final List<FoldRegionInfo> foldRegionsInfo = new ArrayList<FoldRegionInfo>();
+      final List<FoldRegionInfo> foldRegionsInfo = new ArrayList<>();
       for (FoldRegion region : regions) {
         final FoldRegionInfo info = new FoldRegionInfo(region.getStartOffset(), region.getEndOffset(), region.isExpanded());
         foldRegionsInfo.add(info);

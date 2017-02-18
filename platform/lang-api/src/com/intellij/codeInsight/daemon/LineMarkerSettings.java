@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -25,7 +26,7 @@ public abstract class LineMarkerSettings {
     return ServiceManager.getService(LineMarkerSettings.class);
   }
 
-  public abstract boolean isEnabled(GutterIconDescriptor descriptor);
+  public abstract boolean isEnabled(@NotNull GutterIconDescriptor descriptor);
 
-  public abstract void setEnabled(GutterIconDescriptor descriptor, boolean selected);
+  public abstract void setEnabled(@NotNull GutterIconDescriptor descriptor, boolean selected);
 }

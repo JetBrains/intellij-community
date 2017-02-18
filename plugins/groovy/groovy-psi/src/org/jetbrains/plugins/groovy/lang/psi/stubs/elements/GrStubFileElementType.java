@@ -40,6 +40,7 @@ import java.io.IOException;
  * @author ilyas
  */
 public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
+  public static final int STUB_VERSION = 35;
 
   public GrStubFileElementType(Language language) {
     super(language);
@@ -84,18 +85,13 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 29;
+    return super.getStubVersion() + STUB_VERSION;
   }
 
   @Override
   @NotNull
   public String getExternalId() {
     return "groovy.FILE";
-  }
-
-  @Override
-  public void indexStub(@NotNull PsiFileStub stub, @NotNull IndexSink sink) {
-    super.indexStub(stub, sink);
   }
 
   @Override
@@ -126,11 +122,6 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     for (String anno : stub.getAnnotations()) {
       sink.occurrence(GrAnnotatedMemberIndex.KEY, anno);
     }
-
-    //Integer fileId = stub.getUserData(IndexingDataKeys.VIRTUAL_FILE_ID);
-    //if (fileId == null) return;
-    //IndexTree.Unit unit = GrStubIndexer.translate(fileId, stub);
-    //sink.occurrence(JavaStubIndexKeys.UNITS, unit);
   }
 
 }

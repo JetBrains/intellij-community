@@ -42,7 +42,7 @@ public class CleanPycAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final PsiElement[] elements = e.getData(LangDataKeys.PSI_ELEMENT_ARRAY);
     if (elements == null) return;
-    final List<File> pycFiles = new ArrayList<File>();
+    final List<File> pycFiles = new ArrayList<>();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       for (PsiElement element : elements) {
         PsiDirectory dir = (PsiDirectory) element;

@@ -54,6 +54,12 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     Disposer.dispose(this);
   }
 
+  public void cancel(@NotNull Throwable cause) {
+    myTraceableDisposable.killExceptionally(cause);
+    super.cancel();
+    Disposer.dispose(this);
+  }
+
   // called when canceled
   @Override
   public void dispose() {
@@ -68,11 +74,6 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
   @Override
   public final void checkCanceled() {
     super.checkCanceled();
-  }
-
-  public void cancel(@NotNull Throwable cause) {
-    myTraceableDisposable.killExceptionally(cause);
-    super.cancel();
   }
 
   @Override

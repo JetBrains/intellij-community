@@ -61,7 +61,7 @@ public abstract class DomModelFactory<T extends DomElement, M extends DomModel<T
   }
 
   public List<DomFileElement<T>> getFileElements(M model) {
-    final ArrayList<DomFileElement<T>> list = new ArrayList<DomFileElement<T>>(model.getConfigFiles().size());
+    final ArrayList<DomFileElement<T>> list = new ArrayList<>(model.getConfigFiles().size());
     for (XmlFile configFile : model.getConfigFiles()) {
       final DomFileElement<T> element = DomManager.getDomManager(configFile.getProject()).getFileElement(configFile, myClass);
       if (element != null) {

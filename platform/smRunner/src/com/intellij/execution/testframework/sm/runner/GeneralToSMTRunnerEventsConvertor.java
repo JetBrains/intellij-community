@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,9 +36,9 @@ import java.util.*;
  */
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
-  private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<String, SMTestProxy>();
+  private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<>();
   private final TestSuiteStack mySuitesStack;
-  private final Set<SMTestProxy> myCurrentChildren = new LinkedHashSet<SMTestProxy>();
+  private final Set<SMTestProxy> myCurrentChildren = new LinkedHashSet<>();
   private boolean myGetChildren = true;
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
 
@@ -112,17 +111,20 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
-  private final List<Runnable> myBuildTreeRunnables = new ArrayList<Runnable>();
+  private final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
   
   @Override
   public void onSuiteTreeNodeAdded(final String testName, final String locationHint) {
     myTreeBuildBeforeStart = true;
     myBuildTreeRunnables.add(() -> {
       final SMTestProxy testProxy = new SMTestProxy(testName, false, locationHint);
+      testProxy.setTreeBuildBeforeStart();
       if (myLocator != null) {
         testProxy.setLocator(myLocator);
       }
-      getCurrentSuite().addChild(testProxy);
+      SMTestProxy currentSuite = getCurrentSuite();
+      currentSuite.setTreeBuildBeforeStart();
+      currentSuite.addChild(testProxy);
       myEventPublisher.onSuiteTreeNodeAdded(testProxy);
       for (SMTRunnerEventsListener adapter : myListenerAdapters) {
         adapter.onSuiteTreeNodeAdded(testProxy);
@@ -155,7 +157,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     myBuildTreeRunnables.add(() -> mySuitesStack.popSuite(suiteName));
     
     if (myBuildTreeRunnables.size() > 100) {
-      final ArrayList<Runnable> runnables = new ArrayList<Runnable>(myBuildTreeRunnables);
+      final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
       myBuildTreeRunnables.clear();
       processTreeBuildEvents(runnables);
     }
@@ -203,6 +205,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         // creates test
         testProxy = new SMTestProxy(testName, false, locationUrl);
         testProxy.setConfig(isConfig);
+        if (myTreeBuildBeforeStart) testProxy.setTreeBuildBeforeStart();
 
         if (myLocator != null) {
           testProxy.setLocator(myLocator);
@@ -242,6 +245,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       if (newSuite == null) {
         //new suite
         newSuite = new SMTestProxy(suiteName, true, locationUrl, parentSuite.isPreservePresentableName());
+        if (myTreeBuildBeforeStart)newSuite.setTreeBuildBeforeStart();
 
         if (myLocator != null) {
           newSuite.setLocator(myLocator);
@@ -382,14 +386,13 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       }
 
       if (comparisionFailureActualText != null && comparisionFailureExpectedText != null) {
-        testProxy.setTestComparisonFailed(localizedMessage, stackTrace,
-                                          comparisionFailureActualText, comparisionFailureExpectedText,
-                                          testFailedEvent.getExpectedFilePath(), testFailedEvent.getActualFilePath());
+        testProxy.setTestComparisonFailed(localizedMessage, stackTrace, comparisionFailureActualText, comparisionFailureExpectedText, testFailedEvent);
       }
       else if (comparisionFailureActualText == null && comparisionFailureExpectedText == null) {
         testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
       }
       else {
+        testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
         logProblem("Comparison failure actual and expected texts should be both null or not null.\n"
                    + "Expected:\n"
                    + comparisionFailureExpectedText + "\n"
@@ -404,7 +407,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
      addToInvokeLater(() -> {
-       final String testName = ObjectUtils.assertNotNull(testIgnoredEvent.getName());
+       final String testName = testIgnoredEvent.getName();
+       if (testName == null) {
+         logProblem("TestIgnored event: no name");
+       }
        String ignoreComment = testIgnoredEvent.getIgnoreComment();
        final String stackTrace = testIgnoredEvent.getStacktrace();
        final String fullTestName = getFullTestName(testName);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,7 +199,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       myAppletParameters = null;
     }
     else {
-      List<AppletParameter> parameters = new SmartList<AppletParameter>();
+      List<AppletParameter> parameters = new SmartList<>();
       for (Element element : paramList) {
         parameters.add(new AppletParameter(element.getAttributeValue(NAME_ATTR), element.getAttributeValue(VALUE_ATTR)));
       }
@@ -265,10 +265,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       try {
         new URL(getHtmlURL().getUrl());
       }
-      catch (CantRunException ex) {
-        checkUrlIsValid(ex);
-      }
-      catch (MalformedURLException ex) {
+      catch (CantRunException | MalformedURLException ex) {
         checkUrlIsValid(ex);
       }
     }

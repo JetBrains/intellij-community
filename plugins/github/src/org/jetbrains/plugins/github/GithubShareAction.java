@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,12 +53,13 @@ import git4idea.util.GitFileUtils;
 import git4idea.util.GitUIUtil;
 import icons.GithubIcons;
 import org.apache.http.HttpStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
-import org.jetbrains.plugins.github.api.GithubRepo;
-import org.jetbrains.plugins.github.api.GithubUserDetailed;
+import org.jetbrains.plugins.github.api.data.GithubRepo;
+import org.jetbrains.plugins.github.api.data.GithubUserDetailed;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.ui.GithubShareDialog;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
@@ -67,8 +70,6 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
-
-import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
  * @author oleg
@@ -83,10 +84,10 @@ public class GithubShareAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
-      setVisibleEnabled(e, false, false);
+      e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    setVisibleEnabled(e, true, true);
+    e.getPresentation().setEnabledAndVisible(true);
   }
 
   // get gitRepository
@@ -149,7 +150,7 @@ public class GithubShareAction extends DumbAwareAction {
     final String description = shareDialog.getDescription();
     final String remoteName = shareDialog.getRemoteName();
 
-    new Task.Backgroundable(project, "Sharing project on GitHub...") {
+    new Task.Backgroundable(project, "Sharing Project on GitHub...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         // create GitHub repo (network)
@@ -254,9 +255,9 @@ public class GithubShareAction extends DumbAwareAction {
         // get existing github repos (network) and validate auth data
         return GithubUtil.runTask(project, authHolder, indicator, connection -> {
           // check access to private repos (network)
-          GithubUserDetailed userInfo = GithubApiUtil.getCurrentUserDetailed(connection);
+          GithubUserDetailed userInfo = GithubApiUtil.getCurrentUser(connection);
 
-          HashSet<String> names = new HashSet<String>();
+          HashSet<String> names = new HashSet<>();
           for (GithubRepo info : GithubApiUtil.getUserRepos(connection)) {
             names.add(info.getName());
           }
@@ -325,11 +326,11 @@ public class GithubShareAction extends DumbAwareAction {
         filterOutIgnored(project, repository.getUntrackedFilesHolder().retrieveUntrackedFiles());
       trackedFiles.removeAll(untrackedFiles); // fix IDEA-119855
 
-      final List<VirtualFile> allFiles = new ArrayList<VirtualFile>();
+      final List<VirtualFile> allFiles = new ArrayList<>();
       allFiles.addAll(trackedFiles);
       allFiles.addAll(untrackedFiles);
 
-      final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<GithubUntrackedFilesDialog>();
+      final Ref<GithubUntrackedFilesDialog> dialogRef = new Ref<>();
       ApplicationManager.getApplication().invokeAndWait(() -> {
         GithubUntrackedFilesDialog dialog = new GithubUntrackedFilesDialog(project, allFiles);
         if (!trackedFiles.isEmpty()) {
@@ -348,7 +349,7 @@ public class GithubShareAction extends DumbAwareAction {
 
       Collection<VirtualFile> files2add = ContainerUtil.intersection(untrackedFiles, files2commit);
       Collection<VirtualFile> files2rm = ContainerUtil.subtract(trackedFiles, files2commit);
-      Collection<VirtualFile> modified = new HashSet<VirtualFile>(trackedFiles);
+      Collection<VirtualFile> modified = new HashSet<>(trackedFiles);
       modified.addAll(files2commit);
 
       GitFileUtils.addFiles(project, root, files2add);
@@ -405,7 +406,7 @@ public class GithubShareAction extends DumbAwareAction {
     return true;
   }
 
-  public static class GithubUntrackedFilesDialog extends SelectFilesDialog implements TypeSafeDataProvider {
+  public static class GithubUntrackedFilesDialog extends SelectFilesDialog implements DataProvider {
     @NotNull private final Project myProject;
     private CommitMessage myCommitMessagePanel;
 
@@ -442,11 +443,13 @@ public class GithubShareAction extends DumbAwareAction {
       return myCommitMessagePanel.getComment();
     }
 
+    @Nullable
     @Override
-    public void calcData(DataKey key, DataSink sink) {
-      if (key == VcsDataKeys.COMMIT_MESSAGE_CONTROL) {
-        sink.put(VcsDataKeys.COMMIT_MESSAGE_CONTROL, myCommitMessagePanel);
+    public Object getData(@NonNls String dataId) {
+      if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.is(dataId)) {
+        return myCommitMessagePanel;
       }
+      return null;
     }
 
     @Override

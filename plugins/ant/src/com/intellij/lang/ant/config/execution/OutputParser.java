@@ -62,7 +62,7 @@ public class OutputParser{
     myProject = project;
     myProcessHandler = processHandler;
     myMessageView = errorsView;
-    myProgress = new WeakReference<ProgressIndicator>(progress);
+    myProgress = new WeakReference<>(progress);
     myBuildName = buildName;
     myMessageView.setParsingThread(this);
   }
@@ -132,7 +132,7 @@ public class OutputParser{
     else if (IdeaAntLogger2.TASK == tagName) {
       setProgressText(AntBundle.message("executing.task.tag.value.status.text", tagValue));
       if (JAVAC.equals(tagValue)) {
-        myJavacMessages = new ArrayList<String>();
+        myJavacMessages = new ArrayList<>();
       }
       else if (ECHO.equals(tagValue)) {
         myIsEcho = true;

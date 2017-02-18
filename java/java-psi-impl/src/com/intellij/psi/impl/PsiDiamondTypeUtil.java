@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.FileModificationService;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -91,7 +93,6 @@ public class PsiDiamondTypeUtil {
 
   public static PsiElement replaceExplicitWithDiamond(PsiElement psiElement) {
     if (psiElement instanceof PsiReferenceParameterList) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(psiElement.getContainingFile())) return psiElement;
       final PsiNewExpression expression =
         (PsiNewExpression)JavaPsiFacade.getElementFactory(psiElement.getProject()).createExpressionFromText("new a<>()", psiElement);
       final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
@@ -163,8 +164,11 @@ public class PsiDiamondTypeUtil {
       final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
       if (typeByParent != null) {
         final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
-        final PsiNewExpression newExpr =
-          (PsiNewExpression)JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(arrayInitializer, expression);
+        final Project project = expression.getProject();
+        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+        PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(arrayInitializer, expression);
+        //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
+        newExpr = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
         final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
         LOG.assertTrue(initializer != null);
         copy = initializer.getInitializers()[0].replace(expression);
@@ -178,13 +182,20 @@ public class PsiDiamondTypeUtil {
           copy = callCopy != null ? callCopy.findElementAt(offset - call.getTextRange().getStartOffset()) : null;
         }
         else  {
+          final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(expression.getProject());
+          if (injectedLanguageManager.getInjectionHost(expression) != null) {
+            return false;
+          }
           final PsiFile containingFile = expression.getContainingFile();
           final PsiFile fileCopy = (PsiFile)containingFile.copy();
           copy = fileCopy.findElementAt(offset);
           if (method != null && method.getContainingFile() == containingFile) {
             final PsiElement startMethodElementInCopy = fileCopy.findElementAt(method.getTextOffset());
             method = PsiTreeUtil.getParentOfType(startMethodElementInCopy, PsiMethod.class);
-            LOG.assertTrue(method != null, startMethodElementInCopy);
+            if (method == null) {
+              //lombok generated builder
+              return false;
+            }
           }
         }
       }
@@ -273,5 +284,34 @@ public class PsiDiamondTypeUtil {
       }
     }
     return true;
+  }
+
+  /**
+   * Removes redundant type arguments which appear in any descendants of the supplied element.
+   *
+   * @param element element to start the replacement from
+   */
+  public static void removeRedundantTypeArguments(PsiElement element) {
+    for(PsiNewExpression newExpression : PsiTreeUtil.collectElementsOfType(element, PsiNewExpression.class)) {
+      PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+      if(classReference != null && canCollapseToDiamond(newExpression, newExpression, null)) {
+        replaceExplicitWithDiamond(classReference.getParameterList());
+      }
+    }
+    PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+    for(PsiMethodCallExpression call : PsiTreeUtil.collectElementsOfType(element, PsiMethodCallExpression.class)) {
+      PsiType[] arguments = call.getTypeArguments();
+      PsiMethod method = call.resolveMethod();
+      if(method != null) {
+        PsiTypeParameter[] parameters = method.getTypeParameters();
+        if(arguments.length == parameters.length &&
+           areTypeArgumentsRedundant(arguments, call, false, method, parameters)) {
+          PsiMethodCallExpression expr =
+            (PsiMethodCallExpression)factory
+              .createExpressionFromText("foo()", null);
+          call.getTypeArgumentList().replace(expr.getTypeArgumentList());
+        }
+      }
+    }
   }
 }

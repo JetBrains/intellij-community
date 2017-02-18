@@ -87,7 +87,7 @@ public abstract class StartedActivated {
   protected abstract void deactivate() throws VcsException;
 
   private void callImpl(final MySection section, final boolean start) throws VcsException {
-    final List<ThrowableRunnable<VcsException>> list = new ArrayList<ThrowableRunnable<VcsException>>(2);
+    final List<ThrowableRunnable<VcsException>> list = new ArrayList<>(2);
     synchronized (myLock) {
       if (start) {
         section.start(list);

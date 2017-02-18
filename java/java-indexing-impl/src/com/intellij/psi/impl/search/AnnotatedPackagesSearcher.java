@@ -75,9 +75,9 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
       boolean accepted = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
         @Override
         public Boolean compute() {
-          PsiModifierList modlist = (PsiModifierList)annotation.getParent();
-          final PsiElement owner = modlist.getParent();
-          if ((owner instanceof PsiClass)) {
+          PsiModifierList modList = (PsiModifierList)annotation.getParent();
+          final PsiElement owner = modList.getParent();
+          if (owner instanceof PsiClass) {
             PsiClass candidate = (PsiClass)owner;
             if ("package-info".equals(candidate.getName())) {
               LOG.assertTrue(candidate.isValid());

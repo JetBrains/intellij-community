@@ -527,7 +527,7 @@ public class MigrateTypeSignatureTest extends TypeMigrationTestBase {
       }
 
       @Override
-      public PsiElement victims(PsiClass aClass) {
+      public PsiElement victim(PsiClass aClass) {
         final PsiAnonymousClass anonymousClass = PsiTreeUtil.findChildOfType(aClass, PsiAnonymousClass.class);
         assertNotNull(anonymousClass);
         return anonymousClass.findMethodsByName(methodName, false)[0];

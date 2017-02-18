@@ -33,7 +33,7 @@ import java.util.Locale;
  * Date: 04.08.2007
  */
 public class RncTokenTypes {
-  private static final TIntObjectHashMap<IElementType> ourTokenTypes = new TIntObjectHashMap<IElementType>();
+  private static final TIntObjectHashMap<IElementType> ourTokenTypes = new TIntObjectHashMap<>();
 
   static {
     assert RngCompactLanguage.INSTANCE != null;
@@ -77,7 +77,7 @@ public class RncTokenTypes {
   @NotNull
   private static IElementType get(final String name) {
     assert !ourTokenTypes.isEmpty();
-    final Ref<IElementType> ref = new Ref<IElementType>();
+    final Ref<IElementType> ref = new Ref<>();
     ourTokenTypes.forEachValue(new TObjectProcedure<IElementType>() {
       @Override
       public boolean execute(IElementType iElementType) {

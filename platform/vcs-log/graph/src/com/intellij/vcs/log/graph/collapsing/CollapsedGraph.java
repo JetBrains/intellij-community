@@ -48,7 +48,7 @@ public class CollapsedGraph {
   @NotNull private final UpdatableIntToIntMap myNodesMap;
   @NotNull private final EdgeStorage myEdgeStorage;
   @NotNull private final CompiledGraph myCompiledGraph;
-  @NotNull private final AtomicReference<Modification> myCurrentModification = new AtomicReference<Modification>(null);
+  @NotNull private final AtomicReference<Modification> myCurrentModification = new AtomicReference<>(null);
 
 
   private CollapsedGraph(@NotNull LinearGraph delegatedGraph,

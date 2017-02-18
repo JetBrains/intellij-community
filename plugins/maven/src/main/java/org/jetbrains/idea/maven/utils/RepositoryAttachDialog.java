@@ -81,7 +81,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private final JComboBox myCombobox;
 
   private final Map<String, Pair<MavenArtifactInfo, MavenRepositoryInfo>> myCoordinates = ContainerUtil.newTroveMap();
-  private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<String, MavenRepositoryInfo>();
+  private final Map<String, MavenRepositoryInfo> myRepositories = new TreeMap<>();
   private final List<String> myShownItems = ContainerUtil.newArrayList();
   private final String myDefaultDownloadFolder;
 
@@ -217,7 +217,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     }
 
     // use maven version sorter
-    ArrayList<Comparable> comparables = new ArrayList<Comparable>(myShownItems.size());
+    ArrayList<Comparable> comparables = new ArrayList<>(myShownItems.size());
     for (String item : myShownItems) {
       comparables.add(new MavenVersionComparable(item));
     }

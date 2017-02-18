@@ -53,7 +53,7 @@ public abstract class DependenciesHandlerBase {
   }
 
   public void analyze() {
-    final List<DependenciesBuilder> builders = new ArrayList<DependenciesBuilder>();
+    final List<DependenciesBuilder> builders = new ArrayList<>();
 
     final Task task;
     if (canStartInBackground()) {

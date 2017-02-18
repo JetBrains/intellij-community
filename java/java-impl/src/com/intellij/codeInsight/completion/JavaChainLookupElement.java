@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -59,7 +61,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
   @Override
   public Set<String> getAllLookupStrings() {
     final Set<String> strings = getDelegate().getAllLookupStrings();
-    final THashSet<String> result = new THashSet<String>();
+    final THashSet<String> result = new THashSet<>();
     result.addAll(strings);
     result.add(getLookupString());
     return result;
@@ -99,8 +101,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     presentation.setItemText(qualifierText + "." + presentation.getItemText());
 
     if (myQualifier instanceof JavaPsiClassReferenceElement) {
-      String locationString = ((JavaPsiClassReferenceElement)myQualifier).getLocationString();
-      presentation.setTailText(StringUtil.notNullize(presentation.getTailText()) + locationString);
+      presentation.appendTailText(((JavaPsiClassReferenceElement)myQualifier).getLocationString(), false);
     }
     if (qualifierPresentation.isStrikeout()) {
       presentation.setStrikeout(true);

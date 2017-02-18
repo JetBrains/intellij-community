@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +16,22 @@
 
 package com.intellij.profile.codeInspection.ui;
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.profile.Profile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Marker interface for the configurable which is used to configure the current inspection profile. 
+ * Marker interface for the configurable which is used to configure the current inspection profile.
  *
  * @author yole
  */
 public interface ErrorsConfigurable extends Configurable {
-  void selectProfile(final Profile profile);
+  void selectProfile(InspectionProfileImpl profile);
+
   void selectInspectionTool(final String selectedToolShortName);
+
   void selectInspectionGroup(final String[] groupPath);
+
   @Nullable
   Object getSelectedObject();
-
-  class SERVICE {
-    private SERVICE() {
-    }
-
-    @Nullable
-    public static ErrorsConfigurable createConfigurable(@NotNull Project project) {
-      Configurable configurable = ConfigurableExtensionPointUtil.createProjectConfigurableForProvider(project, ErrorsConfigurableProvider.class);
-      if (configurable == null) {
-        configurable = ConfigurableExtensionPointUtil.createApplicationConfigurableForProvider(ErrorsConfigurableProvider.class);
-      }
-      return (ErrorsConfigurable)configurable;
-    }
-  }
 }

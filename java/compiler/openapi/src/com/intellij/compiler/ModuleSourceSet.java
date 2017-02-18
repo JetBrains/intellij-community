@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
 * @author nik
@@ -71,10 +71,6 @@ public class ModuleSourceSet {
 
   @NotNull
   public static Set<Module> getModules(@NotNull Collection<ModuleSourceSet> sourceSets) {
-    Set<Module> modules = new HashSet<Module>();
-    for (ModuleSourceSet set : sourceSets) {
-      modules.add(set.getModule());
-    }
-    return modules;
+    return sourceSets.stream().map(ModuleSourceSet::getModule).collect(Collectors.toSet());
   }
 }

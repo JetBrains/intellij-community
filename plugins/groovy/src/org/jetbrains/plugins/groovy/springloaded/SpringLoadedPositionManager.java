@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ public class SpringLoadedPositionManager implements PositionManager {
     List<ReferenceType> referenceTypes = myDebugProcess.getVirtualMachineProxy().classesByName(className);
     if (referenceTypes.isEmpty()) throw NoDataException.INSTANCE;
 
-    Set<ReferenceType> res = new HashSet<ReferenceType>();
+    Set<ReferenceType> res = new HashSet<>();
 
     for (ReferenceType referenceType : referenceTypes) {
       findNested(res, referenceType, line);
@@ -95,7 +95,7 @@ public class SpringLoadedPositionManager implements PositionManager {
       throw NoDataException.INSTANCE;
     }
 
-    return new ArrayList<ReferenceType>(res);
+    return new ArrayList<>(res);
   }
 
   @NotNull
@@ -209,10 +209,8 @@ public class SpringLoadedPositionManager implements PositionManager {
         res.add(effectiveRef);
       }
     }
-    catch (ObjectCollectedException ignored) {
+    catch (ObjectCollectedException | AbsentInformationException ignored) {
 
-    }
-    catch (AbsentInformationException ignored) {
     }
   }
 

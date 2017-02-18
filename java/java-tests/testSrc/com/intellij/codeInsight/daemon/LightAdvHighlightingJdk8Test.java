@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
@@ -33,11 +32,6 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
-  }
-
   private void doTest(boolean warnings, boolean weakWarnings) {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, weakWarnings, false);
   }
@@ -49,4 +43,5 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   public void testUsedMethodsByMethodReferences() { enableInspectionTool(new UnusedDeclarationInspection()); doTest(true, true); }
   public void testLambdaExpressions() { doTest(false, true); }
   public void testUnsupportedFeatures() { doTest(false, false); }
+  public void testModulesNotSupported() { doTest(false, false); }
 }

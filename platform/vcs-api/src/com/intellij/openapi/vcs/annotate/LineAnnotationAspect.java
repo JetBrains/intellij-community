@@ -49,7 +49,7 @@ public interface LineAnnotationAspect {
 
   /**
    * Returns unique identifier, that will be used to show/hide some aspects
-   * If <code>null</code> this line aspect won't be configurable in annotation settings
+   * If {@code null} this line aspect won't be configurable in annotation settings
    *
    * @return unique id
    */
@@ -57,9 +57,9 @@ public interface LineAnnotationAspect {
   String getId();
 
   /**
-   * Returns <code>true</code> if this aspect will be shown on Annotate action
+   * Returns {@code true} if this aspect will be shown on Annotate action
    *
-   * @return <code>true</code> if this aspect will be shown on Annotate action
+   * @return {@code true} if this aspect will be shown on Annotate action
    */
   boolean isShowByDefault();
 }

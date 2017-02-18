@@ -144,7 +144,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     /**
      * @noinspection StaticCollection
      */
-    private static final Set<String> s_basicTypes = new HashSet<String>(8);
+    private static final Set<String> s_basicTypes = new HashSet<>(8);
 
     static {
       s_basicTypes.add(CommonClassNames.JAVA_LANG_BOOLEAN);

@@ -28,8 +28,8 @@ public class ProcessListTest extends UsefulTestCase {
     assertNotEmpty(Arrays.asList(OSProcessUtil.getProcessList()));
 
     if (SystemInfo.isWindows) {
-      assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessList_WindowsTaskList()));
-      assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessList_WindowsWMIC()));
+      assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessListUsingWindowsTaskList()));
+      assertNotEmpty(Arrays.asList(ProcessListUtil.getProcessListUsingWindowsWMIC()));
     }
   }
 

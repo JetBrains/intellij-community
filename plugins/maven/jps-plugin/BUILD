@@ -16,5 +16,6 @@ iml_module(
         "//tools/idea/jps/model-serialization:jps-model-serialization[module]",
         "//tools/idea/plugins/maven/lib:plexus-utils-2.0.6",
         "//tools/idea/jps/model-serialization:jps-serialization-tests[module, test]",
+        "//tools/idea/plugins/maven/aether-dependency-resolver[module]",
     ],
 )

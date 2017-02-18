@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.lambda;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -188,7 +187,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAcceptInferredVariablesBeforeAdditionalConstraintsLeadToFail() throws Exception {
-    doTest(false);
+    doTest();
   }
 
   public void testEnsureNoCaptureIsPerformedOverTargetTypeOfCastExpressionWhichMarksFunctionalExpression() throws Exception {
@@ -328,20 +327,24 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testHighlightFaultyLambdaReturnExpression() throws Exception {
+    doTest();
+  }
+
+  public void testUncheckedConstraintOnInferenceVariableWithProperUpperBound() throws Exception {
+    doTest();
+  }
+
+  public void testInferTypeParametersFromFunctionalInterfaceInputs() throws Exception {
+    doTest();
+  }
+
   private void doTest() {
-    doTest(false);
-  }
-
-  private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
-  }
-/*
+  /*
   public static Test suite() {
     final TestSuite suite = new TestSuite();
     for (int i = 0; i < 1000; i++) {

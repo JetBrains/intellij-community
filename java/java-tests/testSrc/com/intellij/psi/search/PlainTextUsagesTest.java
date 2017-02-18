@@ -73,7 +73,7 @@ public class PlainTextUsagesTest extends PsiTestCase {
                       int[] starts,
                       int[] ends) throws Exception {
     PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(myProject);
-    final List<PsiFile> filesList = new ArrayList<PsiFile>();
+    final List<PsiFile> filesList = new ArrayList<>();
     final IntArrayList startsList = new IntArrayList();
     final IntArrayList endsList = new IntArrayList();
     helper.processUsagesInNonJavaFiles(originalElement,

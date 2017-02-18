@@ -58,6 +58,11 @@ public class CustomisedActionGroup extends ActionGroup {
     }
   }
 
+  @Override
+  public boolean isPopup() {
+    return myGroup.isPopup();
+  }
+
   public void update(AnActionEvent e) {
     myGroup.update(e);
   }

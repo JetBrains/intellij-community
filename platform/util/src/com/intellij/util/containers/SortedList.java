@@ -15,6 +15,9 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
@@ -23,26 +26,27 @@ import java.util.*;
 public class SortedList<T> extends AbstractList<T>{
   private final SortedMap<T, List<T>> myMap;
   private final Comparator<T> myComparator;
-  private List<T> myDelegate = null;
+  private List<T> myDelegate;
 
-  public SortedList(final Comparator<T> comparator) {
+  public SortedList(@NotNull Comparator<T> comparator) {
     myComparator = comparator;
     myMap = new TreeMap<T, List<T>>(comparator);
   }
 
+  @NotNull
   public Comparator<T> getComparator() {
     return myComparator;
   }
 
   @Override
   public void add(final int index, final T element) {
-    _addToMap(element);
+    addToMap(element);
   }
 
-  private void _addToMap(T element) {
+  private void addToMap(T element) {
     List<T> group = myMap.get(element);
     if (group == null) {
-      myMap.put(element, group = new ArrayList<T>());
+      myMap.put(element, group = new SmartList<T>());
     }
     group.add(element);
     myDelegate = null;
@@ -50,7 +54,7 @@ public class SortedList<T> extends AbstractList<T>{
 
   @Override
   public boolean add(T t) {
-    _addToMap(t);
+    addToMap(t);
     return true;
   }
 
@@ -76,15 +80,16 @@ public class SortedList<T> extends AbstractList<T>{
 
   @Override
   public T get(final int index) {
-    ensureLinearized();
-    return myDelegate.get(index);
+    return ensureLinearized().get(index);
   }
 
+  @NotNull
   private List<T> ensureLinearized() {
-    if (myDelegate == null) {
-      myDelegate = ContainerUtil.concat(myMap.values());
+    List<T> delegate = myDelegate;
+    if (delegate == null) {
+      myDelegate = delegate = ContainerUtil.concat(myMap.values());
     }
-    return myDelegate;
+    return delegate;
   }
 
   @Override
@@ -100,7 +105,6 @@ public class SortedList<T> extends AbstractList<T>{
 
   @Override
   public int size() {
-    ensureLinearized();
-    return myDelegate.size();
+    return ensureLinearized().size();
   }
 }

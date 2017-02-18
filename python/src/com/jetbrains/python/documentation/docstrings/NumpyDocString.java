@@ -105,7 +105,7 @@ public class NumpyDocString extends SectionBasedDocString {
       type = namesPart;
       namesPart = null;
     }
-    final List<Substring> names = new ArrayList<Substring>();
+    final List<Substring> names = new ArrayList<>();
     if (namesPart != null) {
       // Unlike Google code style, Numpydoc allows to list several parameter with same file together, e.g.
       // x1, x2 : array_like

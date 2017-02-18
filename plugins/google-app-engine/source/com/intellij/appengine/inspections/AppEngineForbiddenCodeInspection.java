@@ -56,7 +56,7 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
     }
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
+    final List<ProblemDescriptor> problems = new ArrayList<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitDocComment(PsiDocComment comment) {

@@ -97,7 +97,7 @@ public class AntStringResolver extends PropertyProviderFinder{
     @NotNull
     public Iterator<String> getNamesIterator() {
       if (allNames == null) {
-        allNames = new HashSet<String>(myCached.keySet());
+        allNames = new HashSet<>(myCached.keySet());
       }
       return allNames.iterator();
     }

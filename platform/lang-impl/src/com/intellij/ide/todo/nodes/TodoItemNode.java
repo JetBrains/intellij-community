@@ -50,7 +50,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     RangeMarker rangeMarker = getValue().getRangeMarker();
     LOG.assertTrue(rangeMarker.isValid());
 
-    myHighlightedRegions=new ArrayList<HighlightedRegion>();
+    myHighlightedRegions= new ArrayList<>();
 
   }
 

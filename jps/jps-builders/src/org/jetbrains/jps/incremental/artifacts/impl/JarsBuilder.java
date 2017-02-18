@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.io.ZipUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -119,7 +120,7 @@ public class JarsBuilder {
 
   @Nullable
   private JarInfo[] sortJars() {
-    final DFSTBuilder<JarInfo> builder = new DFSTBuilder<JarInfo>(GraphGenerator.create(CachingSemiGraph.create(new JarsGraph())));
+    final DFSTBuilder<JarInfo> builder = new DFSTBuilder<JarInfo>(GraphGenerator.generate(CachingSemiGraph.cache(new JarsGraph())));
     if (!builder.isAcyclic()) {
       final Pair<JarInfo, JarInfo> dependency = builder.getCircularDependency();
       String message = "Cannot build: circular dependency found between '" + dependency.getFirst().getPresentableDestination() +
@@ -383,7 +384,7 @@ public class JarsBuilder {
     output.closeEntry();
   }
 
-  private class JarsGraph implements GraphGenerator.SemiGraph<JarInfo> {
+  private class JarsGraph implements InboundSemiGraph<JarInfo> {
     public Collection<JarInfo> getNodes() {
       return myJarsToBuild;
     }

@@ -33,7 +33,7 @@ public class SofterCache<T,V> {
   }
 
   public static <T, V> SofterCache<T, V> create(NotNullFunction<T, V> valueProvider) {
-    return new SofterCache<T, V>(valueProvider);
+    return new SofterCache<>(valueProvider);
   }
 
   public void clearCache() {
@@ -44,7 +44,7 @@ public class SofterCache<T,V> {
     SofterReference<ConcurrentMap<T, V>> ref = myCache;
     ConcurrentMap<T, V> map = ref == null ? null : ref.get();
     if (map == null) {
-      myCache = new SofterReference<ConcurrentMap<T, V>>(map = ContainerUtil.newConcurrentMap());
+      myCache = new SofterReference<>(map = ContainerUtil.newConcurrentMap());
     }
     V value = map.get(key);
     if (value == null) {

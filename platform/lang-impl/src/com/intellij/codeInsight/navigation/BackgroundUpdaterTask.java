@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,13 +45,14 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected AbstractPopup myPopup;
   protected T myComponent;
   private Ref<UsageView> myUsageView;
-  private final List<PsiElement> myData = new ArrayList<PsiElement>();
+  private final List<PsiElement> myData = new ArrayList<>();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final Object lock = new Object();
 
   private volatile boolean myCanceled;
   private volatile boolean myFinished;
+  private volatile ProgressIndicator myIndicator;
 
   public BackgroundUpdaterTask(Project project, String title, boolean canBeCancelled) {
     super(project, title, canBeCancelled);
@@ -109,7 +110,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
       myAlarm.cancelAllRequests();
       if (myCanceled) return;
       if (myPopup.isDisposed()) return;
-      ArrayList<PsiElement> data = new ArrayList<PsiElement>();
+      ArrayList<PsiElement> data = new ArrayList<>();
       synchronized (lock) {
         if (comparator != null) {
           Collections.sort(myData, comparator);
@@ -132,6 +133,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     paintBusy(true);
+    myIndicator = indicator;
   }
 
   @Override
@@ -145,7 +147,25 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     myFinished = true;
   }
 
+  @Nullable
+  protected PsiElement getTheOnlyOneElement() {
+    synchronized (lock) {
+      if (myData.size() == 1) {
+        return myData.get(0);
+      }
+    }
+    return null;
+  }
+
   public boolean isFinished() {
     return myFinished;
+  }
+
+  public boolean cancelTask() {
+    ProgressIndicator indicator = myIndicator;
+    if (indicator != null) {
+      indicator.cancel();
+    }
+    return setCanceled();
   }
 }

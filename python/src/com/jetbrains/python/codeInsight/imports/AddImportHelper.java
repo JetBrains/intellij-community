@@ -34,6 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
+import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.*;
@@ -151,6 +152,15 @@ public class AddImportHelper {
     return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
   }
 
+  /**
+   * Returns position in the file after all leading comments, docstring and import statements.
+   * <p>
+   * Returned PSI element is intended to be used as "anchor" parameter for {@link PsiElement#addBefore(PsiElement, PsiElement)},
+   * hence {@code null} means that element to be inserted will be the first in the file.
+   *
+   * @param file target file where some new top-level element is going to be inserted
+   * @return anchor PSI element as described
+   */
   @Nullable
   public static PsiElement getFileInsertPosition(final PsiFile file) {
     return getInsertPosition(file, null, null);
@@ -389,14 +399,24 @@ public class AddImportHelper {
                                             @Nullable PsiElement anchor) {
     try {
       final PyImportStatementBase parentImport = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
+      final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
+      final PsiLanguageInjectionHost injectionHost = manager.getInjectionHost(file);
+      final boolean insideDoctest = file instanceof PyDocstringFile &&
+                                    injectionHost != null &&
+                                    DocStringUtil.getParentDefinitionDocString(injectionHost) == injectionHost;
+
       final PsiElement insertParent;
       if (parentImport != null && parentImport.getContainingFile() == file) {
         insertParent = parentImport.getParent();
       }
+      else if (injectionHost != null && !insideDoctest) {
+        insertParent = manager.getTopLevelFile(file);
+      }
       else {
         insertParent = file;
       }
-      if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      
+      if (insideDoctest) {
         final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, newImport, priority));
         PsiElement whitespace = element.getNextSibling();
         if (!(whitespace instanceof PsiWhiteSpace)) {
@@ -404,13 +424,11 @@ public class AddImportHelper {
         }
         insertParent.addBefore(whitespace, element);
       }
+      else if (anchor instanceof PyImportStatementBase) {
+        insertParent.addAfter(newImport, anchor);
+      }
       else {
-        if (anchor instanceof PyImportStatementBase) {
-          insertParent.addAfter(newImport, anchor);
-        }
-        else {
-          insertParent.addBefore(newImport, getInsertPosition(insertParent, newImport, priority));
-        }
+        insertParent.addBefore(newImport, getInsertPosition(insertParent, newImport, priority));
       }
     }
     catch (IncorrectOperationException e) {
@@ -453,9 +471,9 @@ public class AddImportHelper {
           }
         }
         final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
-        final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name);
+        final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name, asName);
         existingImport.add(importElement);
-        return false;
+        return true;
       }
     }
     addFromImportStatement(file, from, name, asName, priority, anchor);

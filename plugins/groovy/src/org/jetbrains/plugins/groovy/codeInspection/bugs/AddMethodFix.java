@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -49,7 +50,7 @@ public class AddMethodFix extends GroovyFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
 
     if (myClass.isInterface()) {
       final GrMethod method = GroovyPsiElementFactory.getInstance(project)
@@ -91,6 +92,13 @@ public class AddMethodFix extends GroovyFix {
   @Override
   public String getName() {
     return GroovyInspectionBundle.message("add.method", myMethodName, myClass.getName());
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Add method";
   }
 
   static String generateTypeText(GrTypeDefinition aClass) {

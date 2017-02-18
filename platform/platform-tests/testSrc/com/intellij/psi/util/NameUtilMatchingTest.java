@@ -659,8 +659,8 @@ public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testPerformance() {
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
-    final List<MinusculeMatcher> matching = new ArrayList<MinusculeMatcher>();
-    final List<MinusculeMatcher> nonMatching = new ArrayList<MinusculeMatcher>();
+    final List<MinusculeMatcher> matching = new ArrayList<>();
+    final List<MinusculeMatcher> nonMatching = new ArrayList<>();
 
     for (String s : ContainerUtil.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
       matching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));

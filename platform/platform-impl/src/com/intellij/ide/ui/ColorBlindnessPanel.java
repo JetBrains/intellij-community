@@ -47,20 +47,22 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
       }
     });
     add(HorizontalLayout.LEFT, label);
-    
+
     myCheckBox.setSelected(false);
     myCheckBox.addChangeListener(this);
-    myCheckBox.setText(UIBundle.message("color.blindness.checkbox.text"));
     int count = 0;
     for (ColorBlindness blindness : ColorBlindness.values()) {
-      String name = UIBundle.message(blindness.key);
-      if (!name.isEmpty()) {
-        myComboBox.addItem(new Item(blindness, name));
+      ColorBlindnessSupport support = ColorBlindnessSupport.get(blindness);
+      if (support != null) {
+        myComboBox.addItem(new Item(blindness));
         count++;
       }
     }
     myComboBox.setEnabled(false);
     myComboBox.setVisible(count > 1);
+    myCheckBox.setText(UIBundle.message(count > 1
+                                        ? "color.blindness.combobox.text"
+                                        : "color.blindness.checkbox.text"));
     setVisible(count > 0);
   }
 
@@ -109,9 +111,9 @@ final class ColorBlindnessPanel extends JPanel implements ChangeListener {
     private final ColorBlindness myBlindness;
     private final String myName;
 
-    private Item(ColorBlindness blindness, String name) {
+    private Item(ColorBlindness blindness) {
       myBlindness = blindness;
-      myName = name;
+      myName = UIBundle.message(blindness.key);
     }
 
     @Override

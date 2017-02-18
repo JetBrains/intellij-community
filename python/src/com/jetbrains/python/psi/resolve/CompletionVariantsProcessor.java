@@ -42,7 +42,7 @@ import java.util.*;
  * @author yole
  */
 public class CompletionVariantsProcessor extends VariantsProcessor {
-  private final Map<String, LookupElement> myVariants = new HashMap<String, LookupElement>();
+  private final Map<String, LookupElement> myVariants = new HashMap<>();
   private boolean mySuppressParentheses = false;
 
   public CompletionVariantsProcessor(PsiElement context) {
@@ -144,7 +144,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   }
 
   public List<LookupElement> getResultList() {
-    return new ArrayList<LookupElement>(myVariants.values());
+    return new ArrayList<>(myVariants.values());
   }
 
   @Override

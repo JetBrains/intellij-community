@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,7 @@ public class GroovyCompletionData {
   public static void addModifiers(PsiElement position, CompletionResultSet result) {
     PsiClass scope = PsiTreeUtil.getParentOfType(position, PsiClass.class);
     PsiModifierList modifierList = ModifierChooser.findModifierList(position);
-    addKeywords(result, true, ModifierChooser.addMemberModifiers(modifierList, scope != null && scope.isInterface()));
+    addKeywords(result, true, ModifierChooser.addMemberModifiers(modifierList, scope != null && scope.isInterface(), position));
   }
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {

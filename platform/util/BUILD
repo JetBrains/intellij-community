@@ -30,6 +30,7 @@ iml_module(
         "//tools/idea/.idea/libraries:batik",
         "//tools/idea/.idea/libraries:xmlgraphics-commons",
         "//tools/idea/.idea/libraries:xml-apis-ext",
+        "//tools/idea/.idea/libraries:Xerces",
     ],
 )
 
@@ -50,6 +51,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:picocontainer[test]",
         "//tools/idea/.idea/libraries:jna[test]",
-        "//tools/idea:platform-impl_and_others[module]",
+        "//tools/idea/platform/core-api[module, test]",
+        "//tools/idea/platform/projectModel-impl[module, test]",
     ],
 )

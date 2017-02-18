@@ -24,5 +24,7 @@
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
     <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
+    <orderEntry type="module" module-name="util" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

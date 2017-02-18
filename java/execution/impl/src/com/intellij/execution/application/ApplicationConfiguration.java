@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,34 @@
  */
 package com.intellij.execution.application;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.util.PathsList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +63,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public boolean ENABLE_SWING_INSPECTOR;
 
   public String ENV_VARIABLES;
-  private final Map<String,String> myEnvs = new LinkedHashMap<String, String>();
+  private final Map<String,String> myEnvs = new LinkedHashMap<>();
   public boolean PASS_PARENT_ENVS = true;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
@@ -77,7 +84,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    final JavaCommandLineState state = new JavaApplicationCommandLineState<ApplicationConfiguration>(this, env);
+    final JavaCommandLineState state = new JavaApplicationCommandLineState<>(this, env);
     JavaRunConfigurationModule module = getConfigurationModule();
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject(), module.getSearchScope()));
     return state;
@@ -86,10 +93,10 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<ApplicationConfiguration>();
+    SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<ApplicationConfiguration>());
+    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
 
@@ -206,24 +213,24 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public boolean isAlternativeJrePathEnabled() {
-     return ALTERNATIVE_JRE_PATH_ENABLED;
-   }
+    return ALTERNATIVE_JRE_PATH_ENABLED;
+  }
 
-   @Override
-   public void setAlternativeJrePathEnabled(boolean enabled) {
-     ALTERNATIVE_JRE_PATH_ENABLED = enabled;
-   }
+  @Override
+  public void setAlternativeJrePathEnabled(boolean enabled) {
+    ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+  }
 
-   @Nullable
-   @Override
-   public String getAlternativeJrePath() {
-     return ALTERNATIVE_JRE_PATH;
-   }
+  @Nullable
+  @Override
+  public String getAlternativeJrePath() {
+    return ALTERNATIVE_JRE_PATH;
+  }
 
-   @Override
-   public void setAlternativeJrePath(String path) {
-     ALTERNATIVE_JRE_PATH = path;
-   }
+  @Override
+  public void setAlternativeJrePath(String path) {
+    ALTERNATIVE_JRE_PATH = path;
+  }
 
   @Override
   public Collection<Module> getValidModules() {
@@ -231,8 +238,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void readExternal(final Element element) throws InvalidDataException {
-    PathMacroManager.getInstance(getProject()).expandPaths(element);
+  public void readExternal(final Element element) {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(this, element);
@@ -241,7 +247,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public void writeExternal(final Element element) {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
@@ -258,9 +264,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     protected JavaParameters createJavaParameters() throws ExecutionException {
       final JavaParameters params = new JavaParameters();
       params.setUseClasspathJar(true);
+
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;
-
       if (module.getModule() != null) {
         final int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false);
         JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
@@ -268,10 +274,47 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       else {
         JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
       }
+
       params.setMainClass(myConfiguration.MAIN_CLASS_NAME);
+
       setupJavaParameters(params);
 
+      setupModulePath(params, module);
+
       return params;
+    }
+
+    @NotNull
+    @Override
+    protected OSProcessHandler startProcess() throws ExecutionException {
+      OSProcessHandler processHandler = super.startProcess();
+      if (processHandler instanceof KillableProcessHandler && DebuggerSettings.getInstance().KILL_PROCESS_IMMEDIATELY) {
+        ((KillableProcessHandler)processHandler).setShouldKillProcessSoftly(false);
+      }
+      return processHandler;
+    }
+
+    private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
+      JavaSdkVersion version = null;
+      Sdk jdk = params.getJdk();
+      if (jdk != null) {
+        SdkTypeId type = jdk.getSdkType();
+        if (type instanceof JavaSdk) {
+          version = ((JavaSdk)type).getVersion(jdk);
+        }
+      }
+      if (version != null && version.isAtLeast(JavaSdkVersion.JDK_1_9)) {
+        PsiClass mainClass = module.findClass(params.getMainClass());
+        if (mainClass != null) {
+          PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
+          if (mainModule != null) {
+            params.setModuleName(mainModule.getModuleName());
+            PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
+            modulePath.addAll(classPath.getPathList());
+            classPath.clear();
+          }
+        }
+      }
     }
   }
 }

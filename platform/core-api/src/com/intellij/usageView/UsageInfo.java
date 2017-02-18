@@ -15,13 +15,12 @@
  */
 package com.intellij.usageView;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +106,12 @@ public class UsageInfo {
 
   public UsageInfo(@NotNull PsiReference reference) {
     this(reference.getElement(), reference.getRangeInElement().getStartOffset(), reference.getRangeInElement().getEndOffset());
-    myDynamicUsage = reference.resolve() == null;
+    if (reference instanceof PsiPolyVariantReference) {
+      myDynamicUsage = ((PsiPolyVariantReference)reference).multiResolve(false).length == 0;
+    }
+    else {
+      myDynamicUsage = reference.resolve() == null;
+    }
   }
 
   public UsageInfo(@NotNull PsiQualifiedReferenceElement reference) {
@@ -243,6 +247,27 @@ public class UsageInfo {
     if (rangeInElement == null) return null;
     return new ProperTextRange(Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getStartOffset()),
                                Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
+  }
+
+  private Pair<VirtualFile, Integer> offset() {
+    VirtualFile containingFile0 = getVirtualFile();
+    int shift0 = 0;
+    if (containingFile0 instanceof VirtualFileWindow) {
+      shift0 = ((VirtualFileWindow)containingFile0).getDocumentWindow().injectedToHost(0);
+      containingFile0 = ((VirtualFileWindow)containingFile0).getDelegate();
+    }
+    Segment range0 = mySmartPointer.getPsiRange();
+    if (range0 == null) return null;
+    return Pair.create(containingFile0, range0.getStartOffset() + shift0);
+  }
+
+  public int compareToByStartOffset(@NotNull UsageInfo info) {
+    Pair<VirtualFile, Integer> offset0 = offset();
+    Pair<VirtualFile, Integer> offset1 = info.offset();
+    if (offset0 == null || offset0.first == null || offset1 == null || offset1.first == null || !Comparing.equal(offset0.first, offset1.first)) {
+      return 0;
+    }
+    return offset0.second - offset1.second;
   }
 
   @NotNull

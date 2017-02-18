@@ -1,0 +1,4 @@
+REGEXP_FILE
+  PsiErrorElement:Dangling metacharacter
+    <empty list>
+  PsiElement(LBRACE)('{')

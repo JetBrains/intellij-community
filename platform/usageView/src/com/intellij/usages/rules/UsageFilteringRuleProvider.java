@@ -31,5 +31,5 @@ public interface UsageFilteringRuleProvider {
   @NotNull
   AnAction[] createFilteringActions(@NotNull UsageView view);
 
-  Topic<Runnable> RULES_CHANGED = new Topic<Runnable>("usave view rules changed", Runnable.class);
+  Topic<Runnable> RULES_CHANGED = new Topic<>("usave view rules changed", Runnable.class);
 }

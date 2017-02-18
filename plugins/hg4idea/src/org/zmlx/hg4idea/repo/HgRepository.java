@@ -22,6 +22,7 @@ import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
+import org.zmlx.hg4idea.provider.HgLocalIgnoredHolder;
 
 import java.util.*;
 
@@ -84,4 +85,6 @@ public interface HgRepository extends Repository {
   List<String> getUnappliedPatchNames();
 
   void updateConfig();
+
+  HgLocalIgnoredHolder getLocalIgnoredHolder();
 }

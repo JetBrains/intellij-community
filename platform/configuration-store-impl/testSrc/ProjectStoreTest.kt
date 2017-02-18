@@ -19,21 +19,19 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
-import com.intellij.util.readText
-import com.intellij.util.systemIndependentPath
-import com.intellij.util.write
-import org.assertj.core.api.Assertions.assertThat
+import com.intellij.util.io.readText
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
@@ -58,8 +56,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
       filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
     }
 
-    val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    val project = if (projectCreator == null) createHeavyProject(filePath, true) else projectManager.loadProject(filePath)!!
+    val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
     project.runInLoadComponentStateMode {
       project.use(task)
     }
@@ -69,13 +66,15 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
 internal class ProjectStoreTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
   }
 
-  val tempDirManager = TemporaryDirectory()
+  private val tempDirManager = TemporaryDirectory()
 
-  private val ruleChain = RuleChain(tempDirManager)
-  @Rule fun getChain() = ruleChain
+  @Rule
+  @JvmField
+  val ruleChain = RuleChain(tempDirManager)
 
   @Language("XML")
   private val iprFileContent =
@@ -116,7 +115,7 @@ internal class ProjectStoreTest {
 
   @Test fun fileBasedStorage() {
     loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
-      test(project as ProjectEx)
+      test(project)
 
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath(project.projectFilePath!!))
     }
@@ -127,7 +126,7 @@ internal class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
     }) { project ->
-      val store = project.stateStore as IProjectStore
+      val store = project.stateStore
       assertThat(store.nameFile).doesNotExist()
       val newName = "Foo"
       val oldName = project.name
@@ -148,7 +147,7 @@ internal class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/.name", name)
       it.path
     }) { project ->
-      val store = project.stateStore as IProjectStore
+      val store = project.stateStore
       assertThat(store.nameFile).hasContent(name)
 
       project.saveStore()

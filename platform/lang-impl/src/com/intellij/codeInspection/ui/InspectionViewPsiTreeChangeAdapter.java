@@ -17,28 +17,28 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.hash.HashSet;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,11 +49,11 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
 
   private final InspectionResultsView myView;
   private final MergingUpdateQueue myUpdater;
-  private final BoundedTaskExecutor myExecutor;
+
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   public InspectionViewPsiTreeChangeAdapter(@NotNull InspectionResultsView view) {
     myView = view;
-    myExecutor = new BoundedTaskExecutor(AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.CORES_COUNT, myView);
     myUpdater = new MergingUpdateQueue("inspection.view.psi.update.listener",
                                        300,
                                        true,
@@ -109,16 +109,10 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                   return true;
                 });
                 if (needUpdateUI[0]) {
-                  UIUtil.invokeLaterIfNeeded(() -> {
-                    myView.invalidate();
-                    myView.repaint();
-                    if (myView.isUpdating()) {
-                      myView.updateRightPanelLoading();
-                    }
-                    else {
-                      myView.syncRightPanel();
-                    }
-                  });
+                  myAlarm.cancelAllRequests();
+                  myAlarm.addRequest(() -> {
+                    myView.resetTree();
+                  }, 100, ModalityState.NON_MODAL);
                 }
               }
             };
@@ -139,7 +133,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
             }
           }
         };
-        ProgressIndicatorUtils.scheduleWithWriteActionPriority(myExecutor, task);
+        ProgressIndicatorUtils.scheduleWithWriteActionPriority(myView.getTreeUpdater(), task);
       }
     };
   }

@@ -51,7 +51,7 @@ public abstract class AntDomPathElement extends AntDomFilesProviderImpl{
   
   @NotNull 
   protected List<File> getFiles(AntDomPattern pattern, Set<AntFilesProvider> processed) {
-    final List<File> files = new ArrayList<File>();
+    final List<File> files = new ArrayList<>();
     final File baseDir = getCanonicalFile(".");
 
     addLocation(baseDir, files, getLocation().getStringValue());

@@ -104,7 +104,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       return new GrChangeSignatureConflictSearcher((JavaChangeInfo)info).findConflicts(refUsages);
     }
     else {
-      return new MultiMap<PsiElement, String>();
+      return new MultiMap<>();
     }
   }
 
@@ -276,7 +276,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final PsiParameter[] oldBaseParams = baseMethod != null ? baseMethod.getParameterList().getParameters() : null;
 
 
-    Set<GrParameter> toRemove = new HashSet<GrParameter>(oldParameters.length);
+    Set<GrParameter> toRemove = new HashSet<>(oldParameters.length);
     ContainerUtil.addAll(toRemove, oldParameters);
 
     GrParameter anchor = null;
@@ -284,7 +284,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final GrDocTag[] tags = docComment == null ? null : docComment.getTags();
 
 
-    
+    int newParamIndex = 0;
     for (JavaParameterInfo newParameter : newParameters) {
       //if old parameter name differs from base method parameter name we don't change it
       final String newName;
@@ -329,6 +329,14 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       anchor = (GrParameter)parameterList.addAfter(grParameter, anchor);
+      if (newParamIndex < oldParameters.length) {
+        GrParameter oldParam = oldParameters[newParamIndex];
+        PsiElement prev = oldParam.getPrevSibling();
+        if (prev instanceof PsiWhiteSpace) {
+          parameterList.addBefore(prev, anchor);
+        }
+      }
+      newParamIndex++;
     }
 
     for (GrParameter oldParameter : toRemove) {
@@ -516,7 +524,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           return;
         }
       }
-      Set<PsiElement> argsToDelete = new HashSet<PsiElement>(map.length * 2);
+      Set<PsiElement> argsToDelete = new HashSet<>(map.length * 2);
       for (GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo : map) {
         argsToDelete.addAll(argInfo.args);
       }
@@ -675,7 +683,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         final PsiClass parentClass = PsiTreeUtil.getParentOfType(list, PsiClass.class);
         if (parentClass != null) {
           PsiClass containingClass = parentClass;
-          final Set<PsiClass> containingClasses = new HashSet<PsiClass>();
+          final Set<PsiClass> containingClasses = new HashSet<>();
           final PsiElementFactory jfactory = JavaPsiFacade.getElementFactory(list.getProject());
           while (containingClass != null) {
             if (type.isAssignableFrom(jfactory.createType(containingClass, PsiSubstitutor.EMPTY))) {

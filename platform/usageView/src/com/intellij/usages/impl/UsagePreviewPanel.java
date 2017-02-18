@@ -111,8 +111,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       releaseEditor();
       removeAll();
       myEditor = createEditor(psiFile, document);
-      myLineHeight = myEditor.getLineHeight();
       if (myEditor == null) return;
+      myLineHeight = myEditor.getLineHeight();
       myEditor.setBorder(null);
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -161,7 +161,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                             || infoRange.getStartOffset() > elementRange.getLength() 
                             || infoRange.getEndOffset() > elementRange.getLength() ? null 
                                                                                    : elementRange.cutOut(infoRange);
-      if (textRange == null || !highlightOnlyNameElements) textRange = elementRange;
+      if (textRange == null) textRange = elementRange;
       // hack to determine element range to highlight
       if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
         PsiFile psiFile = psiElement.getContainingFile();

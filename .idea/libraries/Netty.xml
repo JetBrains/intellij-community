@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="Netty">
     <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/lib/annotations/netty" />
+      <root url="file://$PROJECT_DIR$/lib/annotations/netty"/>
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/netty-all-4.1.2.Final.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/netty-all-4.1.6.Final.Patched.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/netty-all-4.1.2.Final-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/src/netty-all-4.1.6.Final.Patched-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

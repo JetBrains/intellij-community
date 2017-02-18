@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class SimpleActionGroup extends ActionGroup {
-  private final ArrayList<AnAction> myChildren = new ArrayList<AnAction>();
+  private final ArrayList<AnAction> myChildren = new ArrayList<>();
 
   public SimpleActionGroup() {
     super(null, false);

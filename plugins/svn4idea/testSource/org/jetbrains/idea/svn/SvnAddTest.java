@@ -69,7 +69,7 @@ public class SvnAddTest extends Svn17TestCase {
 
     runAndVerifyStatusSorted("? dir");
 
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     files.add(file);
     files.add(dir);
     final List<VcsException> errors = SvnVcs.getInstance(myProject).getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);

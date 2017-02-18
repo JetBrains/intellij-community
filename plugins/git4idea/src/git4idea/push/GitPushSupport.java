@@ -19,10 +19,8 @@ import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitSharedSettings;
@@ -163,12 +161,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Override
   public boolean isForcePushAllowed(@NotNull GitRepository repo, @NotNull GitPushTarget target) {
     final String targetBranch = target.getBranch().getNameForRemoteOperations();
-    return !ContainerUtil.exists(mySharedSettings.getForcePushProhibitedPatterns(), new Condition<String>() {
-      @Override
-      public boolean value(String pattern) {
-        return targetBranch.matches("^" + pattern + "$"); // let "master" match only "master" and not "any-master-here" by default
-      }
-    });
+    return !mySharedSettings.isBranchProtected(targetBranch);
   }
 
   @Override

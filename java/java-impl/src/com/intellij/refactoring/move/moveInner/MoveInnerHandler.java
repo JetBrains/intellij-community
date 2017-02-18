@@ -20,7 +20,7 @@ import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 
 public interface MoveInnerHandler {
-  LanguageExtension<MoveInnerHandler> EP_NAME = new LanguageExtension<MoveInnerHandler>("com.intellij.refactoring.moveInnerHandler");
+  LanguageExtension<MoveInnerHandler> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.moveInnerHandler");
 
   @NotNull
   PsiClass copyClass(@NotNull MoveInnerOptions options);

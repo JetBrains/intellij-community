@@ -23,16 +23,13 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.template.TemplateLookupSelectionHandler;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -62,17 +59,12 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
 
   void handleTemplateInsert(List<? extends LookupElement> elements, final char completionChar) {
     final InsertionContext context = createInsertionContext(this, myState.getPsiFile(), elements, myState.getEditor(), completionChar);
-    new WriteCommandAction(context.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        doHandleInsert(context);
-      }
-    }.execute();
+    WriteAction.run(() -> doHandleInsert(context));
     Disposer.dispose(context.getOffsetMap());
 
     if (handleCompletionChar(context) && !myState.isFinished()) {
       myState.calcResults(true);
-      myState.nextTab();
+      myState.considerNextTabOnLookupItemSelected(getDelegate());
     }
   }
 
@@ -98,7 +90,7 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
 
   private static boolean handleCompletionChar(InsertionContext context) {
     if (context.getCompletionChar() == '.') {
-      EditorModificationUtil.insertStringAtCaret(context.getEditor(), ".");
+      WriteAction.run(() -> EditorModificationUtil.insertStringAtCaret(context.getEditor(), "."));
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
       return false;
     }

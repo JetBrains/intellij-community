@@ -75,7 +75,7 @@ public final class PyClassRefactoringUtil {
   public static List<PyAssignmentStatement> copyFieldDeclarationToStatement(@NotNull final Collection<PyAssignmentStatement> assignmentStatements,
                                                                             @NotNull final PyStatementList superClassStatement,
                                                                             @Nullable final PyClass dequalifyIfDeclaredInClass) {
-    final List<PyAssignmentStatement> declarations = new ArrayList<PyAssignmentStatement>(assignmentStatements.size());
+    final List<PyAssignmentStatement> declarations = new ArrayList<>(assignmentStatements.size());
     Collections.sort(declarations, PyDependenciesComparator.INSTANCE);
 
 
@@ -153,7 +153,7 @@ public final class PyClassRefactoringUtil {
   public static List<PyFunction> addMethods(@NotNull final PyClass destination, final boolean skipIfExist, @NotNull final PyFunction... methods) {
 
     final PyStatementList destStatementList = destination.getStatementList();
-    final List<PyFunction> result = new ArrayList<PyFunction>(methods.length);
+    final List<PyFunction> result = new ArrayList<>(methods.length);
 
     for (final PyFunction method : methods) {
 
@@ -503,7 +503,7 @@ public final class PyClassRefactoringUtil {
                                      @NotNull final PyClass clazz,
                                      @NotNull final PyClass... superClasses) {
 
-    final Collection<String> superClassNames = new ArrayList<String>();
+    final Collection<String> superClassNames = new ArrayList<>();
 
 
     for (final PyClass superClass : Collections2.filter(Arrays.asList(superClasses), NotNullPredicate.INSTANCE)) {

@@ -36,7 +36,7 @@ public class AntParsingTest extends ParsingTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
-    registerExtensionPoint(new ExtensionPointName<StartTagEndTokenProvider>("com.intellij.xml.startTagEndToken"),
+    registerExtensionPoint(new ExtensionPointName<>("com.intellij.xml.startTagEndToken"),
                            StartTagEndTokenProvider.class);
   }
 

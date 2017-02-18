@@ -42,7 +42,7 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class XmlExtension {
-  public static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<XmlExtension>("com.intellij.xml.xmlExtension");
+  public static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<>("com.intellij.xml.xmlExtension");
 
   public static XmlExtension getExtension(@NotNull final PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(calcExtension(file), PsiModificationTracker.MODIFICATION_COUNT));
@@ -164,11 +164,11 @@ public abstract class XmlExtension {
     return false;
   }
 
-  public boolean needWhitespaceBeforeAttribute() {
+  public boolean useXmlTagInsertHandler() {
     return true;
   }
 
-  public boolean useXmlTagInsertHandler() {
-    return true;
+  public boolean isCollapsibleTag(XmlTag tag) {
+    return false;
   }
 }

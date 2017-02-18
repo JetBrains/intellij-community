@@ -15,5 +15,6 @@
  */
 package com.intellij.openapi.components;
 
+@Deprecated
 public interface ExportableApplicationComponent extends ApplicationComponent, ExportableComponent {
 }

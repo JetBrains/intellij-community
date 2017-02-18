@@ -41,7 +41,7 @@ public class CloudSilentLoggingHandlerImpl implements CloudAgentLoggingHandler {
   }
 
   @Override
-  public TerminalListener createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput) {
+  public TerminalListener createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput, InputStream stderr) {
     return TerminalListener.NULL;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
  */
-public class GroovyAddImportActionTest extends LightCodeInsightFixtureTestCase {
+class GroovyAddImportActionTest extends LightCodeInsightFixtureTestCase {
 
-  public void testUseContext() {
+  void testUseContext() {
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'
     myFixture.addClass 'package bar; public class LogFactory { public static Log log(){} }'

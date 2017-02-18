@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,31 +34,31 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.Groov
  * @author Max Medvedev
  */
 class GrInspectionTest extends GrHighlightingTestBase {
-  public void testDontSimplifyString() { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()) }
+  void testDontSimplifyString() { doTest(new GroovyTrivialIfInspection(), new GroovyTrivialConditionalInspection()) }
 
-  public void testSingleAllocationInClosure() {doTest(new GroovyResultOfObjectAllocationIgnoredInspection()) }
+  void testSingleAllocationInClosure() { doTest(new GroovyResultOfObjectAllocationIgnoredInspection()) }
 
-  public void testUnusedAllocationInClosure() {doTest(new GroovyResultOfObjectAllocationIgnoredInspection()) }
+  void testUnusedAllocationInClosure() { doTest(new GroovyResultOfObjectAllocationIgnoredInspection()) }
 
-  public void testUsedLabel() {doTest(new GroovyLabeledStatementInspection())}
+  void testUsedLabel() { doTest(new GroovyLabeledStatementInspection()) }
 
-  public void testOverlyLongMethodInspection() {doTest(new GroovyOverlyLongMethodInspection())}
+  void testOverlyLongMethodInspection() { doTest(new GroovyOverlyLongMethodInspection()) }
 
-  public void testInaccessibleConstructorCall() { doTest(new GroovyAccessibilityInspection()) }
+  void testInaccessibleConstructorCall() { doTest(new GroovyAccessibilityInspection()) }
 
-  public void testRangeType() { doTest(new GroovyRangeTypeCheckInspection()) }
+  void testRangeType() { doTest(new GroovyRangeTypeCheckInspection()) }
 
-  public void testResolveMetaClass() { doTest(new GroovyAccessibilityInspection()) }
+  void testResolveMetaClass() { doTest(new GroovyAccessibilityInspection()) }
 
-  public void testResultOfAssignmentUsed() { doTest(new GroovyResultOfAssignmentUsedInspection(inspectClosures: true)) }
+  void testResultOfAssignmentUsed() { doTest(new GroovyResultOfAssignmentUsedInspection(inspectClosures: true)) }
 
-  public void testSuppressions() { doTest(new GrUnresolvedAccessInspection(), new GroovyUntypedAccessInspection()) }
+  void testSuppressions() { doTest(new GrUnresolvedAccessInspection(), new GroovyUntypedAccessInspection()) }
 
-  public void testInnerClassConstructorThis() { doTest(true, true, true, new GroovyResultOfAssignmentUsedInspection(inspectClosures: true)) }
+  void testInnerClassConstructorThis() { doTest(true, true, true, new GroovyResultOfAssignmentUsedInspection(inspectClosures: true)) }
 
-  public void testUnnecessaryReturnInSwitch() { doTest(new GroovyUnnecessaryReturnInspection()) }
+  void testUnnecessaryReturnInSwitch() { doTest(new GroovyUnnecessaryReturnInspection()) }
 
-  public void testMemberShipOperatorCheck() { doTest(new GroovyInArgumentCheckInspection()) }
+  void testMemberShipOperatorCheck() { doTest(new GroovyInArgumentCheckInspection()) }
 
   void testOctalInspection() { doTest(new GroovyOctalIntegerInspection()) }
 
@@ -80,7 +80,7 @@ class Foo {
 def result = new Foo().x''', true, false, false, ClashingGettersInspection)
   }
 
-  public void testDeprecated() {
+  void testDeprecated() {
     testHighlighting('''\
 /**
  @deprecated
@@ -95,7 +95,7 @@ class X {
 }''', true, false, false, GrDeprecatedAPIUsageInspection)
   }
 
-  public void testSuppressedErrorInGroovyDoc() {
+  void testSuppressedErrorInGroovyDoc() {
     testHighlighting('''\
 class Class2 {
 
@@ -168,7 +168,7 @@ print 2
     myFixture.testHighlighting(true, false, false, 'abc/foo.groovy')
   }
 
-  public void testStaticImportProperty() {
+  void testStaticImportProperty() {
     myFixture.addFileToProject('Foo.groovy', '''\
 class Foo {
   static def foo = 2
@@ -188,7 +188,7 @@ print foo+<warning descr="Access to 'bar' exceeds its access rights">bar</warnin
 ''', GroovyAccessibilityInspection)
   }
 
-  public void testStaticImportCapsProperty() {
+  void testStaticImportCapsProperty() {
     myFixture.addFileToProject('Foo.groovy', '''\
 class Foo {
   static def FOO = 2
@@ -204,9 +204,9 @@ print FOO + <warning descr="Access to 'BAR' exceeds its access rights">BAR</warn
   }
 
 
-  public void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()) }
+  void testUntypedAccess() { doTest(new GroovyUntypedAccessInspection()) }
 
-  public void testMethodMayBeStaticForCategoryClasses() {
+  void testMethodMayBeStaticForCategoryClasses() {
     testHighlighting('''\
 class Cat{
   def <warning descr="Method may be static">foo</warning>() {
@@ -325,6 +325,6 @@ try{} catch(IOException e) {/*comment*/}
     testHighlighting('try{} <warning descr="Empty \'catch\' block">catch</warning>(IOException e) {/*comment*/}')
   }
 
-  public void testInvokingMethodReferenceWithDefaultParameters() { doTest(new GroovyAssignabilityCheckInspection()) }
+  void testInvokingMethodReferenceWithDefaultParameters() { doTest(new GroovyAssignabilityCheckInspection()) }
 
 }

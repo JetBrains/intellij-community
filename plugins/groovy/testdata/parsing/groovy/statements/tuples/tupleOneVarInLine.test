@@ -1,4 +1,4 @@
-def (a,b,c), d
+def (a,b,c) = [], d
 -----
 Groovy script
   Variable definitions
@@ -15,7 +15,18 @@ Groovy script
     Variable
       PsiElement(identifier)('c')
     PsiElement())(')')
-    PsiElement(,)(',')
     PsiWhiteSpace(' ')
-    Variable
-      PsiElement(identifier)('d')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    Generalized list
+      PsiElement([)('[')
+      PsiElement(])(']')
+  PsiErrorElement:';' or new line expected
+    <empty list>
+  PsiErrorElement:Unexpected symbol
+    PsiElement(,)(',')
+  PsiErrorElement:';' or new line expected
+    <empty list>
+  PsiWhiteSpace(' ')
+  Reference expression
+    PsiElement(identifier)('d')

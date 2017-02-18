@@ -19,6 +19,7 @@ import com.google.common.base.Strings
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IconLoader
+import com.intellij.util.io.isWriteFromBrowserWithoutOrigin
 import com.intellij.util.Base64
 import com.intellij.util.BuiltinWebServerAccess
 import com.intellij.util.ui.UIUtil
@@ -32,7 +33,6 @@ import org.apache.sanselan.Sanselan
 import org.jetbrains.ide.HttpRequestHandler
 import java.awt.image.BufferedImage
 import java.io.IOException
-
 
 private val PREV_HANDLER = AttributeKey.valueOf<HttpRequestHandler>("DelegatingHttpRequestHandler.handler")
 private val LOG = Logger.getInstance(DelegatingHttpRequestHandler::class.java)
@@ -178,7 +178,7 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
   @Suppress("OverridingDeprecatedMember")
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
     try {
-      context.channel().attr(PREV_HANDLER).remove()
+      context.channel().attr(PREV_HANDLER).set(null)
     }
     finally {
       @Suppress("DEPRECATION")

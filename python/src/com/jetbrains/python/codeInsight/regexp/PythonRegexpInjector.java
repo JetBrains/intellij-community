@@ -51,7 +51,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
     }
   }
 
-  private final List<RegexpMethodDescriptor> myDescriptors = new ArrayList<RegexpMethodDescriptor>();
+  private final List<RegexpMethodDescriptor> myDescriptors = new ArrayList<>();
 
   public PythonRegexpInjector() {
     addMethod("compile");

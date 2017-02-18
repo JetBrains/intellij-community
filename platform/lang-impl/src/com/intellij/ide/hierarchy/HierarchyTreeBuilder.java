@@ -52,8 +52,8 @@ public class HierarchyTreeBuilder extends AbstractTreeBuilder {
 
   @NotNull
   public Pair<List<Object>, List<Object>> storeExpandedAndSelectedInfo() {
-    List<Object> pathsToExpand = new ArrayList<Object>();
-    List<Object> selectionPaths = new ArrayList<Object>();
+    List<Object> pathsToExpand = new ArrayList<>();
+    List<Object> selectionPaths = new ArrayList<>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     return Pair.create(pathsToExpand, selectionPaths);
   }

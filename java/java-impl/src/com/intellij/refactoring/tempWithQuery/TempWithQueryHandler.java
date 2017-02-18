@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,8 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
       return;
     }
 
-    final PsiReference[] refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
+    final PsiReference[] refs = ReferencesSearch.search(local, GlobalSearchScope.projectScope(project), false).toArray(
+      PsiReference.EMPTY_ARRAY);
 
     if (refs.length == 0) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.never.used", localName));
@@ -88,7 +89,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     }
 
     final HighlightManager highlightManager = HighlightManager.getInstance(project);
-    ArrayList<PsiReference> array = new ArrayList<PsiReference>();
+    ArrayList<PsiReference> array = new ArrayList<>();
     EditorColorsManager manager = EditorColorsManager.getInstance();
     final TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     for (PsiReference ref : refs) {

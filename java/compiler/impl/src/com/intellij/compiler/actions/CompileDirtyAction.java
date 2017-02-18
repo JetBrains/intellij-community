@@ -18,13 +18,13 @@ package com.intellij.compiler.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.task.ProjectTaskManager;
 
 public class CompileDirtyAction extends CompileActionBase {
 
   protected void doAction(DataContext dataContext, Project project) {
-    CompilerManager.getInstance(project).make(null);
+    ProjectTaskManager.getInstance(project).buildAllModules();
   }
 
   public void update(AnActionEvent e){

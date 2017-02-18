@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -41,6 +42,7 @@ import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerE
  */
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
+  private static final boolean USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer();
 
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
@@ -50,9 +52,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private boolean myPendingLineBreakFlag;
 
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
+    this(testFrameworkName, consoleProperties.isEditable());
+  }
+
+  public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, boolean stdinEnabled) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
-    mySplitter = new OutputLineSplitter(consoleProperties.isEditable()) {
+    mySplitter = new OutputLineSplitter(stdinEnabled) {
       @Override
       protected void onLineAvailable(@NotNull String text, @NotNull Key outputType, boolean tcLikeFakeOutput) {
         processConsistentText(text, outputType, tcLikeFakeOutput);
@@ -90,7 +96,16 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     fireOnUncapturedOutput("\n", ProcessOutputTypes.STDOUT);
   }
 
-  private void processConsistentText(final String text, final Key outputType, boolean tcLikeFakeOutput) {
+  protected void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
+    final int cycleBufferSize = ConsoleBuffer.getCycleBufferSize();
+    if (USE_CYCLE_BUFFER && text.length() > cycleBufferSize) {
+      final StringBuilder builder = new StringBuilder(cycleBufferSize);
+      builder.append(text, 0, cycleBufferSize - 105);
+      builder.append("<...>");
+      builder.append(text, text.length() - 100, text.length());
+      text = builder.toString();
+    }
+
     try {
       if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
         if (myPendingLineBreakFlag) {

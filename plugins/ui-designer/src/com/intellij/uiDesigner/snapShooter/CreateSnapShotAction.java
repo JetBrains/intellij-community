@@ -112,7 +112,7 @@ public class CreateSnapShotAction extends AnAction {
     if (dir == null) return;
 
     final SnapShotClient client = new SnapShotClient();
-    List<RunnerAndConfigurationSettings> appConfigurations = new ArrayList<RunnerAndConfigurationSettings>();
+    List<RunnerAndConfigurationSettings> appConfigurations = new ArrayList<>();
     RunnerAndConfigurationSettings snapshotConfiguration = null;
     boolean connected = false;
 
@@ -192,7 +192,7 @@ public class CreateSnapShotAction extends AnAction {
     dlg.show();
     if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       final int id = dlg.getSelectedComponentId();
-      final Ref<Object> result = new Ref<Object>();
+      final Ref<Object> result = new Ref<>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         try {
           result.set(client.createSnapshot(id));
@@ -465,10 +465,10 @@ public class CreateSnapShotAction extends AnAction {
     }
 
     private boolean checkUnknownLayoutManagers(final Project project) {
-      final Set<String> layoutManagerClasses = new TreeSet<String>();
+      final Set<String> layoutManagerClasses = new TreeSet<>();
       final SnapShotRemoteComponent rc = (SnapShotRemoteComponent) myComponentTree.getSelectionPath().getLastPathComponent();
       assert rc != null;
-      final Ref<Exception> err = new Ref<Exception>();
+      final Ref<Exception> err = new Ref<>();
       Runnable runnable = () -> {
         try {
           collectUnknownLayoutManagerClasses(project, rc, layoutManagerClasses);

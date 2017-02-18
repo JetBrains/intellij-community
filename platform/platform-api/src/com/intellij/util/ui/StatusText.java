@@ -45,7 +45,7 @@ public abstract class StatusText {
 
   private String myText = "";
   protected final SimpleColoredComponent myComponent = new SimpleColoredComponent();
-  private final List<ActionListener> myClickListeners = new ArrayList<ActionListener>();
+  private final List<ActionListener> myClickListeners = new ArrayList<>();
   private boolean myHasActiveClickListeners; // calculated field for performance optimization
   private boolean myShowAboveCenter = true;
 

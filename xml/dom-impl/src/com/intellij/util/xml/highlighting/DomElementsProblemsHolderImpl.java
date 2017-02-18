@@ -40,7 +40,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
     ContainerUtil.newConcurrentMap();
   private final Map<DomElement, Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>> myCachedChildrenErrors =
     ContainerUtil.newConcurrentMap();
-  private final List<Annotation> myAnnotations = new ArrayList<Annotation>();
+  private final List<Annotation> myAnnotations = new ArrayList<>();
 
   private final Function<DomElement, List<DomElementProblemDescriptor>> myDomProblemsGetter =
     s -> {
@@ -52,8 +52,8 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
 
   private static final Factory<Map<Class<? extends DomElementsInspection>,List<DomElementProblemDescriptor>>> CONCURRENT_HASH_MAP_FACTORY =
     () -> ContainerUtil.newConcurrentMap();
-  private static final Factory<List<DomElementProblemDescriptor>> SMART_LIST_FACTORY = () -> new SmartList<DomElementProblemDescriptor>();
-  private final Set<Class<? extends DomElementsInspection>> myPassedInspections = new THashSet<Class<? extends DomElementsInspection>>();
+  private static final Factory<List<DomElementProblemDescriptor>> SMART_LIST_FACTORY = () -> new SmartList<>();
+  private final Set<Class<? extends DomElementsInspection>> myPassedInspections = new THashSet<>();
 
   public DomElementsProblemsHolderImpl(final DomFileElement element) {
     myElement = element;
@@ -135,7 +135,7 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       return map;
     }
 
-    final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new THashMap<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>>();
+    final Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> problems = new THashMap<>();
     if (domElement == myElement) {
       for (Map<Class<? extends DomElementsInspection>, List<DomElementProblemDescriptor>> listMap : myCachedErrors.values()) {
         mergeMaps(problems, listMap);
@@ -174,6 +174,6 @@ public class DomElementsProblemsHolderImpl implements DomElementsProblemsHolder 
       return Collections.emptyList();
     }
     final List<DomElementProblemDescriptor> list = getProblemsMap(myElement).get(inspection.getClass());
-    return list != null ? new ArrayList<DomElementProblemDescriptor>(list) : Collections.<DomElementProblemDescriptor>emptyList();
+    return list != null ? new ArrayList<>(list) : Collections.<DomElementProblemDescriptor>emptyList();
   }
 }

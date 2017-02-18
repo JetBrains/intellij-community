@@ -128,7 +128,7 @@ public class DefaultPatchBaseVersionProvider {
       }
     }
     try {
-      final Ref<VcsHistorySession> ref = new Ref<VcsHistorySession>();
+      final Ref<VcsHistorySession> ref = new Ref<>();
       boolean result = VcsUtil.runVcsProcessWithProgress(new VcsRunnable() {
         public void run() throws VcsException {
           ref.set(historyProvider.createSessionFor(filePath));

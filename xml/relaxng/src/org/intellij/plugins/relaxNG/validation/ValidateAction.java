@@ -197,10 +197,8 @@ public class ValidateAction extends AnAction {
       } catch (IOException e1) {
         eh.fatalError(new SAXParseException(e1.getMessage(), null, UriOrFile.fileToUri(schemaPath), -1, -1, e1));
       }
-    } catch (SAXException e1) {
+    } catch (SAXException | MalformedURLException e1) {
       // huh?
-      Logger.getInstance(ValidateAction.class.getName()).error(e1);
-    } catch (MalformedURLException e1) {
       Logger.getInstance(ValidateAction.class.getName()).error(e1);
     }
   }

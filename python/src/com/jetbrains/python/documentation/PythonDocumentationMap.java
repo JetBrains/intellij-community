@@ -93,7 +93,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   public static class State {
-    private List<Entry> myEntries = new ArrayList<Entry>();
+    private List<Entry> myEntries = new ArrayList<>();
 
     public State() {
       addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
@@ -180,7 +180,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   @Nullable
   private static String transformPattern(@NotNull String urlPattern, QualifiedName moduleQName, @Nullable PsiNamedElement element,
                                          String pyVersion) {
-    Map<String, String> macros = new HashMap<String, String>();
+    Map<String, String> macros = new HashMap<>();
     macros.put("element.name", element == null ? null : element.getName());
     PyClass pyClass = element == null ? null : PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     macros.put("class.name", pyClass == null ? null : pyClass.getName());

@@ -29,7 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
@@ -61,8 +61,8 @@ import java.util.concurrent.ExecutorService;
  * @author peter
  */
 public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
-  private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<Pair<Object, SyncAction>>();
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("MvcModuleStructureSynchronizer pool",1);
+  private final Set<Pair<Object, SyncAction>> myOrders = new LinkedHashSet<>();
 
   private Set<VirtualFile> myPluginRoots = Collections.emptySet();
 
@@ -83,7 +83,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
   @Override
   public void initComponent() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         myModificationTracker.incModificationCount();
@@ -96,7 +96,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
     });
 
-    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         queue(SyncAction.UpdateProjectStructure, module);
@@ -148,7 +148,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
               if (!file.isValid()) return;
               if (!framework.hasSupport(module)) return;
 
-              final List<VirtualFile> files = new ArrayList<VirtualFile>();
+              final List<VirtualFile> files = new ArrayList<>();
 
               if (file.isDirectory()) {
                 ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(file, new ContentIterator() {
@@ -297,7 +297,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private LinkedHashSet<Pair<Object, SyncAction>> takeOrderSnapshot() {
     synchronized (myOrders) {
-      return new LinkedHashSet<Pair<Object, SyncAction>>(myOrders);
+      return new LinkedHashSet<>(myOrders);
     }
   }
 
@@ -360,7 +360,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private Set<Trinity<Module, SyncAction, MvcFramework>> computeRawActions(Set<Pair<Object, SyncAction>> actions) {
     //get module by object and kill duplicates
-    final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<Trinity<Module, SyncAction, MvcFramework>>();
+    final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<>();
     for (final Pair<Object, SyncAction> pair : actions) {
       for (Module module : determineModuleBySyncActionObject(pair.first)) {
         if (!module.isDisposed()) {
@@ -424,7 +424,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         if (mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded) {
           mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded = false;
 
-          Set<VirtualFile> roots = new HashSet<VirtualFile>();
+          Set<VirtualFile> roots = new HashSet<>();
 
           for (String rootPath : MvcWatchedRootProvider.getRootsToWatch(project)) {
             ContainerUtil.addIfNotNull(roots, LocalFileSystem.getInstance().findFileByPath(rootPath));

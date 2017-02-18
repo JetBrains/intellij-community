@@ -18,7 +18,7 @@ package com.intellij.execution.testframework.sm.runner.states;
 
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,7 @@ import java.util.List;
 
 public class CompoundTestFailedState extends TestFailedState {
   
-  final List<TestFailedState> myStates = new ArrayList<TestFailedState>();
+  final List<TestFailedState> myStates = new ArrayList<>();
 
   public CompoundTestFailedState(@Nullable String localizedMessage, @Nullable String stackTrace) {
     super(localizedMessage, stackTrace);
@@ -36,6 +36,7 @@ public class CompoundTestFailedState extends TestFailedState {
 
   public void addFailure(TestFailedState state) {
     myStates.add(state);
+    Disposer.register(this, state);
   }
 
   @Override

@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>continue</code> statement.
+ * Represents a Java {@code continue} statement.
  */
 public interface PsiContinueStatement extends PsiStatement {
   /**
@@ -31,7 +31,7 @@ public interface PsiContinueStatement extends PsiStatement {
 
   /**
    * Returns the statement instance ({@link PsiForStatement}, {@link PsiWhileStatement} etc.) representing
-   * the statement to the next iteration of which <code>continue</code> transfers control.
+   * the statement to the next iteration of which {@code continue} transfers control.
    *
    * @return the statement instance, or null if the statement is not valid in the context where it is located.
    */

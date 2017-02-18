@@ -32,7 +32,7 @@ public class DummyExitStatement extends Statement {
   public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
     if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
       if (bytecode == null) {
-        bytecode = new HashSet<Integer>(bytecodeOffsets);
+        bytecode = new HashSet<>(bytecodeOffsets);
       }
       else {
         bytecode.addAll(bytecodeOffsets);

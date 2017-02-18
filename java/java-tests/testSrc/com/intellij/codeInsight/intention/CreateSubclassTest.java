@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.MultiFileTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -48,6 +49,7 @@ public class CreateSubclassTest extends MultiFileTestCase {
         final PsiClass inner = superClass.findInnerClassByName("Inner", false);
         assertNotNull(inner);
         CreateSubclassAction.createInnerClass(inner);
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
   }
@@ -59,6 +61,7 @@ public class CreateSubclassTest extends MultiFileTestCase {
         PsiDirectory root = myPsiManager.findDirectory(rootDir);
         PsiClass superClass = myJavaFacade.findClass("Superclass", ProjectScope.getAllScope(myProject));
         CreateSubclassAction.createSubclass(superClass, root, "Subclass");
+        UIUtil.dispatchAllInvocationEvents();
       }
     });
   }

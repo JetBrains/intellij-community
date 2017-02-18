@@ -245,7 +245,7 @@ public class CodeCompletionHandlerBase {
   }
 
   @NotNull
-  private LookupImpl obtainLookup(Editor editor) {
+  private LookupImpl obtainLookup(Editor editor, Project project) {
     CompletionAssertions.checkEditorValid(editor);
     LookupImpl existing = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (existing != null && existing.isCompletion()) {
@@ -256,8 +256,8 @@ public class CodeCompletionHandlerBase {
       return existing;
     }
 
-    LookupImpl lookup = (LookupImpl)LookupManager.getInstance(editor.getProject()).createLookup(editor, LookupElement.EMPTY_ARRAY, "",
-                                                                                                new LookupArranger.DefaultArranger());
+    LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "",
+                                                                                    new LookupArranger.DefaultArranger());
     if (editor.isOneLineMode()) {
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);
@@ -275,7 +275,7 @@ public class CodeCompletionHandlerBase {
     CompletionAssertions.checkEditorValid(editor);
 
     CompletionContext context = createCompletionContext(hostCopy, hostMap.getOffset(CompletionInitializationContext.START_OFFSET), hostMap, initContext.getFile());
-    LookupImpl lookup = obtainLookup(editor);
+    LookupImpl lookup = obtainLookup(editor, initContext.getProject());
     CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -481,7 +481,9 @@ public class CodeCompletionHandlerBase {
       final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
 
       AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-        if (phase.checkExpired()) {
+        if (phase.checkExpired() ||
+            !initContext.getFile().isValid() || !hostCopy.isValid() ||
+            !CompletionAssertions.isEditorValid(initContext.getEditor())) {
           Disposer.dispose(translator);
           return;
         }
@@ -566,15 +568,14 @@ public class CodeCompletionHandlerBase {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = indicator.getCaret().getOffset();
-    int idEndOffset = indicator.getIdentifierEndOffset();
-    if (idEndOffset < 0) {
-      idEndOffset = CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
-    }
+    final int idEndOffset = indicator.getOffsetMap().containsOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) ?
+                            indicator.getIdentifierEndOffset() :
+                            CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
     final int idEndOffsetDelta = idEndOffset - caretOffset;
 
     CompletionAssertions.WatchingInsertionContext context;
     if (editor.getCaretModel().supportsMultipleCarets()) {
-      final List<CompletionAssertions.WatchingInsertionContext> contexts = new ArrayList<CompletionAssertions.WatchingInsertionContext>();
+      final List<CompletionAssertions.WatchingInsertionContext> contexts = new ArrayList<>();
       final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
       final PsiFile originalFile = indicator.getParameters().getOriginalFile();
       final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(originalFile);
@@ -685,12 +686,11 @@ public class CodeCompletionHandlerBase {
                                         CompletionAssertions.WatchingInsertionContext context,
                                         LookupElement item,
                                         Editor editor, CompletionProgressIndicator indicator, char completionChar) {
-    int tailOffset = context.getTailOffset();
-    if (tailOffset < 0) {
+    if (!context.getOffsetMap().containsOffset(InsertionContext.TAIL_OFFSET)) {
       LOG.info("tailOffset<0 after inserting " + item + " of " + item.getClass() + "; invalidated at: " + context.invalidateTrace + "\n--------");
     }
     else {
-      editor.getCaretModel().moveToOffset(tailOffset);
+      editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       final Language language = PsiUtilBase.getLanguageInEditor(editor, project);

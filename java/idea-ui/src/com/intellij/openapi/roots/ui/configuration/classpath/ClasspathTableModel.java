@@ -38,7 +38,7 @@ import java.util.List;
 * @author nik
 */
 class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implements ItemRemovable {
-  private static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
+  static final String EXPORT_COLUMN_NAME = ProjectBundle.message("modules.order.export.export.column");
   private static final ColumnInfo<ClasspathTableItem<?>, Boolean> EXPORT_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, Boolean>(EXPORT_COLUMN_NAME) {
     @Nullable
     @Override
@@ -119,7 +119,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   public void init() {
     final OrderEntry[] orderEntries = getModel().getOrderEntries();
     boolean hasJdkOrderEntry = false;
-    List<ClasspathTableItem<?>> items = new ArrayList<ClasspathTableItem<?>>();
+    List<ClasspathTableItem<?>> items = new ArrayList<>();
     for (final OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof JdkOrderEntry) {
         hasJdkOrderEntry = true;
@@ -145,7 +145,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
 
   private List<OrderEntry> getEntries() {
     final int count = getRowCount();
-    final List<OrderEntry> entries = new ArrayList<OrderEntry>(count);
+    final List<OrderEntry> entries = new ArrayList<>(count);
     for (int row = 0; row < count; row++) {
       final OrderEntry entry = getItem(row).getEntry();
       if (entry != null) {

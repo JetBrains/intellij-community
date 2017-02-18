@@ -68,7 +68,7 @@ abstract class FoldRegionsTree {
       region.dispose();
     }
 
-    myRegions = new ArrayList<FoldRegion>();
+    myRegions = new ArrayList<>();
   }
 
   void clearCachedValues() {
@@ -78,11 +78,11 @@ abstract class FoldRegionsTree {
   protected abstract boolean isFoldingEnabled();
 
   void rebuild() {
-    List<FoldRegion> topLevels = new ArrayList<FoldRegion>(myRegions.size() / 2);
-    List<FoldRegion> visible = new ArrayList<FoldRegion>(myRegions.size());
-    List<FoldRegion> allValid = new ArrayList<FoldRegion>(myRegions.size());
+    List<FoldRegion> topLevels = new ArrayList<>(myRegions.size() / 2);
+    List<FoldRegion> visible = new ArrayList<>(myRegions.size());
+    List<FoldRegion> allValid = new ArrayList<>(myRegions.size());
     
-    THashMap<FoldRegion, FoldRegion> distinctRegions = new THashMap<FoldRegion, FoldRegion>(myRegions.size(), OFFSET_BASED_HASHING_STRATEGY);
+    THashMap<FoldRegion, FoldRegion> distinctRegions = new THashMap<>(myRegions.size(), OFFSET_BASED_HASHING_STRATEGY);
     for (FoldRegion region : myRegions) {
       if (!region.isValid()) {
         continue;
@@ -170,7 +170,7 @@ abstract class FoldRegionsTree {
       return;
     }
     
-    Set<FoldRegion> distinctRegions = new THashSet<FoldRegion>(visibleRegions.length, OFFSET_BASED_HASHING_STRATEGY);
+    Set<FoldRegion> distinctRegions = new THashSet<>(visibleRegions.length, OFFSET_BASED_HASHING_STRATEGY);
 
     for (FoldRegion foldRegion : visibleRegions) {
       if (!foldRegion.isValid() || !distinctRegions.add(foldRegion)) {
@@ -281,9 +281,10 @@ abstract class FoldRegionsTree {
     return region.getStartOffset() < offset && region.getEndOffset() > offset;
   }
 
-  public FoldRegion[] fetchCollapsedAt(int offset) {
+  @NotNull
+  FoldRegion[] fetchCollapsedAt(int offset) {
     if (myCachedData.isUnavailable()) return FoldRegion.EMPTY_ARRAY;
-    ArrayList<FoldRegion> allCollapsed = new ArrayList<FoldRegion>();
+    ArrayList<FoldRegion> allCollapsed = new ArrayList<>();
     for (FoldRegion region : myRegions) {
       if (!region.isExpanded() && contains(region, offset)) {
         allCollapsed.add(region);
@@ -322,7 +323,14 @@ abstract class FoldRegionsTree {
     return snapshot.foldedLines[idx];
   }
 
-  public int getLastTopLevelIndexBefore(int offset) {
+  int getTotalNumberOfFoldedLines() {
+    CachedData snapshot = myCachedData;
+    int[] foldedLines = snapshot.foldedLines;
+    if (snapshot.isUnavailable() || foldedLines == null || foldedLines.length == 0) return 0;
+    return foldedLines[foldedLines.length - 1];
+  }
+
+  int getLastTopLevelIndexBefore(int offset) {
     return getLastTopLevelIndexBefore(myCachedData, offset);
   }
   
@@ -350,7 +358,7 @@ abstract class FoldRegionsTree {
   }
 
   @Nullable
-  public FoldRegion getRegionAt(int startOffset, int endOffset) {
+  FoldRegion getRegionAt(int startOffset, int endOffset) {
     int index = Collections.binarySearch(myRegions, new DummyFoldRegion(startOffset, endOffset), RangeMarker.BY_START_OFFSET);
     return index < 0 ? null : myRegions.get(index);
   }
@@ -371,14 +379,18 @@ abstract class FoldRegionsTree {
     private final int[] foldedLines;
 
     private CachedData() {
-      this.visibleRegions = null;
-      this.topLevelRegions = null;
-      this.startOffsets = null;
-      this.endOffsets = null;
-      this.foldedLines = null;
+      visibleRegions = null;
+      topLevelRegions = null;
+      startOffsets = null;
+      endOffsets = null;
+      foldedLines = null;
     }
 
-    private CachedData(FoldRegion[] visibleRegions, FoldRegion[] topLevelRegions, int[] startOffsets, int[] endOffsets, int[] foldedLines) {
+    private CachedData(@NotNull FoldRegion[] visibleRegions,
+                       @NotNull FoldRegion[] topLevelRegions,
+                       @NotNull int[] startOffsets,
+                       @NotNull int[] endOffsets,
+                       @NotNull int[] foldedLines) {
       this.visibleRegions = visibleRegions;
       this.topLevelRegions = topLevelRegions;
       this.startOffsets = startOffsets;

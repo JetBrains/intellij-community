@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -178,7 +177,7 @@ public class ClassRenderer extends NodeRendererImpl{
           children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.class.no.fields.to.display")));
         }
         else if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
-          Collections.sort(children, NodeManagerImpl.getNodeComparator());
+          children.sort(NodeManagerImpl.getNodeComparator());
         }
       }
       else {
@@ -244,7 +243,7 @@ public class ClassRenderer extends NodeRendererImpl{
 
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
     try {
-      return elementFactory.createExpressionFromText(fieldDescriptor.getField().name(), DebuggerUtils.findClass(
+      return elementFactory.createExpressionFromText("this." + fieldDescriptor.getField().name(), DebuggerUtils.findClass(
         fieldDescriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
       );
     }

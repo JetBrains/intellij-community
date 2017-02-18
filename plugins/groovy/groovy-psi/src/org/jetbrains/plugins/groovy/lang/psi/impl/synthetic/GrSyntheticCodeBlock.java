@@ -87,7 +87,7 @@ public class GrSyntheticCodeBlock extends LightElement implements PsiCodeBlock {
     final PsiJavaToken token = SoftReference.dereference(ref);
     if (token != null) return token;
     final LightJavaToken newToken = new LightJavaToken(element, type);
-    element.putUserData(PSI_JAVA_TOKEN, new SoftReference<PsiJavaToken>(newToken));
+    element.putUserData(PSI_JAVA_TOKEN, new SoftReference<>(newToken));
     return newToken;
   }
 

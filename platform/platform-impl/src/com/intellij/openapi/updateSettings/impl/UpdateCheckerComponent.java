@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,16 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.Disposer;
@@ -40,7 +43,7 @@ import javax.swing.event.HyperlinkEvent;
 /**
  * @author yole
  */
-public class UpdateCheckerComponent implements ApplicationComponent {
+public class UpdateCheckerComponent implements ApplicationComponentAdapter, Disposable {
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.HOUR * 8; // Android Studio: check every 8 hours
@@ -59,10 +62,13 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   private final UpdateSettings mySettings;
 
   public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
+    Disposer.register(this, myCheckForUpdatesAlarm);
+
     mySettings = settings;
     updateDefaultChannel();
     checkSecureConnection(app);
     scheduleOnStartCheck(app);
+    cleanupPatch();
   }
 
   private void updateDefaultChannel() {
@@ -107,7 +113,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
       return;
     }
 
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         // Android Studio: always check for update at startup
@@ -127,6 +133,15 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     });
   }
 
+  private static void cleanupPatch() {
+    new Task.Backgroundable(null, IdeBundle.message("update.cleaning.patch.progress"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        UpdateInstaller.cleanupPatch();
+      }
+    }.queue();
+  }
+
   private void queueNextCheck(long interval) {
     myCheckForUpdatesAlarm.addRequest(myCheckRunnable, interval);
   }
@@ -137,14 +152,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   }
 
   @Override
-  public void disposeComponent() {
-    Disposer.dispose(myCheckForUpdatesAlarm);
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "UpdateCheckerComponent";
+  public void dispose() {
   }
 
   public void queueNextCheck() {

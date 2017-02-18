@@ -41,7 +41,7 @@ public class SvnQuickListContentProvider implements VcsQuickListContentProvider 
     }
 
     final ActionManager manager = ActionManager.getInstance();
-    final List<AnAction> actions = new ArrayList<AnAction>();
+    final List<AnAction> actions = new ArrayList<>();
     add("Subversion.Copy", manager, actions);
     add("Subversion.Clenaup", manager, actions);
     return actions;

@@ -43,6 +43,7 @@ public class ParsingScope {
   public ParsingScope withSuite() {
     final ParsingScope result = copy();
     result.mySuite = true;
+    result.myAsync = myAsync;
     return result;
   }
 

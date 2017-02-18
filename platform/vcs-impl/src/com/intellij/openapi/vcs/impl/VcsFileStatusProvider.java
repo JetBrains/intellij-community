@@ -40,6 +40,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   private final ChangeListManager myChangeListManager;
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final VcsConfiguration myConfiguration;
+  private final VcsBaseContentProvider[] myAdditionalProviders;
   private boolean myHaveEmptyContentRevisions;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsFileStatusProvider");
@@ -57,6 +58,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
     myConfiguration = configuration;
     myHaveEmptyContentRevisions = true;
     myFileStatusManager.setFileStatusProvider(this);
+    myAdditionalProviders = VcsBaseContentProvider.EP_NAME.getExtensions(project);
 
     changeListManager.addChangeListListener(new ChangeListAdapter() {
       @Override
@@ -152,12 +154,33 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   @Override
   @Nullable
   public BaseContent getBaseRevision(@NotNull final VirtualFile file) {
+    if (!isHandledByVcs(file)) {
+      VcsBaseContentProvider provider = findProviderFor(file);
+      return provider == null ? null : provider.getBaseRevision(file);
+    }
     final Change change = ChangeListManager.getInstance(myProject).getChange(file);
     if (change == null) return null;
     final ContentRevision beforeRevision = change.getBeforeRevision();
     if (beforeRevision == null) return null;
     if (beforeRevision instanceof BinaryContentRevision) return null;
     return new BaseContentImpl(beforeRevision);
+  }
+
+  @Nullable
+  private VcsBaseContentProvider findProviderFor(@NotNull VirtualFile file) {
+    for (VcsBaseContentProvider support : myAdditionalProviders) {
+      if (support.isSupported(file)) return support;
+    }
+    return null;
+  }
+
+  @Override
+  public boolean isSupported(@NotNull VirtualFile file) {
+    return isHandledByVcs(file) || findProviderFor(file) != null;
+  }
+
+  private boolean isHandledByVcs(@NotNull VirtualFile file) {
+    return file.isInLocalFileSystem() && myVcsManager.getVcsFor(file) != null;
   }
 
   private class BaseContentImpl implements BaseContent {

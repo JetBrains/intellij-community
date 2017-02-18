@@ -87,6 +87,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:fileset refid=\"all_but_jarDeployTitle\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
+           "<manifest>\n" +
+           "<attribute name=\"Implementation-Title\" value=\"My App\">\n" +
+           "</attribute>\n" +
+           "</manifest>\n" +
            "</fx:jar>\n" +
            "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployTitle\">\n" +
            "<fx:application refid=\"jarDeployTitle_id\">\n" +
@@ -224,6 +228,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:fileset refid=\"all_but_jarDeployVersion\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
+           "<manifest>\n" +
+           "<attribute name=\"Implementation-Version\" value=\"4.2\">\n" +
+           "</attribute>\n" +
+           "</manifest>\n" +
            "</fx:jar>\n" +
            "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployVersion\">\n" +
            "<fx:application refid=\"jarDeployVersion_id\">\n" +
@@ -302,7 +310,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   }
 
   public void testJarDeployPreloader() throws Exception {
-    final HashMap<String, String> options = new HashMap<String, String>();
+    final HashMap<String, String> options = new HashMap<>();
     options.put(PRELOADER_CLASS, "MyPreloader");
     options.put(PRELOADER_JAR, "preloader.jar");
     doTest("<fx:fileset id=\"jarDeployPreloader_preloader_files\" requiredFor=\"preloader\" dir=\"temp\" includes=\"preloader.jar\">\n" +

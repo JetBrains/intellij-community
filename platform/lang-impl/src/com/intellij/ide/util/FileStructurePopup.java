@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -62,6 +63,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.AlwaysExpandedTree;
@@ -111,15 +113,14 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private String myTitle;
   private final TreeSpeedSearch mySpeedSearch;
   private final SmartTreeStructure myTreeStructure;
-  private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
   private final PsiElement myInitialPsiElement;
-  private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<Class, JCheckBox>();
-  private final List<JCheckBox> myAutoClicked = new ArrayList<JCheckBox>();
+  private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<>();
+  private final List<JCheckBox> myAutoClicked = new ArrayList<>();
   private String myTestSearchFilter;
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private boolean myInitialNodeIsLeaf;
-  private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<Pair<String, JCheckBox>>();
+  private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<>();
   private final TreeExpander myTreeExpander;
   @NotNull private final FileEditor myFileEditor;
   private final StructureView myStructureViewDelegate;
@@ -300,7 +301,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     //final long time = System.currentTimeMillis();
     JComponent panel = createCenterPanel();
     MnemonicHelper.init(panel);
-    boolean shouldSetWidth = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject) == null;
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
       .setTitle(myTitle)
       .setResizable(true)
@@ -311,11 +311,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setBelongsToGlobalPopupStack(true)
       //.setCancelOnClickOutside(false) //for debug and snapshots
       .setCancelKeyEnabled(false)
-      .setDimensionServiceKey(null, getDimensionServiceKey(), false)
-      .setCancelCallback(() -> {
-        DimensionService.getInstance().setLocation(getDimensionServiceKey(), myPopup.getLocationOnScreen(), myProject);
-        return myCanClose;
-      })
+      .setDimensionServiceKey(null, getDimensionServiceKey(), true)
+      .setCancelCallback(() -> myCanClose)
       .createPopup();
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -340,21 +337,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     });
     myTree.getEmptyText().setText("Loading...");
-    final Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), myProject);
-    if (location != null) {
-      myPopup.showInScreenCoordinates(myFileEditor.getComponent(), location);
-    }
-    else {
-      myPopup.showCenteredInCurrentWindow(myProject);
-    }
+    myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
-    if (shouldSetWidth) {
-      myPopup.setSize(new Dimension(myPreferredWidth + 10, myPopup.getSize().height));
-    }
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
-    SwingUtilities.windowForComponent(myPopup.getContent()).addWindowFocusListener(new WindowFocusListener() {
+    Window window = SwingUtilities.windowForComponent(myPopup.getContent());
+    WindowFocusListener windowFocusListener = new WindowFocusListener() {
       @Override
       public void windowGainedFocus(WindowEvent e) {
       }
@@ -363,7 +352,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       public void windowLostFocus(WindowEvent e) {
         myPopup.cancel();
       }
-    });
+    };
+    window.addWindowFocusListener(windowFocusListener);
+    Disposer.register(myPopup, () -> window.removeWindowFocusListener(windowFocusListener));
+
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ApplicationManager.getApplication().runReadAction(() -> myFilteringStructure.rebuild());
 
@@ -499,7 +491,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   private static Set<PsiElement> getAllParents(PsiElement element) {
-    Set<PsiElement> parents = new java.util.HashSet<PsiElement>();
+    Set<PsiElement> parents = new java.util.HashSet<>();
 
     while (element != null) {
       parents.add(element);
@@ -555,8 +547,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   public JComponent createCenterPanel() {
-    List<FileStructureFilter> fileStructureFilters = new ArrayList<FileStructureFilter>();
-    List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<FileStructureNodeProvider>();
+    List<FileStructureFilter> fileStructureFilters = new ArrayList<>();
+    List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<>();
     if (myTreeActionsOwner != null) {
       for (Filter filter : myBaseTreeModel.getFilters()) {
         if (filter instanceof FileStructureFilter) {
@@ -624,10 +616,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
 
-    myPreferredWidth = Math.max(comboPanel.getPreferredSize().width, JBUI.scale(350));
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree());
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+    Dimension preferredSize = scrollPane.getPreferredSize();
+    preferredSize.width = Math.max(comboPanel.getPreferredSize().width, JBUI.scale(350));
+    scrollPane.setPreferredSize(preferredSize);
     panel.add(scrollPane, BorderLayout.CENTER);
     //panel.add(createSouthPanel(), BorderLayout.SOUTH);
     DataManager.registerDataProvider(panel, new DataProvider() {
@@ -785,7 +779,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     }
 
-    final Ref<Boolean> succeeded = new Ref<Boolean>();
+    final Ref<Boolean> succeeded = new Ref<>();
     final CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
       if (selectedNode != null) {
@@ -982,7 +976,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter = null;
-    private final Set<Object> myVisibleParents = new HashSet<Object>();
+    private final Set<Object> myVisibleParents = new HashSet<>();
     private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
 
     @Override
@@ -1071,11 +1065,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         return paths.get(0).node;
       }
       final Set<PsiElement> parents = getAllParents(myInitialPsiElement);
-      ArrayList<SpeedSearchObjectWithWeight> cur = new ArrayList<SpeedSearchObjectWithWeight>();
+      ArrayList<SpeedSearchObjectWithWeight> cur = new ArrayList<>();
       int max = -1;
       for (SpeedSearchObjectWithWeight p : paths) {
         final Object last = ((TreePath)p.node).getLastPathComponent();
-        final List<PsiElement> elements = new ArrayList<PsiElement>();
+        final List<PsiElement> elements = new ArrayList<>();
         final Object object = ((DefaultMutableTreeNode)last).getUserObject();
         if (object instanceof FilteringTreeStructure.FilteringNode) {
           FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)object;
@@ -1109,7 +1103,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  class FileStructureTree extends JBTreeWithHintProvider implements AlwaysExpandedTree, PlaceProvider<String> {
+  class FileStructureTree extends DnDAwareTree implements AlwaysExpandedTree, PlaceProvider<String> {
     private final boolean fast;
 
     public FileStructureTree(Object rootElement, boolean fastExpand) {
@@ -1132,6 +1126,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       setRootVisible(false);
       setShowsRootHandles(true);
       setHorizontalAutoScrollingEnabled(false);
+
+      HintUpdateSupply.installHintUpdateSupply(this, o -> getPsi(
+        (FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)o).getUserObject()));
     }
 
     @Override
@@ -1147,12 +1144,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     @Override
     public boolean isExpanded(int row) {
       return fast || super.isExpanded(row);
-    }
-
-    @Override
-    protected PsiElement getPsiElementForHint(Object selectedValue) {
-      //noinspection ConstantConditions
-      return getPsi((FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)selectedValue).getUserObject());
     }
 
     @Override

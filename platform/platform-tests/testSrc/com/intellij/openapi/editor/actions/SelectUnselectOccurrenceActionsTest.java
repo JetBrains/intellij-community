@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.ui.LightweightHint;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsightFixtureTestCase {
   private int hintCount;
@@ -38,7 +41,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
         hintCount++;
       }
     };
-    ApplicationManager.getApplication().getMessageBus().connect(myTestRootDisposable).subscribe(EditorHintListener.TOPIC, listener);
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, listener);
   }
 
   public void testAllWithoutInitialSelection() throws Exception {
@@ -246,6 +249,19 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
     checkResult("<selection><caret>fruit</selection>\n" +
                 "fruit\n" +
                 "<selection><caret>fruit</selection>");
+  }
+
+  public void testNearInlays() throws Exception {
+    init("cat cat");
+    EditorTestUtil.addInlay(myFixture.getEditor(), 0);
+    EditorTestUtil.addInlay(myFixture.getEditor(), 4);
+    myFixture.getEditor().getCaretModel().moveToVisualPosition(new VisualPosition(0, 1));
+    executeAction();
+    executeAction();
+    checkResult("<selection><caret>cat</selection> <selection><caret>cat</selection>");
+    assertEquals(Arrays.asList(new VisualPosition(0, 1),
+                               new VisualPosition(0, 6)),
+      myFixture.getEditor().getCaretModel().getAllCarets().stream().map(Caret::getVisualPosition).collect(Collectors.toList()));
   }
 
   private void init(String text) {

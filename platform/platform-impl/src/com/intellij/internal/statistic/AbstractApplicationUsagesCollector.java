@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersiste
 import com.intellij.internal.statistic.persistence.CollectedUsages;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.THashSet;
@@ -38,14 +37,8 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
     try {
       persistProjectUsages(project, new CollectedUsages(getProjectUsages(project), System.currentTimeMillis()));
     }
-    catch (ProcessCanceledException e) {
+    catch (Exception e) {
       LOG.info(e);
-    }
-    catch (CollectUsagesException e) {
-      LOG.info(e);
-    }
-    catch (Exception usageCollectorException) {
-      LOG.info(usageCollectorException);
     }
   }
 
@@ -66,7 +59,7 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
 
   @NotNull
   public Set<UsageDescriptor> getApplicationUsages(@NotNull ApplicationStatisticsPersistence persistence) {
-    ObjectIntHashMap<String> result = new ObjectIntHashMap<String>();
+    ObjectIntHashMap<String> result = new ObjectIntHashMap<>();
     long lastTimeSent = UsageStatisticsPersistenceComponent.getInstance().getLastTimeSent();
     for (CollectedUsages usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
       if (!usageDescriptors.usages.isEmpty() && usageDescriptors.collectionTime > lastTimeSent) {
@@ -82,7 +75,7 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
       return Collections.emptySet();
     }
     else {
-      final THashSet<UsageDescriptor> descriptors = new THashSet<UsageDescriptor>(result.size());
+      final THashSet<UsageDescriptor> descriptors = new THashSet<>(result.size());
       result.forEachEntry(new TObjectIntProcedure<String>() {
         @Override
         public boolean execute(String key, int value) {

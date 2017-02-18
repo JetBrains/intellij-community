@@ -59,6 +59,8 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   public void testOverloadingMethods1() throws Exception { doTest(true, 0); }
 
   public void testPolyadicExpr() throws Exception { doTest(true, 0); }
+  
+  public void testIOOBE_MovingInvalidCode() throws Exception { doTest(true, 0); }
 
   public void testEscalateVisibility() throws Exception {
     doTest(true, 0, VisibilityUtil.ESCALATE_VISIBILITY);
@@ -81,6 +83,10 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
 
   public void testStripFieldQualifier() throws Exception {
     doTest(false, 0);
+  }
+
+  public void testUsageInAnonymousClass() throws Exception {
+    doTest(true, 0);
   }
 
   public void testMethodReference() throws Exception {

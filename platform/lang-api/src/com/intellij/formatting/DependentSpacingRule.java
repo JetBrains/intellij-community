@@ -40,7 +40,7 @@ public class DependentSpacingRule {
   public static final DependentSpacingRule DEFAULT =
     new DependentSpacingRule(Trigger.HAS_LINE_FEEDS).registerData(Anchor.MIN_LINE_FEEDS, 1);
 
-  private final TObjectIntHashMap<Anchor> myData = new TObjectIntHashMap<Anchor>();
+  private final TObjectIntHashMap<Anchor> myData = new TObjectIntHashMap<>();
 
   @NotNull private final Trigger myTrigger;
 
@@ -68,8 +68,8 @@ public class DependentSpacingRule {
 
   /**
    * @param anchor  target data anchor
-   * @return        <code>true</code> if there is a data registered for the given anchor within the current rule;
-   *                <code>false</code> otherwise
+   * @return        {@code true} if there is a data registered for the given anchor within the current rule;
+   *                {@code false} otherwise
    */
   public boolean hasData(@NotNull Anchor anchor) {
     return myData.containsKey(anchor);

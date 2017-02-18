@@ -76,7 +76,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
   private boolean doCopy() {
     final ArrayList<RadComponent> selectedComponents = FormEditingUtil.getSelectedComponents(myEditor);
     final SerializedComponentData data = new SerializedComponentData(serializeForCopy(myEditor, selectedComponents));
-    final SimpleTransferable transferable = new SimpleTransferable<SerializedComponentData>(data, SerializedComponentData.class, ourDataFlavor);
+    final SimpleTransferable transferable = new SimpleTransferable<>(data, SerializedComponentData.class, ourDataFlavor);
     try {
       CopyPasteManager.getInstance().setContents(transferable);
       return true;
@@ -115,7 +115,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
       return;
     }
 
-    final ArrayList<RadComponent> componentsToPaste = new ArrayList<RadComponent>();
+    final ArrayList<RadComponent> componentsToPaste = new ArrayList<>();
     final TIntArrayList xs = new TIntArrayList();
     final TIntArrayList ys = new TIntArrayList();
     loadComponentsToPaste(myEditor, serializedComponents, xs, ys, componentsToPaste);
@@ -125,7 +125,7 @@ public final class CutCopyPasteSupport implements CopyProvider, CutProvider, Pas
 
   @Nullable
   private static ArrayList<RadComponent> deserializeComponents(final GuiEditor editor, final String serializedComponents) {
-    ArrayList<RadComponent> components = new ArrayList<RadComponent>();
+    ArrayList<RadComponent> components = new ArrayList<>();
     TIntArrayList xs = new TIntArrayList();
     TIntArrayList ys = new TIntArrayList();
     if (!loadComponentsToPaste(editor, serializedComponents, xs, ys, components)) {

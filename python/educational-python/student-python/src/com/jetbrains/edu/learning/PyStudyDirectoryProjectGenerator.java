@@ -20,7 +20,6 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
@@ -28,12 +27,14 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.AbstractCreateVirtualEnvDialog;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -51,7 +52,7 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
+public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>  {
   private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;
   private static final String NO_PYTHON_INTERPRETER = "<html><u>Add</u> python interpreter.</html>";
@@ -81,21 +82,24 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
     addErrorLabelMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           mySettingsPanel.showLoginDialog(false, "Signing In");
         }
       }
 
       @Override
       public void mouseEntered(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final CourseInfo selectedItem = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && selectedItem.isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getDefaultCursor());
         }
       }
@@ -117,8 +121,10 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
 
 
   @Override
-  public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                              @Nullable Object settings, @NotNull Module module) {
+  public void configureProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
+                               @NotNull PyNewProjectSettings settings,
+                               @NotNull Module module,
+                               @Nullable PyProjectSynchronizer synchronizer) {
     myGenerator.generateProject(project, baseDir);
     final String testHelper = "test_helper.py";
     if (baseDir.findChild(testHelper) != null) return;
@@ -180,10 +186,11 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
       final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
       final CourseInfo course = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
       if (course == null) return true;
-      if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
+      if (course.getId() > 0 && !enrolledCoursesIds.contains(course.getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId()));
+          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(),
+                                                                                   StepicUpdateSettings.getInstance().getUser()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }

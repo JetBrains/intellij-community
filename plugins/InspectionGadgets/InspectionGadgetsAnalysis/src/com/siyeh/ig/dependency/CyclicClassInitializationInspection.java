@@ -58,7 +58,7 @@ public class CyclicClassInitializationInspection extends BaseGlobalInspection {
       InitializationDependencyUtils.calculateTransitiveInitializationDependentsForClass(refClass);
     final Set<RefClass> dependents =
       InitializationDependencyUtils.calculateTransitiveInitializationDependenciesForClass(refClass);
-    final Set<RefClass> mutualDependents = new HashSet<RefClass>(dependencies);
+    final Set<RefClass> mutualDependents = new HashSet<>(dependencies);
     mutualDependents.retainAll(dependents);
 
     final int numMutualDependents = mutualDependents.size();

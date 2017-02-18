@@ -132,6 +132,7 @@ public class CheckboxTreeBase extends Tree {
     private final ColoredTreeCellRenderer myTextRenderer;
     public final ThreeStateCheckBox myCheckbox;
     private final boolean myUsePartialStatusForParentNodes;
+    protected boolean myIgnoreInheritance;
 
     public CheckboxTreeCellRendererBase(boolean opaque) {
       this(opaque, true);
@@ -187,6 +188,7 @@ public class CheckboxTreeBase extends Tree {
     }
 
     private NodeState getNodeStatus(final CheckedTreeNode node) {
+      if (myIgnoreInheritance) return node.isChecked() ? NodeState.FULL : NodeState.CLEAR;
       final boolean checked = node.isChecked();
       if (node.getChildCount() == 0 || !myUsePartialStatusForParentNodes) return checked ? NodeState.FULL : NodeState.CLEAR;
 

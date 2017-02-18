@@ -92,7 +92,7 @@ class StateMerger {
 
   @NotNull
   private LinkedHashSet<Fact> getUnrelatedFacts(@NotNull final Fact fact, @NotNull DfaMemoryStateImpl state) {
-    return new LinkedHashSet<Fact>(ContainerUtil.filter(getFacts(state), another -> !fact.invalidatesFact(another)));
+    return new LinkedHashSet<>(ContainerUtil.filter(getFacts(state), another -> !fact.invalidatesFact(another)));
   }
 
   private void restoreOtherInequalities(@NotNull Fact removedFact, @NotNull Collection<DfaMemoryStateImpl> mergedGroup, @NotNull DfaMemoryStateImpl state) {
@@ -150,7 +150,7 @@ class StateMerger {
 
   @Nullable
   List<DfaMemoryStateImpl> mergeByUnknowns(@NotNull List<DfaMemoryStateImpl> states) {
-    MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<Integer, DfaMemoryStateImpl>();
+    MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       byHash.putValue(state.getPartialHashCode(false, true), state);
@@ -173,7 +173,7 @@ class StateMerger {
   
   @Nullable
   List<DfaMemoryStateImpl> mergeByNullability(List<DfaMemoryStateImpl> states) {
-    MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<Integer, DfaMemoryStateImpl>();
+    MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       byHash.putValue(state.getPartialHashCode(false, false), state);
@@ -264,10 +264,10 @@ class StateMerger {
       List<DfaVariableValue> vars1 = classPair.first.getVariables(false);
       List<DfaVariableValue> vars2 = classPair.second.getVariables(false);
       
-      LinkedHashSet<DfaValue> firstSet = new LinkedHashSet<DfaValue>(vars1);
+      LinkedHashSet<DfaValue> firstSet = new LinkedHashSet<>(vars1);
       ContainerUtil.addIfNotNull(firstSet, classPair.first.findConstant(true));
 
-      LinkedHashSet<DfaValue> secondSet = new LinkedHashSet<DfaValue>(vars2);
+      LinkedHashSet<DfaValue> secondSet = new LinkedHashSet<>(vars2);
       ContainerUtil.addIfNotNull(secondSet, classPair.second.findConstant(true));
 
       for (DfaVariableValue var : vars1) {

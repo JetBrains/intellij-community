@@ -39,7 +39,7 @@ public class SelectAllAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     RadComponent rootComponent = myArea.getRootComponent();
     if (rootComponent != null) {
-      final List<RadComponent> components = new ArrayList<RadComponent>();
+      final List<RadComponent> components = new ArrayList<>();
       rootComponent.accept(new RadComponentVisitor() {
         @Override
         public void endVisit(RadComponent component) {

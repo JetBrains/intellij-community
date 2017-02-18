@@ -65,14 +65,9 @@ public class LongLiteralsEndingWithLowercaseLInspection
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "long.literals.ending.with.lowercase.l.replace.quickfix");
-    }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

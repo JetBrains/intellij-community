@@ -32,7 +32,7 @@ public class DisplayChangeDetector {
 
   @SuppressWarnings("FieldCanBeLocal") // we need to keep a strong reference to this listener, as GraphicsEnvironment keeps only weak references to them
   private final DisplayChangeHandler myHandler = new DisplayChangeHandler();
-  private final List<Listener> myListeners = new CopyOnWriteArrayList<Listener>(); 
+  private final List<Listener> myListeners = new CopyOnWriteArrayList<>();
 
   private DisplayChangeDetector() {
     try {

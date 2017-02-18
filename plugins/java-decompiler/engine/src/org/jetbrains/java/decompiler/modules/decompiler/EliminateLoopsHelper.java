@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class EliminateLoopsHelper {
     }
 
     // collect relevant break edges
-    List<StatEdge> lstBreakEdges = new ArrayList<StatEdge>();
+    List<StatEdge> lstBreakEdges = new ArrayList<>();
     for (StatEdge edge : loop.getLabelEdges()) {
       if (edge.getType() == StatEdge.TYPE_BREAK) { // all break edges are explicit because of LOOP_DO type
         lstBreakEdges.add(edge);
@@ -99,8 +99,8 @@ public class EliminateLoopsHelper {
     if (!lstBreakEdges.isEmpty()) {
       if (firstok) {
 
-        HashMap<Integer, Boolean> statLabeled = new HashMap<Integer, Boolean>();
-        List<Statement> lstEdgeClosures = new ArrayList<Statement>();
+        HashMap<Integer, Boolean> statLabeled = new HashMap<>();
+        List<Statement> lstEdgeClosures = new ArrayList<>();
 
         for (StatEdge edge : lstBreakEdges) {
           Statement minclosure = LowBreakHelper.getMinClosure(loopcontent, edge.getSource());
@@ -135,10 +135,7 @@ public class EliminateLoopsHelper {
           statLabeled.put(st.id, LowBreakHelper.isBreakEdgeLabeled(lstBreakEdges.get(i).getSource(), st) | statLabeled.get(st.id));
         }
 
-        int postcount = 0;
-        for (Boolean val : statLabeled.values()) {
-          postcount += val ? 1 : 0;
-        }
+        long postcount = statLabeled.values().stream().filter(Boolean::booleanValue).count();
 
         if (precount <= postcount) {
           return false;
@@ -193,7 +190,7 @@ public class EliminateLoopsHelper {
   private static void eliminateLoop(Statement loop, Statement parentloop) {
 
     // move continue edges to the parent loop
-    List<StatEdge> lst = new ArrayList<StatEdge>(loop.getLabelEdges());
+    List<StatEdge> lst = new ArrayList<>(loop.getLabelEdges());
     for (StatEdge edge : lst) {
       loop.removePredecessor(edge);
       edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, parentloop);

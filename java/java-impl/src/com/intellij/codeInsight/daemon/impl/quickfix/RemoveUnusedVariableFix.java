@@ -74,8 +74,8 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   }
 
   private void removeVariableAndReferencingStatements(Editor editor) {
-    final List<PsiElement> references = new ArrayList<PsiElement>();
-    final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+    final List<PsiElement> references = new ArrayList<>();
+    final List<PsiElement> sideEffects = new ArrayList<>();
     final boolean[] canCopeWithSideEffects = {true};
     try {
       PsiElement context = myVariable instanceof PsiField ? ((PsiField)myVariable).getContainingClass() : PsiUtil.getVariableCodeBlock(myVariable, null);

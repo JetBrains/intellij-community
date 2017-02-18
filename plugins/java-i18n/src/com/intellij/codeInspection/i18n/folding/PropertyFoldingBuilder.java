@@ -55,7 +55,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
       return FoldingDescriptor.EMPTY;
     }
     final PsiJavaFile file = (PsiJavaFile) element;
-    final List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
+    final List<FoldingDescriptor> result = new ArrayList<>();
     boolean hasJsp = ContainerUtil.intersects(Arrays.asList(StdLanguages.JSP, StdLanguages.JSPX), file.getViewProvider().getLanguages());
     //hack here because JspFile PSI elements are not threaded correctly via nextSibling/prevSibling
     file.accept(hasJsp ? new JavaRecursiveElementVisitor() {
@@ -80,7 +80,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static void checkLiteral(PsiLiteralExpression expression, List<FoldingDescriptor> result) {
     if (isI18nProperty(expression)) {
       final IProperty property = getI18nProperty(expression);
-      final HashSet<Object> set = new HashSet<Object>();
+      final HashSet<Object> set = new HashSet<>();
       set.add(property != null ? property : PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       final String msg = formatI18nProperty(expression, property);
 
@@ -216,7 +216,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (property == NULL) return false;
     if (property != null) return true;
 
-    final Map<String, Object> annotationParams = new HashMap<String, Object>();
+    final Map<String, Object> annotationParams = new HashMap<>();
     annotationParams.put(AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER, null);
     final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, annotationParams);
     if (!isI18n) {

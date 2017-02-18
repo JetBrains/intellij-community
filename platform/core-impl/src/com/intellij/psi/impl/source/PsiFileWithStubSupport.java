@@ -20,15 +20,28 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A base interface for PSI files that may contain not only text-based syntactic trees as their content,
+ * but also a more lightweight representation called stubs.
+ * @see com.intellij.extapi.psi.StubBasedPsiElementBase
+ */
 public interface PsiFileWithStubSupport extends PsiFile {
+  /**
+   * @return the stub tree for this file, if it's stub-based at all. Will be null after the AST has been loaded
+   * (e.g. by calling {@link PsiElement#getNode()} or {@link PsiElement#getText()}.
+   */
   @Nullable
   StubTree getStubTree();
 
+  /**
+   * Loads the AST for this file and returns the node which corresponds to the given stub
+   */
   @Nullable
   ASTNode findTreeForStub(StubTree tree, StubElement<?> stub);
 }

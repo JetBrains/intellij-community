@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.dsl.psi;
+package org.jetbrains.plugins.groovy.dsl.psi
 
-import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.*
+import org.jetbrains.annotations.Nullable
 
 /**
  * @author ilyas
  */
-public class PsiMethodCategory implements PsiEnhancerCategory {
+class PsiMethodCategory implements PsiEnhancerCategory {
 
   @Nullable
-  public static PsiClass getClassType(PsiField field) {
-    final PsiType type = field.getType();
-    return PsiCategoryUtil.getClassType(type, field);
+  static PsiClass getClassType(PsiField field) {
+    final PsiType type = field.getType()
+    return PsiCategoryUtil.getClassType(type, field)
   }
 
   static Map getParamStringVector(PsiMethod method) {
-    def Map result = [:]
+    Map result = [:]
     int idx = 1
     for (p in method.parameterList.parameters) {
       result.put("value$idx", p.getType().getCanonicalText())
       idx++
     }
-    return result;
+    return result
   }
 
 }

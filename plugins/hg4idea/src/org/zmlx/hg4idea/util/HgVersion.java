@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.zmlx.hg4idea.util;
 
-import com.google.common.base.Objects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +23,7 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommandException;
 
 import java.text.ParseException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,7 +103,7 @@ public final class HgVersion implements Comparable<HgVersion> {
     // but hgrc configuration file may be related to one of repository then extension may be failed to import too
     //before fixed use command exit value instead if errors.isEmpty
     //todo store all unsupported extensions for all repository and notify once
-    Set<String> extensions = new HashSet<String>();
+    Set<String> extensions = new HashSet<>();
     if (errorLines.isEmpty()) {
       return extensions;
     }
@@ -199,7 +195,7 @@ public final class HgVersion implements Comparable<HgVersion> {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myMajor, myMiddle, myMinor);
+    return Objects.hash(myMajor, myMiddle, myMinor);
   }
 
   /**

@@ -56,7 +56,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                if (containingClass == null) {
                  return;
                }
-               Set<String> seenNames = new HashSet<String>();
+               Set<String> seenNames = new HashSet<>();
                for (PyFunction function : containingClass.getMethods()) {
                  seenNames.add(function.getName());
                }

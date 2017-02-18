@@ -33,8 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author peter
@@ -56,8 +54,6 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected StateRestoringCheckBox myCbToSearchForTextOccurrences;
   protected JCheckBox myCbToSkipResultsWhenOneUsage;
 
-  private final ActionListener myUpdateAction;
-
   private ScopeChooserCombo myScopeCombo;
 
   protected AbstractFindUsagesDialog(@NotNull Project project,
@@ -76,17 +72,10 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     mySearchForTextOccurrencesAvailable = searchForTextOccurrencesAvailable;
     mySearchInLibrariesAvailable = searchInLibrariesAvailable;
 
-    myUpdateAction = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        update();
-      }
-    };
-
     setButtonsMargin(null);
 
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
-    setTitle(isSingleFile ? FindBundle.message("find.usages.in.file.dialog.title") : FindBundle.message("find.usages.dialog.title"));
+    setTitle(FindBundle.message(isSingleFile ? "find.usages.in.file.dialog.title" : "find.usages.dialog.title"));
   }
 
   @NotNull
@@ -209,7 +198,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     cb.setSelected(toSelect);
     panel.add(cb);
     if (toUpdate) {
-      cb.addActionListener(myUpdateAction);
+      cb.addActionListener(___ -> update());
     }
     return cb;
   }

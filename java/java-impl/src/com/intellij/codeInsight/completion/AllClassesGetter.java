@@ -126,13 +126,8 @@ public class AllClassesGetter {
   public static final InsertHandler<JavaPsiClassReferenceElement> INSERT_FQN = (context, item) -> {
     final String qName = item.getQualifiedName();
     if (qName != null) {
-      int start = context.getTailOffset() - 1;
-      while (start >= 0) {
-        final char ch = context.getDocument().getCharsSequence().charAt(start);
-        if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
-        start--;
-      }
-      context.getDocument().replaceString(start + 1, context.getTailOffset(), qName);
+      int start = JavaCompletionUtil.findQualifiedNameStart(context);
+      context.getDocument().replaceString(start, context.getTailOffset(), qName);
       LOG.assertTrue(context.getTailOffset() >= 0);
     }
   };
@@ -152,7 +147,7 @@ public class AllClassesGetter {
                                         @NotNull Project project,
                                         @NotNull GlobalSearchScope scope,
                                         @NotNull Processor<PsiClass> processor) {
-    final Set<String> names = new THashSet<String>(10000);
+    final Set<String> names = new THashSet<>(10000);
     AllClassesSearchExecutor.processClassNames(project, scope, s -> {
       if (prefixMatcher.prefixMatches(s)) {
         names.add(s);

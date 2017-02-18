@@ -50,7 +50,7 @@ public class LocalDescriptorsUtil {
                                     @NotNull InspectionToolPresentation dpi) {
     if (descriptors.isEmpty()) return;
 
-    Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<RefElement, List<ProblemDescriptor>>();
+    Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<>();
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
     for (ProblemDescriptor descriptor : descriptors) {
       final PsiElement element = descriptor.getPsiElement();
@@ -73,7 +73,7 @@ public class LocalDescriptorsUtil {
 
       List<ProblemDescriptor> elementProblems = problems.get(refElement);
       if (elementProblems == null) {
-        elementProblems = new ArrayList<ProblemDescriptor>();
+        elementProblems = new ArrayList<>();
         problems.put(refElement, elementProblems);
       }
       elementProblems.add(descriptor);

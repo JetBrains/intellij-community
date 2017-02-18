@@ -28,7 +28,7 @@ public class BaseUpdateCommandListener extends LineCommandAdapter {
   public BaseUpdateCommandListener(@NotNull File base, @Nullable ProgressTracker handler) {
     this.handler = handler;
     this.converter = new UpdateOutputLineConverter(base);
-    exception = new AtomicReference<SVNException>();
+    exception = new AtomicReference<>();
   }
 
   @Override

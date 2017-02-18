@@ -61,15 +61,9 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.qualifier.for.this.remove.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

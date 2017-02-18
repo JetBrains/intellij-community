@@ -21,21 +21,16 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.BitUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
  */
 public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements PsiClassStub<T> {
-  private final StringRef myQualifiedName;
-  private final StringRef myName;
-  private final StringRef myBaseRefText;
-  private final byte myFlags;
-
   private static final int DEPRECATED = 0x01;
   private static final int INTERFACE = 0x02;
   private static final int ENUM = 0x04;
@@ -45,23 +40,17 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int IN_QUALIFIED_NEW = 0x40;
   private static final int DEPRECATED_ANNOTATION = 0x80;
 
-  private LanguageLevel myLanguageLevel;
-  private StringRef mySourceFileName;
+  private final String myQualifiedName;
+  private final String myName;
+  private final String myBaseRefText;
+  private final byte myFlags;
+  private String mySourceFileName;
 
   public PsiClassStubImpl(final JavaClassElementType type,
                           final StubElement parent,
-                          final String qualifiedName,
-                          final String name,
+                          @Nullable final String qualifiedName,
+                          @Nullable final String name,
                           @Nullable final String baseRefText,
-                          final byte flags) {
-    this(type, parent, StringRef.fromString(qualifiedName), StringRef.fromString(name), StringRef.fromString(baseRefText), flags);
-  }
-
-  public PsiClassStubImpl(final JavaClassElementType type,
-                          final StubElement parent,
-                          final StringRef qualifiedName,
-                          final StringRef name,
-                          final StringRef baseRefText,
                           final byte flags) {
     super(parent, type);
     myQualifiedName = qualifiedName;
@@ -76,17 +65,17 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   @Override
   public String getName() {
-    return StringRef.toString(myName);
+    return myName;
   }
 
   @Override
   public String getQualifiedName() {
-    return StringRef.toString(myQualifiedName);
+    return myQualifiedName;
   }
 
   @Override
   public String getBaseClassReferenceText() {
-    return StringRef.toString(myBaseRefText);
+    return myBaseRefText;
   }
 
   @Override
@@ -134,24 +123,23 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   @Override
   public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel != null ? myLanguageLevel : LanguageLevel.HIGHEST;
+    StubElement parent = getParentStub();
+    if (parent instanceof PsiJavaFileStub) {
+      LanguageLevel level = ((PsiJavaFileStub)parent).getLanguageLevel();
+      if (level != null) {
+        return level;
+      }
+    }
+    return LanguageLevel.HIGHEST;
   }
 
   @Override
   public String getSourceFileName() {
-    return StringRef.toString(mySourceFileName);
+    return mySourceFileName;
   }
 
-  public void setLanguageLevel(final LanguageLevel languageLevel) {
-    myLanguageLevel = languageLevel;
-  }
-
-  public void setSourceFileName(final StringRef sourceFileName) {
+  public void setSourceFileName(String sourceFileName) {
     mySourceFileName = sourceFileName;
-  }
-
-  public void setSourceFileName(final String sourceFileName) {
-    mySourceFileName = StringRef.fromString(sourceFileName);
   }
 
   @Override
@@ -183,7 +171,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return flags;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
+  @SuppressWarnings("SpellCheckingInspection")
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("PsiClassStub[");

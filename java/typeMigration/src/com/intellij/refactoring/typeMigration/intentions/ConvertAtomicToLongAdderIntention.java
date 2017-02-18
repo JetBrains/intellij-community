@@ -47,7 +47,7 @@ public class ConvertAtomicToLongAdderIntention extends PsiElementBaseIntentionAc
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(element)) return false;
+    if (!element.isValid() || !PsiUtil.isLanguageLevel8OrHigher(element)) return false;
     final PsiVariable variable = getVariable(element);
     return variable != null;
   }

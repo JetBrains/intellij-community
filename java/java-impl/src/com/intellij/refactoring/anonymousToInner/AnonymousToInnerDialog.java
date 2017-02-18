@@ -51,7 +51,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
   private NameSuggestionsField myNameField;
   private final VariableData[] myVariableData;
-  private final Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<PsiVariable, VariableInfo>();
+  private final Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<>();
   private JCheckBox myCbMakeStatic;
 
   public AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos,

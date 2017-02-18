@@ -111,7 +111,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     private void checkReference(@NotNull final PyReferenceExpression node, @NotNull final PyExpression qualifier) {
       if (myTypeEvalContext.getType(qualifier) instanceof PyNamedTupleType) return;
       final String name = node.getName();
-      final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+      final List<LocalQuickFix> quickFixes = new ArrayList<>();
       quickFixes.add(new PyRenameElementQuickFix());
 
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {

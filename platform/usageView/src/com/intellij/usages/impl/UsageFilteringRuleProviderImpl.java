@@ -45,7 +45,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
   @Override
   @NotNull
   public UsageFilteringRule[] getActiveRules(@NotNull Project project) {
-    final List<UsageFilteringRule> rules = new ArrayList<UsageFilteringRule>();
+    final List<UsageFilteringRule> rules = new ArrayList<>();
 
     if (!myReadWriteState.isShowReadAccess()) {
       rules.add(new ReadAccessFilteringRule());
@@ -77,22 +77,22 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     private boolean myShowReadAccess = true;
     private boolean myShowWriteAccess = true;
 
-    public boolean isShowReadAccess() {
+    boolean isShowReadAccess() {
       return myShowReadAccess;
     }
 
-    public void setShowReadAccess(final boolean showReadAccess) {
+    void setShowReadAccess(final boolean showReadAccess) {
       myShowReadAccess = showReadAccess;
       if (!showReadAccess) {
         myShowWriteAccess = true;
       }
     }
 
-    public boolean isShowWriteAccess() {
+    boolean isShowWriteAccess() {
       return myShowWriteAccess;
     }
 
-    public void setShowWriteAccess(final boolean showWriteAccess) {
+    void setShowWriteAccess(final boolean showWriteAccess) {
       myShowWriteAccess = showWriteAccess;
       if (!showWriteAccess) {
         myShowReadAccess = true;

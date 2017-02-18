@@ -44,7 +44,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
     if (path == null) {
       return null;
     }
-    final List<File> result = new ArrayList<File>();
+    final List<File> result = new ArrayList<>();
     Computable<String> basedirComputable = null;
     final PathTokenizer pathTokenizer = new PathTokenizer(path);
     while (pathTokenizer.hasMoreTokens()) {
@@ -99,7 +99,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
       return PsiReference.EMPTY_ARRAY;
     }
 
-    final List<PsiReference> result = new ArrayList<PsiReference>();
+    final List<PsiReference> result = new ArrayList<>();
     final PathTokenizer pathTokenizer = new PathTokenizer(cpString);
     int searchFromIndex = 0;
     while (pathTokenizer.hasMoreTokens()) {

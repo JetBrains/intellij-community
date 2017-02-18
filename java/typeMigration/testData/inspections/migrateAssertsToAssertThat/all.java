@@ -24,12 +24,13 @@ public class TestCase {
     Assert.assertTrue("asd".contains("qwe"));
   }
 
-  void m3(Collection c, Object o) {
+  void m3(Collection<String> c, String o) {
     Assert.assertTrue(c.contains(o));
     Assert.assertEquals(c, o);
     Assert.assertEquals("msg", c, o);
     Assert.assertNotNull(c);
     Assert.assertNull(c);
+    Assert.assertFalse(c.contains(o));
   }
 
   void m(int[] a, int[] b) {

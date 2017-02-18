@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+@FunctionalInterface
 public interface FileEditorManagerChange {
 
   void run(EditorsSplitters splitters);

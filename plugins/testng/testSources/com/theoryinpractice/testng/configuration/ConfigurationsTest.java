@@ -138,7 +138,7 @@ public class ConfigurationsTest {
     final TestNGConfiguration configuration = createConfiguration(project);
 
     final PsiMethod method = findTestMethod(psiClass);
-    configuration.setMethodConfiguration(new PsiLocation<PsiMethod>(project, method));
+    configuration.setMethodConfiguration(new PsiLocation<>(project, method));
     final String newMethodName = "renamedTest";
     final RenameRefactoring renameMethod = RefactoringFactory.getInstance(project).createRename(method, newMethodName);
     renameMethod.setSearchInComments(false);
@@ -185,7 +185,7 @@ public class ConfigurationsTest {
     Assert.assertFalse(type.isConfigurationByLocation(configuration, new PsiLocation(project, testMethod)));
 
     //method config
-    configuration.setMethodConfiguration(new PsiLocation<PsiMethod>(project, testMethod));
+    configuration.setMethodConfiguration(new PsiLocation<>(project, testMethod));
     Assert.assertTrue(type.isConfigurationByLocation(configuration, new PsiLocation(project, testMethod)));
     Assert.assertFalse(type.isConfigurationByLocation(configuration, new PsiLocation(project, psiClass)));
   }

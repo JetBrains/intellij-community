@@ -52,9 +52,11 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 
 public class CCShowPreview extends DumbAwareAction {
   public static final String SHOW_PREVIEW = "Show Preview";
+  public static final String NO_PREVIEW_MESSAGE = "Preview is available for task files with answer placeholders only";
 
   public CCShowPreview() {
     super(SHOW_PREVIEW, SHOW_PREVIEW, null);
@@ -107,7 +109,7 @@ public class CCShowPreview extends DumbAwareAction {
     }
 
 
-    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+    if (taskFile.getActivePlaceholders().isEmpty()) {
       Messages.showInfoMessage("Preview is available for task files with answer placeholders only", "No Preview for This File");
       return;
     }
@@ -122,7 +124,7 @@ public class CCShowPreview extends DumbAwareAction {
       @Override
       public void run() {
         Pair<VirtualFile, TaskFile> pair =
-          EduUtils.createStudentFile(this, project, virtualFile, generatedFilesFolder, null);
+          EduUtils.createStudentFile(this, project, virtualFile, generatedFilesFolder, null, taskFile.getTask().getActiveSubtaskIndex());
         if (pair != null) {
           showPreviewDialog(project, pair.getFirst(), pair.getSecond());
         }
@@ -145,8 +147,12 @@ public class CCShowPreview extends DumbAwareAction {
         factory.releaseEditor(createdEditor);
       }
     });
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
-      answerPlaceholder.setUseLength(true);
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
+      if (answerPlaceholder.getActiveSubtaskInfo().isNeedInsertText()) {
+        answerPlaceholder.setLength(answerPlaceholder.getTaskText().length());
+      }
+      Integer minIndex = Collections.min(answerPlaceholder.getSubtaskInfos().keySet());
+      answerPlaceholder.setUseLength(minIndex >= answerPlaceholder.getActiveSubtaskIndex());
       EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
     }
     JPanel header = new JPanel();
@@ -161,6 +167,8 @@ public class CCShowPreview extends DumbAwareAction {
     createdEditor.setCaretEnabled(false);
     showPreviewFrame.setComponent(labeledEditor);
     showPreviewFrame.setSize(new Dimension(500, 500));
-    showPreviewFrame.show();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      showPreviewFrame.show();
+    }
   }
 }

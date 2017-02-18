@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -42,8 +42,8 @@ import java.util.*;
  */
 public class LogicalRootsManagerImpl extends LogicalRootsManager {
   private Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> myRoots = null;
-  private final MultiValuesMap<LogicalRootType, NotNullFunction> myProviders = new MultiValuesMap<LogicalRootType, NotNullFunction>();
-  private final MultiValuesMap<FileType, LogicalRootType> myFileTypes2RootTypes = new MultiValuesMap<FileType, LogicalRootType>();
+  private final MultiValuesMap<LogicalRootType, NotNullFunction> myProviders = new MultiValuesMap<>();
+  private final MultiValuesMap<FileType, LogicalRootType> myFileTypes2RootTypes = new MultiValuesMap<>();
   private final ModuleManager myModuleManager;
   private final Project myProject;
 
@@ -59,7 +59,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
         //updateCache(moduleManager);
       }
     });
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         bus.asyncPublisher(LOGICAL_ROOTS).logicalRootsChanged();
@@ -75,11 +75,11 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
 
   private synchronized  Map<Module, MultiValuesMap<LogicalRootType, LogicalRoot>> getRoots(final ModuleManager moduleManager) {
     if (myRoots == null) {
-      myRoots = new THashMap<Module, MultiValuesMap<LogicalRootType, LogicalRoot>>();
+      myRoots = new THashMap<>();
 
       final Module[] modules = moduleManager.getModules();
       for (Module module : modules) {
-        final MultiValuesMap<LogicalRootType, LogicalRoot> map = new MultiValuesMap<LogicalRootType, LogicalRoot>();
+        final MultiValuesMap<LogicalRootType, LogicalRoot> map = new MultiValuesMap<>();
         for (Map.Entry<LogicalRootType, Collection<NotNullFunction>> entry : myProviders.entrySet()) {
           final Collection<NotNullFunction> functions = entry.getValue();
           for (NotNullFunction function : functions) {
@@ -124,7 +124,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
     if (valuesMap == null) {
       return Collections.emptyList();
     }
-    return new ArrayList<LogicalRoot>(valuesMap.values());
+    return new ArrayList<>(valuesMap.values());
   }
 
   @Override
@@ -147,7 +147,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
 
     Collection<LogicalRoot> collection = map.get(type);
     if (collection == null) return Collections.emptyList();
-    return new ArrayList<T>((Collection<T>)collection);
+    return new ArrayList<>((Collection<T>)collection);
   }
 
   @Override

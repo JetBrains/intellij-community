@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
 
 public class MockApplicationEx extends MockApplication implements ApplicationEx {
   public MockApplicationEx(@NotNull Disposable parentDisposable) {
@@ -43,11 +42,11 @@ public class MockApplicationEx extends MockApplication implements ApplicationEx 
   }
 
   @Override
-  public void load(String path) {
+  public void load(@Nullable String path) {
   }
 
   @Override
-  public void load() throws IOException {
+  public void load() {
     load(null);
   }
 

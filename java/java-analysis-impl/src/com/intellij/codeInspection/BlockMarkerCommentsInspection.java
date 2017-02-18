@@ -93,12 +93,6 @@ public class BlockMarkerCommentsInspection extends BaseJavaBatchLocalInspectionT
           holder.registerProblem(element, "Redundant block marker", new LocalQuickFix() {
             @NotNull
             @Override
-            public String getName() {
-              return getFamilyName();
-            }
-
-            @NotNull
-            @Override
             public String getFamilyName() {
               return "Remove block marker comments";
             }

@@ -18,7 +18,7 @@ public class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId
     for (List<Commit> repo : logsFromRepos) {
       size += repo.size();
     }
-    List<Commit> result = new ArrayList<Commit>(size);
+    List<Commit> result = new ArrayList<>(size);
 
     Map<Commit, Iterator<Commit>> nextCommits = ContainerUtil.newHashMap();
     for (List<Commit> log : logsFromRepos) {

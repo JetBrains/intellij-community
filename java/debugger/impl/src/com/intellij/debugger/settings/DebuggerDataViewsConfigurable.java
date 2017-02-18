@@ -333,9 +333,4 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   public String getId() {
     return getHelpTopic();
   }
-
-  @Override
-  public Runnable enableSearch(String option) {
-    return null;
-  }
 }

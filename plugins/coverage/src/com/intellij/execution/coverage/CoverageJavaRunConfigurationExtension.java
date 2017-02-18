@@ -195,7 +195,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   private static String[] getFilters(JavaCoverageEnabledConfiguration coverageEnabledConfiguration) {
     final ClassFilter[] patterns = coverageEnabledConfiguration.getCoveragePatterns();
     if (patterns != null) {
-      final List<String> filters = new ArrayList<String>();
+      final List<String> filters = new ArrayList<>();
       for (ClassFilter classFilter : patterns) {
         filters.add(classFilter.getPattern());
       }

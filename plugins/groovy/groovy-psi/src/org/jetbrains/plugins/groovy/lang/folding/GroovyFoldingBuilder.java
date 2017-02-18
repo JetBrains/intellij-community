@@ -60,7 +60,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                           @NotNull PsiElement root,
                                           @NotNull Document document,
                                           boolean quick) {
-    appendDescriptors(root, descriptors, new HashSet<PsiElement>());
+    appendDescriptors(root, descriptors, new HashSet<>());
   }
 
   private void appendDescriptors(PsiElement element, List<FoldingDescriptor> descriptors, Set<PsiElement> usedComments) {
@@ -105,7 +105,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     //multiline strings
     addFoldingForStrings(descriptors, node);
 
-    Set<PsiElement> newUsedComments = new HashSet<PsiElement>();
+    Set<PsiElement> newUsedComments = new HashSet<>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       appendDescriptors(child, descriptors, newUsedComments);
     }
@@ -315,12 +315,12 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   @Override
-  protected boolean isCustomFoldingCandidate(ASTNode node) {
+  protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {
     return node.getElementType() == GroovyTokenTypes.mSL_COMMENT;
   }
 
   @Override
-  protected boolean isCustomFoldingRoot(ASTNode node) {
+  protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
     IElementType nodeType = node.getElementType();
     return nodeType == GroovyElementTypes.CLASS_DEFINITION || nodeType == GroovyElementTypes.OPEN_BLOCK;
   }

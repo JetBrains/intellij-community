@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,23 @@
 package com.intellij.util.graph;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import org.junit.Test;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * User: anna
- * Date: Feb 13, 2005
+ * @author anna
+ * @since Feb 13, 2005
  */
 public class SearchCyclesTest extends GraphTestCase {
-  public void test1() throws Exception{
-    final HashMap<String, String> graph = new HashMap<String, String>();
+  @Test
+  public void test1() {
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "bd");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -39,8 +42,9 @@ public class SearchCyclesTest extends GraphTestCase {
     doTest(graph, "a", "da", "bdca");
   }
 
-  public void test2() throws Exception{
-    final HashMap<String, String> graph = new HashMap<String, String>();
+  @Test
+  public void test2() {
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "b");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -50,8 +54,9 @@ public class SearchCyclesTest extends GraphTestCase {
     doTest(graph, "a", "bdca");
   }
 
-  public void test3() throws Exception{
-    final HashMap<String, String> graph = new HashMap<String, String>();
+  @Test
+  public void test3() {
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "bd");
     graph.put("b", "d");
     graph.put("d", "a");
@@ -59,8 +64,9 @@ public class SearchCyclesTest extends GraphTestCase {
     doTest(graph, "a", "da");
   }
 
-  public void test4() throws Exception {
-    final HashMap<String, String> graph = new HashMap<String, String>();
+  @Test
+  public void test4() {
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "b");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -71,8 +77,9 @@ public class SearchCyclesTest extends GraphTestCase {
     doTest(graph, "a", "bdeca");
   }
 
-  public void test5() throws Exception{
-    final HashMap<String, String> graph = new HashMap<String, String>();
+  @Test
+  public void test5() {
+    final Map<String, String> graph = new HashMap<>();
     graph.put("a", "be");
     graph.put("b", "d");
     graph.put("c", "a");
@@ -82,16 +89,10 @@ public class SearchCyclesTest extends GraphTestCase {
     doTest(graph, "a", "bdeca", "eca");
   }
 
-  private static void doTest(HashMap<String, String> graph, final String node, String... expected) {
-    final Set<List<String>> nodeCycles = getAlgorithmsInstance().findCycles(initGraph(graph), node);
-    checkResult(expected, nodeCycles);
-  }
-
-  private static void checkResult(String[] expected, Set<List<String>> cycles) {
-    Set<String> cycleStrings = new HashSet<String>();
-    for (List<String> cycle : cycles) {
-      cycleStrings.add(StringUtil.join(cycle, ""));
-    }
-    UsefulTestCase.assertSameElements(cycleStrings, expected);
+  private static void doTest(Map<String, String> graph, String node, String... expected) {
+    Set<String> cycles = getAlgorithmsInstance().findCycles(initGraph(graph), node).stream()
+      .map(cycle -> StringUtil.join(cycle, ""))
+      .collect(Collectors.toSet());
+    assertThat(cycles).containsExactlyInAnyOrder(expected);
   }
 }

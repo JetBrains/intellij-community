@@ -153,7 +153,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
   @Nullable
   public static ParameterInfoHandler[] getHandlers(Project project, final Language... languages) {
-    Set<ParameterInfoHandler> handlers = new THashSet<ParameterInfoHandler>();
+    Set<ParameterInfoHandler> handlers = new THashSet<>();
     for (final Language language : languages) {
       handlers.addAll(DumbService.getInstance(project).filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
     }

@@ -92,14 +92,14 @@ public class LogFileOptions implements JDOMExternalizable {
       return Collections.emptySet();
     }
 
-    List<File> files = new SmartList<File>();
+    List<File> files = new SmartList<>();
     collectMatchedFiles(new File(myPathPattern.substring(0, dirIndex)), Pattern.compile(FileUtil.convertAntToRegexp(myPathPattern.substring(dirIndex + File.separator.length()))), files);
     if (files.isEmpty()) {
       return Collections.emptySet();
     }
 
     if (myShowAll) {
-      SmartHashSet<String> result = new SmartHashSet<String>();
+      SmartHashSet<String> result = new SmartHashSet<>();
       result.ensureCapacity(files.size());
       for (File file : files) {
         result.add(file.getPath());

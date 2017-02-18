@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -55,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author yole
  */
-public class PerformanceWatcher implements ApplicationComponent {
+public class PerformanceWatcher extends ApplicationComponent.Adapter implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.PerformanceWatcher");
   private static final int TOLERABLE_LATENCY = 100;
   private final ScheduledFuture<?> myThread;
@@ -82,12 +83,6 @@ public class PerformanceWatcher implements ApplicationComponent {
 
   public static PerformanceWatcher getInstance() {
     return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "PerformanceWatcher";
   }
 
   public PerformanceWatcher() {
@@ -181,7 +176,7 @@ public class PerformanceWatcher implements ApplicationComponent {
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     if (myThread != null) {
       myThread.cancel(true);
     }

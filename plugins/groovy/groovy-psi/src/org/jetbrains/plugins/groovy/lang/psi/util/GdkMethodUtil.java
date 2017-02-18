@@ -381,7 +381,7 @@ public class GdkMethodUtil {
       if (mix == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
       return CachedValueProvider.Result
-        .create(new Trinity<PsiClassType, GrReferenceExpression, PsiClass>(original.first, original.second, mix),
+        .create(new Trinity<>(original.first, original.second, mix),
                 PsiModificationTracker.MODIFICATION_COUNT);
     });
   }

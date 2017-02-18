@@ -38,6 +38,7 @@ public class GrAnnotationElementType extends GrStubElementType<GrAnnotationStub,
     return new GrAnnotationImpl(stub);
   }
 
+  @NotNull
   @Override
   public GrAnnotationStub createStub(@NotNull GrAnnotation psi, StubElement parentStub) {
     return new GrAnnotationStub(parentStub, psi);

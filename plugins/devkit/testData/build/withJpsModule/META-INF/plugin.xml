@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
   <id>test.plugin</id>
   <name>Test Plugin</name>
   <version>1.0</version>

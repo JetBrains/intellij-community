@@ -1,10 +1,6 @@
 <idea-plugin>
   <project-components>
     <component>
-      <implementation-class>com.intellij.xml.breadcrumbs.BreadcrumbsLoaderComponent</implementation-class>
-      <skipForDefaultProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.pom.xml.XmlAspect</interface-class>
       <implementation-class>com.intellij.pom.xml.impl.XmlAspectImpl</implementation-class>
       <!--<loadForDefaultProject/>-->

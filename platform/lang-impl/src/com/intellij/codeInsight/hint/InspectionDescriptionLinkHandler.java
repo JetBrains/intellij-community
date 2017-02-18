@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Handles tooltip links in format <code>#inspection/inspection_short_name</code>.
+ * Handles tooltip links in format {@code #inspection/inspection_short_name}.
  * On a click or expend acton returns more detailed description for given inspection.
  *
  * @author peter
@@ -49,7 +49,7 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
       return null;
     }
 
-    final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
+    final InspectionProfile profile = InspectionProfileManager.getInstance().getCurrentProfile();
     final InspectionToolWrapper toolWrapper = profile.getInspectionTool(refSuffix, file);
     if (toolWrapper == null) return null;
 

@@ -380,7 +380,6 @@ public class NameUtil {
     boolean matches(@NotNull String name);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   @NotNull
   public static com.intellij.util.text.Matcher buildCompletionMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {

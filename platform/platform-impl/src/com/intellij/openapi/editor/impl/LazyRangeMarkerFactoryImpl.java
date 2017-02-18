@@ -83,7 +83,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
     WeakList<LazyMarker> markers = getMarkers(file);
 
     if (markers == null) {
-      markers = file.putUserDataIfAbsent(LAZY_MARKERS_KEY, new WeakList<LazyMarker>());
+      markers = file.putUserDataIfAbsent(LAZY_MARKERS_KEY, new WeakList<>());
     }
     markers.add(marker);
   }

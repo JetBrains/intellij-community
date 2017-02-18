@@ -1,0 +1,10 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>text</title>
+  <g>
+    <g>
+      <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <polygon points="7 0 7 4 7 5 6 5 2 5 2 15 13 15 13 0 7 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+    </g>
+    <path d="M11,6V7H4V6h7ZM4,9h7V8H4V9Zm0,2h7V10H4v1Zm0,2H8V12H4v1Z" fill="#231f20" opacity="0.6"/>
+  </g>
+</svg>

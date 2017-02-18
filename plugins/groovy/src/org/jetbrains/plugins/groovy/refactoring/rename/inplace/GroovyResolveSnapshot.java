@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -39,7 +40,7 @@ public class GroovyResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapsh
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshot");
 
   private final Map<SmartPsiElementPointer, SmartPsiElementPointer> myReferencesMap =
-    new HashMap<SmartPsiElementPointer, SmartPsiElementPointer>();
+    new HashMap<>();
   private final Project myProject;
   private final Document myDocument;
 
@@ -47,10 +48,10 @@ public class GroovyResolveSnapshot extends ResolveSnapshotProvider.ResolveSnapsh
     myProject = scope.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(scope.getContainingFile());
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
-    final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<PsiElement, SmartPsiElementPointer>();
+    final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<>();
     scope.accept(new GroovyPsiElementVisitor(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(GrReferenceExpression refExpr) {
+      public void visitReferenceExpression(@NotNull GrReferenceExpression refExpr) {
         if (!refExpr.isQualified()) {
           PsiElement resolved = refExpr.resolve();
           if (resolved instanceof GrMember) {

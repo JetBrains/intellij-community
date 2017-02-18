@@ -61,7 +61,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
 
     if (!formsFound) return children;
 
-    Collection<AbstractTreeNode> result = new LinkedHashSet<AbstractTreeNode>(children);
+    Collection<AbstractTreeNode> result = new LinkedHashSet<>(children);
     ProjectViewNode[] copy = children.toArray(new ProjectViewNode[children.size()]);
     for (ProjectViewNode element : copy) {
       PsiClass psiClass = null;
@@ -87,7 +87,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
       Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
       if (!formNodes.isEmpty()) {
         Collection<PsiFile> formFiles = convertToFiles(formNodes);
-        Collection<BasePsiNode<? extends PsiElement>> subNodes = new ArrayList<BasePsiNode<? extends PsiElement>>();
+        Collection<BasePsiNode<? extends PsiElement>> subNodes = new ArrayList<>();
         //noinspection unchecked
         subNodes.add((BasePsiNode<? extends PsiElement>) element);
         subNodes.addAll(formNodes);
@@ -102,7 +102,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   public Object getData(Collection<AbstractTreeNode> selected, String dataId) {
     if (selected != null) {
       if (Form.DATA_KEY.is(dataId)) {
-        List<Form> result = new ArrayList<Form>();
+        List<Form> result = new ArrayList<>();
         for(AbstractTreeNode node: selected) {
           if (node.getValue() instanceof Form) {
             result.add((Form) node.getValue());
@@ -124,7 +124,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   }
 
   private static Collection<PsiFile> convertToFiles(Collection<BasePsiNode<? extends PsiElement>> formNodes) {
-    ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> psiFiles = new ArrayList<>();
     for (AbstractTreeNode treeNode : formNodes) {
       psiFiles.add((PsiFile)treeNode.getValue());
     }
@@ -133,8 +133,8 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
 
   private static Collection<BasePsiNode<? extends PsiElement>> findFormsIn(Collection<AbstractTreeNode> children, List<PsiFile> forms) {
     if (children.isEmpty() || forms.isEmpty()) return Collections.emptyList();
-    ArrayList<BasePsiNode<? extends PsiElement>> result = new ArrayList<BasePsiNode<? extends PsiElement>>();
-    HashSet<PsiFile> psiFiles = new HashSet<PsiFile>(forms);
+    ArrayList<BasePsiNode<? extends PsiElement>> result = new ArrayList<>();
+    HashSet<PsiFile> psiFiles = new HashSet<>(forms);
     for (final AbstractTreeNode child : children) {
       if (child instanceof BasePsiNode) {
         //noinspection unchecked
@@ -163,7 +163,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     }
 
     private static PsiElement[] collectFormPsiElements(Collection<AbstractTreeNode> selected) {
-      Set<PsiElement> result = new HashSet<PsiElement>();
+      Set<PsiElement> result = new HashSet<>();
       for(AbstractTreeNode node: selected) {
         if (node.getValue() instanceof Form) {
           Form form = (Form)node.getValue();

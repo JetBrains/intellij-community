@@ -23,11 +23,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
@@ -92,7 +93,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   @Override
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
-    final ArrayList<AnAction> result = new ArrayList<AnAction>();
+    final ArrayList<AnAction> result = new ArrayList<>();
     result.add(new MyAddAction(fromPopup));
     result.add(new MyDeleteAction(forAll(o -> {
       if (o instanceof MyNode) {
@@ -147,7 +148,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void checkForPredefinedNames() throws ConfigurationException {
-    final Set<String> predefinedScopes = new HashSet<String>();
+    final Set<String> predefinedScopes = new HashSet<>();
     for (CustomScopesProvider scopesProvider : myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER)) {
       for (NamedScope namedScope : scopesProvider.getFilteredScopes()) {
         predefinedScopes.add(namedScope.getName());
@@ -190,8 +191,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void processScopes() {
-    final List<NamedScope> localScopes = new ArrayList<NamedScope>();
-    final List<NamedScope> sharedScopes = new ArrayList<NamedScope>();
+    final List<NamedScope> localScopes = new ArrayList<>();
+    final List<NamedScope> sharedScopes = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
@@ -228,7 +229,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private static Collection<NamedScope> getPredefinedScopes(Project project) {
-    final Collection<NamedScope> result = new ArrayList<NamedScope>();
+    final Collection<NamedScope> result = new ArrayList<>();
     result.addAll(NamedScopeManager.getInstance(project).getPredefinedScopes());
     result.addAll(DependencyValidationManager.getInstance(project).getPredefinedScopes());
     return result;
@@ -305,7 +306,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private String createUniqueName() {
     String str = InspectionsBundle.message("inspection.profile.unnamed");
-    final HashSet<String> treeScopes = new HashSet<String>();
+    final HashSet<String> treeScopes = new HashSet<>();
     obtainCurrentScopes(treeScopes);
     if (!treeScopes.contains(str)) return str;
     int i = 1;
@@ -362,13 +363,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return getHelpTopic();
   }
 
-  @Override
-  @Nullable
-  public Runnable enableSearch(final String option) {
-    return null;
-  }
-
-  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection {
+  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection, DumbAware {
 
     private AnAction[] myChildren;
     private final boolean myFromPopup;
@@ -395,15 +390,15 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       if (myChildren == null) {
         myChildren = new AnAction[2];
-        myChildren[0] = new AnAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
-                                     myLocalScopesManager.getIcon()) {
+        myChildren[0] = new DumbAwareAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
+                                            myLocalScopesManager.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
           }
         };
-        myChildren[1] = new AnAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
-                                     mySharedScopesManager.getIcon()) {
+        myChildren[1] = new DumbAwareAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
+                                            mySharedScopesManager.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             createScope(false, IdeBundle.message("add.scope.dialog.title"), null);
@@ -536,6 +531,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   public static class ScopeChooserConfigurableState extends MasterDetailsState {
     @Tag("order")
     @AbstractCollection(surroundWithTag = false, elementTag = "scope", elementValueAttribute = "name")
-    public List<String> myOrder = new ArrayList<String>();
+    public List<String> myOrder = new ArrayList<>();
   }
 }

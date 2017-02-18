@@ -19,7 +19,6 @@ import com.intellij.mock.MockModule;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -158,7 +157,7 @@ public class DomBasicsTest extends DomTestCase {
 
   public void testAcceptChildren() throws Throwable {
     final MyElement element = createElement("<a><child-element/><child/><child-element/></a>");
-    final Set<DomElement> visited = new HashSet<DomElement>();
+    final Set<DomElement> visited = new HashSet<>();
     element.acceptChildren(new DomElementVisitor() {
       @Override
       public void visitDomElement(DomElement element) {
@@ -515,7 +514,7 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement stable = getDomManager().createStableValue(() -> element[0]);
     element[0] = null;
     ((StableElement) stable).invalidate();
-    assertTrue(stable.equals(stable));
+    assertEquals(stable, stable);
     assertEquals(oldElement.toString(), stable.toString());
   }
 

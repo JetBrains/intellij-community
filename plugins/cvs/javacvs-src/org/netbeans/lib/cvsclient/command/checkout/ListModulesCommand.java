@@ -27,7 +27,7 @@ public class ListModulesCommand extends Command {
 
   // Fields =================================================================
 
-  private final Set<Module> modules = new HashSet<Module>();
+  private final Set<Module> modules = new HashSet<>();
   private Module lastModule;
   private Consumer<Module> myModuleConsumer;
 

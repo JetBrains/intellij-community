@@ -40,7 +40,7 @@ public class RemoteAgentThreadProxyCreator {
     return agentInterface.cast(Proxy.newProxyInstance(callerClassLoader,
                                                       new Class[]{agentInterface},
                                                       new ThreadInvocationHandler(
-                                                        SequentialTaskExecutor.createSequentialApplicationPoolExecutor(),
+                                                        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteAgentThreadProxyCreator pool"),
                                                         callerClassLoader, agentInstance,
                                                         myPreWrapperCreator
                                                       )));

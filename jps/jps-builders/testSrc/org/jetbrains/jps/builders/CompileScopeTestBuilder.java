@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.CompileScope;
@@ -92,10 +93,25 @@ public class CompileScopeTestBuilder {
   }
 
   public CompileScope build() {
-    Collection<BuildTargetType<?>> typesToForceBuild = myForceBuild ? myTargetTypes : Collections.<BuildTargetType<?>>emptyList();
+    final Collection<BuildTargetType<?>> typesToForceBuild;
+    if (myForceBuild) {
+      typesToForceBuild = new SmartHashSet<BuildTargetType<?>>();
+      typesToForceBuild.addAll(myTargetTypes);
+      for (BuildTarget<?> target : myTargets) {
+        typesToForceBuild.add(target.getTargetType());
+      }
+    }
+    else {
+      typesToForceBuild = Collections.emptyList();
+    }
     return new CompileScopeImpl(myTargetTypes, typesToForceBuild, myTargets, myFiles);
   }
 
+  /**
+   * Add all targets in the project to the scope. May lead to unpredictable results if some plugins add targets your test doesn't expect.
+   *
+   * @deprecated use {@link #allModules()} instead or directly add required target types via {@link #targetTypes}
+   */
   public CompileScopeTestBuilder all() {
     myTargetTypes.addAll(TargetTypeRegistry.getInstance().getTargetTypes());
     return this;

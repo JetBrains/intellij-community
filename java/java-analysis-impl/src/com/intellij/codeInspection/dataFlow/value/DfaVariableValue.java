@@ -48,7 +48,7 @@ public class DfaVariableValue extends DfaValue {
     or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
 
   public static class Factory {
-    private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<Trinity<Boolean, String, DfaVariableValue>, DfaVariableValue>();
+    private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<>();
     private final DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
@@ -94,7 +94,7 @@ public class DfaVariableValue extends DfaValue {
   private final boolean myIsNegated;
   private Nullness myInherentNullability;
   private final DfaTypeValue myTypeValue;
-  private final List<DfaVariableValue> myDependents = new SmartList<DfaVariableValue>();
+  private final List<DfaVariableValue> myDependents = new SmartList<>();
 
   private DfaVariableValue(@NotNull PsiModifierListOwner variable, @Nullable PsiType varType, boolean isNegated, DfaValueFactory factory, @Nullable DfaVariableValue qualifier) {
     super(factory);
@@ -189,30 +189,26 @@ public class DfaVariableValue extends DfaValue {
     }
 
     if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
+      PsiExpression initializer = ((PsiField)var).getInitializer();
+      if (initializer != null) {
+        return getFieldInitializerNullness(initializer);
+      }
+
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers((PsiField)var);
       if (initializers.isEmpty()) {
         return defaultNullability;
       }
 
-      boolean hasUnknowns = false;
       for (PsiExpression expression : initializers) {
-        Nullness nullness = getFieldInitializerNullness(expression);
-        if (nullness == Nullness.NULLABLE) {
+        if (getFieldInitializerNullness(expression) == Nullness.NULLABLE) {
           return Nullness.NULLABLE;
         }
-        if (nullness == Nullness.UNKNOWN) {
-          hasUnknowns = true;
-        }
       }
-      
-      if (hasUnknowns) {
-        if (DfaPsiUtil.isInitializedNotNull((PsiField)var)) {
-          return Nullness.NOT_NULL;
-        }
-        return defaultNullability;
+
+      if (DfaPsiUtil.isInitializedNotNull((PsiField)var)) {
+        return Nullness.NOT_NULL;
       }
-      
-      return Nullness.NOT_NULL;
+      return defaultNullability;
     }
 
     return defaultNullability;
@@ -223,11 +219,11 @@ public class DfaVariableValue extends DfaValue {
     if (expression instanceof PsiNewExpression || expression instanceof PsiLiteralExpression || expression instanceof PsiPolyadicExpression) return Nullness.NOT_NULL;
     if (expression instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      return DfaPsiUtil.getElementNullability(null, (PsiModifierListOwner)target);
+      return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
-      return method != null ? DfaPsiUtil.getElementNullability(null, method) : Nullness.UNKNOWN;
+      return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullness.UNKNOWN;
     }
     return Nullness.UNKNOWN;
   }

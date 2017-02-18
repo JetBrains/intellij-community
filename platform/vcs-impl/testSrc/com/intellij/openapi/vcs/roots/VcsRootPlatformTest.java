@@ -64,7 +64,7 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
   protected VirtualFile myRepository;
   public static final String myRepositoryFolderName = "repository";
   private RootModelImpl myRootModel;
-  protected static final Collection<File> myFilesToDelete = new HashSet<File>();
+  protected static final Collection<File> myFilesToDelete = new HashSet<>();
   protected IdeaProjectTestFixture myProjectFixture;
 
   @Override
@@ -120,6 +120,14 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
         delete(file);
       }
       myProjectFixture.tearDown();
+
+      myExtension = null;
+      myVcsManager = null;
+      myVcs = null;
+      myRepository = null;
+      myRootModel = null;
+      myProjectRoot = null;
+      myProject = null;
     }
     finally {
       super.tearDown();

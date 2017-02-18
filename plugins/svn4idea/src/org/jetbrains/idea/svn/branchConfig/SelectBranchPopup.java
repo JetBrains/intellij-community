@@ -82,7 +82,7 @@ public class SelectBranchPopup {
   public static void showForBranchRoot(Project project, VirtualFile vcsRoot, BranchSelectedCallback callback, final String title,
                                        final Component component) {
     final SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
-    final List<String> items = new ArrayList<String>();
+    final List<String> items = new ArrayList<>();
     if (! StringUtil.isEmptyOrSpaces(configuration.getTrunkUrl())) {
       items.add(getTrunkString(configuration));
     }
@@ -197,9 +197,9 @@ public class SelectBranchPopup {
     @Nullable
     private void loadBranches(final String selectedBranchesHolder, final Runnable runnable) {
       final ProgressManager pm = ProgressManager.getInstance();
-      pm.run(new ModalityIgnorantBackgroundableTask(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches")) {
+      pm.run(new ModalityIgnorantBackgroundableTask(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches"), true) {
         @Override
-        protected void doInAwtIfFail(Exception e) {
+        protected void doInAwtIfFail(@NotNull Exception e) {
           runnable.run();
         }
 

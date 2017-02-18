@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface StudyExecutor {
-  LanguageExtension<StudyExecutor> INSTANCE = new LanguageExtension<StudyExecutor>("Edu.StudyExecutor");
+  LanguageExtension<StudyExecutor> INSTANCE = new LanguageExtension<>("Edu.StudyExecutor");
 
   @Nullable
   Sdk findSdk(@NotNull final Project project);

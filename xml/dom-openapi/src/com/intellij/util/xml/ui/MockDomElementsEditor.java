@@ -38,7 +38,7 @@ import java.util.*;
  * @author peter
  */
 public class MockDomElementsEditor {
-  private final Map<EditedElementDescription<? extends DomElement>, DomElement> myDomElements = new HashMap<EditedElementDescription<? extends DomElement>, DomElement>();
+  private final Map<EditedElementDescription<? extends DomElement>, DomElement> myDomElements = new HashMap<>();
   private final Module myModule;
   private CommittablePanel myContents;
   private DomFileEditor myFileEditor;
@@ -100,8 +100,8 @@ public class MockDomElementsEditor {
       @Override
       public void commit() {
         super.commit();
-        final List<EditedElementDescription> descriptions = new ArrayList<EditedElementDescription>();
-        final Set<PsiFile> changedFiles = new HashSet<PsiFile>();
+        final List<EditedElementDescription> descriptions = new ArrayList<>();
+        final Set<PsiFile> changedFiles = new HashSet<>();
         for (final Map.Entry<EditedElementDescription<? extends DomElement>, DomElement> entry : myDomElements.entrySet()) {
           final EditedElementDescription description = entry.getKey();
             final DomElement editedElement = entry.getValue();

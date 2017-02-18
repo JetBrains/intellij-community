@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class CurrentRevision implements VcsFileRevision {
   public static final String CURRENT = VcsBundle.message("vcs.revision.name.current");
   private final VcsRevisionNumber myRevisionNumber;
 
-  public CurrentRevision(VirtualFile file, VcsRevisionNumber revision) {
+  public CurrentRevision(@NotNull VirtualFile file, @NotNull VcsRevisionNumber revision) {
     myFile = file;
     myRevisionNumber = revision;
   }
@@ -77,6 +78,7 @@ public class CurrentRevision implements VcsFileRevision {
     return "";
   }
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }

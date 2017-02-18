@@ -29,7 +29,7 @@ public abstract class MainConfigurationStateSplitter extends StateSplitterEx {
   @Override
   public final List<Pair<Element, String>> splitState(@NotNull Element state) {
     UniqueNameGenerator generator = new UniqueNameGenerator();
-    List<Pair<Element, String>> result = new SmartList<Pair<Element, String>>();
+    List<Pair<Element, String>> result = new SmartList<>();
     for (Iterator<Element> iterator = state.getChildren(getSubStateTagName()).iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
       iterator.remove();

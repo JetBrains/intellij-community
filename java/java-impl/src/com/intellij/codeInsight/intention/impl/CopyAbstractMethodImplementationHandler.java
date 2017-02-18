@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.util.MethodCellRenderer;
@@ -54,9 +55,9 @@ public class CopyAbstractMethodImplementationHandler {
   private final Editor myEditor;
   private final PsiMethod myMethod;
   private PsiClass mySourceClass;
-  private final List<PsiClass> myTargetClasses = new ArrayList<PsiClass>();
-  private final List<PsiEnumConstant> myTargetEnumConstants = new ArrayList<PsiEnumConstant>();
-  private final List<PsiMethod> mySourceMethods = new ArrayList<PsiMethod>();
+  private final List<PsiClass> myTargetClasses = new ArrayList<>();
+  private final List<PsiEnumConstant> myTargetEnumConstants = new ArrayList<>();
+  private final List<PsiMethod> mySourceMethods = new ArrayList<>();
 
   public CopyAbstractMethodImplementationHandler(final Project project, final Editor editor, final PsiMethod method) {
     myProject = project;
@@ -140,7 +141,8 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private void copyImplementation(final PsiMethod sourceMethod) {
-    final List<PsiMethod> generatedMethods = new ArrayList<PsiMethod>();
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(sourceMethod)) return;
+    final List<PsiMethod> generatedMethods = new ArrayList<>();
     new WriteCommandAction(myProject, getTargetFiles()) {
       @Override
       protected void run(@NotNull final Result result) throws Throwable {
@@ -190,7 +192,7 @@ public class CopyAbstractMethodImplementationHandler {
   }
 
   private PsiFile[] getTargetFiles() {
-    Collection<PsiFile> fileList = new HashSet<PsiFile>();
+    Collection<PsiFile> fileList = new HashSet<>();
     for(PsiClass psiClass: myTargetClasses) {
       fileList.add(psiClass.getContainingFile());
     }

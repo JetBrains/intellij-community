@@ -33,8 +33,6 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.IdeaModifiableModelsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -43,7 +41,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.IdeBorderFactory;
@@ -81,8 +78,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private final FrameworkSupportModelBase myModel;
   private final JPanel myOptionsPanel;
   private final FrameworksTree myFrameworksTree;
-  private final Map<FrameworkSupportNode, FrameworkSupportOptionsComponent> myInitializedOptionsComponents = new HashMap<FrameworkSupportNode, FrameworkSupportOptionsComponent>();
-  private final Map<FrameworkGroup<?>, JPanel> myInitializedGroupPanels = new HashMap<FrameworkGroup<?>, JPanel>();
+  private final Map<FrameworkSupportNode, FrameworkSupportOptionsComponent> myInitializedOptionsComponents = new HashMap<>();
+  private final Map<FrameworkGroup<?>, JPanel> myInitializedGroupPanels = new HashMap<>();
   private FrameworkSupportNodeBase myLastSelectedNode;
 
   private Collection<FrameworkSupportNodeBase> myAssociatedFrameworks;
@@ -286,7 +283,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   private List<LibraryCompositionSettings> getLibrariesCompositionSettingsList() {
-    List<LibraryCompositionSettings> list = new ArrayList<LibraryCompositionSettings>();
+    List<LibraryCompositionSettings> list = new ArrayList<>();
     List<FrameworkSupportNode> selected = getSelectedNodes();
     for (FrameworkSupportNode node : selected) {
       ContainerUtil.addIfNotNull(list, getLibraryCompositionSettings(node));
@@ -303,10 +300,10 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private Collection<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers,
                                                            Set<String> associated,
                                                            final Set<String> preselected) {
-    Map<String, FrameworkSupportNode> nodes = new HashMap<String, FrameworkSupportNode>();
-    Map<FrameworkGroup<?>, FrameworkGroupNode> groups = new HashMap<FrameworkGroup<?>, FrameworkGroupNode>();
-    List<FrameworkSupportNodeBase> roots = new ArrayList<FrameworkSupportNodeBase>();
-    Map<String, FrameworkSupportNodeBase> associatedNodes = new LinkedHashMap<String, FrameworkSupportNodeBase>();
+    Map<String, FrameworkSupportNode> nodes = new HashMap<>();
+    Map<FrameworkGroup<?>, FrameworkGroupNode> groups = new HashMap<>();
+    List<FrameworkSupportNodeBase> roots = new ArrayList<>();
+    Map<String, FrameworkSupportNodeBase> associatedNodes = new LinkedHashMap<>();
     for (FrameworkSupportInModuleProvider provider : providers) {
       createNode(provider, nodes, groups, roots, providers, associated, associatedNodes);
     }
@@ -381,11 +378,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   public List<FrameworkSupportNode> getSelectedNodes() {
-    List<FrameworkSupportNode> list = new ArrayList<FrameworkSupportNode>();
+    List<FrameworkSupportNode> list = new ArrayList<>();
     if (myRoots != null) {
       addChildFrameworks(myRoots, list);
     }
-    list.addAll(ContainerUtil.mapNotNull(myAssociatedFrameworks, new Function.InstanceOf<FrameworkSupportNodeBase, FrameworkSupportNode>(FrameworkSupportNode.class)));
+    list.addAll(ContainerUtil.mapNotNull(myAssociatedFrameworks, new Function.InstanceOf<>(FrameworkSupportNode.class)));
     return list;
   }
 
@@ -402,32 +399,22 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   public boolean downloadLibraries(@NotNull final JComponent parentComponent) {
-    final Ref<Boolean> result = Ref.create(true);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
-      applyLibraryOptionsForSelected();
-      List<LibraryCompositionSettings> list = getLibrariesCompositionSettingsList();
-      for (LibraryCompositionSettings compositionSettings : list) {
-        if (!compositionSettings.downloadFiles(parentComponent)) {
-          result.set(false);
-          return;
-        }
-      }
-    });
-
-    if (!result.get()) {
-      int answer = Messages.showYesNoDialog(parentComponent,
-                                            ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
-                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon());
-      if (answer != Messages.YES) {
-        return false;
+    applyLibraryOptionsForSelected();
+    for (LibraryCompositionSettings compositionSettings : getLibrariesCompositionSettingsList()) {
+      if (!compositionSettings.downloadFiles(parentComponent)) {
+        int answer = Messages.showYesNoDialog(parentComponent,
+                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+        return answer == Messages.YES;
       }
     }
+
     return true;
   }
 
   public boolean validate() {
     applyLibraryOptionsForSelected();
-    List<String> frameworksWithoutRequiredLibraries = new ArrayList<String>();
+    List<String> frameworksWithoutRequiredLibraries = new ArrayList<>();
     for (FrameworkSupportNode node : getSelectedNodes()) {
       if (node.getConfigurable().isOnlyLibraryAdded()) {
         LibraryCompositionSettings librarySettings = getLibraryCompositionSettings(node);
@@ -447,10 +434,10 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   public void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {
-    List<Library> addedLibraries = new ArrayList<Library>();
+    List<Library> addedLibraries = new ArrayList<>();
     List<FrameworkSupportNode> selectedFrameworks = getSelectedNodes();
     sortFrameworks(selectedFrameworks);
-    List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
+    List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<>();
     final IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
     for (FrameworkSupportNode node : selectedFrameworks) {
       FrameworkSupportInModuleConfigurable configurable = node.getConfigurable();

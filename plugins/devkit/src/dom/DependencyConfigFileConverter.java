@@ -93,7 +93,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
             return Collections.emptyList();
           }
 
-          final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+          final Set<VirtualFile> roots = new HashSet<>();
           final VirtualFile parent = containingFile.getVirtualFile().getParent();
           roots.add(parent);
 

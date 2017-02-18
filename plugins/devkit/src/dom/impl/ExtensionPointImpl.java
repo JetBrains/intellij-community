@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,17 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+
+import java.util.Collections;
+import java.util.List;
 
 public abstract class ExtensionPointImpl implements ExtensionPoint {
 
@@ -54,5 +60,22 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     }
 
     return getNamePrefix() + "." + getName().getRawText();
+  }
+
+  @Override
+  public List<PsiField> collectMissingWithTags() {
+    PsiClass beanClass = getBeanClass().getValue();
+    if (beanClass == null) {
+      return Collections.emptyList();
+    }
+
+    final List<PsiField> result = new SmartList<>();
+    for (PsiField field : beanClass.getAllFields()) {
+      if (ExtensionDomExtender.isClassField(field.getName()) &&
+          ExtensionDomExtender.findWithElement(getWithElements(), field) == null) {
+        result.add(field);
+      }
+    }
+    return result;
   }
 }

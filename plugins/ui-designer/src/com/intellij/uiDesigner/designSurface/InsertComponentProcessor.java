@@ -71,7 +71,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   private ComponentItem myComponentToInsert;
   private ComponentDropLocation myLastLocation;
 
-  private static final Map<String, RadComponentFactory> myComponentClassMap = new HashMap<String, RadComponentFactory>();
+  private static final Map<String, RadComponentFactory> myComponentClassMap = new HashMap<>();
 
   static {
     myComponentClassMap.put(JScrollPane.class.getName(), new RadScrollPane.Factory());

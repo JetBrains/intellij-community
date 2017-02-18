@@ -79,13 +79,13 @@ public class SvnBranchMapperManager implements PersistentStateComponent<SvnBranc
     public Map<String, Set<String>> myMapping;
 
     public SvnBranchMapperHolder() {
-      myMapping = new HashMap<String, Set<String>>();
+      myMapping = new HashMap<>();
     }
 
     public void put(final String key, final String value) {
       Set<String> files = myMapping.get(key);
       if (files == null) {
-        files = new HashSet<String>();
+        files = new HashSet<>();
         myMapping.put(key, files);
       }
       files.add(value);

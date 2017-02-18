@@ -45,6 +45,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
     }
   };
 
+  @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(literalExpression(), new PropertiesReferenceProvider(true));
     registrar.registerReferenceProvider(literalExpression().withParent(

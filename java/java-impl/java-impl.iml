@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="jsp-spi" />
     <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="library" name="asm" level="project" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="dom-impl" />
     <orderEntry type="module" module-name="vcs-impl" />
@@ -43,7 +42,7 @@
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="java-analysis-impl" exported="" />
     <orderEntry type="module" module-name="external-system-api" />
-    <orderEntry type="library" name="asm5" level="project" />
+    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />

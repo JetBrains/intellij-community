@@ -20,18 +20,13 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +74,7 @@ public class StringConcatenationInspectionBase extends BaseInspection {
   @NotNull
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[0];
-    final Collection<InspectionGadgetsFix> result = new ArrayList();
+    final Collection<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(polyadicExpression);
     if (parent instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)parent;
@@ -155,12 +150,12 @@ public class StringConcatenationInspectionBase extends BaseInspection {
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.assert.option"), "ignoreAsserts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.system.out.option"), "ignoreSystemOuts");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.system.err.option"), "ignoreSystemErrs");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.exceptions.option"), "ignoreThrowableArguments");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("string.concatenation.ignore.constant.initializers.option"), "ignoreConstantInitializers");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.tostring"), "ignoreInToString");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.assert"), "ignoreAsserts");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.system.out"), "ignoreSystemOuts");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.system.err"), "ignoreSystemErrs");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.exceptions"), "ignoreThrowableArguments");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.constant.initializers"), "ignoreConstantInitializers");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.tostring"), "ignoreInToString");
     return optionsPanel;
   }
 
@@ -214,20 +209,7 @@ public class StringConcatenationInspectionBase extends BaseInspection {
         }
       }
       if (ignoreThrowableArguments) {
-        final PsiNewExpression newExpression =
-          PsiTreeUtil.getParentOfType(expression, PsiNewExpression.class, true, PsiCodeBlock.class, PsiClass.class);
-        if (newExpression != null) {
-          final PsiType newExpressionType = newExpression.getType();
-          if (InheritanceUtil.isInheritor(newExpressionType, "java.lang.Throwable")) {
-            return;
-          }
-        } else {
-          final PsiMethodCallExpression methodCallExpression =
-            PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
-          if (RefactoringChangeUtil.isSuperOrThisMethodCall(methodCallExpression)) {
-            return;
-          }
-        }
+        if (ExceptionUtils.isExceptionArgument(expression)) return;
       }
       if (ignoreConstantInitializers) {
         PsiElement parent = expression.getParent();

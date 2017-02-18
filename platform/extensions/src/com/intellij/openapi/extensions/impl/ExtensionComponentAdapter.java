@@ -35,21 +35,21 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   public static final ExtensionComponentAdapter[] EMPTY_ARRAY = new ExtensionComponentAdapter[0];
 
   private Object myComponentInstance;
-  private final String myImplementationClassName;
   private final Element myExtensionElement;
   private final PicoContainer myContainer;
   private final PluginDescriptor myPluginDescriptor;
   private final boolean myDeserializeInstance;
   private ComponentAdapter myDelegate;
-  private Class myImplementationClass;
-  private boolean myNotificationSent = false;
+  @NotNull
+  private Object myImplementationClassOrName; // Class or String
+  private boolean myNotificationSent;
 
-  public ExtensionComponentAdapter(@NotNull String implementationClass,
+  public ExtensionComponentAdapter(@NotNull String implementationClassName,
                                    Element extensionElement,
                                    PicoContainer container,
                                    PluginDescriptor pluginDescriptor,
                                    boolean deserializeInstance) {
-    myImplementationClassName = implementationClass;
+    myImplementationClassOrName = implementationClassName;
     myExtensionElement = extensionElement;
     myContainer = container;
     myPluginDescriptor = pluginDescriptor;
@@ -148,19 +148,20 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   @NotNull
   private Class loadImplementationClass() {
-    if (myImplementationClass == null) {
+    Object implementationClassOrName = myImplementationClassOrName;
+    if (implementationClassOrName instanceof String) {
       try {
-        ClassLoader classLoader = myPluginDescriptor != null ? myPluginDescriptor.getPluginClassLoader() : getClass().getClassLoader();
+        ClassLoader classLoader = myPluginDescriptor == null ? getClass().getClassLoader() : myPluginDescriptor.getPluginClassLoader();
         if (classLoader == null) {
           classLoader = getClass().getClassLoader();
         }
-        myImplementationClass = Class.forName(myImplementationClassName, false, classLoader);
+        myImplementationClassOrName = implementationClassOrName = Class.forName((String)implementationClassOrName, false, classLoader);
       }
       catch (ClassNotFoundException e) {
         throw new RuntimeException(e);
       }
     }
-    return myImplementationClass;
+    return (Class)implementationClassOrName;
   }
 
   private synchronized ComponentAdapter getDelegate() {
@@ -174,19 +175,23 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   @Override
   public String getAssignableToClassName() {
-    return myImplementationClassName;
+    Object implementationClassOrName = myImplementationClassOrName;
+    if (implementationClassOrName instanceof String) {
+      return (String)implementationClassOrName;
+    }
+    return ((Class)implementationClassOrName).getName();
   }
 
-  public boolean isNotificationSent() {
+  boolean isNotificationSent() {
     return myNotificationSent;
   }
 
-  public void setNotificationSent(boolean notificationSent) {
+  void setNotificationSent(boolean notificationSent) {
     myNotificationSent = notificationSent;
   }
 
   @Override
   public String toString() {
-    return "ExtensionComponentAdapter[" + myImplementationClassName + "]: plugin=" + myPluginDescriptor;
+    return "ExtensionComponentAdapter[" + getAssignableToClassName() + "]: plugin=" + myPluginDescriptor;
   }
 }

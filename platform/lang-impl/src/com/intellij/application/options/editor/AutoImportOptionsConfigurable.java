@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.Configurable.VariableProjectAppLevel;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,10 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImportOptionsProvider> implements EditorOptionsProvider {
+public class AutoImportOptionsConfigurable
+  extends CompositeConfigurable<AutoImportOptionsProvider>
+  implements EditorOptionsProvider, VariableProjectAppLevel {
+
   private final Project myProject;
   private JPanel myPanel;
   private JPanel myProvidersPanel;
@@ -88,7 +92,7 @@ public class AutoImportOptionsConfigurable extends CompositeConfigurable<AutoImp
   }
 
   @Override
-  public Runnable enableSearch(final String option) {
-    return null;
+  public boolean isProjectLevel() {
+    return false;
   }
 }

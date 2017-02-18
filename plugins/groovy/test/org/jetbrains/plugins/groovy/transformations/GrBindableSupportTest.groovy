@@ -44,7 +44,7 @@ class GrBindableSupportTest {
   }
 
   @Parameterized.Parameters(name = "{0}")
-  public static Collection<Object[]> data() {
+  static Collection<Object[]> data() {
     [
       '@Bindable on class'               : '@groovy.beans.Bindable class Person {}',
       '@Bindable on class @CompileStatic': '@groovy.transform.CompileStatic @groovy.beans.Bindable class Person {}',
@@ -87,7 +87,7 @@ class GrBindableSupportTest {
       assert method
       assert method.containingClass == clazz
       assert method.originInfo == BindableTransformationSupport.ORIGIN_INFO
-      assert method.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE)
+      assert method.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE_FQN)
     }
   }
 

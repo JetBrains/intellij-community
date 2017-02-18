@@ -45,7 +45,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   @NotNull
   @Override
   public Collection<? extends ActionOrGroup> getVariants(ConvertContext context) {
-    final List<ActionOrGroup> variants = new ArrayList<ActionOrGroup>();
+    final List<ActionOrGroup> variants = new ArrayList<>();
     PairProcessor<String, ActionOrGroup> collectProcessor = (s, actionOrGroup) -> {
       if (isRelevant(actionOrGroup)) {
         variants.add(actionOrGroup);
@@ -170,7 +170,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   private static Map<String, ActionOrGroup> collectForFile(final IdeaPlugin plugin) {
     final XmlFile xmlFile = DomUtil.getFile(plugin);
     return CachedValuesManager.getCachedValue(xmlFile, () -> {
-      Map<String, ActionOrGroup> result = new HashMap<String, ActionOrGroup>();
+      Map<String, ActionOrGroup> result = new HashMap<>();
       for (Actions actions : plugin.getActions()) {
         collectRecursive(result, actions);
       }

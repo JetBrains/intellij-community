@@ -26,6 +26,9 @@ public interface FileStatusListener {
    * Indicates that some file statuses were change. On this event client should recalculate all statuses
    * it's dependent on.
    */
-  void fileStatusesChanged();
-  void fileStatusChanged(@NotNull VirtualFile virtualFile);
+  default void fileStatusesChanged() {
+  }
+
+  default void fileStatusChanged(@NotNull VirtualFile virtualFile) {
+  }
 }

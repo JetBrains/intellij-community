@@ -31,6 +31,8 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.MethodVisitor;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -148,7 +150,8 @@ public class LocalVariablesUtil {
   public static Map<DecompiledLocalVariable, Value> fetchValues(@NotNull StackFrameProxyImpl frameProxy, DebugProcess process) throws Exception {
     Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<>(); // LinkedHashMap for correct order
 
-    com.sun.jdi.Method method = frameProxy.location().method();
+    Location location = frameProxy.location();
+    com.sun.jdi.Method method = location.method();
     final int firstLocalVariableSlot = getFirstLocalsSlot(method);
 
     // gather code variables names
@@ -168,7 +171,7 @@ public class LocalVariablesUtil {
     }
 
     // now try to fetch stack values
-    List<DecompiledLocalVariable> vars = collectVariablesFromBytecode(frameProxy, namesMap);
+    List<DecompiledLocalVariable> vars = collectVariablesFromBytecode(frameProxy.getVirtualMachine(), location, namesMap);
     StackFrame frame = frameProxy.getStackFrame();
     int size = vars.size();
     while (size > 0) {
@@ -266,13 +269,13 @@ public class LocalVariablesUtil {
   }
 
   @NotNull
-  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(StackFrameProxyImpl frame,
-                                                                            final MultiMap<Integer, String> namesMap) {
-    if (!frame.getVirtualMachine().canGetBytecodes()) {
+  private static List<DecompiledLocalVariable> collectVariablesFromBytecode(VirtualMachineProxyImpl vm,
+                                                                            Location location,
+                                                                            MultiMap<Integer, String> namesMap) {
+    if (!vm.canGetBytecodes()) {
       return Collections.emptyList();
     }
     try {
-      final Location location = frame.location();
       LOG.assertTrue(location != null);
       final com.sun.jdi.Method method = location.method();
       final Location methodLocation = method.location();
@@ -285,19 +288,20 @@ public class LocalVariablesUtil {
       if (bytecodes != null && bytecodes.length > 0) {
         final int firstLocalVariableSlot = getFirstLocalsSlot(method);
         final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<>();
-        new InstructionParser(bytecodes, location.codeIndex()) {
-          @Override
-          protected void localVariableInstructionFound(int opcode, int slot, String typeSignature) {
-            if (slot >= firstLocalVariableSlot) {
-              DecompiledLocalVariable variable = usedVars.get(slot);
-              if (variable == null || !typeSignature.equals(variable.getSignature())) {
-                variable = new DecompiledLocalVariable(slot, false, typeSignature, namesMap.get(slot));
-                usedVars.put(slot, variable);
-              }
-            }
-          }
-        }.parse();
-
+        MethodBytecodeUtil.visit(method, location.codeIndex(),
+          new MethodVisitor(Opcodes.API_VERSION) {
+           @Override
+           public void visitVarInsn(int opcode, int slot) {
+             if (slot >= firstLocalVariableSlot) {
+               DecompiledLocalVariable variable = usedVars.get(slot);
+               String typeSignature = MethodBytecodeUtil.getVarInstructionType(opcode).getDescriptor();
+               if (variable == null || !typeSignature.equals(variable.getSignature())) {
+                 variable = new DecompiledLocalVariable(slot, false, typeSignature, namesMap.get(slot));
+                 usedVars.put(slot, variable);
+               }
+             }
+           }
+          }, false);
         if (usedVars.isEmpty()) {
           return Collections.emptyList();
         }
@@ -310,18 +314,18 @@ public class LocalVariablesUtil {
     catch (UnsupportedOperationException ignored) {
     }
     catch (Exception e) {
-      LOG.info(e);
+      LOG.error(e);
     }
     return Collections.emptyList();
   }
 
   @NotNull
   private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
-      @Override
-      public MultiMap<Integer, String> compute() {
-        SourcePosition position = ContextUtil.getSourcePosition(context);
-        if (position != null) {
+    SourcePosition position = ContextUtil.getSourcePosition(context);
+    if (position != null) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
+        @Override
+        public MultiMap<Integer, String> compute() {
           PsiElement element = position.getElementAt();
           PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
@@ -342,10 +346,11 @@ public class LocalVariablesUtil {
             }
             return res;
           }
+          return MultiMap.empty();
         }
-        return MultiMap.empty();
-      }
-    });
+      });
+    }
+    return MultiMap.empty();
   }
 
   /**
@@ -355,15 +360,13 @@ public class LocalVariablesUtil {
     private final MultiMap<Integer, String> myNames;
     private int myCurrentSlotIndex;
     private final PsiElement myElement;
-    private final Stack<Integer> myIndexStack;
+    private final Deque<Integer> myIndexStack = new LinkedList<>();
     private boolean myReached = false;
 
     public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;
-      myIndexStack = new Stack<>();
-
     }
 
     private boolean shouldVisit(PsiElement scope) {
@@ -479,11 +482,7 @@ public class LocalVariablesUtil {
   }
 
   private static int getParametersStackSize(PsiElement method) {
-    int startSlot = 0;
-    for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
-      startSlot += getTypeSlotSize(parameter.getType());
-    }
-    return startSlot;
+    return Arrays.stream(DebuggerUtilsEx.getParameters(method)).mapToInt(parameter -> getTypeSlotSize(parameter.getType())).sum();
   }
 
   private static int getTypeSlotSize(PsiType varType) {
@@ -498,11 +497,7 @@ public class LocalVariablesUtil {
   }
 
   private static int getFirstLocalsSlot(com.sun.jdi.Method method) {
-    int firstLocalVariableSlot = getFirstArgsSlot(method);
-    for (String type : method.argumentTypeNames()) {
-      firstLocalVariableSlot += getTypeSlotSize(type);
-    }
-    return firstLocalVariableSlot;
+    return getFirstArgsSlot(method) + method.argumentTypeNames().stream().mapToInt(LocalVariablesUtil::getTypeSlotSize).sum();
   }
 
   private static int getTypeSlotSize(String name) {

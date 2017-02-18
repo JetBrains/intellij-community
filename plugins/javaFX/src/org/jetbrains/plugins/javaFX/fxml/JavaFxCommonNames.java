@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NonNls;
 
@@ -50,10 +51,13 @@ public class JavaFxCommonNames {
   @NonNls public static final String JAVAFX_BEANS_VALUE_WRITABLE_VALUE = "javafx.beans.value.WritableValue";
   @NonNls public static final String JAVAFX_SCENE_LAYOUT_PANE = "javafx.scene.layout.Pane";
   @NonNls public static final String JAVAFX_BEANS_NAMED_ARG = "javafx.beans.NamedArg";
+  @NonNls public static final String JAVAFX_BEANS_PROPERTY_SIMPLE_STRING_PROPERTY = "javafx.beans.property.SimpleStringProperty";
+  @NonNls public static final String JAVAFX_BEANS_PROPERTY_SIMPLE_LIST_PROPERTY = "javafx.beans.property.SimpleListProperty";
+  @NonNls public static final String JAVAFX_BEANS_PROPERTY_SIMPLE_OBJECT_PROPERTY = "javafx.beans.property.SimpleObjectProperty";
 
   @NonNls public static final String PROPERTY_METHOD_SUFFIX = "Property";
 
-  public static final Map<String, PsiType> ourWritableMap = new HashMap<String, PsiType>();
+  public static final Map<String, PsiType> ourWritableMap = new HashMap<>();
   static {
     ourWritableMap.put("javafx.beans.value.WritableBooleanValue", PsiType.BOOLEAN);
     ourWritableMap.put("javafx.beans.value.WritableIntegerValue", PsiType.INT);
@@ -62,7 +66,7 @@ public class JavaFxCommonNames {
     ourWritableMap.put("javafx.beans.value.WritableDoubleValue", PsiType.DOUBLE);
   }
 
-  public static final Map<String, PsiType> ourReadOnlyMap = new HashMap<String, PsiType>();
+  public static final Map<String, PsiType> ourReadOnlyMap = new HashMap<>();
   static {
     ourReadOnlyMap.put("javafx.beans.property.ReadOnlyBooleanProperty", PsiType.BOOLEAN);
     ourReadOnlyMap.put("javafx.beans.property.ReadOnlyIntegerProperty", PsiType.INT);
@@ -74,4 +78,13 @@ public class JavaFxCommonNames {
   @NonNls public static final String JAVA_FX_PARENT = "javafx.scene.Parent";
   @NonNls public static final String JAVA_FX_SCENE = "javafx.scene.Scene";
   @NonNls public static final String JAVAFX_APPLICATION_APPLICATION = "javafx.application.Application";
+
+  public static final Map<PsiPrimitiveType, String> ourObservablePrimitiveWrappers = new HashMap<>();
+  static {
+    ourObservablePrimitiveWrappers.put(PsiType.INT, "javafx.beans.property.SimpleIntegerProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.LONG, "javafx.beans.property.SimpleLongProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.FLOAT, "javafx.beans.property.SimpleFloatProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.DOUBLE, "javafx.beans.property.SimpleDoubleProperty");
+    ourObservablePrimitiveWrappers.put(PsiType.BOOLEAN, "javafx.beans.property.SimpleBooleanProperty");
+  }
 }

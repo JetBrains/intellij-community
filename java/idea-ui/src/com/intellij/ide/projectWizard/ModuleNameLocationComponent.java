@@ -18,10 +18,7 @@ package com.intellij.ide.projectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
-import com.intellij.ide.util.projectWizard.NamePathComponent;
-import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
@@ -35,6 +32,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -65,7 +63,29 @@ public class ModuleNameLocationComponent {
     myWizardContext = wizardContext;
   }
 
-  public void updateDataModel(AbstractModuleBuilder moduleBuilder) {
+  @Nullable
+  public AbstractModuleBuilder getModuleBuilder() {
+    return ((AbstractModuleBuilder)myWizardContext.getProjectBuilder());
+  }
+
+  /**
+   * @see ModuleWizardStep#validate()
+   */
+  public boolean validate() throws ConfigurationException {
+    AbstractModuleBuilder builder = getModuleBuilder();
+    if (builder != null && !builder.validateModuleName(getModuleName())) return false;
+    if (!validateModulePaths()) return false;
+    validateExistingModuleName();
+    return true;
+  }
+
+  /**
+   * @see ModuleWizardStep#updateDataModel()
+   */
+  public void updateDataModel() {
+    AbstractModuleBuilder moduleBuilder = getModuleBuilder();
+    if (moduleBuilder == null) return;
+
     final String moduleName = getModuleName();
     moduleBuilder.setName(moduleName);
     moduleBuilder.setModuleFilePath(
@@ -195,8 +215,10 @@ public class ModuleNameLocationComponent {
     }
   }
 
+  private void validateExistingModuleName() throws ConfigurationException {
+    Project project = myWizardContext.getProject();
+    if (project == null) return;
 
-  public void validateExistingModuleName(Project project) throws ConfigurationException {
     final String moduleName = getModuleName();
     final Module module;
     final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(project);
@@ -211,7 +233,7 @@ public class ModuleNameLocationComponent {
     }
   }
 
-  public boolean validateModulePaths() throws ConfigurationException {
+  private boolean validateModulePaths() throws ConfigurationException {
     final String moduleName = getModuleName();
     final String moduleFileDirectory = myModuleFileLocation.getText();
     if (moduleFileDirectory.length() == 0) {

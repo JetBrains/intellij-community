@@ -198,7 +198,7 @@ public class EditorPaintingTest extends AbstractEditorTest {
     }
   }
 
-  private void fail(String message, File expectedResultsFile, BufferedImage actualImage) throws IOException {
+  private void fail(@NotNull String message, @NotNull File expectedResultsFile, BufferedImage actualImage) throws IOException {
     File savedImage = FileUtil.createTempFile(getName(), ".png", false);
     addTmpFileToKeep(savedImage);
     ImageIO.write(actualImage, "png", savedImage);
@@ -263,6 +263,14 @@ public class EditorPaintingTest extends AbstractEditorTest {
     public void drawChars(char[] data, int offset, int length, int x, int y) {
       for (int i = offset; i < offset + length; i++) {
         drawChar(data[i], x, y);
+        x += BitmapFont.CHAR_WIDTH;
+      }
+    }
+
+    @Override
+    public void drawString(String str, float x, float y) {
+      for (int i = 0; i < str.length(); i++) {
+        drawChar(str.charAt(i), (int)x, (int)y);
         x += BitmapFont.CHAR_WIDTH;
       }
     }

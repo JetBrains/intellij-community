@@ -50,7 +50,7 @@ public class XmlUnwrapDescriptor implements UnwrapDescriptor {
       }
     }
 
-    List<Pair<PsiElement, Unwrapper>> result = new ArrayList<Pair<PsiElement, Unwrapper>>();
+    List<Pair<PsiElement, Unwrapper>> result = new ArrayList<>();
 
     FileViewProvider viewProvider = file.getViewProvider();
 
@@ -62,7 +62,7 @@ public class XmlUnwrapDescriptor implements UnwrapDescriptor {
         PsiElement tag = PsiTreeUtil.getParentOfType(e, XmlTag.class);
         while (tag != null) {
           if (XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()) != null) { // Exclude implicit tags suck as 'jsp:root'
-            result.add(new Pair<PsiElement, Unwrapper>(tag, new XmlEnclosingTagUnwrapper()));
+            result.add(new Pair<>(tag, new XmlEnclosingTagUnwrapper()));
           }
           tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class);
         }

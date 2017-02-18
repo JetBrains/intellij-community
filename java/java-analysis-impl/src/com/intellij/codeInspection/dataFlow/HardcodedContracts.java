@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +35,10 @@ import static com.intellij.codeInspection.dataFlow.MethodContract.createConstrai
 public class HardcodedContracts {
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
-    if (owner == null) return Collections.emptyList();
+    if (owner == null ||
+        InjectedLanguageManager.getInstance(owner.getProject()).isInjectedFragment(owner.getContainingFile())) {
+      return Collections.emptyList();
+    }
 
     final int paramCount = method.getParameterList().getParametersCount();
     String className = owner.getQualifiedName();
@@ -48,9 +53,7 @@ public class HardcodedContracts {
     }
     else if ("com.google.common.base.Preconditions".equals(className)) {
       if ("checkNotNull".equals(methodName) && paramCount > 0) {
-        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
-        constraints[0] = NULL_VALUE;
-        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+        return failIfNull(0, paramCount);
       }
       if (("checkArgument".equals(methodName) || "checkState".equals(methodName)) && paramCount > 0) {
         MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
@@ -60,14 +63,17 @@ public class HardcodedContracts {
     }
     else if ("java.util.Objects".equals(className)) {
       if ("requireNonNull".equals(methodName) && paramCount > 0) {
-        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
-        constraints[0] = NULL_VALUE;
-        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+        return failIfNull(0, paramCount);
       }
     }
-    else if ("org.apache.commons.lang.Validate".equals(className) || 
-             "org.apache.commons.lang3.Validate".equals(className) || 
+    else if ("org.apache.commons.lang.Validate".equals(className) ||
+             "org.apache.commons.lang3.Validate".equals(className) ||
              "org.springframework.util.Assert".equals(className)) {
+      if (("isTrue".equals(methodName) || "state".equals(methodName)) && paramCount > 0) {
+        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+        constraints[0] = FALSE_VALUE;
+        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      }
       if ("notNull".equals(methodName) && paramCount > 0) {
         MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
         constraints[0] = NULL_VALUE;
@@ -76,8 +82,10 @@ public class HardcodedContracts {
     }
     else if ("junit.framework.Assert".equals(className) ||
              "org.junit.Assert".equals(className) ||
+             "org.junit.Assume".equals(className) ||
              "junit.framework.TestCase".equals(className) ||
              "com.google.common.truth.Truth".equals(className) ||
+             "com.google.common.truth.TestVerb".equals(className) ||
              className.startsWith("org.assertj.core.api.") ||
              "org.testng.Assert".equals(className) ||
              "org.testng.AssertJUnit".equals(className)) {
@@ -110,31 +118,14 @@ public class HardcodedContracts {
 
   private static List<MethodContract> handleTestFrameworks(int paramCount, String className, String methodName,
                                                            @Nullable PsiMethodCallExpression call) {
-    if ("assertThat".equals(methodName) && call != null) {
-      PsiExpression[] args = call.getArgumentList().getExpressions();
-      if (args.length == paramCount) {
-        for (int i = 1; i < args.length; i++) {
-          if (isNotNullMatcher(args[i])) {
-            MethodContract.ValueConstraint[] constraints = createConstraintArray(args.length);
-            constraints[i - 1] = NULL_VALUE;
-            return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
-          }
-        }
-        if (args.length == 1) {
-          final PsiElement parent = call.getParent();
-          if (parent instanceof PsiReferenceExpression && 
-              "isNotNull".equals(((PsiReferenceExpression)parent).getReferenceName()) && 
-              parent.getParent() instanceof PsiMethodCallExpression) {
-            return Collections.singletonList(new MethodContract(new MethodContract.ValueConstraint[]{NULL_VALUE}, THROW_EXCEPTION));
-          }
-        }
-      }
-      return Collections.emptyList();
+    if (("assertThat".equals(methodName) || "assumeThat".equals(methodName) || "that".equals(methodName)) && call != null) {
+      return handleAssertThat(paramCount, call);
     }
 
     if (!"junit.framework.Assert".equals(className) &&
         !"junit.framework.TestCase".equals(className) &&
         !"org.junit.Assert".equals(className) &&
+        !"org.junit.Assume".equals(className) &&
         !"org.testng.Assert".equals(className) &&
         !"org.testng.AssertJUnit".equals(className)) {
       return Collections.emptyList();
@@ -149,11 +140,11 @@ public class HardcodedContracts {
 
     int checkedParam = testng ? 0 : paramCount - 1;
     MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
-    if ("assertTrue".equals(methodName)) {
+    if ("assertTrue".equals(methodName) || "assumeTrue".equals(methodName)) {
       constraints[checkedParam] = FALSE_VALUE;
       return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
     }
-    if ("assertFalse".equals(methodName)) {
+    if ("assertFalse".equals(methodName) || "assumeFalse".equals(methodName)) {
       constraints[checkedParam] = TRUE_VALUE;
       return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
     }
@@ -161,11 +152,45 @@ public class HardcodedContracts {
       constraints[checkedParam] = NOT_NULL_VALUE;
       return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
     }
-    if ("assertNotNull".equals(methodName)) {
-      constraints[checkedParam] = NULL_VALUE;
-      return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+    if ("assertNotNull".equals(methodName) || "assumeNotNull".equals(methodName)) {
+      return failIfNull(checkedParam, paramCount);
     }
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static List<MethodContract> handleAssertThat(int paramCount, @NotNull PsiMethodCallExpression call) {
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    if (args.length == paramCount) {
+      for (int i = 1; i < args.length; i++) {
+        if (isNotNullMatcher(args[i])) {
+          return failIfNull(i - 1, paramCount);
+        }
+      }
+      if (args.length == 1 && hasNotNullChainCall(call)) {
+        return failIfNull(0, 1);
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  private static boolean hasNotNullChainCall(PsiMethodCallExpression call) {
+    Iterable<PsiElement> exprParents = SyntaxTraverser.psiApi().parents(call).
+      takeWhile(e -> !(e instanceof PsiStatement) && !(e instanceof PsiMember));
+    return ContainerUtil.exists(exprParents, HardcodedContracts::isNotNullCall);
+  }
+
+  private static boolean isNotNullCall(PsiElement ref) {
+    return ref instanceof PsiReferenceExpression &&
+           "isNotNull".equals(((PsiReferenceExpression)ref).getReferenceName()) &&
+           ref.getParent() instanceof PsiMethodCallExpression;
+  }
+
+  @NotNull
+  private static List<MethodContract> failIfNull(int argIndex, int argCount) {
+    MethodContract.ValueConstraint[] constraints = createConstraintArray(argCount);
+    constraints[argIndex] = NULL_VALUE;
+    return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
   }
 
   public static boolean isHardcodedPure(PsiMethod method) {

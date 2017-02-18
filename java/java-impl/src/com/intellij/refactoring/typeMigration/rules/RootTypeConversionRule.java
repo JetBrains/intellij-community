@@ -65,7 +65,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
                 if (Comparing.equal(functionalInterfaceType, to) && method.isEquivalentTo(LambdaUtil.getFunctionalInterfaceMethod(from))) {
                   return new TypeConversionDescriptorBase() {
                     @Override
-                    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+                    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
                       final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)expression;
                       final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
                       if (qualifierExpression != null) {
@@ -147,7 +147,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
     }
 
     @Override
-    public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+    public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());

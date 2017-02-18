@@ -58,7 +58,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     final List<Pair<String, Icon>> list = myDataFactory.create();
-    myData = new HashMap<String,Icon>();
+    myData = new HashMap<>();
 
     final JComboBox comboBox = (JComboBox)editorComponent;
     comboBox.removeAllItems();

@@ -58,7 +58,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected JPanel myContentPanel;
   protected TallImageComponent myIcon;
   private Component myCurrentStepComponent;
-  private final Map<Component, String> myComponentToIdMap = new HashMap<Component, String>();
+  private final Map<Component, String> myComponentToIdMap = new HashMap<>();
   private final StepListener myStepListener = new StepListener() {
     public void stateChanged() {
       updateStep();
@@ -67,13 +67,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
   public AbstractWizard(final String title, final Component dialogParent) {
     super(dialogParent, true);
-    mySteps = new ArrayList<T>();
+    mySteps = new ArrayList<>();
     initWizard(title);
   }
 
   public AbstractWizard(final String title, @Nullable final Project project) {
     super(project, true);
-    mySteps = new ArrayList<T>();
+    mySteps = new ArrayList<>();
     initWizard(title);
   }
 
@@ -249,7 +249,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       if (myIcon == null) {
         return;
       }
-      final BufferedImage image = UIUtil.createImage(myIcon.getIconWidth(), myIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      final BufferedImage image = UIUtil.createImage(g, myIcon.getIconWidth(), myIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
       final Graphics2D gg = image.createGraphics();
       myIcon.paintIcon(this, gg, 0, 0);
 
@@ -496,7 +496,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myNextButton.setEnabled(canGoNext);
     }
 
-    if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode() && getRootPane() != null) {
       getRootPane().setDefaultButton(myNextButton);
     }
 

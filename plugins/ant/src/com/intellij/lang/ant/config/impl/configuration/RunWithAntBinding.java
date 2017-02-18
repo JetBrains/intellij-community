@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class RunWithAntBinding extends UIPropertyBinding {
-  private final ArrayList<JComponent> myComponents = new ArrayList<JComponent>();
+  private final ArrayList<JComponent> myComponents = new ArrayList<>();
   private final JRadioButton myUseDefaultAnt;
   private final ComboboxWithBrowseButton myAnts;
   private final ChooseAndEditComboBoxController<AntReference, AntReference> myAntsController;
@@ -63,7 +63,7 @@ public class RunWithAntBinding extends UIPropertyBinding {
       }
     });
 
-    myAntsController = new ChooseAndEditComboBoxController<AntReference, AntReference>(myAnts, new ConvertingIterator.IdConvertor<AntReference>(), AntReference.COMPARATOR) {
+    myAntsController = new ChooseAndEditComboBoxController<AntReference, AntReference>(myAnts, new ConvertingIterator.IdConvertor<>(), AntReference.COMPARATOR) {
       public Iterator<AntReference> getAllListItems() {
         return antConfiguration.getConfiguredAnts().keySet().iterator();
       }

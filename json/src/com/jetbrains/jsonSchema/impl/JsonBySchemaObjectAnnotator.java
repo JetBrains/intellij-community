@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.*;
@@ -7,6 +22,7 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,10 +38,11 @@ import java.util.*;
 class JsonBySchemaObjectAnnotator implements Annotator {
   private final static Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.JsonBySchemaAnnotator");
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
-  private final static JsonSchemaObject ANY_SCHEMA = new JsonSchemaObject();
+  @NotNull private final VirtualFile mySchemaFile;
   private final JsonSchemaObject myRootSchema;
 
-  public JsonBySchemaObjectAnnotator(@NotNull JsonSchemaObject schema) {
+  public JsonBySchemaObjectAnnotator(@NotNull VirtualFile schemaFile, @NotNull JsonSchemaObject schema) {
+    mySchemaFile = schemaFile;
     myRootSchema = schema;
   }
 
@@ -36,21 +53,27 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     final JsonProperty firstProp = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
     if (firstProp == null) {
-      checkRootObject(holder, element);
+      final JsonValue root = findTopLevelElement(element);
+      if (root != null) {
+        checkRootObject(holder, root);
+      }
       return;
     }
     if (checkIfAlreadyProcessed(holder, firstProp)) return;
 
-    final List<BySchemaChecker> checkers = new ArrayList<BySchemaChecker>();
+    final List<BySchemaChecker> checkers = new ArrayList<>();
     JsonSchemaWalker.findSchemasForAnnotation(firstProp, new JsonSchemaWalker.CompletionSchemesConsumer() {
       @Override
-      public void consume(boolean isName, @NotNull JsonSchemaObject schema) {
+      public void consume(boolean isName,
+                          @NotNull JsonSchemaObject schema,
+                          @NotNull VirtualFile schemaFile,
+                          @NotNull List<JsonSchemaWalker.Step> steps) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final Set<String> validatedProperties = new HashSet<String>();
+        final Set<String> validatedProperties = new HashSet<>();
         checker.checkByScheme(firstProp.getValue(), schema, validatedProperties);
         checkers.add(checker);
       }
-    }, myRootSchema);
+    }, myRootSchema, mySchemaFile);
 
     if (checkers.isEmpty()) return;
 
@@ -71,16 +94,27 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     if (processCheckerResults(holder, checker)) return;
     if (firstProp.getParent() instanceof JsonObject && firstProp.getParent().getParent() instanceof PsiFile) {
-      checkRootObject(holder, element);
+      checkRootObject(holder, firstProp.getParent());
+    }
+  }
+
+  private static JsonValue findTopLevelElement(@NotNull PsiElement element) {
+    PsiElement current = element;
+    while (true) {
+      final JsonValue value = PsiTreeUtil.getParentOfType(current, JsonValue.class, true);
+      if (value != null && (value.getParent() instanceof PsiFile)) return value;
+      if (value == null) return current instanceof JsonValue ? (JsonValue)current : null;
+      current = value;
     }
   }
 
   private void checkRootObject(@NotNull AnnotationHolder holder, PsiElement property) {
-    final JsonObject object = PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    JsonValue object = property instanceof JsonObject ? (JsonObject)property : PsiTreeUtil.getParentOfType(property, JsonObject.class);
+    if (object == null) object = property instanceof JsonArray ? (JsonValue)property : PsiTreeUtil.getParentOfType(property, JsonArray.class);
     if (object != null) {
       final BySchemaChecker rootChecker = new BySchemaChecker();
 
-      final Set<String> validatedProperties = new HashSet<String>();
+      final Set<String> validatedProperties = new HashSet<>();
       rootChecker.checkByScheme(object, myRootSchema, validatedProperties);
       processCheckerResults(holder, rootChecker);
     }
@@ -90,7 +124,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     final AnnotationSession session = holder.getCurrentAnnotationSession();
     Set<PsiElement> data = session.getUserData(ANNOTATED_PROPERTIES);
     if (data == null) {
-      data = new HashSet<PsiElement>();
+      data = new HashSet<>();
       session.putUserData(ANNOTATED_PROPERTIES, data);
     }
     if (data.contains(property)) return true;
@@ -114,7 +148,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     private boolean myHadTypeError;
 
     public BySchemaChecker() {
-      myErrors = new HashMap<PsiElement, String>();
+      myErrors = new HashMap<>();
     }
 
     public Map<PsiElement, String> getErrors() {
@@ -192,16 +226,23 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       final JsonObject object = ObjectUtils.tryCast(value, JsonObject.class);
       //noinspection ConstantConditions
       final List<JsonProperty> propertyList = object.getPropertyList();
-      final Map<String, JsonProperty> map = new HashMap<String, JsonProperty>();
+      final Map<String, JsonProperty> map = new HashMap<>();
       for (JsonProperty property : propertyList) {
         map.put(property.getName(), property);
         final JsonSchemaObject propertySchema = properties.get(property.getName());
         if (propertySchema != null) {
-          checkByScheme(property.getValue(), propertySchema, new HashSet<String>());
-        } else if (schema.getAdditionalPropertiesSchema() != null) {
-          checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<String>());
-        } else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
-          error("Property '" + property.getName() + "' is not allowed", property);
+          checkByScheme(property.getValue(), propertySchema, new HashSet<>());
+        }
+        else {
+          final JsonSchemaObject patternSchema = schema.getMatchingPatternPropertySchema(property.getName());
+          if (patternSchema != null) {
+            checkByScheme(property.getValue(), patternSchema, new HashSet<>());
+          } else if (schema.getAdditionalPropertiesSchema() != null) {
+            checkByScheme(property.getValue(), schema.getAdditionalPropertiesSchema(), new HashSet<>());
+          }
+          else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
+            error("Property '" + property.getName() + "' is not allowed", property);
+          }
         }
         validatedProperties.add(property.getName());
       }
@@ -237,14 +278,15 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       if (schemaDependencies != null) {
         for (Map.Entry<String, JsonSchemaObject> entry : schemaDependencies.entrySet()) {
           if (map.containsKey(entry.getKey())) {
-            checkByScheme(value, entry.getValue(), new HashSet<String>());
+            checkByScheme(value, entry.getValue(), new HashSet<>());
           }
         }
       }
     }
 
     private boolean checkForEnum(JsonValue value, JsonSchemaObject schema) {
-      if (schema.getEnum() == null) return true;
+      //enum values + pattern -> don't check enum values
+      if (schema.getEnum() == null || schema.getPattern() != null)  return true;
       final String text = value.getText();
       final List<Object> objects = schema.getEnum();
       for (Object object : objects) {
@@ -266,7 +308,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     }
 
     private class ArrayItemsChecker {
-      private final Set<String> myValueTexts = new HashSet<String>();
+      private final Set<String> myValueTexts = new HashSet<>();
       private JsonValue myFirstNonUnique;
       private boolean myCheckUnique;
 
@@ -274,14 +316,14 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         myCheckUnique = schema.isUniqueItems();
         if (schema.getItemsSchema() != null) {
           for (JsonValue arrayValue : list) {
-            checkByScheme(arrayValue, schema.getItemsSchema(), new HashSet<String>());
+            checkByScheme(arrayValue, schema.getItemsSchema(), new HashSet<>());
             checkUnique(arrayValue);
           }
         } else if (schema.getItemsSchemaList() != null) {
           final Iterator<JsonSchemaObject> iterator = schema.getItemsSchemaList().iterator();
           for (JsonValue arrayValue : list) {
             if (iterator.hasNext()) {
-              checkByScheme(arrayValue, iterator.next(), new HashSet<String>());
+              checkByScheme(arrayValue, iterator.next(), new HashSet<>());
             } else {
               if (!Boolean.TRUE.equals(schema.getAdditionalItemsAllowed())) {
                 error("Additional items are not allowed", arrayValue);
@@ -357,10 +399,13 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           return;
         }
       }
-      if (schema.getMultipleOf() != null) {
-        final double leftOver = value.doubleValue() % schema.getMultipleOf().doubleValue();
+      final Number multipleOf = schema.getMultipleOf();
+      if (multipleOf != null) {
+        final double leftOver = value.doubleValue() % multipleOf.doubleValue();
         if (leftOver > 0.000001) {
-          error("Is not multiple of " + propValue.getText(), propValue);
+          final String multipleOfValue = String.valueOf(Math.abs(multipleOf.doubleValue() - multipleOf.intValue()) < 0.000001 ?
+                                                        multipleOf.intValue() : multipleOf);
+          error("Is not multiple of " + multipleOfValue, propValue);
           return;
         }
       }
@@ -435,12 +480,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     private void processOneOf(JsonValue value, JsonSchemaObject schema, Set<String> validatedProperties) {
       final List<JsonSchemaObject> oneOf = schema.getOneOf();
-      final Map<PsiElement, String> errors = new HashMap<PsiElement, String>();
+      final Map<PsiElement, String> errors = new HashMap<>();
       int cntCorrect = 0;
       boolean validatedPropertiesAdded = false;
       for (JsonSchemaObject object : oneOf) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final HashSet<String> local = new HashSet<String>();
+        final HashSet<String> local = new HashSet<>();
         checker.checkByScheme(value, object, local);
         if (checker.isCorrect()) {
           if (!validatedPropertiesAdded) {
@@ -474,10 +519,10 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
     private void processAnyOf(JsonValue value, JsonSchemaObject schema, Set<String> validatedProperties) {
       final List<JsonSchemaObject> anyOf = schema.getAnyOf();
-      final Map<PsiElement, String> errors = new HashMap<PsiElement, String>();
+      final Map<PsiElement, String> errors = new HashMap<>();
       for (JsonSchemaObject object : anyOf) {
         final BySchemaChecker checker = new BySchemaChecker();
-        final HashSet<String> local = new HashSet<String>();
+        final HashSet<String> local = new HashSet<>();
         checker.checkByScheme(value, object, local);
         if (checker.isCorrect()) {
           validatedProperties.addAll(local);
@@ -548,7 +593,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
   }
 
   // todo no pattern properties at the moment
-  @Nullable
+  /*@Nullable
   private static JsonSchemaObject getChild(JsonSchemaObject current, String name) {
     JsonSchemaObject schema = current.getProperties().get(name);
     if (schema != null) return schema;
@@ -582,5 +627,5 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       if (schema != null) return schema;
     }
     return null;
-  }
+  }*/
 }

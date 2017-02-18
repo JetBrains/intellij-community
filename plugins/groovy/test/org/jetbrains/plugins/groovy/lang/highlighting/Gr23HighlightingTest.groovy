@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
  * Created by Max Medvedev on 27/02/14
  */
 class Gr23HighlightingTest extends GrHighlightingTestBase {
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_2_3
@@ -472,5 +474,15 @@ class A implements T {}
 
 new A().foo
 ''', GroovyUnusedDeclarationInspection
+  }
+
+  void 'test no exception on super reference in trait without supertypes'() {
+    testHighlighting '''\
+trait SimpleTrait {
+  void foo() {
+    super.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
+  }
+}
+'''
   }
 }

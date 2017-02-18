@@ -18,15 +18,15 @@ package org.jetbrains.settingsRepository.git
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
 import org.eclipse.jgit.api.MergeResult
+import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.merge.MergeStrategy
-import org.jetbrains.jgit.dirCache.deleteAllFiles
 import org.jetbrains.settingsRepository.LOG
 import org.jetbrains.settingsRepository.MutableUpdateResult
 import org.jetbrains.settingsRepository.UpdateResult
 
 internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
-    val message = if (toTheirs) "Overwrite local to ${manager.getUpstream()}" else "Overwrite remote ${manager.getUpstream()} to local"
+    val message = if (toTheirs) "Overwrite local to ${manager.repository.upstream}" else "Overwrite remote ${manager.repository.upstream} to local"
     LOG.debug { message }
 
     val resetResult = repository.resetHard()
@@ -38,7 +38,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
     // grab added/deleted/renamed/modified files
     val mergeStrategy = if (toTheirs) MergeStrategy.THEIRS else MergeStrategy.OURS
 
-    var refToMerge = fetch()
+    val refToMerge = fetch()
     val mergeResult = if (refToMerge == null) null else merge(refToMerge, mergeStrategy, forceMerge = true, commitMessage = commitMessage)
     val firstMergeResult = mergeResult?.result
 
@@ -68,6 +68,10 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
           return result
         }
 
+        if (repository.repositoryState == RepositoryState.MERGING) {
+          repository.resetHard()
+        }
+
         val secondMergeResult = merge(latestUpstreamCommit, mergeStrategy, true, forceMerge = true, commitMessage = commitMessage)
         if (!secondMergeResult.status.isSuccessful) {
           throw IllegalStateException(secondMergeResult.toString())
@@ -85,7 +89,7 @@ internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator
 
       // must be performed only after initial pull, so, local changes will be relative to remote files
       localRepositoryInitializer()
-      manager.commit(indicator)
+      (manager as GitRepositoryManager).commit(indicator)
     }
     return result
   }

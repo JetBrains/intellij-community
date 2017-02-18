@@ -27,7 +27,7 @@ public abstract class CloudDeploymentConfiguratorBase<D extends DeploymentConfig
   }
 
   public static List<CloudDeploymentRuntimeProvider> getDeploymentRuntimeProviders(ServerType<?> serverType) {
-    List<CloudDeploymentRuntimeProvider> result = new ArrayList<CloudDeploymentRuntimeProvider>();
+    List<CloudDeploymentRuntimeProvider> result = new ArrayList<>();
     for (CloudDeploymentRuntimeProvider provider : CloudDeploymentRuntimeProvider.EP_NAME.getExtensions()) {
       ServerType<?> providerServerType = provider.getServerType();
       if (providerServerType == null || providerServerType == serverType) {
@@ -41,7 +41,7 @@ public abstract class CloudDeploymentConfiguratorBase<D extends DeploymentConfig
   @Override
   public List<DeploymentSource> getAvailableDeploymentSources() {
     if (myProject.isDefault()) return Collections.emptyList();
-    List<DeploymentSource> result = new ArrayList<DeploymentSource>();
+    List<DeploymentSource> result = new ArrayList<>();
     for (CloudDeploymentRuntimeProvider provider : getDeploymentRuntimeProviders(myServerType)) {
       result.addAll(provider.getDeploymentSources(myProject));
     }

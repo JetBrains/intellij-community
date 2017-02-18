@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
 
     myFile.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitAssignmentExpression(GrAssignmentExpression expression) {
+      public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
         final GrExpression lValue = expression.getLValue();
         if (lValue instanceof GrTupleExpression) {
           for (GrExpression grExpression : ((GrTupleExpression)lValue).getExpressions()) {
@@ -132,12 +132,12 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
       }
 
       @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
         //don't go inside type definitions
       }
 
       @Override
-      public void visitElement(GroovyPsiElement element) {
+      public void visitElement(@NotNull GroovyPsiElement element) {
         if (myHasWriteAccess == null) {
           super.visitElement(element);
         }

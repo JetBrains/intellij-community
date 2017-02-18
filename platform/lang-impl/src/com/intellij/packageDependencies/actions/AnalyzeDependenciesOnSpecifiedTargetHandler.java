@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.DependencyVisitorFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -41,7 +43,7 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
   private final GlobalSearchScope myTargetScope;
 
   public AnalyzeDependenciesOnSpecifiedTargetHandler(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull GlobalSearchScope targetScope) {
-    super(project, Collections.singletonList(scope), Collections.<PsiFile>emptySet());
+    super(project, Collections.singletonList(scope), new HashSet<>());
     myTargetScope = targetScope;
   }
 
@@ -76,7 +78,11 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
     }
     final String source = StringUtil.decapitalize(getForwardScope(builders).getDisplayName());
     final String target = StringUtil.decapitalize(myTargetScope.getDisplayName());
-    final String message = AnalysisScopeBundle.message("no.dependencies.found.message", source, target);
+    String message = AnalysisScopeBundle.message("no.dependencies.found.message", source, target);
+    if (DependencyVisitorFactory.VisitorOptions.fromSettings(myProject).skipImports()) {
+      message += " ";
+      message += AnalysisScopeBundle.message("dependencies.in.imports.message");
+    }
     NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(myProject);
     return false;
   }

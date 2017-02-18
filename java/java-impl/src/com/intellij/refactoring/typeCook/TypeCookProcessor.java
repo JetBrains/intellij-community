@@ -97,7 +97,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-    final Set<PsiElement> victims = new HashSet<PsiElement>();
+    final Set<PsiElement> victims = new HashSet<>();
 
     for (UsageInfo usage : usages) {
       victims.add(usage.getElement());

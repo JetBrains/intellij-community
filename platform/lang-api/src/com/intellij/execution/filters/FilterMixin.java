@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -34,24 +35,29 @@ public interface FilterMixin {
   @NotNull
   String getUpdateMessage();
 
-  abstract class AdditionalHighlight {
-    private final int myStart;
-    private final int myEnd;
-
-    protected AdditionalHighlight(int start, int end) {
-      myStart = start;
-      myEnd = end;
+  class AdditionalHighlight extends Filter.Result {
+    public AdditionalHighlight(int start, int end) {
+      super(start, end, null);
     }
 
+    @SuppressWarnings("unused")
+    public AdditionalHighlight(@NotNull List<Filter.ResultItem> resultItems) {
+      super(resultItems);
+    }
+
+    @Deprecated
     public int getStart() {
-      return myStart;
+      return getHighlightStartOffset();
     }
 
+    @Deprecated
     public int getEnd() {
-      return myEnd;
+      return getHighlightEndOffset();
     }
 
-    @NotNull
-    public abstract TextAttributes getTextAttributes(@Nullable final TextAttributes source);
+    @Nullable
+    public TextAttributes getTextAttributes(@Nullable final TextAttributes source) {
+      return null;
+    }
   }
 }

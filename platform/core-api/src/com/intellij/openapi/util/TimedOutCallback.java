@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov

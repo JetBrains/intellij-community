@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,12 @@ public class KeymapGenerator implements ApplicationStarter {
     for (Keymap keymap : KeymapManagerEx.getInstanceEx().getAllKeymaps()) {
 
       xml.append("  <Keymap name=\"").append(keymap.getPresentableName()).append("\">\n");
-      for (String id : keymap.getActionIds()) {
+      for (String id : keymap.getActionIdList()) {
         String shortcuts = KeymapUtil.getShortcutsText(keymap.getShortcuts(id));
         if (!StringUtil.isEmpty(shortcuts)) {
           AnAction action = actionManager.getAction(id);
           xml.append("    <Action id=\"").append(id).append("\">\n");
-          Set<String> addedShortcuts = new THashSet<String>();
+          Set<String> addedShortcuts = new THashSet<>();
           for (Shortcut shortcut : keymap.getShortcuts(id)) {
             // Different shortcuts may have equal display strings (e.g. shift+minus and shift+subtract)
             // We don't want them do be duplicated for users

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,14 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.projectWizard.*;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -44,7 +42,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -55,7 +55,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.exception.VelocityException;
@@ -67,6 +66,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.ZipInputStream;
@@ -206,18 +206,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
                      boolean reportFailuresWithDialog) {
     final WizardInputField basePackage = getBasePackageField();
     try {
-      final NullableFunction<String, String> pathConvertor = path1 -> {
-        if (moduleMode && path1.contains(Project.DIRECTORY_STORE_FOLDER)) return null;
-        if (basePackage != null) {
-          return path1.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
-        }
-        return path1;
-      };
-
       final File dir = new File(path);
-
       class ExceptionConsumer implements Consumer<VelocityException> {
-
         private String myPath;
         private String myText;
         private SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
@@ -267,10 +257,19 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       }
       ExceptionConsumer consumer = new ExceptionConsumer();
 
+      List<File> filesToRefresh = new ArrayList<>();
       myTemplate.processStream(new ArchivedProjectTemplate.StreamProcessor<Void>() {
         @Override
         public Void consume(@NotNull ZipInputStream stream) throws IOException {
-          ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, stream, pathConvertor, new ZipUtil.ContentProcessor() {
+          ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, stream, path1 -> {
+            if (moduleMode && path1.contains(Project.DIRECTORY_STORE_FOLDER)) {
+              return null;
+            }
+            if (basePackage != null) {
+              return path1.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
+            }
+            return path1;
+          }, new ZipUtil.ContentProcessor() {
             @Override
             public byte[] processContent(byte[] content, File file) throws IOException {
               if(pI != null){
@@ -282,6 +281,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
               return fileType.isBinary() ? content : processTemplates(projectName, text, file, consumer);
             }
           }, true);
+
+          myTemplate.handleUnzippedDirectories(dir, filesToRefresh);
+
           return null;
         }
       });
@@ -298,11 +300,16 @@ public class TemplateModuleBuilder extends ModuleBuilder {
           throw new IOException("Can't rename " + from + " to " + to);
         }
       }
-      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-      if (virtualFile == null) {
-        throw new IOException("Can't find " + dir);
+
+      RefreshQueue refreshQueue = RefreshQueue.getInstance();
+      LOG.assertTrue(!filesToRefresh.isEmpty());
+      for (File file : filesToRefresh) {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+        if (virtualFile == null) {
+          throw new IOException("Can't find " + file);
+        }
+        refreshQueue.refresh(false, true, null, virtualFile);
       }
-      RefreshQueue.getInstance().refresh(false, true, null, virtualFile);
 
       consumer.reportFailures();
     }
@@ -358,11 +365,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     final File location = new File(FileUtil.toSystemDependentName(path));
     LOG.assertTrue(location.exists());
 
-    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
-      }
-    });
+    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(
+      (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
     if (baseDir == null) {
       LOG.error("Couldn't find path '" + path + "' in VFS");
       return null;
@@ -372,29 +376,28 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     boolean isSomehowOverwriting = children.length > 1 ||
                                    (children.length == 1 && !PathMacroUtil.DIRECTORY_STORE_NAME.equals(children[0].getName()));
 
-    Ref<Boolean> canceledRef = new Ref<>();
-    Ref<Project> projectRef = new Ref<>();
-    Task.Modal task = new Task.Modal(null, "Applying Template", true) {
+    Task.WithResult<Project, RuntimeException> task = new Task.WithResult<Project, RuntimeException>(null, "Applying Template", true) {
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
+      public Project compute(@NotNull ProgressIndicator indicator) {
         try {
-          projectRef.set(createProject(name, path, indicator));
+          myProjectMode = true;
+          unzip(name, path, false, indicator, false);
+          return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          return null;
         }
         finally {
           cleanup();
           if(indicator.isCanceled()){
-            canceledRef.set(true);
             if (!isSomehowOverwriting) {
               ApplicationManager.getApplication().invokeLater(() -> {
-                AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(TemplateProjectDirectoryGenerator.class);
                 try {
-                  baseDir.delete(TemplateProjectDirectoryGenerator.class);
+                  WriteAction.run(() -> baseDir.delete(TemplateProjectDirectoryGenerator.class));
                 }
                 catch (IOException e) {
                   LOG.error(e);
-                }
-                finally {
-                  token.close();
                 }
               });
             }
@@ -402,35 +405,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         }
       }
     };
-    ProgressManager.getInstance().run(task);
-    if(canceledRef.get() == Boolean.TRUE){
-      throw new ProcessCanceledException();
-    }
-    return projectRef.get();
-  }
-
-  @Nullable
-  private Project createProject(String name, final String path, @Nullable ProgressIndicator  progressIndicator) {
-    myProjectMode = true;
-    unzip(name, path, false, progressIndicator, false);
-    Ref<Project> projectRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(()->{
-      projectRef.set(
-        ApplicationManager.getApplication().runWriteAction(new NullableComputable<Project>() {
-        @Nullable
-        @Override
-        public Project compute() {
-          try {
-            return ProjectManagerEx.getInstanceEx().convertAndLoadProject(path);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-            return null;
-          }
-        }
-      }));
-    }, ModalityState.any());
-    return projectRef.get();
+    return ProgressManager.getInstance().run(task);
   }
 
   private final static Logger LOG = Logger.getInstance(TemplateModuleBuilder.class);

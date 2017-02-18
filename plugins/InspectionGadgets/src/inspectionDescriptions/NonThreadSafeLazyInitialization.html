@@ -1,7 +1,7 @@
 <html>
 <body>
 Reports <b>static</b> variables being lazily initialized
-in an non-thread-safe manner. Lazy initialization of <b>static</b> variables should be done
+in a non-thread-safe manner. Lazy initialization of <b>static</b> variables should be done
 in an appropriate synchronization construct, to prevent different threads from
 performing conflicting initialization.
 <p>
@@ -10,7 +10,7 @@ which introduces the static holder pattern described in
 <a href="http://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom">
 http://en.wikipedia.org/wiki/Initialization_on_demand_holder_idiom
 </a>
-where the JVM guarantees the thread-safety of such initializations.
+where the JVM guarantees the thread safety of such initializations.
 <!-- tooltip end -->
 <p>
 

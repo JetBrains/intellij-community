@@ -46,11 +46,13 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
+import static org.jetbrains.plugins.groovy.projectRoots.RootTypesKt.ROOT_TYPES;
+
 public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
 
   public NewGroovyClassAction() {
     super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"),
-          JetgroovyIcons.Groovy.Class, true);
+          JetgroovyIcons.Groovy.Class, ROOT_TYPES);
   }
 
   @Override
@@ -127,5 +129,4 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
     final String description = fromTemplate.getFileType().getDescription();
     throw new IncorrectOperationException(GroovyBundle.message("groovy.file.extension.is.not.mapped.to.groovy.file.type", description));
   }
-
 }

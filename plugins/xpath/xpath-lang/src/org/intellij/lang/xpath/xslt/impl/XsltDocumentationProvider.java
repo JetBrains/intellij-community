@@ -172,7 +172,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         Document d = com.intellij.reference.SoftReference.dereference(myDocument);
         if (d == null) {
             d = new SAXBuilder().build(XsltSupport.class.getResource("resources/documentation.xml"));
-            myDocument = new SoftReference<Document>(d);
+            myDocument = new SoftReference<>(d);
         }
         return d;
     }
@@ -181,7 +181,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
         Templates t = com.intellij.reference.SoftReference.dereference(myTemplates);
         if (t == null) {
             t = TransformerFactory.newInstance().newTemplates(makeSource("resources/documentation.xsl"));
-            myTemplates = new SoftReference<Templates>(t);
+            myTemplates = new SoftReference<>(t);
         }
         return t;
     }

@@ -113,7 +113,7 @@ public class InspectionDiff {
   private static Document createDelta(@Nullable Document oldDoc, Document newDoc) {
     Element newRoot = newDoc.getRootElement();
 
-    ourFileToProblem = new HashMap<String, ArrayList<Element>>();
+    ourFileToProblem = new HashMap<>();
     List newProblems = newRoot.getChildren("problem");
     for (final Object o : newProblems) {
       Element newProblem = (Element)o;
@@ -160,7 +160,7 @@ public class InspectionDiff {
     String fileName = problem.getChildText(FILE_ELEMENT);
     ArrayList<Element> problemList = ourFileToProblem.get(fileName);
     if (problemList == null) {
-      problemList = new ArrayList<Element>();
+      problemList = new ArrayList<>();
       ourFileToProblem.put(fileName, problemList);
     }
     problemList.add(problem);

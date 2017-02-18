@@ -41,7 +41,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
 
   public void testReplaceAnnotation() throws Exception {
     //be sure not to load tree
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
     PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
     final PsiAnnotation[] annotations = aClass.getModifierList().getAnnotations();
@@ -49,7 +49,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     assertEquals("A", annotations[0].getNameReferenceElement().getReferenceName());
     final PsiAnnotation newAnnotation = myJavaFacade.getElementFactory().createAnnotationFromText("@B", null);
     //here the tree is going to be loaded
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
     CommandProcessor.getInstance().executeCommand(myProject, () -> WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
         annotations[0].replace(newAnnotation);

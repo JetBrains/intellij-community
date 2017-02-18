@@ -31,7 +31,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Caret;
@@ -57,8 +56,6 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
-  public static final Logger LOG = Logger.getInstance(SimpleDiffViewer.class);
-
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final StatusPanel myStatusPanel;
@@ -99,6 +96,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @CalledInAwt
   protected void onDispose() {
     destroyChangedBlocks();
+    myFoldingModel.destroy();
     super.onDispose();
   }
 
@@ -225,6 +223,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private Runnable apply(@NotNull final CompareData data) {
     return () -> {
       myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
+
       clearDiffPresentation();
 
       myIsContentsEqual = data.isContentsEqual();
@@ -234,13 +233,17 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      if (data.getFragments() != null) {
-        for (LineFragment fragment : data.getFragments()) {
-          myDiffChanges.add(new SimpleDiffChange(this, fragment));
+      List<LineFragment> fragments = data.getFragments();
+      if (fragments != null) {
+        for (int i = 0; i < fragments.size(); i++) {
+          LineFragment fragment = fragments.get(i);
+          LineFragment previousFragment = i != 0 ? fragments.get(i - 1) : null;
+
+          myDiffChanges.add(new SimpleDiffChange(this, fragment, previousFragment));
         }
       }
 
-      myFoldingModel.install(data.getFragments(), myRequest, getFoldingModelSettings());
+      myFoldingModel.install(fragments, myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -253,6 +256,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   private Runnable applyNotification(@Nullable final JComponent notification) {
     return () -> {
       clearDiffPresentation();
+      myFoldingModel.destroy();
       if (notification != null) myPanel.addNotification(notification);
     };
   }
@@ -289,8 +293,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       change.destroyHighlighter();
     }
     myInvalidDiffChanges.clear();
-
-    myFoldingModel.destroy();
 
     myContentPanel.repaintDivider();
     myStatusPanel.update();

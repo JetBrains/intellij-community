@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private final Getter<Boolean> myDisposedGetter;
   private VcsDirtyScope myScope;
   private FoldersCutDownWorker myFoldersCutDownWorker;
-  private final IgnoredFilesComponent myIgnoredFilesComponent;
+  private final ChangeListManager myСhangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManagerGate myGate;
   private Factory<JComponent> myAdditionalInfo;
@@ -46,11 +47,11 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
                             final FileHolderComposite composite,
                             final Getter<Boolean> disposedGetter,
-                            final IgnoredFilesComponent ignoredFilesComponent, final ChangeListManagerGate gate) {
+                            final ChangeListManager сhangeListManager, final ChangeListManagerGate gate) {
     myChangeListWorker = changeListWorker;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
-    myIgnoredFilesComponent = ignoredFilesComponent;
+    myСhangeListManager = сhangeListManager;
     myGate = gate;
     myVcsManager = ProjectLevelVcsManager.getInstance(changeListWorker.getProject());
   }
@@ -130,7 +131,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     checkIfDisposed();
     if (isIgnoredByVcs(file)) return;
     if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      if (myIgnoredFilesComponent.isIgnoredFile(file)) {
+      if (myСhangeListManager.isIgnoredFile(file)) {
         myComposite.getIgnoredFileHolder().addFile(file);
       }
       else if (myComposite.getIgnoredFileHolder().containsFile(file)) {
@@ -174,15 +175,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     checkIfDisposed();
     if (isIgnoredByVcs(file)) return;
     if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      IgnoredFilesHolder ignoredFilesHolder = myComposite.getIgnoredFileHolder();
-      if (ignoredFilesHolder instanceof IgnoredFilesCompositeHolder) {
-        IgnoredFilesHolder holder = ((IgnoredFilesCompositeHolder)ignoredFilesHolder).getAppropriateIgnoredHolder();
-        if (holder instanceof MapIgnoredFilesHolder) {
-          ((MapIgnoredFilesHolder)holder).addByVcsChangeProvider(file);
-          return;
-        }
-      }
-      ignoredFilesHolder.addFile(file);
+      ObjectUtils.assertNotNull(myComposite.getIgnoredFileHolder().getActiveVcsHolder()).addFile(file);
     }
   }
 

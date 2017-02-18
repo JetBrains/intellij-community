@@ -92,7 +92,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.setShowErrors(false);
 
-    final List<File> dirsToPrune = new ArrayList<File>();
+    final List<File> dirsToPrune = new ArrayList<>();
     for(Change c: changes) {
       if (c.getType() == Change.Type.DELETED) {
         final ContentRevision contentRevision = c.getBeforeRevision();

@@ -41,7 +41,7 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Abstra
   @NotNull
   @Override
   public final Set<UsageDescriptor> getProjectUsages(@NotNull final Project project) {
-    final Set<String> runConfigurationTypes = new HashSet<String>();
+    final Set<String> runConfigurationTypes = new HashSet<>();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {

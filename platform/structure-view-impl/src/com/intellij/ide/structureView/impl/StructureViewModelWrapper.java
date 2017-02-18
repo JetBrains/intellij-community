@@ -67,7 +67,7 @@ public class StructureViewModelWrapper implements StructureViewModel {
   @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
-    return new StructureViewElementWrapper<PsiElement>(myStructureViewModel.getRoot(), myMainFile);
+    return new StructureViewElementWrapper<>(myStructureViewModel.getRoot(), myMainFile);
   }
 
   @Override

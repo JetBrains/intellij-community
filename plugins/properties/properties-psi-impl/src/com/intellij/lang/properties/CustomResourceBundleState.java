@@ -40,7 +40,7 @@ public class CustomResourceBundleState {
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false, elementTag = "file", elementValueAttribute = "value")
-  public Set<String> myFileUrls = new HashSet<String>();
+  public Set<String> myFileUrls = new HashSet<>();
 
   @Tag("base-name")
   public String myBaseName;

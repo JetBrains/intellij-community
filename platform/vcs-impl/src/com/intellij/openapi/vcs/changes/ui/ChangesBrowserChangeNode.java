@@ -42,9 +42,11 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     super(userObject);
     myProject = project;
     myDecorator = decorator;
-    if (!ChangesUtil.getFilePath(userObject).isDirectory()) {
-      myCount = 1;
-    }
+  }
+
+  @Override
+  protected boolean isFile() {
+    return !isDirectory();
   }
 
   @Override
@@ -77,7 +79,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
       }
       appendSwitched(renderer, file);
     }
-    else if (getCount() != 1 || getDirectoryCount() != 0) {
+    else if (getFileCount() != 1 || getDirectoryCount() != 0) {
       appendSwitched(renderer, file);
       appendCount(renderer);
     }
@@ -127,7 +129,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   }
 
   public int getSortWeight() {
-    return 6;
+    return CHANGE_SORT_WEIGHT;
   }
 
   public int compareUserObjects(final Object o2) {

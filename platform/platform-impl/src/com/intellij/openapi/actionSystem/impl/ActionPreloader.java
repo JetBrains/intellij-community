@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
+import com.intellij.ide.SearchTopHitProvider;
+import com.intellij.ide.ui.ConfigurableOptionsTopHitProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
@@ -29,6 +32,19 @@ public class ActionPreloader extends PreloadingActivity {
   public void preload(@NotNull ProgressIndicator indicator) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       ((ActionManagerImpl)ActionManager.getInstance()).preloadActions(indicator);
+    }
+
+    TypedHandlerDelegate.EP_NAME.getExtensions();
+
+    preloadTopHits(indicator);
+  }
+
+  private static void preloadTopHits(@NotNull ProgressIndicator indicator) {
+    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+      indicator.checkCanceled();
+      if (provider instanceof ConfigurableOptionsTopHitProvider) {
+        ((ConfigurableOptionsTopHitProvider)provider).getOptions(null);
+      }
     }
   }
 }

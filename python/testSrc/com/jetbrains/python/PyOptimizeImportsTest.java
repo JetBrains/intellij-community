@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -33,13 +34,6 @@ import java.util.List;
  * @author yole
  */
 public class PyOptimizeImportsTest extends PyTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    // importsFromTypingUnusedInTypeComments depends on registered TokenSetContributors
-    PythonDialectsTokenSetProvider.reset();
-  }
 
   public void testSimple() {
     doTest();
@@ -229,6 +223,11 @@ public class PyOptimizeImportsTest extends PyTestCase {
   // PY-19836
   public void testSameModuleImportedWithDifferentAliases() {
     doTest();
+  }
+
+  // PY-18972
+  public void testReferencesInFStringLiterals() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
   private void doTest() {

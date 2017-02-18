@@ -295,17 +295,24 @@ public abstract class PsiClassType extends PsiType {
     };
   }
 
-  /**
-   * Temporary class to facilitate transition to {@link #getCanonicalText(boolean)}.
-   */
   public static abstract class Stub extends PsiClassType {
     protected Stub(LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
       super(languageLevel, annotations);
     }
 
-    public Stub(LanguageLevel languageLevel, @NotNull TypeAnnotationProvider annotations) {
+    protected Stub(LanguageLevel languageLevel, @NotNull TypeAnnotationProvider annotations) {
       super(languageLevel, annotations);
     }
+
+    @NotNull
+    @Override
+    public final String getPresentableText() {
+      return getPresentableText(false);
+    }
+
+    @NotNull
+    @Override
+    public abstract String getPresentableText(boolean annotated);
 
     @NotNull
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.testFramework.LightIdeaTestCase;
@@ -130,10 +129,10 @@ public class RunConfigurableTest extends LightIdeaTestCase {
   }
 
   private void doExpand() {
-    List<DefaultMutableTreeNode> toExpand = new ArrayList<DefaultMutableTreeNode>();
+    List<DefaultMutableTreeNode> toExpand = new ArrayList<>();
     RunConfigurable.collectNodesRecursively(myRoot, toExpand, FOLDER);
     assertEquals(5, toExpand.size());
-    List<DefaultMutableTreeNode> toExpand2 = new ArrayList<DefaultMutableTreeNode>();
+    List<DefaultMutableTreeNode> toExpand2 = new ArrayList<>();
     RunConfigurable.collectNodesRecursively(myRoot, toExpand2, CONFIGURATION_TYPE);
     toExpand.addAll(toExpand2);
     for (DefaultMutableTreeNode node : toExpand) {
@@ -196,7 +195,7 @@ public class RunConfigurableTest extends LightIdeaTestCase {
     assertEquals(expected, myConfigurable.getAvailableDropPosition(direction));
   }
 
-  private static RunManagerImpl createRunManager(Element element) throws InvalidDataException {
+  private static RunManagerImpl createRunManager(Element element) {
     Project project = getProject();
     RunManagerImpl runManager = new RunManagerImpl(project, PropertiesComponent.getInstance(project));
     runManager.initializeConfigurationTypes(new ConfigurationType[]{ApplicationConfigurationType.getInstance(),

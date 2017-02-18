@@ -65,12 +65,12 @@ public class GenericInlineHandler {
       allReferences = Collections.singleton(invocationReference);
     }
     else {
-      final Ref<Collection<? extends PsiReference>> usagesRef = new Ref<Collection<? extends PsiReference>>();
+      final Ref<Collection<? extends PsiReference>> usagesRef = new Ref<>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> usagesRef.set(ReferencesSearch.search(element).findAll()), "Find Usages", false, element.getProject());
       allReferences = usagesRef.get();
     }
 
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     final Map<Language, InlineHandler.Inliner> inliners = initializeInliners(element, settings, allReferences);
 
     for (PsiReference reference : allReferences) {
@@ -90,7 +90,7 @@ public class GenericInlineHandler {
       }
     }
 
-    HashSet<PsiElement> elements = new HashSet<PsiElement>();
+    HashSet<PsiElement> elements = new HashSet<>();
     for (PsiReference reference : allReferences) {
       PsiElement refElement = reference.getElement();
       if (refElement != null) {
@@ -131,7 +131,7 @@ public class GenericInlineHandler {
   public static Map<Language, InlineHandler.Inliner> initializeInliners(PsiElement element,
                                                                         InlineHandler.Settings settings,
                                                                         Collection<? extends PsiReference> allReferences) {
-    final Map<Language, InlineHandler.Inliner> inliners = new HashMap<Language, InlineHandler.Inliner>();
+    final Map<Language, InlineHandler.Inliner> inliners = new HashMap<>();
     for (PsiReference ref : allReferences) {
       if (ref == null) {
         LOG.error("element: " + element.getClass()+ ", allReferences contains null!");

@@ -43,7 +43,6 @@ import com.intellij.ui.LightColors;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
-import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +58,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import static com.intellij.util.WaitForProgressToShow.*;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -84,8 +85,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myProject = project;
     myProvider = provider;
     myLocation = location;
-    myShouldBeCalledOnDispose = new ArrayList<Runnable>();
-    myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<CommittedChangeList>());
+    myShouldBeCalledOnDispose = new ArrayList<>();
+    myBrowser = new CommittedChangesTreeBrowser(project, new ArrayList<>());
     Disposer.register(this, myBrowser);
     add(myBrowser, BorderLayout.CENTER);
 
@@ -169,14 +170,10 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
             }
 
             public void consume(final List<CommittedChangeList> list) {
-              new AbstractCalledLater(myProject, ModalityState.stateForComponent(myBrowser)) {
-                public void run() {
-                  myBrowser.append(list);
-                }
-              }.callMe();
+              runOrInvokeLaterAboveProgress(() -> myBrowser.append(list), ModalityState.stateForComponent(myBrowser), myProject);
             }
           };
-          final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<CommittedChangeList>(30, appender,-1);
+          final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(30, appender, -1);
 
           myProvider.loadCommittedChanges(mySettings, myLocation, myMaxCount, new AsynchConsumer<CommittedChangeList>() {
             public void finished() {
@@ -193,7 +190,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         }
         catch (final VcsException e) {
           LOG.info(e);
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          runOrInvokeLaterAboveProgress(new Runnable() {
             public void run() {
               Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(e.getMessages(), "\n"), "Committed Changes");
             }
@@ -403,7 +400,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       } else {
         filterHelper = new WordMatchFilterHelper(myFilterComponent.getFilter());
       }
-      final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
+      final List<CommittedChangeList> result = new ArrayList<>();
       for (CommittedChangeList list : changeLists) {
         if (filterHelper.filter(list)) {
           result.add(list);
@@ -420,7 +417,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void passCachedListsToListener(final VcsConfigurationChangeListener.DetailedNotification notification,
                                         final Project project, final VirtualFile root) {
-    final LinkedList<CommittedChangeList> resultList = new LinkedList<CommittedChangeList>();
+    final LinkedList<CommittedChangeList> resultList = new LinkedList<>();
     myBrowser.reportLoadedLists(new CommittedChangeListsListener() {
       public void onBeforeStartReport() {
       }

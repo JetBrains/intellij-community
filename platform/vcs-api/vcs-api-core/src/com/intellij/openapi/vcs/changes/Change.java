@@ -67,7 +67,7 @@ public class Change {
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
     myHash = -1;
-    myOtherLayers = new HashMap<String, Change>(0);
+    myOtherLayers = new HashMap<>(0);
   }
 
   private static FileStatus convertStatus(@Nullable ContentRevision beforeRevision, @Nullable ContentRevision afterRevision) {

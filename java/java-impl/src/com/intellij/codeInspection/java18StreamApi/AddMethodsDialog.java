@@ -114,7 +114,7 @@ public class AddMethodsDialog extends DialogWrapper {
         if (!myExamplePanel.isEnabled()) {
           myExamplePanel.setEnabled(true);
         }
-        final Collection<PseudoLambdaReplaceTemplate> suitableTemplates = new LinkedHashSet<PseudoLambdaReplaceTemplate>();
+        final Collection<PseudoLambdaReplaceTemplate> suitableTemplates = new LinkedHashSet<>();
         final Collection<PsiMethod> methods = (Collection<PsiMethod>) e.getItem();
         for (PseudoLambdaReplaceTemplate template : PseudoLambdaReplaceTemplate.getAllTemplates()) {
           for (PsiMethod method : methods) {
@@ -130,7 +130,7 @@ public class AddMethodsDialog extends DialogWrapper {
           myTemplatesCombo.setEnabled(true);
         }
         LOG.assertTrue(!suitableTemplates.isEmpty());
-        final List<PseudoLambdaReplaceTemplate> templatesAsList = new ArrayList<PseudoLambdaReplaceTemplate>(suitableTemplates);
+        final List<PseudoLambdaReplaceTemplate> templatesAsList = new ArrayList<>(suitableTemplates);
         myTemplatesCombo.setModel(new CollectionComboBoxModel(templatesAsList));
         myTemplatesCombo.setSelectedItem(templatesAsList.get(0));
       }
@@ -156,7 +156,7 @@ public class AddMethodsDialog extends DialogWrapper {
         }
         else {
           final List<PseudoLambdaReplaceTemplate> possibleTemplates = PseudoLambdaReplaceTemplate.getAllTemplates();
-          final LinkedMultiMap<String, PsiMethod> nameToMethod = new LinkedMultiMap<String, PsiMethod>();
+          final LinkedMultiMap<String, PsiMethod> nameToMethod = new LinkedMultiMap<>();
           for (PsiMethod m : ContainerUtil.filter(aClass.getMethods(), method -> {
             if (method.isConstructor() ||
                 !method.hasModifierProperty(PsiModifier.STATIC) ||

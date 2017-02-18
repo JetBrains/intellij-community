@@ -586,7 +586,7 @@ public class FileTypesTest extends PlatformTestCase {
       file.putUserData(FileTypeManagerImpl.DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
 
       ensureRedetected(file, detectorCalled);
-      assertTrue(file.getFileType().toString(), file.getFileType() == stuffType);
+      assertSame(file.getFileType().toString(), file.getFileType(), stuffType);
       log("T: ------");
     }
     finally {
@@ -596,7 +596,7 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void _testStressPlainTextFileWithEverIncreasingLength() throws IOException, InterruptedException {
-    FrequentEventDetector.disableUntil(myTestRootDisposable);
+    FrequentEventDetector.disableUntil(getTestRootDisposable());
 
     File f = createTempFile("xx.lkjlkjlkjlj", "a");
     VirtualFile virtualFile = getVirtualFile(f);
@@ -658,7 +658,7 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void _testStressPlainTextFileWithEverIncreasingLength2() throws IOException, InterruptedException {
-    FrequentEventDetector.disableUntil(myTestRootDisposable);
+    FrequentEventDetector.disableUntil(getTestRootDisposable());
 
     File f = createTempFile("xx.asdkjfhlkasjdhf", StringUtil.repeatSymbol(' ', (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD - 100));
     VirtualFile virtualFile = getVirtualFile(f);

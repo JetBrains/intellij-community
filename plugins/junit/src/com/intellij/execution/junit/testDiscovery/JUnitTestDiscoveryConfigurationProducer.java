@@ -15,11 +15,30 @@
  */
 package com.intellij.execution.junit.testDiscovery;
 
-import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiMethod;
 
 public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
   protected JUnitTestDiscoveryConfigurationProducer() {
-    super(ConfigurationTypeUtil.findConfigurationType(JUnitTestDiscoveryConfigurationType.class));
+    super(JUnitConfigurationType.getInstance());
+  }
+
+  @Override
+  protected void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position) {
+    ((JUnitConfiguration)configuration).beFromSourcePosition(position);
+  }
+
+  @Override
+  protected Pair<String, String> getPosition(JavaTestConfigurationBase configuration) {
+    final JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
+    if (data.TEST_OBJECT.equals(JUnitConfiguration.BY_SOURCE_POSITION)) {
+      return Pair.create(data.getMainClassName(), data.getMethodName());
+    }
+    return null;
   }
 }

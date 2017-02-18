@@ -10,6 +10,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -28,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.edu.learning.actions.StudyActionWithShortcut;
 import com.jetbrains.edu.learning.actions.StudyNextWindowAction;
 import com.jetbrains.edu.learning.actions.StudyPrevWindowAction;
@@ -59,7 +63,9 @@ public class StudyProjectComponent implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(StudyProjectComponent.class.getName());
   private final Project myProject;
   private FileCreatedByUserListener myListener;
-  private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<Keymap, List<Pair<String, String>>>();
+  private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<>();
+  private MessageBusConnection myBusConnection;
+
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
   }
@@ -97,32 +103,36 @@ public class StudyProjectComponent implements ProjectComponent {
     }
 
     StudyUtils.registerStudyToolWindow(course, myProject);
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            Course course = StudyTaskManager.getInstance(myProject).getCourse();
-            if (course != null) {
-              final UISettings instance = UISettings.getInstance();
-              if (instance != null) {
-                instance.HIDE_TOOL_STRIPES = false;
-                instance.fireUISettingsChanged();
-              }
-              registerShortcuts();
-              EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
-            }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(
+      (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
+        Course course1 = StudyTaskManager.getInstance(myProject).getCourse();
+        if (course1 != null) {
+          final UISettings instance = UISettings.getInstance();
+          if (instance != null) {
+            instance.HIDE_TOOL_STRIPES = false;
+            instance.fireUISettingsChanged();
           }
-        });
+          registerShortcuts();
+          EduUsagesCollector.projectTypeOpened(course1.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
+        }
+      })));
+
+    myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    myBusConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(myProject);
+        if (toolWindow != null) {
+          toolWindow.updateFonts(myProject);
+        }
       }
-    }));
+    });
   }
 
   private void registerShortcuts() {
     StudyToolWindow window = StudyUtils.getStudyToolWindow(myProject);
     if (window != null) {
-      List<AnAction> actionsOnToolbar = window.getActions(true);
+      List<AnAction> actionsOnToolbar = window.getActions();
       if (actionsOnToolbar != null) {
         for (AnAction action : actionsOnToolbar) {
           if (action instanceof StudyActionWithShortcut) {
@@ -155,7 +165,7 @@ public class StudyProjectComponent implements ProjectComponent {
     final Course course = EduStepicConnector.getCourse(myProject, info);
 
     if (course == null) return;
-    flushCourse(myProject, course);
+    flushCourse(course);
     course.initCourse(false);
 
     StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
@@ -197,7 +207,7 @@ public class StudyProjectComponent implements ProjectComponent {
       final ArrayList<Task> tasks = new ArrayList<>();
       for (Task task : lesson.getTaskList()) {
         index += 1;
-        final Task studentTask = studentLesson.getTask(task.getStepicId());
+        final Task studentTask = studentLesson.getTask(task.getStepId());
         if (studentTask != null && StudyStatus.Solved.equals(studentTask.getStatus())) {
           studentTask.setIndex(index);
           tasks.add(studentTask);
@@ -231,7 +241,7 @@ public class StudyProjectComponent implements ProjectComponent {
   private static void copyFile(@NotNull final File from, @NotNull final File to) {
     if (from.exists()) {
       try {
-        FileUtil.copy(from, to);
+        FileUtil.copyFileOrDir(from, to);
       }
       catch (IOException e) {
         LOG.warn("Failed to copy " + from.getName());
@@ -244,7 +254,7 @@ public class StudyProjectComponent implements ProjectComponent {
     for (Keymap keymap : keymapManager.getAllKeymaps()) {
       List<Pair<String, String>> pairs = myDeletedShortcuts.get(keymap);
       if (pairs == null) {
-        pairs = new ArrayList<Pair<String, String>>();
+        pairs = new ArrayList<>();
         myDeletedShortcuts.put(keymap, pairs);
       }
       for (String shortcutString : shortcuts) {
@@ -315,6 +325,7 @@ public class StudyProjectComponent implements ProjectComponent {
 
   @Override
   public void disposeComponent() {
+    myBusConnection.disconnect();
   }
 
   @NotNull
@@ -333,7 +344,7 @@ public class StudyProjectComponent implements ProjectComponent {
     public void fileCreated(@NotNull VirtualFileEvent event) {
       if (myProject.isDisposed()) return;
       final VirtualFile createdFile = event.getFile();
-      final VirtualFile taskDir = createdFile.getParent();
+      final VirtualFile taskDir = StudyUtils.getTaskDir(createdFile);
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
         return;
@@ -352,7 +363,7 @@ public class StudyProjectComponent implements ProjectComponent {
               final TaskFile taskFile = new TaskFile();
               taskFile.initTaskFile(task, false);
               taskFile.setUserCreated(true);
-              final String name = createdFile.getName();
+              final String name = FileUtil.getRelativePath(taskDir.getPath(), createdFile.getPath(), '/');
               taskFile.name = name;
               //TODO: put to other steps as well
               task.getTaskFiles().put(name, taskFile);

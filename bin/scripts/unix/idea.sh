@@ -11,7 +11,7 @@ message()
   if [ -n "`which zenity`" ]; then
     zenity --error --title="$TITLE" --text="$1"
   elif [ -n "`which kdialog`" ]; then
-    kdialog --error --title "$TITLE" "$1"
+    kdialog --error "$1" --title "$TITLE"
   elif [ -n "`which xmessage`" ]; then
     xmessage -center "ERROR: $TITLE: $1"
   elif [ -n "`which notify-send`" ]; then
@@ -50,19 +50,23 @@ if [ -x "$READLINK" ]; then
   done
 fi
 
-IDE_HOME=`dirname "$SCRIPT_LOCATION"`/..
 IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
+if [ "$IDE_BIN_HOME" = "." ]; then
+  IDE_HOME=".."
+else
+  IDE_HOME=`dirname "$IDE_BIN_HOME"`
+fi
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): @@product_uc@@_JDK, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
 elif [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
-  JDK=`$CAT $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
-  if [ ! -d $JDK ]; then
-    JDK=$IDE_HOME/$JDK
+  JDK=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
+  if [ ! -d "$JDK" ]; then
+    JDK="$IDE_HOME/$JDK"
   fi
 elif [ -x "$IDE_HOME/jre/jre/bin/java" ] && "$IDE_HOME/jre/jre/bin/java" -version > /dev/null 2>&1 ; then
   JDK="$IDE_HOME/jre"
@@ -125,7 +129,7 @@ JAVA_TOOL_OPTIONS= "$JAVA_BIN" -version 2> "$VERSION_LOG"
 "$GREP" "64-Bit|x86_64|amd64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
-test $BITS -eq 0 && BITS="64" || BITS=""
+test ${BITS} -eq 0 && BITS="64" || BITS=""
 
 # ---------------------------------------------------------------------
 # Collect JVM options and IDE properties.
@@ -149,7 +153,7 @@ done
 
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
-  OS_NAME=`echo $OS_TYPE | "$TR" '[:upper:]' '[:lower:]'`
+  OS_NAME=`echo "$OS_TYPE" | "$TR" '[:upper:]' '[:lower:]'`
   AGENT_LIB="yjpagent-$OS_NAME$BITS"
   if [ -r "$IDE_BIN_HOME/lib$AGENT_LIB.so" ]; then
     AGENT="-agentlib:$AGENT_LIB=disablealloc,delay=10000,sessionname=@@system_selector@@"
@@ -170,28 +174,15 @@ fi
 # Run the IDE.
 # ---------------------------------------------------------------------
 LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
-  $AGENT \
+  ${AGENT} \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
-  $VM_OPTIONS "-Djb.vmOptionsFile=$VM_OPTIONS_FILES_USED" \
+  ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in_@@product_uc@@.hprof" \
-  -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
-  $IDE_PROPERTIES_PROPERTY \
+  -Didea.paths.selector=@@system_selector@@ \
+  "-Djb.vmOptionsFile=$VM_OPTIONS_FILES_USED" \
+  ${IDE_PROPERTIES_PROPERTY} \
   @@ide_jvm_args@@ \
-  @@main_class_name@@ \
+  com.intellij.idea.Main \
   "$@"
-EC=$?
-
-test $EC -ne 88 && exit $EC
-
-RESTARTER="$HOME/.@@system_selector@@/system/restart/restarter.sh"
-if [ -x "$RESTARTER" ]; then
-  "$RESTARTER"
-  "$RM" -f "$RESTARTER"
-  if [ "$BUILDSERVER" ]; then
-    exit 0
-  fi
-fi
-
-exec "$0"

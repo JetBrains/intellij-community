@@ -36,6 +36,7 @@ public class ResourceBundleReferenceProvider extends PsiReferenceProvider {
     mySoft = soft;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         ResourceBundleReference reference = new ResourceBundleReference(element, mySoft);

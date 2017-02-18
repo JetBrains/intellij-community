@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class ClosureGenerator {
     boolean shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType) &&
                                      MissingReturnInspection.methodMissesSomeReturns(block, MissingReturnInspection.ReturnStatus.shouldNotReturnValue);
 
-    new CodeBlockGenerator(builder, context.extend(), myExitPoints).generateCodeBlock(block, shouldInsertReturnNull);
+    new CodeBlockGenerator(builder, context.extend(), myExitPoints).generateCodeBlock(parameters, block, shouldInsertReturnNull);
     builder.append('\n');
   }
 

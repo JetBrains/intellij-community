@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,12 +33,8 @@ public abstract class GeneratedSourcesFilter {
   public static final ExtensionPointName<GeneratedSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.generatedSourcesFilter");
 
   public static boolean isGeneratedSourceByAnyFilter(@NotNull VirtualFile file, @NotNull Project project) {
-    for (GeneratedSourcesFilter filter : EP_NAME.getExtensions()) {
-      if (filter.isGeneratedSource(file, project)) {
-        return true;
-      }
-    }
-    return false;
+    return ReadAction.compute(() -> !project.isDisposed() &&
+                                    Arrays.stream(EP_NAME.getExtensions()).anyMatch(filter -> filter.isGeneratedSource(file, project)));
   }
 
   public abstract boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project);

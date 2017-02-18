@@ -83,7 +83,7 @@ public class AbstractClassWithoutAbstractMethodsInspection
     private static Set<PsiMethod> calculateOverriddenMethods(
       PsiMethod[] methods) {
       final Set<PsiMethod> overriddenMethods =
-        new HashSet<PsiMethod>(methods.length);
+        new HashSet<>(methods.length);
       for (final PsiMethod method : methods) {
         calculateOverriddenMethods(method, overriddenMethods);
       }

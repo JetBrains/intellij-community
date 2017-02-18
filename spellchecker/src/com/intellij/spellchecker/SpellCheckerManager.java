@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.spellchecker;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -31,10 +30,10 @@ import com.intellij.spellchecker.engine.SpellCheckerEngine;
 import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.engine.SuggestionProvider;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
-import com.intellij.spellchecker.state.StateLoader;
+import com.intellij.spellchecker.state.AggregatedDictionaryState;
 import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
-import com.intellij.util.Consumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,14 +100,12 @@ public class SpellCheckerManager {
           else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
             spellChecker.loadDictionary(new FileLoader(s, s));
           }
-
         });
-
       }
     }
 
-    if (removedDictionaries != null && !removedDictionaries.isEmpty()) {
-      for (final String name : removedDictionaries) {
+    if (!ContainerUtil.isEmpty(removedDictionaries)) {
+      for (String name : removedDictionaries) {
         spellChecker.removeDictionary(name);
       }
     }
@@ -126,11 +123,7 @@ public class SpellCheckerManager {
 
   private void fillEngineDictionary() {
     spellChecker.reset();
-    final StateLoader stateLoader = new StateLoader(project);
-    stateLoader.load(s -> {
-      //do nothing - in this loader we don't worry about word list itself - the whole dictionary will be restored
-    });
-    final List<Loader> loaders = new ArrayList<Loader>();
+    final List<Loader> loaders = new SmartList<>();
     // Load bundled dictionaries from corresponding jars
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       for (String dictionary : provider.getBundledDictionaries()) {
@@ -157,11 +150,12 @@ public class SpellCheckerManager {
 
       }
     }
-    loaders.add(stateLoader);
     for (Loader loader : loaders) {
       spellChecker.loadDictionary(loader);
     }
-    userDictionary = stateLoader.getDictionary();
+
+    userDictionary = ServiceManager.getService(project, AggregatedDictionaryState.class).getDictionary();
+    spellChecker.addModifiableDictionary(userDictionary);
   }
 
   public boolean hasProblem(@NotNull String word) {
@@ -185,16 +179,11 @@ public class SpellCheckerManager {
 
   @NotNull
   public static List<String> getBundledDictionaries() {
-    final ArrayList<String> dictionaries = new ArrayList<String>();
+    final ArrayList<String> dictionaries = new ArrayList<>();
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       ContainerUtil.addAll(dictionaries, provider.getBundledDictionaries());
     }
     return dictionaries;
-  }
-
-  @NotNull
-  public static HighlightDisplayLevel getHighlightDisplayLevel() {
-    return HighlightDisplayLevel.find(SpellCheckerSeveritiesProvider.TYPO);
   }
 
   @NotNull
@@ -213,8 +202,8 @@ public class SpellCheckerManager {
         else if (Strings.isUpperCase(word)) {
           Strings.upperCase(suggestions);
         }
-        Set<String> unique = new LinkedHashSet<String>(suggestions);
-        return unique.size() < suggestions.size() ? new ArrayList<String>(unique) : suggestions;
+        Set<String> unique = new LinkedHashSet<>(suggestions);
+        return unique.size() < suggestions.size() ? new ArrayList<>(unique) : suggestions;
       }
     }
     return Collections.emptyList();

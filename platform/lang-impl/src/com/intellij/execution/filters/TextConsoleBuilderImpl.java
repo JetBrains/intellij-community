@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.filters;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,15 +30,15 @@ import java.util.List;
 public class TextConsoleBuilderImpl extends TextConsoleBuilder {
   private final Project myProject;
   private final GlobalSearchScope myScope;
-  private final ArrayList<Filter> myFilters = new ArrayList<Filter>();
+  private final List<Filter> myFilters = new SmartList<>();
   private boolean myViewer;
   private boolean myUsePredefinedMessageFilter = true;
 
-  public TextConsoleBuilderImpl(final Project project) {
+  public TextConsoleBuilderImpl(@NotNull Project project) {
     this(project, GlobalSearchScope.allScope(project));
   }
 
-  public TextConsoleBuilderImpl(@NotNull final Project project, @NotNull GlobalSearchScope scope) {
+  public TextConsoleBuilderImpl(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     myProject = project;
     myScope = scope;
   }
@@ -53,17 +52,18 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     return consoleView;
   }
 
+  @NotNull
   protected ConsoleView createConsole() {
     return new ConsoleViewImpl(myProject, myScope, myViewer, myUsePredefinedMessageFilter);
   }
 
   @Override
-  public void addFilter(final Filter filter) {
+  public void addFilter(@NotNull Filter filter) {
     myFilters.add(filter);
   }
 
   @Override
-  public TextConsoleBuilder filters(List<Filter> filters) {
+  public TextConsoleBuilder filters(@NotNull List<Filter> filters) {
     myFilters.addAll(filters);
     return this;
   }
@@ -73,6 +73,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     myViewer = isViewer;
   }
 
+  @NotNull
   protected Project getProject() {
     return myProject;
   }
@@ -81,7 +82,8 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     return myScope;
   }
 
-  protected ArrayList<Filter> getFilters() {
+  @NotNull
+  protected List<Filter> getFilters() {
     return myFilters;
   }
 

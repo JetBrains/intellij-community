@@ -49,7 +49,7 @@ public class GraphChangesUtil {
     if (edge.getDownNodeIndex() != null) {
       down = graph.getNodeId(edge.getDownNodeIndex());
     }
-    return new EdgeImpl<Integer>(up, down, edge.getTargetId(), removed);
+    return new EdgeImpl<>(up, down, edge.getTargetId(), removed);
   }
 
   public static GraphChanges<Integer> edgesReplaced(Collection<GraphEdge> removedEdges,
@@ -65,6 +65,6 @@ public class GraphChangesUtil {
       edgeChanges.add(edgeChanged(edge, delegateGraph, false));
     }
 
-    return new GraphChanges.GraphChangesImpl<Integer>(Collections.<GraphChanges.Node<Integer>>emptySet(), edgeChanges);
+    return new GraphChanges.GraphChangesImpl<>(Collections.<GraphChanges.Node<Integer>>emptySet(), edgeChanges);
   }
 }

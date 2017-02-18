@@ -37,11 +37,11 @@ public class ClassImplementationsSearch implements QueryExecutor<PsiElement, Def
 
   public static boolean processImplementations(final PsiClass psiClass, final Processor<PsiElement> processor, SearchScope scope) {
     final boolean showInterfaces = Registry.is("ide.goto.implementation.show.interfaces");
-    if (!ClassInheritorsSearch.search(psiClass, scope, true).forEach(new PsiElementProcessorAdapter<PsiClass>(element -> {
-        if (!showInterfaces && element.isInterface()) {
-          return true;
-        }
-        return processor.process(element);
+    if (!ClassInheritorsSearch.search(psiClass, scope, true).forEach(new PsiElementProcessorAdapter<>(element -> {
+      if (!showInterfaces && element.isInterface()) {
+        return true;
+      }
+      return processor.process(element);
     }))) {
       return false;
     }

@@ -16,14 +16,12 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -97,6 +95,10 @@ public class PushDownTest extends LightRefactoringTestCase {
 
   public void testPreserveOverrideAnnotationAfterConflict() throws Exception {
     doTestImplements(true, true);
+  }
+
+  public void testInterfaceVisibilityInClass() throws Exception {
+    doTest();
   }
 
   private void doTest() {
@@ -182,10 +184,5 @@ public class PushDownTest extends LightRefactoringTestCase {
     }.run();
 
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
-  }
-
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
   }
 }

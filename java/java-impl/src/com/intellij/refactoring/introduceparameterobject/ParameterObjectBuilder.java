@@ -32,8 +32,8 @@ import java.util.List;
 class ParameterObjectBuilder {
     private String className;
     private String packageName;
-    private final List<ParameterSpec> fields = new ArrayList<ParameterSpec>(5);
-    private final List<PsiTypeParameter> typeParams = new ArrayList<PsiTypeParameter>();
+    private final List<ParameterSpec> fields = new ArrayList<>(5);
+    private final List<PsiTypeParameter> typeParams = new ArrayList<>();
     private Project myProject;
   private JavaCodeStyleManager myJavaCodeStyleManager ;
   private String myVisibility;

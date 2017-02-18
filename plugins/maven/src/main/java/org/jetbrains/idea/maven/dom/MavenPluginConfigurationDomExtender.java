@@ -88,7 +88,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
 
     MavenDomPluginExecution executionElement = config.getParentOfType(MavenDomPluginExecution.class, false);
     if (executionElement != null) {
-      selectedGoals = new ArrayList<String>();
+      selectedGoals = new ArrayList<>();
 
       String id = executionElement.getId().getStringValue();
       String defaultPrefix = "default-";
@@ -102,7 +102,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
       }
     }
 
-    Map<String, ParameterData> namesWithParameters = new THashMap<String, ParameterData>();
+    Map<String, ParameterData> namesWithParameters = new THashMap<>();
 
     for (MavenDomMojo eachMojo : pluginModel.getMojos().getMojos()) {
       String goal = eachMojo.getGoal().getStringValue();
@@ -220,7 +220,7 @@ public class MavenPluginConfigurationDomExtender extends DomExtender<MavenDomCon
     String singularName = StringUtil.unpluralize(parameterName);
     if (singularName == null) singularName = parameterName;
 
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     String[] parts = NameUtil.splitNameIntoWords(singularName);
     for (int i = 0; i < parts.length; i++) {
       result.add(StringUtil.decapitalize(StringUtil.join(parts, i, parts.length, "")));

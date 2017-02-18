@@ -25,7 +25,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
+public class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
 
   private static final int UNDEFINED_OFFSET = -1;
 

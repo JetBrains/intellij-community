@@ -19,7 +19,7 @@ public class PreviewProviderId<V, C> {
   private final String myVisualName;
 
   public static <V, C> PreviewProviderId<V, C> create(String visualName) {
-    return new PreviewProviderId<V, C>(visualName);
+    return new PreviewProviderId<>(visualName);
   }
 
   private PreviewProviderId(String visualName) {

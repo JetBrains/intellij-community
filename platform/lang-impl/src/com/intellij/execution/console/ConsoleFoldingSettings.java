@@ -32,8 +32,8 @@ import java.util.*;
  */
 @State(name="ConsoleFoldingSettings", storages=@Storage("consoleFolding.xml"))
 public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
-  private final List<String> myPositivePatterns = new ArrayList<String>();
-  private final List<String> myNegativePatterns = new ArrayList<String>();
+  private final List<String> myPositivePatterns = new ArrayList<>();
+  private final List<String> myNegativePatterns = new ArrayList<>();
 
   public ConsoleFoldingSettings() {
     for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
@@ -108,8 +108,8 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
     myPositivePatterns.clear();
     myNegativePatterns.clear();
 
-    Set<String> removedPositive = new HashSet<String>(state.removedPositive);
-    Set<String> removedNegative = new HashSet<String>(state.removedNegative);
+    Set<String> removedPositive = new HashSet<>(state.removedPositive);
+    Set<String> removedNegative = new HashSet<>(state.removedNegative);
 
     for (CustomizableConsoleFoldingBean regexp : CustomizableConsoleFoldingBean.EP_NAME.getExtensions()) {
       if (!(regexp.negate ? removedNegative : removedPositive).contains(regexp.substring)) {
@@ -123,10 +123,10 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
   }
 
   public static class MyBean {
-    public List<String> addedPositive = new ArrayList<String>();
-    public List<String> addedNegative = new ArrayList<String>();
-    public List<String> removedPositive = new ArrayList<String>();
-    public List<String> removedNegative = new ArrayList<String>();
+    public List<String> addedPositive = new ArrayList<>();
+    public List<String> addedNegative = new ArrayList<>();
+    public List<String> removedPositive = new ArrayList<>();
+    public List<String> removedNegative = new ArrayList<>();
   }
 
 }

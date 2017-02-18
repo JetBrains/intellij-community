@@ -167,8 +167,8 @@ public class FileStructureDialog extends DialogWrapper {
     myCommanderPanel = new MyCommanderPanel(myProject);
     myTreeStructure = new MyStructureTreeStructure();
 
-    List<FileStructureFilter> fileStructureFilters = new ArrayList<FileStructureFilter>();
-    List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<FileStructureNodeProvider>();
+    List<FileStructureFilter> fileStructureFilters = new ArrayList<>();
+    List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<>();
     if (myTreeActionsOwner != null) {
       for(Filter filter: myBaseTreeModel.getFilters()) {
         if (filter instanceof FileStructureFilter) {
@@ -211,7 +211,7 @@ public class FileStructureDialog extends DialogWrapper {
 
       @Override
       protected List<AbstractTreeNode> getAllAcceptableNodes(final Object[] childElements, VirtualFile file) {
-        ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+        ArrayList<AbstractTreeNode> result = new ArrayList<>();
         for (Object childElement : childElements) {
           result.add((AbstractTreeNode)childElement);
         }
@@ -394,10 +394,10 @@ public class FileStructureDialog extends DialogWrapper {
 
     @Override
     public boolean navigateSelectedElement() {
-      final Ref<Boolean> succeeded = new Ref<Boolean>();
+      final Ref<Boolean> succeeded = new Ref<>();
       final CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.executeCommand(myProject, () -> {
-        succeeded.set(MyCommanderPanel.super.navigateSelectedElement());
+        succeeded.set(super.navigateSelectedElement());
         IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
       }, "Navigate", null);
       if (succeeded.get()) {
@@ -455,7 +455,7 @@ public class FileStructureDialog extends DialogWrapper {
         return childElements;
       }
 
-      ArrayList<Object> filteredElements = new ArrayList<Object>(childElements.length);
+      ArrayList<Object> filteredElements = new ArrayList<>(childElements.length);
       SpeedSearchComparator speedSearchComparator = createSpeedSearchComparator();
 
       for (Object child : childElements) {

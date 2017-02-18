@@ -17,7 +17,11 @@ package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NonNls;
@@ -30,7 +34,7 @@ import javax.swing.tree.TreePath;
  * @author nik
  */
 public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
-  private final XDebuggerTreeNode myNode;
+  protected final XDebuggerTreeNode myNode;
   protected final XDebuggerExpressionComboBox myExpressionEditor;
   protected final XDebuggerTree myTree;
 
@@ -38,6 +42,11 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
     myNode = node;
     myTree = myNode.getTree();
     myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition(), false);
+  }
+
+  @Override
+  protected JComponent createInplaceEditorComponent() {
+    return myExpressionEditor.getComponent();
   }
 
   @Override
@@ -61,12 +70,55 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   }
 
   @Override
-  protected JComponent getPreferredFocusedComponent() {
-    return myExpressionEditor.getPreferredFocusedComponent();
+  public void doOKAction() {
+    myExpressionEditor.saveTextInHistory();
+    super.doOKAction();
   }
 
-  public XDebuggerTreeNode getNode() {
-    return myNode;
+  @Override
+  protected void onShown() {
+    XDebugSession session = XDebugView.getSession(myTree);
+    if (session != null) {
+      session.addSessionListener(new XDebugSessionListener() {
+        @Override
+        public void sessionPaused() {
+          cancel();
+        }
+
+        @Override
+        public void sessionResumed() {
+          cancel();
+        }
+
+        @Override
+        public void sessionStopped() {
+          cancel();
+        }
+
+        @Override
+        public void stackFrameChanged() {
+          cancel();
+        }
+
+        @Override
+        public void beforeSessionResume() {
+          cancel();
+        }
+
+        private void cancel() {
+          AppUIUtil.invokeOnEdt(XDebuggerTreeInplaceEditor.this::cancelEditing);
+        }
+      }, myDisposable);
+    }
+  }
+
+  protected XExpression getExpression() {
+    return myExpressionEditor.getExpression();
+  }
+
+  @Override
+  protected JComponent getPreferredFocusedComponent() {
+    return myExpressionEditor.getPreferredFocusedComponent();
   }
 
   @Override
@@ -85,8 +137,8 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   }
 
   @Override
-  protected JTree getTree() {
-    return myNode.getTree();
+  protected XDebuggerTree getTree() {
+    return myTree;
   }
 
   @Override

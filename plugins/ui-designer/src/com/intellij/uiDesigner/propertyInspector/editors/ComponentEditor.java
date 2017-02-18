@@ -60,7 +60,7 @@ public class ComponentEditor extends ComboBoxPropertyEditor<String> {
   }
 
   protected RadComponent[] collectFilteredComponents(final RadComponent component) {
-    final ArrayList<RadComponent> result = new ArrayList<RadComponent>();
+    final ArrayList<RadComponent> result = new ArrayList<>();
     result.add(null);
 
     RadContainer container = component.getParent();

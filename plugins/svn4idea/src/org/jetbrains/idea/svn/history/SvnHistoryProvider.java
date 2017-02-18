@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -235,9 +235,6 @@ public class SvnHistoryProvider
     try {
       logLoader.preliminary();
     }
-    catch (SVNCancelException e) {
-      throw new VcsException(e);
-    }
     catch (SVNException e) {
       throw new VcsException(e);
     }
@@ -250,7 +247,7 @@ public class SvnHistoryProvider
       new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
                             ! path.isNonLocal());
 
-    final Ref<Boolean> sessionReported = new Ref<Boolean>();
+    final Ref<Boolean> sessionReported = new Ref<>();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(SvnBundle.message("progress.text2.collecting.history", path.getName()));

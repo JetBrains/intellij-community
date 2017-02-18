@@ -46,7 +46,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   @NonNls protected static final String SINGLE_TASK_CREATED = "singleTask-created";
   @NonNls protected static final String ID = "id";
 
-  protected LinkedHashMap<String, Selector> mySelectors = new LinkedHashMap<String, Selector>();
+  protected LinkedHashMap<String, Selector> mySelectors = new LinkedHashMap<>();
 
   /**
    * Serialization constructor
@@ -88,7 +88,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   @AbstractCollection(surroundWithTag = false)
   @NotNull
   public List<Selector> getSelectors() {
-    return new ArrayList<Selector>(mySelectors.values());
+    return new ArrayList<>(mySelectors.values());
   }
 
   public void setSelectors(@NotNull List<Selector> selectors) {
@@ -123,7 +123,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
   @Override
   public SelectorBasedResponseHandler clone() {
     SelectorBasedResponseHandler clone = (SelectorBasedResponseHandler)super.clone();
-    clone.mySelectors = new LinkedHashMap<String, Selector>(mySelectors.size());
+    clone.mySelectors = new LinkedHashMap<>(mySelectors.size());
     for (Selector selector : mySelectors.values()) {
       clone.mySelectors.put(selector.getName(), selector.clone());
     }
@@ -166,7 +166,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     }
     List<Object> tasks = selectTasksList(response, max);
     LOG.debug(String.format("Total %d tasks extracted from response", tasks.size()));
-    List<Task> result = new ArrayList<Task>(tasks.size());
+    List<Task> result = new ArrayList<>(tasks.size());
     for (Object context : tasks) {
       String id = selectString(getSelector(ID), context);
       GenericTask task;

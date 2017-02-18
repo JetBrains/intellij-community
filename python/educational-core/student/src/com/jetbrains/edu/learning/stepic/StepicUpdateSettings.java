@@ -5,14 +5,15 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "StepicUpdateSettings", storages = @Storage("other.xml"))
 public class StepicUpdateSettings implements PersistentStateComponent<StepicUpdateSettings> {
+  private StepicUser myUser;
   public long LAST_TIME_CHECKED = 0;
 
   public StepicUpdateSettings() {
-
   }
 
   public long getLastTimeChecked() {
@@ -37,4 +38,16 @@ public class StepicUpdateSettings implements PersistentStateComponent<StepicUpda
   public static StepicUpdateSettings getInstance() {
     return ServiceManager.getService(StepicUpdateSettings.class);
   }
+  @NotNull
+  public StepicUser getUser() {
+    if (myUser == null) {
+      myUser = new StepicUser();
+    }
+    return myUser;
+  }
+
+  public void setUser(@NotNull final StepicUser user) {
+    myUser = user;
+  }
+
 }

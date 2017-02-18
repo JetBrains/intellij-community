@@ -39,9 +39,9 @@ import java.util.Set;
  * @author nik
  */
 public class AppEngineWebSchemaProvider extends XmlSchemaProvider {
-  private static final Set<String> FILE_NAMES = new HashSet<String>(Arrays.asList(AppEngineUtil.APP_ENGINE_WEB_XML_NAME,
-                                                                             AppEngineUtil.APP_ENGINE_APPLICATION_XML_NAME,
-                                                                             AppEngineUtil.JDO_CONFIG_XML_NAME));
+  private static final Set<String> FILE_NAMES = new HashSet<>(Arrays.asList(AppEngineUtil.APP_ENGINE_WEB_XML_NAME,
+                                                                            AppEngineUtil.APP_ENGINE_APPLICATION_XML_NAME,
+                                                                            AppEngineUtil.JDO_CONFIG_XML_NAME));
 
   @Override
   public boolean isAvailable(@NotNull XmlFile file) {

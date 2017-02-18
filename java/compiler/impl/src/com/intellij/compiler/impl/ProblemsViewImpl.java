@@ -52,7 +52,7 @@ public class ProblemsViewImpl extends ProblemsView{
   private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS = EnumSet.allOf(ErrorTreeElementKind.class);
 
   private final ProblemsViewPanel myPanel;
-  private final ExecutorService myViewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor();
+  private final ExecutorService myViewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ProblemsView pool");
   private final Icon myActiveIcon = AllIcons.Toolwindows.Problems;
   private final Icon myPassiveIcon = IconLoader.getDisabledIcon(myActiveIcon);
 

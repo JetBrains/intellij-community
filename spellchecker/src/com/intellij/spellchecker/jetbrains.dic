@@ -56,6 +56,7 @@ builtin
 bzip
 calc
 callee
+callouts
 camelcase
 cancelable
 cancellable
@@ -64,6 +65,7 @@ captcha
 ccflags
 cdata
 cglib
+chai
 changelog
 changelist
 charset
@@ -98,12 +100,15 @@ cond
 conf
 config
 configs
+configurability
 configurator
 configurators
 const
 constexpr
 contravariant
+contrib
 controlfile
+couchbase
 coursecreator
 covariant
 cron
@@ -142,6 +147,7 @@ devkit
 dirs
 distinctrow
 django
+dockerfile
 dojo
 draggable
 dtrace
@@ -199,6 +205,7 @@ geocode
 geometrycollection
 getters
 giud
+gists
 globals
 google
 gruntfile
@@ -250,6 +257,7 @@ inout
 instantiable
 insteadof
 intellij
+interpolator
 intrinsics
 iphone
 iphoneos
@@ -270,6 +278,7 @@ jetbrains
 jibx
 jndi
 jnilib
+jooq
 jpeg
 jpdl
 jquery
@@ -285,6 +294,7 @@ keyframe
 keyframes
 keymap
 keymaps
+keystore
 kotlin
 labeler
 labelers
@@ -296,6 +306,7 @@ lifecycle
 likec
 linestring
 linkplain
+listable
 lldb
 llvm
 logback
@@ -311,11 +322,13 @@ longblob
 longtext
 lookahead
 lookup
+lossy
 lucene
 lvalue
 lvalues
 macrodef
 makefile
+makefiles
 maxdatafiles
 maxextents
 maximizable
@@ -330,6 +343,7 @@ mediumblob
 mediumint
 mediumtext
 metadata
+metas
 middleint
 middleware
 millis
@@ -341,6 +355,7 @@ miny
 mixin
 mlslabel
 mockito
+mojo
 monad
 monoidal
 mongodb
@@ -351,6 +366,7 @@ multipart
 multipoint
 multipolygon
 multiset
+mutator
 mutex
 mutexes
 mxml
@@ -358,9 +374,11 @@ mybatis
 mysql
 namespace
 namespaces
+narayana
 nchar
 nclob
 ndbcluster
+netflix
 nmtoken
 noarchivelog
 noaudit
@@ -437,6 +455,8 @@ pointcut
 pointcuts
 portlet
 polyadic
+polyfill
+polyfills
 popup
 popups
 posix
@@ -446,6 +466,10 @@ postprocessing
 postprocessor
 pragma
 prebuilt
+precompile
+precompiled
+precompiler
+precompilers
 prefetch
 premain
 prepend
@@ -489,8 +513,11 @@ reifying
 reindex
 reindexing
 renderer
+repackager
 replacer
 repo
+repos
+requeue
 resetlogs
 resizable
 resize
@@ -510,8 +537,11 @@ rvalues
 savepoint
 scala
 schemas
+screenshots
 scriptlet
 scriptlets
+scrollbar
+scrollbars
 securefile
 serializable
 serializer
@@ -589,12 +619,17 @@ subexpression
 subexpressions
 sublicense
 sublist
+submenu
+submenus
+submodule
+submodules
 subpackage
 subpackages
 subpartition
 subpartitions
 subst
 substring
+substrings
 subtag
 subtree
 subtrees
@@ -628,6 +663,7 @@ toggleable
 tokenize
 tokenizer
 toolchain
+toolchains
 tooltip
 tooltips
 toplink
@@ -676,6 +712,7 @@ varargs
 varbinary
 varchar
 varcharacter
+variadic
 varray
 verdana
 versa
@@ -690,12 +727,14 @@ webjar
 webjars
 webpack
 webservice
+webservices
 whitespace
 whitespaces
 wifi
 wiki
 wildcard
 wildcards
+wildfly
 wordwrap
 workflow
 writeln

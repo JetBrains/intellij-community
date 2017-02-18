@@ -27,6 +27,7 @@ public class SeverityUtil {
   public static Collection<SeverityRegistrar.SeverityBasedTextAttributes> getRegisteredHighlightingInfoTypes(@NotNull SeverityRegistrar registrar) {
     Collection<SeverityRegistrar.SeverityBasedTextAttributes> collection = registrar.allRegisteredAttributes();
     for (HighlightInfoType type : registrar.standardSeverities()) {
+      if (HighlightInfoType.INFORMATION.equals(type)) continue;
       collection.add(getSeverityBasedTextAttributes(registrar, type));
     }
     return collection;

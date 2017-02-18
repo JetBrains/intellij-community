@@ -18,7 +18,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -73,10 +72,6 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) {
-      return;
-    }
-
     PsiLocalVariable variable = findVariable(element);
     if (variable != null) {
       processVariable(project, editor, variable);

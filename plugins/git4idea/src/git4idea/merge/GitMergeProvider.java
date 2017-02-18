@@ -15,8 +15,12 @@
  */
 package git4idea.merge;
 
+import com.intellij.dvcs.DvcsUtil;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -24,6 +28,7 @@ import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider2;
 import com.intellij.openapi.vcs.merge.MergeSession;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,7 +40,10 @@ import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitFileUtils;
@@ -43,11 +51,9 @@ import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static git4idea.GitUtil.CHERRY_PICK_HEAD;
 import static git4idea.GitUtil.MERGE_HEAD;
@@ -132,7 +138,18 @@ public class GitMergeProvider implements MergeProvider2 {
           }
           mergeData.CURRENT = loadRevisionCatchingErrors(current);
           mergeData.LAST = loadRevisionCatchingErrors(last);
+
+          // TODO: can be done once for a root
+          mergeData.CURRENT_REVISION_NUMBER = findCurrentRevisionNumber(root);
           mergeData.LAST_REVISION_NUMBER = findLastRevisionNumber(root);
+          mergeData.ORIGINAL_REVISION_NUMBER = findOriginalRevisionNumber(root, mergeData.CURRENT_REVISION_NUMBER, mergeData.LAST_REVISION_NUMBER);
+
+
+          Trinity<String, String, String> blobs = getAffectedBlobs(root, file);
+
+          mergeData.CURRENT_FILE_PATH = getBlobPathInRevision(root, file, blobs.getFirst(), mergeData.CURRENT_REVISION_NUMBER);
+          mergeData.ORIGINAL_FILE_PATH = getBlobPathInRevision(root, file, blobs.getSecond(), mergeData.ORIGINAL_REVISION_NUMBER);
+          mergeData.LAST_FILE_PATH = getBlobPathInRevision(root, file, blobs.getThird(), mergeData.LAST_REVISION_NUMBER);
         }
         catch (IOException e) {
           throw new IllegalStateException("Failed to load file content", e);
@@ -143,27 +160,179 @@ public class GitMergeProvider implements MergeProvider2 {
     return mergeData;
   }
 
+  @NotNull
+  private Trinity<String, String, String> getAffectedBlobs(@NotNull VirtualFile root, @NotNull VirtualFile file) {
+    try {
+      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
+      h.addParameters("--exclude-standard", "--unmerged", "-z");
+      h.endOptions();
+      h.addRelativeFiles(Collections.singleton(file));
+
+      String output = h.run();
+      StringScanner s = new StringScanner(output);
+
+      String lastBlob = null;
+      String currentBlob = null;
+      String originalBlob = null;
+
+      while (s.hasMoreData()) {
+        s.spaceToken(); // permissions
+        String blob = s.spaceToken();
+        int source = Integer.parseInt(s.tabToken()); // stage
+        s.boundedToken('\u0000'); // file name
+
+        if (source == theirsRevision(root)) {
+          lastBlob = blob;
+        }
+        else if (source == yoursRevision(root)) {
+          currentBlob = blob;
+        }
+        else if (source == ORIGINAL_REVISION_NUM) {
+          originalBlob = blob;
+        }
+        else {
+          throw new IllegalStateException("Unknown revision " + source + " for the file: " + file);
+        }
+      }
+      return Trinity.create(currentBlob, originalBlob, lastBlob);
+    }
+    catch (VcsException e) {
+      LOG.warn(e);
+      return Trinity.create(null, null, null);
+    }
+  }
+
   @Nullable
-  private VcsRevisionNumber findLastRevisionNumber(@NotNull VirtualFile root) {
-    if (myReverseRoots.contains(root)) {
-      return resolveHead(root);
+  private FilePath getBlobPathInRevision(@NotNull VirtualFile root,
+                                         @NotNull VirtualFile file,
+                                         @Nullable String blob,
+                                         @Nullable VcsRevisionNumber revision) {
+    if (blob == null || revision == null) return null;
+
+    // fast check if file was not renamed
+    FilePath path = doGetBlobPathInRevision(root, blob, revision, file);
+    if (path != null) return path;
+
+    return doGetBlobPathInRevision(root, blob, revision, null);
+  }
+
+  @Nullable
+  private FilePath doGetBlobPathInRevision(@NotNull final VirtualFile root,
+                                           @NotNull final String blob,
+                                           @NotNull VcsRevisionNumber revision,
+                                           @Nullable VirtualFile file) {
+    final FilePath[] result = new FilePath[1];
+    final boolean[] pathAmbiguous = new boolean[1];
+
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LS_TREE);
+    h.addParameters(revision.asString());
+
+    if (file != null) {
+      h.endOptions();
+      h.addRelativeFiles(Collections.singleton(file));
     }
     else {
-      try {
-        return GitRevisionNumber.resolve(myProject, root, MERGE_HEAD);
-      }
-      catch (VcsException e) {
-        LOG.info("Couldn't resolve the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
-        try {
-          return GitRevisionNumber.resolve(myProject, root, CHERRY_PICK_HEAD);
-        }
-        catch (VcsException e1) {
-          LOG.info("Couldn't resolve neither MERGE_HEAD, nor the CHERRY_PICK_HEAD in " + root, e1);
-          // for now, we don't know: maybe it is a conflicted file from rebase => then resolve the head.
-          return resolveHead(root);
-        }
-      }
+      h.addParameters("-r");
+      h.endOptions();
     }
+
+    h.addLineListener(new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (outputType != ProcessOutputTypes.STDOUT) return;
+        if (!line.contains(blob)) return;
+        if (pathAmbiguous[0]) return;
+
+        try {
+          StringScanner s = new StringScanner(line);
+          s.spaceToken(); // permissions
+          String type = s.spaceToken(); // type
+          String recordBlob = s.tabToken(); // blob
+          FilePath file = VcsUtil.getFilePath(root, GitUtil.unescapePath(s.line()));
+
+          if (!"blob".equals(type)) return;
+          if (!blob.equals(recordBlob)) return;
+
+          if (result[0] == null) {
+            result[0] = file;
+          }
+          else {
+            // there are multiple files with given content in this revision.
+            // we don't know which is right, so do not return any
+            pathAmbiguous[0] = true;
+          }
+        }
+        catch (VcsException e) {
+          LOG.warn(e);
+        }
+      }
+    });
+    h.runInCurrentThread(null);
+
+    if (pathAmbiguous[0]) return null;
+    return result[0];
+  }
+
+  @Nullable
+  private GitRevisionNumber findLastRevisionNumber(@NotNull VirtualFile root) {
+    return myReverseRoots.contains(root) ? resolveHead(root) : resolveMergeHead(root);
+  }
+
+  @Nullable
+  private GitRevisionNumber findCurrentRevisionNumber(@NotNull VirtualFile root) {
+    return myReverseRoots.contains(root) ? resolveMergeHead(root) : resolveHead(root);
+  }
+
+  @Nullable
+  private GitRevisionNumber findOriginalRevisionNumber(@NotNull VirtualFile root,
+                                                       @Nullable VcsRevisionNumber currentRevision,
+                                                       @Nullable VcsRevisionNumber lastRevision) {
+    if (currentRevision == null || lastRevision == null) return null;
+    try {
+      return GitHistoryUtils.getMergeBase(myProject, root, currentRevision.asString(), lastRevision.asString());
+    }
+    catch (VcsException e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  @Nullable
+  private GitRevisionNumber resolveMergeHead(@NotNull VirtualFile root) {
+    try {
+      return GitRevisionNumber.resolve(myProject, root, MERGE_HEAD);
+    }
+    catch (VcsException e) {
+      LOG.info("Couldn't resolve the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
+    }
+
+    try {
+      return GitRevisionNumber.resolve(myProject, root, CHERRY_PICK_HEAD);
+    }
+    catch (VcsException e) {
+      LOG.info("Couldn't resolve the CHERRY_PICK_HEAD in " + root, e);
+    }
+
+    GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+    assert repository != null;
+
+    File rebaseApply = repository.getRepositoryFiles().getRebaseApplyDir();
+    GitRevisionNumber rebaseRevision = readRevisionFromFile(new File(rebaseApply, "original-commit"));
+    if (rebaseRevision != null) return rebaseRevision;
+
+    File rebaseMerge = repository.getRepositoryFiles().getRebaseMergeDir();
+    GitRevisionNumber mergeRevision = readRevisionFromFile(new File(rebaseMerge, "stopped-sha"));
+    if (mergeRevision != null) return mergeRevision;
+
+    return null;
+  }
+
+  @Nullable
+  private static GitRevisionNumber readRevisionFromFile(@NotNull File file) {
+    if (!file.exists()) return null;
+    String revision = DvcsUtil.tryLoadFileOrReturn(file, null, CharsetToolkit.UTF8);
+    if (revision == null) return null;
+    return new GitRevisionNumber(revision);
   }
 
   @Nullable
@@ -251,13 +420,13 @@ public class GitMergeProvider implements MergeProvider2 {
    * The merge session, it queries conflict information.
    */
   private class MyMergeSession implements MergeSession {
-    Map<VirtualFile, Conflict> myConflicts = new HashMap<VirtualFile, Conflict>();
+    Map<VirtualFile, Conflict> myConflicts = new HashMap<>();
 
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
       try {
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : GitUtil.sortFilesByGitRoot(filesToMerge).entrySet()) {
-          Map<String, Conflict> cs = new HashMap<String, Conflict>();
+          Map<String, Conflict> cs = new HashMap<>();
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
           GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);

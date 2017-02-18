@@ -55,7 +55,8 @@ public class StepIntersection<Data, Area> {
     myAreaIndex = 0;
     myDataConvertor = dataConvertor;
     myAreasConvertor = areasConvertor;
-    myHackSearch = new HackSearch<Data, Area, TextRange>(myDataConvertor, myAreasConvertor, (o1, o2) -> o1.intersects(o2) ? 0 : o1.getStartOffset() < o2.getStartOffset() ? -1 : 1);
+    myHackSearch = new HackSearch<>(myDataConvertor, myAreasConvertor,
+                                    (o1, o2) -> o1.intersects(o2) ? 0 : o1.getStartOffset() < o2.getStartOffset() ? -1 : 1);
   }
 
   public void resetIndex() {
@@ -63,7 +64,7 @@ public class StepIntersection<Data, Area> {
   }
 
   public List<Data> process(final Iterable<Data> data) {
-    final List<Data> result = new ArrayList<Data>();
+    final List<Data> result = new ArrayList<>();
     process(data, (data1, area) -> result.add(data1));
     return result;
   }

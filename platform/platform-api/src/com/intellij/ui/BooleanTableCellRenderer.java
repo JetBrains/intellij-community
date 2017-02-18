@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -44,18 +45,15 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSel, boolean hasFocus, int row, int column) {
-    final Color bg = UIUtil.isUnderNimbusLookAndFeel() && row % 2 == 1 ? UIUtil.TRANSPARENT_COLOR : table.getBackground();
-    final Color fg = table.getForeground();
-    final Color selBg = table.getSelectionBackground();
-    final Color selFg = table.getSelectionForeground();
+    Couple<Color> colors = UIUtil.getCellColors(table, isSel, row, column);
 
     if (value == null) {
-      myPanel.setBackground(isSel ? selBg : bg);
+      myPanel.setBackground(colors.getSecond());
       return myPanel;
     }
 
-    setForeground(isSel ? selFg : fg);
-    setBackground(isSel ? selBg : bg);
+    setForeground(colors.getFirst());
+    setBackground(colors.getSecond());
 
     if (value instanceof String) {
       setSelected(Boolean.parseBoolean((String)value));

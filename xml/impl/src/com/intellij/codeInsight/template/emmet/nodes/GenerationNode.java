@@ -406,7 +406,7 @@ public class GenerationNode extends UserDataHolderBase {
   }
 
   private static void removeVariablesWhichHasNoSegment(TemplateImpl template) {
-    Set<String> segments = new HashSet<String>();
+    Set<String> segments = new HashSet<>();
     for (int i = 0; i < template.getSegmentsCount(); i++) {
       segments.add(template.getSegmentName(i));
     }
@@ -440,7 +440,7 @@ public class GenerationNode extends UserDataHolderBase {
     attributesString = attributesString.length() > 0 ? ' ' + attributesString : null;
     Map<String, String> predefinedValues = null;
     if (attributesString != null) {
-      predefinedValues = new HashMap<String, String>();
+      predefinedValues = new HashMap<>();
       predefinedValues.put(TemplateToken.ATTRS, attributesString);
     }
     return predefinedValues;

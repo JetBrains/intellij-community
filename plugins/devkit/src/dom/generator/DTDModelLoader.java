@@ -74,11 +74,11 @@ public class DTDModelLoader implements ModelLoader {
   private void processDTD(String namespace, DTD dtd, Map<String, TypeDesc> jtMap, Map<String, NamespaceDesc> nsdMap) {
     final NamespaceDesc nsd = ensureNamespaceExists(namespace);
     if (nsd.skip) return;
-    final ArrayList<String> resultQNames = new ArrayList<String>();
+    final ArrayList<String> resultQNames = new ArrayList<>();
     final DTDElement[] elements = new DTDElement[dtd.elements.size()];
     int ptr = 1;
 
-    final HashSet<DTDElement> visitedElements = new HashSet<DTDElement>();
+    final HashSet<DTDElement> visitedElements = new HashSet<>();
     elements[0] = dtd.rootElement;
 
     while (--ptr > -1) {
@@ -111,8 +111,8 @@ public class DTDModelLoader implements ModelLoader {
         fd1.realIndex = td.fdMap.size();
         duplicates = Util.addToNameMap(td.fdMap, fd1, false) || duplicates;
       }
-      final ArrayList<List<DTDItem>> choiceList = new ArrayList<List<DTDItem>>();
-      final LinkedList<Entry> plist = new LinkedList<Entry>();
+      final ArrayList<List<DTDItem>> choiceList = new ArrayList<>();
+      final LinkedList<Entry> plist = new LinkedList<>();
       if (el.content instanceof DTDContainer) {
       //if ((el.content instanceof DTDChoice) || (el.content instanceof DTDSequence)) {
         plist.add(new Entry(el.content, false, true));
@@ -222,8 +222,8 @@ public class DTDModelLoader implements ModelLoader {
         fd.idx = i++;
       }
       for (List<DTDItem> l : choiceList) {
-        ArrayList<DTDItem> clist = new ArrayList<DTDItem>();
-        LinkedList<DTDItem> elist = new LinkedList<DTDItem>();
+        ArrayList<DTDItem> clist = new ArrayList<>();
+        LinkedList<DTDItem> elist = new LinkedList<>();
         for (i = 0; i < l.size(); i++) {
           elist.add(l.get(i));
         }

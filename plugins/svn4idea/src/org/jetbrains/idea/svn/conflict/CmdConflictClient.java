@@ -26,7 +26,7 @@ public class CmdConflictClient extends BaseSvnClient implements ConflictClient {
                       boolean resolveProperty,
                       boolean resolveContent,
                       boolean resolveTree) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, path);
     CommandUtil.put(parameters, depth);

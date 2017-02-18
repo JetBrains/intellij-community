@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.remote.GitRememberedInputs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +42,10 @@ public class GitCloneDialog extends CloneDvcsDialog {
     myGit = ServiceManager.getService(Git.class);
   }
 
-  protected boolean test(@NotNull String url) {
-    return myGit.lsRemote(myProject, new File("."), url).success();
+  @NotNull
+  protected TestResult test(@NotNull String url) {
+    GitCommandResult result = myGit.lsRemote(myProject, new File("."), url);
+    return result.success() ? TestResult.SUCCESS : new TestResult(result.getErrorOutputAsJoinedString());
   }
 
   @NotNull

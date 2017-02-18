@@ -93,7 +93,7 @@ public class JBZipEntry implements Cloneable {
   /**
    * Sets the internal file attributes.
    *
-   * @param value an <code>int</code> value
+   * @param value an {@code int} value
    * @since 1.1
    */
   public void setInternalAttributes(int value) {
@@ -113,7 +113,7 @@ public class JBZipEntry implements Cloneable {
   /**
    * Sets the external file attributes.
    *
-   * @param value an <code>long</code> value
+   * @param value an {@code long} value
    * @since 1.1
    */
   public void setExternalAttributes(long value) {
@@ -132,7 +132,7 @@ public class JBZipEntry implements Cloneable {
    * Sets Unix permissions in a way that is understood by Info-Zip's
    * unzip command.
    *
-   * @param mode an <code>int</code> value
+   * @param mode an {@code int} value
    * @since Ant 1.5.2
    */
   public void setUnixMode(int mode) {
@@ -169,7 +169,7 @@ public class JBZipEntry implements Cloneable {
   /**
    * Set the platform (UNIX or FAT).
    *
-   * @param platform an <code>int</code> value - 0 is FAT, 3 is UNIX
+   * @param platform an {@code int} value - 0 is FAT, 3 is UNIX
    * @since 1.9
    */
   protected void setPlatform(int platform) {

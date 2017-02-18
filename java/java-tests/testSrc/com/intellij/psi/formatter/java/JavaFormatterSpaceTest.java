@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -591,7 +591,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "};"
     );
   }
-  
+
   public void testCommentBetweenAnnotationAndModifierList() {
     getSettings().KEEP_LINE_BREAKS = false;
     getSettings().KEEP_FIRST_COLUMN_COMMENT = false;
@@ -607,7 +607,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                 "    int a = 2;\n" +
                 "}");
   }
-  
+
   public void testSpace_BeforeSemicolon_InsideFor() {
     getSettings().SPACE_BEFORE_SEMICOLON = true;
     doMethodTest(
@@ -619,7 +619,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}\n"
     );
   }
-  
+
   public void testSpace_BeforeSemicolon_InsideFor_IfSpacesWithinForIsOn() {
     getSettings().SPACE_WITHIN_FOR_PARENTHESES = true;
     doMethodTest(
@@ -631,7 +631,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "}\n"
     );
   }
-  
+
   public void testSpaceBeforeTypeArgumentList() {
     getSettings().SPACE_BEFORE_TYPE_PARAMETER_LIST = true;
     doMethodTest(
@@ -643,7 +643,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "Bar. <Int, String>call();"
     );
   }
-  
+
   public void testKeepLineBreaksWorks_InsidePolyExpression() {
     getSettings().KEEP_LINE_BREAKS = false;
     doMethodTest(
@@ -652,5 +652,4 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "int x = (1 + 2 + 3) * (1 + 2 + 2) * (1 + 2);"
     );
   }
-  
 }

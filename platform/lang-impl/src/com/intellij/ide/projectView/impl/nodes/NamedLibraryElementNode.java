@@ -47,7 +47,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
+    List<AbstractTreeNode> children = new ArrayList<>();
     NamedLibraryElement libraryElement = getValue();
     if (libraryElement != null) {
       LibraryGroupNode.addLibraryChildren(libraryElement.getOrderEntry(), children, getProject(), this);

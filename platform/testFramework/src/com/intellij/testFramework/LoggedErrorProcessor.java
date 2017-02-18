@@ -60,7 +60,7 @@ public class LoggedErrorProcessor {
       }
     }
 
-    throw new AssertionError(message);
+    throw new AssertionError(message, t);
   }
 
   public void disableStderrDumping(@NotNull Disposable parentDisposable) {

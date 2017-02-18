@@ -92,7 +92,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
     String[] names = suggestedNameInfo.names;
 
     if (isInteractive) {
-      List<String> namesList = new ArrayList<String>();
+      List<String> namesList = new ArrayList<>();
       ContainerUtil.addAll(namesList, names);
       String defaultName = styleManager.propertyNameToVariableName(propertyName, kind);
       if (namesList.contains(defaultName)) {

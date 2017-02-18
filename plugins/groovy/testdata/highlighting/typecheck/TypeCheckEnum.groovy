@@ -34,7 +34,7 @@ class FooEnum {
     <error descr="Cannot cast 'Closure<Integer>' to 'E'">(E) { int a, int b -> a + b }</error>
     (E) s
     <error descr="Cannot cast 'Matcher' to 'E'">(E) "aaa" =~ /aaa/</error>
-    <error descr="Cannot cast 'ArrayList' to 'E'">(E) []</error>
+    <error descr="Cannot cast 'List' to 'E'">(E) []</error>
     <error descr="Cannot cast 'String' to 'E'">(E) "F"</error>
   }
 

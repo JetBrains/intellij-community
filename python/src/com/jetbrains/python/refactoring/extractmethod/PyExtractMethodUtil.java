@@ -120,7 +120,7 @@ public class PyExtractMethodUtil {
         builder.append("async ");
       }
       builder.append("def f():\n    ");
-      final List<PsiElement> newMethodElements = new ArrayList<PsiElement>(elementsRange);
+      final List<PsiElement> newMethodElements = new ArrayList<>(elementsRange);
       final boolean hasOutputVariables = !fragment.getOutputVariables().isEmpty();
 
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
@@ -228,7 +228,7 @@ public class PyExtractMethodUtil {
 
   private static void processGlobalWrites(@NotNull final PyFunction function, @NotNull final PyCodeFragment fragment) {
     final Set<String> globalWrites = fragment.getGlobalWrites();
-    final Set<String> newGlobalNames = new LinkedHashSet<String>();
+    final Set<String> newGlobalNames = new LinkedHashSet<>();
     final Scope scope = ControlFlowCache.getScope(function);
     for (String name : globalWrites) {
       if (!scope.isGlobal(name)) {
@@ -247,7 +247,7 @@ public class PyExtractMethodUtil {
 
   private static void processNonlocalWrites(@NotNull PyFunction function, @NotNull PyCodeFragment fragment) {
     final Set<String> nonlocalWrites = fragment.getNonlocalWrites();
-    final Set<String> newNonlocalNames = new LinkedHashSet<String>();
+    final Set<String> newNonlocalNames = new LinkedHashSet<>();
     final Scope scope = ControlFlowCache.getScope(function);
     for (String name : nonlocalWrites) {
       if (!scope.isNonlocal(name)) {
@@ -442,7 +442,7 @@ public class PyExtractMethodUtil {
       final String name = parameter.getName();
       final String newName = map.get(name);
       if (name != null && newName != null && !name.equals(newName)) {
-        final Map<PsiElement, String> allRenames = new java.util.HashMap<PsiElement, String>();
+        final Map<PsiElement, String> allRenames = new java.util.HashMap<>();
         allRenames.put(parameter, newName);
         final UsageInfo[] usages = RenameUtil.findUsages(parameter, newName, false, false, allRenames);
         try {
@@ -473,7 +473,7 @@ public class PyExtractMethodUtil {
 
   @NotNull
   private static Map<String, String> createMap(@NotNull final AbstractVariableData[] variableData) {
-    final Map<String, String> map = new HashMap<String, String>();
+    final Map<String, String> map = new HashMap<>();
     for (AbstractVariableData data : variableData) {
       map.put(data.getOriginalName(), data.getName());
     }
@@ -611,7 +611,7 @@ public class PyExtractMethodUtil {
           throw new CommonRefactoringUtil.RefactoringErrorHintException(error);
         }
       }
-      final List<AbstractVariableData> data = new ArrayList<AbstractVariableData>();
+      final List<AbstractVariableData> data = new ArrayList<>();
       for (String in : fragment.getInputVariables()) {
         final AbstractVariableData d = new AbstractVariableData();
         d.name = in + "_new";

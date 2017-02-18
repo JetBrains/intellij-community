@@ -52,7 +52,7 @@ public abstract class AbstractRegionToKillRingTest extends LightPlatformCodeInsi
   protected static Pair<String, String> parse() {
     SelectionModel selectionModel = myEditor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
-      return new Pair<String, String>(null, myEditor.getDocument().getText());
+      return new Pair<>(null, myEditor.getDocument().getText());
     }
     
     CharSequence text = myEditor.getDocument().getCharsSequence();
@@ -60,6 +60,6 @@ public abstract class AbstractRegionToKillRingTest extends LightPlatformCodeInsi
     StringBuilder nonSelectedText = new StringBuilder();
     nonSelectedText.append(text.subSequence(0, selectionModel.getSelectionStart()))
       .append(text.subSequence(selectionModel.getSelectionEnd(), text.length()));
-    return new Pair<String, String>(selectedText, nonSelectedText.toString());
+    return new Pair<>(selectedText, nonSelectedText.toString());
   }
 }

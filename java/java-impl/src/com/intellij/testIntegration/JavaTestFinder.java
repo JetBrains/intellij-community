@@ -21,11 +21,13 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.HashSet;
@@ -52,7 +54,7 @@ public class JavaTestFinder implements TestFinder {
 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(element.getProject());
 
-    List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
+    List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<>();
     for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(klass.getName())) {
       for (PsiClass eachClass : cache.getClassesByName(eachNameWithWeight.first, scope)) {
         if (isTestSubjectClass(eachClass)) {
@@ -96,7 +98,7 @@ public class JavaTestFinder implements TestFinder {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
-    List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<Pair<? extends PsiNamedElement, Integer>>();
+    List<Pair<? extends PsiNamedElement, Integer>> classesWithProximities = new ArrayList<>();
     Processor<Pair<? extends PsiNamedElement, Integer>> processor =
       Processors.cancelableCollectProcessor(classesWithProximities);
     collectTests(klass, processor);
@@ -112,7 +114,7 @@ public class JavaTestFinder implements TestFinder {
     String klassName = klass.getName();
     Pattern pattern = Pattern.compile(".*" + StringUtil.escapeToRegexp(klassName) + ".*", Pattern.CASE_INSENSITIVE);
 
-    HashSet<String> names = new HashSet<String>();
+    HashSet<String> names = new HashSet<>();
     cache.getAllClassNames(names);
     for (String eachName : names) {
       if (pattern.matcher(eachName).matches()) {
@@ -136,7 +138,8 @@ public class JavaTestFinder implements TestFinder {
   @Nullable
   private static Module getModule(PsiElement element) {
     ProjectFileIndex index = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
-    return index.getModuleForFile(element.getContainingFile().getVirtualFile());
+    VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    return file == null ? null : index.getModuleForFile(file);
   }
 
   public boolean isTest(@NotNull PsiElement element) {

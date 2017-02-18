@@ -52,7 +52,7 @@ public class SingletonRefGroup implements RefGroup {
 
   @NotNull
   @Override
-  public Color getBgColor() {
-    return myRef.getType().getBackgroundColor();
+  public List<Color> getColors() {
+    return Collections.singletonList(myRef.getType().getBackgroundColor());
   }
 }

@@ -26,8 +26,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.application.ModalityState.defaultModalityState;
-
 /**
  * Executes an action surrounding it with freezing-unfreezing of the ChangeListManager
  * and blocking/unblocking save/sync on frame de/activation.
@@ -82,7 +80,7 @@ public class GitFreezingProcess {
       FileDocumentManager.getInstance().saveAllDocuments();
       mySaveAndSyncHandler.blockSaveOnFrameDeactivation();
       mySaveAndSyncHandler.blockSyncOnFrameActivation();
-    }, defaultModalityState());
+    });
   }
 
   private void unblockInAwt() {
@@ -90,7 +88,7 @@ public class GitFreezingProcess {
       myProjectManager.unblockReloadingProjectOnExternalChanges();
       mySaveAndSyncHandler.unblockSaveOnFrameDeactivation();
       mySaveAndSyncHandler.unblockSyncOnFrameActivation();
-    }, defaultModalityState());
+    });
   }
 
   private void freeze() {

@@ -75,7 +75,7 @@ public class EditTaskDialog extends DialogWrapper {
       ChangeListManager changeListManager = ChangeListManager.getInstance(project);
       List<LocalChangeList> changeLists = changeListManager.getChangeLists();
       changeLists.add(null);
-      myChangelist.setModel(new CollectionComboBoxModel<LocalChangeList>(changeLists));
+      myChangelist.setModel(new CollectionComboBoxModel<>(changeLists));
       final List<ChangeListInfo> lists = task.getChangeLists();
       if (!lists.isEmpty()) {
         LocalChangeList list = changeListManager.getChangeList(lists.get(0).id);
@@ -92,10 +92,10 @@ public class EditTaskDialog extends DialogWrapper {
       }
       else {
         VcsTaskHandler.TaskInfo[] tasks = handlers[0].getAllExistingTasks();
-        ArrayList<VcsTaskHandler.TaskInfo> infos = new ArrayList<VcsTaskHandler.TaskInfo>(Arrays.asList(tasks));
+        ArrayList<VcsTaskHandler.TaskInfo> infos = new ArrayList<>(Arrays.asList(tasks));
         Collections.sort(infos);
         infos.add(null);
-        myBranch.setModel(new CollectionComboBoxModel<VcsTaskHandler.TaskInfo>(infos));
+        myBranch.setModel(new CollectionComboBoxModel<>(infos));
         final List<BranchInfo> branches = task.getBranches(false);
         if (!branches.isEmpty()) {
           VcsTaskHandler.TaskInfo info = ContainerUtil.find(tasks, info1 -> branches.get(0).name.equals(info1.getName()));

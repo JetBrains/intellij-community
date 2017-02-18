@@ -45,7 +45,7 @@ public class Xslt2FunctionContext extends DefaultFunctionContext {
   }
 
   static {
-    final Map<Pair<QName, Integer>, Function> decls = new HashMap<Pair<QName, Integer>, Function>();
+    final Map<Pair<QName, Integer>, Function> decls = new HashMap<>();
 
     // xslt 2.0
 

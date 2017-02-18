@@ -1,4 +1,4 @@
-<idea-plugin version="2">
+<idea-plugin>
 
   <!--
    Extension points to support gnu command line language.

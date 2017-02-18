@@ -36,9 +36,9 @@ public class EditorTextFieldActionPromoter implements ActionPromoter {
    * other editor actions with lower priority.
    * <p/>
    * Rationale: there is at least one commit-specific action that is mapped to the editor action by default
-   * (<code>'show commit messages history'</code> vs <code>'scroll to center'</code>). We want to process the former on target
+   * ({@code 'show commit messages history'} vs {@code 'scroll to center'}). We want to process the former on target
    * short key triggering. Another example is that {@code 'Ctrl+Shift+Right/Left Arrow'} shortcut is bound to
-   * <code>'expand/reduce selection by word'</code> editor action and <code>'change dialog width'</code> non-editor action
+   * {@code 'expand/reduce selection by word'} editor action and {@code 'change dialog width'} non-editor action
    * and we want to use the first one.
    */
   private static final Comparator<AnAction> ACTIONS_COMPARATOR = (o1, o2) -> {
@@ -53,7 +53,7 @@ public class EditorTextFieldActionPromoter implements ActionPromoter {
 
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
-    ArrayList<AnAction> result = new ArrayList<AnAction>(actions);
+    ArrayList<AnAction> result = new ArrayList<>(actions);
     Collections.sort(result, ACTIONS_COMPARATOR);
     return result;
   }

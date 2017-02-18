@@ -125,7 +125,7 @@ public abstract class Entry {
   }
 
   public boolean hasUnavailableContent() {
-    return hasUnavailableContent(new ArrayList<Entry>());
+    return hasUnavailableContent(new ArrayList<>());
   }
 
   public boolean hasUnavailableContent(List<Entry> entriesWithUnavailableContent) {
@@ -207,7 +207,7 @@ public abstract class Entry {
   }
 
   public static List<Difference> getDifferencesBetween(Entry left, Entry right) {
-    List<Difference> result = new SmartList<Difference>();
+    List<Difference> result = new SmartList<>();
 
     if (left == null) right.collectCreatedDifferences(result);
     else if (right == null) left.collectDeletedDifferences(result);

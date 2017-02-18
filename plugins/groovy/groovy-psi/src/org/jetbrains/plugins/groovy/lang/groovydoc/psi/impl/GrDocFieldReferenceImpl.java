@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public class GrDocFieldReferenceImpl extends GrDocMemberReferenceImpl implements
       }
       return candidates;
     }
-    return new ResolveResult[0];
+    return ResolveResult.EMPTY_ARRAY;
   }
 
 }

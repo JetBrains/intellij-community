@@ -40,7 +40,7 @@ public class ConstantPool implements NewClassNameBuilder {
 
   public ConstantPool(DataInputStream in) throws IOException {
     int size = in.readUnsignedShort();
-    pool = new ArrayList<PooledConstant>(size);
+    pool = new ArrayList<>(size);
     BitSet[] nextPass = {new BitSet(size), new BitSet(size), new BitSet(size)};
 
     // first dummy constant

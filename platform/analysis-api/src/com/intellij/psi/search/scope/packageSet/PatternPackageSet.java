@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,16 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   @Override
   public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return matchesScope(file, project, fileIndex) && (myPattern == null || myPattern.matcher(getPackageName(file, fileIndex)).matches());
+    if (matchesScope(file, project, fileIndex)) {
+      if (myPattern == null) {
+        return true;
+      }
+      String packageName = getPackageName(file, fileIndex);
+      if (packageName != null && myPattern.matcher(packageName).matches()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean matchesScope(VirtualFile file, Project project, ProjectFileIndex fileIndex) {
@@ -89,15 +98,15 @@ public class PatternPackageSet extends PatternBasedPackageSet {
       return fileIndex.isInContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_SOURCE) {
-      return isSource && !fileIndex.isInTestSourceContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern,
-                                                                                                       file, fileIndex);
+      return isSource && !TestSourcesFilter.isTestSources(file, project)
+             && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_LIBRARY) {
       return (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file)) && matchesLibrary(myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_TEST) {
-      return isSource && fileIndex.isInTestSourceContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern,
-                                                                                                      file, fileIndex);
+      return isSource && TestSourcesFilter.isTestSources(file, project) &&
+             FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_PROBLEM) {
       return isSource && WolfTheProblemSolver.getInstance(project).isProblemFile(file) &&
@@ -107,7 +116,9 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   }
 
   private static String getPackageName(VirtualFile file, ProjectFileIndex fileIndex) {
-    return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(file.isDirectory() ? file :  file.getParent()), file.getNameWithoutExtension());
+    VirtualFile dir = file.isDirectory() ? file : file.getParent();
+    if (dir == null) return null;
+    return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(dir), file.getNameWithoutExtension());
   }
 
   @NotNull

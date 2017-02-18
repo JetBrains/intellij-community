@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.startupWizard.StartupWizard;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
@@ -37,7 +39,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.UrlClassLoader;
-import com.sun.jna.Native;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -76,11 +77,6 @@ public class StartupUtil {
     }
   }
 
-  public static int getAcquiredPort() {
-    BuiltInServer server = getServer();
-    return server == null ? -1 : server.getPort();
-  }
-
   @Nullable
   public synchronized static BuiltInServer getServer() {
     return ourSocketLock == null ? null : ourSocketLock.getServer();
@@ -88,6 +84,8 @@ public class StartupUtil {
 
   interface AppStarter {
     void start(boolean newConfigFolder);
+
+    default void beforeImportConfigs() {}
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
@@ -130,6 +128,7 @@ public class StartupUtil {
     }
 
     if (newConfigFolder) {
+      appStarter.beforeImportConfigs();
       ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
     }
 
@@ -334,12 +333,11 @@ public class StartupUtil {
   }
 
   private static void loadSystemLibraries(final Logger log) {
-    // load JNA and Snappy in own temp directory - to avoid collisions and work around no-exec /tmp
+    // load JNA in own temp directory - to avoid collisions and work around no-exec /tmp
     File ideTempDir = new File(PathManager.getTempPath());
     if (!(ideTempDir.mkdirs() || ideTempDir.exists())) {
       throw new RuntimeException("Unable to create temp directory '" + ideTempDir + "'");
     }
-
     if (System.getProperty("jna.tmpdir") == null) {
       System.setProperty("jna.tmpdir", ideTempDir.getPath());
     }
@@ -347,11 +345,10 @@ public class StartupUtil {
       System.setProperty("jna.nosys", "true");  // prefer bundled JNA dispatcher lib
     }
     try {
-      long t = System.currentTimeMillis();
-      log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
+      JnaLoader.load(log);
     }
     catch (Throwable t) {
-      logError(log, "Unable to load JNA library", t);
+      log.error("Unable to load JNA library (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")", t);
     }
 
     if (SystemInfo.isWin2kOrNewer) {
@@ -372,11 +369,6 @@ public class StartupUtil {
       // WinP should not unpack .dll files into parent directory
       System.setProperty("winp.unpack.dll.to.parent.dir", "false");
     }
-  }
-
-  private static void logError(Logger log, String message, Throwable t) {
-    message = message + " (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")";
-    log.error(message, t);
   }
 
   private static void startLogging(final Logger log) {
@@ -430,8 +422,18 @@ public class StartupUtil {
         return;
       }
 
+      CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+      if (configProvider != null) {
+        configProvider.beforeStartupWizard();
+      }
+
       new CustomizeIDEWizardDialog(provider).show();
+
       PluginManagerCore.invalidatePlugins();
+      if (configProvider != null) {
+        configProvider.startupWizardFinished();
+      }
+
       return;
     }
 

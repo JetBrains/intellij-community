@@ -288,7 +288,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     }
 
 
-    final List<PsiClassType> expectedClassTypes = new SmartList<PsiClassType>();
+    final List<PsiClassType> expectedClassTypes = new SmartList<>();
 
     for (PsiType psiType : GroovyExpectedTypesProvider.getDefaultExpectedTypes(placeToInferType)) {
       if (psiType instanceof PsiClassType) {
@@ -423,7 +423,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
   }
 
   private static Set<TypeConstraint> getExpectedTypeInfos(final CompletionParameters params) {
-    return new THashSet<TypeConstraint>(Arrays.asList(getExpectedTypes(params)), EXPECTED_TYPE_INFO_STRATEGY);
+    return new THashSet<>(Arrays.asList(getExpectedTypes(params)), EXPECTED_TYPE_INFO_STRATEGY);
   }
 
   @NotNull

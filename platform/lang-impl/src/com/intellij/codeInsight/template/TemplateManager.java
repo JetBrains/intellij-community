@@ -56,4 +56,10 @@ public abstract class TemplateManager {
 
   @Nullable
   public abstract Template getActiveTemplate(@NotNull Editor editor);
+
+  /**
+   * Finished a live template in the given editor, if it's present
+   * @return whether a live template was present
+   */
+  public abstract boolean finishTemplate(@NotNull Editor editor);
 }

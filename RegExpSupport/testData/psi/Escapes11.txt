@@ -1,0 +1,5 @@
+REGEXP_FILE
+  RegExpPatternImpl: <\x{0}>
+    RegExpBranchImpl: <\x{0}>
+      RegExpCharImpl: <\x{0}>
+        PsiElement(HEX_CHAR)('\x{0}')

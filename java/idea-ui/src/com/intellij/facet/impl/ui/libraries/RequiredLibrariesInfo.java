@@ -35,10 +35,10 @@ import java.util.List;
  * @author nik
  */
 public class RequiredLibrariesInfo {
-  private final List<LibraryInfo> myLibraryInfos = new ArrayList<LibraryInfo>();
+  private final List<LibraryInfo> myLibraryInfos = new ArrayList<>();
 
   public RequiredLibrariesInfo(LibraryInfo... libs) {
-    myLibraryInfos.addAll(new ArrayList<LibraryInfo>(Arrays.asList(libs)));
+    myLibraryInfos.addAll(new ArrayList<>(Arrays.asList(libs)));
   }
 
   @Nullable
@@ -48,8 +48,8 @@ public class RequiredLibrariesInfo {
 
   @Nullable
   public RequiredClassesNotFoundInfo checkLibraries(List<VirtualFile> libraryFiles) {
-    List<LibraryInfo> infos = new ArrayList<LibraryInfo>();
-    List<String> classes = new ArrayList<String>();
+    List<LibraryInfo> infos = new ArrayList<>();
+    List<String> classes = new ArrayList<>();
 
     for (LibraryInfo info : myLibraryInfos) {
       boolean notFound;

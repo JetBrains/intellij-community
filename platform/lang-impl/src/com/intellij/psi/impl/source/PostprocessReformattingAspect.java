@@ -279,7 +279,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     }
     List<ASTNode> list = getContext().myReformatElements.get(viewProvider);
     if (list == null) {
-      list = new ArrayList<ASTNode>();
+      list = new ArrayList<>();
       getContext().myReformatElements.put(viewProvider, list);
       if (Holder.STORE_REFORMAT_ORIGINATOR_STACKTRACE) {
         viewProvider.putUserData(REFORMAT_ORIGINATOR, new Throwable());
@@ -309,7 +309,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       }
     }
 
-    final TreeSet<PostprocessFormattingTask> postProcessTasks = new TreeSet<PostprocessFormattingTask>();
+    final TreeSet<PostprocessFormattingTask> postProcessTasks = new TreeSet<>();
     Collection<Disposable> toDispose = ContainerUtilRt.newArrayList();
     try {
       // process all roots in viewProvider to find marked for reformat before elements and create appropriate range markers
@@ -375,8 +375,8 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
   @NotNull
   private List<PostponedAction> normalizeAndReorderPostponedActions(@NotNull Set<PostprocessFormattingTask> rangesToProcess, @NotNull Document document) {
-    final List<PostprocessFormattingTask> freeFormattingActions = new ArrayList<PostprocessFormattingTask>();
-    final List<ReindentTask> indentActions = new ArrayList<ReindentTask>();
+    final List<PostprocessFormattingTask> freeFormattingActions = new ArrayList<>();
+    final List<ReindentTask> indentActions = new ArrayList<>();
 
     PostprocessFormattingTask accumulatedTask = null;
     Iterator<PostprocessFormattingTask> iterator = rangesToProcess.iterator();
@@ -467,7 +467,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       }
     }
 
-    final List<PostponedAction> result = new ArrayList<PostponedAction>();
+    final List<PostponedAction> result = new ArrayList<>();
     Collections.reverse(freeFormattingActions);
     Collections.reverse(indentActions);
 
@@ -505,7 +505,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private static void createActionsMap(@NotNull List<ASTNode> astNodes,
                                        @NotNull FileViewProvider provider,
                                        @NotNull final TreeSet<PostprocessFormattingTask> rangesToProcess) {
-    final Set<ASTNode> nodesToProcess = new HashSet<ASTNode>(astNodes);
+    final Set<ASTNode> nodesToProcess = new HashSet<>(astNodes);
     final Document document = provider.getDocument();
     if (document == null) {
       return;
@@ -546,7 +546,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         }
 
         private Iterable<TextRange> getEnabledRanges(@NotNull PsiElement element) {
-          List<TextRange> disabledRanges = new ArrayList<TextRange>();
+          List<TextRange> disabledRanges = new ArrayList<>();
           for (DisabledIndentRangesProvider rangesProvider : DisabledIndentRangesProvider.EP_NAME.getExtensions()) {
             Collection<TextRange> providedDisabledRanges = rangesProvider.getDisabledIndentRanges(element);
             if (providedDisabledRanges != null) {
@@ -736,10 +736,10 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   private static class ReindentRangesAction implements PostponedAction {
-    private final List<Pair<Integer, RangeMarker>> myRangesToReindent = new ArrayList<Pair<Integer, RangeMarker>>();
+    private final List<Pair<Integer, RangeMarker>> myRangesToReindent = new ArrayList<>();
 
     public void add(@NotNull RangeMarker rangeMarker, int oldIndent) {
-      myRangesToReindent.add(new Pair<Integer, RangeMarker>(oldIndent, rangeMarker));
+      myRangesToReindent.add(new Pair<>(oldIndent, rangeMarker));
     }
 
     @Override
@@ -780,7 +780,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   private static class Context {
     private int myPostponedCounter = 0;
     private int myDisabledCounter = 0;
-    private final Set<FileViewProvider> myUpdatedProviders = new HashSet<FileViewProvider>();
-    private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<FileViewProvider, List<ASTNode>>();
+    private final Set<FileViewProvider> myUpdatedProviders = new HashSet<>();
+    private final Map<FileViewProvider, List<ASTNode>> myReformatElements = new HashMap<>();
   }
 }

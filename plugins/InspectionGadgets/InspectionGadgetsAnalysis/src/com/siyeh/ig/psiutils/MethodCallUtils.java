@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -35,7 +36,7 @@ public class MethodCallUtils {
   /**
    * @noinspection StaticCollection
    */
-  @NonNls private static final Set<String> regexMethodNames = new HashSet<String>(5);
+  @NonNls private static final Set<String> regexMethodNames = new HashSet<>(5);
 
   static {
     regexMethodNames.add("compile");
@@ -55,12 +56,30 @@ public class MethodCallUtils {
 
   @Nullable
   public static PsiType getTargetType(@NotNull PsiMethodCallExpression expression) {
-    final PsiReferenceExpression method = expression.getMethodExpression();
-    final PsiExpression qualifierExpression = method.getQualifierExpression();
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
     if (qualifierExpression == null) {
       return null;
     }
     return qualifierExpression.getType();
+  }
+
+  public static boolean isCompareToCall(@NotNull PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    if (!HardcodedMethodConstants.COMPARE_TO.equals(methodExpression.getReferenceName())) {
+      return false;
+    }
+    final PsiMethod method = expression.resolveMethod();
+    return MethodUtils.isCompareTo(method);
+  }
+
+  public static boolean isCompareToIgnoreCaseCall(@NotNull PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    if (!"compareToIgnoreCase".equals(methodExpression.getReferenceName())) {
+      return false;
+    }
+    final PsiMethod method = expression.resolveMethod();
+    return MethodUtils.isCompareToIgnoreCase(method);
   }
 
   public static boolean isEqualsCall(PsiMethodCallExpression expression) {
@@ -71,6 +90,16 @@ public class MethodCallUtils {
     }
     final PsiMethod method = expression.resolveMethod();
     return MethodUtils.isEquals(method);
+  }
+
+  public static boolean isEqualsIgnoreCaseCall(PsiMethodCallExpression expression) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final String name = methodExpression.getReferenceName();
+    if (!HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(name)) {
+      return false;
+    }
+    final PsiMethod method = expression.resolveMethod();
+    return MethodUtils.isEqualsIgnoreCase(method);
   }
 
   public static boolean isSimpleCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
@@ -89,11 +118,31 @@ public class MethodCallUtils {
     return isCallToMethod(expression, calledOnClassName, returnType, methodName, parameterTypes);
   }
 
+  public static boolean isCallToStaticMethod(@NotNull PsiMethodCallExpression expression, @NonNls @NotNull String calledOnClassName,
+                                             @NonNls @NotNull String methodName, int parameterCount) {
+    PsiExpression[] args = expression.getArgumentList().getExpressions();
+    if (!methodName.equals(getMethodName(expression)) || args.length < parameterCount) {
+      return false;
+    }
+    PsiMethod method = expression.resolveMethod();
+    if (method == null ||
+        !method.hasModifierProperty(PsiModifier.STATIC) ||
+        method.getParameterList().getParametersCount() != parameterCount ||
+        !method.isVarArgs() && args.length != parameterCount) {
+      return false;
+    }
+    PsiClass aClass = method.getContainingClass();
+    return aClass != null && calledOnClassName.equals(aClass.getQualifiedName());
+  }
+
   public static boolean isCallToMethod(@NotNull PsiMethodCallExpression expression, @NonNls @Nullable String calledOnClassName,
     @Nullable PsiType returnType, @Nullable Pattern methodNamePattern, @Nullable PsiType... parameterTypes) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     if (methodNamePattern != null) {
       final String referenceName = methodExpression.getReferenceName();
+      if (referenceName == null) {
+        return false;
+      }
       final Matcher matcher = methodNamePattern.matcher(referenceName);
       if (!matcher.matches()) {
         return false;
@@ -243,7 +292,21 @@ public class MethodCallUtils {
       return false;
     }
     final PsiMethod targetMethod = expression.resolveMethod();
-    return targetMethod != null && MethodSignatureUtil.areSignaturesEqual(targetMethod, method);
+    return targetMethod != null && MethodSignatureUtil.isSuperMethod(targetMethod, method);
+  }
+
+  /**
+   * Returns true if given method call is a var-arg call
+   *
+   * @param call a call to test
+   * @return true if call is resolved to the var-arg method and var-arg form is actually used
+   */
+  public static boolean isVarArgCall(PsiMethodCallExpression call) {
+    PsiMethod method = call.resolveMethod();
+    if(method == null || !method.isVarArgs()) return false;
+    PsiSubstitutor substitutor = call.resolveMethodGenerics().getSubstitutor();
+    return MethodCallInstruction
+      .isVarArgCall(method, substitutor, call.getArgumentList().getExpressions(), method.getParameterList().getParameters());
   }
 
   public static boolean containsSuperMethodCall(@NotNull PsiMethod method) {
@@ -314,6 +377,12 @@ public class MethodCallUtils {
         super.visitElement(element);
       }
     }
+
+    @Override
+    public void visitClass(PsiClass aClass) {}
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
     @Override
     public void visitIfStatement(PsiIfStatement statement) {

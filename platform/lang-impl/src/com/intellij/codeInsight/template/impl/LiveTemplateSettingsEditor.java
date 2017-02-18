@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -242,7 +243,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new ComboBox<String>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo = new ComboBox<>(new String[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(@NotNull ItemEvent e) {
@@ -291,7 +292,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private List<TemplateContextType> getApplicableContexts() {
-    ArrayList<TemplateContextType> result = new ArrayList<TemplateContextType>();
+    ArrayList<TemplateContextType> result = new ArrayList<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
       if (myContext.isEnabled(type)) {
         result.add(type);
@@ -336,11 +337,20 @@ public class LiveTemplateSettingsEditor extends JPanel {
         }
         sb.append(ownName);
       }
+
+      String contexts = "Applicable in " + sb.toString();
+      change.setText("Change");
+
       final boolean noContexts = sb.length() == 0;
-      String contexts = (noContexts ? "No applicable contexts" + (allowNoContexts ? "" : " yet") : "Applicable in " + sb.toString()) + ".  ";
-      ctxLabel.setText(StringUtil.first(contexts, 100, true));
-      ctxLabel.setForeground(noContexts ? allowNoContexts ? JBColor.GRAY : JBColor.RED : UIUtil.getLabelForeground());
-      change.setText(noContexts ? "Define" : "Change");
+      if (noContexts) {
+        if (!allowNoContexts) {
+          ctxLabel.setForeground(JBColor.RED);
+        }
+        contexts = "No applicable contexts" + (allowNoContexts ? "" : " yet");
+        ctxLabel.setIcon(AllIcons.General.BalloonWarning);
+        change.setText("Define");
+      }
+      ctxLabel.setText(StringUtil.first(contexts + ". ", 100, true));
 
       myTemplateOptionsPanel.removeAll();
       myTemplateOptionsPanel.add(createTemplateOptionsPanel());
@@ -417,18 +427,15 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
 
-    TreeUtil.traverse(root, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object _node) {
-        final CheckedTreeNode node = (CheckedTreeNode)_node;
-        if (node.isChecked()) {
-          final TreeNode[] path = node.getPath();
-          if (path != null) {
-            checkboxTree.expandPath(new TreePath(path).getParentPath());
-          }
+    TreeUtil.traverse(root, _node -> {
+      final CheckedTreeNode node = (CheckedTreeNode)_node;
+      if (node.isChecked()) {
+        final TreeNode[] path = node.getPath();
+        if (path != null) {
+          checkboxTree.expandPath(new TreePath(path).getParentPath());
         }
-        return true;
       }
+      return true;
     });
 
     panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
@@ -554,11 +561,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
     }
 
-    return new ArrayList<Variable>(newVariableNames.values());
+    return new ArrayList<>(newVariableNames.values());
   }
 
   private List<Variable> getCurrentVariables() {
-    List<Variable> myVariables = new ArrayList<Variable>();
+    List<Variable> myVariables = new ArrayList<>();
 
     for(int i = 0; i < myTemplate.getVariableCount(); i++) {
       myVariables.add(new Variable(myTemplate.getVariableNameAt(i),

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -40,7 +39,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodFix");
 
   private final PsiMethod myMethodPrototype;
-  private final List<String> myExceptions = new ArrayList<String>();
+  private final List<String> myExceptions = new ArrayList<>();
   private String myText;
 
   public AddMethodFix(@NotNull PsiMethod methodPrototype, @NotNull PsiClass implClass) {
@@ -111,7 +110,6 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
-    if (!FileModificationService.getInstance().prepareFileForWrite(myClass.getContainingFile())) return;
     PsiCodeBlock body;
     if (myClass.isInterface() && (body = myMethodPrototype.getBody()) != null) body.delete();
     for (String exception : myExceptions) {

@@ -133,8 +133,8 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return "capture of " + myExistential.getPresentableText();
+  public String getPresentableText(boolean annotated) {
+    return "capture of " + myExistential.getPresentableText(annotated);
   }
 
   @NotNull

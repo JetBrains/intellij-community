@@ -19,7 +19,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
@@ -35,13 +37,17 @@ public class MvcRunTargetHistoryService implements PersistentStateComponent<Stri
 
   private static final int MAX_HISTORY_LENGTH = 20;
 
-  private final LinkedList<String> myHistory = new LinkedList<String>();
+  private final LinkedList<String> myHistory = new LinkedList<>();
 
   private String myVmOptions = "";
 
   @Override
   public String[] getState() {
     synchronized (myHistory) {
+      if (myHistory.isEmpty() && StringUtil.isEmpty(myVmOptions)) {
+        return ArrayUtilRt.EMPTY_STRING_ARRAY;
+      }
+
       String[] res = new String[myHistory.size() + 1];
       res[0] = '#' + myVmOptions;
       int i = 1;

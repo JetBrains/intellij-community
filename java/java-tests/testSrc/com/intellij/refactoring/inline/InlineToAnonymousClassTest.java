@@ -2,6 +2,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -45,6 +46,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   }
 
   public void testConstructorWithArguments() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testUnrelatedParameters() throws Exception {
     doTest(false, false);
   }
 
@@ -235,7 +240,18 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   public void testAvailableInSupers() throws Exception {
     doTest(false, false);
   }
-  
+
+  public void testNoFinalForJava8() throws Exception {
+    final LanguageLevel languageLevel = getLanguageLevel();
+    try {
+      setLanguageLevel(LanguageLevel.HIGHEST);
+      doTest(true, false);
+    }
+    finally {
+      setLanguageLevel(languageLevel);
+    }
+  }
+
   public void testNoInlineAbstract() throws Exception {
     doTestNoInline("Abstract classes cannot be inlined");
   }
@@ -468,5 +484,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     final PsiClassType superType = InlineToAnonymousClassProcessor.getSuperType(classToInline);
     assertTrue(superType != null);
     assertEquals(canBeInvokedOnReference, InlineToAnonymousClassHandler.canBeInvokedOnReference(callToInline, superType));
+  }
+
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_1_7;
   }
 }

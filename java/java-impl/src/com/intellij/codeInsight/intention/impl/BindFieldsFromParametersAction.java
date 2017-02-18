@@ -29,7 +29,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -96,7 +99,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   @NotNull
   private static List<PsiParameter> getAvailableParameters(@NotNull PsiMethod method) {
-    final List<PsiParameter> parameters = new ArrayList<PsiParameter>();
+    final List<PsiParameter> parameters = new ArrayList<>();
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       if (isAvailable(parameter)) {
         parameters.add(parameter);
@@ -157,9 +160,9 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     final PsiMethod method = psiParameter != null ? (PsiMethod)psiParameter.getDeclarationScope() : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
     LOG.assertTrue(method != null);
 
-    final HashSet<String> usedNames = new HashSet<String>();
+    final HashSet<String> usedNames = new HashSet<>();
     final Iterable<PsiParameter> parameters = selectParameters(project, method, copyUnboundedParamsAndClearOriginal(method), isInteractive);
-    final MultiMap<PsiType, PsiParameter> types = new MultiMap<PsiType, PsiParameter>();
+    final MultiMap<PsiType, PsiParameter> types = new MultiMap<>();
     for (PsiParameter parameter : parameters) {
       types.putValue(parameter.getType(), parameter);
     }
@@ -200,11 +203,36 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   private static MemberChooser<ParameterClassMember> showChooser(@NotNull Project project,
                                            @NotNull PsiMethod method,
                                            @NotNull ParameterClassMember[] members) {
-    final MemberChooser<ParameterClassMember> chooser = new MemberChooser<ParameterClassMember>(members, false, true, project);
-    chooser.selectElements(members);
+    final MemberChooser<ParameterClassMember> chooser = new MemberChooser<>(members, false, true, project);
+    chooser.selectElements(getInitialSelection(method, members));
     chooser.setTitle("Choose " + (method.isConstructor() ? "Constructor" : "Method") + " Parameters");
     chooser.show();
     return chooser;
+  }
+
+  /**
+   * Exclude parameters passed to super() or this() calls from initial selection
+   */
+  private static ParameterClassMember[] getInitialSelection(@NotNull PsiMethod method,
+                                                            @NotNull ParameterClassMember[] members) {
+    final Set<PsiElement> resolvedInSuperOrThis = new HashSet<>();
+    final PsiCodeBlock body = method.getBody();
+    LOG.assertTrue(body != null);
+    final PsiStatement[] statements = body.getStatements();
+    if (statements.length > 0 && statements[0] instanceof PsiExpressionStatement) {
+      final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+      if (expression instanceof PsiMethodCallExpression) {
+        final PsiMethod calledMethod = ((PsiMethodCallExpression)expression).resolveMethod();
+        if (calledMethod != null && calledMethod.isConstructor()) {
+          for (PsiExpression arg : ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()) {
+            if (arg instanceof PsiReferenceExpression) {
+              ContainerUtil.addIfNotNull(((PsiReferenceExpression)arg).resolve(), resolvedInSuperOrThis);
+            }
+          }
+        }
+      }
+    }
+    return ContainerUtil.findAll(members, member -> !resolvedInSuperOrThis.contains(member.getParameter())).toArray(ParameterClassMember.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -217,7 +245,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   @NotNull
   private static <T extends PsiElement> List<T> revealPointers(@NotNull Iterable<SmartPsiElementPointer<T>> pointers) {
-    final List<T> result = new ArrayList<T>();
+    final List<T> result = new ArrayList<>();
     for (SmartPsiElementPointer<T> pointer : pointers) {
       result.add(pointer.getElement());
     }
@@ -226,7 +254,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
 
   @NotNull
   private static List<PsiParameter> revealParameterClassMembers(@NotNull Iterable<ParameterClassMember> parameterClassMembers) {
-    final List<PsiParameter> result = new ArrayList<PsiParameter>();
+    final List<PsiParameter> result = new ArrayList<>();
     for (ParameterClassMember parameterClassMember : parameterClassMembers) {
       result.add(parameterClassMember.getParameter());
     }
@@ -247,7 +275,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   private static Collection<SmartPsiElementPointer<PsiParameter>> copyUnboundedParamsAndClearOriginal(@NotNull PsiMethod method) {
     synchronized (LOCK) {
       final Collection<SmartPsiElementPointer<PsiParameter>> unboundedParams = getUnboundedParams(method);
-      final Collection<SmartPsiElementPointer<PsiParameter>> result = new ArrayList<SmartPsiElementPointer<PsiParameter>>(unboundedParams);
+      final Collection<SmartPsiElementPointer<PsiParameter>> result = new ArrayList<>(unboundedParams);
       unboundedParams.clear();
       return result;
     }
@@ -277,9 +305,12 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     String name = names[0];
     if (targetClass != null) {
       for (String curName : names) {
-        if (!usedNames.contains(curName) && targetClass.findFieldByName(curName, false) != null) {
-          name = curName;
-          break;
+        if (!usedNames.contains(curName)) {
+          final PsiField fieldByName = targetClass.findFieldByName(curName, false);
+          if (fieldByName != null && (!method.isConstructor() || !isFieldAssigned(fieldByName, method)) && fieldByName.getType().isAssignableFrom(parameter.getType())) {
+            name = curName;
+            break;
+          }
         }
       }
     }
@@ -312,6 +343,15 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
         LOG.error(e);
       }
     });
+  }
+
+  private static boolean isFieldAssigned(PsiField field, PsiMethod method) {
+    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method))) {
+      if (reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

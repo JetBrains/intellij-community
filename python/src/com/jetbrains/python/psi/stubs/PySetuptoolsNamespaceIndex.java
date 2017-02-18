@@ -45,7 +45,7 @@ public class PySetuptoolsNamespaceIndex extends ScalarIndexExtension<String> {
     public Map<String, Void> map(@NotNull FileContent inputData) {
       final CharSequence content = inputData.getContentAsText();
       final Matcher matcher = RE_NAMESPACE.matcher(content);
-      final Map<String, Void> results = new HashMap<String, Void>();
+      final Map<String, Void> results = new HashMap<>();
       while (matcher.find()) {
         final String packageName = matcher.group(1);
         results.put(packageName, null);

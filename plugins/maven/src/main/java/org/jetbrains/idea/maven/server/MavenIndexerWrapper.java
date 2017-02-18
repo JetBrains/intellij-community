@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.Set;
 
 public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServerIndexer> {
-  private final TIntObjectHashMap<IndexData> myDataMap = new TIntObjectHashMap<IndexData>();
+  private final TIntObjectHashMap<IndexData> myDataMap = new TIntObjectHashMap<>();
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
     super(parent);

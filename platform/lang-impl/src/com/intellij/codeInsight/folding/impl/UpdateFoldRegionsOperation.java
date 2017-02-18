@@ -33,21 +33,15 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static com.intellij.util.containers.ContainerUtil.newTroveMap;
+import java.util.*;
 
 /**
  * @author cdr
  */
 class UpdateFoldRegionsOperation implements Runnable {
-
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
   
   private static final Logger LOG = Logger.getInstance("#" + UpdateFoldRegionsOperation.class.getName());
@@ -56,7 +50,9 @@ class UpdateFoldRegionsOperation implements Runnable {
   private final Project myProject;
   private final Editor myEditor;
   private final PsiFile myFile;
+  @NotNull
   private final ApplyDefaultStateMode myApplyDefaultState;
+  @NotNull
   private final FoldingUpdate.FoldingMap myElementsToFoldMap;
   private final boolean myKeepCollapsedRegions;
   private final boolean myForInjected;
@@ -65,7 +61,7 @@ class UpdateFoldRegionsOperation implements Runnable {
                              @NotNull Editor editor,
                              @NotNull PsiFile file,
                              @NotNull FoldingUpdate.FoldingMap elementsToFoldMap,
-                             ApplyDefaultStateMode applyDefaultState,
+                             @NotNull ApplyDefaultStateMode applyDefaultState,
                              boolean keepCollapsedRegions,
                              boolean forInjected) {
     myProject = project;
@@ -81,15 +77,15 @@ class UpdateFoldRegionsOperation implements Runnable {
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    Map<TextRange,Boolean> rangeToExpandStatusMap = newTroveMap();
+    Map<TextRange,Boolean> rangeToExpandStatusMap = new THashMap<>();
 
     // FoldingUpdate caches instances of our object, so they must be immutable.
     FoldingUpdate.FoldingMap elementsToFold = new FoldingUpdate.FoldingMap(myElementsToFoldMap); 
 
     removeInvalidRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap);
 
-    Map<FoldRegion, Boolean> shouldExpand = newTroveMap();
-    Map<FoldingGroup, Boolean> groupExpand = newTroveMap();
+    Map<FoldRegion, Boolean> shouldExpand = new THashMap<>();
+    Map<FoldingGroup, Boolean> groupExpand = new THashMap<>();
     List<FoldRegion> newRegions = addNewRegions(info, foldingModel, elementsToFold, rangeToExpandStatusMap, shouldExpand, groupExpand);
 
     applyExpandStatus(newRegions, shouldExpand, groupExpand);
@@ -115,7 +111,7 @@ class UpdateFoldRegionsOperation implements Runnable {
                                          FoldingUpdate.FoldingMap elementsToFold, @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap,
                                          @NotNull Map<FoldRegion, Boolean> shouldExpand,
                                          @NotNull Map<FoldingGroup, Boolean> groupExpand) {
-    List<FoldRegion> newRegions = newArrayList();
+    List<FoldRegion> newRegions = new ArrayList<>();
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     for (PsiElement element : elementsToFold.keySet()) {
       ProgressManager.checkCanceled();
@@ -180,7 +176,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   private void removeInvalidRegions(@NotNull EditorFoldingInfo info,
                                     @NotNull FoldingModelEx foldingModel,
                                     FoldingUpdate.FoldingMap elementsToFold, @NotNull Map<TextRange, Boolean> rangeToExpandStatusMap) {
-    List<FoldRegion> toRemove = newArrayList();
+    List<FoldRegion> toRemove = new ArrayList<>();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
       if (myKeepCollapsedRegions && !region.isExpanded() && !regionOrGroupCanBeRemovedWhenCollapsed(region)) continue;

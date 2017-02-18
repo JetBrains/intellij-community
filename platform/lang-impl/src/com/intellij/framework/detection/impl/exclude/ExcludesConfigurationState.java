@@ -27,8 +27,8 @@ import java.util.List;
  * @author nik
  */
 public class ExcludesConfigurationState {
-  private List<String> myFrameworkTypes = new ArrayList<String>();
-  private List<ExcludedFileState> myFiles = new ArrayList<ExcludedFileState>();
+  private List<String> myFrameworkTypes = new ArrayList<>();
+  private List<ExcludedFileState> myFiles = new ArrayList<>();
   private boolean myDetectionEnabled = true;
 
   @Property(surroundWithTag = false)

@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class LiteralExpressionTokenizerTest extends LightPlatformCodeInsightFixtureTestCase {
   private static class TokenCollector extends TokenConsumer implements Consumer<TextRange> {
-    private final List<String> myTokenTexts = new ArrayList<String>();
+    private final List<String> myTokenTexts = new ArrayList<>();
     private String myText;
 
     @Override

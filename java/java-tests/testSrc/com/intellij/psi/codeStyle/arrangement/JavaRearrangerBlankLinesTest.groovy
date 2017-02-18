@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
  * @author Denis Zhdanov
  * @since 8/30/12 12:14 PM
  */
-public class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
+class JavaRearrangerBlankLinesTest extends AbstractJavaRearrangerTest {
 
   void testPreserveRelativeBlankLines() {
     commonSettings.BLANK_LINES_AROUND_CLASS = 2

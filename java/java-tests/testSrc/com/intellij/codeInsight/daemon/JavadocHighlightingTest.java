@@ -108,6 +108,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testEnumConstructor() { myInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package"; doTest(); }
   public void testIgnoreDuplicateThrows() { myInspection.setIgnoreDuplicatedThrows(true); doTest(); }
   public void testIgnoreAccessors() { myInspection.setIgnoreSimpleAccessors(true); doTest(); }
+  public void testAuthoredMethod() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());

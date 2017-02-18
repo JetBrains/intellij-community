@@ -21,10 +21,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.InvocationEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class IdeEventQueueTest extends PlatformTestCase {
@@ -61,11 +58,11 @@ public class IdeEventQueueTest extends PlatformTestCase {
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
 
     // do not react to other events
-    MouseEvent mouseClick = new MouseEvent(new JLabel(), MouseEvent.BUTTON1, 1, InputEvent.BUTTON1_DOWN_MASK, 12, 14, 1, true);
-    eventQueue.postEvent(mouseClick);
+    AWTEvent ev2 = new ActionEvent(new JLabel(), ActionEvent.ACTION_PERFORMED, "Command");
+    eventQueue.postEvent(ev2);
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
-    assertEquals(mouseClick, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
+    assertEquals(ev2, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
 
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());

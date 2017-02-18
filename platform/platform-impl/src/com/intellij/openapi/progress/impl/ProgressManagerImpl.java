@@ -19,20 +19,29 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.util.PotemkinProgress;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
+  private final Set<PotemkinProgress> myEdtProgresses = ContainerUtil.newConcurrentSet();
+
   @Override
   public void setCancelButtonText(String cancelButtonText) {
     ProgressIndicator progressIndicator = getProgressIndicator();
@@ -50,11 +59,15 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
+    boolean edtProgress = progress instanceof PotemkinProgress && ApplicationManager.getApplication().isDispatchThread();
+    if (edtProgress) myEdtProgresses.add((PotemkinProgress)progress);
+
     try {
       super.executeProcessUnderProgress(process, progress);
     }
     finally {
       if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
+      if (edtProgress) myEdtProgresses.remove(progress);
     }
   }
 
@@ -95,13 +108,9 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    final ProgressIndicator progressIndicator;
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      progressIndicator = new EmptyProgressIndicator();
-    }
-    else {
-      progressIndicator = new BackgroundableProcessIndicator(task);
-    }
+    ProgressIndicator progressIndicator = ApplicationManager.getApplication().isHeadlessEnvironment() ?
+                                          new EmptyProgressIndicator() :
+                                          new BackgroundableProcessIndicator(task);
     return runProcessWithProgressAsynchronously(task, progressIndicator, null);
   }
 
@@ -121,7 +130,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       @Override
       public void run() {
         boolean processCanceled = false;
-        Exception exception = null;
+        Throwable exception = null;
 
         final long start = System.currentTimeMillis();
         try {
@@ -130,17 +139,17 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
         catch (ProcessCanceledException e) {
           processCanceled = true;
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           exception = e;
         }
         final long end = System.currentTimeMillis();
-        final long time = end - start;
 
         final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
-        final Exception finalException = exception;
+        final Throwable finalException = exception;
 
         if (!finalCanceled) {
           final Task.NotificationInfo notificationInfo = task.notifyFinished();
+          final long time = end - start;
           if (notificationInfo != null && time > 5000) { // snow notification if process took more than 5 secs
             final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
             if (window == null || notificationInfo.isShowWhenFocused()) {
@@ -154,5 +163,47 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     };
 
     return ApplicationManager.getApplication().executeOnPooledThread(action);
+  }
+
+  @Override
+  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      throw new AssertionError("runInReadActionWithWriteActionPriority shouldn't be invoked from read action");
+    }
+    boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action);
+    if (!success) {
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
+    }
+    return success;
+  }
+
+  @Nullable
+  @Override
+  protected CheckCanceledHook createCheckCanceledHook() {
+    boolean shouldSleep = HeavyProcessLatch.INSTANCE.hasPrioritizedThread() && Registry.is("ide.prioritize.ui.thread", false);
+    boolean hasEdtProgresses = myEdtProgresses.size() > 0;
+    if (shouldSleep && hasEdtProgresses) return () -> pingProgresses() | sleepIfNeeded();
+    if (shouldSleep) return ProgressManagerImpl::sleepIfNeeded;
+    if (hasEdtProgresses) return this::pingProgresses;
+    return null;
+  }
+
+  private boolean pingProgresses() {
+    if (!ApplicationManager.getApplication().isDispatchThread()) return false;
+
+    boolean hasProgresses = false;
+    for (PotemkinProgress progress : myEdtProgresses) {
+      hasProgresses = true;
+      progress.interact();
+    }
+    return hasProgresses;
+  }
+
+  private static boolean sleepIfNeeded() {
+    if (HeavyProcessLatch.INSTANCE.isInsideLowPriorityThread()) {
+      TimeoutUtil.sleep(1);
+      return true;
+    }
+    return false;
   }
 }

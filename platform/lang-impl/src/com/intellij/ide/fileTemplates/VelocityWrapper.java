@@ -48,7 +48,7 @@ import java.io.*;
  */
 class VelocityWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.VelocityWrapper");
-  private static final ThreadLocal<FileTemplateManager> ourTemplateManager = new ThreadLocal<FileTemplateManager>();
+  private static final ThreadLocal<FileTemplateManager> ourTemplateManager = new ThreadLocal<>();
 
   static {
     try{

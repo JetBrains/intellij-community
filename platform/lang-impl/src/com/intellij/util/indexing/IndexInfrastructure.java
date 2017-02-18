@@ -32,6 +32,7 @@ import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -52,7 +54,7 @@ public class IndexInfrastructure {
   private static final boolean ourDoParallelIndicesInitialization = SystemProperties
     .getBooleanProperty("idea.parallel.indices.initialization", false);
   public static final boolean ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true);
-  private static final BoundedTaskExecutor ourGenesisExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+  private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("IndexInfrastructure pool");
 
   private IndexInfrastructure() {
   }
@@ -153,7 +155,7 @@ public class IndexInfrastructure {
   }
 
   public static abstract class DataInitialization<T> implements Callable<T> {
-    private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<ThrowableRunnable>();
+    private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<>();
 
     @Override
     public final T call() throws Exception {
@@ -185,7 +187,7 @@ public class IndexInfrastructure {
       CountDownLatch proceedLatch = new CountDownLatch(numberOfTasksToExecute);
 
       if (ourDoParallelIndicesInitialization) {
-        BoundedTaskExecutor taskExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE,
+        BoundedTaskExecutor taskExecutor = new BoundedTaskExecutor("IndexInfrastructure.DataInitialization.runParallelNestedInitializationTasks", PooledThreadExecutor.INSTANCE,
                                                                    CacheUpdateRunner.indexingThreadCount());
 
         for (ThrowableRunnable callable : myNestedInitializationTasks) {

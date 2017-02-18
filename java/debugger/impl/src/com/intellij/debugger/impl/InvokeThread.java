@@ -92,9 +92,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       try {
         myRequestFuture.get(timeout, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException ignored) {
-      } 
-      catch (CancellationException ignored) {
+      catch (TimeoutException | CancellationException ignored) {
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,14 @@ import java.util.*;
  * @author Dennis.Ushakov
  */
 public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends PsiElement, M extends MemberInfoBase<T>> {
-  protected final HashMap<C, LinkedHashSet<C>> myClassToSubclassesMap = new HashMap<C, LinkedHashSet<C>>();
-  private final HashMap<C, Set<C>> myTargetClassToExtendingMap = new HashMap<C, Set<C>>();
-  private final HashMap<C, List<M>> myClassToMemberInfoMap = new HashMap<C, List<M>>();
+  protected final HashMap<C, LinkedHashSet<C>> myClassToSubclassesMap = new HashMap<>();
+  private final HashMap<C, Set<C>> myTargetClassToExtendingMap = new HashMap<>();
+  private final HashMap<C, List<M>> myClassToMemberInfoMap = new HashMap<>();
   protected final C myClass;
   protected final MemberInfoBase.Filter<T> myFilter;
-  private final HashMap<C, List<M>> myTargetClassToIntermediateMemberInfosMap = new HashMap<C, List<M>>();
-  private final HashMap<C, LinkedHashSet<M>> myTargetClassToMemberInfosListMap = new HashMap<C, LinkedHashSet<M>>();
-  private final HashMap<C, HashSet<M>> myTargetClassToDuplicatedMemberInfosMap = new HashMap<C, HashSet<M>>();
+  private final HashMap<C, List<M>> myTargetClassToIntermediateMemberInfosMap = new HashMap<>();
+  private final HashMap<C, LinkedHashSet<M>> myTargetClassToMemberInfosListMap = new HashMap<>();
+  private final HashMap<C, HashSet<M>> myTargetClassToDuplicatedMemberInfosMap = new HashMap<>();
 
   public AbstractMemberInfoStorage(C aClass, MemberInfoBase.Filter<T> memberInfoFilter) {
     myClass = aClass;
@@ -47,7 +47,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
   public Set<C> getExtending(C baseClass) {
     Set<C> result = myTargetClassToExtendingMap.get(baseClass);
     if(result == null) {
-      result = new HashSet<C>();
+      result = new HashSet<>();
       result.add(baseClass);
       final Set<C> allClasses = getAllClasses();
       for (C aClass : allClasses) {
@@ -68,7 +68,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
   public List<M> getClassMemberInfos(C aClass) {
     List<M> result = myClassToMemberInfoMap.get(aClass);
     if(result == null) {
-      ArrayList<M> temp = new ArrayList<M>();
+      ArrayList<M> temp = new ArrayList<>();
       extractClassMembers(aClass, temp);
       result = Collections.unmodifiableList(temp);
       myClassToMemberInfoMap.put(aClass, result);
@@ -82,8 +82,8 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
     List<M> result = myTargetClassToIntermediateMemberInfosMap.get(baseClass);
 
     if (result == null) {
-      Set<M> list = getIntermediateClassesMemberInfosList(baseClass, new HashSet<C>());
-      result = Collections.unmodifiableList(new ArrayList<M>(list));
+      Set<M> list = getIntermediateClassesMemberInfosList(baseClass, new HashSet<>());
+      result = Collections.unmodifiableList(new ArrayList<>(list));
       myTargetClassToIntermediateMemberInfosMap.put(baseClass, result);
     }
 
@@ -93,7 +93,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
   private Set<M> getIntermediateClassesMemberInfosList(C targetClass, Set<C> visited) {
     LinkedHashSet<M> result = myTargetClassToMemberInfosListMap.get(targetClass);
     if(result == null) {
-      result = new LinkedHashSet<M>();
+      result = new LinkedHashSet<>();
       Set<C> subclasses = getSubclasses(targetClass);
       for (C subclass : subclasses) {
         List<M> memberInfos = getClassMemberInfos(subclass);
@@ -110,26 +110,15 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
   }
 
   protected LinkedHashSet<C> getSubclasses(C aClass) {
-    LinkedHashSet<C> result = myClassToSubclassesMap.get(aClass);
-    if(result == null) {
-      result = new LinkedHashSet<C>();
-      myClassToSubclassesMap.put(aClass, result);
-    }
-    return result;
+    return myClassToSubclassesMap.computeIfAbsent(aClass, k -> new LinkedHashSet<>());
   }
 
   public Set<M> getDuplicatedMemberInfos(C baseClass) {
-    HashSet<M> result = myTargetClassToDuplicatedMemberInfosMap.get(baseClass);
-
-    if(result == null) {
-      result = buildDuplicatedMemberInfos(baseClass);
-      myTargetClassToDuplicatedMemberInfosMap.put(baseClass, result);
-    }
-    return result;
+    return myTargetClassToDuplicatedMemberInfosMap.computeIfAbsent(baseClass, k -> buildDuplicatedMemberInfos(baseClass));
   }
 
   private HashSet<M> buildDuplicatedMemberInfos(C baseClass) {
-    HashSet<M> result = new HashSet<M>();
+    HashSet<M> result = new HashSet<>();
     List<M> memberInfos = getIntermediateMemberInfosList(baseClass);
 
     for (int i = 0; i < memberInfos.size(); i++) {

@@ -101,23 +101,23 @@ public class JUnitRuleInspection extends BaseInspection {
     if (!hasPublic) {
       if (shouldBeStatic) {
         if (!hasStatic) {
-          errorMessage = "public and static";
+          errorMessage = "'public' and 'static'";
         } else {
-          errorMessage = "public";
+          errorMessage = "'public'";
         }
       }
       else {
         if (!hasStatic){
-          errorMessage = "public";
+          errorMessage = "'public'";
         } else {
-          errorMessage = "public and non-static";
+          errorMessage = "'public' and non-static";
         }
       }
     }
     else {
       if (!hasStatic) {
         if (shouldBeStatic) {
-          errorMessage = "static";
+          errorMessage = "'static'";
         }
       }
       else if (shouldBeNonStatic) {

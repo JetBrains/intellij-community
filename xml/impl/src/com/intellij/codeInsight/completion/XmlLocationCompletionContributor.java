@@ -78,12 +78,12 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
   private static Object[] completeNamespace(PsiElement myElement) {
     final XmlFile file = (XmlFile)myElement.getContainingFile();
     PsiElement parent = myElement.getParent();
-    final Set<Object> preferred = new HashSet<Object>();
+    final Set<Object> preferred = new HashSet<>();
     if (parent instanceof XmlAttribute && "xmlns".equals(((XmlAttribute)parent).getName())) {
       XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(file);
       preferred.addAll(helper.guessUnboundNamespaces(parent.getParent(), file));
     }
-    Set<String> list = new HashSet<String>();
+    Set<String> list = new HashSet<>();
     for (XmlSchemaProvider provider : Extensions.getExtensions(XmlSchemaProvider.EP_NAME)) {
       if (provider.isAvailable(file)) {
         list.addAll(provider.getAvailableNamespaces(file, null));
@@ -96,7 +96,7 @@ public class XmlLocationCompletionContributor extends CompletionContributor {
     final XmlDocument document = file.getDocument();
     assert document != null;
     XmlTag rootTag = document.getRootTag();
-    final ArrayList<String> additionalNs = new ArrayList<String>();
+    final ArrayList<String> additionalNs = new ArrayList<>();
     if (rootTag != null) URLReference.processWsdlSchemas(rootTag, xmlTag -> {
       final String s = xmlTag.getAttributeValue(URLReference.TARGET_NAMESPACE_ATTR_NAME);
       if (s != null) { additionalNs.add(s); }

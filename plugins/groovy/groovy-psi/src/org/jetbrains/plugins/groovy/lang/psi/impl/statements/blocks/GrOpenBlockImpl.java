@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifiableCodeBlock;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -27,7 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 /**
  * @author ilyas
  */
-public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock {
+public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock, PsiModifiableCodeBlock {
+
   public GrOpenBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
   }
@@ -45,5 +47,11 @@ public class GrOpenBlockImpl extends GrBlockImpl implements GrOpenBlock {
   public boolean isTopControlFlowOwner() {
     final PsiElement parent = getParent();
     return parent instanceof GrMethod || parent instanceof GrClassInitializer;
+  }
+
+  @Override
+  public boolean shouldChangeModificationCount(PsiElement place) {
+    final PsiElement parent = getParent();
+    return !(parent instanceof GrMethod) && !(parent instanceof GrClassInitializer);
   }
 }

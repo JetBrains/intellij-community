@@ -81,7 +81,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
     final String id = actionManager.getId(action);
     out.append("id=").append(id);
     if (id != null) {
-      out.append(" shortcuts:");
+      out.append("; shortcuts:");
       final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(id);
       for (int i = 0; i < shortcuts.length; i++) {
         Shortcut shortcut = shortcuts[i];
@@ -91,6 +91,7 @@ public class ActionTracer implements UiDebuggerExtension, AnActionListener {
         }
       }
     }
+    out.append("; class: ").append(action.getClass().getName());
     out.append("\n");
     final Document doc = myText.getDocument();
     try {

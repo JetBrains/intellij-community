@@ -111,4 +111,19 @@ public class SourceStubPsiFactory extends StubPsiFactory {
   public PsiNameValuePair createNameValuePair(PsiNameValuePairStub stub) {
     return new PsiNameValuePairImpl(stub);
   }
+
+  @Override
+  public PsiJavaModule createModule(PsiJavaModuleStub stub) {
+    return new PsiJavaModuleImpl(stub);
+  }
+
+  @Override
+  public PsiRequiresStatement createRequiresStatement(PsiRequiresStatementStub stub) {
+    return new PsiRequiresStatementImpl(stub);
+  }
+
+  @Override
+  public PsiExportsStatement createExportsStatement(PsiExportsStatementStub stub) {
+    return new PsiExportsStatementImpl(stub);
+  }
 }

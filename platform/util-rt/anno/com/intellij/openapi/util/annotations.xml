@@ -6,5 +6,8 @@
   <item name="com.intellij.openapi.util.Getter">
     <annotation name="java.lang.FunctionalInterface" />
   </item>
+  <item name="com.intellij.openapi.util.Setter">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
 </root>
 

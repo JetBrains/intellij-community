@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class FileEditorManagerEx extends FileEditorManager implements BusyObject {
-  protected final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
+  protected final List<EditorDataProvider> myDataProviders = new ArrayList<>();
 
   public static FileEditorManagerEx getInstanceEx(@NotNull Project project) {
     return (FileEditorManagerEx)getInstance(project);
@@ -74,11 +74,14 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract void updateFilePresentation(@NotNull VirtualFile file);
 
   /**
-   *
+   * Synchronous version of {@link #getActiveWindow()}. Will return <code>null</code> if invoked not from EDT.
    * @return current window in splitters
    */
   public abstract EditorWindow getCurrentWindow();
 
+  /**
+   * Asynchronous version of {@link #getCurrentWindow()}. Execution happens after focus settle down. Can be invoked on any thread.
+   */
   @NotNull
   public abstract AsyncResult<EditorWindow> getActiveWindow();
 

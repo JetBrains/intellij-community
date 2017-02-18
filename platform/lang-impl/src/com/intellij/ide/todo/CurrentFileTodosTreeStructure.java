@@ -31,7 +31,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
   private static final Object[] ourEmptyArray=new Object[]{};
 
   /**
-   * Current <code>VirtualFile</code> for which the structure is built. If <code>myFile</code> is <code>null</code>
+   * Current {@code VirtualFile} for which the structure is built. If {@code myFile} is {@code null}
    * then the structure is empty (contains only root node).
    */
   private PsiFile myFile;
@@ -58,7 +58,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
   }
 
   /**
-   * Sets <code>file</code> for which the structure is built. Alter this method is invoked caches should
+   * Sets {@code file} for which the structure is built. Alter this method is invoked caches should
    * be validated.
    */
   public void setFile(PsiFile file){

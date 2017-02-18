@@ -4,7 +4,7 @@ interface I {
 
 class A {
   {
-    I predicate = (a) -> alwaysTrue(a, "");
+    I predicate = a -> alwaysTrue(a, "");
   }
 
   private static boolean alwaysTrue(int a, String anObject) {

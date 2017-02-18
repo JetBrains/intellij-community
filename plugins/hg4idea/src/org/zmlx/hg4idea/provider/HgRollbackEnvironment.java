@@ -55,8 +55,8 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
     if (changes == null || changes.isEmpty()) {
       return;
     }
-    List<FilePath> toDelete = new ArrayList<FilePath>();
-    List<FilePath> filePaths = new LinkedList<FilePath>();
+    List<FilePath> toDelete = new ArrayList<>();
+    List<FilePath> filePaths = new LinkedList<>();
     for (Change change : changes) {
       ContentRevision contentRevision;
       if (Change.Type.DELETED == change.getType()) {

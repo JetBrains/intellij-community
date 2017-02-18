@@ -41,7 +41,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
-      final THashSet<String> names = new THashSet<String>(1000);
+      final THashSet<String> names = new THashSet<>(1000);
       IdFilter filter = IdFilter.getProjectIdFilter(project, includeNonProjectItems);
       processNames(s -> {
         names.add(s);
@@ -69,7 +69,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   @Override
   public void processNames(@NotNull final Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     long started = System.currentTimeMillis();
-    FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, s -> processor.process(s), scope, filter);
+    FilenameIndex.processAllFileNames(processor, scope, filter);
     if (IdFilter.LOG.isDebugEnabled()) {
       IdFilter.LOG.debug("All names retrieved:" + (System.currentTimeMillis() - started));
     }

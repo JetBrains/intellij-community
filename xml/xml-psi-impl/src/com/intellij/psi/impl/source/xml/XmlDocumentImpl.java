@@ -185,16 +185,16 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
     if (cachedValue == null) {
-      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<XmlNSDescriptor>(getManager(), () -> {
+      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<>(getManager(), () -> {
         final XmlNSDescriptor defaultNSDescriptorInner = getDefaultNSDescriptorInner(namespace, strict);
 
         if (isGeneratedFromDtd(defaultNSDescriptorInner)) {
-          return new CachedValueProvider.Result<XmlNSDescriptor>(defaultNSDescriptorInner, XmlDocumentImpl.this, ExternalResourceManager.getInstance());
+          return new CachedValueProvider.Result<>(defaultNSDescriptorInner, this, ExternalResourceManager.getInstance());
         }
 
-        return new CachedValueProvider.Result<XmlNSDescriptor>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
-                                                                     ? defaultNSDescriptorInner.getDependences()
-                                                                     : ExternalResourceManager.getInstance());
+        return new CachedValueProvider.Result<>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
+                                                                          ? defaultNSDescriptorInner.getDependences()
+                                                                          : ExternalResourceManager.getInstance());
       }));
     }
     return cachedValue.getValue();
@@ -365,10 +365,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   @NotNull
   @Override
   public CompositePsiElement clone() {
-    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<>(
       myDefaultDescriptorsCacheStrict
     );
-    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<>(
       myDefaultDescriptorsCacheNotStrict
     );
     final XmlDocumentImpl copy = (XmlDocumentImpl) super.clone();
@@ -378,10 +378,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
   @Override
   public PsiElement copy() {
-    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheStrict = new HashMap<>(
       myDefaultDescriptorsCacheStrict
     );
-    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<String, CachedValue<XmlNSDescriptor>>(
+    HashMap<String, CachedValue<XmlNSDescriptor>> cacheNotStrict = new HashMap<>(
       myDefaultDescriptorsCacheNotStrict
     );
     final XmlDocumentImpl copy = (XmlDocumentImpl)super.copy();
@@ -417,7 +417,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void dumpStatistics(){
     System.out.println("Statistics:");
-    final TObjectIntHashMap<Object> map = new TObjectIntHashMap<Object>();
+    final TObjectIntHashMap<Object> map = new TObjectIntHashMap<>();
 
     final PsiElementVisitor psiRecursiveElementVisitor = new XmlRecursiveElementVisitor(){
       @NonNls private static final String TOKENS_KEY = "Tokens";

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
@@ -21,6 +36,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
     myDelegate = delegate;
   }
 
+  @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, final MatchContext matchContext) {
     if (patternNode == null || matchedNode == null || matchedNode.getClass() == patternNode.getClass()) {
       return myDelegate.match(patternNode, matchedNode, matchContext);
@@ -40,8 +56,12 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   }
 
   @Override
-  public boolean canMatch(PsiElement patternNode, PsiElement matchedNode) {
-    return myDelegate.canMatch(patternNode, matchedNode);
+  public boolean canMatch(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+    final PsiElement newPatternNode = skipNodeIfNeccessary(patternNode);
+    if (newPatternNode != patternNode) {
+      return context.getPattern().getHandler(newPatternNode).canMatch(newPatternNode, matchedNode, context);
+    }
+    return myDelegate.canMatch(patternNode, matchedNode, context);
   }
 
   @Override
@@ -49,6 +69,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
     return myDelegate.matchSequentially(nodes, nodes2, context);
   }
 
+  @Override
   public boolean match(PsiElement patternNode,
                        PsiElement matchedNode,
                        final int start,
@@ -68,6 +89,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
     return myDelegate.match(patternNode, matchedNode, start, end, context);
   }
 
+  @Override
   protected boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
     return myDelegate.isMatchSequentiallySucceeded(nodes2);
   }
@@ -77,6 +99,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
     return true;
   }
 
+  @Override
   public MatchingHandler getDelegate() {
     return myDelegate;
   }

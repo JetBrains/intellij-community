@@ -23,8 +23,8 @@ import com.intellij.util.messages.Topic;
 import java.util.List;
 
 public interface VcsConfigurationChangeListener {
-  Topic<Notification> BRANCHES_CHANGED = new Topic<Notification>("branch mapping changed", Notification.class);
-  Topic<DetailedNotification> BRANCHES_CHANGED_RESPONSE = new Topic<DetailedNotification>("branch mapping changed (detailed)", DetailedNotification.class);
+  Topic<Notification> BRANCHES_CHANGED = new Topic<>("branch mapping changed", Notification.class);
+  Topic<DetailedNotification> BRANCHES_CHANGED_RESPONSE = new Topic<>("branch mapping changed (detailed)", DetailedNotification.class);
 
   interface Notification {
     void execute(final Project project, final VirtualFile vcsRoot);

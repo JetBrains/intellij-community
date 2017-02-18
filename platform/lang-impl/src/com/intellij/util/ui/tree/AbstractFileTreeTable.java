@@ -72,7 +72,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
                                @NotNull VirtualFileFilter filter,
                                boolean showProjectNode,
                                boolean showContentFilesOnly) {
-    super(new MyModel<T>(project, valueClass, valueTitle, showContentFilesOnly ? new ProjectContentFileFilter(project, filter) : filter));
+    super(new MyModel<>(project, valueClass, valueTitle, showContentFilesOnly ? new ProjectContentFileFilter(project, filter) : filter));
     myProject = project;
 
     //noinspection unchecked
@@ -174,7 +174,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
 
   public boolean clearSubdirectoriesOnDemandOrCancel(final VirtualFile parent, final String message, final String title) {
     Map<VirtualFile, T> mappings = myModel.myCurrentMapping;
-    Map<VirtualFile, T> subdirectoryMappings = new THashMap<VirtualFile, T>();
+    Map<VirtualFile, T> subdirectoryMappings = new THashMap<>();
     for (VirtualFile file : mappings.keySet()) {
       if (file != null && (parent == null || VfsUtilCore.isAncestor(parent, file, true))) {
         subdirectoryMappings.put(file, mappings.get(file));
@@ -242,7 +242,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   }
 
   private static class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
-    private final Map<VirtualFile, T> myCurrentMapping = new HashMap<VirtualFile, T>();
+    private final Map<VirtualFile, T> myCurrentMapping = new HashMap<>();
     private final Class<T> myValueClass;
     private final String myValueTitle;
     private AbstractFileTreeTable<T> myTreeTable;
@@ -254,7 +254,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
 
     private Map<VirtualFile, T> getValues() {
-      return new HashMap<VirtualFile, T>(myCurrentMapping);
+      return new HashMap<>(myCurrentMapping);
     }
 
     @Override
@@ -418,7 +418,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     private void init() {
       if (getUserObject() == null) {
         setUserObject(myObject);
-        final List<ConvenientNode> children = new ArrayList<ConvenientNode>();
+        final List<ConvenientNode> children = new ArrayList<>();
         appendChildrenTo(children);
         Collections.sort(children, (node1, node2) -> {
           Object o1 = node1.getObject();

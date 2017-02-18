@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class Range<T extends Comparable<T>> {
 
-  private final T myFrom;
-  private final T myTo;
+  @NotNull private final T myFrom;
+  @NotNull private final T myTo;
 
 
   public Range(@NotNull final T from, @NotNull final T to) {
@@ -29,15 +29,16 @@ public class Range<T extends Comparable<T>> {
     myTo = to;
   }
 
-  public boolean isWithin(T object) {
+  public boolean isWithin(@NotNull T object) {
     return object.compareTo(myFrom) >= 0 && object.compareTo(myTo) <= 0;
   }
 
-
+  @NotNull
   public T getFrom() {
     return myFrom;
   }
 
+  @NotNull
   public T getTo() {
     return myTo;
   }
@@ -45,5 +46,26 @@ public class Range<T extends Comparable<T>> {
   @Override
   public String toString() {
     return "(" + myFrom + "," + myTo + ")";
+  }
+
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Range<?> range = (Range<?>)o;
+
+    if (!myFrom.equals(range.myFrom)) return false;
+    if (!myTo.equals(range.myTo)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myFrom.hashCode();
+    result = 31 * result + myTo.hashCode();
+    return result;
   }
 }

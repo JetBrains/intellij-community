@@ -158,7 +158,7 @@ public class HgCommandExecutor {
 
     logCommand(operation, arguments);
 
-    final List<String> cmdLine = new LinkedList<String>();
+    final List<String> cmdLine = new LinkedList<>();
     cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
     if (repo != null) {
       cmdLine.add("--repository");

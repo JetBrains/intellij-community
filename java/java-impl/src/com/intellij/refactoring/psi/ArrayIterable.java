@@ -26,6 +26,6 @@ class ArrayIterable<T> implements Iterable<T>
     }
 
     public Iterator<T> iterator(){
-        return new ArrayIterator<T>(contents);
+        return new ArrayIterator<>(contents);
     }
 }

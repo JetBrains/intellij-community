@@ -37,7 +37,7 @@ public class CaretModelWindow implements CaretModel {
   private final CaretModel myDelegate;
   private final EditorEx myHostEditor;
   private final EditorWindow myEditorWindow;
-  private final Map<Caret, InjectedCaret> myInjectedCaretMap = new WeakHashMap<Caret, InjectedCaret>();
+  private final Map<Caret, InjectedCaret> myInjectedCaretMap = new WeakHashMap<>();
 
   public CaretModelWindow(CaretModel delegate, EditorWindow editorWindow) {
     myDelegate = delegate;
@@ -101,7 +101,7 @@ public class CaretModelWindow implements CaretModel {
     return myDelegate.isUpToDate();
   }
 
-  private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<CaretListener>();
+  private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<>();
   @Override
   public void addCaretListener(@NotNull final CaretListener listener) {
     CaretListener wrapper = new CaretAdapter() {
@@ -174,7 +174,7 @@ public class CaretModelWindow implements CaretModel {
   @Override
   public List<Caret> getAllCarets() {
     List<Caret> hostCarets = myDelegate.getAllCarets();
-    List<Caret> carets = new ArrayList<Caret>(hostCarets.size());
+    List<Caret> carets = new ArrayList<>(hostCarets.size());
     for (Caret hostCaret : hostCarets) {
       carets.add(createInjectedCaret(hostCaret));
     }
@@ -229,7 +229,7 @@ public class CaretModelWindow implements CaretModel {
   }
 
   private List<CaretState> convertCaretStates(List<CaretState> caretStates) {
-    List<CaretState> convertedStates = new ArrayList<CaretState>(caretStates.size());
+    List<CaretState> convertedStates = new ArrayList<>(caretStates.size());
     for (CaretState state : caretStates) {
       convertedStates.add(new CaretState(injectedToHost(state.getCaretPosition()),
                                          injectedToHost(state.getSelectionStart()),
@@ -246,7 +246,7 @@ public class CaretModelWindow implements CaretModel {
   @Override
   public List<CaretState> getCaretsAndSelections() {
     List<CaretState> caretsAndSelections = myDelegate.getCaretsAndSelections();
-    List<CaretState> convertedStates = new ArrayList<CaretState>(caretsAndSelections.size());
+    List<CaretState> convertedStates = new ArrayList<>(caretsAndSelections.size());
     for (CaretState state : caretsAndSelections) {
       convertedStates.add(new CaretState(hostToInjected(state.getCaretPosition()),
                                          hostToInjected(state.getSelectionStart()),

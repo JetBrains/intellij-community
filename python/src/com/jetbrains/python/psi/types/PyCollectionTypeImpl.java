@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
@@ -77,20 +78,13 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PyCollectionType)) return false;
+    if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
 
-    PyCollectionType type = (PyCollectionType)o;
+    final PyCollectionTypeImpl that = (PyCollectionTypeImpl)o;
 
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myClass.getProject());
-    final List<PyType> otherElementTypes = type.getElementTypes(context);
-    if (myElementTypes.size() != otherElementTypes.size()) return false;
-    for (int i = 0; i < myElementTypes.size(); i++) {
-      final PyType elementType = myElementTypes.get(i);
-      final PyType otherElementType = otherElementTypes.get(i);
-      if (elementType == null && otherElementType != null) return false;
-      if (elementType != null && !elementType.equals(otherElementType)) return false;
-    }
+    if (!myElementTypes.equals(that.myElementTypes)) return false;
+
     return true;
   }
 
@@ -102,5 +96,12 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
       result += type != null ? type.hashCode() : 0;
     }
     return result;
+  }
+
+  @Nullable
+  @Override
+  public PyType getIteratedItemType() {
+    // TODO: Select the parameter type that matches T in Iterable[T]
+    return ContainerUtil.getFirstItem(myElementTypes);
   }
 }

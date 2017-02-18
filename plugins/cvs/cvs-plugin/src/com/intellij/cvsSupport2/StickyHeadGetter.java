@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ public abstract class StickyHeadGetter {
                                        final String name,
                                        final Convertor<CvsRevisionNumber, Boolean> chooser) {
     final LocalPathIndifferentLogOperation operation = new LocalPathIndifferentLogOperation(new File(parent.getPath(), name));
-    final Ref<Boolean> logSuccess = new Ref<Boolean>(Boolean.TRUE);
+    final Ref<Boolean> logSuccess = new Ref<>(Boolean.TRUE);
     final CvsExecutionEnvironment cvsExecutionEnvironment = new CvsExecutionEnvironment(new CvsMessagesAdapter(),
       CvsExecutionEnvironment.DUMMY_STOPPER, new ErrorProcessor() {
       public void addError(VcsException ex) {
@@ -141,10 +141,7 @@ public abstract class StickyHeadGetter {
       //operation.login(context);
       operation.execute(cvsExecutionEnvironment, false);
     }
-    catch (VcsException e) {
-      //
-    }
-    catch (CommandAbortedException e) {
+    catch (VcsException | CommandAbortedException e) {
       //
     }
     if (Boolean.TRUE.equals(logSuccess.get())) {

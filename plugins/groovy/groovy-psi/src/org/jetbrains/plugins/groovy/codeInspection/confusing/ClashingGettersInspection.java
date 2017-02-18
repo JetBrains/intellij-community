@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,10 +65,10 @@ public class ClashingGettersInspection extends BaseInspection {
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
         super.visitTypeDefinition(typeDefinition);
 
-        Map<String, PsiMethod> getters = new HashMap<String, PsiMethod>();
+        Map<String, PsiMethod> getters = new HashMap<>();
         for (PsiMethod method : typeDefinition.getMethods()) {
           final String methodName = method.getName();
           if (!GroovyPropertyUtils.isSimplePropertyGetter(method)) continue;
@@ -98,7 +98,7 @@ public class ClashingGettersInspection extends BaseInspection {
   private static Pair<PsiElement, String> getGetterDescription(PsiMethod getter) {
     final String name = getter.getName();
     if (getter instanceof GrGdkMethod) {
-      return new Pair<PsiElement, String>(null, "GDK method '" + name + "'");
+      return new Pair<>(null, "GDK method '" + name + "'");
     }
     else if (getter instanceof GrReflectedMethod) {
       getter = ((GrReflectedMethod)getter).getBaseMethod();
@@ -114,7 +114,7 @@ public class ClashingGettersInspection extends BaseInspection {
       final String info = PsiFormatUtil
         .formatMethod(getter, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                       PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-      return new Pair<PsiElement, String>(null, "method " + info);
+      return new Pair<>(null, "method " + info);
     }
   }
 }

@@ -44,14 +44,14 @@ abstract class ThreadLocalAnnotatorMap<K, V> {
   private final ThreadLocal<VersionedMap<K, V>> CACHE = new ThreadLocal<VersionedMap<K, V>>(){
     @Override
     protected VersionedMap<K, V> initialValue() {
-      return new VersionedMap<K, V>(version);
+      return new VersionedMap<>(version);
     }
   };
 
   @SuppressWarnings("unchecked")
   @NotNull
   private List<V> cloneTemplates(@NotNull Collection<V> templates) {
-    List<V> result = new ArrayList<V>(templates.size());
+    List<V> result = new ArrayList<>(templates.size());
     PicoContainer container = ApplicationManager.getApplication().getPicoContainer();
     for (V template : templates) {
       Class<? extends V> aClass = (Class<? extends V>)template.getClass();

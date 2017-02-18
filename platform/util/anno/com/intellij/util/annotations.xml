@@ -12,9 +12,6 @@
   <item name="com.intellij.util.PairConsumer">
     <annotation name="java.lang.FunctionalInterface" />
   </item>
-  <item name="com.intellij.util.PairConvertor">
-    <annotation name="java.lang.FunctionalInterface" />
-  </item>
   <item name="com.intellij.util.PairFunction">
     <annotation name="java.lang.FunctionalInterface" />
   </item>
@@ -34,9 +31,6 @@
     <annotation name="java.lang.FunctionalInterface" />
   </item>
   <item name="com.intellij.util.ThrowableConvertor">
-    <annotation name="java.lang.FunctionalInterface" />
-  </item>
-  <item name="com.intellij.util.ThrowablePairConsumer">
     <annotation name="java.lang.FunctionalInterface" />
   </item>
   <item name="com.intellij.util.ThrowableRunnable">

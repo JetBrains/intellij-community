@@ -53,11 +53,12 @@ public class GdkMethodHolder {
   private GdkMethodHolder(final PsiClass categoryClass, final boolean isStatic, final GlobalSearchScope scope) {
     myStatic = isStatic;
     myScope = scope;
-    final MultiMap<String, PsiMethod> byName = new MultiMap<String, PsiMethod>();
+    final MultiMap<String, PsiMethod> byName = new MultiMap<>();
     myPsiManager = categoryClass.getManager();
     for (PsiMethod m : categoryClass.getMethods()) {
       final PsiParameter[] params = m.getParameterList().getParameters();
       if (params.length == 0) continue;
+      if (!m.hasModifierProperty(PsiModifier.PUBLIC)) continue;
       if (PsiImplUtil.isDeprecatedByAnnotation(m) || PsiImplUtil.isDeprecatedByDocTag(m)) {
         continue;
       }
@@ -67,9 +68,8 @@ public class GdkMethodHolder {
       @NotNull
       @Override
       protected MultiMap<String, PsiMethod> compute() {
-        MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
+        MultiMap<String, PsiMethod> map = new MultiMap<>();
         for (PsiMethod method : byName.values()) {
-          if (!method.hasModifierProperty(PsiModifier.PUBLIC)) continue;
           map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
         }
         return map;
@@ -79,7 +79,7 @@ public class GdkMethodHolder {
     myOriginalMethodsByNameAndType = new ConcurrentFactoryMap<String, MultiMap<String, PsiMethod>>() {
       @Override
       protected MultiMap<String, PsiMethod> create(String name) {
-        MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
+        MultiMap<String, PsiMethod> map = new MultiMap<>();
         for (PsiMethod method : byName.get(name)) {
           map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
         }

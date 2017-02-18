@@ -30,7 +30,7 @@ import java.util.List;
 
 public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>,
                                       Member extends PsiElement> {
-  public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<PushDownDelegate>("com.intellij.refactoring.pushDown");
+  public static final LanguageExtension<PushDownDelegate> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.pushDown");
 
   @Nullable
   protected static <MemberInfo extends MemberInfoBase<Member>, Member extends PsiElement> PushDownDelegate<MemberInfo, Member> findDelegate(@NotNull PsiElement sourceClass) {
@@ -79,7 +79,7 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
    * e.g. check if target class already has field with the same name, some references types
    * won't be accessible anymore, etc
    *
-   * If <code>targetClass == null</code> (target class should be created), then subClassData would be not null
+   * If {@code targetClass == null} (target class should be created), then subClassData would be not null
    */
   protected abstract void checkTargetClassConflicts(@Nullable PsiElement targetClass,
                                                     PushDownData<MemberInfo, Member> pushDownData,
@@ -120,7 +120,7 @@ public abstract class PushDownDelegate<MemberInfo extends MemberInfoBase<Member>
   }
 
   /**
-   * Create sub class with <code>subClassData.getNewClassName()</code> in the specified context if no inheritors were found
+   * Create sub class with {@code subClassData.getNewClassName()} in the specified context if no inheritors were found
    */
   @Nullable
   protected PsiElement createSubClass(PsiElement aClass, NewSubClassData subClassData) {

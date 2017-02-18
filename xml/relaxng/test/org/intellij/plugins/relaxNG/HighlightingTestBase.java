@@ -176,8 +176,6 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
       Pass.POPUP_HINTS,
       Pass.UPDATE_ALL,
       Pass.UPDATE_FOLDING,
-      Pass.UPDATE_OVERRIDDEN_MARKERS,
-      Pass.VISIBLE_LINE_MARKERS,
     } : new int[]{Pass.EXTERNAL_TOOLS};
     return CodeInsightTestFixtureImpl.instantiateAndRun(myTestFixture.getFile(), editor, ignore, false);
   }

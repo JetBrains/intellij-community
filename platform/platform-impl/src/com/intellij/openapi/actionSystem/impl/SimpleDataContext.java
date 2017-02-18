@@ -29,7 +29,7 @@ public class SimpleDataContext implements DataContext {
   private final DataContext myParent;
 
   private SimpleDataContext(String dataId, Object data, DataContext parent) {
-    myDataId2Data = new HashMap<String, Object>(1);
+    myDataId2Data = new HashMap<>(1);
     myDataId2Data.put(dataId, data);
     myParent = parent;
   }

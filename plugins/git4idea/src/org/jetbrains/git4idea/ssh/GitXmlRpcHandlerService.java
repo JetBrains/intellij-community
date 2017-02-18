@@ -58,7 +58,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   @Nullable private File myScriptPath;
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
-  @NotNull private final THashMap<UUID, T> handlers = new THashMap<UUID, T>();
+  @NotNull private final THashMap<UUID, T> handlers = new THashMap<>();
   @NotNull private final Object HANDLERS_LOCK = new Object();
 
   /**

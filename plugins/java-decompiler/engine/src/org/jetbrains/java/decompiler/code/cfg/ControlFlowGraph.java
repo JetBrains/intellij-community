@@ -47,7 +47,7 @@ public class ControlFlowGraph implements CodeConstants {
 
   private Map<BasicBlock, BasicBlock> subroutines;
 
-  private Set<BasicBlock> finallyExits = new HashSet<BasicBlock>();
+  private Set<BasicBlock> finallyExits = new HashSet<>();
 
   // *****************************************************************************
   // constructors
@@ -225,7 +225,7 @@ public class ControlFlowGraph implements CodeConstants {
 
     short[] states = findStartInstructions(instrseq);
 
-    Map<Integer, BasicBlock> mapInstrBlocks = new HashMap<Integer, BasicBlock>();
+    Map<Integer, BasicBlock> mapInstrBlocks = new HashMap<>();
     VBStyleCollection<BasicBlock, Integer> colBlocks = createBasicBlocks(states, instrseq, mapInstrBlocks);
 
     blocks = colBlocks;
@@ -244,7 +244,7 @@ public class ControlFlowGraph implements CodeConstants {
     int len = seq.length();
     short[] inststates = new short[len];
 
-    Set<Integer> excSet = new HashSet<Integer>();
+    Set<Integer> excSet = new HashSet<>();
 
     for (ExceptionHandler handler : seq.getExceptionTable().getHandlers()) {
       excSet.add(handler.from_instr);
@@ -293,7 +293,7 @@ public class ControlFlowGraph implements CodeConstants {
                                                                    InstructionSequence instrseq,
                                                                    Map<Integer, BasicBlock> mapInstrBlocks) {
 
-    VBStyleCollection<BasicBlock, Integer> col = new VBStyleCollection<BasicBlock, Integer>();
+    VBStyleCollection<BasicBlock, Integer> col = new VBStyleCollection<>();
 
     InstructionSequence currseq = null;
     List<Integer> lstOffs = null;
@@ -367,9 +367,9 @@ public class ControlFlowGraph implements CodeConstants {
 
   private void setExceptionEdges(InstructionSequence instrseq, Map<Integer, BasicBlock> instrBlocks) {
 
-    exceptions = new ArrayList<ExceptionRangeCFG>();
+    exceptions = new ArrayList<>();
 
-    Map<String, ExceptionRangeCFG> mapRanges = new HashMap<String, ExceptionRangeCFG>();
+    Map<String, ExceptionRangeCFG> mapRanges = new HashMap<>();
 
     for (ExceptionHandler handler : instrseq.getExceptionTable().getHandlers()) {
 
@@ -385,7 +385,7 @@ public class ControlFlowGraph implements CodeConstants {
       }
       else {
 
-        List<BasicBlock> protectedRange = new ArrayList<BasicBlock>();
+        List<BasicBlock> protectedRange = new ArrayList<>();
         for (int j = from.id; j < to.id; j++) {
           BasicBlock block = blocks.getWithKey(j);
           protectedRange.add(block);
@@ -404,19 +404,19 @@ public class ControlFlowGraph implements CodeConstants {
 
   private void setSubroutineEdges() {
 
-    final Map<BasicBlock, BasicBlock> subroutines = new HashMap<BasicBlock, BasicBlock>();
+    final Map<BasicBlock, BasicBlock> subroutines = new HashMap<>();
 
     for (BasicBlock block : blocks) {
 
       if (block.getSeq().getLastInstr().opcode == CodeConstants.opc_jsr) {
 
-        LinkedList<BasicBlock> stack = new LinkedList<BasicBlock>();
-        LinkedList<LinkedList<BasicBlock>> stackJsrStacks = new LinkedList<LinkedList<BasicBlock>>();
+        LinkedList<BasicBlock> stack = new LinkedList<>();
+        LinkedList<LinkedList<BasicBlock>> stackJsrStacks = new LinkedList<>();
 
-        Set<BasicBlock> setVisited = new HashSet<BasicBlock>();
+        Set<BasicBlock> setVisited = new HashSet<>();
 
         stack.add(block);
-        stackJsrStacks.add(new LinkedList<BasicBlock>());
+        stackJsrStacks.add(new LinkedList<>());
 
         while (!stack.isEmpty()) {
 
@@ -449,7 +449,7 @@ public class ControlFlowGraph implements CodeConstants {
             for (BasicBlock succ : node.getSuccs()) {
               if (!setVisited.contains(succ)) {
                 stack.add(succ);
-                stackJsrStacks.add(new LinkedList<BasicBlock>(jsrstack));
+                stackJsrStacks.add(new LinkedList<>(jsrstack));
               }
             }
           }
@@ -480,7 +480,7 @@ public class ControlFlowGraph implements CodeConstants {
 
   private int processJsrRanges() {
 
-    List<JsrRecord> lstJsrAll = new ArrayList<JsrRecord>();
+    List<JsrRecord> lstJsrAll = new ArrayList<>();
 
     // get all jsr ranges
     for (Entry<BasicBlock, BasicBlock> ent : subroutines.entrySet()) {
@@ -492,7 +492,7 @@ public class ControlFlowGraph implements CodeConstants {
 
     // sort ranges
     // FIXME: better sort order
-    List<JsrRecord> lstJsr = new ArrayList<JsrRecord>();
+    List<JsrRecord> lstJsr = new ArrayList<>();
     for (JsrRecord arr : lstJsrAll) {
       int i = 0;
       for (; i < lstJsr.size(); i++) {
@@ -514,7 +514,7 @@ public class ControlFlowGraph implements CodeConstants {
         Set<BasicBlock> set1 = arr1.range;
 
         if (!set.contains(arr1.jsr) && !set1.contains(arr.jsr)) { // rang 0 doesn't contain entry 1 and vice versa
-          Set<BasicBlock> setc = new HashSet<BasicBlock>(set);
+          Set<BasicBlock> setc = new HashSet<>(set);
           setc.retainAll(set1);
 
           if (!setc.isEmpty()) {
@@ -530,9 +530,9 @@ public class ControlFlowGraph implements CodeConstants {
 
   private Set<BasicBlock> getJsrRange(BasicBlock jsr, BasicBlock ret) {
 
-    Set<BasicBlock> blocks = new HashSet<BasicBlock>();
+    Set<BasicBlock> blocks = new HashSet<>();
 
-    List<BasicBlock> lstNodes = new LinkedList<BasicBlock>();
+    List<BasicBlock> lstNodes = new LinkedList<>();
     lstNodes.add(jsr);
 
     BasicBlock dom = jsr.getSuccs().get(0);
@@ -594,8 +594,8 @@ public class ControlFlowGraph implements CodeConstants {
 
   private void splitJsrRange(BasicBlock jsr, BasicBlock ret, Set<BasicBlock> common_blocks) {
 
-    List<BasicBlock> lstNodes = new LinkedList<BasicBlock>();
-    Map<Integer, BasicBlock> mapNewNodes = new HashMap<Integer, BasicBlock>();
+    List<BasicBlock> lstNodes = new LinkedList<>();
+    Map<Integer, BasicBlock> mapNewNodes = new HashMap<>();
 
     lstNodes.add(jsr);
     mapNewNodes.put(jsr.id, jsr);
@@ -680,14 +680,14 @@ public class ControlFlowGraph implements CodeConstants {
       ExceptionRangeCFG range = exceptions.get(i);
       List<BasicBlock> lstRange = range.getProtectedRange();
 
-      HashSet<BasicBlock> setBoth = new HashSet<BasicBlock>(common_blocks);
+      HashSet<BasicBlock> setBoth = new HashSet<>(common_blocks);
       setBoth.retainAll(lstRange);
 
       if (setBoth.size() > 0) {
         List<BasicBlock> lstNewRange;
 
         if (setBoth.size() == lstRange.size()) {
-          lstNewRange = new ArrayList<BasicBlock>();
+          lstNewRange = new ArrayList<>();
           ExceptionRangeCFG newRange = new ExceptionRangeCFG(lstNewRange,
                                                              mapNewNodes.get(range.getHandler().id), range.getExceptionTypes());
           exceptions.add(newRange);
@@ -751,7 +751,7 @@ public class ControlFlowGraph implements CodeConstants {
       if (suc.mark != 1) {
 
         DataPoint point = new DataPoint();
-        point.setLocalVariables(new ArrayList<VarType>(data.getLocalVariables()));
+        point.setLocalVariables(new ArrayList<>(data.getLocalVariables()));
         point.getStack().push(new VarType(CodeConstants.TYPE_OBJECT, 0, null));
 
         removeJsrInstructions(pool, suc, point);
@@ -774,7 +774,7 @@ public class ControlFlowGraph implements CodeConstants {
 
   public List<BasicBlock> getReversePostOrder() {
 
-    List<BasicBlock> res = new LinkedList<BasicBlock>();
+    List<BasicBlock> res = new LinkedList<>();
     addToReversePostOrderListIterative(first, res);
 
     return res;
@@ -782,10 +782,10 @@ public class ControlFlowGraph implements CodeConstants {
 
   private static void addToReversePostOrderListIterative(BasicBlock root, List<BasicBlock> lst) {
 
-    LinkedList<BasicBlock> stackNode = new LinkedList<BasicBlock>();
-    LinkedList<Integer> stackIndex = new LinkedList<Integer>();
+    LinkedList<BasicBlock> stackNode = new LinkedList<>();
+    LinkedList<Integer> stackIndex = new LinkedList<>();
 
-    Set<BasicBlock> setVisited = new HashSet<BasicBlock>();
+    Set<BasicBlock> setVisited = new HashSet<>();
 
     stackNode.add(root);
     stackIndex.add(0);
@@ -797,7 +797,7 @@ public class ControlFlowGraph implements CodeConstants {
 
       setVisited.add(node);
 
-      List<BasicBlock> lstSuccs = new ArrayList<BasicBlock>(node.getSuccs());
+      List<BasicBlock> lstSuccs = new ArrayList<>(node.getSuccs());
       lstSuccs.addAll(node.getSuccExceptions());
 
       for (; index < lstSuccs.size(); index++) {

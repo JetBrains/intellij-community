@@ -39,7 +39,7 @@ import java.util.List;
  */
 public interface Rearranger<E extends ArrangementEntry> {
 
-  LanguageExtension<Rearranger<?>> EXTENSION = new LanguageExtension<Rearranger<?>>("com.intellij.lang.rearranger");
+  LanguageExtension<Rearranger<?>> EXTENSION = new LanguageExtension<>("com.intellij.lang.rearranger");
 
   /**
    * Tries to wrap given element into arrangement entry at the target context.
@@ -53,7 +53,7 @@ public interface Rearranger<E extends ArrangementEntry> {
    *                  in order to build method dependency graph if no such grouping rule is defined
    * @return          arrangement entry for the given element if it's possible to perform the mapping and list of arrangement entries
    *                  available at the given context plus newly created entry for the given element;
-   *                  <code>null</code> otherwise
+   *                  {@code null} otherwise
    */
   @Nullable
   Pair<E, List<E>> parseWithNew(@NotNull PsiElement root,

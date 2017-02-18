@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ import java.util.*;
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameProcessor");
 
-  protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<PsiElement, String>();
+  protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<>();
 
   private @NotNull PsiElement myPrimaryElement;
   private String myNewName = null;
@@ -75,9 +75,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private String myCommandName;
 
   private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
-  private final List<AutomaticRenamerFactory> myRenamerFactories = new ArrayList<AutomaticRenamerFactory>();
-  private final List<AutomaticRenamer> myRenamers = new ArrayList<AutomaticRenamer>();
-  private final List<UnresolvableCollisionUsageInfo> mySkippedUsages = new ArrayList<UnresolvableCollisionUsageInfo>();
+  private final List<AutomaticRenamerFactory> myRenamerFactories = new ArrayList<>();
+  private final List<AutomaticRenamer> myRenamers = new ArrayList<>();
+  private final List<UnresolvableCollisionUsageInfo> mySkippedUsages = new ArrayList<>();
 
   public RenameProcessor(Project project,
                          @NotNull PsiElement element,
@@ -141,7 +141,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   @Override
   public boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
     RenameUtil.addConflictDescriptions(usagesIn, conflicts);
     RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts, myAllRenames);
@@ -162,10 +162,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final List<UsageInfo> variableUsages = new ArrayList<UsageInfo>();
+    final List<UsageInfo> variableUsages = new ArrayList<>();
     if (!myRenamers.isEmpty()) {
       if (!findRenamedVariables(variableUsages)) return false;
-      final LinkedHashMap<PsiElement, String> renames = new LinkedHashMap<PsiElement, String>();
+      final LinkedHashMap<PsiElement, String> renames = new LinkedHashMap<>();
       for (final AutomaticRenamer renamer : myRenamers) {
         final List<? extends PsiNamedElement> variables = renamer.getElements();
         for (final PsiNamedElement variable : variables) {
@@ -198,6 +198,26 @@ public class RenameProcessor extends BaseRefactoringProcessor {
           return false;
         }
       }
+    }
+
+    final int[] choice = myAllRenames.size() > 1 ? new int[]{-1} : null;
+    try {
+      for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<PsiElement, String> entry = iterator.next();
+        if (entry.getKey() instanceof PsiFile) {
+          final PsiFile file = (PsiFile)entry.getKey();
+          final PsiDirectory containingDirectory = file.getContainingDirectory();
+          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(), "Rename")) {
+            iterator.remove();
+            continue;
+          }
+        }
+        RenameUtil.checkRename(entry.getKey(), entry.getValue());
+      }
+    }
+    catch (IncorrectOperationException e) {
+      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), getHelpID(), myProject);
+      return false;
     }
 
     final Set<UsageInfo> usagesSet = ContainerUtil.newLinkedHashSet(usagesIn);
@@ -272,9 +292,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   @NotNull
   public UsageInfo[] findUsages() {
     myRenamers.clear();
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
 
-    List<PsiElement> elements = new ArrayList<PsiElement>(myAllRenames.keySet());
+    List<PsiElement> elements = new ArrayList<>(myAllRenames.keySet());
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
@@ -310,7 +330,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myPrimaryElement = elements[0];
 
     final Iterator<String> newNames = myAllRenames.values().iterator();
-    LinkedHashMap<PsiElement, String> newAllRenames = new LinkedHashMap<PsiElement, String>();
+    LinkedHashMap<PsiElement, String> newAllRenames = new LinkedHashMap<>();
     for (PsiElement resolved : elements) {
       newAllRenames.put(resolved, newNames.next());
     }
@@ -350,32 +370,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   @Override
   public void performRefactoring(@NotNull UsageInfo[] usages) {
-    final int[] choice = myAllRenames.size() > 1 ? new int[]{-1} : null;
-    String message = null;
-    try {
-      for (Iterator<Map.Entry<PsiElement, String>> iterator = myAllRenames.entrySet().iterator(); iterator.hasNext(); ) {
-        Map.Entry<PsiElement, String> entry = iterator.next();
-        if (entry.getKey() instanceof PsiFile) {
-          final PsiFile file = (PsiFile)entry.getKey();
-          final PsiDirectory containingDirectory = file.getContainingDirectory();
-          if (CopyFilesOrDirectoriesHandler.checkFileExist(containingDirectory, choice, file, entry.getValue(), "Rename")) {
-            iterator.remove();
-            continue;
-          }
-        }
-        RenameUtil.checkRename(entry.getKey(), entry.getValue());
-      }
-    }
-    catch (IncorrectOperationException e) {
-      message = e.getMessage();
-    }
-
-    if (message != null) {
-      CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), message, getHelpID(), myProject);
-      return;
-    }
-
-    List<Runnable> postRenameCallbacks = new ArrayList<Runnable>();
+    List<Runnable> postRenameCallbacks = new ArrayList<>();
 
     final MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usages);
     for (final PsiElement element : myAllRenames.keySet()) {
@@ -401,7 +396,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       runnable.run();
     }
 
-    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<NonCodeUsageInfo>();
+    List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof NonCodeUsageInfo) {
         nonCodeUsages.add((NonCodeUsageInfo)usage);
@@ -442,7 +437,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public static MultiMap<PsiElement, UsageInfo> classifyUsages(Collection<? extends PsiElement> elements, UsageInfo[] usages) {
-    final MultiMap<PsiElement, UsageInfo> result = new MultiMap<PsiElement, UsageInfo>();
+    final MultiMap<PsiElement, UsageInfo> result = new MultiMap<>();
     for (UsageInfo usage : usages) {
       LOG.assertTrue(usage instanceof MoveRenameUsageInfo);
       if (usage.getReference() instanceof LightElement) {

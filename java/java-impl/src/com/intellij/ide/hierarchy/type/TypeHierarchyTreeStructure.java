@@ -51,7 +51,7 @@ public final class TypeHierarchyTreeStructure extends SubtypesHierarchyTreeStruc
     if (!aClass.isValid()) return PsiClass.EMPTY_ARRAY;
     if (aClass.isInterface()) return PsiClass.EMPTY_ARRAY;
 
-    final ArrayList<PsiClass> superClasses = new ArrayList<PsiClass>();
+    final ArrayList<PsiClass> superClasses = new ArrayList<>();
     while (!CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
       final PsiClass aClass1 = aClass;
       final PsiClass[] superTypes = aClass1.getSupers();

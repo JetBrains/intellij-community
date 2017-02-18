@@ -28,7 +28,7 @@ import java.util.Set;
  */
 public class StaticTextWhiteSpaceDefinitionStrategy extends AbstractWhiteSpaceFormattingStrategy {
 
-  private final Set<CharSequence> myWhiteSpaces = new HashSet<CharSequence>();
+  private final Set<CharSequence> myWhiteSpaces = new HashSet<>();
 
   public StaticTextWhiteSpaceDefinitionStrategy(@NotNull CharSequence ... whiteSpaces) {
     myWhiteSpaces.addAll(Arrays.asList(whiteSpaces));

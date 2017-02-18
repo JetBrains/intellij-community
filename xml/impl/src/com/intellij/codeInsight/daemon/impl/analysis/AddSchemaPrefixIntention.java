@@ -58,6 +58,11 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final XmlAttribute xmlns = getXmlnsDeclaration(element);
     if (xmlns == null) return;
@@ -79,8 +84,8 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
                                  }
                                });
       if (nsPrefix == null) return;
-      final List<XmlTag> tags = new ArrayList<XmlTag>();
-      final List<XmlAttributeValue> values = new ArrayList<XmlAttributeValue>();
+      final List<XmlTag> tags = new ArrayList<>();
+      final List<XmlAttributeValue> values = new ArrayList<>();
       new WriteCommandAction(project, NAME, tag.getContainingFile()) {
         @Override
         protected void run(@NotNull Result result) throws Throwable {

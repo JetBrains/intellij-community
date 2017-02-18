@@ -25,6 +25,10 @@ fun getBooleanUsage(key: String, value: Boolean): UsageDescriptor {
   return UsageDescriptor(key + if (value) ".enabled" else ".disabled", 1)
 }
 
+fun getEnumUsage(key: String, value: Enum<*>?): UsageDescriptor {
+  return UsageDescriptor(key + "." + value?.name?.toLowerCase(), 1)
+}
+
 /**
  * Constructs a proper UsageDescriptor for a counting value.
  * If one needs to know a number of some items in the project, there is no direct way to report usages per-project.

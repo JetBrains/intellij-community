@@ -53,7 +53,7 @@ public class FrameworkDetectionProcessor {
   public FrameworkDetectionProcessor(ProgressIndicator progressIndicator, final FrameworkDetectionContext context) {
     myProgressIndicator = progressIndicator;
     final FrameworkDetector[] detectors = FrameworkDetector.EP_NAME.getExtensions();
-    myDetectorsByFileType = new MultiMap<FileType, FrameworkDetectorData>();
+    myDetectorsByFileType = new MultiMap<>();
     for (FrameworkDetector detector : detectors) {
       myDetectorsByFileType.putValue(detector.getFileType(), new FrameworkDetectorData(detector));
     }
@@ -61,13 +61,13 @@ public class FrameworkDetectionProcessor {
   }
 
   public List<? extends DetectedFrameworkDescription> processRoots(List<File> roots) {
-    myProcessedFiles = new HashSet<VirtualFile>();
+    myProcessedFiles = new HashSet<>();
     for (File root : roots) {
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
       if (virtualFile == null) continue;
       collectSuitableFiles(virtualFile);
     }
-    List<DetectedFrameworkDescription> result = new ArrayList<DetectedFrameworkDescription>();
+    List<DetectedFrameworkDescription> result = new ArrayList<>();
     for (FrameworkDetectorData data : myDetectorsByFileType.values()) {
       result.addAll(data.myDetector.detect(data.mySuitableFiles, myContext));
     }
@@ -124,7 +124,7 @@ public class FrameworkDetectionProcessor {
   private static class FrameworkDetectorData {
     private final FrameworkDetector myDetector;
     private final ElementPattern<FileContent> myFilePattern;
-    private final List<VirtualFile> mySuitableFiles = new ArrayList<VirtualFile>();
+    private final List<VirtualFile> mySuitableFiles = new ArrayList<>();
 
     public FrameworkDetectorData(FrameworkDetector detector) {
       myDetector = detector;

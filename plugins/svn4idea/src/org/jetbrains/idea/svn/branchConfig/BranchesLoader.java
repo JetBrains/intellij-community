@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,12 +63,9 @@ public class BranchesLoader implements Runnable {
   public void run() {
     try {
       List<SvnBranchItem> branches = loadBranches();
-      myBunch.updateBranches(myRoot, myUrl, new InfoStorage<List<SvnBranchItem>>(branches, myInfoReliability));
+      myBunch.updateBranches(myRoot, myUrl, new InfoStorage<>(branches, myInfoReliability));
     }
-    catch (VcsException e) {
-      showError(e);
-    }
-    catch (SVNException e) {
+    catch (VcsException | SVNException e) {
       showError(e);
     }
   }
@@ -77,7 +74,7 @@ public class BranchesLoader implements Runnable {
   public List<SvnBranchItem> loadBranches() throws SVNException, VcsException {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     SVNURL branchesUrl = SVNURL.parseURIEncoded(myUrl);
-    List<SvnBranchItem> result = new LinkedList<SvnBranchItem>();
+    List<SvnBranchItem> result = new LinkedList<>();
     SvnTarget target = SvnTarget.fromURL(branchesUrl);
     DirectoryEntryConsumer handler = createConsumer(result);
 

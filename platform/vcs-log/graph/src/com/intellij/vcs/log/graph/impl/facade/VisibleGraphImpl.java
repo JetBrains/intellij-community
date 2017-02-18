@@ -24,7 +24,6 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNodeType;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
-import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
@@ -43,7 +42,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   @NotNull private final GraphColorManager<CommitId> myColorManager;
 
   private PrintElementManagerImpl myPrintElementManager;
-  private PrintElementGenerator myPrintElementGenerator;
+  private PrintElementGeneratorImpl myPrintElementGenerator;
   private boolean myShowLongEdges = false;
 
   public VisibleGraphImpl(@NotNull LinearGraphController graphController,
@@ -65,40 +64,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
   public RowInfo<CommitId> getRowInfo(final int visibleRow) {
     final int nodeId = myGraphController.getCompiledGraph().getNodeId(visibleRow);
     assert nodeId >= 0; // todo remake for all id
-    return new RowInfo<CommitId>() {
-      @NotNull
-      @Override
-      public CommitId getCommit() {
-        return myPermanentGraph.getPermanentCommitsInfo().getCommitId(nodeId);
-      }
-
-      @NotNull
-      @Override
-      public CommitId getOneOfHeads() {
-        int headNodeId = myPermanentGraph.getPermanentGraphLayout().getOneOfHeadNodeIndex(nodeId);
-        return myPermanentGraph.getPermanentCommitsInfo().getCommitId(headNodeId);
-      }
-
-      @NotNull
-      @Override
-      public Collection<? extends PrintElement> getPrintElements() {
-        return myPrintElementGenerator.getPrintElements(visibleRow);
-      }
-
-      @NotNull
-      @Override
-      public RowType getRowType() {
-        GraphNodeType nodeType = myGraphController.getCompiledGraph().getGraphNode(visibleRow).getType();
-        switch (nodeType) {
-          case USUAL:
-            return RowType.NORMAL;
-          case UNMATCHED:
-            return RowType.UNMATCHED;
-          default:
-            throw new UnsupportedOperationException("Unsupported node type: " + nodeType);
-        }
-      }
-    };
+    return new MyRowInfo(nodeId, visibleRow);
   }
 
   @Override
@@ -125,6 +91,10 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       .build(myGraphController.getCompiledGraph(), myPermanentGraph.getPermanentGraphLayout(), myPermanentGraph.getPermanentCommitsInfo(),
              myPermanentGraph.getLinearGraph().nodesCount(),
              myPermanentGraph.getBranchNodeIds());
+  }
+
+  public int getRecommendedWidth() {
+    return myPrintElementGenerator.getRecommendedWidth();
   }
 
   private class ActionControllerImpl implements ActionController<CommitId> {
@@ -163,13 +133,13 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
       if (action.getType() == GraphAction.Type.MOUSE_OVER) {
         myPrintElementManager.setSelectedElement(affectedElement);
-        return new GraphAnswerImpl<CommitId>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
-                                             false);
+        return new GraphAnswerImpl<>(getCursor(true), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
+                                     false);
       }
 
       if (action.getType() == GraphAction.Type.MOUSE_CLICK) {
-        return new GraphAnswerImpl<CommitId>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
-                                             true);
+        return new GraphAnswerImpl<>(getCursor(false), myPermanentGraph.getPermanentCommitsInfo().getCommitId(targetId), null,
+                                     true);
       }
 
       return null;
@@ -212,7 +182,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
     private GraphAnswer<CommitId> convert(@NotNull final LinearGraphController.LinearGraphAnswer answer) {
       final Runnable graphUpdater = answer.getGraphUpdater();
-      return new GraphAnswerImpl<CommitId>(answer.getCursorToSet(), null, graphUpdater == null ? null : new Runnable() {
+      return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : new Runnable() {
         @Override
         public void run() {
           graphUpdater.run();
@@ -278,6 +248,49 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @Override
     public Type getType() {
       return myType;
+    }
+  }
+
+  private class MyRowInfo implements RowInfo<CommitId> {
+    private final int myNodeId;
+    private final int myVisibleRow;
+
+    public MyRowInfo(int nodeId, int visibleRow) {
+      myNodeId = nodeId;
+      myVisibleRow = visibleRow;
+    }
+
+    @NotNull
+    @Override
+    public CommitId getCommit() {
+      return myPermanentGraph.getPermanentCommitsInfo().getCommitId(myNodeId);
+    }
+
+    @NotNull
+    @Override
+    public CommitId getOneOfHeads() {
+      int headNodeId = myPermanentGraph.getPermanentGraphLayout().getOneOfHeadNodeIndex(myNodeId);
+      return myPermanentGraph.getPermanentCommitsInfo().getCommitId(headNodeId);
+    }
+
+    @NotNull
+    @Override
+    public Collection<? extends PrintElement> getPrintElements() {
+      return myPrintElementGenerator.getPrintElements(myVisibleRow);
+    }
+
+    @NotNull
+    @Override
+    public RowType getRowType() {
+      GraphNodeType nodeType = myGraphController.getCompiledGraph().getGraphNode(myVisibleRow).getType();
+      switch (nodeType) {
+        case USUAL:
+          return RowType.NORMAL;
+        case UNMATCHED:
+          return RowType.UNMATCHED;
+        default:
+          throw new UnsupportedOperationException("Unsupported node type: " + nodeType);
+      }
     }
   }
 }

@@ -48,18 +48,18 @@ public class SimpleDiffChange {
   private int[] myLineStartShifts = new int[2];
   private int[] myLineEndShifts = new int[2];
 
-  // TODO: adjust color from inner fragments - configurable
   public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
-                          @NotNull LineFragment fragment) {
+                          @NotNull LineFragment fragment,
+                          @Nullable LineFragment previousFragment) {
     myViewer = viewer;
 
     myFragment = fragment;
     myInnerFragments = fragment.getInnerFragments();
 
-    installHighlighter();
+    installHighlighter(previousFragment);
   }
 
-  public void installHighlighter() {
+  public void installHighlighter(@Nullable LineFragment previousFragment) {
     assert myHighlighters.isEmpty();
 
     if (myInnerFragments != null) {
@@ -68,6 +68,8 @@ public class SimpleDiffChange {
     else {
       doInstallHighlighterSimple();
     }
+    doInstallNonSquashedChangesSeparator(previousFragment);
+
     doInstallActionHighlighters();
   }
 
@@ -100,6 +102,11 @@ public class SimpleDiffChange {
     }
   }
 
+  private void doInstallNonSquashedChangesSeparator(@Nullable LineFragment previousFragment) {
+    createNonSquashedChangesSeparator(previousFragment, Side.LEFT);
+    createNonSquashedChangesSeparator(previousFragment, Side.RIGHT);
+  }
+
   private void doInstallActionHighlighters() {
     myOperations.add(createOperation(Side.LEFT));
     myOperations.add(createOperation(Side.RIGHT));
@@ -113,7 +120,6 @@ public class SimpleDiffChange {
     int endLine = side.getEndLine(myFragment);
 
     myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored));
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(editor, startLine, endLine, type, false));
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
@@ -127,6 +133,22 @@ public class SimpleDiffChange {
 
     Editor editor = myViewer.getEditor(side);
     myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start, end, type));
+  }
+
+  private void createNonSquashedChangesSeparator(@Nullable LineFragment previousFragment, @NotNull Side side) {
+    if (previousFragment == null) return;
+
+    int startLine = side.getStartLine(myFragment);
+    int endLine = side.getEndLine(myFragment);
+
+    int prevStartLine = side.getStartLine(previousFragment);
+    int prevEndLine = side.getEndLine(previousFragment);
+
+    if (startLine == endLine) return;
+    if (prevStartLine == prevEndLine) return;
+    if (prevEndLine != startLine) return;
+
+    myHighlighters.addAll(DiffDrawUtil.createLineMarker(myViewer.getEditor(side), startLine, TextDiffType.MODIFIED));
   }
 
   public void updateGutterActions(boolean force) {

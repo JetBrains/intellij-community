@@ -16,10 +16,10 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -40,7 +40,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
 
   @Override
   public Set<PsiJavaFile> prepareOperation(final UsageInfo[] usages) {
-    Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
+    Set<PsiJavaFile> javaFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
       final PsiFile file = usage.getFile();
@@ -60,8 +60,8 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
       }
     });
 
-    final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<SmartPsiElementPointer<PsiImportStatementBase>>();
-    final Runnable findRedundantImports = () -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+    final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<>();
+    final Runnable findRedundantImports = () -> ReadAction.run(() -> {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);

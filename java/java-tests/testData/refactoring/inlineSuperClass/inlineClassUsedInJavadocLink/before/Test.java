@@ -1,0 +1,1 @@
+interface Test extends Super {}

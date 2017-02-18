@@ -45,6 +45,12 @@ public abstract class ModuleWizardStep extends StepAdapter {
     return null;
   }
 
+  /**
+   * Validates user input before {@link #updateDataModel()} is called.
+   *
+   * @return {@code true} if input is valid, {@code false} otherwise
+   * @throws ConfigurationException if input is not valid and needs user attention. Exception message will be displayed to user
+   */
   public boolean validate() throws ConfigurationException {
     return true;
   }

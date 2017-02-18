@@ -20,6 +20,7 @@ import com.intellij.diff.merge.*;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -28,8 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-
-import static com.intellij.diff.merge.MergeUtil.createSimpleResolveAction;
+import java.awt.event.ActionEvent;
 
 public class ApplyPatchMergeTool implements MergeTool {
   @NotNull
@@ -75,7 +75,39 @@ public class ApplyPatchMergeTool implements MergeTool {
     @Override
     public Action getResolveAction(@NotNull final MergeResult result) {
       if (result == MergeResult.LEFT || result == MergeResult.RIGHT) return null;
-      return createSimpleResolveAction(result, myMergeRequest, myMergeContext, this);
+
+      String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
+      return new AbstractAction(caption) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (result == MergeResult.RESOLVED) {
+            int unresolved = getUnresolvedCount();
+            if (unresolved != 0 &&
+                Messages.showYesNoDialog(getComponent().getRootPane(),
+                                         DiffBundle.message("apply.patch.partially.resolved.changes.confirmation.message", unresolved),
+                                         DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                                         Messages.getQuestionIcon()) != Messages.YES) {
+              return;
+            }
+          }
+
+          if (result == MergeResult.CANCEL &&
+              !MergeUtil.showExitWithoutApplyingChangesDialog(MyApplyPatchViewer.this, myMergeRequest, myMergeContext)) {
+            return;
+          }
+
+          myMergeContext.finishMerge(result);
+        }
+      };
+    }
+
+    private int getUnresolvedCount() {
+      int count = 0;
+      for (ApplyPatchChange change : getPatchChanges()) {
+        if (change.isResolved()) continue;
+        count++;
+      }
+      return count;
     }
 
     @Override

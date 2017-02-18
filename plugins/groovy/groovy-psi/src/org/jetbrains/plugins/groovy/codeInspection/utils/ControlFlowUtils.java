@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -429,9 +428,13 @@ public class ControlFlowUtils {
     return false;
   }
 
+
+  @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element) {
     return collectReturns(element, element instanceof GrCodeBlock || element instanceof GroovyFile);
   }
+
+  @NotNull
   public static List<GrStatement> collectReturns(@Nullable PsiElement element, final boolean allExitPoints) {
     if (element == null) return Collections.emptyList();
 
@@ -445,9 +448,10 @@ public class ControlFlowUtils {
     return collectReturns(flow, allExitPoints);
   }
 
+  @NotNull
   public static List<GrStatement> collectReturns(@NotNull Instruction[] flow, final boolean allExitPoints) {
     boolean[] visited = new boolean[flow.length];
-    final List<GrStatement> res = new ArrayList<GrStatement>();
+    final List<GrStatement> res = new ArrayList<>();
     visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, new ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
@@ -499,7 +503,7 @@ public class ControlFlowUtils {
 
   @Nullable
   public static Instruction findNearestInstruction(PsiElement place, Instruction[] flow) {
-    List<Instruction> applicable = new ArrayList<Instruction>();
+    List<Instruction> applicable = new ArrayList<>();
     for (Instruction instruction : flow) {
       final PsiElement element = instruction.getElement();
       if (element == null) continue;
@@ -539,8 +543,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitReturnStatement(
-        @NotNull GrReturnStatement returnStatement) {
+    public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
       if (m_found) {
         return;
       }
@@ -563,8 +566,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitBreakStatement(
-        @NotNull GrBreakStatement breakStatement) {
+    public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
       if (m_found) {
         return;
       }
@@ -593,8 +595,7 @@ public class ControlFlowUtils {
     }
 
     @Override
-    public void visitContinueStatement(
-        @NotNull GrContinueStatement continueStatement) {
+    public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
       if (m_found) {
         return;
       }
@@ -617,7 +618,7 @@ public class ControlFlowUtils {
 
   public static Set<GrExpression> getAllReturnValues(@NotNull final GrControlFlowOwner block) {
     return CachedValuesManager.getCachedValue(block, () -> {
-      final Set<GrExpression> result = new HashSet<GrExpression>();
+      final Set<GrExpression> result = new HashSet<>();
       visitAllExitPoints(block, new ExitPointVisitor() {
         @Override
         public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
@@ -725,12 +726,12 @@ public class ControlFlowUtils {
   public static List<ReadWriteVariableInstruction> findAccess(GrVariable local, boolean ahead, boolean writeAccessOnly, Instruction cur) {
     String name = local.getName();
 
-    final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
-    final HashSet<Instruction> visited = new HashSet<Instruction>();
+    final ArrayList<ReadWriteVariableInstruction> result = new ArrayList<>();
+    final HashSet<Instruction> visited = new HashSet<>();
 
     visited.add(cur);
 
-    Queue<Instruction> queue = new ArrayDeque<Instruction>();
+    Queue<Instruction> queue = new ArrayDeque<>();
 
     for (Instruction i : ahead ? cur.allSuccessors() : cur.allPredecessors()) {
       if (visited.add(i)) {
@@ -829,7 +830,7 @@ public class ControlFlowUtils {
       }
     };
 
-    return new DFAEngine<BitSet>(flow, dfa, sem).performForceDFA();
+    return new DFAEngine<>(flow, dfa, sem).performForceDFA();
   }
 
 }

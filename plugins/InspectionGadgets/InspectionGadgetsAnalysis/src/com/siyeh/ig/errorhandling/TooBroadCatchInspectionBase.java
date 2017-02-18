@@ -82,7 +82,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
       }
       final Set<PsiClassType> thrownTypes = ExceptionUtils.calculateExceptionsThrown(tryBlock);
       ExceptionUtils.calculateExceptionsThrown(statement.getResourceList(), thrownTypes);
-      final Set<PsiType> caughtTypes = new HashSet<PsiType>(thrownTypes.size());
+      final Set<PsiType> caughtTypes = new HashSet<>(thrownTypes.size());
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       boolean runtimeExceptionSeen = false;
       for (final PsiCatchSection catchSection : catchSections) {
@@ -138,7 +138,7 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
           return Collections.emptyList();
         }
       }
-      final List<PsiType> maskedTypes = new ArrayList<PsiType>();
+      final List<PsiType> maskedTypes = new ArrayList<>();
       for (PsiType typeThrown : thrownTypes) {
         if (!caughtTypes.contains(typeThrown) && caughtType.isAssignableFrom(typeThrown)) {
           caughtTypes.add(typeThrown);

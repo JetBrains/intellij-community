@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     setModal(true);
     myContext = context;
     myConversionRunners = conversionRunners;
-    myAffectedFiles = new HashSet<File>();
+    myAffectedFiles = new HashSet<>();
     for (ConversionRunner conversionRunner : conversionRunners) {
       myAffectedFiles.addAll(conversionRunner.getAffectedFiles());
     }
@@ -122,7 +122,7 @@ public class ConvertProjectDialog extends DialogWrapper {
       }
 
       ProjectConversionUtil.backupFiles(myAffectedFiles, myContext.getProjectBaseDir(), myBackupDir);
-      List<ConversionRunner> usedRunners = new ArrayList<ConversionRunner>();
+      List<ConversionRunner> usedRunners = new ArrayList<>();
       for (ConversionRunner runner : myConversionRunners) {
         if (runner.isConversionNeeded()) {
           runner.preProcess();
@@ -135,11 +135,7 @@ public class ConvertProjectDialog extends DialogWrapper {
       myConverted = true;
       super.doOKAction();
     }
-    catch (CannotConvertException e) {
-      LOG.info(e);
-      showErrorMessage(IdeBundle.message("error.cannot.convert.project", e.getMessage()));
-    }
-    catch (IOException e) {
+    catch (CannotConvertException | IOException e) {
       LOG.info(e);
       showErrorMessage(IdeBundle.message("error.cannot.convert.project", e.getMessage()));
     }

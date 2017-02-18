@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,7 @@ class Specification {
   }
 
 
-
-  public void testCompletion() {
+  void testCompletion() {
     def file = myFixture.addFileToProject("FooSpec.groovy", """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
@@ -73,7 +72,7 @@ class FooSpec extends spock.lang.Specification {
     assertEquals(expectedType, ((PsiVariable)var).type.canonicalText)
   }
 
-  public void testEquals() {
+  void testEquals() {
     doTest(CommonClassNames.JAVA_LANG_STRING, """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
@@ -87,7 +86,7 @@ class FooSpec extends spock.lang.Specification {
 """)
   }
 
-  public void testTable() {
+  void testTable() {
     doTest("java.util.List<? extends java.lang.Number>", """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
@@ -105,7 +104,7 @@ class FooSpec extends spock.lang.Specification {
 """)
   }
 
-  public void testShlSimple() {
+  void testShlSimple() {
     doTest(AbstractMap.name, """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
@@ -119,7 +118,7 @@ class FooSpec extends spock.lang.Specification {
 """)
   }
 
-  public void testShlMulti1() {
+  void testShlMulti1() {
     doTest(CommonClassNames.JAVA_LANG_STRING, """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
@@ -135,7 +134,7 @@ class FooSpec extends spock.lang.Specification {
 """)
   }
 
-  public void testShlMulti2() {
+  void testShlMulti2() {
     doTest(CommonClassNames.JAVA_LANG_STRING, """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {
@@ -151,7 +150,7 @@ class FooSpec extends spock.lang.Specification {
 """)
   }
 
-  public void testRename() {
+  void testRename() {
     myFixture.configureByText("FooSpec.groovy", """
 class FooSpec extends spock.lang.Specification {
   @spock.lang.Unroll("xxx #name a #name #name    #name")
@@ -198,23 +197,23 @@ class FooSpec extends spock.lang.Specification {
   }
 
 
-  public void checkCompletionStatic(PsiFile file, String ... expectedVariants) {
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+  void checkCompletionStatic(PsiFile file, String... expectedVariants) {
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
 
-    LookupElement[] lookupElements = myFixture.completeBasic();
+    LookupElement[] lookupElements = myFixture.completeBasic()
 
-    assertNotNull(lookupElements);
+    assertNotNull(lookupElements)
 
-    Set<String> missedVariants = ContainerUtil.newHashSet(expectedVariants);
+    Set<String> missedVariants = ContainerUtil.newHashSet(expectedVariants)
 
     for (LookupElement lookupElement : lookupElements) {
-      missedVariants.remove(lookupElement.getLookupString());
+      missedVariants.remove(lookupElement.getLookupString())
     }
 
-    assertEmpty("Some completion variants are missed", missedVariants);
+    assertEmpty("Some completion variants are missed", missedVariants)
   }
 
-  public void testVariable_resolved() {
+  void testVariable_resolved() {
     myFixture.enableInspections(GroovyAssignabilityCheckInspection, GrUnresolvedAccessInspection)
 
     myFixture.configureByText("FooSpec.groovy", """\
@@ -231,7 +230,7 @@ class FooSpec extends spock.lang.Specification {
     myFixture.checkHighlighting(true, false, true)
   }
 
-  public void testVariable_NotExistingInCompletion() {
+  void testVariable_NotExistingInCompletion() {
     myFixture.configureByText("FooSpec.groovy", """
 class FooSpec extends spock.lang.Specification {
   def "foo test"() {

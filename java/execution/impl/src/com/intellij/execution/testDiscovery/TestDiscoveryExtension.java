@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -46,23 +46,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TestDiscoveryExtension extends RunConfigurationExtension {
   private static final Logger LOG = Logger.getInstance("#" + TestDiscoveryExtension.class.getName());
-
-  @Nullable
-  public SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
-    return null;
-  }
-
-  @Nullable
-  public String getEditorTitle() {
-    return null;
-  }
 
   @NotNull
   @Override
@@ -75,21 +64,28 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
                                  @NotNull final ProcessHandler handler,
                                  @Nullable RunnerSettings runnerSettings) {
     if (runnerSettings == null && isApplicableFor(configuration)) {
-      final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
+      final String frameworkPrefix = ((JavaTestConfigurationBase)configuration).getFrameworkPrefix();
+      final String moduleName = ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModuleName();
+
+      Disposable disposable = Disposer.newDisposable();
+      final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
       final MessageBusConnection connection = configuration.getProject().getMessageBus().connect();
       connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
-        private List<String> myCompletedMethodNames = new ArrayList<String>();
+        private List<String> myCompletedMethodNames = new ArrayList<>();
         @Override
         public void onTestFinished(@NotNull SMTestProxy test) {
           final SMTestProxy.SMRootTestProxy root = test.getRoot();
           if ((root == null || root.getHandler() == handler)) {
             final String fullTestName = test.getLocationUrl();
             if (fullTestName != null && fullTestName.startsWith(JavaTestLocator.TEST_PROTOCOL)) {
-              myCompletedMethodNames.add(((JavaTestConfigurationBase)configuration).getFrameworkPrefix() + fullTestName.substring(JavaTestLocator.TEST_PROTOCOL.length() + 3));
+              myCompletedMethodNames.add(frameworkPrefix + fullTestName.substring(JavaTestLocator.TEST_PROTOCOL.length() + 3));
               if (myCompletedMethodNames.size() > 50) {
                 final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
                 myCompletedMethodNames.clear();
-                processTracesAlarm.addRequest(() -> processAvailableTraces(configuration, fullTestNames), 100);
+                processTracesAlarm.addRequest(() -> processAvailableTraces(fullTestNames,
+                                                                           getTracesDirectory(configuration), moduleName, frameworkPrefix,
+                                                                           TestDiscoveryIndex.getInstance(configuration.getProject())
+                ), 100);
               }
             }
           }
@@ -101,7 +97,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
             processTracesAlarm.cancelAllRequests();
             processTracesAlarm.addRequest(() -> {
               processAvailableTraces(configuration);
-              Disposer.dispose(processTracesAlarm);
+              Disposer.dispose(disposable);
             }, 0);
             connection.disconnect();
           }
@@ -110,6 +106,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
+  @Override
   public void updateJavaParameters(RunConfigurationBase configuration, JavaParameters params, RunnerSettings runnerSettings) {
     if (runnerSettings != null || !isApplicableFor(configuration)) {
       return;
@@ -140,6 +137,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     throw new WriteExternalException();
   }
 
+  @Override
   protected boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
     return configuration instanceof JavaTestConfigurationBase && Registry.is("testDiscovery.enabled");
   }
@@ -160,7 +158,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
       if (testMethodTraces != null) {
         for (File testMethodTrace : testMethodTraces) {
           try {
-            coverageIndex.updateFromTestTrace(testMethodTrace);
+            coverageIndex.updateFromTestTrace(testMethodTrace, ((JavaTestConfigurationBase)configuration).getConfigurationModule().getModuleName(),
+                                              ((JavaTestConfigurationBase)configuration).getFrameworkPrefix());
             FileUtil.delete(testMethodTrace);
           }
           catch (IOException e) {
@@ -176,9 +175,12 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
-  private static void processAvailableTraces(RunConfigurationBase configuration, String[] fullTestNames) {
-    final String tracesDirectory = getTracesDirectory(configuration);
-    final TestDiscoveryIndex coverageIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
+  @SuppressWarnings("WeakerAccess")  // called via reflection from com.intellij.InternalTestDiscoveryListener.flushCurrentTraces()
+  public static void processAvailableTraces(final String[] fullTestNames,
+                                            final String tracesDirectory,
+                                            final String moduleName,
+                                            final String frameworkPrefix,
+                                            final TestDiscoveryIndex discoveryIndex) {
     synchronized (ourTracesLock) {
       for (String fullTestName : fullTestNames) {
         final String className = StringUtil.getPackageName(fullTestName);
@@ -187,10 +189,10 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           final File testMethodTrace = new File(tracesDirectory, className + "-" + methodName + ".tr");
           if (testMethodTrace.exists()) {
             try {
-              coverageIndex.updateFromTestTrace(testMethodTrace);
+              discoveryIndex.updateFromTestTrace(testMethodTrace, moduleName, frameworkPrefix);
               FileUtil.delete(testMethodTrace);
             }
-            catch (IOException e) {
+            catch (Throwable e) {
               LOG.error("Can not load " + testMethodTrace, e);
             }
           }

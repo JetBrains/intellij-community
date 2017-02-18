@@ -44,32 +44,22 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
-  private final JpsArtifact myArtifact;
+public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
 
   public ArtifactBuildTarget(@NotNull JpsArtifact artifact) {
-    super(ArtifactBuildTargetType.INSTANCE);
-    myArtifact = artifact;
-  }
-
-  @Override
-  public String getId() {
-    return myArtifact.getName();
-  }
-
-  public JpsArtifact getArtifact() {
-    return myArtifact;
+    super(ArtifactBuildTargetType.INSTANCE, artifact);
   }
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, final TargetOutputIndex outputIndex) {
     final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<BuildTarget<?>>();
-    JpsArtifactUtil.processPackagingElements(myArtifact.getRootElement(), new Processor<JpsPackagingElement>() {
+    final JpsArtifact artifact = getArtifact();
+    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), new Processor<JpsPackagingElement>() {
       @Override
       public boolean process(JpsPackagingElement element) {
         if (element instanceof JpsArtifactOutputPackagingElement) {
           JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
-          if (included != null && !included.equals(myArtifact)) {
+          if (included != null && !included.equals(artifact)) {
             if (!StringUtil.isEmpty(included.getOutputPath())) {
               dependencies.add(new ArtifactBuildTarget(included));
               return false;
@@ -94,21 +84,8 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    return myArtifact.equals(((ArtifactBuildTarget)o).myArtifact);
-  }
-
-  @Override
-  public int hashCode() {
-    return myArtifact.hashCode();
-  }
-
-  @Override
   public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
-    out.println(StringUtil.notNullize(myArtifact.getOutputPath()));
+    out.println(StringUtil.notNullize(getArtifact().getOutputPath()));
     final BuildRootIndex rootIndex = pd.getBuildRootIndex();
     for (ArtifactRootDescriptor descriptor : rootIndex.getTargetRoots(this, null)) {
       descriptor.writeConfiguration(out);
@@ -123,9 +100,10 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
                                                              BuildDataPaths dataPaths) {
     ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(index, ignoredFileIndex, this, model, dataPaths);
     ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(model, dataPaths);
-    String outputPath = StringUtil.notNullize(myArtifact.getOutputPath());
+    final JpsArtifact artifact = getArtifact();
+    String outputPath = StringUtil.notNullize(artifact.getOutputPath());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(builder, outputPath);
-    LayoutElementBuildersRegistry.getInstance().generateInstructions(myArtifact, instructionCreator, context);
+    LayoutElementBuildersRegistry.getInstance().generateInstructions(artifact, instructionCreator, context);
     return builder.getDescriptors();
   }
 
@@ -138,13 +116,13 @@ public class ArtifactBuildTarget extends BuildTarget<ArtifactRootDescriptor> {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Artifact '" + myArtifact.getName() + "'";
+    return "Artifact '" + getArtifact().getName() + "'";
   }
 
   @NotNull
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
-    String outputFilePath = myArtifact.getOutputFilePath();
+    String outputFilePath = getArtifact().getOutputFilePath();
     return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.<File>emptyList();
   }
 }

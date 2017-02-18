@@ -55,7 +55,7 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
   @Override
   public StructureViewTreeElement[] getChildren() {
     TreeElement[] baseChildren = myTreeElement.getChildren();
-    List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+    List<StructureViewTreeElement> result = new ArrayList<>();
     for (TreeElement element : baseChildren) {
       StructureViewTreeElement wrapper = new StructureViewElementWrapper((StructureViewTreeElement)element, myMainFile);
 

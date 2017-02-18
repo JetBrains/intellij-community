@@ -222,12 +222,12 @@ public class DomSemContributor extends SemContributor {
 
   @Nullable
   private static DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
-    LinkedHashSet<XmlTag> allParents = new LinkedHashSet<XmlTag>();
+    LinkedHashSet<XmlTag> allParents = new LinkedHashSet<>();
     PsiElement each = tag;
     while (each instanceof XmlTag && allParents.add((XmlTag)each)) {
       each = PhysicalDomParentStrategy.getParentTagCandidate((XmlTag)each);
     }
-    ArrayList<XmlTag> list = new ArrayList<XmlTag>(allParents);
+    ArrayList<XmlTag> list = new ArrayList<>(allParents);
     Collections.reverse(list);
     DomManagerImpl manager = DomManagerImpl.getDomManager(tag.getProject());
     for (XmlTag xmlTag : list) {

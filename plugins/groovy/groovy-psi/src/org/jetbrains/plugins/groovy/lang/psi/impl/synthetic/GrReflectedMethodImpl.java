@@ -122,7 +122,7 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   private void initParameterList(GrParameter[] parameters, int optionalParams, PsiClassType categoryType) {
     final GrLightParameterListBuilder parameterList = (GrLightParameterListBuilder)getParameterList();
 
-    List<GrParameter> skipped = new ArrayList<GrParameter>();
+    List<GrParameter> skipped = new ArrayList<>();
 
     if (categoryType != null) {
       parameterList.addParameter(new GrLightParameter(CATEGORY_PARAMETER_NAME, categoryType, this));

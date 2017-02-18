@@ -204,7 +204,7 @@ public class GitConfigTest extends GitPlatformTest {
 
   private static Collection<GitBranchTrackInfo> readBranchResults(File file) throws IOException {
     String content = FileUtil.loadFile(file);
-    Collection<GitBranchTrackInfo> remotes = new ArrayList<GitBranchTrackInfo>();
+    Collection<GitBranchTrackInfo> remotes = new ArrayList<>();
     List<String> remStrings = StringUtil.split(content, "BRANCH");
     for (String remString : remStrings) {
       if (StringUtil.isEmptyOrSpaces(remString)) {
@@ -231,7 +231,7 @@ public class GitConfigTest extends GitPlatformTest {
 
   private static Set<GitRemote> readRemoteResults(File resultFile) throws IOException {
     String content = FileUtil.loadFile(resultFile);
-    Set<GitRemote> remotes = new HashSet<GitRemote>();
+    Set<GitRemote> remotes = new HashSet<>();
     List<String> remStrings = StringUtil.split(content, "REMOTE");
     for (String remString : remStrings) {
       if (StringUtil.isEmptyOrSpaces(remString)) {

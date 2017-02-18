@@ -26,7 +26,7 @@ import java.util.ArrayList;
  * @author Konstantin Bulenkov
  */
 public class JBSlidingPanel extends JBPanel {
-  private final ArrayList<Pair<String,Component>> mySlides = new ArrayList<Pair<String, Component>>();
+  private final ArrayList<Pair<String,Component>> mySlides = new ArrayList<>();
   private int mySelectedIndex = -1;
 
   public JBSlidingPanel() {

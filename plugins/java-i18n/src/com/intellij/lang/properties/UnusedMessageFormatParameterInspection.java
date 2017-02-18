@@ -20,7 +20,6 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
@@ -39,7 +38,7 @@ import java.util.Set;
  * User: anna
  * Date: 07-Sep-2005
  */
-public class UnusedMessageFormatParameterInspection extends PropertySuppressableInspectionBase {
+public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
   public static final String REGEXP = "regexp";
   @NotNull
   public String getGroupDisplayName() {
@@ -62,7 +61,7 @@ public class UnusedMessageFormatParameterInspection extends PropertySuppressable
     if (!(file instanceof PropertiesFile)) return null;
     PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<IProperty> properties = propertiesFile.getProperties();
-    List<ProblemDescriptor> problemDescriptors = new ArrayList<ProblemDescriptor>();
+    List<ProblemDescriptor> problemDescriptors = new ArrayList<>();
     for (IProperty property : properties) {
       @NonNls String name = property.getName();
       if (name != null) {
@@ -70,7 +69,7 @@ public class UnusedMessageFormatParameterInspection extends PropertySuppressable
         if (name.startsWith(REGEXP + ".") || name.endsWith("." + REGEXP)) continue;
       }
       String value = property.getValue();
-      Set<Integer> parameters = new HashSet<Integer>();
+      Set<Integer> parameters = new HashSet<>();
       if (value != null) {
         int index = value.indexOf('{');
         while (index != -1) {

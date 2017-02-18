@@ -61,7 +61,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Override
   public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
-    final ArrayList<String> arguments = new ArrayList<String>();
+    final ArrayList<String> arguments = new ArrayList<>();
     for (PyRequirement requirement : requirements) {
       arguments.add(requirement.toString());
     }
@@ -114,7 +114,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
 
   @Override
   public void uninstall(@NotNull List<PyPackage> packages) throws ExecutionException {
-    final ArrayList<String> arguments = new ArrayList<String>();
+    final ArrayList<String> arguments = new ArrayList<>();
     for (PyPackage aPackage : packages) {
       arguments.add(aPackage.getName());
     }
@@ -135,7 +135,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @NotNull
   protected static List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
     final String[] lines = StringUtil.splitByLines(s);
-    final List<PyPackage> packages = new ArrayList<PyPackage>();
+    final List<PyPackage> packages = new ArrayList<>();
     for (String line : lines) {
       if (line.startsWith("#")) continue;
       final List<String> fields = StringUtil.split(line, "=");
@@ -144,7 +144,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
-      final List<PyRequirement> requirements = new ArrayList<PyRequirement>();
+      final List<PyRequirement> requirements = new ArrayList<>();
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");

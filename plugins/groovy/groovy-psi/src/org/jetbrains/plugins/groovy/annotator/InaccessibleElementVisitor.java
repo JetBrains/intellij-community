@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAccessibilityChecker;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -38,7 +39,7 @@ public class InaccessibleElementVisitor extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+  public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
     final int size = myInfos.size();
     super.visitReferenceExpression(referenceExpression);
     if (size == myInfos.size()) {
@@ -50,7 +51,7 @@ public class InaccessibleElementVisitor extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+  public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
     final int size = myInfos.size();
     super.visitCodeReferenceElement(refElement);
     if (size == myInfos.size()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -91,13 +90,10 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     panel.add(myCheckbox);
     panel.add(myComboBox);
     panel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
-    panel.add(new LinkLabel("Manage Scopes", null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel));
-        if (settings != null) {
-          settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES));
-        }
+    panel.add(LinkLabel.create("Manage Scopes", () -> {
+      Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel));
+      if (settings != null) {
+        settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES));
       }
     }));
     return panel;

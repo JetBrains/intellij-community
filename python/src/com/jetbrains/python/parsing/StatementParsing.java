@@ -214,37 +214,45 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           builder.error(EXPRESSION_EXPECTED);
         }
       }
-      else if (builder.getTokenType() == PyTokenTypes.EQ) {
-        statementType = PyElementTypes.ASSIGNMENT_STATEMENT;
+      else if (atToken(PyTokenTypes.EQ) || (atToken(PyTokenTypes.COLON) && myContext.getLanguageLevel().isPy3K())) {
         exprStatement.rollbackTo();
         exprStatement = builder.mark();
         getExpressionParser().parseExpression(false, true);
-        LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ, builder.getTokenType());
-        builder.advanceLexer();
+        LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ || builder.getTokenType() == PyTokenTypes.COLON, builder.getTokenType());
 
-        while (true) {
-          PsiBuilder.Marker maybeExprMarker = builder.mark();
-          final boolean isYieldExpr = builder.getTokenType() == PyTokenTypes.YIELD_KEYWORD;
-          if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
-            maybeExprMarker.drop();
-            builder.error(EXPRESSION_EXPECTED);
-            break;
-          }
-          if (builder.getTokenType() == PyTokenTypes.EQ) {
-            if (isYieldExpr) {
+        if (builder.getTokenType() == PyTokenTypes.COLON) {
+          statementType = PyElementTypes.TYPE_DECLARATION_STATEMENT;
+          getFunctionParser().parseParameterAnnotation();
+        }
+
+        if (builder.getTokenType() == PyTokenTypes.EQ) {
+          statementType = PyElementTypes.ASSIGNMENT_STATEMENT;
+          builder.advanceLexer();
+
+          while (true) {
+            PsiBuilder.Marker maybeExprMarker = builder.mark();
+            final boolean isYieldExpr = builder.getTokenType() == PyTokenTypes.YIELD_KEYWORD;
+            if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
               maybeExprMarker.drop();
-              builder.error("Cannot assign to 'yield' expression");
+              builder.error(EXPRESSION_EXPECTED);
+              break;
+            }
+            if (builder.getTokenType() == PyTokenTypes.EQ) {
+              if (isYieldExpr) {
+                maybeExprMarker.drop();
+                builder.error("Cannot assign to 'yield' expression");
+              }
+              else {
+                maybeExprMarker.rollbackTo();
+                getExpressionParser().parseExpression(false, true);
+                LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ, builder.getTokenType());
+              }
+              builder.advanceLexer();
             }
             else {
-              maybeExprMarker.rollbackTo();
-              getExpressionParser().parseExpression(false, true);
-              LOG.assertTrue(builder.getTokenType() == PyTokenTypes.EQ, builder.getTokenType());
+              maybeExprMarker.drop();
+              break;
             }
-            builder.advanceLexer();
-          }
-          else {
-            maybeExprMarker.drop();
-            break;
           }
         }
       }

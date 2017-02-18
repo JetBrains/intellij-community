@@ -39,9 +39,9 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
   @NotNull
   public Collection<AbstractTreeNode> getChildrenImpl() {
     PsiClass parent = getPsiClass();
-    final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<AbstractTreeNode>();
+    final ArrayList<AbstractTreeNode> treeNodes = new ArrayList<>();
 
-    ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> result = new ArrayList<>();
     if (getSettings().isShowMembers()) {
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
       for (PsiElement psiElement : result) {

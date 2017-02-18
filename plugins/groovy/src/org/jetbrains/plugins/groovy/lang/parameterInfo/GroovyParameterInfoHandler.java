@@ -80,7 +80,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     List<? extends PsiElement> elements = JavaCompletionUtil.getAllPsiElements(item);
 
     if (elements != null) {
-      List<GroovyResolveResult> methods = new ArrayList<GroovyResolveResult>();
+      List<GroovyResolveResult> methods = new ArrayList<>();
       for (PsiElement element : elements) {
         if (element instanceof PsiMethod) {
           methods.add(new GroovyResolveResultImpl(element, true));
@@ -192,7 +192,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static void filterOutReflectedMethods(List toShow) {
-    Set<GrMethod> methods = new HashSet<GrMethod>();
+    Set<GrMethod> methods = new HashSet<>();
 
     for (Iterator iterator = toShow.iterator(); iterator.hasNext(); ) {
       Object next = iterator.next();

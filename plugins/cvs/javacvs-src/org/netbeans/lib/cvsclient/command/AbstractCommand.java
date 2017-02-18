@@ -34,7 +34,7 @@ public abstract class AbstractCommand extends Command {
 
 	// Fields =================================================================
 
-	private final List<AbstractFileObject> fileObjects = new ArrayList<AbstractFileObject>();
+	private final List<AbstractFileObject> fileObjects = new ArrayList<>();
 	private boolean recursive = true;
 
 	// Setup ==================================================================

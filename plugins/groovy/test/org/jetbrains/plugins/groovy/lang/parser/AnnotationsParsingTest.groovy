@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,34 @@ package org.jetbrains.plugins.groovy.lang.parser
 /**
  * @author peter
  */
-public class AnnotationsParsingTest extends GroovyParsingTestCase {
+class AnnotationsParsingTest extends GroovyParsingTestCase {
   final String basePath = super.basePath + "annotations"
 
-  public void testAnn1() { doTest() }
-  public void testAnn2() { doTest() }
-  public void testAnn3() { doTest() }
-  public void testAnn4() { doTest() }
-  public void testAnn5() { doTest() }
-  public void testAnn6() { doTest() }
-  public void testAnn7() { doTest() }
-  public void testClassLiteral() { doTest() }
-  public void testImportAnn() { doTest() }
-  public void testPackageAnn() { doTest() }
-  public void testDefAttribute() {doTest()}
-  public void testLineFeedAfterRef() {doTest()}
-  public void testKeywordsAttributes() {doTest()}
-  public void testMess() { doTest() }
+  void testAnn1() { doTest() }
+
+  void testAnn2() { doTest() }
+
+  void testAnn3() { doTest() }
+
+  void testAnn4() { doTest() }
+
+  void testAnn5() { doTest() }
+
+  void testAnn6() { doTest() }
+
+  void testAnn7() { doTest() }
+
+  void testClassLiteral() { doTest() }
+
+  void testImportAnn() { doTest() }
+
+  void testPackageAnn() { doTest() }
+
+  void testDefAttribute() { doTest() }
+
+  void testLineFeedAfterRef() { doTest() }
+
+  void testKeywordsAttributes() { doTest() }
+
+  void testMess() { doTest() }
 }

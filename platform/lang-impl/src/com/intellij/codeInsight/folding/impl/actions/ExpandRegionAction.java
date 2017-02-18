@@ -37,7 +37,7 @@ public class ExpandRegionAction extends EditorAction {
     });
   }
 
-  public static void expandRegionAtCaret(final Project project, @Nullable final Editor editor) {
+  private static void expandRegionAtCaret(final Project project, @Nullable final Editor editor) {
     if (editor == null) return;
 
     expandRegionAtOffset(project, editor, editor.getCaretModel().getOffset());

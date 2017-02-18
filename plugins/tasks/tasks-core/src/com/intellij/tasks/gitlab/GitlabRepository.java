@@ -105,7 +105,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     final List<GitlabIssue> issues = fetchIssues((offset / limit) + 1, limit, !withClosed);
-    return ContainerUtil.map2Array(issues, GitlabTask.class, issue -> new GitlabTask(GitlabRepository.this, issue));
+    return ContainerUtil.map2Array(issues, GitlabTask.class, issue -> new GitlabTask(this, issue));
   }
 
   @Nullable
@@ -127,9 +127,9 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
    */
   @NotNull
   public List<GitlabProject> fetchProjects() throws Exception {
-    final ResponseHandler<List<GitlabProject>> handler = new GsonMultipleObjectsDeserializer<GitlabProject>(GSON, LIST_OF_PROJECTS_TYPE);
+    final ResponseHandler<List<GitlabProject>> handler = new GsonMultipleObjectsDeserializer<>(GSON, LIST_OF_PROJECTS_TYPE);
     final String projectUrl = getRestApiUrl("projects");
-    final List<GitlabProject> result = new ArrayList<GitlabProject>();
+    final List<GitlabProject> result = new ArrayList<>();
     int pageNum = 1;
     while (true) {
       final URI paginatedProjectsUrl = new URIBuilder(projectUrl)
@@ -152,7 +152,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @NotNull
   public GitlabProject fetchProject(int id) throws Exception {
     final HttpGet request = new HttpGet(getRestApiUrl("project", id));
-    return getHttpClient().execute(request, new GsonSingleObjectDeserializer<GitlabProject>(GSON, GitlabProject.class));
+    return getHttpClient().execute(request, new GsonSingleObjectDeserializer<>(GSON, GitlabProject.class));
   }
 
   @NotNull
@@ -167,7 +167,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
       // Filtering by state was added in v7.3
       uriBuilder.addParameter("state", "opened");
     }
-    final ResponseHandler<List<GitlabIssue>> handler = new GsonMultipleObjectsDeserializer<GitlabIssue>(GSON, LIST_OF_ISSUES_TYPE);
+    final ResponseHandler<List<GitlabIssue>> handler = new GsonMultipleObjectsDeserializer<>(GSON, LIST_OF_ISSUES_TYPE);
     return getHttpClient().execute(new HttpGet(uriBuilder.build()), handler);
   }
 
@@ -185,7 +185,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   public GitlabIssue fetchIssue(int projectId, int issueId) throws Exception {
     ensureProjectsDiscovered();
     final HttpGet request = new HttpGet(getRestApiUrl("projects", projectId, "issues", issueId));
-    final ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<GitlabIssue>(GSON, GitlabIssue.class, true);
+    final ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<>(GSON, GitlabIssue.class, true);
     return getHttpClient().execute(request, handler);
   }
 

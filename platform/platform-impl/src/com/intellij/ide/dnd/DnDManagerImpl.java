@@ -44,14 +44,14 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   @NonNls private static final String SOURCE_KEY = "DnD Source";
   @NonNls private static final String TARGET_KEY = "DnD Target";
 
-  public static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<Pair<Image, Point>>("draggedImage");
+  public static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<>("draggedImage");
 
   private DnDEventImpl myCurrentEvent;
   private DnDEvent myLastHighlightedEvent;
 
   private static final DnDTarget NULL_TARGET = new NullTarget();
 
-  private WeakReference<DnDTarget> myLastProcessedTarget = new WeakReference<DnDTarget>(NULL_TARGET);
+  private WeakReference<DnDTarget> myLastProcessedTarget = new WeakReference<>(NULL_TARGET);
   private DragSourceContext myCurrentDragContext;
 
   private Component myLastProcessedOverComponent;
@@ -285,7 +285,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
       }
     }
 
-    myLastProcessedTarget = new WeakReference<DnDTarget>(target);
+    myLastProcessedTarget = new WeakReference<>(target);
     myLastProcessedPoint = currentEvent.getPoint();
     myLastProcessedOverComponent = currentEvent.getCurrentOverComponent();
     myLastProcessedAction = currentEvent.getAction().getActionId();
@@ -733,7 +733,7 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
     if (c == null) {
       myLastDropHandler = null;
     } else {
-      myLastDropHandler = new WeakReference<Component>(c);
+      myLastDropHandler = new WeakReference<>(c);
     }
   }
 

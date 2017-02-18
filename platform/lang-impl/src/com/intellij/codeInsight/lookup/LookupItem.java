@@ -61,7 +61,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
   private double myPriority;
   private Map<Object,Object> myAttributes = null;
   public static final LookupItem[] EMPTY_ARRAY = new LookupItem[0];
-  private final Set<String> myAllLookupStrings = new HashSet<String>();
+  private final Set<String> myAllLookupStrings = new HashSet<>();
   private String myPresentable;
   private AutoCompletionPolicy myAutoCompletionPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
 
@@ -77,7 +77,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
    * @deprecated use {@link LookupElementBuilder}
    */
   public static LookupItem fromString(String s) {
-    return new LookupItem<String>(s, s);
+    return new LookupItem<>(s, s);
   }
 
   public void setObject(@NotNull T o) {
@@ -156,7 +156,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   public void setAttribute(Object key, Object value){
     if (myAttributes == null){
-      myAttributes = new HashMap<Object, Object>(5);
+      myAttributes = new HashMap<>(5);
     }
     myAttributes.put(key, value);
   }
@@ -168,7 +168,7 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
     }
 
     if (myAttributes == null){
-      myAttributes = new HashMap<Object, Object>(5);
+      myAttributes = new HashMap<>(5);
     }
     myAttributes.put(key, value);
   }

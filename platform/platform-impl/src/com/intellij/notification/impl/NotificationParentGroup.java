@@ -52,7 +52,7 @@ public class NotificationParentGroup {
           if (parent != null) {
             List<NotificationParentGroupBean> children = myChildren.get(parent);
             if (children == null) {
-              myChildren.put(parent, children = new ArrayList<NotificationParentGroupBean>());
+              myChildren.put(parent, children = new ArrayList<>());
             }
             children.add(bean);
           }

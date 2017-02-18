@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -276,7 +275,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   @Override
   @Nullable
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     PsiElement docElement = getDocumentationElement(element, originalElement);
     if (docElement != null) {
       ContainerUtil.addIfNotNull(result, docElement.getUserData(NonCodeMembersHolder.DOCUMENTATION_URL));
@@ -312,10 +311,10 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     if (element == null) return null;
 
-    String standard = element.getNavigationElement() instanceof PsiDocCommentOwner ? JavaDocumentationProvider.generateExternalJavadoc(element) : null;
+    String standard = generateExternalJavaDoc(element);
 
     if (element instanceof GrVariable &&
-        ((GrVariable)element).getTypeElementGroovy() == null &&
+        ((GrVariable)element).getDeclaredType() == null &&
         standard != null) {
       final String truncated = StringUtil.trimEnd(standard, BODY_HTML);
 
@@ -350,6 +349,12 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return standard;
   }
 
+  @Nullable
+  protected static String generateExternalJavaDoc(@NotNull PsiElement element) {
+    JavaDocInfoGenerator generator = new GroovyDocInfoGenerator(element);
+    return JavaDocumentationProvider.generateExternalJavadoc(element, generator);
+  }
+
   private static PsiElement getDocumentationElement(PsiElement element, PsiElement originalElement) {
     if (element instanceof GrGdkMethod) {
       element = ((GrGdkMethod)element).getStaticMethod();
@@ -381,13 +386,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
     if (element instanceof GrPropertyForCompletion) {
       element = ((GrPropertyForCompletion)element).getOriginalAccessor();
-    }
-
-    if (element != null) {
-      PsiElement delegate = element.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE);
-      if (delegate != null) {
-        return delegate;
-      }
     }
 
     return element;

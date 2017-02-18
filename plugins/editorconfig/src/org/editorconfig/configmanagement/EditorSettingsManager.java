@@ -21,12 +21,12 @@ import java.util.Map;
 
 public class EditorSettingsManager extends FileDocumentManagerAdapter {
   // Handles the following EditorConfig settings:
-  private static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
-  private static final String insertFinalNewlineKey = "insert_final_newline";
+  public static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
+  public static final String insertFinalNewlineKey = "insert_final_newline";
   private static final Map<String, String> trimMap;
 
   static {
-    Map<String, String> map = new HashMap<String, String>();
+    Map<String, String> map = new HashMap<>();
     map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
     map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
     trimMap = Collections.unmodifiableMap(map);
@@ -35,7 +35,7 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
   private static final Map<String, Boolean> newlineMap;
 
   static {
-    Map<String, Boolean> map = new HashMap<String, Boolean>();
+    Map<String, Boolean> map = new HashMap<>();
     map.put("true", Boolean.TRUE);
     map.put("false", Boolean.FALSE);
     newlineMap = Collections.unmodifiableMap(map);

@@ -31,7 +31,7 @@ public class JavadocFixer {
    * 
    * @param editor   target editor
    * @param psiFile  PSI file for the document exposed via the given editor
-   * @return  <code>true</code> if smart completion was performed; <code>false</code> otherwise
+   * @return  {@code true} if smart completion was performed; {@code false} otherwise
    */
   public boolean process(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     // Check parameter description completion.

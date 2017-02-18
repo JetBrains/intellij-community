@@ -156,7 +156,7 @@ public class EqualsHashCodeTemplatesManager extends TemplatesManager {
   }
 
   public Collection<Couple<TemplateResource>> getTemplateCouples() {
-    final LinkedHashMap<String, Couple<TemplateResource>> resources = new LinkedHashMap<String, Couple<TemplateResource>>();
+    final LinkedHashMap<String, Couple<TemplateResource>> resources = new LinkedHashMap<>();
     for (TemplateResource resource : getAllTemplates()) {
       final String baseName = getTemplateBaseName(resource);
       TemplateResource eq = toEqualsName(baseName).equals(resource.getFileName()) ? resource : null;

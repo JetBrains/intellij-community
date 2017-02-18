@@ -34,7 +34,7 @@ public class FormFileErrorCollector extends FormErrorCollector {
   private final InspectionManager myManager;
   private final PsiFile myFile;
   private final boolean myOnTheFly;
-  private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+  private final List<ProblemDescriptor> myProblems = new ArrayList<>();
 
   public FormFileErrorCollector(final PsiFile file, final InspectionManager manager, boolean onTheFly) {
     myManager = manager;

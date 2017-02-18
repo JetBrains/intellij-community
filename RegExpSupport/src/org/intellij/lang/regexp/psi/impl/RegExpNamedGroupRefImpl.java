@@ -54,7 +54,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
 
   @Nullable
   public RegExpGroup resolve() {
-    final PsiElementProcessor.FindFilteredElement<RegExpGroup> processor = new PsiElementProcessor.FindFilteredElement<RegExpGroup>(
+    final PsiElementProcessor.FindFilteredElement<RegExpGroup> processor = new PsiElementProcessor.FindFilteredElement<>(
       new PsiElementFilter() {
         public boolean isAccepted(PsiElement element) {
           if (!(element instanceof RegExpGroup)) {
@@ -130,7 +130,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       @Override
       @NotNull
       public Object[] getVariants() {
-        final PsiElementProcessor.CollectFilteredElements<RegExpGroup> processor = new PsiElementProcessor.CollectFilteredElements<RegExpGroup>(
+        final PsiElementProcessor.CollectFilteredElements<RegExpGroup> processor = new PsiElementProcessor.CollectFilteredElements<>(
           new PsiElementFilter() {
             @Override
             public boolean isAccepted(PsiElement element) {

@@ -27,7 +27,7 @@ import static com.intellij.util.ui.JBUI.scale;
  */
 public class JBInsets extends Insets {
   /**
-   * Creates and initializes a new <code>Insets</code> object with the
+   * Creates and initializes a new {@code Insets} object with the
    * specified top, left, bottom, and right insets.
    *
    * @param top    the inset from the top.

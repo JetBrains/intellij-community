@@ -37,7 +37,7 @@ public class UrlSerializationHelper {
   }
 
   public SvnBranchConfiguration prepareForSerialization(final SvnBranchConfiguration configuration) {
-    final Ref<Boolean> withUserInfo = new Ref<Boolean>();
+    final Ref<Boolean> withUserInfo = new Ref<>();
     final String trunkUrl = serializeUrl(configuration.getTrunkUrl(), withUserInfo);
 
     if (Boolean.FALSE.equals(withUserInfo.get())) {
@@ -45,7 +45,7 @@ public class UrlSerializationHelper {
     }
 
     final List<String> branches = configuration.getBranchUrls();
-    final List<String> newBranchesList = new ArrayList<String>(branches.size());
+    final List<String> newBranchesList = new ArrayList<>(branches.size());
     for (String s : branches) {
       newBranchesList.add(serializeUrl(s, withUserInfo));
     }
@@ -64,7 +64,7 @@ public class UrlSerializationHelper {
 
     final String newTrunkUrl = deserializeUrl(configuration.getTrunkUrl(), userInfo);
     final List<String> branches = configuration.getBranchUrls();
-    final List<String> newBranchesList = new ArrayList<String>(branches.size());
+    final List<String> newBranchesList = new ArrayList<>(branches.size());
     for (String s : branches) {
       newBranchesList.add(deserializeUrl(s, userInfo));
     }

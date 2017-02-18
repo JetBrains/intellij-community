@@ -110,7 +110,7 @@ public class MavenImportingSettings implements Cloneable {
   @NotNull
   public Set<String> getDependencyTypesAsSet() {
     if (myDependencyTypesAsSet == null) {
-      Set<String> res = new LinkedHashSet<String>();
+      Set<String> res = new LinkedHashSet<>();
 
       for (String type : StringUtil.tokenize(dependencyTypes, " \n\r\t,;")) {
         res.add(type);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -36,7 +35,6 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.awt.RelativePoint;
@@ -60,18 +58,17 @@ import java.util.Map;
  * @author peter
  */
 public class EditorHyperlinkSupport {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.EditorHyperlinkSupport");
-  public static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
+  private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
   private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("HYPERLINK");
-  private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
-  private static final int HIGHLIGHT_LAYER = HighlighterLayer.SELECTION - 111;
 
   private final Editor myEditor;
   @NotNull private final Project myProject;
+  private final AsyncFilterRunner myFilterRunner;
 
   public EditorHyperlinkSupport(@NotNull final Editor editor, @NotNull final Project project) {
     myEditor = editor;
     myProject = project;
+    myFilterRunner = new AsyncFilterRunner(this, myEditor);
 
     editor.addEditorMouseListener(new EditorMouseAdapter() {
       @Override
@@ -87,6 +84,7 @@ public class EditorHyperlinkSupport {
     });
 
     editor.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseMoved(final MouseEvent e) {
         final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getPoint());
         if (info != null) {
@@ -109,9 +107,14 @@ public class EditorHyperlinkSupport {
     }
   }
 
+  @SuppressWarnings("SameParameterValue")
+  public void waitForPendingFilters(long timeoutMs) {
+    myFilterRunner.waitForPendingFilters(timeoutMs);
+  }
+  
   @Deprecated
   public Map<RangeHighlighter, HyperlinkInfo> getHyperlinks() {
-    LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<RangeHighlighter, HyperlinkInfo>();
+    LinkedHashMap<RangeHighlighter, HyperlinkInfo> result = new LinkedHashMap<>();
     for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
       HyperlinkInfo info = getHyperlinkInfo(highlighter);
       if (info != null) {
@@ -127,7 +130,7 @@ public class EditorHyperlinkSupport {
       return null;
     }
 
-    final RangeHighlighter range = findLinkRangeAt(this.myEditor.logicalPositionToOffset(logical));
+    final RangeHighlighter range = findLinkRangeAt(myEditor.logicalPositionToOffset(logical));
     if (range != null) {
       final HyperlinkInfo hyperlinkInfo = getHyperlinkInfo(range);
       if (hyperlinkInfo != null) {
@@ -174,16 +177,15 @@ public class EditorHyperlinkSupport {
     return getHyperlinks(lineStart, lineEnd, myEditor);
   }
 
-  public static List<RangeHighlighter> getHyperlinks(int startOffset, int endOffset, final Editor editor) {
+  private static List<RangeHighlighter> getHyperlinks(int startOffset, int endOffset, final Editor editor) {
     final MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    final CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<RangeHighlighterEx>();
+    final CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<>();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset,
-                                                        new FilteringProcessor<RangeHighlighterEx>(
-                                                          rangeHighlighterEx -> HYPERLINK_LAYER == rangeHighlighterEx.getLayer() &&
-                                                                              rangeHighlighterEx.isValid() &&
-                                                                 getHyperlinkInfo(rangeHighlighterEx) != null, processor)
+                                                        new FilteringProcessor<>(
+                                                          rangeHighlighterEx -> rangeHighlighterEx.isValid() &&
+                                                                                getHyperlinkInfo(rangeHighlighterEx) != null, processor)
     );
-    return new ArrayList<RangeHighlighter>(processor.getResults());
+    return new ArrayList<>(processor.getResults());
   }
 
   public void removeHyperlink(@NotNull RangeHighlighter hyperlink) {
@@ -197,7 +199,7 @@ public class EditorHyperlinkSupport {
 
   /**
    * @deprecated for binary compatibility with older plugins
-   * @see #createHyperlink(int, int, com.intellij.openapi.editor.markup.TextAttributes, com.intellij.execution.filters.HyperlinkInfo)
+   * @see #createHyperlink(int, int, TextAttributes, HyperlinkInfo)
    */
   public void addHyperlink(final int highlightStartOffset,
                            final int highlightEndOffset,
@@ -211,7 +213,8 @@ public class EditorHyperlinkSupport {
                                           int highlightEndOffset,
                                           @Nullable TextAttributes highlightAttributes,
                                           @NotNull HyperlinkInfo hyperlinkInfo) {
-    return createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo, null);
+    return createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo, null,
+                           HighlighterLayer.HYPERLINK);
   }
 
   @NotNull
@@ -219,11 +222,12 @@ public class EditorHyperlinkSupport {
                                            final int highlightEndOffset,
                                            @Nullable final TextAttributes highlightAttributes,
                                            @NotNull final HyperlinkInfo hyperlinkInfo,
-                                           @Nullable TextAttributes followedHyperlinkAttributes) {
+                                           @Nullable TextAttributes followedHyperlinkAttributes, 
+                                           int layer) {
     TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : getHyperlinkAttributes();
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
-                                                                                       HYPERLINK_LAYER,
+                                                                                       layer,
                                                                                        textAttributes,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
     associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
@@ -252,51 +256,43 @@ public class EditorHyperlinkSupport {
 
   @Deprecated
   public void highlightHyperlinks(final Filter customFilter, final Filter predefinedMessageFilter, final int line1, final int endLine) {
-    highlightHyperlinks(new Filter() {
-      @Nullable
-      @Override
-      public Result applyFilter(String line, int entireLength) {
-        Result result = customFilter.applyFilter(line, entireLength);
-        return result != null ? result : predefinedMessageFilter.applyFilter(line, entireLength);
-      }
+    highlightHyperlinks((line, entireLength) -> {
+      Filter.Result result = customFilter.applyFilter(line, entireLength);
+      return result != null ? result : predefinedMessageFilter.applyFilter(line, entireLength);
     }, line1, endLine);
   }
   
   public void highlightHyperlinks(final Filter customFilter, final int line1, final int endLine) {
-    final Document document = myEditor.getDocument();
+    myFilterRunner.highlightHyperlinks(customFilter, Math.max(0, line1), endLine);
+  }
 
-    final int startLine = Math.max(0, line1);
-
-    for (int line = startLine; line <= endLine; line++) {
-      int endOffset = document.getLineEndOffset(line);
-      if (endOffset < document.getTextLength()) {
-        endOffset++; // add '\n'
+  void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
+    Document document = myEditor.getDocument();
+    for (Filter.ResultItem resultItem : result.getResultItems()) {
+      int start = resultItem.getHighlightStartOffset() + offsetDelta;
+      int end = resultItem.getHighlightEndOffset() + offsetDelta;
+      if (start < 0 || end < start || end > document.getTextLength()) {
+        continue;
       }
-      final String text = getLineText(document, line, true);
-      Filter.Result result = customFilter.applyFilter(text, endOffset);
-      if (result != null) {
-        for (Filter.ResultItem resultItem : result.getResultItems()) {
-          int start = resultItem.getHighlightStartOffset();
-          int end = resultItem.getHighlightEndOffset();
-          if (end < start || end > document.getTextLength()) {
-            LOG.error("Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + document.getTextLength() + "; filter=" + customFilter);
-            continue;
-          }
 
-          TextAttributes attributes = resultItem.getHighlightAttributes();
-          if (resultItem.getHyperlinkInfo() != null) {
-            createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes());
-          }
-          else if (attributes != null) {
-            addHighlighter(start, end, attributes);
-          }
-        }
+      TextAttributes attributes = resultItem.getHighlightAttributes();
+      if (resultItem.getHyperlinkInfo() != null) {
+        createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
+                        resultItem.getHighlighterLayer());
+      }
+      else if (attributes != null) {
+        addHighlighter(start, end, attributes, resultItem.getHighlighterLayer());
       }
     }
   }
 
   public void addHighlighter(int highlightStartOffset, int highlightEndOffset, TextAttributes highlightAttributes) {
-    myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset, highlightEndOffset, HIGHLIGHT_LAYER, highlightAttributes,
+    addHighlighter(highlightStartOffset, highlightEndOffset, highlightAttributes, HighlighterLayer.CONSOLE_FILTER);
+    
+  }
+  
+  public void addHighlighter(int highlightStartOffset, int highlightEndOffset, TextAttributes highlightAttributes, int highlighterLayer) {
+    myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset, highlightEndOffset, highlighterLayer, highlightAttributes,
                                                   HighlighterTargetArea.EXACT_RANGE);
   }
 
@@ -329,18 +325,24 @@ public class EditorHyperlinkSupport {
         break;
       }
     }
-    i = i % ranges.size();
+    i %= ranges.size();
     int newIndex = i;
     while (newIndex < ranges.size() && newIndex >= 0) {
       newIndex = (newIndex + delta + ranges.size()) % ranges.size();
       final RangeHighlighter next = ranges.get(newIndex);
-      if (editor.getFoldingModel().getCollapsedRegionAtOffset(next.getStartOffset()) == null) {
-        return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
-          public void navigate(final boolean requestFocus) {
-            action.consume(next);
-            linkFollowed(editor, ranges, next);
-          }
-        }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
+      HyperlinkInfo info = getHyperlinkInfo(next);
+      assert info != null;
+      if (info.includeInOccurenceNavigation()) {
+        boolean inCollapsedRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(next.getStartOffset()) != null;
+        if (!inCollapsedRegion) {
+          return new OccurenceNavigator.OccurenceInfo(new NavigatableAdapter() {
+            @Override
+            public void navigate(final boolean requestFocus) {
+              action.consume(next);
+              linkFollowed(editor, ranges, next);
+            }
+          }, newIndex == -1 ? -1 : newIndex + 1, ranges.size());
+        }
       }
       if (newIndex == i) {
         break; // cycled through everything, found no next/prev hyperlink
@@ -364,23 +366,28 @@ public class EditorHyperlinkSupport {
       }
     }
     //refresh highlighter text attributes
-    markupModel.addRangeHighlighter(0, 0, HYPERLINK_LAYER, getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE).dispose();
+    markupModel.addRangeHighlighter(0, 0, link.getLayer(), getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE).dispose();
   }
 
 
-  public static String getLineText(Document document, int lineNumber, boolean includeEol) {
+  @NotNull
+  public static String getLineText(@NotNull Document document, int lineNumber, boolean includeEol) {
+    return getLineSequence(document, lineNumber, includeEol).toString();
+  }
+
+  static CharSequence getLineSequence(@NotNull Document document, int lineNumber, boolean includeEol) {
     int endOffset = document.getLineEndOffset(lineNumber);
     if (includeEol && endOffset < document.getTextLength()) {
       endOffset++;
     }
-    return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
+    return document.getImmutableCharSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset);
   }
 
   private static class HyperlinkInfoTextAttributes extends TextAttributes {
     private final HyperlinkInfo myHyperlinkInfo;
     private final TextAttributes myFollowedHyperlinkAttributes;
 
-    public HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo, @Nullable TextAttributes followedHyperlinkAttributes) {
+    HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo, @Nullable TextAttributes followedHyperlinkAttributes) {
       myHyperlinkInfo = hyperlinkInfo;
       myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
     }
@@ -391,7 +398,7 @@ public class EditorHyperlinkSupport {
     }
 
     @Nullable
-    public TextAttributes getFollowedHyperlinkAttributes() {
+    TextAttributes getFollowedHyperlinkAttributes() {
       return myFollowedHyperlinkAttributes;
     }
   }

@@ -33,7 +33,7 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
     JpsModule main = addModule("main", mainRoot);
     JpsModule dep = addModule("dep", depRoot);
     main.getDependenciesList().addModuleDependency(dep);
-    rebuildAll();
+    rebuildAllModules();
   }
 
   public void testTestOnProductionDependency() {
@@ -43,7 +43,7 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
     main.addSourceRoot(JpsPathUtil.pathToUrl(testRoot), JavaSourceRootType.TEST_SOURCE);
     JpsModule dep = addModule("dep", depRoot);
     main.getDependenciesList().addModuleDependency(dep);
-    rebuildAll();
+    rebuildAllModules();
   }
 
   public void testTransitiveDependencyViaDummyModule() {
@@ -58,7 +58,7 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
     addExportedDependency(dummy, dummy2);
     addExportedDependency(dummy2, dep);
     dummy2.getDependenciesList().addModuleDependency(dummy);
-    rebuildAll();
+    rebuildAllModules();
   }
 
   private static void addExportedDependency(JpsModule main, JpsModule dep) {

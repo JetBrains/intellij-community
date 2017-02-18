@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,14 @@ import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public abstract class CvsOperation {
   private static final NotNullLazyValue<Map<String, String>> ourCvsEnvironment = new AtomicNotNullLazyValue<Map<String, String>>() {
     @NotNull
     @Override
     protected Map<String, String> compute() {
-      Map<String, String> cvsEnv = new HashMap<String, String>();
+      Map<String, String> cvsEnv = new HashMap<>();
 
       Map<String, String> knownToCvs = EnvironmentUtil.getEnvironmentMap();
       @SuppressWarnings("SpellCheckingInspection") String[] toCvs = {
@@ -59,7 +56,7 @@ public abstract class CvsOperation {
     }
   };
 
-  private final Collection<Runnable> myFinishActions = new ArrayList<Runnable>();
+  private final Collection<Runnable> myFinishActions = new ArrayList<>();
 
   public abstract void execute(CvsExecutionEnvironment executionEnvironment, boolean underReadAction) throws VcsException, CommandAbortedException;
 
@@ -70,9 +67,7 @@ public abstract class CvsOperation {
   }
 
   public void executeFinishActions() {
-    for (final Runnable myFinishAction : myFinishActions) {
-      myFinishAction.run();
-    }
+    myFinishActions.forEach(Runnable::run);
   }
 
   protected void modifyOptions(GlobalOptions options) {
@@ -93,15 +88,10 @@ public abstract class CvsOperation {
 
     File[] subFiles = file.listFiles();
     if (subFiles == null) {
-      subFiles = new File[0];
+      return 0;
     }
 
-    int result = 0;
-    for (File subFile : subFiles) {
-      result += calculateFilesIn(subFile);
-    }
-
-    return result;
+    return Arrays.stream(subFiles).mapToInt(CvsOperation::calculateFilesIn).sum();
   }
 
   public abstract String getLastProcessedCvsRoot();

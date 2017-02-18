@@ -39,7 +39,7 @@ import java.util.Set;
  * @author dsl
  */
 public class AutomaticVariableRenamer extends AutomaticRenamer {
-  private final Set<PsiNamedElement> myToUnpluralize = new HashSet<PsiNamedElement>();
+  private final Set<PsiNamedElement> myToUnpluralize = new HashSet<>();
 
   public AutomaticVariableRenamer(PsiClass aClass, String newClassName, Collection<UsageInfo> usages) {
     final String oldClassName = aClass.getName();
@@ -89,7 +89,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
   }
 
   private static List<PsiField> getFieldsInSameDeclaration(final PsiField variable) {
-    List<PsiField> result = new ArrayList<PsiField>();
+    List<PsiField> result = new ArrayList<>();
     ASTNode node = variable.getNode();
     if (node != null) {
       while (true) {

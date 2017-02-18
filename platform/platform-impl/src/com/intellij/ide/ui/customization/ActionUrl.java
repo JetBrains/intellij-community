@@ -60,7 +60,7 @@ public class ActionUrl implements JDOMExternalizable {
 
 
   public ActionUrl() {
-    myGroupPath = new ArrayList<String>();
+    myGroupPath = new ArrayList<>();
   }
 
   public ActionUrl(final ArrayList<String> groupPath,
@@ -133,7 +133,7 @@ public class ActionUrl implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    myGroupPath = new ArrayList<String>();
+    myGroupPath = new ArrayList<>();
     for (Object o : element.getChildren(PATH)) {
       myGroupPath.add(((Element)o).getAttributeValue(VALUE));
     }
@@ -249,7 +249,7 @@ public class ActionUrl implements JDOMExternalizable {
   }
 
   public static ArrayList<String> getGroupPath(final TreePath treePath){
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
     for (int i = 0; i < treePath.getPath().length - 1; i++) {
       Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
       if (o instanceof Group){

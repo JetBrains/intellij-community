@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -37,7 +35,6 @@ import java.util.Map;
  */
 public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   /** This should be used in tests primarily */
-  @TestOnly
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
     super(tool, ourEPMap.getValue().get(tool.getShortName()));
   }
@@ -62,7 +59,6 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return context.getStdJobDescriptors().LOCAL_ANALYSIS_ARRAY;
   }
 
-
   public boolean isUnfair() {
     return myEP == null ? getTool() instanceof UnfairLocalInspectionTool : myEP.unfair;
   }
@@ -85,8 +81,8 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     @NotNull
     @Override
     protected Map<String, LocalInspectionEP> compute() {
-      HashMap<String, LocalInspectionEP> map = new HashMap<String, LocalInspectionEP>();
-      for (LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
+      Map<String, LocalInspectionEP> map = new THashMap<>();
+      for (LocalInspectionEP ep : LocalInspectionEP.LOCAL_INSPECTION.getExtensions()) {
         map.put(ep.getShortName(), ep);
       }
       return map;
@@ -95,7 +91,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
 
   @Nullable
   public static InspectionToolWrapper findTool2RunInBatch(@NotNull Project project, @Nullable PsiElement element, @NotNull String name) {
-    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     final InspectionToolWrapper toolWrapper = element == null
                                            ? inspectionProfile.getInspectionTool(name, project)
                                            : inspectionProfile.getInspectionTool(name, element);

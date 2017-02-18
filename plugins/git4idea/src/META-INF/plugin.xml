@@ -49,6 +49,7 @@
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with Branch..." />
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
+      <reference id="Vcs.Show.Graph.History"/>
       <separator/>
       <reference id="ChangesView.Revert" />
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
@@ -62,6 +63,7 @@
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="AllIcons.Actions.Reset"/>
       <separator/>
+      <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction" text="Remotes..." />
       <action id="Git.Clone" class="git4idea.actions.GitCloneAction" text="Clone..." />
       <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch"/>
       <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull..." icon="AllIcons.Actions.CheckOut"/>
@@ -101,6 +103,8 @@
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." />
+    <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
+            description="Undo last commit and put its changes into selected changelist"/>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -111,6 +115,7 @@
       <reference id="Git.BranchOperationGroup"/>
       <separator/>
       <reference id="Git.Reset.In.Log" />
+      <reference id="Git.Uncommit" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
 
@@ -142,6 +147,7 @@
     <statistics.usagesCollector implementation="git4idea.GitStatisticsCollector" />
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
+    <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>

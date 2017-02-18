@@ -96,7 +96,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   }
 
   private static File[] getJarsFromDirectory(File libFolder) {
-    List<File> jars = new ArrayList<File>();
+    List<File> jars = new ArrayList<>();
     final File[] files = libFolder.listFiles();
     if (files != null) {
       for (File file : files) {
@@ -163,7 +163,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
       }
       catch (IOException e) {
         LOG.error(e);
-        myMethodsBlackList = new THashMap<String, Set<String>>();
+        myMethodsBlackList = new THashMap<>();
       }
     }
     final Set<String> methods = myMethodsBlackList.get(className);
@@ -182,7 +182,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   @NotNull
   @Override
   public List<String> getUserLibraryPaths() {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     result.add(getLibUserDirectoryPath());
     File opt = new File(myHomePath, "lib/opt/user");
     ContainerUtil.addIfNotNull(result, findLatestVersion(new File(opt, "appengine-endpoints")));
@@ -203,7 +203,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   public VirtualFile[] getOrmLibSources() {
     final File libsDir = new File(myHomePath, "src/orm");
     final File[] files = libsDir.listFiles();
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<>();
     if (files != null) {
       for (File file : files) {
         final String url = VfsUtil.getUrlForLibraryRoot(file);
@@ -231,7 +231,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   private Map<String, Set<String>> loadBlackList() throws IOException {
     final InputStream stream = getClass().getResourceAsStream("/data/methodsBlacklist.txt");
     LOG.assertTrue(stream != null, "/data/methodsBlacklist.txt not found");
-    final THashMap<String, Set<String>> map = new THashMap<String, Set<String>>();
+    final THashMap<String, Set<String>> map = new THashMap<>();
     BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
     try {
       String line;
@@ -239,7 +239,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
         final int i = line.indexOf(':');
         String className = line.substring(0, i);
         String methods = line.substring(i + 1);
-        map.put(className, new THashSet<String>(StringUtil.split(methods, ",")));
+        map.put(className, new THashSet<>(StringUtil.split(methods, ",")));
       }
     }
     finally {

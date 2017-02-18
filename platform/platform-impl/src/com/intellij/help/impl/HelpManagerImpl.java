@@ -47,6 +47,8 @@ public class HelpManagerImpl extends HelpManager {
   private WeakReference<IdeaHelpBroker> myBrokerReference = null;
 
   public void invokeHelp(@Nullable String id) {
+    id = StringUtil.notNullize(id, "top");
+    
     UsageTrigger.trigger("ide.help." + id);
 
     if (MacHelpUtil.isApplicable() && MacHelpUtil.invokeHelp(id)) {
@@ -58,7 +60,7 @@ public class HelpManagerImpl extends HelpManager {
       HelpSet set = createHelpSet();
       if (set != null) {
         broker = new IdeaHelpBroker(set);
-        myBrokerReference = new WeakReference<IdeaHelpBroker>(broker);
+        myBrokerReference = new WeakReference<>(broker);
       }
     }
 
@@ -71,25 +73,15 @@ public class HelpManagerImpl extends HelpManager {
       }
       String productVersion = info.getMajorVersion() + "." + minorVersion;
 
-      String url = info.getWebHelpUrl() + "?";
+      String url = info.getWebHelpUrl() + "/" + productVersion + "/?" + id;
       
       if (PlatformUtils.isJetBrainsProduct()) {
         String productCode = info.getBuild().getProductCode();
         if(!StringUtil.isEmpty(productCode)) {
-          url += "utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion + "&";
+          url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion;
         }
       }
 
-      if (PlatformUtils.isCLion()) {
-        url += "Keyword=" + id;
-        url += "&ProductVersion=" + productVersion;
-        
-        if (info.isEAP()) {
-          url += "&EAP"; 
-        }
-      } else {
-        url += id;
-      }
       BrowserUtil.browse(url);
       return;
     }
@@ -97,14 +89,12 @@ public class HelpManagerImpl extends HelpManager {
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     broker.setActivationWindow(activeWindow);
 
-    if (id != null) {
-      try {
-        broker.setCurrentID(id);
-      }
-      catch (BadIDException e) {
-        Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
-        return;
-      }
+    try {
+      broker.setCurrentID(id);
+    }
+    catch (BadIDException e) {
+      Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
+      return;
     }
     broker.setDisplayed(true);
   }

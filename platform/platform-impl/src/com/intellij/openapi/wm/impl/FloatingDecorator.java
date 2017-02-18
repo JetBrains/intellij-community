@@ -19,6 +19,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -28,6 +29,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +59,7 @@ public final class FloatingDecorator extends JDialog {
   private final MyUISettingsListener myUISettingsListener;
   private WindowInfoImpl myInfo;
 
-  private final Disposable myDisposable;
+  private final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
@@ -67,7 +69,7 @@ public final class FloatingDecorator extends JDialog {
   private IdeFrameImpl myIdeFrame;
 
 
-  FloatingDecorator(final IdeFrameImpl owner,final WindowInfoImpl info,final InternalDecorator internalDecorator){
+  FloatingDecorator(final IdeFrameImpl owner, @NotNull WindowInfoImpl info, @NotNull InternalDecorator internalDecorator){
     // Due to JDK's bug #8029387 we want floating tool windows to be parent-less on Mac.
     // On Windows and Linux we want a parent since the task bar will otherwise show the floating tool windows as independent frames.
     super(SystemInfo.isMac ? null : owner, internalDecorator.getToolWindow().getId());
@@ -101,7 +103,7 @@ public final class FloatingDecorator extends JDialog {
     //
 
     myDelayAlarm=new Alarm();
-    myFrameTicker=new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    myFrameTicker=new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myDisposable);
     myAnimator=new MyAnimator();
     myCurrentFrame=0;
     myStartRatio=0.0f;
@@ -116,11 +118,7 @@ public final class FloatingDecorator extends JDialog {
 
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
     ideGlassPane.addMousePreprocessor(new MouseAdapter() {
-    }, myDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-      }
-    });
+    }, myDisposable);
 
     apply(info);
   }
@@ -151,7 +149,7 @@ public final class FloatingDecorator extends JDialog {
 
     setFocusableWindowState(true);
 
-    uiSettings.addUISettingsListener(myUISettingsListener, myDelayAlarm);
+    ApplicationManager.getApplication().getMessageBus().connect(myDelayAlarm).subscribe(UISettingsListener.TOPIC, myUISettingsListener);
   }
 
   public final void dispose(){
@@ -166,7 +164,7 @@ public final class FloatingDecorator extends JDialog {
     super.dispose();
   }
 
-  final void apply(final WindowInfoImpl info){
+  final void apply(@NotNull WindowInfoImpl info){
     LOG.assertTrue(info.isFloating());
     myInfo=info;
     // Set alpha mode

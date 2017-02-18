@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 /**
  * @author peter
  */
-public class RenameDirectoryTest extends JavaCodeInsightFixtureTestCase {
+class RenameDirectoryTest extends JavaCodeInsightFixtureTestCase {
 
-  public void testRenameSrcRootWithTextOccurrences() {
+  void testRenameSrcRootWithTextOccurrences() {
     VirtualFile srcRoot = myFixture.tempDirFixture.findOrCreateDir("")
 
     def fooClass = myFixture.addClass("""
@@ -34,7 +34,7 @@ class Foo {
 """)
     myFixture.configureFromExistingVirtualFile(fooClass.containingFile.virtualFile)
 
-    new RenameProcessor(getProject(), psiManager.findDirectory(srcRoot), "newName", true, true).run();
+    new RenameProcessor(getProject(), psiManager.findDirectory(srcRoot), "newName", true, true).run()
 
     assert srcRoot.path.endsWith("newName")
     myFixture.checkResult """

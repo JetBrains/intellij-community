@@ -59,7 +59,7 @@ public class MavenVersionsRemoteManager
   @Override
   public List<String> execute(@NotNull RepositoryLibraryDescription repositoryLibraryDescription, ProgressIndicator indicator) {
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
-    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_GET_VERSIONS);
+    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_GET_VERSIONS, null, null);
     embedder.customizeForGetVersions();
     try {
       List<MavenRemoteRepository> remoteRepositories = convertRepositories(repositoryLibraryDescription.getRemoteRepositories());
@@ -83,7 +83,7 @@ public class MavenVersionsRemoteManager
   }
 
   private static List<MavenRemoteRepository> convertRepositories(Collection<MavenRepositoryInfo> infos) {
-    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(infos.size());
+    List<MavenRemoteRepository> result = new ArrayList<>(infos.size());
     for (MavenRepositoryInfo each : infos) {
       if (each.getUrl() != null) {
         result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));

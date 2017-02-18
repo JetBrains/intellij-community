@@ -28,11 +28,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +74,7 @@ public final class SocketLock {
 
   private final String myConfigPath;
   private final String mySystemPath;
-  private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<Consumer<List<String>>>();
+  private final AtomicReference<Consumer<List<String>>> myActivateListener = new AtomicReference<>();
   private String myToken;
   private BuiltInServer myServer;
 
@@ -96,14 +98,11 @@ public final class SocketLock {
     }
     finally {
       try {
-        underLocks(new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            FileUtil.delete(new File(myConfigPath, PORT_FILE));
-            FileUtil.delete(new File(mySystemPath, PORT_FILE));
-            FileUtil.delete(new File(mySystemPath, TOKEN_FILE));
-            return null;
-          }
+        underLocks(() -> {
+          FileUtil.delete(new File(myConfigPath, PORT_FILE));
+          FileUtil.delete(new File(mySystemPath, PORT_FILE));
+          FileUtil.delete(new File(mySystemPath, TOKEN_FILE));
+          return null;
         });
       }
       catch (Exception e) {
@@ -123,7 +122,7 @@ public final class SocketLock {
   }
 
   @NotNull
-  public ActivateStatus lock(@NotNull final String[] args) throws Exception {
+  public ActivateStatus lock(@NotNull String[] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
     return underLocks(() -> {
@@ -137,6 +136,7 @@ public final class SocketLock {
         for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
           ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
           if (status != ActivateStatus.NO_INSTANCE) {
+            log("exit: lock(): " + status);
             return status;
           }
         }
@@ -147,13 +147,15 @@ public final class SocketLock {
       }
 
       myToken = UUID.randomUUID().toString();
-      final String[] lockedPaths = {myConfigPath, mySystemPath};
+      String[] lockedPaths = {myConfigPath, mySystemPath};
       int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
-      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false,
-                                             () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken));
+      NotNullProducer<ChannelHandler> handler = () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
+      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, handler);
+
       byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
       FileUtil.writeToFile(portMarkerC, portBytes);
       FileUtil.writeToFile(portMarkerS, portBytes);
+
       File tokenFile = new File(mySystemPath, TOKEN_FILE);
       FileUtil.writeToFile(tokenFile, myToken.getBytes(CharsetToolkit.UTF8_CHARSET));
       PosixFileAttributeView view = Files.getFileAttributeView(tokenFile.toPath(), PosixFileAttributeView.class);
@@ -165,6 +167,7 @@ public final class SocketLock {
           log(e);
         }
       }
+
       log("exit: lock(): succeed");
       return ActivateStatus.NO_INSTANCE;
     });
@@ -172,19 +175,11 @@ public final class SocketLock {
 
   private <V> V underLocks(@NotNull Callable<V> action) throws Exception {
     FileUtilRt.createDirectory(new File(myConfigPath));
-    FileOutputStream lock1 = new FileOutputStream(new File(myConfigPath, PORT_LOCK_FILE), true);
-    try {
+    try (@SuppressWarnings("unused") FileOutputStream lock1 = new FileOutputStream(new File(myConfigPath, PORT_LOCK_FILE), true)) {
       FileUtilRt.createDirectory(new File(mySystemPath));
-      FileOutputStream lock2 = new FileOutputStream(new File(mySystemPath, PORT_LOCK_FILE), true);
-      try {
+      try (@SuppressWarnings("unused") FileOutputStream lock2 = new FileOutputStream(new File(mySystemPath, PORT_LOCK_FILE), true)) {
         return action.call();
       }
-      finally {
-        lock2.close();
-      }
-    }
-    finally {
-      lock1.close();
     }
   }
 
@@ -205,8 +200,7 @@ public final class SocketLock {
     log("trying: port=%s", portNumber);
     args = checkForJetBrainsProtocolCommand(args);
     try {
-      Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber);
-      try {
+      try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber)) {
         socket.setSoTimeout(1000);
 
         boolean result = false;
@@ -250,9 +244,6 @@ public final class SocketLock {
           return ActivateStatus.CANNOT_ACTIVATE;
         }
       }
-      finally {
-        socket.close();
-      }
     }
     catch (ConnectException e) {
       log("%s (stale port file?)", e.getMessage());
@@ -264,6 +255,7 @@ public final class SocketLock {
     return ActivateStatus.NO_INSTANCE;
   }
 
+  @SuppressWarnings("ALL")
   private static void printPID(int port) {
     try {
       Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);

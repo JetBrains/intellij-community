@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -35,13 +34,11 @@ import com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -292,7 +289,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
   class NodeWrapper extends AbstractTreeNode<Object> {
     String myName;
-    List<NodeWrapper> myChildren = new ArrayList<NodeWrapper>();
+    List<NodeWrapper> myChildren = new ArrayList<>();
 
     public NodeWrapper(final Project project, final String value) {
       super(project, new Object());
@@ -406,15 +403,9 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
         if (parent instanceof NodeWrapper) {
           return children;
         }
-        List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+        List<AbstractTreeNode> result = new ArrayList<>();
         result.add(rootWrapper);
         return result;
-      }
-
-      @Override
-      @Nullable
-      public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-        return null;
       }
     };
   }

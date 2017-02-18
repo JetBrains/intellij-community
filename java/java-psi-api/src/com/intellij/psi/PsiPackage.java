@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * Represents a Java package.
  */
 public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, PsiModifierListOwner, PsiDirectoryContainer, PsiQualifiedNamedElement {
-  @NonNls String PACKAGE_INFO_CLASS = "package-info";
-  @NonNls String PACKAGE_INFO_FILE = PACKAGE_INFO_CLASS + ".java";
+  String PACKAGE_INFO_CLASS = "package-info";
+  String PACKAGE_INFO_FILE = PACKAGE_INFO_CLASS + ".java";
+  String PACKAGE_INFO_CLS_FILE = PACKAGE_INFO_CLASS + ".class";
 
   PsiPackage[] EMPTY_ARRAY = new PsiPackage[0];
 
@@ -98,7 +98,8 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
    * @return the list of annotations, or null if the package does not have any package-level annotations.
    * @since 5.1
    */
-  @Nullable PsiModifierList getAnnotationList();
+  @Nullable
+  PsiModifierList getAnnotationList();
 
   /**
    * This method must be invoked on the package after all directories corresponding
@@ -117,7 +118,6 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
 
   @Override
   @Nullable("default package")
-  @NonNls
   String getName();
 
   boolean containsClassNamed(@NotNull String name);

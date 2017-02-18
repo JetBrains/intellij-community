@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,7 @@ public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDe
       Object object = method.invoke(getInstance());
       return (object instanceof Boolean) && (Boolean)object;
     }
-    catch (NoSuchMethodException ignore) {
-    }
-    catch (IllegalAccessException ignore) {
-    }
-    catch (InvocationTargetException ignore) {
+    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignore) {
     }
     return false;
   }
@@ -60,11 +56,7 @@ public abstract class PublicMethodBasedOptionDescription extends BooleanOptionDe
       Method method = getInstance().getClass().getMethod(mySetterName, boolean.class);
       method.invoke(getInstance(), Boolean.valueOf(enabled));
     }
-    catch (NoSuchMethodException ignore) {
-    }
-    catch (IllegalAccessException ignore) {
-    }
-    catch (InvocationTargetException ignore) {
+    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignore) {
     }
     fireUpdated();
   }

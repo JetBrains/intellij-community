@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -308,10 +308,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         SwingUtilities.invokeAndWait(runnable);
       }
     }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
+    catch (InterruptedException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }
@@ -325,7 +322,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   protected abstract Runnable doUpdateDiffs(T model);
 
   protected ContentDiffRequest createDifference(final FileDifferenceModel m) {
-    final Ref<ContentDiffRequest> requestRef = new Ref<ContentDiffRequest>();
+    final Ref<ContentDiffRequest> requestRef = new Ref<>();
 
     new Task.Modal(myProject, message("message.processing.revisions"), false) {
       public void run(@NotNull final ProgressIndicator i) {
@@ -463,10 +460,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       showNotification(LocalHistoryBundle.message("message.patch.created"));
       ShowFilePathAction.openFile(new File(p.getFileName()));
     }
-    catch (VcsException e) {
-      showError(message("message.error.during.create.patch", e));
-    }
-    catch (IOException e) {
+    catch (VcsException | IOException e) {
       showError(message("message.error.during.create.patch", e));
     }
   }

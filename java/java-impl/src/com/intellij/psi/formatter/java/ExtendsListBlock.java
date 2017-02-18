@@ -53,8 +53,8 @@ public class ExtendsListBlock extends AbstractJavaBlock{
 
   @Override
   protected List<Block> buildChildren() {
-    final ArrayList<Block> result = new ArrayList<Block>();
-    ArrayList<Block> elementsExceptKeyword = new ArrayList<Block>();
+    final ArrayList<Block> result = new ArrayList<>();
+    ArrayList<Block> elementsExceptKeyword = new ArrayList<>();
     myChildAlignment = createChildAlignment();
     myChildIndent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
     myUseChildAttributes = true;
@@ -69,7 +69,7 @@ public class ExtendsListBlock extends AbstractJavaBlock{
         if (ElementType.KEYWORD_BIT_SET.contains(elementType)) {
           if (!elementsExceptKeyword.isEmpty()) {
             result.add(new SyntheticCodeBlock(elementsExceptKeyword, null,  mySettings, myJavaSettings, Indent.getNoneIndent(), null));
-            elementsExceptKeyword = new ArrayList<Block>();
+            elementsExceptKeyword = new ArrayList<>();
           }
           Indent indent = mySettings.ALIGN_THROWS_KEYWORD 
                           && elementType == JavaTokenType.THROWS_KEYWORD ? Indent.getNoneIndent() : myChildIndent;

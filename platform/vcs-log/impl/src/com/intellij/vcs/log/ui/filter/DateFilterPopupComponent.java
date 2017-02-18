@@ -72,9 +72,9 @@ class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter> {
     Date oneWeekBefore = cal.getTime();
 
     return new DefaultActionGroup(createAllAction(),
+                                  new SelectAction(),
                                   new DateAction(oneDayBefore, "Last 24 hours"),
-                                  new DateAction(oneWeekBefore, "Last 7 days"),
-                                  new SelectAction());
+                                  new DateAction(oneWeekBefore, "Last 7 days"));
   }
 
   private class DateAction extends DumbAwareAction {

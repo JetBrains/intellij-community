@@ -117,11 +117,11 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * The list of local branches
    */
-  protected final List<GitBranch> myLocalBranches = new ArrayList<GitBranch>();
+  protected final List<GitBranch> myLocalBranches = new ArrayList<>();
   /**
    * The list of remote branches
    */
-  protected final List<GitBranch> myRemoteBranches = new ArrayList<GitBranch>();
+  protected final List<GitBranch> myRemoteBranches = new ArrayList<>();
   /**
    * The current branch
    */
@@ -129,7 +129,7 @@ public class GitRebaseDialog extends DialogWrapper {
   /**
    * The tags
    */
-  protected final List<GitTag> myTags = new ArrayList<GitTag>();
+  protected final List<GitTag> myTags = new ArrayList<>();
   /**
    * The validator for onto field
    */

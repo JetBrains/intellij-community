@@ -125,7 +125,7 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     final PsiReference psiReference = TargetElementUtil.findReference(editor, offset);
     if (psiReference instanceof PsiPolyVariantReference) {
       final ResolveResult[] results = ((PsiPolyVariantReference)psiReference).multiResolve(false);
-      Set<PsiElement> types = new THashSet<PsiElement>();
+      Set<PsiElement> types = new THashSet<>();
 
       for(ResolveResult r: results) {
         PsiElement element = r.getElement();

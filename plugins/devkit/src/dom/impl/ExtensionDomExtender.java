@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -90,7 +89,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static MultiMap<String, IdeaPlugin> getPluginMap(final Project project) {
-    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<String, IdeaPlugin>();
+    MultiMap<String, IdeaPlugin> byId = new LinkedMultiMap<>();
     for (IdeaPlugin each : IdeaPluginConverter.getAllPlugins(project)) {
       byId.putValue(each.getPluginId(), each);
     }
@@ -326,12 +325,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   public static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
-    Set<String> result = new HashSet<String>();
+    Set<String> result = new HashSet<>();
 
     result.add(PluginManagerCore.CORE_PLUGIN_ID);
 
     for (Dependency dependency : ideaPlugin.getDependencies()) {
-      ContainerUtil.addIfNotNull(dependency.getStringValue(), result);
+      ContainerUtil.addIfNotNull(result, dependency.getStringValue());
     }
 
     if (ideaPlugin.getPluginId() == null) {
@@ -347,9 +346,9 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
               final DomFileElement<IdeaPlugin> fileElement = ideaPlugin.getManager().getFileElement(xmlFile, IdeaPlugin.class);
               if (fileElement != null) {
                 final IdeaPlugin mainPlugin = fileElement.getRootElement();
-                ContainerUtil.addIfNotNull(mainPlugin.getPluginId(), result);
+                ContainerUtil.addIfNotNull(result, mainPlugin.getPluginId());
                 for (Dependency dependency : mainPlugin.getDependencies()) {
-                  ContainerUtil.addIfNotNull(dependency.getStringValue(), result);
+                  ContainerUtil.addIfNotNull(result, dependency.getStringValue());
                 }
               }
             }
@@ -362,11 +361,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   public void registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
-    final XmlElement xmlElement = extensions.getXmlElement();
-    if (xmlElement == null) return;
-
     IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
-
     if (ideaPlugin == null) return;
 
     String epPrefix = extensions.getEpPrefix();

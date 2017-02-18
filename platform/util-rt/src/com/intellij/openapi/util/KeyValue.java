@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,25 @@
  */
 package com.intellij.openapi.util;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/23/13
- * Time: 10:01 AM
- */
-public class KeyValue<Key,Value> {
-  private final Key myKey;
-  private final Value myValue;
+import org.jetbrains.annotations.NotNull;
 
+/** @deprecated use {@link Pair} (to be removed in IDEA 2018) */
+public class KeyValue<Key, Value> extends Pair<Key, Value> {
   public KeyValue(Key key, Value value) {
-    myKey = key;
-    myValue = value;
+    super(key, value);
   }
 
-  public static<Key, Value> KeyValue<Key, Value> create(final Key key, final Value value) {
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "deprecation"})
+  @NotNull
+  public static <Key, Value> KeyValue<Key, Value> create(final Key key, final Value value) {
     return new KeyValue<Key, Value>(key, value);
   }
 
   public Key getKey() {
-    return myKey;
+    return first;
   }
 
   public Value getValue() {
-    return myValue;
+    return second;
   }
 }

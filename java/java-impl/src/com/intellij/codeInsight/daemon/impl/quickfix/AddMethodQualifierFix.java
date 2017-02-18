@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -50,8 +50,12 @@ public class AddMethodQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    String text = QuickFixBundle.message("add.method.qualifier.fix.text", myCandidates.size() > 1 ? "" : myCandidates.get(0).getName());
-    if (myCandidates.size() > 1) {
+    final List<PsiVariable> candidates = getOrFindCandidates();
+    if (candidates.isEmpty()) {
+      return getFamilyName();
+    }
+    String text = QuickFixBundle.message("add.method.qualifier.fix.text", candidates.size() > 1 ? "" : candidates.get(0).getName());
+    if (candidates.size() > 1) {
       text += "...";
     }
     return text;
@@ -60,7 +64,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("add.method.qualifier.fix.family");
   }
 
   @Override
@@ -80,7 +84,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   }
 
   private void findCandidates() {
-    myCandidates = new ArrayList<PsiVariable>();
+    myCandidates = new ArrayList<>();
     final PsiMethodCallExpression methodCallElement = myMethodCall.getElement();
     final String methodName = methodCallElement.getMethodExpression().getReferenceName();
     if (methodName == null) {
@@ -107,16 +111,19 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   @TestOnly
   public List<PsiVariable> getCandidates() {
-    return myCandidates;
+    return getOrFindCandidates();
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return myMethodCall.getElement();
   }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(file)) {
-      return;
-    }
-    if (myCandidates.size() == 1 || UNIT_TEST_MODE) {
-      qualify(myCandidates.get(0), editor);
+    if (getOrFindCandidates().size() == 1 || UNIT_TEST_MODE) {
+      qualify(getOrFindCandidates().get(0), editor);
     }
     else {
       chooseAndQualify(editor);
@@ -125,7 +132,7 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   private void chooseAndQualify(final Editor editor) {
     final BaseListPopupStep<PsiVariable> step =
-      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), myCandidates) {
+      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), getOrFindCandidates()) {
         @Override
         public PopupStep onChosen(final PsiVariable selectedValue, final boolean finalChoice) {
           if (selectedValue != null && finalChoice) {

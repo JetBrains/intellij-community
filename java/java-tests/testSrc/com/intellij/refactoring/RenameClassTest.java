@@ -103,7 +103,7 @@ public class RenameClassTest extends MultiFileTestCase {
   }
 
   private void doTest(@NonNls final String qClassName, @NonNls final String newName) throws Exception {
-    doTest((rootDir, rootAfter) -> RenameClassTest.this.performAction(qClassName, newName));
+    doTest((rootDir, rootAfter) -> this.performAction(qClassName, newName));
   }
 
   private void performAction(String qClassName, String newName) throws Exception {

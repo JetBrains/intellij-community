@@ -1,0 +1,19 @@
+PsiJavaFile:Extras.java
+  PsiJavaModule:one
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:one('one')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace('\n')
+  PsiErrorElement:Unexpected tokens
+    PsiIdentifier:module('module')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:another('another')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

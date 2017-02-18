@@ -242,14 +242,28 @@ public class DiffDividerDrawUtil {
     }
 
     public void paint(Graphics2D g, int width, boolean paintBorder, boolean curve) {
-      // we need this shift, because editor background highlight is painted in range "Y(line) - 1 .. Y(line + 1) - 1"
-      int startY1 = myStart1 - 1;
-      int endY1 = myEnd1 - 1;
-      int startY2 = myStart2 - 1;
-      int endY2 = myEnd2 - 1;
+      int startY1;
+      int endY1;
+      int startY2;
+      int endY2;
 
-      if (endY1 - startY1 < 2) endY1 = startY1 + 1;
-      if (endY2 - startY2 < 2) endY2 = startY2 + 1;
+      if (myEnd1 - myStart1 < 2) {
+        startY1 = myStart1 - 1;
+        endY1 = myStart1;
+      }
+      else {
+        startY1 = myStart1;
+        endY1 = myEnd1 - 1;
+      }
+
+      if (myEnd2 - myStart2 < 2) {
+        startY2 = myStart2 - 1;
+        endY2 = myStart2;
+      }
+      else {
+        startY2 = myStart2;
+        endY2 = myEnd2 - 1;
+      }
 
       Stroke oldStroke = g.getStroke();
       if (myResolved) {

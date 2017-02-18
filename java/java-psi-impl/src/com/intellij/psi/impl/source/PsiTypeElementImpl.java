@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -26,12 +27,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.copyAndClear;
@@ -100,7 +103,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
-        type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)child, null, createProvider(annotations));
+        type = new PsiClassReferenceType(getReferenceComputable((PsiJavaCodeReferenceElement)child), null, createProvider(annotations));
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
         assert type != null : this;
@@ -152,6 +155,39 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     }
 
     return type;
+  }
+
+  @NotNull
+  private Computable<PsiJavaCodeReferenceElement> getReferenceComputable(PsiJavaCodeReferenceElement ref) {
+    final PsiElement parent = getParent();
+    if (parent instanceof PsiMethod || parent instanceof PsiVariable) {
+      return computeFromTypeOwner(parent, new WeakReference<PsiJavaCodeReferenceElement>(ref));
+    }
+
+    return new Computable.PredefinedValueComputable<PsiJavaCodeReferenceElement>(ref);
+  }
+
+  @NotNull
+  private static Computable<PsiJavaCodeReferenceElement> computeFromTypeOwner(final PsiElement parent, final WeakReference<PsiJavaCodeReferenceElement> ref) {
+    return new Computable<PsiJavaCodeReferenceElement>() {
+      volatile WeakReference<PsiJavaCodeReferenceElement> myCache = ref;
+
+      @Override
+      public PsiJavaCodeReferenceElement compute() {
+        PsiJavaCodeReferenceElement result = myCache.get();
+        if (result == null) {
+          myCache = new WeakReference<PsiJavaCodeReferenceElement>(result = getParentTypeElement().getReferenceElement());
+        }
+        return result;
+      }
+
+      @NotNull
+      private PsiTypeElementImpl getParentTypeElement() {
+        PsiTypeElement typeElement = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnTypeElement()
+                                                                 : ((PsiVariable)parent).getTypeElement();
+        return (PsiTypeElementImpl)ObjectUtils.assertNotNull(typeElement);
+      }
+    };
   }
 
   private static TypeAnnotationProvider createProvider(List<PsiAnnotation> annotations) {

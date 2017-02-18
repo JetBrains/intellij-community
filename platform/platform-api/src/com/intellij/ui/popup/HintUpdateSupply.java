@@ -24,6 +24,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,13 +58,22 @@ public abstract class HintUpdateSupply {
     if (supply != null) supply.hideHint();
   }
 
-  public static void installSimpleHintUpdateSupply(@NotNull final JComponent component) {
+  public static void installSimpleHintUpdateSupply(@NotNull JComponent component) {
+    installHintUpdateSupply(component, o -> o instanceof PsiElement ? (PsiElement)o : null);
+  }
+
+  public static void installDataContextHintUpdateSupply(@NotNull JComponent component) {
+    installHintUpdateSupply(component, o ->
+      o instanceof PsiElement ? (PsiElement)o :
+      CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(component)));
+  }
+
+  public static void installHintUpdateSupply(@NotNull final JComponent component, final Function<Object, PsiElement> provider) {
     HintUpdateSupply supply = new HintUpdateSupply(component) {
       @Nullable
       @Override
       protected PsiElement getPsiElementForHint(@Nullable Object selectedValue) {
-        return selectedValue instanceof PsiElement ? (PsiElement)selectedValue :
-               CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(component));
+        return provider.fun(selectedValue);
       }
     };
     if (component instanceof JList) supply.installListListener((JList)component);

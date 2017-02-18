@@ -73,7 +73,7 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   @Override
   @NotNull
   public Library[] getLibraries() {
-    final ArrayList<Library> result = new ArrayList<Library>();
+    final ArrayList<Library> result = new ArrayList<>();
     final Iterator<Library> libraryIterator = getLibraryIterator();
     ContainerUtil.addAll(result, libraryIterator);
     return result.toArray(new Library[result.size()]);
@@ -118,8 +118,8 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   @NotNull
   public Iterator<Library> getLibraryIterator() {
     FilteringIterator<OrderEntry, LibraryOrderEntry> filteringIterator =
-      new FilteringIterator<OrderEntry, LibraryOrderEntry>(myRootModel.getOrderIterator(), MODULE_LIBRARY_ORDER_ENTRY_FILTER);
-    return new ConvertingIterator<LibraryOrderEntry, Library>(filteringIterator, ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
+      new FilteringIterator<>(myRootModel.getOrderIterator(), MODULE_LIBRARY_ORDER_ENTRY_FILTER);
+    return new ConvertingIterator<>(filteringIterator, ORDER_ENTRY_TO_LIBRARY_CONVERTOR);
   }
 
   @Override

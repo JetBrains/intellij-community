@@ -43,7 +43,7 @@ class BuildMessageDispatcher extends SimpleChannelInboundHandlerAdapter<CmdlineR
 
   private static final AttributeKey<SessionData> SESSION_DATA = AttributeKey.valueOf("BuildMessageDispatcher.sessionData");
 
-  private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<UUID, SessionData>(16, 0.75f, 1);
+  private final Map<UUID, SessionData> mySessionDescriptors = new ConcurrentHashMap<>(16, 0.75f, 1);
   private final Set<UUID> myCanceledSessions = ContainerUtil.newConcurrentSet();
 
   public void registerBuildMessageHandler(@NotNull final RequestFuture<? extends BuilderMessageHandler> future, @Nullable CmdlineRemoteProto.Message.ControllerMessage params) {

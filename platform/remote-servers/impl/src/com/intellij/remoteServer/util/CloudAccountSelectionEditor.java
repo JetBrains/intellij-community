@@ -50,7 +50,7 @@ import java.util.Map;
 public class CloudAccountSelectionEditor {
 
   private static final Map<ServerType<?>, Key<RemoteServer<?>>> ourCloudType2AccountKey
-    = new HashMap<ServerType<?>, Key<RemoteServer<?>>>();
+    = new HashMap<>();
 
 
   private JButton myNewButton;
@@ -117,7 +117,7 @@ public class CloudAccountSelectionEditor {
   private void createAccount(ServerType<?> cloudType) {
     RemoteServer<?> newAccount = RemoteServersManager.getInstance().createServer(cloudType, generateServerName(cloudType));
 
-    final Ref<Consumer<String>> errorConsumerRef = new Ref<Consumer<String>>();
+    final Ref<Consumer<String>> errorConsumerRef = new Ref<>();
 
     SingleRemoteServerConfigurable configurable = new SingleRemoteServerConfigurable(newAccount, null, true) {
 
@@ -186,7 +186,7 @@ public class CloudAccountSelectionEditor {
   private static Key<RemoteServer<?>> getKey(ServerType<?> cloudType) {
     Key<RemoteServer<?>> result = ourCloudType2AccountKey.get(cloudType);
     if (result == null) {
-      result = new Key<RemoteServer<?>>("cloud-account-" + cloudType.getId());
+      result = new Key<>("cloud-account-" + cloudType.getId());
       ourCloudType2AccountKey.put(cloudType, result);
     }
     return result;

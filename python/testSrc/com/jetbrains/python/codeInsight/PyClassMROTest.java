@@ -65,7 +65,11 @@ public class PyClassMROTest extends PyTestCase {
   }
 
   public void testSixWithMetaclass() {
-    assertMRO(getClass("C"), "B", "object");
+    assertMRO(getClass("C"), "B", "D", "object");
+  }
+
+  public void testSixWithMetaclassWithAs() {
+    assertMRO(getClass("C"), "B", "D", "object");
   }
 
   // PY-4183
@@ -76,7 +80,7 @@ public class PyClassMROTest extends PyTestCase {
   public void testTangledInheritance() {
     final int numClasses = 100;
 
-    final List<String> expectedMRO = new ArrayList<String>();
+    final List<String> expectedMRO = new ArrayList<>();
     for (int i = numClasses - 1; i >= 1; i--) {
       expectedMRO.add(String.format("Class%03d", i));
     }
@@ -97,7 +101,7 @@ public class PyClassMROTest extends PyTestCase {
 
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
     final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.deepCodeInsight(cls.getProject()));
-    final List<String> classNames = new ArrayList<String>();
+    final List<String> classNames = new ArrayList<>();
     for (PyClassLikeType type : types) {
       if (type != null) {
         final String name = type.getName();

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class SideEffectChecker {
-  private static final Set<String> ourSideEffectFreeClasses = new THashSet<String>(Arrays.asList(
+  private static final Set<String> ourSideEffectFreeClasses = new THashSet<>(Arrays.asList(
     Object.class.getName(),
     Short.class.getName(),
     Character.class.getName(),

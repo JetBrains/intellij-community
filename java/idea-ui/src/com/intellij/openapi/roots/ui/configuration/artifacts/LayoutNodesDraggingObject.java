@@ -40,7 +40,7 @@ public class LayoutNodesDraggingObject extends PackagingElementDraggingObject {
 
   @Override
   public List<PackagingElement<?>> createPackagingElements(ArtifactEditorContext context) {
-    final List<PackagingElement<?>> result = new ArrayList<PackagingElement<?>>();
+    final List<PackagingElement<?>> result = new ArrayList<>();
 
     for (PackagingElementNode<?> node : myNodes) {
       final List<? extends PackagingElement<?>> elements = node.getPackagingElements();

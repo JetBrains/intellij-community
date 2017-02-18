@@ -21,7 +21,6 @@ import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -56,11 +55,11 @@ public final class TargetAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFiles()) {
+    for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFileList()) {
       final String name = buildFile.getPresentableName();
       if (name != null && myBuildName.equals(name)) {
         String[] targets = myTargets.length == 1 && DEFAULT_TARGET_NAME.equals(myTargets[0]) ? ArrayUtil.EMPTY_STRING_ARRAY : myTargets;
-        ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, e.getDataContext(), Collections.<BuildFileProperty>emptyList(), AntBuildListener.NULL);
+        ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, e.getDataContext(), Collections.emptyList(), AntBuildListener.NULL);
         return;
       }
     }

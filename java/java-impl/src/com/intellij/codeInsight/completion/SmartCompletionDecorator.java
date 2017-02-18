@@ -74,9 +74,9 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
       final PsiType type = JavaCompletionUtil.getLookupElementType(delegate);
       final TailType itemType = item != null ? item.getTailType() : TailType.NONE;
       if (type != null && type.isValid()) {
-        Set<TailType> voidTyped = new HashSet<TailType>();
-        Set<TailType> sameTyped = new HashSet<TailType>();
-        Set<TailType> assignableTyped = new HashSet<TailType>();
+        Set<TailType> voidTyped = new HashSet<>();
+        Set<TailType> sameTyped = new HashSet<>();
+        Set<TailType> assignableTyped = new HashSet<>();
         for (ExpectedTypeInfo info : myExpectedTypeInfos) {
           final PsiType infoType = info.getType();
           final PsiType originalInfoType = JavaCompletionUtil.originalize(infoType);
@@ -149,7 +149,7 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length == 0) return false;
 
-    final Set<PsiTypeParameter> set = new THashSet<PsiTypeParameter>(Arrays.asList(typeParameters));
+    final Set<PsiTypeParameter> set = new THashSet<>(Arrays.asList(typeParameters));
     final PsiTypeVisitor<Boolean> typeParamSearcher = new PsiTypeVisitor<Boolean>() {
       @Override
       public Boolean visitType(final PsiType type) {

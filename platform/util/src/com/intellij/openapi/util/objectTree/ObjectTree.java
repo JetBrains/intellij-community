@@ -60,6 +60,7 @@ public final class ObjectTree<T> {
   }
 
   public final void register(@NotNull T parent, @NotNull T child) {
+    if (parent == child) throw new IllegalArgumentException("Cannot register to itself: "+parent);
     Object wasDisposed = getDisposalInfo(parent);
     if (wasDisposed != null) {
       throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
@@ -120,7 +121,7 @@ public final class ObjectTree<T> {
     return myModification.incrementAndGet();
   }
 
-  public final boolean executeAll(@NotNull T object, boolean disposeTree, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
+  public final boolean executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
     ObjectNode<T> node;
     synchronized (treeLock) {
       node = getNode(object);
@@ -133,7 +134,7 @@ public final class ObjectTree<T> {
       }
       return false;
     }
-    node.execute(disposeTree, action);
+    node.execute(action);
     return true;
   }
 
@@ -162,19 +163,21 @@ public final class ObjectTree<T> {
     executeActionWithRecursiveGuard(object, myExecutedUnregisteredNodes, action);
   }
 
-  public final void executeChildAndReplace(@NotNull T toExecute, @NotNull T toReplace, boolean disposeTree, @NotNull ObjectTreeAction<T> action) {
+  public final void executeChildAndReplace(@NotNull T toExecute,
+                                           @NotNull T toReplace,
+                                           @NotNull ObjectTreeAction<T> action) {
     final ObjectNode<T> toExecuteNode;
     T parentObject;
     synchronized (treeLock) {
       toExecuteNode = getNode(toExecute);
-      assert toExecuteNode != null : "Object " + toExecute + " wasn't registered or already disposed";
+      if (toExecuteNode == null) throw new IllegalArgumentException("Object " + toExecute + " wasn't registered or already disposed");
 
       final ObjectNode<T> parent = toExecuteNode.getParent();
-      assert parent != null : "Object " + toExecute + " is not connected to the tree - doesn't have parent";
+      if (parent == null) throw new IllegalArgumentException("Object " + toExecute + " is not connected to the tree - doesn't have parent");
       parentObject = parent.getObject();
     }
 
-    toExecuteNode.execute(disposeTree, action);
+    toExecuteNode.execute(action);
     register(parentObject, toReplace);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Condition;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
@@ -53,15 +52,15 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   AbstractTreeBuilderTest.Node myFabrique;
 
 
-  Map<NodeElement, ElementEntry> myElementUpdate = new TreeMap<NodeElement, ElementEntry>();
+  Map<NodeElement, ElementEntry> myElementUpdate = new TreeMap<>();
   ElementUpdateHook myElementUpdateHook;
 
-  Map<String, Integer> mySortedParent = new TreeMap<String, Integer>();
+  Map<String, Integer> mySortedParent = new TreeMap<>();
 
   NodeDescriptor.NodeComparator.Delegate<NodeDescriptor> myComparator;
   Node myIntellij;
 
-  protected final Set<NodeElement> myChanges = new HashSet<NodeElement>();
+  protected final Set<NodeElement> myChanges = new HashSet<>();
 
   protected AbstractTreeBuilderTest(boolean passThrough) {
     super(passThrough);
@@ -75,7 +74,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   protected void setUp() throws Exception {
     super.setUp();
 
-    myComparator = new NodeDescriptor.NodeComparator.Delegate<NodeDescriptor>(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
+    myComparator = new NodeDescriptor.NodeComparator.Delegate<>(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
         return AlphaComparator.INSTANCE.compare(o1, o2);
@@ -296,7 +295,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   class Node  {
 
     final NodeElement myElement;
-    final ArrayList<Node> myChildElements = new ArrayList<Node>();
+    final ArrayList<Node> myChildElements = new ArrayList<>();
 
     Node(Node parent, String textName) {
       this(parent, new NodeElement(textName));
@@ -388,9 +387,9 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   class MyStructure extends BaseStructure {
-    private final Map<NodeElement, NodeElement> myChild2Parent = new HashMap<NodeElement, NodeElement>();
-    private final Map<NodeElement, Node> myElement2Node = new HashMap<NodeElement, Node>();
-    private final Set<NodeElement> myLeaves = new HashSet<NodeElement>();
+    private final Map<NodeElement, NodeElement> myChild2Parent = new HashMap<>();
+    private final Map<NodeElement, Node> myElement2Node = new HashMap<>();
+    private final Set<NodeElement> myLeaves = new HashSet<>();
     private ReValidator myReValidator;
 
     @Override
@@ -526,12 +525,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   private void onElementAction(String action, NodeElement element) {
-    ElementEntry entry = myElementUpdate.get(element);
-    if (entry == null) {
-      entry = new ElementEntry(element);
-      myElementUpdate.put(element, entry);
-    }
-    entry.onElementAction(action);
+    myElementUpdate.computeIfAbsent(element, k -> new ElementEntry(element)).onElementAction(action);
 
     if (myElementUpdateHook != null) {
       myElementUpdateHook.onElementAction(action, element);

@@ -142,7 +142,7 @@ public class GenericMain {
       String param = value.substring(0, to);
       value = value.substring(to + 1);
 
-      List<GenericType> lstBounds = new ArrayList<GenericType>();
+      List<GenericType> lstBounds = new ArrayList<>();
 
       while (true) {
         if (value.charAt(0) == ':') {

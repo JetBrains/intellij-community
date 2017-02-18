@@ -42,3 +42,17 @@ enum MyEnum {
 
   abstract int value();
 }
+class Outer {
+
+  void m() {
+    class Local {}
+    class Local2 extends Outer {}
+  }
+
+  class Inner1 {
+    Inner2 field;
+  }
+  class Inner2 {
+    Inner1 field;
+  }
+}

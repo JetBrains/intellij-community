@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.components;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Application-level component's implementation class may implement the <code>ApplicationComponent</code> interface.<br>
+ * Application-level component's implementation class may implement the {@code ApplicationComponent} interface.<br>
  * It may have constructor with parameters that are also application components.
  * <p>
  * <strong>Note that if you register a class as an application component it will be loaded, its instance will be created and

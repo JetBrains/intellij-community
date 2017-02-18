@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,11 @@ public class ExceptionUtil {
       break;
     }
     return th;
+  }
+
+  @NotNull
+  public static String currentStackTrace() {
+    return getThrowableText(new Throwable());
   }
 
   @NotNull
@@ -157,6 +162,18 @@ public class ExceptionUtil {
     if (t != null) {
       rethrowUnchecked(t);
       throw (Exception)t;
+    }
+  }
+
+  public static void rethrow(@Nullable Throwable throwable) {
+    if (throwable instanceof Error) {
+      throw (Error)throwable;
+    }
+    else if (throwable instanceof RuntimeException) {
+      throw (RuntimeException)throwable;
+    }
+    else {
+      throw new RuntimeException(throwable);
     }
   }
 

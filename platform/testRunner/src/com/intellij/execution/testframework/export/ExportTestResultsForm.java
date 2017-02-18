@@ -68,18 +68,16 @@ public class ExportTestResultsForm {
 
     myFileNameField.setText(defaultFileName);
 
-    myCustomTemplateField
-      .addBrowseFolderListener(ExecutionBundle.message("export.test.results.custom.template.chooser.title"), null, null,
-                               new FileChooserDescriptor(true, false, false, false, false, false) {
+    myCustomTemplateField.addBrowseFolderListener(ExecutionBundle.message("export.test.results.custom.template.chooser.title"), null, null,
+                                                  new FileChooserDescriptor(true, false, false, false, false, false) {
                                  public boolean isFileSelectable(VirtualFile file) {
                                    return "xsl".equalsIgnoreCase(file.getExtension()) || "xslt".equalsIgnoreCase(file.getExtension());
                                  }
-                               }, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT, false);
+                               }, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
-    myFolderField
-      .addBrowseFolderListener(ExecutionBundle.message("export.test.results.output.folder.chooser.title"), null, null,
-                               FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                               TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT, false);
+    myFolderField.addBrowseFolderListener(ExecutionBundle.message("export.test.results.output.folder.chooser.title"), null, null,
+                                          FileChooserDescriptorFactory.createSingleFolderDescriptor(),
+                                          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     myFileNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override

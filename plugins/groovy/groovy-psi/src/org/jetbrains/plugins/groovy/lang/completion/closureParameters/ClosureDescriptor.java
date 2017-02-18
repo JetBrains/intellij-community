@@ -38,7 +38,7 @@ import java.util.Map;
  * @author Max Medvedev
  */
 public class ClosureDescriptor extends LightElement implements PsiElement {
-  private final List<ClosureParameterInfo> myParams = new ArrayList<ClosureParameterInfo>();
+  private final List<ClosureParameterInfo> myParams = new ArrayList<>();
   private Map myMethod;
 
   public ClosureDescriptor(PsiManager manager) {
@@ -67,7 +67,7 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
     String name = String.valueOf(myMethod.get("name"));
     if (name == null || !name.equals(method.getName())) return false;
 
-    List<PsiType> types = new ArrayList<PsiType>();
+    List<PsiType> types = new ArrayList<>();
     final Object params = myMethod.get("params");
     if (params instanceof Map) {
       boolean first = true;

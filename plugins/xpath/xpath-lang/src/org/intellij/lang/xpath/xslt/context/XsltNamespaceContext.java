@@ -70,7 +70,7 @@ public class XsltNamespaceContext implements NamespaceContext {
     public static Collection<String> getPrefixes(XmlElement context) {
         final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
         if (tag != null) {
-            final HashSet<String> allPrefixes = new HashSet<String>();
+            final HashSet<String> allPrefixes = new HashSet<>();
             final String[] uris = tag.knownNamespaces();
             for (String uri : uris) {
                 for (XmlTag p = tag; p != null; p = p.getParentTag()) {

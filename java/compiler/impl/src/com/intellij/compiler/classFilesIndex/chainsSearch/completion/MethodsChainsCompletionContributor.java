@@ -60,7 +60,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         if (completionContext == null) return;
 
         final Set<String> contextTypesKeysSet = completionContext.getContextTypes();
-        final Set<String> contextRelevantTypes = new HashSet<String>(contextTypesKeysSet.size() + 1);
+        final Set<String> contextRelevantTypes = new HashSet<>(contextTypesKeysSet.size() + 1);
         for (final String type : contextTypesKeysSet) {
           if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
             contextRelevantTypes.add(type);
@@ -100,7 +100,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
       searchChains(target, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
     if (searchResult.size() < MAX_SEARCH_RESULT_SIZE) {
       if (!target.isArray()) {
-        final List<MethodsChain> inheritorFilteredSearchResult = new SmartList<MethodsChain>();
+        final List<MethodsChain> inheritorFilteredSearchResult = new SmartList<>();
         final Processor<TargetType> consumer = targetType -> {
           for (final MethodsChain chain : searchChains(targetType,
                                                        contextRelevantTypes,
@@ -192,7 +192,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
       }
     }
 
-    final List<MethodsChain> filteredResult = new ArrayList<MethodsChain>();
+    final List<MethodsChain> filteredResult = new ArrayList<>();
     for (final MethodsChain chain : chains) {
       final int chainWeight = chain.getChainWeight();
       if (chainWeight * FILTER_RATIO >= maxWeight) {

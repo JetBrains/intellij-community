@@ -53,28 +53,28 @@ public abstract class AbstractExternalSystemLocalSettings {
 
   private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>>                               myExpandStates
                                                                                                                                                 =
-    new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
+    new AtomicReference<>(new HashMap<>());
   private final AtomicReference<List<ExternalTaskExecutionInfo>>                                             myRecentTasks                      =
-    new AtomicReference<List<ExternalTaskExecutionInfo>>(
+    new AtomicReference<>(
       ContainerUtilRt.<ExternalTaskExecutionInfo>newArrayList()
     );
   private final AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>>                   myAvailableProjects                =
-    new AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>>(
+    new AtomicReference<>(
       ContainerUtilRt.<ExternalProjectPojo, Collection<ExternalProjectPojo>>newHashMap()
     );
   private final AtomicReference<Map<String/* external project config path */, Collection<ExternalTaskPojo>>> myAvailableTasks                   =
-    new AtomicReference<Map<String, Collection<ExternalTaskPojo>>>(
+    new AtomicReference<>(
       ContainerUtilRt.<String, Collection<ExternalTaskPojo>>newHashMap()
     );
   private final AtomicReference<Map<String/* external project config path */, ExternalProjectBuildClasspathPojo>> myProjectBuildClasspath =
-    new AtomicReference<Map<String, ExternalProjectBuildClasspathPojo>>(
+    new AtomicReference<>(
       ContainerUtilRt.<String, ExternalProjectBuildClasspathPojo>newHashMap()
     );
   private final AtomicReference<Map<String/* external project config path */, Long>>
                                                                                                              myExternalConfigModificationStamps =
-    new AtomicReference<Map<String, Long>>(ContainerUtilRt.<String, Long>newHashMap());
+    new AtomicReference<>(ContainerUtilRt.<String, Long>newHashMap());
 
-  private final AtomicReference<ExternalProjectsViewState> myExternalProjectsViewState = new AtomicReference<ExternalProjectsViewState>(
+  private final AtomicReference<ExternalProjectsViewState> myExternalProjectsViewState = new AtomicReference<>(
     new ExternalProjectsViewState()
   );
 

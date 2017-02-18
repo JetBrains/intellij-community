@@ -23,7 +23,7 @@ public class UnnecessarySuperfluousBoxing {
     }
 
     Integer foo2(String foo, int bar) {
-        return foo == null ? <warning descr="Unnecessary boxing 'Integer.valueOf(0)'">Integer.valueOf(0)</warning> : bar;
+        return foo == null ? Integer.valueOf(0) : bar;
     }
 
     void noUnboxing(Object val) {
@@ -56,6 +56,13 @@ public class UnnecessarySuperfluousBoxing {
     }
 
     int bababoxing(int i) {
+        int j = <warning descr="Unnecessary boxing 'Integer.valueOf(i)'">Integer.valueOf(i)</warning>;
       return <warning descr="Unnecessary boxing 'Integer.valueOf(i)'">Integer.valueOf(i)</warning>;
+    }
+
+    void bibaboxing() {
+        Integer i = Integer.valueOf(0);
+        new java.util.ArrayList<Integer>().add(Integer.valueOf(0));
+        String.format("%d", Integer.valueOf(0));
     }
 }

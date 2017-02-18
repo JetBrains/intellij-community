@@ -21,14 +21,15 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -41,10 +42,11 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     this("IMPORT_ELEMENT");
   }
 
-  public PyImportElementElementType(String debugName) {
+  public PyImportElementElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
+  @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
     return new PyImportElementImpl(node);
@@ -55,6 +57,7 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     return new PyImportElementImpl(stub);
   }
 
+  @NotNull
   @Override
   public PyImportElementStub createStub(@NotNull PyImportElement psi, StubElement parentStub) {
     final PyTargetExpression asName = psi.getAsNameElement();

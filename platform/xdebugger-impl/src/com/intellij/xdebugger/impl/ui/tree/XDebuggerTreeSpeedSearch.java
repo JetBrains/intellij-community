@@ -18,10 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
-import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
@@ -29,11 +26,9 @@ import javax.swing.tree.TreePath;
 import java.util.LinkedList;
 import java.util.List;
 
-class XDebuggerTreeSpeedSearch extends TreeSpeedSearch implements XDebuggerTreeListener {
+class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
   public XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<TreePath, String> toStringConvertor) {
     super(tree, toStringConvertor, true);
-
-    //((XDebuggerTree)myComponent).addTreeListener(this);
   }
 
   @Nullable
@@ -160,13 +155,5 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch implements XDebuggerTreeL
   private TreePath match(TreeNode node, String string) {
     TreePath path = node instanceof XDebuggerTreeNode ? ((XDebuggerTreeNode)node).getPath() : null;
     return isMatchingElement(path, string) ? path : null;
-  }
-
-  @Override
-  public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
-  }
-
-  @Override
-  public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
   }
 }

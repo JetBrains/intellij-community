@@ -26,37 +26,7 @@
     <orderEntry type="module" module-name="junit" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library name="Gradle">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-tooling-api-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-core-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-messaging-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-model-core-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-model-groovy-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-base-services-groovy-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-native-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-resources-3.2.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-cli-3.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/core/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/model-core/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/model-groovy/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/messaging/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/wrapper/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/base-services/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/base-services-groovy/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/native/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/resources/src/main/java" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-3.2-src.zip!/gradle-3.2/subprojects/cli/src/main/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="GradleGuava">
         <CLASSES>
@@ -70,7 +40,7 @@
     <orderEntry type="module-library" exported="">
       <library name="commons-io">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-io-2.2.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/commons-lang-2.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -79,7 +49,6 @@
     <orderEntry type="module-library">
       <library name="GradleJnaPosix">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jna-3.2.7.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/native-platform-0.11.jar!/" />
         </CLASSES>
         <JAVADOC />

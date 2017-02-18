@@ -168,7 +168,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   public void setSdkHome(String sdkHome) {
-    List<Sdk> sdkList = new ArrayList<Sdk>();
+    List<Sdk> sdkList = new ArrayList<>();
     sdkList.add(null);
     final List<Sdk> allSdks = PythonSdkType.getAllSdks();
     Collections.sort(allSdks, new PreferredSdkComparator());

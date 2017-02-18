@@ -36,5 +36,5 @@ public interface CloudAgentLoggingHandler {
 
   boolean isTtySupported();
 
-  TerminalListener createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput);
+  TerminalListener createTerminal(String pipeName, OutputStream terminalInput, InputStream terminalOutput, InputStream stderr);
 }

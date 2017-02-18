@@ -71,7 +71,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
         new JavaIntroduceParameterObjectClassDescriptor("Param", "", null, false, createInner, null, datas, method, false);
       final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
       IntroduceParameterObjectProcessor processor =
-        new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(
+        new IntroduceParameterObjectProcessor<>(
           method, classDescriptor,
           parameters,
           delegate);
@@ -227,7 +227,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase{
                                                         mergedParams, method, generateAccessors);
       final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
       IntroduceParameterObjectProcessor processor =
-        new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(
+        new IntroduceParameterObjectProcessor<>(
           method, classDescriptor,
           parameters,
           false);

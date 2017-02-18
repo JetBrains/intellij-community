@@ -42,7 +42,7 @@ public class PointlessArithmeticExpressionInspection
   extends BaseInspection {
 
   private static final Set<IElementType> arithmeticTokens =
-    new THashSet<IElementType>(9);
+    new THashSet<>(9);
 
   static {
     arithmeticTokens.add(JavaTokenType.PLUS);
@@ -166,15 +166,10 @@ public class PointlessArithmeticExpressionInspection
   }
 
   private class PointlessArithmeticFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "constant.conditional.expression.simplify.quickfix");
     }

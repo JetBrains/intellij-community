@@ -263,7 +263,7 @@ class GitRepositoryReader {
     if (!refsRootDir.exists()) {
       return Collections.emptyMap();
     }
-    final Map<String, String> result = new HashMap<String, String>();
+    final Map<String, String> result = new HashMap<>();
     FileUtil.processFilesRecursively(refsRootDir, new Processor<File>() {
       @Override
       public boolean process(File file) {

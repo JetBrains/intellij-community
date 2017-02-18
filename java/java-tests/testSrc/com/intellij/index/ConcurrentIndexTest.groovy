@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 package com.intellij.index
+
+import com.intellij.lang.FCTSBackedLighterAST
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.BombedProgressIndicator
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.util.GCUtil
 
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
 /**
  * @author peter
  */
@@ -40,8 +46,8 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
   }
 
-  public void "test concurrent switching with checkCanceled"() {
-    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
+  void "test concurrent switching with checkCanceled"() {
+    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
     for (iteration in 1..200) {
       def name = "Foo" + iteration
 //      if (iteration % 10 == 0) println "Finding $name"
@@ -75,7 +81,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
         })
       }
 
-      for(future in futuresToWait) future.get();
+      for(future in futuresToWait) future.get()
     }
   }
 
@@ -87,8 +93,8 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void "test cancellable and non-cancellable progress"() {
-    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
+  void "test cancellable and non-cancellable progress"() {
+    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
 
@@ -122,15 +128,15 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             sameStartCondition.await()
             assert myFixture.findClass("Foo").node
           }
-        });
+        })
       }
 
-      for(future in futuresToWait) future.get();
+      for(future in futuresToWait) future.get()
     }
   }
 
-  public void "test forceUpdateAffectsReadOfDataForUnsavedDocuments"() {
-    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()));
+  void "test forceUpdateAffectsReadOfDataForUnsavedDocuments"() {
+    def N = Math.max(2, (int)(Runtime.runtime.availableProcessors()))
     PsiFileImpl file = (PsiFileImpl) myFixture.addFileToProject("Foo.java", "class Foo {" + ("public void foo() {}\n") * 1000 + "}")
     assert myFixture.findClass("Foo").node
 
@@ -164,10 +170,42 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
             sameStartCondition.await()
             assert myFixture.findClass("Foo" + i).node
           }
-        });
+        })
       }
 
-      for(future in futuresToWait) future.get();
+      for(future in futuresToWait) future.get()
     }
   }
+
+  void "test concurrent light AST access during uncommitted document indexing"() {
+    def clazz = myFixture.addClass('class Bar { void foo(Object o) {}}')
+
+    def text = " foo(null);";
+    for (i in 0..20) {
+      text = "new Runnable() { void run() {\n " + text + "\n}}.run();"
+    }
+    text = "class Foo {{ " + text * 200 + "}}"
+
+    def file = myFixture.addFileToProject('a.java', text)
+    def document = file.viewProvider.document
+    for (i in 1..5) {
+      WriteCommandAction.runWriteCommandAction project, {
+        document.insertString(document.text.indexOf('null') + 1, ' ')
+        document.insertString(document.text.indexOf('(null') + 1, ' ')
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      assert file.node.lighterAST instanceof FCTSBackedLighterAST
+      List<Future> futures = []
+      futures << ApplicationManager.application.executeOnPooledThread { ReadAction.run {
+        assert !JavaNullMethodArgumentUtil.hasNullArgument(clazz.methods[0], 0)
+      } }
+      futures << ApplicationManager.application.executeOnPooledThread { ReadAction.run {
+        assert JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
+      } }
+      futures.each { it.get() }
+    }
+  }
+
 }

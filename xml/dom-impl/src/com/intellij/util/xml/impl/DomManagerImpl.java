@@ -117,7 +117,7 @@ public final class DomManagerImpl extends DomManager {
     }, project);
 
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      private final List<DomEvent> myDeletionEvents = new SmartList<DomEvent>();
+      private final List<DomEvent> myDeletionEvents = new SmartList<>();
 
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
@@ -167,13 +167,17 @@ public final class DomManagerImpl extends DomManager {
   }
 
   private List<DomEvent> calcDomChangeEvents(final VirtualFile file) {
-    if (!(file instanceof NewVirtualFile)) return Collections.emptyList();
+    if (!(file instanceof NewVirtualFile) || myProject.isDisposed()) {
+      return Collections.emptyList();
+    }
 
     final List<DomEvent> events = ContainerUtil.newArrayList();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) return false;
+        if (myProject.isDisposed() || !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file)) {
+          return false;
+        }
 
         if (!file.isDirectory() && StdFileTypes.XML == file.getFileType()) {
           final PsiFile psiFile = getCachedPsiFile(file);
@@ -280,7 +284,7 @@ public final class DomManagerImpl extends DomManager {
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
     //noinspection unchecked
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
-      file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<T>(aClass, rootTagName, file));
+      file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file));
       mySemService.clearCache();
     }
     final DomFileElementImpl<T> fileElement = getFileElement(file);
@@ -434,9 +438,9 @@ public final class DomManagerImpl extends DomManager {
   public final <T> T createStableValue(final Factory<T> provider, final Condition<T> validator) {
     final T initial = provider.create();
     assert initial != null;
-    final StableInvocationHandler handler = new StableInvocationHandler<T>(initial, provider, validator);
+    final StableInvocationHandler handler = new StableInvocationHandler<>(initial, provider, validator);
 
-    final Set<Class> intf = new HashSet<Class>();
+    final Set<Class> intf = new HashSet<>();
     ContainerUtil.addAll(intf, initial.getClass().getInterfaces());
     intf.add(StableElement.class);
     //noinspection unchecked

@@ -16,8 +16,8 @@
 package com.intellij.remoteServer.util.importProject;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.actions.ImportModuleAction;
@@ -26,7 +26,6 @@ import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
-import com.intellij.ide.wizard.Step;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.components.AbstractProjectComponent;
@@ -46,7 +45,6 @@ import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentS
 import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
 import com.intellij.remoteServer.util.CloudNotifier;
-import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
@@ -77,7 +75,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
     myNotifier = new CloudNotifier("Git remotes detector");
 
-    myDelegates = new ArrayList<CloudTypeDelegate>();
+    myDelegates = new ArrayList<>();
     for (CloudGitDeploymentDetector deploymentDetector : CloudGitDeploymentDetector.EP_NAME.getExtensions()) {
       myDelegates.add(new CloudTypeDelegate(deploymentDetector));
     }
@@ -87,7 +85,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
   public void projectOpened() {
     myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, this);
 
-    myRunManager.addRunManagerListener(new RunManagerAdapter() {
+    myRunManager.addRunManagerListener(new RunManagerListener() {
 
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
@@ -119,7 +117,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
     private final CloudGitDeploymentDetector myDeploymentDetector;
 
-    private Map<GitRepository, RepositoryNotifier> myRepositoryToNotifier = new HashMap<GitRepository, RepositoryNotifier>();
+    private Map<GitRepository, RepositoryNotifier> myRepositoryToNotifier = new HashMap<>();
 
     public CloudTypeDelegate(CloudGitDeploymentDetector deploymentDetector) {
       myDeploymentDetector = deploymentDetector;
@@ -254,7 +252,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
         ImportModuleAction.createFromWizard(myProject, wizard);
       }
       else {
-        final Ref<CloudGitChooseAccountStepBase> chooseAccountStepRef = new Ref<CloudGitChooseAccountStepBase>();
+        final Ref<CloudGitChooseAccountStepBase> chooseAccountStepRef = new Ref<>();
         if (!new AbstractProjectWizard(CloudBundle.getText("choose.account.wizzard.title", myCloudName), myProject, (String)null) {
 
           final StepSequence myStepSequence;

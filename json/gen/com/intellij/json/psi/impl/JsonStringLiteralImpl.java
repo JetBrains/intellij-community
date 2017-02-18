@@ -18,8 +18,12 @@ public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements Jso
     super(node);
   }
 
+  public void accept(@NotNull JsonElementVisitor visitor) {
+    visitor.visitStringLiteral(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitStringLiteral(this);
+    if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);
   }
 

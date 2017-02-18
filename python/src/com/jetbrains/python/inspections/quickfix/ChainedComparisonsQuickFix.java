@@ -57,13 +57,8 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.chained.comparison");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.chained.comparison");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

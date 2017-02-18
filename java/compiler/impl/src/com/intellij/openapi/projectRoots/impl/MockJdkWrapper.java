@@ -81,7 +81,8 @@ public final class MockJdkWrapper implements Sdk {
 
   @NotNull
   public Object clone() throws CloneNotSupportedException {
-    throw new CloneNotSupportedException();
+    Sdk delegateClone = (Sdk)myDelegate.clone();
+    return new MockJdkWrapper(myHomePath, delegateClone);
   }
 
   public SdkAdditionalData getSdkAdditionalData() {

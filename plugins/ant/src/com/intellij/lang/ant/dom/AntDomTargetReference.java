@@ -85,7 +85,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
                   if (candidateName.endsWith(candidateTargetName)) {
                     final String prefix = candidateName.substring(0, candidateName.length() - candidateTargetName.length());
                     if (prefixNamePairs == null) {
-                      prefixNamePairs = new ArrayList<Couple<String>>(); // lazy init
+                      prefixNamePairs = new ArrayList<>(); // lazy init
                     }
                     prefixNamePairs.add(Couple.of(prefix, candidateName));
                   }
@@ -177,7 +177,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
     if (contextTarget == null) {
       return Collections.emptySet();
     }
-    final Set<String> existing = new ArrayListSet<String>();
+    final Set<String> existing = new ArrayListSet<>();
     final String selfName = contextTarget.getName().getStringValue();
     if (selfName != null) {
       existing.add(selfName);
@@ -211,7 +211,7 @@ class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiRe
   }
   
   public static class ReferenceGroup {
-    private List<AntDomTargetReference> myRefs = new ArrayList<AntDomTargetReference>();
+    private List<AntDomTargetReference> myRefs = new ArrayList<>();
     
     public void addReference(AntDomTargetReference ref) {
       myRefs.add(ref);

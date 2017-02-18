@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,12 @@ import git4idea.update.GitFetcher;
 import git4idea.util.GitCommitCompareInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
+import org.jetbrains.plugins.github.api.GithubApiUtil;
+import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.data.GithubBranch;
+import org.jetbrains.plugins.github.api.data.GithubPullRequest;
+import org.jetbrains.plugins.github.api.data.GithubRepo;
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
 import org.jetbrains.plugins.github.util.*;
@@ -97,7 +102,7 @@ public class GithubCreatePullRequestWorker {
     myRemoteUrl = remoteUrl;
     myCurrentBranch = currentBranch;
 
-    myForks = new ArrayList<ForkInfo>();
+    myForks = new ArrayList<>();
   }
 
   @NotNull
@@ -144,7 +149,7 @@ public class GithubCreatePullRequestWorker {
 
       GithubAuthDataHolder authHolder;
       try {
-        authHolder = GithubUtil.getValidAuthDataHolderFromConfig(project, indicator);
+        authHolder = GithubUtil.getValidAuthDataHolderFromConfig(project, AuthLevel.LOGGED, indicator);
       }
       catch (IOException e) {
         GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
@@ -282,7 +287,7 @@ public class GithubCreatePullRequestWorker {
     synchronized (fork.LOCK) {
       if (fork.getFetchTask() != null) return;
 
-      final MasterFutureTask<Void> task = new MasterFutureTask<Void>(new Callable<Void>() {
+      final MasterFutureTask<Void> task = new MasterFutureTask<>(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           doFetchRemote(fork);
@@ -311,7 +316,7 @@ public class GithubCreatePullRequestWorker {
       MasterFutureTask<Void> masterTask = branch.getForkInfo().getFetchTask();
       assert masterTask != null;
 
-      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<DiffInfo>(masterTask, new Callable<DiffInfo>() {
+      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, new Callable<DiffInfo>() {
         @Override
         public DiffInfo call() throws VcsException {
           return doLoadDiffInfo(branch);
@@ -478,7 +483,7 @@ public class GithubCreatePullRequestWorker {
   public void createPullRequest(@NotNull final BranchInfo branch,
                                 @NotNull final String title,
                                 @NotNull final String description) {
-    new Task.Backgroundable(myProject, "Creating pull request...") {
+    new Task.Backgroundable(myProject, "Creating Pull Request...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         LOG.info("Pushing current branch");
@@ -633,7 +638,7 @@ public class GithubCreatePullRequestWorker {
     public ForkInfo(@NotNull GithubFullPath path, @NotNull List<String> branches, @Nullable String defaultBranch) {
       myPath = path;
       myDefaultBranch = defaultBranch == null ? "master" : defaultBranch;
-      myBranches = new ArrayList<BranchInfo>();
+      myBranches = new ArrayList<>();
       for (String branchName : branches) {
         myBranches.add(new BranchInfo(branchName, this));
       }
@@ -803,13 +808,7 @@ public class GithubCreatePullRequestWorker {
       try {
         return super.get();
       }
-      catch (InterruptedException e) {
-        return null;
-      }
-      catch (CancellationException e) {
-        return null;
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException | CancellationException e) {
         return null;
       }
     }
@@ -832,7 +831,7 @@ public class GithubCreatePullRequestWorker {
       else {
         synchronized (LOCK) {
           if (myDone) return false;
-          if (mySlaves == null) mySlaves = new ArrayList<SlaveFutureTask>();
+          if (mySlaves == null) mySlaves = new ArrayList<>();
           mySlaves.add(slave);
           return true;
         }

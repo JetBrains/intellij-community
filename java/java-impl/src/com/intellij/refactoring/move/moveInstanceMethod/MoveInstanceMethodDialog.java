@@ -26,6 +26,7 @@ import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -119,11 +120,11 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   @Nullable
   private JPanel createParametersPanel () {
     myThisClassesMap = MoveInstanceMembersUtil.getThisClassesToMembers(myMethod);
-    myOldClassParameterNameFields = new HashMap<PsiClass, EditorTextField>();
+    myOldClassParameterNameFields = new HashMap<>();
     if (myThisClassesMap.size() == 0) return null;
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     for (PsiClass aClass : myThisClassesMap.keySet()) {
-      final String text = RefactoringBundle.message("move.method.this.parameter.label", aClass.getName());
+      final String text = RefactoringBundle.message("move.method.this.parameter.label", ObjectUtils.notNull(aClass.getName(), ""));
       panel.add(new TitledSeparator(text, null));
 
       String suggestedName = MoveInstanceMethodHandler.suggestParameterNameForThisClass(aClass);
@@ -137,7 +138,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   }
 
   protected void doAction() {
-    Map<PsiClass, String> parameterNames = new LinkedHashMap<PsiClass, String>();
+    Map<PsiClass, String> parameterNames = new LinkedHashMap<>();
     for (final PsiClass aClass : myThisClassesMap.keySet()) {
       EditorTextField field = myOldClassParameterNameFields.get(aClass);
       if (field.isEnabled()) {

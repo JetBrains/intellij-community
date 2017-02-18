@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * Use this for cases similar to {@link ILazyParseableElementType}, but when its default implementation isn't sufficient.
  * For example, default lazy-parseable elements can't be stub-based (see {@link com.intellij.psi.stubs.IStubElementType}),
- * while {@link ICustomParsingType} gives you flexibility to achieve that.
+ * while {@link ICustomParsingType} gives you flexibility to achieve that in conjunction with {@link ILazyParseableElementTypeBase}.
  */
 public interface ICustomParsingType {
 

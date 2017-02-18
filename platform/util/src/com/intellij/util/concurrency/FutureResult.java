@@ -26,6 +26,13 @@ public class FutureResult<T> implements Future<T> {
   private final Semaphore mySema = new Semaphore(0);
   private volatile Pair<Object, Boolean> myValue;
 
+  public FutureResult() {
+  }
+  
+  public FutureResult(@Nullable T result) {
+    set(result);
+  }
+  
   public synchronized void set(@Nullable T result) {
     assertNotSet();
 

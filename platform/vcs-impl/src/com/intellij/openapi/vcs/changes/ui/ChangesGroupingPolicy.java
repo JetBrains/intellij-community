@@ -19,7 +19,5 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ChangesGroupingPolicy {
   @Nullable
-  ChangesBrowserNode getParentNodeFor(final StaticFilePath node, final ChangesBrowserNode rootNode);
-
-  void clear();
+  ChangesBrowserNode getParentNodeFor(final StaticFilePath node, final ChangesBrowserNode subtreeRoot);
 }

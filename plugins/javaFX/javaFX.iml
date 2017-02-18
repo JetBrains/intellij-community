@@ -24,7 +24,9 @@
     <orderEntry type="module" module-name="common-javaFX-plugin" />
     <orderEntry type="module" module-name="manifest" />
     <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="properties" />
     <orderEntry type="library" name="SceneBuilderKit" level="project" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="typeMigration" />
   </component>
 </module>

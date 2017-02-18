@@ -36,10 +36,10 @@ public class PsiMigrationImpl implements PsiMigration {
   private final PsiMigrationManager myMigrationManager;
   private final JavaPsiFacade myFacade;
   private final PsiManagerImpl myManager;
-  private final Map<String, MigrationClassImpl> myQNameToClassMap = new HashMap<String, MigrationClassImpl>();
-  private final Map<String, List<PsiClass>>  myPackageToClassesMap = new HashMap<String, List<PsiClass>>();
-  private final Map<String, MigrationPackageImpl> myQNameToPackageMap = new HashMap<String, MigrationPackageImpl>();
-  private final Map<String, List<PsiPackage>>  myPackageToSubpackagesMap = new HashMap<String, List<PsiPackage>>();
+  private final Map<String, MigrationClassImpl> myQNameToClassMap = new HashMap<>();
+  private final Map<String, List<PsiClass>>  myPackageToClassesMap = new HashMap<>();
+  private final Map<String, MigrationPackageImpl> myQNameToPackageMap = new HashMap<>();
+  private final Map<String, List<PsiPackage>>  myPackageToSubpackagesMap = new HashMap<>();
   private boolean myIsValid = true;
 
   public PsiMigrationImpl(PsiMigrationManager migrationManager, JavaPsiFacade facade, PsiManagerImpl manager) {
@@ -71,7 +71,7 @@ public class PsiMigrationImpl implements PsiMigration {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     List<PsiClass> psiClasses = myPackageToClassesMap.get(packageName);
     if (psiClasses == null) {
-      psiClasses = new ArrayList<PsiClass>();
+      psiClasses = new ArrayList<>();
       myPackageToClassesMap.put(packageName, psiClasses);
     }
     return psiClasses;
@@ -114,7 +114,7 @@ public class PsiMigrationImpl implements PsiMigration {
     assertValid();
     List<PsiPackage> psiPackages = myPackageToSubpackagesMap.get(parentName);
     if (psiPackages == null) {
-      psiPackages = new ArrayList<PsiPackage>();
+      psiPackages = new ArrayList<>();
       myPackageToSubpackagesMap.put(parentName, psiPackages);
     }
     return psiPackages;

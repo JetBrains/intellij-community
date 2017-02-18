@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,19 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Language;
@@ -38,6 +49,23 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     final InspectionProfileEntry inspection = getInspection();
     if (inspection != null) {
       myFixture.enableInspections(inspection);
+
+      final Project project = myFixture.getProject();
+      final HighlightDisplayKey displayKey = HighlightDisplayKey.find(inspection.getShortName());
+      final InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile();
+      final HighlightDisplayLevel errorLevel = currentProfile.getErrorLevel(displayKey, null);
+      if (errorLevel == HighlightDisplayLevel.DO_NOT_SHOW) {
+        currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, project);
+      }
+    }
+
+    Sdk sdk = ModuleRootManager.getInstance(ModuleManager.getInstance(getProject()).getModules()[0]).getSdk();
+    if (JAVA_1_7.getSdk().getName().equals(sdk == null ? null : sdk.getName())) {
+      PsiClass object = JavaPsiFacade.getInstance(getProject()).findClass("java.lang.Object", GlobalSearchScope.allScope(getProject()));
+      assertNotNull(object);
+
+      PsiClass component = JavaPsiFacade.getInstance(getProject()).findClass("java.awt.Component", GlobalSearchScope.allScope(getProject()));
+      assertNotNull(component);
     }
   }
 
@@ -77,8 +105,14 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
       if (text.isEmpty()) {
         newText.append("</warning>");
       }
+      else if ("!".equals(text)) {
+        newText.append("</error>");
+      }
       else if ("_".equals(text)) {
         newText.append("<caret>");
+      }
+      else if (text.startsWith("!")) {
+        newText.append("<error descr=\"").append(text.substring(1)).append("\">");
       }
       else {
         newText.append("<warning descr=\"").append(text).append("\">");

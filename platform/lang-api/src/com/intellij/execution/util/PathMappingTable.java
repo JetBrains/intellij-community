@@ -16,6 +16,7 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -94,7 +95,7 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
 
   @Override
   protected boolean isEmpty(PathMappingSettings.PathMapping element) {
-    return element.getLocalRoot().isEmpty() && element.getRemoteRoot().isEmpty();
+    return StringUtil.isEmpty(element.getLocalRoot()) && StringUtil.isEmpty(element.getRemoteRoot());
   }
 
   @Override

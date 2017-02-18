@@ -63,7 +63,7 @@ public class GitRebaser {
     myGit = git;
     myProgressIndicator = progressIndicator;
     myVcs = GitVcs.getInstance(project);
-    mySkippedCommits = new ArrayList<GitRebaseUtils.CommitInfo>();
+    mySkippedCommits = new ArrayList<>();
   }
 
   public GitUpdateResult rebase(@NotNull VirtualFile root,
@@ -163,7 +163,7 @@ public class GitRebaser {
     GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
     // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
     GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor(rebaseEditorService, myProject, root, rh);
-    Integer rebaseEditorNo = editor.getHandlerNo();
+    UUID rebaseEditorNo = editor.getHandlerNo();
     rebaseEditorService.configureHandler(rh, rebaseEditorNo);
   }
 
@@ -171,7 +171,7 @@ public class GitRebaser {
    * @return Roots which have unfinished rebase process. May be empty.
    */
   public @NotNull Collection<VirtualFile> getRebasingRoots() {
-    final Collection<VirtualFile> rebasingRoots = new HashSet<VirtualFile>();
+    final Collection<VirtualFile> rebasingRoots = new HashSet<>();
     for (VirtualFile root : ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs)) {
       if (GitRebaseUtils.isRebaseInTheProgress(myProject, root)) {
         rebasingRoots.add(root);
@@ -188,7 +188,7 @@ public class GitRebaser {
    * prohibit reordering merge commits.
    */
   public boolean reoderCommitsIfNeeded(@NotNull final VirtualFile root, @NotNull String parentCommit, @NotNull List<String> olderCommits) throws VcsException {
-    List<String> allCommits = new ArrayList<String>(); //TODO
+    List<String> allCommits = new ArrayList<>(); //TODO
     if (olderCommits.isEmpty() || olderCommits.size() == allCommits.size()) {
       LOG.info("Nothing to reorder. olderCommits: " + olderCommits + " allCommits: " + allCommits);
       return true;
@@ -196,7 +196,7 @@ public class GitRebaser {
 
     final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.REBASE);
     h.setStdoutSuppressed(false);
-    Integer rebaseEditorNo = null;
+    UUID rebaseEditorNo = null;
     GitRebaseEditorService rebaseEditorService = GitRebaseEditorService.getInstance();
     try {
       h.addParameters("-i", "-m", "-v");
@@ -411,7 +411,7 @@ public class GitRebaser {
           return 0;
         }
         try {
-          TreeMap<String, String> pickLines = new TreeMap<String, String>();
+          TreeMap<String, String> pickLines = new TreeMap<>();
           StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(path), CharsetToolkit.UTF8)));
           while (s.hasMoreData()) {
             if (!s.tryConsume("pick ")) {

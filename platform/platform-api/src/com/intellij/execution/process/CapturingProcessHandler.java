@@ -78,7 +78,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
   private void setErrorCodeIfNotYetSet() {
     // if exit code was set on processTerminated, no need to rewrite it
     // WinPtyProcess returns -2 if pty is already closed
-    if (myOutput.hasErrorExitCode()) {
+    if (!myOutput.isExitCodeSet()) {
       myOutput.setExitCode(getProcess().exitValue());
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,10 @@ package org.jetbrains.plugins.groovy.dsl.toplevel;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
@@ -34,6 +30,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 
 import java.util.Collections;
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.hasNameInFile;
 
 /**
  * @author peter
@@ -58,18 +56,10 @@ public class AnnotatedContextFilter implements ContextFilter {
   private static Map<String, Boolean> getPossibleAnnotations(final PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
       Map<String, Boolean> result = StringUtil.contains(file.getViewProvider().getContents(), "@")
-                                    ? ConcurrentFactoryMap.createMap(anno -> containsString(anno, file))
+                                    ? ConcurrentFactoryMap.createConcurrentMap(anno -> hasNameInFile(file, anno))
                                     : Collections.emptyMap();
       return CachedValueProvider.Result.create(result, file);
     });
-  }
-
-  @NotNull
-  private static Boolean containsString(String anno, PsiFile file) {
-    if (file.getVirtualFile() == null) return StringUtil.contains(file.getViewProvider().getContents(), anno);
-
-    GlobalSearchScope scope = GlobalSearchScope.fileScope(file);
-    return !FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry(anno, true), scope).isEmpty();
   }
 
   @Nullable public static PsiAnnotation findContextAnnotation(@NotNull PsiElement context, String annoQName) {

@@ -59,7 +59,7 @@ public class FailedConversionsDialog extends DialogWrapper {
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    @NonNls StringBuffer buf = new StringBuffer();
+    @NonNls StringBuilder buf = new StringBuilder();
     for (String description : myConflictDescriptions) {
       buf.append(description);
       buf.append("<br><br>");

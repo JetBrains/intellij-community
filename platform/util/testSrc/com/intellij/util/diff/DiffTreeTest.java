@@ -139,7 +139,7 @@ public class DiffTreeTest extends TestCase {
   }
 
   private static class DiffBuilder implements DiffTreeChangeBuilder<Node, Node> {
-    private final List<String> myResults = new ArrayList<String>();
+    private final List<String> myResults = new ArrayList<>();
 
     @Override
     public void nodeReplaced(@NotNull final Node oldNode, @NotNull final Node newNode) {

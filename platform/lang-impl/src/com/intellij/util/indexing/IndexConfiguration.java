@@ -29,10 +29,10 @@ import java.util.Map;
 
 class IndexConfiguration {
   private final Map<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>> myIndices =
-    new THashMap<ID<?, ?>, Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter>>();
-  private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
-  private final List<ID<?, ?>> myIndicesWithoutFileTypeInfo = new ArrayList<ID<?, ?>>();
-  private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new THashMap<FileType, List<ID<?, ?>>>();
+    new THashMap<>();
+  private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<>();
+  private final List<ID<?, ?>> myIndicesWithoutFileTypeInfo = new ArrayList<>();
+  private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = new THashMap<>();
   private volatile boolean myFreezed;
 
   <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
@@ -72,7 +72,7 @@ class IndexConfiguration {
       if (associatedFileTypes != null && !associatedFileTypes.isEmpty()) {
         for(FileType fileType:associatedFileTypes) {
           List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
-          if (ids == null) myFileType2IndicesWithFileTypeInfoMap.put(fileType, ids = new ArrayList<ID<?, ?>>(5));
+          if (ids == null) myFileType2IndicesWithFileTypeInfoMap.put(fileType, ids = new ArrayList<>(5));
           ids.add(name);
         }
       } else {

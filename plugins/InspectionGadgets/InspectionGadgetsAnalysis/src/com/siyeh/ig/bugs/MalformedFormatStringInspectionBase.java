@@ -47,8 +47,8 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
   final List<String> methodNames;
 
   public MalformedFormatStringInspectionBase() {
-    classNames = new ArrayList<String>();
-    methodNames = new ArrayList<String>();
+    classNames = new ArrayList<>();
+    methodNames = new ArrayList<>();
     parseString(additionalClasses, classNames);
     parseString(additionalMethods, methodNames);
   }

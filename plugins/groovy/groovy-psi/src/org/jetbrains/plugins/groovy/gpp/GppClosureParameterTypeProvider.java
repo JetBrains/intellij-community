@@ -182,7 +182,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   }
 
   private static ArrayList<Pair<PsiMethod, PsiSubstitutor>> getMethodsToOverrideImplement(PsiClass psiClass, final boolean toImplement) {
-    final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
+    final ArrayList<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<>();
     for (CandidateInfo info : OverrideImplementExploreUtil.getMethodsToOverrideImplement(psiClass, toImplement)) {
       result.add(Pair.create((PsiMethod) info.getElement(), info.getSubstitutor()));
     }

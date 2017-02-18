@@ -82,7 +82,7 @@ public abstract class ProblemsView {
     if (!text.contains("\n")) {
       return new String[]{text};
     }
-    final List<String> lines = new ArrayList<String>();
+    final List<String> lines = new ArrayList<>();
     StringTokenizer tokenizer = new StringTokenizer(text, "\n", false);
     while (tokenizer.hasMoreTokens()) {
       lines.add(tokenizer.nextToken());

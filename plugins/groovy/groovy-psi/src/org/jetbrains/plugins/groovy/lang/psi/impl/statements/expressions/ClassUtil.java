@@ -31,11 +31,11 @@ public class ClassUtil {
   public static Map<String, PsiClass> getSuperClassesWithCache(@NotNull PsiClass aClass) {
     Map<String, PsiClass> superClassNames = PARENT_CACHE_KEY.getCachedValue(aClass);
     if (superClassNames == null) {
-      Set<PsiClass> superClasses = new THashSet<PsiClass>();
+      Set<PsiClass> superClasses = new THashSet<>();
       superClasses.add(aClass);
       InheritanceUtil.getSuperClasses(aClass, superClasses, true);
 
-      superClassNames = new LinkedHashMap<String, PsiClass>();
+      superClassNames = new LinkedHashMap<>();
       for (PsiClass superClass : superClasses) {
         superClassNames.put(superClass.getQualifiedName(), superClass);
       }

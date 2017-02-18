@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Lists interesting features importable from __future__.
- * <code>.toString()</code> returns the Python name of the feature.
+ * {@code .toString()} returns the Python name of the feature.
  * <br/>
  * User: dcheryasov
  */

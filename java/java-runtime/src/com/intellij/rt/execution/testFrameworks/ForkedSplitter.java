@@ -28,8 +28,8 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
 
   private Object myRootDescription;
 
-  public ForkedSplitter(String workingDirsPath, String forkMode, PrintStream out, PrintStream err, List newArgs) {
-    super(workingDirsPath, forkMode, out, err, newArgs);
+  public ForkedSplitter(String workingDirsPath, String forkMode, List newArgs) {
+    super(workingDirsPath, forkMode, newArgs);
   }
 
   protected int startSplitting(String[] args,
@@ -39,7 +39,6 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
     if (myRootDescription == null) {
       return  -1;
     }
-    sendTree(myRootDescription);
     if (myWorkingDirsPath == null || new File(myWorkingDirsPath).length() == 0) {
       final String classpath = System.getProperty("java.class.path");
       if (repeatCount != null && RepeatCount.getCount(repeatCount) != 0 && myForkMode.equals("repeat")) {

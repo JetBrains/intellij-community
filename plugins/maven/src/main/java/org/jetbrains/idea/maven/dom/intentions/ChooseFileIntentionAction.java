@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.intentions;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -82,6 +83,7 @@ public class ChooseFileIntentionAction implements IntentionAction {
     if (selectedFile == null) return;
 
     if (dep != null) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       new WriteCommandAction(project) {
         protected void run(@NotNull Result result) throws Throwable {
           dep.getSystemPath().setValue(selectedFile);

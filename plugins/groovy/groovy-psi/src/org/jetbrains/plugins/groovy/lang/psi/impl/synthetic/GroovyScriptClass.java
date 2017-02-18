@@ -48,7 +48,7 @@ public class GroovyScriptClass extends GrLightTypeDefinitionBase implements Synt
   public GroovyScriptClass(@NotNull GroovyFile file) {
     super(file);
     myFile = file;
-    myCache = new GrTypeDefinitionMembersCache<GroovyScriptClass>(this, FileCodeMembersProvider.INSTANCE);
+    myCache = new GrTypeDefinitionMembersCache<>(this, FileCodeMembersProvider.INSTANCE);
     getModifierList().addModifier(GrModifierFlags.PUBLIC_MASK);
   }
 

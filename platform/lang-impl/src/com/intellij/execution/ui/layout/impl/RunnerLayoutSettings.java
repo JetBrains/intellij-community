@@ -33,7 +33,7 @@ public class RunnerLayoutSettings implements PersistentStateComponent<Element> {
     return ServiceManager.getService(RunnerLayoutSettings.class);
   }
 
-  private final Map<String, RunnerLayout> myRunnerId2Settings = new LinkedHashMap<String, RunnerLayout>();
+  private final Map<String, RunnerLayout> myRunnerId2Settings = new LinkedHashMap<>();
 
   public RunnerLayout getLayout(@NotNull String id) {
     RunnerLayout layout = myRunnerId2Settings.get(id);

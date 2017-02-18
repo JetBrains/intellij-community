@@ -9,7 +9,7 @@ class A {
     ArrayList<String> strings = new ArrayList<String>();
     Stream<String> it = strings.stream();
 
-    int i = (int) it.flatMap((f) -> getFunction().apply(f).stream()).count();
+    int i = (int) it.flatMap(f -> getFunction().apply(f).stream()).count();
   }
 
   Function<String, List<String>> getFunction() {

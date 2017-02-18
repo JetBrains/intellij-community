@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ public class ProjectIconsAccessor {
 
   private final Project myProject;
 
-  private final SLRUMap<String, Pair<Long, Icon>> iconsCache = new SLRUMap<String, Pair<Long, Icon>>(500, 1000);
+  private final SLRUMap<String, Pair<Long, Icon>> iconsCache = new SLRUMap<>(500, 1000);
 
   ProjectIconsAccessor(Project project) {
     myProject = project;
@@ -69,7 +70,7 @@ public class ProjectIconsAccessor {
       return null;
     }
 
-    final List<FileReference> refs = new ArrayList<FileReference>();
+    final List<FileReference> refs = new ArrayList<>();
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -116,16 +117,20 @@ public class ProjectIconsAccessor {
   public Icon getIcon(@NotNull VirtualFile file) {
     final String path = file.getPath();
     final long stamp = file.getModificationStamp();
-    Pair<Long, Icon> iconInfo = iconsCache.get(path);
-    if (iconInfo == null || iconInfo.getFirst() < stamp) {
-      try {
-        final Icon icon = createOrFindBetterIcon(file, isIdeaProject(myProject));
-        iconInfo = new Pair<Long, Icon>(stamp, hasProperSize(icon) ? icon : null);
-        iconsCache.put(file.getPath(), iconInfo);
-      }
-      catch (Exception e) {//
-        iconInfo = null;
-        iconsCache.remove(path);
+
+    Pair<Long, Icon> iconInfo;
+    synchronized (iconsCache) {
+      iconInfo = iconsCache.get(path);
+      if (iconInfo == null || iconInfo.getFirst() < stamp) {
+        try {
+          final Icon icon = createOrFindBetterIcon(file, isIdeaProject(myProject));
+          iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
+          iconsCache.put(file.getPath(), iconInfo);
+        }
+        catch (Exception e) {
+          iconInfo = null;
+          iconsCache.remove(path);
+        }
       }
     }
     return iconInfo == null ? null : iconInfo.getSecond();
@@ -140,8 +145,8 @@ public class ProjectIconsAccessor {
   }
 
   private static boolean hasProperSize(Icon icon) {
-    return icon.getIconHeight() <= ICON_MAX_HEIGHT &&
-           icon.getIconWidth() <= ICON_MAX_WEIGHT;
+    return icon.getIconHeight() <= JBUI.scale(ICON_MAX_HEIGHT) &&
+           icon.getIconWidth() <= JBUI.scale(ICON_MAX_WEIGHT);
   }
 
   private static boolean isIdeaProject(Project project) {

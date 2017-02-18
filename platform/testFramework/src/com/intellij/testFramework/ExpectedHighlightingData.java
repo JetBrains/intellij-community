@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -40,7 +41,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ConstantFunction;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -83,12 +83,12 @@ public class ExpectedHighlightingData {
       this.severity = severity;
       this.endOfLine = endOfLine;
       this.enabled = enabled;
-      this.infos = new THashSet<HighlightInfo>();
+      this.infos = new THashSet<>();
     }
   }
 
-  private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<String, ExpectedHighlightingSet>();
-  private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<RangeMarker, LineMarkerInfo>();
+  private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
+  private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<>();
   private final Document myDocument;
   @SuppressWarnings("StatefulEp") private final PsiFile myFile;
   private final String myText;
@@ -143,8 +143,6 @@ public class ExpectedHighlightingData {
     }
     registerHighlightingType(END_LINE_HIGHLIGHT_MARKER, new ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true));
     registerHighlightingType(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, false));
-
-    initAdditionalHighlightingTypes();
   }
 
   public void init() {
@@ -190,7 +188,8 @@ public class ExpectedHighlightingData {
       assert element != null : value;
       TextRange range = new TextRange(startOffset, endOffset);
       final String tooltip = value.getLineMarkerTooltip();
-      LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(element, range, null, value.updatePass, e -> tooltip, null, GutterIconRenderer.Alignment.RIGHT);
+      LineMarkerInfo markerInfo =
+        new LineMarkerInfo<>(element, range, null, value.updatePass, e -> tooltip, null, GutterIconRenderer.Alignment.RIGHT);
       entry.setValue(markerInfo);
     }
   }
@@ -221,7 +220,7 @@ public class ExpectedHighlightingData {
       endOffset -= endTag.length();
 
       LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset, endOffset), null, Pass.LINE_MARKERS,
-                                                                 new ConstantFunction<PsiElement, String>(descr), null,
+                                                                 new ConstantFunction<>(descr), null,
                                                                  GutterIconRenderer.Alignment.RIGHT);
 
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
@@ -247,6 +246,7 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+effecttype=\"([A-Z]+)\")?" +
                                 "(?:\\s+fonttype=\"([0-9]+)\")?" +
                                 "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\\\])*)\")?" +
+                                "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                                 "(/)?>";
 
     final Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
@@ -271,6 +271,7 @@ public class ExpectedHighlightingData {
     final String effectType = matcher.group(groupIdx++);
     final String fontType = matcher.group(groupIdx++);
     final String attrKey = matcher.group(groupIdx++);
+    final String bundleMessage = matcher.group(groupIdx++);
     final boolean closed = matcher.group(groupIdx) != null;
 
     if (descr == null) {
@@ -336,6 +337,11 @@ public class ExpectedHighlightingData {
 
       if (forcedAttributes != null) builder.textAttributes(forcedAttributes);
       if (forcedTextAttributesKey != null) builder.textAttributes(forcedTextAttributesKey);
+      if (bundleMessage != null) {
+        final List<String> split = StringUtil.split(bundleMessage, "|");
+        final ResourceBundle bundle = ResourceBundle.getBundle(split.get(0));
+        descr = CommonBundle.message(bundle, split.get(1), split.stream().skip(2).toArray());
+      }
       if (descr != null) { builder.description(descr); builder.unescapedToolTip(descr); }
       if (expectedHighlightingSet.endOfLine) builder.endOfLine();
       HighlightInfo highlightInfo = builder.createUnconditionally();
@@ -453,7 +459,7 @@ public class ExpectedHighlightingData {
   }
 
   private static <T> List<T> reverseCollection(Collection<T> infos) {
-    return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<T>(infos));
+    return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<>(infos));
   }
 
   private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {
@@ -610,11 +616,4 @@ public class ExpectedHighlightingData {
     return String.format("(%d:%d..%d:%d)", startLine + 1, endLine + 1, startCol + 1, endCol + 1);
   }
 
-  /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  protected final Map<String, ExpectedHighlightingSet> highlightingTypes = myHighlightingTypes;
-
-  /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
-  protected void initAdditionalHighlightingTypes() { }
 }

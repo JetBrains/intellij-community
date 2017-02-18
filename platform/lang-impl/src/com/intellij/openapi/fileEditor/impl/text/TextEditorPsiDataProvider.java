@@ -211,14 +211,14 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   }
 
   private Language[] computeLanguages(@NotNull Editor editor, @NotNull Caret caret) {
-    LinkedHashSet<Language> set = new LinkedHashSet<Language>(4);
+    LinkedHashSet<Language> set = new LinkedHashSet<>(4);
     Language injectedLanguage = (Language)getData(injectedId(LANGUAGE.getName()), editor, caret);
-    addIfNotNull(injectedLanguage, set);
+    addIfNotNull(set, injectedLanguage);
     Language language = (Language)getData(LANGUAGE.getName(), editor, caret);
-    addIfNotNull(language, set);
+    addIfNotNull(set, language);
     PsiFile psiFile = (PsiFile)getData(PSI_FILE.getName(), editor, caret);
     if (psiFile != null) {
-      addIfNotNull(psiFile.getViewProvider().getBaseLanguage(), set);
+      addIfNotNull(set, psiFile.getViewProvider().getBaseLanguage());
     }
     return set.toArray(new Language[set.size()]);
   }

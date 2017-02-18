@@ -82,8 +82,8 @@ public final class TypeEvalContextBasedCache<T> {
     @Override
     public Result<Map<TypeEvalConstraints, T>> compute() {
       // This method is called if cache is empty. Create new map for it.
-      final HashMap<TypeEvalConstraints, T> map = new HashMap<TypeEvalConstraints, T>();
-      return new Result<Map<TypeEvalConstraints, T>>(map, PsiModificationTracker.MODIFICATION_COUNT);
+      final HashMap<TypeEvalConstraints, T> map = new HashMap<>();
+      return new Result<>(map, PsiModificationTracker.MODIFICATION_COUNT);
     }
   }
 }

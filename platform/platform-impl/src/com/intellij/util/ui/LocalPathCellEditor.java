@@ -77,7 +77,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
 
   @Override
   public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, final int row, int column) {
-    myComponent = new CellEditorComponentWithBrowseButton<JTextField>(new TextFieldWithBrowseButton(createActionListener(table)), this);
+    myComponent = new CellEditorComponentWithBrowseButton<>(new TextFieldWithBrowseButton(createActionListener(table)), this);
     myComponent.getChildComponent().setText((String)value);
     return myComponent;
   }

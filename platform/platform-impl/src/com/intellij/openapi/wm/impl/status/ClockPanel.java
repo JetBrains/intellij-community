@@ -53,7 +53,7 @@ public class ClockPanel extends JComponent {
   protected final Calendar myCalendar;
   private final boolean is24Hours;
   private ScheduledFuture<?> myScheduledFuture;
-  private final Runnable myRepaintRunnable = () -> ClockPanel.this.repaint();
+  private final Runnable myRepaintRunnable = () -> this.repaint();
 
   public ClockPanel() {
     myCalendar = getInstance();

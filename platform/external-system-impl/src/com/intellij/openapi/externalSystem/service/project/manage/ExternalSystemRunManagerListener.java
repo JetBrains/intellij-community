@@ -16,8 +16,8 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -40,7 +40,7 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
  * @author Vladislav.Soroka
  * @since 11/14/2014
  */
-class ExternalSystemRunManagerListener extends RunManagerAdapter {
+class ExternalSystemRunManagerListener implements RunManagerListener {
 
   private ExternalProjectsManager myManager;
   private final Map<Integer, Pair<String, RunnerAndConfigurationSettings>> myMap;

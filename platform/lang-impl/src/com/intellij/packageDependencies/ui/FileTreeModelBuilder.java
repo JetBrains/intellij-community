@@ -71,9 +71,9 @@ public class FileTreeModelBuilder {
   private final Marker myMarker;
   private final boolean myAddUnmarkedFiles;
   private final PackageDependenciesNode myRoot;
-  private final Map<VirtualFile,DirectoryNode> myModuleDirNodes = new HashMap<VirtualFile, DirectoryNode>();
-  private final Map<Module, ModuleNode> myModuleNodes = new HashMap<Module, ModuleNode>();
-  private final Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<String, ModuleGroupNode>();
+  private final Map<VirtualFile,DirectoryNode> myModuleDirNodes = new HashMap<>();
+  private final Map<Module, ModuleNode> myModuleNodes = new HashMap<>();
+  private final Map<String, ModuleGroupNode> myModuleGroupNodes = new HashMap<>();
   private GeneralGroupNode myExternalNode;
 
   private int myScannedFileCount = 0;
@@ -419,7 +419,7 @@ public class FileTreeModelBuilder {
 
   @Nullable
   public static PackageDependenciesNode[] findNodeForPsiElement(PackageDependenciesNode parent, PsiElement element){
-    final Set<PackageDependenciesNode> result = new HashSet<PackageDependenciesNode>();
+    final Set<PackageDependenciesNode> result = new HashSet<>();
     for (int i = 0; i < parent.getChildCount(); i++){
       final TreeNode treeNode = parent.getChildAt(i);
       if (treeNode instanceof PackageDependenciesNode){

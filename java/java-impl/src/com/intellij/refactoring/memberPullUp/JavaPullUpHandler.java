@@ -145,7 +145,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     final MemberInfo[] memberInfos = infos.toArray(new MemberInfo[infos.size()]);
     final PsiClass superClass = dialog.getSuperClass();
     if (!checkWritable(superClass, memberInfos)) return false;
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
       final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;

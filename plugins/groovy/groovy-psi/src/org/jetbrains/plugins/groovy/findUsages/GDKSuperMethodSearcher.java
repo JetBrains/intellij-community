@@ -69,7 +69,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final MethodSignature signature = method.getHierarchicalMethodSignature();
-    List<PsiMethod> goodSupers = new ArrayList<PsiMethod>();
+    List<PsiMethod> goodSupers = new ArrayList<>();
 
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
@@ -83,7 +83,7 @@ public class GDKSuperMethodSearcher implements QueryExecutor<MethodSignatureBack
 
     if (goodSupers.isEmpty()) return true;
 
-    List<PsiMethod> result = new ArrayList<PsiMethod>(goodSupers.size());
+    List<PsiMethod> result = new ArrayList<>(goodSupers.size());
     result.add(goodSupers.get(0));
 
     final Comparator<PsiMethod> comparator = (o1, o2) -> { //compare by first parameter type

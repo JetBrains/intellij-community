@@ -35,7 +35,7 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
 
   public static class State {
 
-    private Map<String, ConfigurationBean> myHistoryElements = new LinkedHashMap<String, ConfigurationBean>();
+    private Map<String, ConfigurationBean> myHistoryElements = new LinkedHashMap<>();
 
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundKeyWithTag = false, surroundWithTag = false, surroundValueWithTag = false, entryTagName = "history-entry", keyAttributeName = "file")

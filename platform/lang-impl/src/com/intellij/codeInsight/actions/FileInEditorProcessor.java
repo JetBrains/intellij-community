@@ -160,7 +160,7 @@ class FileInEditorProcessor {
         builder.append("No lines changed: changes since last revision are already properly formatted").append("<br>");
       }
       else {
-        builder.append("No lines changed: code is already properly formatted").append("<br>");
+        builder.append("No lines changed: content is already properly formatted").append("<br>");
       }
     }
     else {

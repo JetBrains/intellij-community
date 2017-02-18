@@ -64,7 +64,7 @@ public class NamespaceDesc {
     this.intfs = def.intfs;
   }
 
-  final Map<String, String> props = new HashMap<String, String>();
+  final Map<String, String> props = new HashMap<>();
   final String name;
   String pkgName;
   String superClass;

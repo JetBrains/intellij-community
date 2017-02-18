@@ -44,7 +44,7 @@ public class CustomLoadingExtensionPointBean extends AbstractExtensionPointBean 
                                    "Check if 'implementationClass' attribute is specified");
       }
       //noinspection unchecked
-      return instantiate(implementationClass, picoContainer);
+      return instantiate(findClass(implementationClass), picoContainer, true);
     }
   }
 }

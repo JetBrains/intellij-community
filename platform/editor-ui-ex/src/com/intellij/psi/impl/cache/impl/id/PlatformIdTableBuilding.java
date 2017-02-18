@@ -55,7 +55,7 @@ import java.util.Map;
  * Author: dmitrylomov
  */
 public abstract class PlatformIdTableBuilding {
-  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
+  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<>("Editor");
   private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
 
   private PlatformIdTableBuilding() {}
@@ -108,6 +108,7 @@ public abstract class PlatformIdTableBuilding {
   private static class CompositeTodoIndexer extends VersionedTodoIndexer {
     private final DataIndexer<TodoIndexEntry, Integer, FileContent>[] indexers;
 
+    @SafeVarargs
     public CompositeTodoIndexer(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
       this.indexers = indexers;
     }
@@ -117,6 +118,7 @@ public abstract class PlatformIdTableBuilding {
     public Map<TodoIndexEntry, Integer> map(@NotNull FileContent inputData) {
       Map<TodoIndexEntry, Integer> result = ContainerUtil.newTroveMap();
       for (DataIndexer<TodoIndexEntry, Integer, FileContent> indexer : indexers) {
+        if (indexer == null) continue;
         for (Map.Entry<TodoIndexEntry, Integer> entry : indexer.map(inputData).entrySet()) {
           TodoIndexEntry key = entry.getKey();
           if (result.containsKey(key)) {
@@ -186,7 +188,7 @@ public abstract class PlatformIdTableBuilding {
           }
           iterator.advance();
         }
-        final Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
+        final Map<TodoIndexEntry, Integer> map = new HashMap<>();
         for (IndexPattern pattern : IndexPatternUtil.getIndexPatterns()) {
           final int count = occurrenceConsumer.getOccurrenceCount(pattern);
           if (count > 0) {

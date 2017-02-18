@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Base java local inspection which provides batch suppress actions, i.e. actions which don't need UI components to run (e.g. Editor).

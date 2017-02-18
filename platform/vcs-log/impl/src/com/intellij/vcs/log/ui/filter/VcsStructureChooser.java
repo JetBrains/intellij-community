@@ -36,8 +36,8 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.PlusMinus;
-import com.intellij.util.TreeNodeState;
+import com.intellij.openapi.vcs.changes.ui.PlusMinus;
+import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
@@ -109,7 +109,7 @@ public class VcsStructureChooser extends DialogWrapper {
       }
     });
 
-    TreeSet<VirtualFile> checkSet = new TreeSet<VirtualFile>(FilePathComparator.getInstance());
+    TreeSet<VirtualFile> checkSet = new TreeSet<>(FilePathComparator.getInstance());
     checkSet.addAll(roots);
     for (Module module : modules) {
       VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
@@ -161,7 +161,7 @@ public class VcsStructureChooser extends DialogWrapper {
         return !changeListManager.isIgnoredFile(file) && !changeListManager.isUnversioned(file);
       }
     };
-    descriptor.withRoots(new ArrayList<VirtualFile>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true);
+    descriptor.withRoots(new ArrayList<>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true);
     final MyCheckboxTreeCellRenderer cellRenderer =
       new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
     FileSystemTreeImpl fileSystemTree =

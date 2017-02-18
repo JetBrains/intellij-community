@@ -69,12 +69,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     }
     myModuleOutputDir = new File(ourOutputRoot, PathUtil.getFileName(getTestAppPath()));
     myChecker = initOutputChecker();
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        ExecutionTestCase.super.setUp();
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> super.setUp());
     if (!myModuleOutputDir.exists()) {
       VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ourOutputRoot);
       assertNotNull(ourOutputRoot.getAbsolutePath(), vDir);
@@ -138,12 +133,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
     if (myCompilerTester != null) {
       myCompilerTester.tearDown();
     }
-    EdtTestUtil.runInEdtAndWait(new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        ExecutionTestCase.super.tearDown();
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
     //myChecker.checkValid(getTestProjectJdk());
     //probably some thread is destroyed right now because of log exception
     //wait a little bit
@@ -178,7 +168,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   }
 
   public void waitProcess(@NotNull final ProcessHandler processHandler) {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
 
     final boolean[] isRunning = {true};
     alarm.addRequest(() -> {
@@ -199,7 +189,7 @@ public abstract class ExecutionTestCase extends IdeaTestCase {
   }
 
   public void waitFor(Runnable r) {
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, getTestRootDisposable());
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     final Thread thread = Thread.currentThread();
 
     final boolean[] isRunning = {true};

@@ -89,7 +89,7 @@ class OverridingMethodsDialog extends DialogWrapper {
   }
 
   public ArrayList<UsageInfo> getSelected() {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> result = new ArrayList<>();
     for (int i = 0; i < myChecked.length; i++) {
       if(myChecked[i]) {
         result.add(myOverridingMethods.get(i));

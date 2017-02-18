@@ -85,7 +85,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
     //noinspection unchecked
     HashMap<String, StringDescriptor> name2Descriptor = (HashMap<String, StringDescriptor>)component.getClientProperty(CLIENT_PROP_NAME_2_DESCRIPTOR);
     if(name2Descriptor == null){
-      name2Descriptor = new HashMap<String,StringDescriptor>();
+      name2Descriptor = new HashMap<>();
       component.putClientProperty(CLIENT_PROP_NAME_2_DESCRIPTOR, name2Descriptor);
     }
     return name2Descriptor;

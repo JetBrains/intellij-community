@@ -90,14 +90,7 @@ public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNo
         RecursiveLighterASTNodeWalkingVisitor.this.elementFinished(element.node);
 
         if (parentStack.peek() == element) { // getFirstChild returned nothing. otherwise getFirstChild() was not called, i.e. super.visitNode() was not called i.e. just ignore
-          IndexedLighterASTNode[] children = childrenStack.pop();
-          List<LighterASTNode> list = children.length == 0 ? Collections.<LighterASTNode>emptyList() : ContainerUtil.map(children, new Function<IndexedLighterASTNode, LighterASTNode>() {
-            @Override
-            public LighterASTNode fun(IndexedLighterASTNode node) {
-              return node.node;
-            }
-          });
-          ast.disposeChildren(list);
+          childrenStack.pop();
           parentStack.pop();
         }
       }

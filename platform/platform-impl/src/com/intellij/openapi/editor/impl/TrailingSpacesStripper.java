@@ -49,11 +49,11 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
   private static final Key<Boolean> DISABLE_FOR_FILE_KEY = Key.create("DISABLE_TRAILING_SPACE_STRIPPER_FOR_FILE_KEY");
 
-  private final Set<Document> myDocumentsToStripLater = new THashSet<Document>();
+  private final Set<Document> myDocumentsToStripLater = new THashSet<>();
 
   @Override
   public void beforeAllDocumentsSaving() {
-    Set<Document> documentsToStrip = new THashSet<Document>(myDocumentsToStripLater);
+    Set<Document> documentsToStrip = new THashSet<>(myDocumentsToStripLater);
     myDocumentsToStripLater.clear();
     for (Document document : documentsToStrip) {
       strip(document);
@@ -83,7 +83,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
     if (doStrip) {
       final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-      boolean success = stripIfNotCurrentLine(document, inChangedLinesOnly);
+      boolean success = strip(document, inChangedLinesOnly, settings.isKeepTrailingSpacesOnCaretLine());
       if (!success) {
         myDocumentsToStripLater.add(document);
       }
@@ -161,7 +161,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     return activeEditor;
   }
 
-  public static boolean stripIfNotCurrentLine(@NotNull Document document, boolean inChangedLinesOnly) {
+  public static boolean strip(@NotNull Document document, boolean inChangedLinesOnly, boolean skipCaretLines) {
     if (document instanceof DocumentWindow) {
       document = ((DocumentWindow)document).getDelegate();
     }
@@ -170,11 +170,8 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     }
     Editor activeEditor = getActiveEditor(document);
 
-    // when virtual space enabled, we can strip whitespace anywhere
-    boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
-
-    final List<Caret> carets = activeEditor == null ? Collections.<Caret>emptyList() : activeEditor.getCaretModel().getAllCarets();
-    final List<VisualPosition> visualCarets = new ArrayList<VisualPosition>(carets.size());
+    final List<Caret> carets = activeEditor == null ? Collections.emptyList() : activeEditor.getCaretModel().getAllCarets();
+    final List<VisualPosition> visualCarets = new ArrayList<>(carets.size());
     int[] caretOffsets = new int[carets.size()];
     for (int i = 0; i < carets.size(); i++) {
       Caret caret = carets.get(i);
@@ -184,7 +181,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
     boolean markAsNeedsStrippingLater =
       ((DocumentImpl)document).stripTrailingSpaces(getProject(document, activeEditor),
-                                                   inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
+                                                   inChangedLinesOnly, skipCaretLines, caretOffsets);
 
     if (activeEditor != null && !ShutDownTracker.isShutdownHookRunning()) {
       activeEditor.getCaretModel().runBatchCaretOperation(() -> {

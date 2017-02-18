@@ -74,7 +74,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     ApplicationManager.getApplication().runReadAction(() -> {
       final Object[] result;
       if (myShowTreeNodes) {
-        final ArrayList<Object> list = new ArrayList<Object>();
+        final ArrayList<Object> list = new ArrayList<>();
         ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
                              element instanceof ASTNode? (ASTNode)element : null;
         if (element instanceof Inject) {
@@ -105,7 +105,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
       else {
         final PsiElement[] elementChildren = ((PsiElement)element).getChildren();
         if (!myShowWhiteSpaces) {
-          final List<PsiElement> childrenList = new ArrayList<PsiElement>(elementChildren.length);
+          final List<PsiElement> childrenList = new ArrayList<>(elementChildren.length);
           for (PsiElement psiElement : elementChildren) {
             if (!myShowWhiteSpaces && psiElement instanceof PsiWhiteSpace) {
               continue;

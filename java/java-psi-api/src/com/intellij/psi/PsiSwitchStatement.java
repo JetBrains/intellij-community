@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>switch</code> statement.
+ * Represents a Java {@code switch} statement.
  *
  * @see PsiSwitchLabelStatement
  */

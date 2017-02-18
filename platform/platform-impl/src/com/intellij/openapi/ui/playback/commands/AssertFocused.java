@@ -35,7 +35,7 @@ public class AssertFocused extends AbstractCommand {
     final ActionCallback result = new ActionCallback();
 
     String text = getText().substring(PREFIX.length()).trim();
-    final Map<String, String> expected = new LinkedHashMap<String, String>();
+    final Map<String, String> expected = new LinkedHashMap<>();
 
     if (text.length() > 0) {
       final String[] keyValue = text.split(",");
@@ -73,7 +73,7 @@ public class AssertFocused extends AbstractCommand {
     }
 
     Component eachParent = owner;
-    final LinkedHashMap<String, String> actual = new LinkedHashMap<String, String>();
+    final LinkedHashMap<String, String> actual = new LinkedHashMap<>();
     while (eachParent != null) {
       if (eachParent instanceof Queryable) {
         ((Queryable)eachParent).putInfo(actual);
@@ -94,7 +94,7 @@ public class AssertFocused extends AbstractCommand {
       }
     }
 
-    Map<String, String> untested = new HashMap<String, String>();
+    Map<String, String> untested = new HashMap<>();
     for (String eachKey : actual.keySet()) {
       if (testedKeys.contains(eachKey)) continue;
       untested.put(eachKey, actual.get(eachKey));

@@ -1,6 +1,7 @@
 package org.jetbrains.protocolModelGenerator
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isNullOrEmpty
 import gnu.trove.THashMap
 import org.jetbrains.io.JsonReaderEx
@@ -15,17 +16,28 @@ import java.util.*
 
 fun main(args: Array<String>) {
   val outputDir = args[0]
-  val schemaUrl = args[1]
-  val bytes: ByteArray
-  if (schemaUrl.startsWith("http")) {
-    bytes = loadBytes(URL(schemaUrl).openStream())
+  val roots = IntRange(3, args.size - 1).map {
+    val schemaUrl = args[it]
+    val bytes: ByteArray
+    if (schemaUrl.startsWith("http")) {
+      bytes = loadBytes(URL(schemaUrl).openStream())
+    }
+    else {
+      bytes = Files.readAllBytes(FileSystems.getDefault().getPath(schemaUrl))
+    }
+    val reader = JsonReaderEx(bytes.toString(Charsets.UTF_8))
+    reader.isLenient = true
+    ProtocolSchemaReaderImpl().parseRoot(reader)
   }
-  else {
-    bytes = Files.readAllBytes(FileSystems.getDefault().getPath(schemaUrl))
+  val mergedRoot = if (roots.size == 1) roots[0] else object : ProtocolMetaModel.Root {
+    override val version: ProtocolMetaModel.Version?
+      get() = roots[0].version
+
+    override fun domains(): List<ProtocolMetaModel.Domain> {
+      return ContainerUtil.concat(roots.map { it.domains() })
+    }
   }
-  val reader = JsonReaderEx(bytes.toString(Charsets.UTF_8))
-  reader.isLenient = true
-  Generator(outputDir, args[2], args[3], ProtocolSchemaReaderImpl().parseRoot(reader))
+  Generator(outputDir, args[1], args[2], mergedRoot)
 }
 
 private fun loadBytes(stream: InputStream): ByteArray {
@@ -74,7 +86,7 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
     val domainGeneratorMap = THashMap<String, DomainGenerator>()
 
     for (domain in domainList) {
-      if (isDomainSkipped(domain)) {
+      if (!INCLUDED_DOMAINS.contains(domain.domain())) {
         System.out.println("Domain skipped: ${domain.domain()}")
         continue
       }
@@ -218,14 +230,10 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
 
 val READER_INTERFACE_NAME = "ProtocolResponseReader"
 
-private fun isDomainSkipped(domain: ProtocolMetaModel.Domain): Boolean {
-  if (domain.domain() == "CSS" || domain.domain() == "Inspector" || domain.domain() == "Worker" || domain.domain() == "ServiceWorker") {
-    return false
-  }
-
   // todo DOMDebugger
-  return domain.hidden || domain.domain() == "DOMDebugger" || domain.domain() == "Timeline" || domain.domain() == "Input"
-}
+private val INCLUDED_DOMAINS = arrayOf("CSS", "Debugger", "DOM", "Inspector", "Log", "Network", "Page", "Runtime", "ServiceWorker",
+                                       "Tracing", "Worker",
+                                       "Console")
 
 fun generateMethodNameSubstitute(originalName: String, out: TextOutput): String {
   if (originalName != "this") {

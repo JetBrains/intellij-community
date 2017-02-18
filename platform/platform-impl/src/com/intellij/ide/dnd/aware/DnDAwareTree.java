@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.TreeUI;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -109,7 +108,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
     c.setBackground(tree.getBackground());
     c.setFont(tree.getFont());
     c.setSize(c.getPreferredSize());
-    final BufferedImage image = UIUtil.createImage(c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);
+    final BufferedImage image = UIUtil.createImage(c, c.getWidth(), c.getHeight(), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g2 = (Graphics2D)image.getGraphics();
     g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
     c.paint(g2);
@@ -125,7 +124,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
       }
     }
 
-    return new Pair<Image, Point>(image, point);
+    return new Pair<>(image, point);
   }
 
   private void initDnD() {

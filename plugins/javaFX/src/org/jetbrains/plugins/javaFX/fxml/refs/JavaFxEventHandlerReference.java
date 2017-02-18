@@ -60,7 +60,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
   @Override
   public Object[] getVariants() {
     if (myController == null) return EMPTY_ARRAY;
-    final List<PsiMethod> availableHandlers = new ArrayList<PsiMethod>();
+    final List<PsiMethod> availableHandlers = new ArrayList<>();
     for (PsiMethod psiMethod : myController.getAllMethods()) {
       if (isHandlerMethodSignature(psiMethod, myController) && JavaFxPsiUtil.isVisibleInFxml(psiMethod)) {
          availableHandlers.add(psiMethod);

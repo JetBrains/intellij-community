@@ -29,14 +29,14 @@ import org.jetbrains.annotations.Nullable;
 public interface GenerationInfo {
   GenerationInfo[] EMPTY_ARRAY = new GenerationInfo[0];
 
-  void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException;
+  void insert(@NotNull PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException;
 
+  @NotNull
   PsiMember getPsiMember();
 
   /**
-   * @param aClass
    * @param leaf leaf element. Is guaranteed to be a tree descendant of aClass.
-   * @return the value that will be passed to the {@link #insert(com.intellij.psi.PsiClass, com.intellij.psi.PsiElement, boolean)} method later.
+   * @return the value that will be passed to the {@link #insert(PsiClass, PsiElement, boolean)} method later.
    */
   @Nullable
   PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf);
@@ -44,5 +44,5 @@ public interface GenerationInfo {
   /**
    * Position caret in generated element in correct way
    */
-  void positionCaret(Editor editor, boolean toEditMethodBody);
+  void positionCaret(@NotNull Editor editor, boolean toEditMethodBody);
 }

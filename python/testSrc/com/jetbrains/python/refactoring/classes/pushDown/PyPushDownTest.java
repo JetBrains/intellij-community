@@ -77,7 +77,7 @@ public class PyPushDownTest extends PyClassRefactoringTest {
       String baseName = "/refactoring/pushdown/" + getTestName(true);
       myFixture.configureByFile(baseName + ".before.py");
       final PyClass clazz = findClass(className);
-      final List<PyMemberInfo<PyElement>> members = new ArrayList<PyMemberInfo<PyElement>>();
+      final List<PyMemberInfo<PyElement>> members = new ArrayList<>();
       for (String memberName : memberNames) {
         final PyElement member = findMember(className, memberName);
         members.add(MembersManager.findMember(clazz, member));

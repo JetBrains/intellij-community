@@ -22,11 +22,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
 /**
  * @author peter
  */
-public class UseVirtualFileEqualsInspection extends InternalInspection {
+public class UseVirtualFileEqualsInspection extends DevKitInspectionBase {
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {

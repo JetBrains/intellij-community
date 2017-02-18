@@ -37,8 +37,4 @@ class ArrayInitializerEvaluator implements Evaluator{
     }
     return values;
   }
-
-  public Modifier getModifier() {
-    return null;
-  }
 }

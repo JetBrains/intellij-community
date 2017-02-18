@@ -38,7 +38,7 @@ import java.util.Set;
  * @by Maxim.Mossienko
  */
 public class XmlPerformanceTest extends LightQuickFixTestCase {
-  private final Set<String> ourTestsWithFolding = new HashSet<String>(Arrays.asList("IndentUnindent2"));
+  private final Set<String> ourTestsWithFolding = new HashSet<>(Arrays.asList("IndentUnindent2"));
 
   @Override
   protected String getBasePath() {

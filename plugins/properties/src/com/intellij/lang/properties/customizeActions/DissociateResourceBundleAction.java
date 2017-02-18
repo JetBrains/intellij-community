@@ -22,12 +22,10 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleManager;
-import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -76,12 +74,9 @@ public class DissociateResourceBundleAction extends AnAction {
   }
 
   public static void dissociate(final Collection<ResourceBundle> resourceBundles, final Project project) {
-    final FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    final Set<PsiFileSystemItem> toUpdateInProjectView = new HashSet<PsiFileSystemItem>();
+    final Set<PsiFileSystemItem> toUpdateInProjectView = new HashSet<>();
     for (ResourceBundle resourceBundle : resourceBundles) {
-      fileEditorManager.closeFile(new ResourceBundleAsVirtualFile(resourceBundle));
       for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
-        fileEditorManager.closeFile(propertiesFile.getVirtualFile());
         PsiDirectory containingDirectory = propertiesFile.getContainingFile().getContainingDirectory();
         if (containingDirectory != null) {
           toUpdateInProjectView.add(containingDirectory);
@@ -103,7 +98,7 @@ public class DissociateResourceBundleAction extends AnAction {
 
   @NotNull
   private static Collection<ResourceBundle> extractResourceBundles(final AnActionEvent event) {
-    final Set<ResourceBundle> targetResourceBundles = new HashSet<ResourceBundle>();
+    final Set<ResourceBundle> targetResourceBundles = new HashSet<>();
     final ResourceBundle[] chosenResourceBundles = event.getData(ResourceBundle.ARRAY_DATA_KEY);
     if (chosenResourceBundles != null) {
       for (ResourceBundle resourceBundle : chosenResourceBundles) {

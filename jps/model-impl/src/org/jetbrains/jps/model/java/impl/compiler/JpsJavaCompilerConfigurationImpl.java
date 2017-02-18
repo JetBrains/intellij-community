@@ -35,8 +35,10 @@ import java.util.*;
 public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<JpsJavaCompilerConfigurationImpl> implements JpsJavaCompilerConfiguration {
   public static final JpsElementChildRole<JpsJavaCompilerConfiguration> ROLE = JpsElementChildRoleBase.create("compiler configuration");
   private boolean myAddNotNullAssertions = true;
+  private List<String> myNotNullAnnotations = Collections.singletonList(NotNull.class.getName());
   private boolean myClearOutputDirectoryOnRebuild = true;
   private final JpsCompilerExcludes myCompilerExcludes = new JpsCompilerExcludesImpl();
+  private final JpsCompilerExcludes myValidationExcludes = new JpsCompilerExcludesImpl();
   private final List<String> myResourcePatterns = new ArrayList<String>();
   private final List<ProcessorConfigProfile> myAnnotationProcessingProfiles = new ArrayList<ProcessorConfigProfile>();
   private final ProcessorConfigProfileImpl myDefaultAnnotationProcessingProfile = new ProcessorConfigProfileImpl("Default");
@@ -66,6 +68,11 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   }
 
   @Override
+  public List<String> getNotNullAnnotations() {
+    return myNotNullAnnotations;
+  }
+
+  @Override
   public boolean isClearOutputDirectoryOnRebuild() {
     return myClearOutputDirectoryOnRebuild;
   }
@@ -73,6 +80,11 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   @Override
   public void setAddNotNullAssertions(boolean addNotNullAssertions) {
     myAddNotNullAssertions = addNotNullAssertions;
+  }
+
+  @Override
+  public void setNotNullAnnotations(List<String> notNullAnnotations) {
+    myNotNullAnnotations = Collections.unmodifiableList(notNullAnnotations);
   }
 
   @Override
@@ -84,6 +96,12 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   @Override
   public JpsCompilerExcludes getCompilerExcludes() {
     return myCompilerExcludes;
+  }
+
+  @NotNull
+  @Override
+  public JpsCompilerExcludes getValidationExcludes() {
+    return myValidationExcludes;
   }
 
   @NotNull

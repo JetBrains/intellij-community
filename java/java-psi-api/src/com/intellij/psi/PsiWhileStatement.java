@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>while</code> statement.
+ * Represents a Java {@code while} statement.
  */
 public interface PsiWhileStatement extends PsiLoopStatement {
   /**

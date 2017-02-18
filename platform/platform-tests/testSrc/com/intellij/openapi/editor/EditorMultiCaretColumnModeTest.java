@@ -68,7 +68,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
          "line7");
     setEditorVisibleSize(1000, 3);
 
-    executeAction("EditorPageUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "line<caret>2\n" +
                       "line<caret>3\n" +
@@ -86,7 +86,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "line6\n" +
                       "line7");
 
-    executeAction("EditorPageDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "line2\n" +
                       "line3\n" +
@@ -95,7 +95,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "line6\n" +
                       "line7");
 
-    executeAction("EditorPageDownWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "line2\n" +
                       "line3\n" +
@@ -104,7 +104,7 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "line<caret>6\n" +
                       "line<caret>7");
 
-    executeAction("EditorPageUpWithSelection");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP_WITH_SELECTION);
     checkResultByText("line1\n" +
                       "line2\n" +
                       "line3\n" +
@@ -437,6 +437,18 @@ public class EditorMultiCaretColumnModeTest extends AbstractEditorTest {
                       "<caret>\n" +
                       "\n" +
                       "");
+  }
+
+  public void testPageMovementsInteroperateWithLineMovements() throws Exception {
+    init("abc\nabc\n<caret>abc\nabc\nabc");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION);
+    checkResultByText("abc\nabc\n<caret>abc\n<caret>abc\n<caret>abc");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION);
+    checkResultByText("abc\nabc\n<caret>abc\n<caret>abc\nabc");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP_WITH_SELECTION);
+    checkResultByText("<caret>abc\n<caret>abc\n<caret>abc\nabc\nabc");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+    checkResultByText("abc\n<caret>abc\n<caret>abc\nabc\nabc");
   }
 
   private void init(String text) throws IOException {

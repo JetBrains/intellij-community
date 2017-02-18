@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,15 @@ public class IrreducibleCFGDeobfuscator {
 
     class Node {
       public Integer id;
-      public final Set<Node> preds = new HashSet<Node>();
-      public final Set<Node> succs = new HashSet<Node>();
+      public final Set<Node> preds = new HashSet<>();
+      public final Set<Node> succs = new HashSet<>();
 
       public Node(Integer id) {
         this.id = id;
       }
     }
 
-    HashMap<Integer, Node> mapNodes = new HashMap<Integer, Node>();
+    HashMap<Integer, Node> mapNodes = new HashMap<>();
 
     // checking exceptions and creating nodes
     for (Statement stat : statement.getStats()) {
@@ -145,7 +145,7 @@ public class IrreducibleCFGDeobfuscator {
     StatEdge enteredge = splitnode.getPredecessorEdges(StatEdge.TYPE_REGULAR).iterator().next();
 
     // copy the smallest statement
-    Statement splitcopy = copyStatement(splitnode, null, new HashMap<Statement, Statement>());
+    Statement splitcopy = copyStatement(splitnode, null, new HashMap<>());
     initCopiedStatement(splitcopy);
 
     // insert the copy
@@ -172,15 +172,13 @@ public class IrreducibleCFGDeobfuscator {
 
   private static int getStatementSize(Statement statement) {
 
-    int res = 0;
+    int res;
 
     if (statement.type == Statement.TYPE_BASICBLOCK) {
       res = ((BasicBlockStatement)statement).getBlock().getSeq().length();
     }
     else {
-      for (Statement stat : statement.getStats()) {
-        res += getStatementSize(stat);
-      }
+      res = statement.getStats().stream().mapToInt(IrreducibleCFGDeobfuscator::getStatementSize).sum();
     }
 
     return res;

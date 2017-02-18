@@ -55,7 +55,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   }
 
   public void readExternal(@NotNull U configuration, @NotNull Element parentNode) throws InvalidDataException {
-    Map<String, T> extensions = new THashMap<String, T>();
+    Map<String, T> extensions = new THashMap<>();
     for (T extension : getApplicableExtensions(configuration)) {
       extensions.put(extension.getSerializationId(), extension);
     }
@@ -74,7 +74,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
       }
     }
     if (!found) {
-      List<Element> copy = new ArrayList<Element>(children.size());
+      List<Element> copy = new ArrayList<>(children.size());
       for (Element child : children) {
         copy.add(child.clone());
       }
@@ -171,7 +171,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   }
 
   protected List<T> getApplicableExtensions(@NotNull U configuration) {
-    List<T> extensions = new SmartList<T>();
+    List<T> extensions = new SmartList<>();
     for (T extension : Extensions.getExtensions(myExtensionPointName)) {
       if (extension.isApplicableFor(configuration)) {
         extensions.add(extension);
@@ -181,7 +181,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   }
 
   protected List<T> getEnabledExtensions(@NotNull U configuration, @Nullable RunnerSettings runnerSettings) {
-    List<T> extensions = new SmartList<T>();
+    List<T> extensions = new SmartList<>();
     for (T extension : Extensions.getExtensions(myExtensionPointName)) {
       if (extension.isApplicableFor(configuration) && extension.isEnabledFor(configuration, runnerSettings)) {
         extensions.add(extension);

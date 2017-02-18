@@ -45,7 +45,7 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
 
   @Override
   protected DomElement[] getChildren(@NotNull final DomElement domElement) {
-    final List<DomElement> children = new ArrayList<DomElement>();
+    final List<DomElement> children = new ArrayList<>();
     domElement.acceptChildren(new DomElementVisitor() {
       @Override
       public void visitDomElement(final DomElement element) {

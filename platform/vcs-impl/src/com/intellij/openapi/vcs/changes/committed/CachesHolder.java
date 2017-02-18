@@ -104,7 +104,7 @@ public class CachesHolder {
   }
 
   public List<ChangesCacheFile> getAllCaches() {
-    final List<ChangesCacheFile> result = new ArrayList<ChangesCacheFile>();
+    final List<ChangesCacheFile> result = new ArrayList<>();
     iterateAllCaches(new NotNullFunction<ChangesCacheFile, Boolean>() {
       @NotNull
       public Boolean fun(final ChangesCacheFile changesCacheFile) {

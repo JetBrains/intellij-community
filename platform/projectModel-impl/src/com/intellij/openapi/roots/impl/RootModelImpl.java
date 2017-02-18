@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.configurationStore.SerializationUtilKt;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -29,11 +32,12 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +50,7 @@ import java.util.*;
 public class RootModelImpl extends RootModelBase implements ModifiableRootModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootModelImpl");
 
-  private final Set<ContentEntry> myContent = new TreeSet<ContentEntry>(ContentComparator.INSTANCE);
+  private final Set<ContentEntry> myContent = new TreeSet<>(ContentComparator.INSTANCE);
 
   private final List<OrderEntry> myOrderEntries = new Order();
   // cleared by myOrderEntries modification, see Order
@@ -57,7 +61,8 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   private boolean myWritable;
   private final VirtualFilePointerManager myFilePointerManager;
   private boolean myDisposed = false;
-  private final Set<ModuleExtension> myExtensions = new TreeSet<ModuleExtension>();
+  private final Set<ModuleExtension> myExtensions = new TreeSet<>((o1, o2) -> Comparing.compare(o1.getClass().getName(), 
+                                                                                                o2.getClass().getName()));
 
   private final RootConfigurationAccessor myConfigurationAccessor;
 
@@ -122,7 +127,15 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     RootModelImpl originalRootModel = moduleRootManager.getRootModel();
     for (ModuleExtension extension : originalRootModel.myExtensions) {
       ModuleExtension model = extension.getModifiableModel(false);
-      model.readExternal(element);
+
+      if (model instanceof PersistentStateComponent) {
+        SerializationUtilKt.deserializeAndLoadState((PersistentStateComponent)model, element);
+      }
+      else {
+        //noinspection deprecation
+        model.readExternal(element);
+      }
+
       registerOnDispose(model);
       myExtensions.add(model);
     }
@@ -154,8 +167,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     myWritable = writable;
     myConfigurationAccessor = rootConfigurationAccessor;
 
-    final Set<ContentEntry> thatContent = rootModel.myContent;
-    for (ContentEntry contentEntry : thatContent) {
+    for (ContentEntry contentEntry : rootModel.myContent) {
       if (contentEntry instanceof ClonableContentEntry) {
         ContentEntry cloned = ((ClonableContentEntry)contentEntry).cloneEntry(this);
         myContent.add(cloned);
@@ -225,7 +237,14 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   public LibraryOrderEntry addLibraryEntry(@NotNull Library library) {
     assertWritable();
     final LibraryOrderEntry libraryOrderEntry = new LibraryOrderEntryImpl(library, this, myProjectRootManager);
-    assert libraryOrderEntry.isValid();
+    if (!libraryOrderEntry.isValid()) {
+      LibraryEx libraryEx = ObjectUtils.tryCast(library, LibraryEx.class);
+      boolean libraryDisposed = libraryEx != null ? libraryEx.isDisposed() : Disposer.isDisposed(library);
+      throw new AssertionError("Invalid libraryOrderEntry, library: " + library
+                               + " of type " + library.getClass()
+                               + ", disposed: " + libraryDisposed
+                               + ", kind: " + (libraryEx != null ? libraryEx.getKind() : "<undefined>"));
+    }
     myOrderEntries.add(libraryOrderEntry);
     return libraryOrderEntry;
   }
@@ -301,7 +320,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     if (newEntries.length != myOrderEntries.size()) {
       return "Size mismatch: old size=" + myOrderEntries.size() + "; new size=" + newEntries.length;
     }
-    Set<OrderEntry> set = new HashSet<OrderEntry>();
+    Set<OrderEntry> set = new HashSet<>();
     for (OrderEntry newEntry : newEntries) {
       if (!myOrderEntries.contains(newEntry)) {
         return "Trying to add nonexisting order entry " + newEntry;
@@ -400,9 +419,25 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     return e;
   }
 
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+  public long getStateModificationCount() {
+    long result = 0;
     for (ModuleExtension extension : myExtensions) {
-      extension.writeExternal(element);
+      if (extension instanceof PersistentStateComponentWithModificationTracker) {
+        result += ((PersistentStateComponentWithModificationTracker)extension).getStateModificationCount();
+      }
+    }
+    return result;
+  }
+
+  public void writeExternal(@NotNull Element element) {
+    for (ModuleExtension extension : myExtensions) {
+      if (extension instanceof PersistentStateComponent) {
+        XmlSerializer.serializeInto(((PersistentStateComponent)extension).getState(), element);
+      }
+      else {
+        //noinspection deprecation
+        extension.writeExternal(element);
+      }
     }
 
     for (ContentEntry contentEntry : getContent()) {

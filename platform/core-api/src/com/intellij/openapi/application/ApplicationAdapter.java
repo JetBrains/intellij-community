@@ -38,4 +38,8 @@ public abstract class ApplicationAdapter implements ApplicationListener {
   @Override
   public void writeActionFinished(@NotNull Object action) {
   }
+
+  @Override
+  public void afterWriteActionFinished(@NotNull Object action) {
+  }
 }

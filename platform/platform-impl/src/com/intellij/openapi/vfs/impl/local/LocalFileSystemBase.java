@@ -55,7 +55,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   private static final FileAttributes FAKE_ROOT_ATTRIBUTES =
     new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false);
 
-  private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
+  private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<>();
 
   @Override
   @Nullable
@@ -94,10 +94,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
 
-    final FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
-    if (attributes != null && !attributes.isFile()) {
-      LOG.warn("not a file: " + ioFile + ", " + attributes);
-      throw new FileNotFoundException("Not a file: " + ioFile);
+    if (SystemInfo.isUnix) { // avoid opening fifo files
+      final FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
+      if (attributes != null && !attributes.isFile()) {
+        LOG.warn("not a file: " + ioFile + ", " + attributes);
+        throw new FileNotFoundException("Not a file: " + ioFile);
+      }
     }
 
     return ioFile;
@@ -243,7 +245,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     if (fireCommonRefreshSession) manager.fireBeforeRefreshStart(false);
 
     try {
-      List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
+      List<VirtualFile> filesToRefresh = new ArrayList<>();
 
       for (File file : files) {
         final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
@@ -447,8 +449,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   @NotNull
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
-    final InputStream stream = new FileInputStream(convertToIOFileAndCheck(file));
-    try {
+    try (InputStream stream = new FileInputStream(convertToIOFileAndCheck(file))) {
       long l = file.getLength();
       if (l > Integer.MAX_VALUE) throw new IOException("File is too large: " + l + ", " + file);
       final int length = (int)l;
@@ -456,9 +457,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
       // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
       return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
-    }
-    finally {
-      stream.close();
     }
   }
 

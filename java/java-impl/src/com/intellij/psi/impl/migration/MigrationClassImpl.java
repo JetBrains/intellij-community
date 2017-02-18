@@ -234,13 +234,13 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
   @Override
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
-    return new ArrayList<Pair<PsiMethod,PsiSubstitutor>>();
+    return new ArrayList<>();
   }
 
   @Override
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
-    return new ArrayList<Pair<PsiMethod,PsiSubstitutor>>();
+    return new ArrayList<>();
   }
 
   @Override

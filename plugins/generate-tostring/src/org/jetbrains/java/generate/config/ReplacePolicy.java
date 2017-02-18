@@ -22,7 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This policy is to replace the existing <code>toString</code> method.
+ * This policy is to replace the existing {@code toString} method.
  */
 public class ReplacePolicy implements ConflictResolutionPolicy {
 

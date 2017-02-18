@@ -45,7 +45,7 @@ public class PythonModuleBuilder extends PythonModuleBuilderBase implements Sour
 
   public void addSourcePath(final Pair<String, String> sourcePathInfo) {
     if (mySourcePaths == null) {
-      mySourcePaths = new ArrayList<Pair<String, String>>();
+      mySourcePaths = new ArrayList<>();
     }
     mySourcePaths.add(sourcePathInfo);
   }

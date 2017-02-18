@@ -185,7 +185,7 @@ public class MavenModuleImporter {
   }
 
   private void configDependencies() {
-    THashSet<String> dependencyTypesFromSettings = new THashSet<String>();
+    THashSet<String> dependencyTypesFromSettings = new THashSet<>();
 
     AccessToken accessToken = ReadAction.start();
     try {

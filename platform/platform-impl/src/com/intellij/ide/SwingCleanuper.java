@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -55,12 +54,13 @@ import java.util.EventListener;
  *
  * @author Vladimir Kondratyev
  */
-public final class SwingCleanuper implements ApplicationComponent{
+public final class SwingCleanuper {
   private final Alarm myAlarm;
 
   public SwingCleanuper(@NotNull Application application, ProjectManager projectManager) {
     myAlarm = new Alarm(application);
     projectManager.addProjectManagerListener(new ProjectManagerAdapter(){
+        @Override
         public void projectOpened(final Project project) {
           myAlarm.cancelAllRequests();
         }
@@ -68,6 +68,7 @@ public final class SwingCleanuper implements ApplicationComponent{
         // which is used to compose next focus event. Actually this component could be an editors or a tool window. To fix this
         // memory leak we (if the project was closed and a new one was not opened yet) request focus to the status bar and after
         // the focus events have passed the queue, we put 'null' to the DefaultKeyboardFocusManager.realOppositeComponent field.
+        @Override
         public void projectClosed(final Project project){
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(
@@ -265,15 +266,6 @@ public final class SwingCleanuper implements ApplicationComponent{
       // Ignore
     }
   }
-
-  public final void disposeComponent(){}
-
-  @NotNull
-  public final String getComponentName(){
-    return "SwingCleanuper";
-  }
-
-  public final void initComponent() { }
 
   private static void fixJTextComponentMemoryLeak() {
     final JTextComponent component = ReflectionUtil.getStaticFieldValue(JTextComponent.class, JTextComponent.class, "focusedComponent");

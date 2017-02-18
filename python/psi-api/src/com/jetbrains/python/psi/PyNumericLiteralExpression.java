@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.jetbrains.python.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.math.BigInteger;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public interface PyNumericLiteralExpression extends PyLiteralExpression {
   /**
@@ -33,11 +33,13 @@ public interface PyNumericLiteralExpression extends PyLiteralExpression {
    * Returns the value of this literal as a {@code BigInteger} (with any
    * fraction truncated).
    */
+  @Nullable
   BigInteger getBigIntegerValue();
 
   /**
    * Returns the exact value of this literal.
    */
+  @Nullable
   BigDecimal getBigDecimalValue();
 
   boolean isIntegerLiteral();

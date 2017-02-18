@@ -110,7 +110,7 @@ public class ConstExprent extends Exprent {
   }
 
   public List<Exprent> getAllExprents() {
-    return new ArrayList<Exprent>();
+    return new ArrayList<>();
   }
 
   @Override

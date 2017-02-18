@@ -14,6 +14,11 @@ public final class LocalFileUrl implements Url {
     this.path = path;
   }
 
+  @Override
+  public Url resolve(@NotNull String subPath) {
+    return new LocalFileUrl(path.isEmpty() ? subPath : (path + "/" + subPath));
+  }
+
   @NotNull
   @Override
   public String getPath() {

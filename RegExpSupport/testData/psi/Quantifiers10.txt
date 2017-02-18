@@ -1,0 +1,11 @@
+REGEXP_FILE
+  RegExpPatternImpl: <a*>
+    RegExpBranchImpl: <a*>
+      RegExpClosureImpl: <a*>
+        RegExpCharImpl: <a>
+          PsiElement(CHARACTER)('a')
+        RegExpQuantifierImpl: <*>
+          PsiElement(STAR)('*')
+          PsiErrorElement:Dangling metacharacter
+            <empty list>
+  PsiElement(STAR)('*')

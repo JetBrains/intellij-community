@@ -102,12 +102,12 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
 
   @NotNull
   public static <T extends LookupElement> LookupElementDecorator<T> withInsertHandler(@NotNull T element, @NotNull final InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
-    return new InsertingDecorator<T>(element, insertHandler);
+    return new InsertingDecorator<>(element, insertHandler);
   }
 
   @NotNull
   public static <T extends LookupElement> LookupElementDecorator<T> withRenderer(@NotNull final T element, @NotNull final LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {
-    return new VisagisteDecorator<T>(element, visagiste);
+    return new VisagisteDecorator<>(element, visagiste);
   }
 
   @Override

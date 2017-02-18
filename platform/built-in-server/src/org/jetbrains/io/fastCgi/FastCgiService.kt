@@ -15,10 +15,12 @@
  */
 package org.jetbrains.io.fastCgi
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.addChannelListener
+import com.intellij.util.io.handler
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
@@ -26,10 +28,11 @@ import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.SingleConnectionNetService
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.doneRun
+import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.io.*
 import java.util.concurrent.atomic.AtomicInteger
 
-val LOG = Logger.getInstance(FastCgiService::class.java)
+internal val LOG = logger<FastCgiService>()
 
 // todo send FCGI_ABORT_REQUEST if client channel disconnected
 abstract class FastCgiService(project: Project) : SingleConnectionNetService(project) {
@@ -85,7 +88,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
       promise
         .doneRun { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
         .rejected {
-          Promise.logError(LOG, it)
+          LOG.errorIfNotMessage(it)
           handleError(fastCgiRequest, notEmptyContent)
         }
     }
@@ -193,7 +196,7 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
       }
     }
 
-    if (builder.length == 0) {
+    if (builder.isEmpty()) {
       // end of headers
       return
     }

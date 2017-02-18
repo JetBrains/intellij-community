@@ -55,7 +55,7 @@ public class ProjectStartupTaskManager {
   private void verifyState() {
     if (! myShared.isEmpty()) {
       final Collection<RunnerAndConfigurationSettings> sharedConfigurations = getSharedConfigurations();
-      final List<RunnerAndConfigurationSettings> canNotBeShared = new ArrayList<RunnerAndConfigurationSettings>();
+      final List<RunnerAndConfigurationSettings> canNotBeShared = new ArrayList<>();
       final Iterator<RunnerAndConfigurationSettings> iterator = sharedConfigurations.iterator();
       while (iterator.hasNext()) {
         final RunnerAndConfigurationSettings configuration = iterator.next();
@@ -82,7 +82,7 @@ public class ProjectStartupTaskManager {
   private Collection<RunnerAndConfigurationSettings> getConfigurations(ProjectStartupConfigurationBase configuration) {
     if (configuration.isEmpty()) return Collections.emptyList();
 
-    final List<RunnerAndConfigurationSettings> result = new ArrayList<RunnerAndConfigurationSettings>();
+    final List<RunnerAndConfigurationSettings> result = new ArrayList<>();
     final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = configuration.getList();
     for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
       final RunnerAndConfigurationSettings settings = ((RunManagerImpl) myRunManager).getConfigurationById(descriptor.getId());
@@ -120,7 +120,7 @@ public class ProjectStartupTaskManager {
     if (! myRunManager.isConfigurationShared(settings)) {
       final Collection<RunnerAndConfigurationSettings> sharedConfigurations = getSharedConfigurations();
       if (sharedConfigurations.remove(settings)) {
-        final List<RunnerAndConfigurationSettings> localConfigurations = new ArrayList<RunnerAndConfigurationSettings>(getLocalConfigurations());
+        final List<RunnerAndConfigurationSettings> localConfigurations = new ArrayList<>(getLocalConfigurations());
         localConfigurations.add(settings);
         setStartupConfigurations(sharedConfigurations, localConfigurations);
 

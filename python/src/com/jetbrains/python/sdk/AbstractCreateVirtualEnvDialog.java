@@ -23,8 +23,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbModePermission;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -263,8 +261,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
       @Override
       public void onSuccess() {
         if (myPath != null) {
-          ApplicationManager.getApplication().invokeLater(() -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
-                                                                                                    () -> setupVirtualEnvSdk(myPath, associateWithProject(), callback)));
+          ApplicationManager.getApplication().invokeLater(() -> setupVirtualEnvSdk(myPath, associateWithProject(), callback));
         }
       }
     };

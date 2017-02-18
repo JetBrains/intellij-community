@@ -1,0 +1,16 @@
+Backward Hierarchy:
+java.lang.Object -> Bar
+
+Backward References:
+Bar in Bar
+Bar.<init>(0) in Bar
+java.lang.Object.<init>(0) in Bar
+java.util.ArrayList in Bar
+java.util.Collections in Bar
+java.util.Collections.EMPTY_LIST in Bar
+java.util.Collections.emptyList(0) in Bar
+java.util.LinkedList in Bar
+java.util.List in Bar
+
+Class Definitions:
+Bar in Bar

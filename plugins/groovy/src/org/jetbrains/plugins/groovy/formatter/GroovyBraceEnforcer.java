@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitIfStatement(GrIfStatement statement) {
+  public void visitIfStatement(@NotNull GrIfStatement statement) {
     if (checkElementContainsRange(statement)) {
       final SmartPsiElementPointer pointer =
         SmartPointerManager.getInstance(statement.getProject()).createSmartPsiElementPointer(statement);
@@ -148,7 +148,7 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitForStatement(GrForStatement statement) {
+  public void visitForStatement(@NotNull GrForStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitForStatement(statement);
       processStatement(statement, statement.getBody(), myPostProcessor.getSettings().FOR_BRACE_FORCE);
@@ -156,7 +156,7 @@ public class GroovyBraceEnforcer extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitWhileStatement(GrWhileStatement statement) {
+  public void visitWhileStatement(@NotNull GrWhileStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitWhileStatement(statement);
       processStatement(statement, statement.getBody(), myPostProcessor.getSettings().WHILE_BRACE_FORCE);

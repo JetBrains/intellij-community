@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
 public class PluginGroups {
@@ -40,16 +42,16 @@ public class PluginGroups {
   
   public static final String IDEA_VIM_PLUGIN_ID = "IdeaVIM";
 
-  final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<String, Pair<Icon, List<String>>>();
-  final Map<String, String> myFeaturedPlugins = new LinkedHashMap<String, String>();
+  final Map<String, Pair<Icon, List<String>>> myTree = new LinkedHashMap<>();
+  final Map<String, String> myFeaturedPlugins = new LinkedHashMap<>();
 
-  private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<String, List<IdSet>>();
-  private final Map<String, String> myDescriptions = new LinkedHashMap<String, String>();
-  private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<IdeaPluginDescriptor>();
-  private Collection<String> myDisabledPluginIds = new HashSet<String>();
+  private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<>();
+  private final Map<String, String> myDescriptions = new LinkedHashMap<>();
+  private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<>();
+  private Collection<String> myDisabledPluginIds = new HashSet<>();
   private IdeaPluginDescriptor[] myAllPlugins;
   private boolean myInitialized = false;
-  private Set<String> myFeaturedIds = new HashSet<String>();
+  private Set<String> myFeaturedIds = new HashSet<>();
   private Runnable myLoadingCallback = null;
 
   public PluginGroups() {
@@ -72,10 +74,7 @@ public class PluginGroups {
           myPluginsFromRepository.addAll(get());
           if (myLoadingCallback != null) myLoadingCallback.run();
         }
-        catch (InterruptedException e) {
-          if (myLoadingCallback != null) myLoadingCallback.run();
-        }
-        catch (ExecutionException e) {
+        catch (InterruptedException | ExecutionException e) {
           if (myLoadingCallback != null) myLoadingCallback.run();
         }
       }
@@ -84,12 +83,36 @@ public class PluginGroups {
     PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
     initGroups(myTree, myFeaturedPlugins);
+    initCloudPlugins();
   }
 
   public void setLoadingCallback(Runnable loadingCallback) {
     myLoadingCallback = loadingCallback;
     if (!myPluginsFromRepository.isEmpty()) {
       myLoadingCallback.run();
+    }
+  }
+
+  private void initCloudPlugins() {
+    CloudConfigProvider provider = CloudConfigProvider.getProvider();
+    if (provider == null) {
+      return;
+    }
+
+    List<String> plugins = provider.getInstalledPlugins();
+    if (plugins.isEmpty()) {
+      return;
+    }
+
+    for (Iterator<Entry<String, String>> I = myFeaturedPlugins.entrySet().iterator(); I.hasNext(); ) {
+      String value = I.next().getValue();
+      if (ContainerUtil.find(plugins, plugin -> value.endsWith(":" + plugin)) != null) {
+        I.remove();
+      }
+    }
+
+    for (String plugin : plugins) {
+      myFeaturedPlugins.put(plugin, "#Cloud:#Cloud:" + plugin);
     }
   }
 
@@ -263,11 +286,11 @@ public class PluginGroups {
   private void initIfNeed() {
     if (myInitialized) return;
     myInitialized = true;
-    for (Map.Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
+    for (Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
       final String group = entry.getKey();
       if (CORE.equals(group)) continue;
 
-      List<IdSet> idSets = new ArrayList<IdSet>();
+      List<IdSet> idSets = new ArrayList<>();
       StringBuilder description = new StringBuilder();
       for (String idDescription : entry.getValue().getSecond()) {
         IdSet idSet = new IdSet(this, idDescription);
@@ -371,9 +394,9 @@ public class PluginGroups {
 
   void setPluginEnabledWithDependencies(final String pluginId, boolean enabled) {
     initIfNeed();
-    Set<String> ids = new HashSet<String>();
+    Set<String> ids = new HashSet<>();
     collectInvolvedIds(pluginId, enabled, ids);
-    Set<IdSet> sets = new HashSet<IdSet>();
+    Set<IdSet> sets = new HashSet<>();
     for (String id : ids) {
       IdSet set = getSet(id);
       if (set != null) {
@@ -412,7 +435,7 @@ public class PluginGroups {
   }
 
   private List<String> getNonOptionalDependencies(final String id) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     IdeaPluginDescriptor descriptor = findPlugin(id);
     if (descriptor != null) {
       for (PluginId pluginId : descriptor.getDependentPluginIds()) {

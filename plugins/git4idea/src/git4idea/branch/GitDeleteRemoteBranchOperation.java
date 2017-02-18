@@ -59,7 +59,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       trackingBranches.remove(currentBranch);
     }
 
-    final AtomicReference<DeleteRemoteBranchDecision> decision = new AtomicReference<DeleteRemoteBranchDecision>();
+    final AtomicReference<DeleteRemoteBranchDecision> decision = new AtomicReference<>();
     final boolean finalCurrentBranchTracksBranchToDelete = currentBranchTracksBranchToDelete;
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -72,7 +72,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     if (decision.get().delete()) {
       boolean deletedSuccessfully = doDeleteRemote(myBranchName, repositories);
       if (deletedSuccessfully) {
-        final Collection<String> successfullyDeletedLocalBranches = new ArrayList<String>(1);
+        final Collection<String> successfullyDeletedLocalBranches = new ArrayList<>(1);
         if (decision.get().deleteTracking()) {
           for (final String branch : trackingBranches) {
             getIndicator().setText("Deleting " + branch);

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -26,7 +25,11 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -59,13 +62,9 @@ class CanonicalPathMap {
 
   private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
     Map<String, String> result = ContainerUtil.newConcurrentMap();
-
-    List<String> roots = ContainerUtil.concat(Arrays.asList(recursiveRoots, flatRoots));
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(roots, null, false, false, root -> {
-      ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result);
-      return true;
-    });
-
+    Stream.concat(recursiveRoots.stream(), flatRoots.stream())
+      .parallel()
+      .forEach(root -> ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result));
     return result;
   }
 
@@ -145,7 +144,6 @@ class CanonicalPathMap {
           String rootParent = new File(root).getParent();
           if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
             changedPaths.add(root);
-            continue ext;
           }
         }
       }
@@ -159,7 +157,6 @@ class CanonicalPathMap {
           String rootParent = new File(root).getParent();
           if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
             changedPaths.add(root);
-            continue ext;
           }
         }
       }

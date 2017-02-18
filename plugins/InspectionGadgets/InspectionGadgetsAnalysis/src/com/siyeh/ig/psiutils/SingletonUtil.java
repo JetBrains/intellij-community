@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,10 @@ public class SingletonUtil {
   }
 
   public static boolean isSingleton(@NotNull PsiClass aClass) {
-    if (aClass.isInterface() || aClass.isEnum() ||
-        aClass.isAnnotationType()) {
+    if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
       return false;
     }
-    if (aClass instanceof PsiTypeParameter ||
-        aClass instanceof PsiAnonymousClass) {
+    if (aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass) {
       return false;
     }
     final PsiMethod[] constructors = getIfOnlyInvisibleConstructors(aClass);
@@ -50,19 +48,47 @@ public class SingletonUtil {
     final PsiField[] fields = aClass.getFields();
     PsiField result = null;
     for (final PsiField field : fields) {
-      final String className = aClass.getQualifiedName();
       if (!field.hasModifierProperty(PsiModifier.STATIC)) {
         continue;
       }
       final PsiType type = field.getType();
-      final String fieldTypeName = type.getCanonicalText();
-      if (!fieldTypeName.equals(className)) {
+      if (!(type instanceof PsiClassType)) {
+        continue;
+      }
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass targetClass = classType.resolve();
+      if (!aClass.equals(targetClass)) {
         continue;
       }
       if (result != null) {
         return null;
       }
       result = field;
+    }
+    final PsiClass[] innerClasses = aClass.getInnerClasses();
+    for (PsiClass innerClass : innerClasses) {
+      if (!innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+        continue;
+      }
+      final PsiField[] fields1 = innerClass.getFields();
+      for (PsiField field : fields1) {
+        if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        final PsiType type = field.getType();
+        if (!(type instanceof PsiClassType)) {
+          continue;
+        }
+        final PsiClassType classType = (PsiClassType)type;
+        final PsiClass targetClass = classType.resolve();
+        if (!aClass.equals(targetClass)) {
+          continue;
+        }
+        if (result != null) {
+          return null;
+        }
+        result = field;
+      }
     }
     return result;
   }
@@ -84,13 +110,9 @@ public class SingletonUtil {
     return constructors;
   }
 
-  private static boolean newOnlyAssignsToStaticSelfInstance(
-    PsiMethod method, final PsiField field) {
-    final Query<PsiReference> search =
-      MethodReferencesSearch.search(method, field.getUseScope(),
-                                    false);
-    final NewOnlyAssignedToFieldProcessor processor =
-      new NewOnlyAssignedToFieldProcessor(field);
+  private static boolean newOnlyAssignsToStaticSelfInstance(PsiMethod method, final PsiField field) {
+    final Query<PsiReference> search = MethodReferencesSearch.search(method, field.getUseScope(), false);
+    final NewOnlyAssignedToFieldProcessor processor = new NewOnlyAssignedToFieldProcessor(field);
     search.forEach(processor);
     return processor.isNewOnlyAssignedToField();
   }

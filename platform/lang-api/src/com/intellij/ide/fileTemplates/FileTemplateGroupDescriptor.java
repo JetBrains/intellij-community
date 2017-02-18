@@ -24,7 +24,7 @@ import java.util.List;
 
 public class FileTemplateGroupDescriptor extends FileTemplateDescriptor {
   private final String myTitle;
-  private final List<FileTemplateDescriptor> myTemplates = new ArrayList<FileTemplateDescriptor>();
+  private final List<FileTemplateDescriptor> myTemplates = new ArrayList<>();
 
   public FileTemplateGroupDescriptor(String title, Icon icon, FileTemplateDescriptor... children) {
     this(title, icon);

@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,7 +28,7 @@ import java.awt.event.KeyEvent;
 public class AlphaNumericTypeCommand extends TypeCommand {
 
   public AlphaNumericTypeCommand(String text, int line) {
-    super(text, line);
+    super(text, line, true);
   }
 
   public ActionCallback _execute(PlaybackContext context) {
@@ -39,7 +38,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
   protected ActionCallback type(final PlaybackContext context, final String text) {
     final ActionCallback result = new ActionCallback();
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+    inWriteSafeContext(() -> {
       TypingTarget typingTarget = findTarget(context);
       if (typingTarget != null) {
         typingTarget.type(text).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> typeByRobot(context.getRobot(), text).notify(result));

@@ -15,48 +15,7 @@
  */
 package standardDsls
 
-import com.intellij.psi.PsiType
-import com.intellij.psi.util.PsiUtil
-
-/**
- * @author Maxim.Medvedev
- */
-
-interface Constants {
-  String STRING = "java.lang.String"
-  String WILDCARD_PREFIX = "? extends "
-}
-
-private String extractIterableParameter(PsiType type) {
-  def componentType = PsiUtil.extractIterableTypeParameter(type, true)
-  return removeWildcard(componentType?.canonicalText ?: componentType?.presentableText);
-}
-
-private String removeWildcard(String componentType) {
-  componentType = componentType?.replace("?extends", "? extends ")
-  componentType = componentType?.replace("?super", "? super ")
-
-  if (componentType?.startsWith(Constants.WILDCARD_PREFIX)) {
-    return componentType?.substring(Constants.WILDCARD_PREFIX.size())
-  }
-  return componentType
-}
-
-private String constructElementTypeArg(PsiType psiType) {
-  def arg = extractIterableParameter(psiType)
-  if (!arg || arg == "null") return ""
-  return "<$arg>"
-}
-
-/*
-contributor(ctype: "java.util.Collection") {
-  method name: "getAt", params: [arg: "int"], type: extractIterableParameter(psiType)
-  method name: "getAt", params: [arg: "groovy.lang.Range"], type: "java.util.List${constructElementTypeArg(psiType)}"
-  method name: "getAt", params: [arg: "java.util.Collection"], type: "java.util.List${constructElementTypeArg(psiType)}"
-}
-*/
-
-contributor(ctype:"groovy.lang.GString") {
+contributor(ctype: "groovy.lang.GString") {
   delegatesTo(findClass("java.lang.String"))
 }
 

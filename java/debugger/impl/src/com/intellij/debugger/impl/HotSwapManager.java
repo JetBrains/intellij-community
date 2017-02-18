@@ -145,12 +145,7 @@ public class HotSwapManager extends AbstractProjectComponent {
           for (Pair<DebuggerSession, Long> pair : sessionWithStamps) {
             final DebuggerSession session = pair.first;
             if (fileStamp > pair.second) {
-              Map<String, HotSwapFile> container = result.get(session);
-              if (container == null) {
-                container = new java.util.HashMap<>();
-                result.put(session, container);
-              }
-              container.put(qualifiedName, hotswapFile);
+              result.computeIfAbsent(session, k -> new java.util.HashMap<>()).put(qualifiedName, hotswapFile);
             }
           }
         }

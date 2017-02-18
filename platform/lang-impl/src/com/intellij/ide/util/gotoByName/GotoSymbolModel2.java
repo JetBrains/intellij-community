@@ -51,7 +51,7 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
     if (result == null) {
       return result;
     }
-    final Collection<Language> items = new HashSet<Language>(result);
+    final Collection<Language> items = new HashSet<>(result);
     items.add(Language.ANY);
     return items;
   }

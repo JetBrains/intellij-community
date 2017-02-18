@@ -94,7 +94,7 @@ public class VcsCloseTaskPanel extends TaskDialogPanel {
       for (ChangeListInfo info : myTask.getChangeLists()) {
         LocalChangeList list = changeListManager.getChangeList(info.id);
         if (list != null) {
-          changeListManager.commitChanges(list, new ArrayList<Change>(list.getChanges()));
+          changeListManager.commitChanges(list, new ArrayList<>(list.getChanges()));
         }
       }
     }

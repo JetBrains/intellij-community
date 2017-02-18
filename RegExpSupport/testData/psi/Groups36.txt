@@ -1,0 +1,14 @@
+REGEXP_FILE
+  RegExpPatternImpl: <(?P<name>{>
+    RegExpBranchImpl: <(?P<name>{>
+      RegExpClosureImpl: <(?P<name>{>
+        RegExpGroupImpl: <(?P<name>>
+          PsiElement(PYTHON_NAMED_GROUP)('(?P<')
+          PsiElement(NAME)('name')
+          PsiElement(GT)('>')
+          PsiErrorElement:Dangling metacharacter
+            <empty list>
+        RegExpQuantifierImpl: <{>
+          PsiElement(LBRACE)('{')
+          PsiErrorElement:Number expected
+            <empty list>

@@ -16,19 +16,14 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.tools.fragmented.LineNumberConvertor;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.AppliedSplitPatchHunk;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 class PatchChangeBuilder {
@@ -38,26 +33,6 @@ class PatchChangeBuilder {
   @NotNull private final TIntArrayList myChangedLines = new TIntArrayList();
 
   private int totalLines = 0;
-
-  @NotNull
-  public static CharSequence getPatchedContent(@NotNull AppliedTextPatch patch, @NotNull String localContent) {
-    PatchChangeBuilder builder = new PatchChangeBuilder();
-    builder.exec(patch.getHunks());
-
-    DocumentImpl document = new DocumentImpl(localContent, true);
-    List<Hunk> appliedHunks = ContainerUtil.filter(builder.getHunks(), (h) -> h.getStatus() == HunkStatus.EXACTLY_APPLIED);
-    ContainerUtil.sort(appliedHunks, Comparator.comparingInt(h -> h.getAppliedToLines().start));
-
-    for (int i = appliedHunks.size() - 1; i >= 0; i--) {
-      Hunk hunk = appliedHunks.get(i);
-      LineRange appliedTo = hunk.getAppliedToLines();
-      List<String> inserted = hunk.getInsertedLines();
-
-      DiffUtil.applyModification(document, appliedTo.start, appliedTo.end, inserted);
-    }
-
-    return document.getText();
-  }
 
   public void exec(@NotNull List<AppliedSplitPatchHunk> splitHunks) {
     int lastBeforeLine = -1;
@@ -182,6 +157,7 @@ class PatchChangeBuilder {
       return myStatus;
     }
 
+    @Nullable
     public LineRange getAppliedToLines() {
       return myAppliedToLines;
     }

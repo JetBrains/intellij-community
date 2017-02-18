@@ -299,7 +299,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testArrayInitializerSeveralLines() { doTest(); }
 
   public void testReturnInLambda() { doTest(); }
-  
+  public void testSemicolonAfterLambda() { doTest(); }
+
   private void doTestBracesNextLineStyle() throws Exception {
     CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

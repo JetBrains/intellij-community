@@ -81,7 +81,7 @@ public class GotoRelatedItem {
   }
 
   public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements, String group) {
-    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>(elements.size());
+    List<GotoRelatedItem> items = new ArrayList<>(elements.size());
     for (PsiElement element : elements) {
       items.add(new GotoRelatedItem(element, group));
     }

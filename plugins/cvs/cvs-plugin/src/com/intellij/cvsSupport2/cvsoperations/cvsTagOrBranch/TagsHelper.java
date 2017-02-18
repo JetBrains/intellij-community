@@ -72,7 +72,7 @@ public class TagsHelper {
   @Nullable
   public static String chooseBranch(Collection<FilePath> files, Project project) {
     try {
-      return chooseFrom(collectAllBranches(files, project), new ArrayList<CvsRevisionNumber>());
+      return chooseFrom(collectAllBranches(files, project), new ArrayList<>());
     }
     catch (VcsException e) {
       showErrorMessage(e);
@@ -91,7 +91,7 @@ public class TagsHelper {
   }
 
   public static Collection<String> getAllBranches(List<LogInformation> log) {
-    final HashSet<String> branches = new HashSet<String>();
+    final HashSet<String> branches = new HashSet<>();
     for (final LogInformation logInformation : log) {
       collectBranches(logInformation, branches);
     }
@@ -126,8 +126,8 @@ public class TagsHelper {
     if (files.length == 0) {
       return Collections.emptyList();
     }
-    final Collection<FilePath> roots = new HashSet<FilePath>();
-    final Set<VirtualFile> seen = new HashSet<VirtualFile>();
+    final Collection<FilePath> roots = new HashSet<>();
+    final Set<VirtualFile> seen = new HashSet<>();
     for(FilePath filePath : files) {
       final VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(filePath);
       if (root == null || !seen.add(root)) {
@@ -167,16 +167,16 @@ public class TagsHelper {
   }
 
   private static Collection<String> collectSortedTags(Collection<String> tags) {
-    final ArrayList<String> result = new ArrayList<String>(tags);
+    final ArrayList<String> result = new ArrayList<>(tags);
     Collections.sort(result);
     return result;
   }
 
   private static Collection<String> collectSortedRevisionsNames(Collection<CvsRevisionNumber> revisions) {
-    if (revisions == null) return new ArrayList<String>();
-    final ArrayList<CvsRevisionNumber> list = new ArrayList<CvsRevisionNumber>(revisions);
+    if (revisions == null) return new ArrayList<>();
+    final ArrayList<CvsRevisionNumber> list = new ArrayList<>(revisions);
     Collections.sort(list, (o, o1) -> o.compareTo(o1));
-    final ArrayList<String> result = new ArrayList<String>();
+    final ArrayList<String> result = new ArrayList<>();
     for (final CvsRevisionNumber aList : list) {
       result.add(aList.toString());
     }
@@ -184,7 +184,7 @@ public class TagsHelper {
   }
 
   public static Collection<CvsRevisionNumber> getAllRevisions(List<LogInformation> logs) {
-    final ArrayList<CvsRevisionNumber> result = new ArrayList<CvsRevisionNumber>();
+    final ArrayList<CvsRevisionNumber> result = new ArrayList<>();
     for (final LogInformation log : logs) {
       collectRevisions(log, result);
     }

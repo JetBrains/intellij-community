@@ -21,12 +21,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.compiled.ClsParameterImpl;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
+import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.util.GCUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.FileBasedIndex;
 
@@ -87,6 +93,8 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertTrue(file.isValid());
     assertEquals("pack", file.getPackageName());
     assertEquals(1, file.getClasses().length);
+    file = getFile("MyEnum");
+    assertEquals(LanguageLevel.JDK_1_5, file.getLanguageLevel());
   }
 
   public void testClassBasics() {
@@ -409,6 +417,18 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertEquals("@pkg.TypeAnnotations.TA(\"parameter\") int", p1.getType().getCanonicalText(true));
   }
 
+  public void testModuleInfo() {
+    PsiJavaFile file = getFile("../../stubBuilder/module-info");
+    assertEquals(LanguageLevel.JDK_1_9, file.getLanguageLevel());
+
+    PsiJavaModule module = file.getModuleDeclaration();
+    assertNotNull(module);
+    assertEquals("M.N", module.getModuleName());
+
+    assertNull(file.getPackageStatement());
+    assertEquals(0, file.getClasses().length);
+  }
+
   private PsiJavaFile getFile() {
     return getFile(getTestName(false));
   }
@@ -420,5 +440,16 @@ public class ClsPsiTest extends LightIdeaTestCase {
     PsiFile clsFile = PsiManager.getInstance(getProject()).findFile(file);
     assertTrue(String.valueOf(clsFile), clsFile instanceof ClsFileImpl);
     return (PsiJavaFile)clsFile;
+  }
+
+  public void testClsPsiDoesNotHoldStrongReferencesToMirrorAST() {
+    PsiClass dbl = getJavaFacade().findClass(Double.class.getName(), myScope);
+    assertNotNull(dbl);
+    int hash1 = ((ClsClassImpl)dbl).getMirror().hashCode();
+    assertEquals(dbl, ((ClsClassImpl)dbl).getMirror().getUserData(ClsElementImpl.COMPILED_ELEMENT));
+
+    GCUtil.tryGcSoftlyReachableObjects();
+    LeakHunter.checkLeak(dbl, ClassElement.class, element -> element.getPsi().getUserData(ClsElementImpl.COMPILED_ELEMENT) == dbl);
+    assertFalse(hash1 == ((ClsClassImpl)dbl).getMirror().hashCode());
   }
 }

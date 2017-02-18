@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
@@ -60,7 +59,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
   @Override
   protected boolean findAdditionalMembers(final Set<UsageInfo> toMakeStatic) {
     if (!toMakeStatic.isEmpty()) {
-      myAdditionalMethods = new ArrayList<PsiMethod>();
+      myAdditionalMethods = new ArrayList<>();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         for (UsageInfo usageInfo : toMakeStatic) {
           myAdditionalMethods.add((PsiMethod)usageInfo.getElement());
@@ -71,7 +70,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
                                                                           methods -> myAdditionalMethods.addAll(methods)) {
           @Override
           protected ArrayList<UsageInfo> getTopLevelItems() {
-            return new ArrayList<UsageInfo>(toMakeStatic);
+            return new ArrayList<>(toMakeStatic);
           }
         };
         TreeUtil.expand(chooser.getTree(), 2);
@@ -133,13 +132,13 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     PsiParameterList paramList = myMember.getParameterList();
     PsiElement addParameterAfter = null;
     PsiDocTag anchor = null;
-    List<PsiType> addedTypes = new ArrayList<PsiType>();
+    List<PsiType> addedTypes = new ArrayList<>();
 
     final PsiClass containingClass = myMember.getContainingClass();
     LOG.assertTrue(containingClass != null);
     
     if (mySettings.isDelegate()) {
-      List<ParameterInfoImpl> params = new ArrayList<ParameterInfoImpl>();
+      List<ParameterInfoImpl> params = new ArrayList<>();
       PsiParameter[] parameters = myMember.getParameterList().getParameters();
 
       if (mySettings.isMakeClassParameter()) {
@@ -304,7 +303,7 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
 
     PsiElement anchor = null;
     PsiExpressionList argList = null;
-    PsiExpression[] exprs = new PsiExpression[0];
+    PsiExpression[] exprs = PsiExpression.EMPTY_ARRAY;
     if (parent instanceof PsiMethodCallExpression) {
       argList = ((PsiMethodCallExpression)parent).getArgumentList();
       exprs = argList.getExpressions();

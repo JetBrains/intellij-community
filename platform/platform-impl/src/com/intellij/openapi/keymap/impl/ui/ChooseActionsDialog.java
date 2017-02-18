@@ -110,7 +110,7 @@ public class ChooseActionsDialog extends DialogWrapper {
     TreePath[] paths = myActionsTree.getTree().getSelectionPaths();
     if (paths == null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
-    ArrayList<String> actions = new ArrayList<String>();
+    ArrayList<String> actions = new ArrayList<>();
     for (TreePath path : paths) {
       Object node = path.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {

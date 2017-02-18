@@ -151,9 +151,9 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
 
   @NotNull
   @Override
-  public String getPresentableText() {
+  public String getPresentableText(boolean annotated) {
     if (myPresentableText == null) {
-      myPresentableText = getText(TextType.PRESENTABLE, true);
+      myPresentableText = getText(TextType.PRESENTABLE, annotated);
     }
     return myPresentableText;
   }

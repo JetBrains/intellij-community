@@ -16,13 +16,15 @@
 package com.jetbrains.python.console;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
-import com.jetbrains.python.console.pydev.ConsoleCommunication;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.console.completion.PydevConsoleReference;
+import com.jetbrains.python.documentation.PyDocumentationBuilder;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,21 +51,21 @@ public class PydevDocumentationProvider extends AbstractDocumentationProvider {
 
   @Nullable
   public static String createDoc(final PsiElement element, final PsiElement originalElement) {
-    final PyExpression expression = PsiTreeUtil.getParentOfType(originalElement, PyExpression.class);
+    final PyReferenceExpression expression = PsiTreeUtil.getNonStrictParentOfType(originalElement, PyReferenceExpression.class);
     // Indicates that we are inside console, not a lookup element!
     if (expression == null){
       return null;
     }
-    final ConsoleCommunication communication = PydevConsoleRunner.getConsoleCommunication(originalElement);
-    if (communication == null){
+    PydevConsoleReference consoleRef = PyUtil.as(expression.getReference(), PydevConsoleReference.class);
+    if (consoleRef == null) { //shouldn't really happen!
       return null;
     }
-    try {
-      final String description = communication.getDescription(expression.getText());
-      return StringUtil.isEmptyOrSpaces(description) ? null : description;
-    }
-    catch (Exception e) {
+    PyElement documentationElement = consoleRef.getDocumentationElement();
+    if (documentationElement == null) {
       return null;
     }
+
+    return new PyDocumentationBuilder(documentationElement, null).build();
+
   }
 }

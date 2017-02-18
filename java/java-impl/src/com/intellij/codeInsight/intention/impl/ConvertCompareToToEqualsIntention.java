@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,15 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,140 +31,97 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Batkovich
  */
 public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntentionAction {
-  public static final String TEXT = "Convert '.compareTo()' method to '.equals()' (may change semantics)";
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
-      return;
+    final CompareToResult compareToResult = CompareToResult.findCompareTo(element);
+    assert compareToResult != null;
+    final PsiExpression qualifier = compareToResult.getQualifier();
+    final PsiExpression argument = compareToResult.getArgument();
+    final StringBuilder text = new StringBuilder();
+    if (!compareToResult.isEqEq()) {
+      text.append('!');
     }
-    final ResolveResult resolveResult = findCompareTo(element);
-    assert resolveResult != null;
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    final Pair<PsiExpression, PsiExpression> qualifierAndParameter = getQualifierAndParameter(resolveResult.getCompareToCall());
-    final PsiExpression newExpression =
-      elementFactory.createExpressionFromText(String.format((resolveResult.isEqEq() ? "" : "!") + "%s.equals(%s)", qualifierAndParameter.getFirst().getText(), qualifierAndParameter.getSecond().getText()), null);
-    final PsiElement result = resolveResult.getBinaryExpression().replace(newExpression);
+    if (qualifier != null) {
+      text.append(qualifier.getText()).append('.');
+    }
+    text.append("equals(").append(argument.getText()).append(')');
+    final PsiExpression newExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(text.toString(), null);
+    final PsiElement result = compareToResult.getBinaryExpression().replace(newExpression);
 
     editor.getCaretModel().moveToOffset(result.getTextOffset() + result.getTextLength());
   }
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    return findCompareTo(element) != null;
+    return CompareToResult.findCompareTo(element) != null;
   }
 
-  private static Pair<PsiExpression, PsiExpression> getQualifierAndParameter(PsiMethodCallExpression methodCallExpression) {
-    final PsiExpression qualifier = methodCallExpression.getMethodExpression().getQualifierExpression();
-    assert qualifier != null;
-    final PsiExpression parameter = methodCallExpression.getArgumentList().getExpressions()[0];
-    return Pair.create(qualifier, parameter);
-  }
+  private static class CompareToResult {
 
-  @Nullable
-  private static ResolveResult findCompareTo(PsiElement element) {
-    final PsiBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PsiBinaryExpression.class);
-    if (binaryExpression == null) {
-      return null;
-    }
-    final PsiJavaToken operationSign = binaryExpression.getOperationSign();
-    boolean isEqEq;
-    if (JavaTokenType.NE.equals(operationSign.getTokenType())) {
-      isEqEq = false;
-    } else if (JavaTokenType.EQEQ.equals(operationSign.getTokenType())) {
-      isEqEq = true;
-    } else {
-      return null;
-    }
-    PsiMethodCallExpression compareToExpression = null;
-    boolean hasZero = false;
-    for (PsiExpression psiExpression : binaryExpression.getOperands()) {
-      if (compareToExpression == null && detectCompareTo(psiExpression)) {
-        compareToExpression = (PsiMethodCallExpression)psiExpression;
-        continue;
-      }
-      if (!hasZero && detectZero(psiExpression)) {
-        hasZero = true;
-      }
-    }
-    if (!hasZero || compareToExpression == null) {
-      return null;
-    }
-    getQualifierAndParameter(compareToExpression);
-    return new ResolveResult(binaryExpression, compareToExpression, isEqEq);
-  }
-
-  private static boolean detectCompareTo(final @NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
-      return false;
-    }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null) {
-      return false;
-    }
-    final PsiMethod psiMethod = methodCallExpression.resolveMethod();
-    if (psiMethod == null || !"compareTo".equals(psiMethod.getName()) || psiMethod.getParameterList().getParametersCount() != 1) {
-      return false;
-    }
-    if (methodCallExpression.getArgumentList().getExpressions().length != 1) {
-      return false;
-    }
-    final PsiClass containingClass = psiMethod.getContainingClass();
-    if (containingClass == null) {
-      return false;
-    }
-    final PsiClass javaLangComparable = JavaPsiFacade.getInstance(expression.getProject()).findClass(CommonClassNames.JAVA_LANG_COMPARABLE, GlobalSearchScope.allScope(
-      expression.getProject()));
-    if (javaLangComparable == null) {
-      return false;
-    }
-    if (!containingClass.isInheritor(javaLangComparable, true)) {
-      return false;
-    }
-    return true;
-  }
-
-  private static boolean detectZero(final @NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiLiteralExpression)) {
-      return false;
-    }
-    final Object value = ((PsiLiteralExpression)expression).getValue();
-    return Comparing.equal(value, 0);
-  }
-
-  private static class ResolveResult {
     private final PsiBinaryExpression myBinaryExpression;
     private final PsiMethodCallExpression myCompareToCall;
-    private final boolean myEqEq;
 
-    private ResolveResult(PsiBinaryExpression binaryExpression, PsiMethodCallExpression compareToCall, boolean eqEq) {
+    private CompareToResult(PsiBinaryExpression binaryExpression, PsiMethodCallExpression compareToCall) {
       myBinaryExpression = binaryExpression;
       myCompareToCall = compareToCall;
-      myEqEq = eqEq;
     }
 
     public PsiBinaryExpression getBinaryExpression() {
       return myBinaryExpression;
     }
 
-    public PsiMethodCallExpression getCompareToCall() {
-      return myCompareToCall;
+    public boolean isEqEq() {
+      return JavaTokenType.EQEQ.equals(myBinaryExpression.getOperationTokenType());
     }
 
-    public boolean isEqEq() {
-      return myEqEq;
+    public PsiExpression getArgument() {
+      return myCompareToCall.getArgumentList().getExpressions()[0];
+    }
+
+    public PsiExpression getQualifier() {
+      return myCompareToCall.getMethodExpression().getQualifierExpression();
+    }
+
+    @Nullable
+    static CompareToResult findCompareTo(PsiElement element) {
+      final PsiBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PsiBinaryExpression.class);
+      if (binaryExpression == null) {
+        return null;
+      }
+      final IElementType tokenType = binaryExpression.getOperationTokenType();
+      if (!JavaTokenType.NE.equals(tokenType) && !JavaTokenType.EQEQ.equals(tokenType)) {
+        return null;
+      }
+      PsiMethodCallExpression compareToExpression;
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      if (lhs instanceof PsiMethodCallExpression) {
+        compareToExpression = (PsiMethodCallExpression)lhs;
+        if (!MethodCallUtils.isCompareToCall(compareToExpression) || !ExpressionUtils.isZero(rhs)) {
+          return null;
+        }
+      } else if (rhs instanceof PsiMethodCallExpression) {
+        compareToExpression = (PsiMethodCallExpression)rhs;
+        if (!ExpressionUtils.isZero(lhs) || !MethodCallUtils.isCompareToCall(compareToExpression)) {
+          return null;
+        }
+      } else {
+        return null;
+      }
+      return new CompareToResult(binaryExpression, compareToExpression);
     }
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return TEXT;
+    return "Convert 'compareTo()' expression to 'equals()' call";
   }
 
   @NotNull
   @Override
   public String getText() {
-    return getFamilyName();
+    return "Convert 'compareTo()' expression to 'equals()' call (may change semantics)";
   }
 }

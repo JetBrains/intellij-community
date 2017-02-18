@@ -44,7 +44,7 @@ public class TypeDesc {
   final String xsName;
   final String xsNamespace;
   final String name;
-  final Map<String, FieldDesc> fdMap = new TreeMap<String, FieldDesc>();
+  final Map<String, FieldDesc> fdMap = new TreeMap<>();
   boolean duplicates;
   String documentation;
   TypeDesc[] supers;

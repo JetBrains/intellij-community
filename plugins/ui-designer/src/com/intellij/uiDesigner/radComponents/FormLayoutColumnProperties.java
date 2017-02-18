@@ -41,7 +41,7 @@ public class FormLayoutColumnProperties implements CustomPropertiesPanel {
   private static final Map<Object, String> UNITS_MAP;
 
   static {
-    UNITS_MAP = new HashMap<Object, String>();
+    UNITS_MAP = new HashMap<>();
     UNITS_MAP.put("px", UIDesignerBundle.message("unit.pixels"));
     UNITS_MAP.put("dlu", UIDesignerBundle.message("unit.dialog.units"));
     UNITS_MAP.put("pt", UIDesignerBundle.message("unit.points"));

@@ -36,7 +36,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Stream;
 
-import static com.intellij.vcsUtil.VcsUtil.toStream;
+import static com.intellij.util.containers.UtilKt.concat;
+import static com.intellij.util.containers.UtilKt.stream;
 
 public class VcsContextWrapper implements VcsContext {
   @NotNull protected final DataContext myContext;
@@ -154,11 +155,11 @@ public class VcsContextWrapper implements VcsContext {
   public Stream<FilePath> getSelectedFilePathsStream() {
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
 
-    return VcsUtil.concat(
+    return concat(
       path != null ? Stream.of(path) : Stream.empty(),
-      toStream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
+      stream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
       getSelectedFilesStream().map(VcsUtil::getFilePath),
-      toStream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
+      stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)
     );
   }
 

@@ -1,0 +1,15 @@
+Backward Hierarchy:
+java.lang.Object -> Lambda
+java.lang.Runnable -> fun_expr(id=0)
+
+Backward References:
+Lambda in Lambda
+Lambda.<init>(0) in Lambda
+Lambda.main(1) in Lambda
+java.lang.Object.<init>(0) in Lambda
+java.lang.String in Lambda
+java.lang.Thread in Lambda
+
+Class Definitions:
+Lambda in Lambda
+fun_expr(id=0) in Lambda

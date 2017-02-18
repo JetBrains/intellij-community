@@ -17,6 +17,7 @@ package com.intellij.dupLocator;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface LightDuplicateProfile {
   void process(@NotNull LighterAST ast, @NotNull Callback callback);
+  boolean acceptsFile(@NotNull VirtualFile file);
 
   interface Callback {
     void process(int hash, int hash2, @NotNull LighterAST ast, @NotNull LighterASTNode... nodes);

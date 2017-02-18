@@ -44,6 +44,7 @@ public class GrEnumConstantElementType extends GrStubElementType<GrFieldStub, Gr
     return new GrEnumConstantImpl(stub);
   }
 
+  @NotNull
   @Override
   public GrFieldStub createStub(@NotNull GrEnumConstant psi, StubElement parentStub) {
     String[] annNames = GrStubUtils.getAnnotationNames(psi);

@@ -20,8 +20,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -78,9 +83,7 @@ public class MemberLookupHelper {
     final String params = myMergedOverloads
                           ? "(...)"
                           : myMember instanceof PsiMethod
-                            ? PsiFormatUtil.formatMethod((PsiMethod)myMember, substitutor,
-                                                         PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                         PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE)
+                            ? getMethodParameterString((PsiMethod)myMember, substitutor)
                             : "";
     presentation.clearTail();
     presentation.appendTailText(params, false);
@@ -90,11 +93,28 @@ public class MemberLookupHelper {
       presentation.appendTailText(location, true);
     }
 
-    final PsiType type = myMember instanceof PsiMethod ? ((PsiMethod)myMember).getReturnType() : ((PsiField) myMember).getType();
+    PsiType declaredType = myMember instanceof PsiMethod ? ((PsiMethod)myMember).getReturnType() : ((PsiField)myMember).getType();
+    PsiType type = patchGetClass(substitutor.substitute(declaredType));
     if (type != null) {
       presentation.setTypeText(substitutor.substitute(type).getPresentableText());
     }
   }
 
+  @Nullable
+  private PsiType patchGetClass(@Nullable PsiType type) {
+    if (myMember instanceof PsiMethod && PsiTypesUtil.isGetClass((PsiMethod)myMember) && type instanceof PsiClassType) {
+      PsiType arg = ContainerUtil.getFirstItem(Arrays.asList(((PsiClassType)type).getParameters()));
+      PsiType bound = arg instanceof PsiWildcardType ? TypeConversionUtil.erasure(((PsiWildcardType)arg).getExtendsBound()) : null;
+      if (bound != null) {
+        return PsiTypesUtil.createJavaLangClassType(myMember, bound, false);
+      }
+    }
+    return type;
+  }
 
+  @NotNull
+  static String getMethodParameterString(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    return PsiFormatUtil.formatMethod(method, substitutor,
+                                      PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE);
+  }
 }

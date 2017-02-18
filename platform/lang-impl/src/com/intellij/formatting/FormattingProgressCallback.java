@@ -72,8 +72,8 @@ public interface FormattingProgressCallback {
    * <p/>
    * I.e. the general idea is that given indicator is provided with the task which will be executed from EDT
    * {@link SequentialTask#iteration() part by part} until the task {@link SequentialTask#isDone() is finished}.
-   * That <code>'part-by-part'</code> processing is assumed to update current indicator (call <code>'beforeXxx()'</code>
-   * and <code>'afterXxx()'</code> methods).
+   * That {@code 'part-by-part'} processing is assumed to update current indicator (call {@code 'beforeXxx()'}
+   * and {@code 'afterXxx()'} methods).
    * 
    * @param task    formatter task to process
    */
@@ -84,8 +84,8 @@ public interface FormattingProgressCallback {
    * 
    * @param eventType     target event type
    * @param callback      callback to register for the given event type
-   * @return              <code>true</code> if given callback is successfully registered for the given event type;
-   *                      <code>false</code> otherwise
+   * @return              {@code true} if given callback is successfully registered for the given event type;
+   *                      {@code false} otherwise
    */
   boolean addCallback(@NotNull EventType eventType, @NotNull Runnable callback);
   

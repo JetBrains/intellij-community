@@ -32,7 +32,7 @@ public class DelimitedListProcessorTest extends TestCase {
   }
 
   private void doTest(final String text, final List<String> expected) {
-    final ArrayList<String> tokens = new ArrayList<String>();
+    final ArrayList<String> tokens = new ArrayList<>();
     new DelimitedListProcessor(";") {
       @Override
       protected void processToken(final int start, final int end, final boolean delimitersOnly) {

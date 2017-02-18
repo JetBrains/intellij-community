@@ -39,7 +39,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   @Nullable
   @Override
   public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
-    listOwner = BaseExternalAnnotationsManager.preferCompiledElement(listOwner);
+    listOwner = PsiUtil.preferCompiledElement(listOwner);
 
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && listOwner instanceof PsiMethod) {
       PsiAnnotation anno = getHardcodedContractAnnotation((PsiMethod)listOwner);
@@ -112,6 +112,11 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return null;
     }
 
+    if (NullableNotNullManager.findNullabilityDefaultInHierarchy(method, true) != null ||
+        NullableNotNullManager.findNullabilityDefaultInHierarchy(method, false) != null) {
+      return null;
+    }
+
     Nullness nullness = NullityInference.inferNullity(method);
     if (nullness == Nullness.NOT_NULL) {
       return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
@@ -124,23 +129,28 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation createContractAnnotation(List<MethodContract> contracts, boolean pure) {
+    return createContractAnnotation(myProject, pure, StringUtil.join(contracts, "; "));
+  }
+
+  @Nullable
+  public static PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts) {
     final String attrs;
     if (!contracts.isEmpty() && pure) {
-      attrs = "value = " + "\"" + StringUtil.join(contracts, "; ") + "\", pure = true";
+      attrs = "value = " + "\"" + contracts + "\", pure = true";
     } else if (pure) {
       attrs = "pure = true";
     } else if (!contracts.isEmpty()) {
-      attrs = "\"" + StringUtil.join(contracts, "; ") + "\"";
+      attrs = "\"" + contracts + "\"";
     } else {
       return null;
     }
-    return ProjectBytecodeAnalysis.getInstance(myProject).createContractAnnotation(attrs);
+    return ProjectBytecodeAnalysis.getInstance(project).createContractAnnotation(attrs);
   }
 
   @NotNull
   @Override
   public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
-    listOwner = BaseExternalAnnotationsManager.preferCompiledElement(listOwner);
+    listOwner = PsiUtil.preferCompiledElement(listOwner);
     List<PsiAnnotation> result = ContainerUtil.newArrayList();
     PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotations(listOwner);
     for (PsiAnnotation annotation : fromBytecode) {

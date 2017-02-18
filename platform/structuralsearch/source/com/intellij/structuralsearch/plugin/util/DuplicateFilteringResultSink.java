@@ -14,7 +14,7 @@ import java.util.Set;
  */
 public class DuplicateFilteringResultSink implements MatchResultSink {
   private final MatchResultSink delegate;
-  final Set<SmartPsiPointer> duplicates = new THashSet<SmartPsiPointer>();
+  final Set<SmartPsiPointer> duplicates = new THashSet<>();
 
   public DuplicateFilteringResultSink(MatchResultSink delegate) {
     this.delegate = delegate;

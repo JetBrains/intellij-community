@@ -45,7 +45,7 @@ import java.util.List;
  */
 public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiClass> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.makeMethodStatic.MakeClassStaticProcessor");
-  private final List<PsiField> myFieldsToSplit = new ArrayList<PsiField>();
+  private final List<PsiField> myFieldsToSplit = new ArrayList<>();
 
   public MakeClassStaticProcessor(final Project project, final PsiClass aClass, final Settings settings) {
     super(project, aClass, settings);

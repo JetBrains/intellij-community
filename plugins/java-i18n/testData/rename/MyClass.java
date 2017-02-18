@@ -1,5 +1,4 @@
 import org.jetbrains.annotations.PropertyKey;
-
 import java.util.ResourceBundle;
 
 public class MyClass {

@@ -82,7 +82,7 @@ public class MergingFileManager implements FileManager {
 
   private static String[] mergeLines(String[] curLines, String[] prevLines) {
     if (prevLines.length == 0) return curLines;
-    ArrayList<String> merged = new ArrayList<String>();
+    ArrayList<String> merged = new ArrayList<>();
     int curIdx = 0, prevIdx = 0;
     String cur, prev;
     boolean classScope = false;
@@ -142,7 +142,7 @@ public class MergingFileManager implements FileManager {
   }
 
   private static void mergeImports(ArrayList<String> merged, String[] curLines, String[] prevLines, int[] indices) {
-    TreeSet<String> externalClasses = new TreeSet<String>();
+    TreeSet<String> externalClasses = new TreeSet<>();
     for (int i = 0; i < curLines.length; i++) {
       String line = curLines[i].trim();
       if (line.startsWith("import ") && line.endsWith(";")) {
@@ -224,7 +224,7 @@ public class MergingFileManager implements FileManager {
 
   private static String[] loadFile(File f1) {
     if (!f1.exists()) return ArrayUtil.EMPTY_STRING_ARRAY;
-    ArrayList<String> list = new ArrayList<String>();
+    ArrayList<String> list = new ArrayList<>();
     BufferedReader in = null;
     try {
       in = new BufferedReader(new FileReader(f1));

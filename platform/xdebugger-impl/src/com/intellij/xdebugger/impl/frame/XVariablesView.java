@@ -18,11 +18,11 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -31,10 +31,12 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +52,6 @@ import java.util.TreeSet;
  */
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
   public static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
-  public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
   private final JPanel myComponent;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
@@ -66,26 +67,31 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   }
 
   @Override
-  public void processSessionEvent(@NotNull final SessionEvent event) {
-    XDebugSession session = getSession(getPanel());
-    XStackFrame stackFrame = session == null ? null : session.getCurrentStackFrame();
-    XDebuggerTree tree = getTree();
+  public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
+    if (ApplicationManager.getApplication().isDispatchThread()) { // mark nodes obsolete asap
+      getTree().markNodesObsolete();
+    }
 
-    if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
-      saveCurrentTreeState(stackFrame);
-      if (event == SessionEvent.BEFORE_RESUME) {
-        return;
+    XStackFrame stackFrame = session.getCurrentStackFrame();
+    DebuggerUIUtil.invokeLater(() -> {
+      XDebuggerTree tree = getTree();
+
+      if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
+        saveCurrentTreeState(stackFrame);
+        if (event == SessionEvent.BEFORE_RESUME) {
+          return;
+        }
       }
-    }
 
-    tree.markNodesObsolete();
-    if (stackFrame != null) {
-      cancelClear();
-      buildTreeAndRestoreState(stackFrame);
-    }
-    else {
-      requestClear();
-    }
+      tree.markNodesObsolete();
+      if (stackFrame != null) {
+        cancelClear();
+        buildTreeAndRestoreState(stackFrame);
+      }
+      else {
+        requestClear();
+      }
+    });
   }
 
   @Override
@@ -96,8 +102,8 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
 
   private static void clearInlineData(XDebuggerTree tree) {
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
-    tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
     tree.updateEditor();
+    clearInlays(tree);
   }
 
   protected void addEmptyMessage(XValueContainerNode root) {
@@ -134,28 +140,24 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   }
 
   public static class InlineVariablesInfo {
-    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData
-      = new THashMap<>();
+    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new THashMap<>();
+    private final TObjectLongHashMap<VirtualFile> myTimestamps = new ObjectLongHashMap<>();
 
     @Nullable
-    public List<XValueNodeImpl> get(@NotNull VirtualFile file, int line) {
-      synchronized (myData) {
-        Set<Entry> entries = myData.get(Pair.create(file, line));
-        if (entries == null) return null;
-        return ContainerUtil.map(entries, entry -> entry.myNode);
+    public synchronized List<XValueNodeImpl> get(@NotNull VirtualFile file, int line, long currentTimestamp) {
+      long timestamp = myTimestamps.get(file);
+      if (timestamp == -1 || timestamp < currentTimestamp) {
+        return null;
       }
+      Set<Entry> entries = myData.get(Pair.create(file, line));
+      if (entries == null) return null;
+      return ContainerUtil.map(entries, entry -> entry.myNode);
     }
 
-    public void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node) {
-      synchronized (myData) {
-        Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
-        Set<Entry> entries = myData.get(key);
-        if (entries == null) {
-          entries = new TreeSet<>();
-          myData.put(key, entries);
-        }
-        entries.add(new Entry(position.getOffset(), node));
-      }
+    public synchronized void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node, long timestamp) {
+      myTimestamps.put(file, timestamp);
+      Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
+      myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
     }
 
     private static class Entry implements Comparable<Entry> {

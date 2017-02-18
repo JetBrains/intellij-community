@@ -16,8 +16,12 @@ public class JsonBooleanLiteralImpl extends JsonLiteralImpl implements JsonBoole
     super(node);
   }
 
+  public void accept(@NotNull JsonElementVisitor visitor) {
+    visitor.visitBooleanLiteral(this);
+  }
+
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonElementVisitor) ((JsonElementVisitor)visitor).visitBooleanLiteral(this);
+    if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);
   }
 

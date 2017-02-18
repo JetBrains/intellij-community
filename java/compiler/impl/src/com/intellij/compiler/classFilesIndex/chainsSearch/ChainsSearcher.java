@@ -89,18 +89,24 @@ public final class ChainsSearcher {
     final List<WeightAware<MethodIncompleteSignature>> allInitialVertexes = initResult.getVertexes();
 
     final LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>> q =
-      new LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>(ContainerUtil.map(allInitialVertexes,
-                                                                                                   methodIncompleteSignatureWeightAware -> {
-                                                                                                     final MethodIncompleteSignature underlying = methodIncompleteSignatureWeightAware.getUnderlying();
-                                                                                                     return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
-                                                                                                       Pair.create(
-                                                                                                         underlying,
-                                                                                                         new MethodsChain(context.resolveNotDeprecated(underlying),
-                                                                                                                          methodIncompleteSignatureWeightAware.getWeight(),
-                                                                                                                          underlying.getOwner())),
-                                                                                                       methodIncompleteSignatureWeightAware.getWeight()
-                                                                                                     );
-                                                                                                   }
+      new LinkedList<>(ContainerUtil.map(allInitialVertexes,
+                                         methodIncompleteSignatureWeightAware -> {
+                                           final MethodIncompleteSignature underlying =
+                                             methodIncompleteSignatureWeightAware.getUnderlying();
+                                           return new WeightAware<>(
+                                             Pair.create(
+                                               underlying,
+                                               new MethodsChain(context
+                                                                  .resolveNotDeprecated(
+                                                                    underlying),
+                                                                methodIncompleteSignatureWeightAware
+                                                                  .getWeight(),
+                                                                underlying
+                                                                  .getOwner())),
+                                             methodIncompleteSignatureWeightAware
+                                               .getWeight()
+                                           );
+                                         }
       ));
 
     int maxWeight = 0;
@@ -127,7 +133,7 @@ public final class ChainsSearcher {
       final String currentReturnType = currentVertexUnderlying.getFirst().getOwner();
       final SortedSet<UsageIndexValue> nextMethods = indexReader.getMethods(currentReturnType);
       final MaxSizeTreeSet<WeightAware<MethodIncompleteSignature>> currentSignatures =
-        new MaxSizeTreeSet<WeightAware<MethodIncompleteSignature>>(maxResultSize);
+        new MaxSizeTreeSet<>(maxResultSize);
       for (final UsageIndexValue indexValue : nextMethods) {
         final MethodIncompleteSignature vertex = indexValue.getMethodIncompleteSignature();
         final int occurrences = indexValue.getOccurrences();
@@ -143,7 +149,7 @@ public final class ChainsSearcher {
                   final MethodsChain newBestMethodsChain =
                     currentVertexMethodsChain.addEdge(psiMethods, indexValue.getMethodIncompleteSignature().getOwner(), vertexDistance);
                   currentSignatures
-                    .add(new WeightAware<MethodIncompleteSignature>(indexValue.getMethodIncompleteSignature(), vertexDistance));
+                    .add(new WeightAware<>(indexValue.getMethodIncompleteSignature(), vertexDistance));
                   knownDistance.put(vertex, newBestMethodsChain);
                 }
               }
@@ -171,7 +177,7 @@ public final class ChainsSearcher {
                 updated = true;
                 final MethodsChain methodsChain =
                   currentVertexUnderlying.second.addEdge(resolved, sign.getUnderlying().getOwner(), sign.getWeight());
-                q.add(new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
+                q.add(new WeightAware<>(
                   Pair.create(sign.getUnderlying(), methodsChain), sign.getWeight()));
                 continue;
               }
@@ -182,7 +188,7 @@ public final class ChainsSearcher {
           final ParametersMatcher.MatchResult parametersMatchResult = ParametersMatcher.matchParameters(methodsChain, context);
           if (parametersMatchResult.noUnmatchedAndHasMatched() && parametersMatchResult.hasTarget()) {
             updated = true;
-            q.addFirst(new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
+            q.addFirst(new WeightAware<>(
               Pair.create(sign.getUnderlying(), methodsChain), sign.getWeight()));
           }
           isBreak = true;
@@ -214,7 +220,7 @@ public final class ChainsSearcher {
 
     private ResultHolder(final PsiManager psiManager) {
       myContext = psiManager;
-      myResult = new ArrayList<MethodsChain>();
+      myResult = new ArrayList<>();
     }
 
     public void add(final MethodsChain newChain) {
@@ -223,7 +229,7 @@ public final class ChainsSearcher {
         return;
       }
       boolean doAdd = true;
-      final Stack<Integer> indexesToRemove = new Stack<Integer>();
+      final Stack<Integer> indexesToRemove = new Stack<>();
       for (int i = 0; i < myResult.size(); i++) {
         final MethodsChain chain = myResult.get(i);
         //

@@ -41,10 +41,6 @@ class InstanceofEvaluator implements Evaluator {
     myTypeEvaluator = typeEvaluator;
   }
 
-  public Modifier getModifier() {
-    return null;
-  }
-
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {

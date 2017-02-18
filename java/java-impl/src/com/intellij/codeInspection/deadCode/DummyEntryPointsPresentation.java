@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.deadCode;
 
-import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalJavaInspectionContext;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
@@ -24,10 +23,12 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation {
   private static final RefEntryPointFilter myFilter = new RefEntryPointFilter();
@@ -43,7 +44,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   }
 
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, CommonProblemDescriptor[] allowedDescriptors) {
+  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
     if (myQuickFixActions == null) {
       myQuickFixActions = new QuickFixAction[]{new MoveEntriesToSuspicious(getToolWrapper())};
     }
@@ -57,7 +58,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
 
   private class MoveEntriesToSuspicious extends QuickFixAction {
     private MoveEntriesToSuspicious(@NotNull InspectionToolWrapper toolWrapper) {
-      super(InspectionsBundle.message("inspection.dead.code.remove.from.entry.point.quickfix"), null, null, toolWrapper);
+      super(InspectionsBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"), null, null, toolWrapper);
     }
 
     @Override
@@ -66,22 +67,16 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
       if (e.getPresentation().isEnabled()) {
         final InspectionResultsView view = getInvoker(e);
         boolean permanentFound = false;
-        boolean nonPermanentFound = false;
         for (RefEntity point : view.getTree().getSelectedElements()) {
           if (point instanceof RefJavaElement && ((RefJavaElement)point).isEntry()) {
             if (((RefJavaElement)point).isPermanentEntry()) {
               permanentFound = true;
-            }
-            else {
-              nonPermanentFound = true;
+              break;
             }
           }
         }
 
-        if (permanentFound && nonPermanentFound) {
-          e.getPresentation().setText(InspectionsBundle.message("inspection.dead.code.remove.user.defined.entry.point.quickfix"));
-        }
-        else if (nonPermanentFound || !permanentFound) {
+        if (!permanentFound) {
           e.getPresentation().setEnabled(false);
         }
       }
@@ -101,14 +96,18 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     }
   }
 
-  @NotNull
   @Override
-  public InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
+  public void createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
                                        @NotNull InspectionRVContentProvider provider,
                                        @NotNull InspectionTreeNode parentNode,
                                        boolean showStructure,
                                        boolean groupByStructure) {
-    return node;
+    myToolNode = node;
+  }
+
+  @Override
+  protected boolean skipEntryPoints(RefJavaElement refElement) {
+    return false;
   }
 
   @Override

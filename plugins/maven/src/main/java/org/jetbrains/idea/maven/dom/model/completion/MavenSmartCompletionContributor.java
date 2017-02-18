@@ -51,7 +51,7 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
   private static Collection<?> getVariants(CompletionParameters parameters) {
     if (!MavenDomUtil.isMavenFile(parameters.getOriginalFile())) return Collections.emptyList();
 
-    SmartList<?> result = new SmartList<Object>();
+    SmartList<?> result = new SmartList<>();
 
     for (PsiReference each : getReferences(parameters)) {
       if (each instanceof TagNameReference) continue;

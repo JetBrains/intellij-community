@@ -5,23 +5,25 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 
 public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CCEditTaskTextAction.class);
+  private static final String EDITING_MODE = "Editing Mode";
 
   public CCEditTaskTextAction() {
-    super("Editing Mode", "Editing Mode", AllIcons.Modules.Edit);
+    super(EDITING_MODE, EDITING_MODE, AllIcons.Modules.Edit);
   }
 
   @Override
@@ -43,16 +45,30 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
     if (window == null) {
       return;
     }
-
-    final StudyEditor selectedEditor = StudyUtils.getSelectedStudyEditor(project);
-    if (selectedEditor == null) {
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor == null) {
+      return;
+    }
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    if (virtualFile == null) {
       StudyTaskManager.getInstance(project).setTurnEditingMode(true);
       return;
     }
-    final StudyState studyState = new StudyState(selectedEditor);
-    VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(studyState.getTaskDir());
+
+    Task task = StudyUtils.getTaskForFile(project, virtualFile);
+    if (task == null) {
+      StudyTaskManager.getInstance(project).setTurnEditingMode(true);
+      return;
+    }
+    VirtualFile taskDir = task.getTaskDir(project);
+    if (taskDir == null) {
+      StudyTaskManager.getInstance(project).setTurnEditingMode(true);
+      return;
+    }
+    VirtualFile taskTextFile = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
     if (taskTextFile == null) {
       LOG.info("Failed to find task.html");
+      StudyTaskManager.getInstance(project).setTurnEditingMode(true);
       return;
     }
     Document document = FileDocumentManager.getInstance().getDocument(taskTextFile);

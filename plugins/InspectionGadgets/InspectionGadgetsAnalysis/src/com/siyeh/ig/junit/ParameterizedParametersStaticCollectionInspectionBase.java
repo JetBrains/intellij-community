@@ -54,7 +54,7 @@ public class ParameterizedParametersStaticCollectionInspectionBase extends BaseI
             if (value instanceof PsiClassObjectAccessExpression) {
               final PsiTypeElement typeElement = ((PsiClassObjectAccessExpression)value).getOperand();
               if (typeElement.getType().getCanonicalText().equals(PARAMETERIZED_FQN)) {
-                List<MethodCandidate> candidates = new ArrayList<MethodCandidate>();
+                List<MethodCandidate> candidates = new ArrayList<>();
                 for (PsiMethod method : aClass.getMethods()) {
                   PsiType returnType = method.getReturnType();
                   final PsiClass returnTypeClass = PsiUtil.resolveClassInType(returnType);

@@ -60,14 +60,11 @@ public class ExecutionPointHighlighter {
 
   private final AtomicBoolean updateRequested = new AtomicBoolean();
 
-  public ExecutionPointHighlighter(final Project project) {
+  public ExecutionPointHighlighter(@NotNull Project project) {
     myProject = project;
 
     // Update highlighter colors if global color schema was changed
-    final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    if (colorsManager != null) { // in some debugger tests EditorColorsManager component isn't loaded
-      colorsManager.addEditorColorsListener(scheme -> update(false), project);
-    }
+    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, scheme -> update(false));
   }
 
   public void show(final @NotNull XSourcePosition position, final boolean notTopFrame,

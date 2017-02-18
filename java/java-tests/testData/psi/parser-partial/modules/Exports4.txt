@@ -1,0 +1,24 @@
+PsiJavaFile:Exports4.java
+  PsiJavaModule:M
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:M('M')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiExportsStatement
+      PsiKeyword:exports('exports')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:pkg
+        PsiIdentifier:pkg('pkg')
+        PsiReferenceParameterList
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiKeyword:to('to')
+      PsiErrorElement:Identifier expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

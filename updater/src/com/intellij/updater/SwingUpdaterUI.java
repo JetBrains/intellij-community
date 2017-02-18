@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import javax.swing.*;
@@ -11,7 +26,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@SuppressWarnings({"UndesirableClassUsage","UseJBColor"}) // Plain Swing
+@SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseDPIAwareInsets", "SSBasedInspection"})
 public abstract class SwingUpdaterUI implements UpdaterUI {
 
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
@@ -43,7 +58,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
   public Map<String, ValidationResult.Option> askUser(final List<ValidationResult> validationResults) throws OperationCancelledException {
     if (validationResults.isEmpty()) return Collections.emptyMap();
 
-    final Map<String, ValidationResult.Option> result = new HashMap<String, ValidationResult.Option>();
+    final Map<String, ValidationResult.Option> result = new HashMap<>();
     try {
       SwingUtilities.invokeAndWait(() -> {
         boolean proceed = true;
@@ -136,7 +151,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
   private static class MyTableModel extends AbstractTableModel {
     public static final String[] COLUMNS = new String[]{"File", "Action", "Problem", "Solution"};
     public static final int OPTIONS_COLUMN_INDEX = 3;
-    private final List<Item> myItems = new ArrayList<Item>();
+    private final List<Item> myItems = new ArrayList<>();
 
     public MyTableModel(List<ValidationResult> validationResults) {
       for (ValidationResult each : validationResults) {
@@ -214,7 +229,7 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
     }
 
     public Map<String, ValidationResult.Option> getResult() {
-      Map<String, ValidationResult.Option> result = new HashMap<String, ValidationResult.Option>();
+      Map<String, ValidationResult.Option> result = new HashMap<>();
       for (Item each : myItems) {
         result.put(each.validationResult.path, each.option);
       }
@@ -239,13 +254,13 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
 
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      MyTableModel tableModel = (MyTableModel)table.getModel();
-      DefaultComboBoxModel comboModel = new DefaultComboBoxModel();
+      DefaultComboBoxModel<ValidationResult.Option> comboModel = new DefaultComboBoxModel<>();
 
-      for (ValidationResult.Option each : tableModel.getOptions(row)) {
+      for (ValidationResult.Option each : ((MyTableModel)table.getModel()).getOptions(row)) {
         comboModel.addElement(each);
       }
-      ((JComboBox)editorComponent).setModel(comboModel);
+      @SuppressWarnings("unchecked") JComboBox<ValidationResult.Option> comboBox = (JComboBox<ValidationResult.Option>)editorComponent;
+      comboBox.setModel(comboModel);
 
       return super.getTableCellEditorComponent(table, value, isSelected, row, column);
     }
@@ -259,13 +274,12 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
         MyTableModel tableModel = (MyTableModel)table.getModel();
         Color color = table.getBackground();
 
-        switch (tableModel.getKind(row)) {
-          case ERROR:
-            color = new Color(255, 175, 175);
-            break;
-          case CONFLICT:
-            color = new Color(255, 240, 240);
-            break;
+        ValidationResult.Kind kind = tableModel.getKind(row);
+        if (kind == ValidationResult.Kind.ERROR) {
+          color = new Color(255, 175, 175);
+        }
+        else if (kind == ValidationResult.Kind.CONFLICT) {
+          color = new Color(255, 240, 240);
         }
         result.setBackground(color);
       }

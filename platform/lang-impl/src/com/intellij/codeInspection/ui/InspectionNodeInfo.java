@@ -15,23 +15,20 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.DisableInspectionToolAction;
+import com.intellij.codeInspection.actions.RunInspectionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
+import com.intellij.ui.components.panels.StatelessCardLayout;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -51,12 +48,12 @@ public class InspectionNodeInfo extends JPanel {
                             @NotNull final Project project) {
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
-    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(true);
+    final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(false);
     LOG.assertTrue(toolWrapper != null);
-    InspectionProfileImpl currentProfile =
-      (InspectionProfileImpl)InspectionProjectProfileManager.getInstance(project).getProjectProfileImpl();
-    HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName());
-    boolean enabled = currentProfile.isToolEnabled(key);
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
+    final ToolsImpl tools = currentProfile.getTools(toolWrapper.getShortName(), project);
+    LOG.assertTrue(tools != null, "Can't find tools for: " + toolWrapper.getShortName());
+    boolean enabled = tools.isEnabled();
 
     JPanel titlePanel = new JPanel();
     titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.LINE_AXIS));
@@ -84,23 +81,19 @@ public class InspectionNodeInfo extends JPanel {
     final String toolDescription = toolWrapper.loadDescription();
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
+    int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;
+    pane.setMaximumSize(new Dimension(maxWidth, Integer.MAX_VALUE));
+    pane.setAlignmentX(0);
 
-    add(pane,
-        new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.VERTICAL,
-                               new JBInsets(0, 10, 0, 0), getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width, 0));
+    add(StatelessCardLayout.wrap(pane),
+        new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                               new JBInsets(0, 10, 0, 0), 0, 0));
     JButton enableButton = new JButton((enabled ? "Disable" : "Enable") + " inspection");
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        DisableInspectionToolAction.modifyAndCommitProjectProfile(model -> {
-          final String toolId = key.toString();
-          if (enabled) {
-            model.disableTool(toolId, project);
-          }
-          else {
-            ((InspectionProfileImpl)model).enableTool(toolId, project);
-          }
-        }, project);
+        InspectionsConfigTreeTable.setToolEnabled(!enabled, currentProfile, toolWrapper.getShortName(), project);
+        tree.getContext().getView().profileChanged();
         return true;
       }
     }.installOn(enableButton);
@@ -109,9 +102,7 @@ public class InspectionNodeInfo extends JPanel {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        final AnAction action = ActionManager.getInstance().getAction("RunInspectionOn");
-        action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, action.getTemplatePresentation(),
-                                                                   DataManager.getInstance().getDataContext(runInspectionOnButton)));
+        RunInspectionAction.runInspection(project, toolWrapper.getShortName(), null, null, null);
         return true;
       }
     }.installOn(runInspectionOnButton);

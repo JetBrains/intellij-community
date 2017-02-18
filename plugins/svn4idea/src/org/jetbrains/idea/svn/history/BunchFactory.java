@@ -37,7 +37,7 @@ public class BunchFactory {
   public BunchFactory(final CachedProvider internallyCached, final CachedProvider visuallyCached, final LiveProvider liveProvider) {
     myLiveProvider = liveProvider;
 
-    final List<BunchProvider> providers = new ArrayList<BunchProvider>();
+    final List<BunchProvider> providers = new ArrayList<>();
     if (internallyCached != null) {
       providers.add(internallyCached);
     }
@@ -46,7 +46,7 @@ public class BunchFactory {
     }
     providers.add(myLiveProvider);
 
-    myResult = new ArrayList<Fragment>();
+    myResult = new ArrayList<>();
     myProviderIterator = providers.iterator();
     while (myProviderIterator.hasNext()) {
       myCurrentProvider = myProviderIterator.next();
@@ -60,7 +60,7 @@ public class BunchFactory {
   public List<Fragment> goBack(final int bunchSize, final Ref<Boolean> myYoungestRead) throws VcsException {
     execute(bunchSize);
     myYoungestRead.set(myLiveProvider.isEarliestRevisionWasAccessed());
-    return new ArrayList<Fragment>(myResult);
+    return new ArrayList<>(myResult);
   }
 
   private void addToResult(final Fragment fragment) {

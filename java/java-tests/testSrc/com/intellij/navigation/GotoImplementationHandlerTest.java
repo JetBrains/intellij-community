@@ -50,6 +50,28 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
+  public void testFromIncompleteCode() {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {\n" +
+                                                          "    abstract void foo();\n" +
+                                                          "\n" +
+                                                          "    class A {\n" +
+                                                          "        {\n" +
+                                                          "            Hello<caret>\n" +
+                                                          "        }\n" +
+                                                          "    }\n" +
+                                                          "    class Hello1 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "}" +
+                                                          "class Hello2 extends Hello {\n" +
+                                                          "    void foo() {}\n" +
+                                                          "}\n");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = getTargets(file);
+    assertEquals(2, impls.length);
+  }
+
   public void testToStringOnUnqualified() {
     final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Fix {\n" +
                                                                 "    {\n" +
@@ -225,6 +247,39 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     final PsiClass aClass = ((PsiMethod)method).getContainingClass();
     assertNotNull(aClass);
     assertEquals("A", aClass.getName());
+  }
+
+  public void testMethodImplementationsOnTypeVariable() throws Exception {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "interface I {}\n" +
+                                                          "interface Im {\n" +
+                                                          "    void m();\n" +
+                                                          "}\n" +
+                                                          "class Im1 implements Im {\n" +
+                                                          "    public void m() {}\n" +
+                                                          "}\n" +
+                                                          "class Im2 implements Im {\n" +
+                                                          "    public void m() {}\n" +
+                                                          "}\n" +
+                                                          "class JavaClass<T extends K, K extends I & Im> {\n" +
+                                                          "    void  a(T t){\n" +
+                                                          "        t.<caret>m();\n" +
+                                                          "    }\n" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    PsiElement[] targets = getTargets(file);
+    assertSize(2, targets);
+  }
+
+  public void testStaticMethodReference() {
+    PsiFile file = myFixture.addFileToProject("Foo.java",
+                                                          "class C {\n" +
+                                                          "  static void a(){}\n" +
+                                                          "  {a<caret>();}" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = getTargets(file);
+    assertEquals(1, impls.length);
   }
 
   private PsiElement[] getTargets(PsiFile file) {

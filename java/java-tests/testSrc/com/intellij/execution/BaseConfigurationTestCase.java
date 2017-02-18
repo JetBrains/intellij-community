@@ -49,7 +49,7 @@ import java.util.List;
 
 public abstract class BaseConfigurationTestCase extends IdeaTestCase {
   protected TempFiles myTempFiles;
-  private final List<Module> myModulesToDispose = new ArrayList<Module>();
+  private final List<Module> myModulesToDispose = new ArrayList<>();
   protected static final String MOCK_JUNIT = "mock JUnit";
 
   @Override

@@ -91,24 +91,28 @@ void showWarning(NSString* messageText){
 }
 
 
-void appendBundle(NSString *path, NSMutableArray *sink) {
+BOOL appendBundle(NSString *path, NSMutableArray *sink) {
     if ([path hasSuffix:@"jdk"] || [path hasSuffix:@".jre"]) {
         NSBundle *bundle = [NSBundle bundleWithPath:path];
         if (bundle != nil) {
             [sink addObject:bundle];
+            return true;
         }
     }
+    return false;
 }
 
-void appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
+BOOL appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
     NSError *error = nil;
     NSArray *names = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
 
+    BOOL res = false;
     if (names != nil) {
         for (NSString *name in names) {
-            appendBundle([path stringByAppendingPathComponent:name], sink);
+            res |= appendBundle([path stringByAppendingPathComponent:name], sink);
         }
     }
+    return res;
 }
 
 NSArray *allVms() {
@@ -130,7 +134,9 @@ NSArray *allVms() {
         NSBundle *bundle = [NSBundle mainBundle];
         NSString *appDir = [bundle.bundlePath stringByAppendingPathComponent:@"Contents"];
 
-        appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths);
+        if (!appendJvmBundlesAt([appDir stringByAppendingPathComponent:@"/jre"], jvmBundlePaths)) {
+          appendBundle([appDir stringByAppendingPathComponent:@"/jdk"], jvmBundlePaths);
+        }
         if ((jvmBundlePaths.count > 0) && (satisfies(jvmVersion(jvmBundlePaths[jvmBundlePaths.count-1]), required))) return jvmBundlePaths;
 
         appendJvmBundlesAt([NSHomeDirectory() stringByAppendingPathComponent:@"Library/Java/JavaVirtualMachines"], jvmBundlePaths);

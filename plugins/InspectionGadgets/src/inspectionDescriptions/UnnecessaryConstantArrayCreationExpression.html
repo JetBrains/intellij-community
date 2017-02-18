@@ -1,10 +1,8 @@
 <html>
 <body>
-Reports any constant new array expression which can be replaced
-with an array initializer. Array initializers omit the type declaration because
+Reports any constant new array expression, like <code>int[] a = new int[]{42}</code> which can be replaced
+with an array initializer, e.g. <code>int[] a = {42}</code>. Array initializers omit the type declaration because
 that is already specified by the declaration of the variable the expression is
 assigned to.
-<!-- tooltip end -->
-<p>
 </body>
 </html>

@@ -63,7 +63,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     if (value.startsWith("$")) {
       return getSinglePropertyReferences(xmlAttributeValue, value, fileIds);
     }
-    final Set<String> acceptableIds = new HashSet<String>();
+    final Set<String> acceptableIds = new HashSet<>();
     if (currentTag != null) {
       final XmlTag parentTag = currentTag.getParentTag();
       for (final String id : fileIds.keySet()) {
@@ -81,6 +81,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
                                                         @NotNull XmlAttributeValue xmlAttributeValue,
                                                         @NotNull String value,
                                                         @NotNull Map<String, XmlAttributeValue> fileIds) {
+    if (FxmlConstants.NULL_EXPRESSION.equals(value)) return PsiReference.EMPTY_ARRAY;
     final String expressionBody = value.substring(2, value.length() - 1);
     final List<String> propertyNames = StringUtil.split(expressionBody, ".", true, false);
     if (JavaFxPropertyAttributeDescriptor.isIncompletePropertyChain(propertyNames)) return PsiReference.EMPTY_ARRAY;
@@ -115,6 +116,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
   private static PsiReference[] getSinglePropertyReferences(@NotNull XmlAttributeValue xmlAttributeValue,
                                                             @NotNull String value,
                                                             @NotNull Map<String, XmlAttributeValue> fileIds) {
+    if (FxmlConstants.isNullValue(value)) return PsiReference.EMPTY_ARRAY;
     return getSinglePropertyReferences(xmlAttributeValue, fileIds, value.substring(1), 1);
   }
 
@@ -248,7 +250,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     @Nullable
     @Override
     public PsiElement resolve() {
-      return JavaFxPsiUtil.collectReadableProperties(myPsiClass).get(myFieldName);
+      return JavaFxPsiUtil.getReadableProperties(myPsiClass).get(myFieldName);
     }
 
     @NotNull
@@ -266,7 +268,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     private Object[] collectProperties(@NotNull PsiType propertyType, @NotNull Project project) {
       final PsiType resolvedType = JavaFxPsiUtil.getWritablePropertyType(propertyType, project);
       final List<LookupElement> objs = new ArrayList<>();
-      final Collection<PsiMember> readableProperties = JavaFxPsiUtil.collectReadableProperties(myPsiClass).values();
+      final Collection<PsiMember> readableProperties = JavaFxPsiUtil.getReadableProperties(myPsiClass).values();
       for (PsiMember readableMember : readableProperties) {
         final PsiType readableType = JavaFxPsiUtil.getReadablePropertyType(readableMember);
         if (readableType == null) continue;

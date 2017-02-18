@@ -28,7 +28,7 @@ import java.util.List;
  */
 public interface JavaSafeDeleteDelegate {
   LanguageExtension<JavaSafeDeleteDelegate> EP =
-    new LanguageExtension<JavaSafeDeleteDelegate>("com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate");
+    new LanguageExtension<>("com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate");
 
   void createUsageInfoForParameter(final PsiReference reference,
                                    final List<UsageInfo> usages,

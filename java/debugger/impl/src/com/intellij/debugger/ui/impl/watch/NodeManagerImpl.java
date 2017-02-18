@@ -27,6 +27,7 @@ import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
+import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
@@ -120,9 +121,14 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
         StringBuilderSpinAllocator.dispose(builder);
       }
     }
-    catch (EvaluateException e) {
-      return null;
+    catch (EvaluateException ignored) {
     }
+    catch (InternalException ie) {
+      if (ie.errorCode() != 23) { // INVALID_METHODID
+        throw ie;
+      }
+    }
+    return null;
   }
 
   public void dispose() {

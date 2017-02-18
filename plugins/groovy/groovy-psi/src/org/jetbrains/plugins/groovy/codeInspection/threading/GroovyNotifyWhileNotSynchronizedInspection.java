@@ -63,7 +63,7 @@ public class GroovyNotifyWhileNotSynchronizedInspection extends BaseInspection {
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(GrMethodCallExpression grMethodCallExpression) {
+    public void visitMethodCallExpression(@NotNull GrMethodCallExpression grMethodCallExpression) {
       super.visitMethodCallExpression(grMethodCallExpression);
       final GrExpression methodExpression = grMethodCallExpression.getInvokedExpression();
       if (!(methodExpression instanceof GrReferenceExpression)) {

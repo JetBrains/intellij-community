@@ -69,7 +69,7 @@ public class CompletionTester {
     final CheckType checkType = CheckType.valueOf(in.next());
 
     in.useDelimiter("\n");
-    final List<String> variants = new ArrayList<String>();
+    final List<String> variants = new ArrayList<>();
     while (in.hasNext()) {
       final String variant = in.next().trim();
       if (variant.length() > 0) {

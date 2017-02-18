@@ -238,7 +238,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     public void performFix() {
       BaseLibrariesConfigurable configurable = BaseLibrariesConfigurable.getInstance(myContext.getProject(), LibraryTablesRegistrar.PROJECT_LEVEL);
       Library[] libraries = configurable.getModelProvider().getModifiableModel().getLibraries();
-      List<LibraryProjectStructureElement> toRemove = new ArrayList<LibraryProjectStructureElement>();
+      List<LibraryProjectStructureElement> toRemove = new ArrayList<>();
       for (Library library : libraries) {
         LibraryProjectStructureElement libraryElement = new LibraryProjectStructureElement(myContext, library);
         if (myContext.getDaemonAnalyzer().getUsages(libraryElement).isEmpty()) {

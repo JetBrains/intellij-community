@@ -82,7 +82,7 @@ public abstract class InstructionVisitor {
       return nextInstruction(instruction, runner, memState);
     }
 
-    ArrayList<DfaInstructionState> result = new ArrayList<DfaInstructionState>();
+    ArrayList<DfaInstructionState> result = new ArrayList<>();
 
     DfaMemoryState thenState = memState.createCopy();
     DfaMemoryState elseState = memState.createCopy();

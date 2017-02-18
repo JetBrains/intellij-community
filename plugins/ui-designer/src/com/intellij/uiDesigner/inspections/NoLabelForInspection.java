@@ -58,9 +58,9 @@ public class NoLabelForInspection extends BaseFormInspection {
       while(root.getParentContainer() != null) {
         root = root.getParentContainer();
       }
-      final Ref<Boolean> found = new Ref<Boolean>(Boolean.FALSE);
-      final Ref<RadComponent> candidateLabel = new Ref<RadComponent>();
-      final List<RadComponent> allLabels = new ArrayList<RadComponent>();
+      final Ref<Boolean> found = new Ref<>(Boolean.FALSE);
+      final Ref<RadComponent> candidateLabel = new Ref<>();
+      final List<RadComponent> allLabels = new ArrayList<>();
       FormEditingUtil.iterate(root, new FormEditingUtil.ComponentVisitor() {
         public boolean visit(final IComponent c2) {
           if (FormInspectionUtil.isComponentClass(module, c2, JLabel.class)) {

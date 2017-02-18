@@ -103,7 +103,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   }
 
   private Collection<VirtualFile> computeRoots() {
-    final Collection<VirtualFile> result = new LinkedHashSet<VirtualFile>();
+    final Collection<VirtualFile> result = new LinkedHashSet<>();
     myOrderEnumerator.forEach((orderEntry, customHandlers) -> {
       OrderRootType type = getRootType(orderEntry);
 
@@ -141,7 +141,7 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   @NotNull
   private Collection<String> computeRootsUrls() {
-    final Collection<String> result = new LinkedHashSet<String>();
+    final Collection<String> result = new LinkedHashSet<>();
     myOrderEnumerator.forEach((orderEntry, customHandlers) -> {
       OrderRootType type = getRootType(orderEntry);
 

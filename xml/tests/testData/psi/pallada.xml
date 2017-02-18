@@ -131,10 +131,10 @@
   </path>
   
   <path id="library.mocks.classpath">
-    <pathelement location="${basedir}/lib/dev/easymock.jar"/>
+    <pathelement location="${basedir}/lib/dev/easymock-3.4.jar"/>
     <pathelement location="${basedir}/lib/dev/mockobjects-core-0.09.jar"/>
   </path>
-  
+
   <path id="library.velocity.classpath">
     <pathelement location="${basedir}/lib/velocity.jar"/>
   </path>

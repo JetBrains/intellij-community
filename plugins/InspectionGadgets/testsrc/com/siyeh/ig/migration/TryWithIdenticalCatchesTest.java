@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,23 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
  * @author yole
  */
 public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase {
-  public void test() {
+  public void testTryIdenticalCatches() {
+    doTest();
+  }
+
+  public void testNonDisjunctTypes() {
+    doTest();
+  }
+
+  public void doTest() {
+    String name = getTestName(false);
     myFixture.enableInspections(TryWithIdenticalCatchesInspection.class);
-    myFixture.configureByFile("com/siyeh/igtest/errorhandling/try_identical_catches/TryIdenticalCatches.java");
+    myFixture.configureByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".java");
     myFixture.checkHighlighting(true, false, false);
     IntentionAction intention = myFixture.findSingleIntention("Collapse 'catch' blocks");
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResultByFile("com/siyeh/igtest/errorhandling/try_identical_catches/TryIdenticalCatches.after.java");
+    myFixture.checkResultByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".after.java");
   }
 
   @Override

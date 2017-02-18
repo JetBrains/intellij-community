@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
@@ -41,7 +43,6 @@ import java.net.*;
 import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Handy class for reading data from HTTP connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.
@@ -52,8 +53,11 @@ import java.util.zip.GZIPInputStream;
  *   }
  * });
  * }</pre>
+ * @see URLUtil
  */
 public final class HttpRequests {
+  private static final Logger LOG = Logger.getInstance(HttpRequests.class);
+
   private static final int BLOCK_SIZE = 16 * 1024;
   private static final Pattern CHARSET_PATTERN = Pattern.compile("charset=([^;]+)");
 
@@ -114,6 +118,11 @@ public final class HttpRequests {
     @NotNull
     public String getUrl() {
       return myUrl;
+    }
+
+    @Override
+    public String getMessage() {
+      return "Status: " + myStatusCode;
     }
 
     @Override
@@ -247,25 +256,27 @@ public final class HttpRequests {
 
   private static class RequestImpl implements Request, AutoCloseable {
     private final RequestBuilderImpl myBuilder;
+    private String myUrl;
     private URLConnection myConnection;
     private InputStream myInputStream;
     private BufferedReader myReader;
 
     private RequestImpl(RequestBuilderImpl builder) {
       myBuilder = builder;
+      myUrl = myBuilder.myUrl;
     }
 
     @NotNull
     @Override
     public String getURL() {
-      return myBuilder.myUrl;
+      return myUrl;
     }
 
     @NotNull
     @Override
     public URLConnection getConnection() throws IOException {
       if (myConnection == null) {
-        myConnection = openConnection(myBuilder);
+        myConnection = openConnection(myBuilder, this);
       }
       return myConnection;
     }
@@ -276,8 +287,7 @@ public final class HttpRequests {
       if (myInputStream == null) {
         myInputStream = getConnection().getInputStream();
         if (myBuilder.myGzip && "gzip".equalsIgnoreCase(getConnection().getContentEncoding())) {
-          //noinspection IOResourceOpenedButNotSafelyClosed
-          myInputStream = new GZIPInputStream(myInputStream);
+          myInputStream = CountingGZIPInputStream.create(myInputStream);
         }
       }
       return myInputStream;
@@ -368,8 +378,13 @@ public final class HttpRequests {
   }
 
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
+    LOG.assertTrue(ApplicationManager.getApplication() == null ||
+                   ApplicationManager.getApplication().isUnitTestMode() ||
+                   !ApplicationManager.getApplication().isReadAccessAllowed(),
+                   "Network shouldn't be accessed in EDT or inside read action");
+
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
-    if (Patches.JDK_BUG_ID_8032832 && !UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
+    if (contextLoader != null && shouldOverrideContextClassLoader(contextLoader)) {
       // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
       try (URLClassLoader cl = new URLClassLoader(new URL[0], contextLoader)) {
         Thread.currentThread().setContextClassLoader(cl);
@@ -382,6 +397,16 @@ public final class HttpRequests {
     else {
       return doProcess(builder, processor);
     }
+  }
+
+  private static boolean shouldOverrideContextClassLoader(ClassLoader contextLoader) {
+    if (!Patches.JDK_BUG_ID_8032832) {
+      return false;
+    }
+    if (!UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
+      return true;
+    }
+    return SystemProperties.getBooleanProperty("http.requests.override.context.classloader", false);
   }
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
@@ -407,12 +432,12 @@ public final class HttpRequests {
     return CharsetToolkit.UTF8_CHARSET;
   }
 
-  private static URLConnection openConnection(RequestBuilderImpl builder) throws IOException {
-    String url = builder.myUrl;
+  private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
+    String url = request.myUrl;
 
     for (int i = 0; i < builder.myRedirectLimit; i++) {
       if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
-        url = "https:" + url.substring(5);
+        request.myUrl = url = "https:" + url.substring(5);
       }
 
       if (url.startsWith("https:") && ApplicationManager.getApplication() != null) {
@@ -456,13 +481,15 @@ public final class HttpRequests {
       }
 
       if (connection instanceof HttpURLConnection) {
+        if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
         int responseCode = ((HttpURLConnection)connection).getResponseCode();
+        if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
         if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
           ((HttpURLConnection)connection).disconnect();
 
           if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-            url = connection.getHeaderField("Location");
+            request.myUrl = url = connection.getHeaderField("Location");
             if (url != null) {
               continue;
             }

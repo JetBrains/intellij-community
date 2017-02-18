@@ -54,7 +54,7 @@ public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   @Override
   protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
     if ("numpy".equals(qName)) {
-      final List<PyCustomMember> members = new ArrayList<PyCustomMember>();
+      final List<PyCustomMember> members = new ArrayList<>();
       for (String type : NUMERIC_TYPES) {
         members.add(new PyCustomMember(type, DTYPE, false));
       }

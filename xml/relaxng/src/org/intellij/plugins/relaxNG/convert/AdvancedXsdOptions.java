@@ -49,7 +49,7 @@ public class AdvancedXsdOptions implements AdvancedOptions {
 
   @Override
   public Map<String, ?> getOptions() {
-    final Map<String, Object> strings = new HashMap<String, Object>();
+    final Map<String, Object> strings = new HashMap<>();
     if (myDisableAbstractElements.isSelected()) {
       strings.put(DISABLE_ABSTRACT_ELEMENTS, Boolean.TRUE);
     }

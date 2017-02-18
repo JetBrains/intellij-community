@@ -32,7 +32,6 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.util.Condition;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.util.Function;
@@ -49,7 +48,9 @@ public class AddModuleWizard extends AbstractProjectWizard {
   private final ModulesProvider myModulesProvider;
   private WizardMode myWizardMode;
 
-  /** Import mode */
+  /**
+   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
+   */
   public AddModuleWizard(@Nullable Project project, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, filePath);
     myImportProviders = importProviders;
@@ -57,7 +58,9 @@ public class AddModuleWizard extends AbstractProjectWizard {
     initModuleWizard(project, filePath);
   }
 
-  /** Import mode */
+  /**
+   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
+   */
   public AddModuleWizard(Project project, Component dialogParent, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, dialogParent);
     myImportProviders = importProviders;
@@ -136,8 +139,8 @@ public class AddModuleWizard extends AbstractProjectWizard {
    * Allows to ask current wizard to move to the desired step.
    *
    * @param filter  closure that allows to indicate target step - is called with each of registered steps and is expected
-   *                to return <code>true</code> for the step to go to
-   * @return        <code>true</code> if current wizard is navigated to the target step; <code>false</code> otherwise
+   *                to return {@code true} for the step to go to
+   * @return        {@code true} if current wizard is navigated to the target step; {@code false} otherwise
    */
   public boolean navigateToStep(@NotNull Function<Step, Boolean> filter) {
     for (int i = 0, myStepsSize = mySteps.size(); i < myStepsSize; i++) {

@@ -26,7 +26,7 @@ import java.util.Map;
 public class VisibleTreeStateComponent {
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag=false, surroundKeyWithTag = false, surroundValueWithTag = false)
-  public Map<String, VisibleTreeState> myProfileNameToState = new HashMap<String, VisibleTreeState>();
+  public Map<String, VisibleTreeState> myProfileNameToState = new HashMap<>();
 
   public void copyFrom(VisibleTreeStateComponent state) {
     myProfileNameToState.clear();

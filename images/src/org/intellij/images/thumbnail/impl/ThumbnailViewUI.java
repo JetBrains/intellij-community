@@ -286,7 +286,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private Set<VirtualFile> findFiles(VirtualFile[] roots) {
-        Set<VirtualFile> files = new HashSet<VirtualFile>();
+        Set<VirtualFile> files = new HashSet<>();
         for (VirtualFile root : roots) {
             files.addAll(findFiles(root));
         }
@@ -294,7 +294,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
     private Set<VirtualFile> findFiles(VirtualFile file) {
-        Set<VirtualFile> files = new HashSet<VirtualFile>(0);
+        Set<VirtualFile> files = new HashSet<>(0);
         Project project = thumbnailView.getProject();
         if (!project.isDisposed()) {
             ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
@@ -438,7 +438,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             return deleteProvider;
         } else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
-            Set<Navigatable> navigatables = new HashSet<Navigatable>(selectedFiles.length);
+            Set<Navigatable> navigatables = new HashSet<>(selectedFiles.length);
             for (VirtualFile selectedFile : selectedFiles) {
                 if (!selectedFile.isDirectory()) {
                     navigatables.add(new ThumbnailNavigatable(selectedFile));
@@ -458,7 +458,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     @NotNull
     private PsiElement[] getSelectedElements() {
         VirtualFile[] selectedFiles = getSelectedFiles();
-        Set<PsiElement> psiElements = new HashSet<PsiElement>(selectedFiles.length);
+        Set<PsiElement> psiElements = new HashSet<>(selectedFiles.length);
         PsiManager psiManager = PsiManager.getInstance(thumbnailView.getProject());
         for (VirtualFile file : selectedFiles) {
             PsiFile psiFile = psiManager.findFile(file);

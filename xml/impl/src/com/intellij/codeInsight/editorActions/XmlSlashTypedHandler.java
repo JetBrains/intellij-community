@@ -16,9 +16,9 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
-import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
@@ -26,12 +26,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -92,12 +92,10 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       if ("</".equals(prevLeafText) && prevLeaf.getElementType() == XmlTokenType.XML_END_TAG_START) {
         XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
         if (tag != null && StringUtil.isNotEmpty(tag.getName()) && TreeUtil.findSibling(prevLeaf, XmlTokenType.XML_NAME) == null) {
-          if (!(file.getFileType() instanceof XmlLikeFileType) && !HtmlUtil.supportsXmlTypedHandlers(file)) return Result.CONTINUE;
-
           // check for template language like JSP
           if (provider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
             PsiElement element1 = SingleRootFileViewProvider.findElementAt(file, offset - 1);
-            if (element1 != null && element1.getText().startsWith("</")) {
+            if (element1 != null) {
               // case of top-level jsp tag
               XmlTag tag1 = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
               if (shouldReplace(tag, tag1, offset)) {
@@ -113,6 +111,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
             }
           }
           EditorModificationUtil.insertStringAtCaret(editor, tag.getName() + ">", false);
+          autoIndent(editor);
           return Result.STOP;
         }
       }
@@ -164,5 +163,16 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       tag = tag.getParentTag();
     }
     return false;
+  }
+
+  private static void autoIndent(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    if (project != null) {
+      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+      Document document = editor.getDocument();
+      documentManager.commitDocument(document);
+      int lineOffset = document.getLineStartOffset(document.getLineNumber(editor.getCaretModel().getOffset()));
+      CodeStyleManager.getInstance(project).adjustLineIndent(document, lineOffset);
+    }
   }
 }

@@ -52,6 +52,16 @@ public class MockFontLayoutService extends FontLayoutService {
   }
 
   @Override
+  public int charWidth(@NotNull FontMetrics fontMetrics, int codePoint) {
+    return myCharWidth;
+  }
+
+  @Override
+  public float charWidth2D(@NotNull FontMetrics fontMetrics, int codePoint) {
+    return myCharWidth;
+  }
+
+  @Override
   public int getHeight(@NotNull FontMetrics fontMetrics) {
     return myLineHeight;
   }

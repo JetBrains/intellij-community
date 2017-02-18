@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,9 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.JavaProgramPatcher;
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -49,28 +48,19 @@ import java.io.IOException;
 import java.util.jar.Attributes;
 import java.util.regex.Pattern;
 
-
 /**
  * @author peter
  */
 public class GroovyHotSwapper extends JavaProgramPatcher {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper");
   private static final String GROOVY_HOTSWAP_AGENT_PATH = "groovy.hotswap.agent.path";
-
   private static final Pattern SPRING_LOADED_PATTERN = Pattern.compile("-javaagent:.+springloaded-[^/\\\\]+\\.jar");
   
-  private static boolean containsGroovyClasses(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      AccessToken accessToken = ReadAction.start();
-      try {
-        return CachedValueProvider.Result
-          .create(FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)),
-                  PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-      finally {
-        accessToken.finish();
-      }
-    });
+  private static boolean containsGroovyClasses(Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, () ->
+      CachedValueProvider.Result.create(
+        FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.projectScope(project)),
+        PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
   private static boolean hasSpringLoadedReloader(JavaParameters javaParameters) {
@@ -85,6 +75,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
   
   @Override
   public void patchJavaParameters(Executor executor, RunProfile configuration, JavaParameters javaParameters) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!executor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID)) {
       return;
     }
@@ -124,7 +115,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     if (jdk != null) {
       String vendor = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VENDOR);
       if (vendor != null && vendor.contains("IBM")) {
-        LOG.info("Due to IBM JDK pecularities (IDEA-59070) we don't add groovy agent when running applications under it");
+        LOG.info("Due to IBM JDK peculiarities (IDEA-59070) we don't add Groovy agent when running applications under it");
         return;
       }
     }
@@ -143,7 +134,8 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
       final File dir = new File(PathManager.getSystemPath(), "groovyHotSwap");
       if (dir.getAbsolutePath().contains(" ")) {
         LOG.info("Groovy hot-swap not used since the agent path contains spaces: " + agentPath + "\n" +
-                 "One can move the agent to a directory with no spaces in path and specify its path in <IDEA dist>/bin/idea.properties as " + GROOVY_HOTSWAP_AGENT_PATH + "=<path>");
+                 "One can move the agent to a directory with no spaces in path," +
+                 " and specify its path in <IDEA dist>/bin/idea.properties as " + GROOVY_HOTSWAP_AGENT_PATH + "=<path>");
         return null;
       }
 
@@ -173,5 +165,4 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     final File pluginDir = ourJar.getParentFile();
     return pluginDir.getPath() + File.separator + "agent" + File.separator + "gragent.jar";
   }
-
 }

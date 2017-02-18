@@ -12,8 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import com.google.common.base.Objects;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +20,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class HgRevisionNumber implements VcsRevisionNumber {
 
@@ -195,7 +194,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   @Override
   public int hashCode() {
     // if short revision number is not empty, then short changeset is enough, a.e. annotations
-    return Objects.hashCode(revision, revision.isEmpty() ? changeset : getShortHash(changeset));
+    return Objects.hash(revision, revision.isEmpty() ? changeset : getShortHash(changeset));
   }
 
   @Override

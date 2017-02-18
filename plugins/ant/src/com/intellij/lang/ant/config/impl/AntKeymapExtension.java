@@ -40,7 +40,7 @@ class AntKeymapExtension implements KeymapExtension {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntProjectKeymap");
 
   public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {
-    final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<AntBuildFile, KeymapGroup>();
+    final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<>();
     final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("ant.targets.group.title"),
                                                                             AllIcons.Nodes.KeymapAnt);
 

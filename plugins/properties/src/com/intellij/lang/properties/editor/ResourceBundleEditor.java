@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-/**
- * @author Alexey
- */
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -37,6 +35,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.incomplete.IncompletePropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertiesResourceBundleUtil;
+import com.intellij.lang.properties.xml.XmlPropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -61,7 +60,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
@@ -70,11 +71,16 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -115,14 +121,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
   private final Set<VirtualFile> myBackSlashPressed     = new THashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final PropertiesAnchorizer myPropertiesAnchorizer;
 
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
   private volatile boolean    myDisposed;
-  private VirtualFileListener myVfsListener;
+  private ResourceBundleEditorFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
+  private ResourceBundleEditorHighlighter myHighlighter;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -130,7 +136,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     final JPanel splitPanel = new JPanel();
     myValuesPanel = new JPanel();
     myStructureViewPanel = new JPanel();
-    JBSplitter splitter = new JBSplitter(false);
+    JBSplitter splitter = new OnePixelSplitter(false);
     splitter.setFirstComponent(myStructureViewPanel);
     splitter.setSecondComponent(myValuesPanel);
     splitter.setShowDividerControls(true);
@@ -142,8 +148,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     myResourceBundle = resourceBundle;
     myPropertiesInsertDeleteManager = new ResourceBundlePropertiesUpdateManager(resourceBundle);
 
-    myPropertiesAnchorizer = new PropertiesAnchorizer(myResourceBundle.getProject());
-    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this, myPropertiesAnchorizer);
+    myStructureViewComponent = new ResourceBundleStructureViewComponent(myResourceBundle, this);
     myStructureViewPanel.setLayout(new BorderLayout());
     myStructureViewPanel.add(myStructureViewComponent, BorderLayout.CENTER);
 
@@ -209,12 +214,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     installPropertiesChangeListeners();
 
-    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
+    myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         onSelectionChanged(event);
       }
     });
+    myHighlighter = myResourceBundle.getDefaultPropertiesFile() instanceof XmlPropertiesFile ? null : new ResourceBundleEditorHighlighter(this);
   }
 
   public ResourceBundle getResourceBundle() {
@@ -310,8 +316,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       if (value != null) {
         final IProperty property = PropertiesImplUtil.getProperty(value);
         if (propertyName.equals(property.getUnescapedKey())) {
-          final PropertiesAnchorizer.PropertyAnchor anchor = myPropertiesAnchorizer.get(property);
-          myStructureViewComponent.select(anchor, true);
+          myStructureViewComponent.select(property, true);
           selectionChanged();
           return;
         }
@@ -322,6 +327,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         }
       }
     }
+  }
+
+  public void flush() {
+    myVfsListener.flush();
   }
 
   @Nullable
@@ -370,10 +379,9 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
     ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
       try {
-
         if (currentValue.isEmpty() &&
             ResourceBundleEditorKeepEmptyValueToggleAction.keepEmptyProperties() &&
-            propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
+            !propertiesFile.equals(myResourceBundle.getDefaultPropertiesFile().getVirtualFile())) {
           myPropertiesInsertDeleteManager.deletePropertyIfExist(currentSelectedProperty, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
         } else {
           myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
@@ -386,10 +394,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   void recreateEditorsPanel() {
+    if (!myProject.isOpen() || myDisposed) return;
+
     myValuesPanel.removeAll();
     myValuesPanel.setLayout(new CardLayout());
 
-    if (!myProject.isOpen()) return;
     JPanel valuesPanelComponent = new MyJPanel(new GridBagLayout());
     myValuesPanel.add(new JBScrollPane(valuesPanelComponent){
       @Override
@@ -403,7 +412,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles();
 
     GridBagConstraints gc = new GridBagConstraints(0, 0, 0, 0, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                   new Insets(5, 5, 5, 5), 0, 0);
+                                                   JBUI.insets(5), 0, 0);
     releaseAllEditors();
     myTitledPanels.clear();
     int y = 0;
@@ -444,6 +453,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         public void focusLost(final Editor editor) {
           if (!editor.isViewer() && propertiesFile.getContainingFile().isValid()) {
             writeEditorPropertyValue(null, editor, propertiesFile.getVirtualFile());
+            myVfsListener.flush();
           }
         }
       });
@@ -465,7 +475,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         }
       };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
-      comp.setBorder(IdeBorderFactory.createTitledBorder(title, true));
+      comp.setBorder(IdeBorderFactory.createTitledBorder(title, false));
       myTitledPanels.put(propertiesFile.getVirtualFile(), (JPanel)comp);
 
       valuesPanelComponent.add(comp, gc);
@@ -485,12 +495,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     valuesPanelComponent.add(new JPanel(), gc);
     selectionChanged();
     myValuesPanel.repaint();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        updateEditorsFromProperties(true);
-      }
-    });
+    updateEditorsFromProperties(true);
   }
 
   @NotNull
@@ -526,7 +531,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       ((TitledBorder)titledPanel.getBorder()).setTitleColor(property == null ? JBColor.RED : UIUtil.getLabelTextForeground());
       titledPanel.repaint();
     }
-    undoManager.flushCurrentCommandMerger();
   }
 
   private void installPropertiesChangeListeners() {
@@ -611,7 +615,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   @Nullable
-  private IProperty getSelectedProperty() {
+  IProperty getSelectedProperty() {
     final Collection<DefaultMutableTreeNode> selectedNode = getSelectedNodes();
     if (selectedNode.isEmpty()) {
       return null;
@@ -652,7 +656,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       (ResourceBundleFileStructureViewElement)myStructureViewComponent.getTreeModel().getRoot();
     final Set<String> propertyKeys = ResourceBundleFileStructureViewElement.getPropertiesMap(myResourceBundle, root.isShowOnlyIncomplete()).keySet();
     final boolean isAlphaSorted = myStructureViewComponent.isActionActive(Sorter.ALPHA_SORTER_ID);
-    final List<String> keysOrder = new ArrayList<String>(propertyKeys);
+    final List<String> keysOrder = new ArrayList<>(propertyKeys);
     if (isAlphaSorted) {
       Collections.sort(keysOrder);
     }
@@ -676,6 +680,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   @NotNull
   public JComponent getComponent() {
     return myDataProviderPanel;
+  }
+
+  public StructureViewComponent getStructureViewComponent() {
+    return myStructureViewComponent;
   }
 
   private Object getData(final String dataId) {
@@ -815,7 +823,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
   @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
+    return myHighlighter;
   }
 
   @Override
@@ -923,13 +931,16 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
                   }
                   ApplicationManager.getApplication().runWriteAction(() -> WriteCommandAction.runWriteCommandAction(myProject, () -> {
                     try {
-                      for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
-                        final Editor translationEditor = entry.getValue();
-                        if (translationEditor != editor) {
-                          final VirtualFile propertiesFile = entry.getKey();
-                          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, PropertiesImplUtil.getPropertiesFile(propertiesFile, myProject));
-                          translationEditor.getDocument().setText(valueToPropagate);
+                      final PropertiesFile[] propertiesFiles = myResourceBundle.getPropertiesFiles().stream().filter(f -> {
+                        final IProperty property = f.findPropertyByKey(currentSelectedProperty);
+                        return property == null || !valueToPropagate.equals(property.getValue());
+                      }).toArray(PropertiesFile[]::new);
+                      final PsiFile[] filesToPrepare = Arrays.stream(propertiesFiles).map(PropertiesFile::getContainingFile).toArray(PsiFile[]::new);
+                      if (FileModificationService.getInstance().preparePsiElementsForWrite(filesToPrepare)) {
+                        for (PropertiesFile file : propertiesFiles) {
+                          myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, valueToPropagate, file);
                         }
+                        recreateEditorsPanel();
                       }
                     }
                     catch (final IncorrectOperationException e1) {

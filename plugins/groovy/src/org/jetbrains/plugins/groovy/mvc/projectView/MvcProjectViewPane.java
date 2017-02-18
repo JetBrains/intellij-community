@@ -369,7 +369,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     if (module == null || !framework.hasSupport(module)) {
       return null;
     }
-    List<Object> result = new ArrayList<Object>();
+    List<Object> result = new ArrayList<>();
 
     final MvcProjectViewPane view = getView(project, framework);
     if (view == null) {

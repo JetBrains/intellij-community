@@ -39,8 +39,7 @@ public class InferenceFromSourceUtil {
   private static boolean calcShouldInferFromSource(@NotNull PsiMethod method) {
     if (isLibraryCode(method) ||
         method.hasModifierProperty(PsiModifier.ABSTRACT) ||
-        PsiUtil.canBeOverriden(method) ||
-        method.getBody() == null) {
+        PsiUtil.canBeOverriden(method)) {
       return false;
     }
 

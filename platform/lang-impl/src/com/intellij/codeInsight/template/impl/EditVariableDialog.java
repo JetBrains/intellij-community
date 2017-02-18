@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class EditVariableDialog extends DialogWrapper {
-  private ArrayList<Variable> myVariables = new ArrayList<Variable>();
+  private ArrayList<Variable> myVariables = new ArrayList<>();
 
   private JTable myTable;
   private final Editor myEditor;

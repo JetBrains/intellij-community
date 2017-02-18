@@ -48,7 +48,7 @@ public abstract class PyCallHierarchyTreeStructureBase extends HierarchyTreeStru
   @NotNull
   @Override
   protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
-    final List<PyHierarchyNodeDescriptor> descriptors = new ArrayList<PyHierarchyNodeDescriptor>();
+    final List<PyHierarchyNodeDescriptor> descriptors = new ArrayList<>();
     if (descriptor instanceof PyHierarchyNodeDescriptor) {
       final PyHierarchyNodeDescriptor pyDescriptor = (PyHierarchyNodeDescriptor)descriptor;
       final PsiElement element = pyDescriptor.getPsiElement();
@@ -60,7 +60,7 @@ public abstract class PyCallHierarchyTreeStructureBase extends HierarchyTreeStru
 
       final List<PsiElement> children = getChildren((PyElement)element);
 
-      final HashMap<PsiElement, PyHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<PsiElement, PyHierarchyNodeDescriptor>();
+      final HashMap<PsiElement, PyHierarchyNodeDescriptor> callerToDescriptorMap = new HashMap<>();
       PsiElement baseClass = element instanceof PyFunction ? ((PyFunction)element).getContainingClass() : null;
 
       for (PsiElement caller : children) {

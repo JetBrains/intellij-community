@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,19 @@ import org.jetbrains.annotations.NotNull;
 public interface ProjectLifecycleListener {
   Topic<ProjectLifecycleListener> TOPIC = Topic.create("Various stages of project lifecycle notifications", ProjectLifecycleListener.class);
 
-  void projectComponentsInitialized(@NotNull Project project);
+  default void projectComponentsInitialized(@NotNull Project project) {
+  }
 
-  void beforeProjectLoaded(@NotNull Project project);
+  default void beforeProjectLoaded(@NotNull Project project) {
+  }
 
-  void afterProjectClosed(@NotNull Project project);
+  default void afterProjectClosed(@NotNull Project project) {
+  }
 
+  /**
+   * @deprecated Use {@link ProjectLifecycleListener}
+   */
+  @Deprecated
   abstract class Adapter implements ProjectLifecycleListener {
-    public void projectComponentsInitialized(@NotNull Project project) { }
-
-    public void beforeProjectLoaded(@NotNull Project project) { }
-
-    public void afterProjectClosed(@NotNull Project project) { }
   }
 }

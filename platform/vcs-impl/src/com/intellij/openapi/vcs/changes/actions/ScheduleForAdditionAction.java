@@ -46,8 +46,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.vcsUtil.VcsUtil.isEmpty;
-import static com.intellij.vcsUtil.VcsUtil.notNullize;
+import static com.intellij.util.containers.UtilKt.isEmpty;
+import static com.intellij.util.containers.UtilKt.notNullize;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 

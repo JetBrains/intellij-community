@@ -74,7 +74,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myKeypass;
   private boolean myConvertCss2Bin;
   private String myNativeBundle = JavaFxPackagerConstants.NativeBundles.none.name();
-  private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+  private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<>();
   private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
 
   @Override
@@ -83,12 +83,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
     final Project project = compileContext.getProject();
-    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(new Computable<Set<Module>>() {
-      @Override
-      public Set<Module> compute() {
-        return ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project);
-      }
-    });
+    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(
+      (Computable<Set<Module>>)() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project));
     if (modules.isEmpty()) {
       return;
     }

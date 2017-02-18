@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,16 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.process.ProcessHandler;
+import org.jetbrains.annotations.NotNull;
 
 public interface ProcessProxy {
-  int getPortNumber();
+  void attach(@NotNull ProcessHandler processHandler);
 
-  void attach(ProcessHandler processHandler);
+  default boolean canSendBreak() { return true; }
+  default boolean canSendStop() { return true; }
 
-  void sendBreak ();
+  void sendBreak();
+  void sendStop();
 
-  void sendStop ();
+  default void destroy() { }
 }

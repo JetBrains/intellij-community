@@ -46,6 +46,11 @@ public abstract class SubstrateRef {
     return null;
   }
 
+  @Nullable
+  public Stub getGreenStub(int index) {
+    return getStub();
+  }
+
   public abstract boolean isValid();
 
   @NotNull
@@ -112,7 +117,7 @@ public abstract class SubstrateRef {
       throw new UnsupportedOperationException();
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Stub getStub() {
       return myStub;

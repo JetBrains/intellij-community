@@ -47,18 +47,18 @@ import java.util.*;
   storages = @Storage(value = "jdk.table.xml", roamingType = RoamingType.DISABLED)
 )
 public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableComponent, PersistentStateComponent<Element> {
-  private final List<Sdk> mySdks = new ArrayList<Sdk>();
+  private final List<Sdk> mySdks = new ArrayList<>();
 
   private final MessageListenerList<Listener> myListenerList;
 
   @NonNls private static final String ELEMENT_JDK = "jdk";
 
-  private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<String, ProjectJdkImpl>();
+  private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<>();
   private final MessageBus myMessageBus;
 
   public ProjectJdkTableImpl() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
-    myListenerList = new MessageListenerList<Listener>(myMessageBus, JDK_TABLE_TOPIC);
+    myListenerList = new MessageListenerList<>(myMessageBus, JDK_TABLE_TOPIC);
     // support external changes to jdk libraries (Endorsed Standards Override)
     final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -71,7 +71,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!events.isEmpty()) {
-          final Set<Sdk> affected = new SmartHashSet<Sdk>();
+          final Set<Sdk> affected = new SmartHashSet<>();
           for (VFileEvent event : events) {
             addAffectedJavaSdk(event, affected);
           }
@@ -184,7 +184,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
 
   @Override
   public List<Sdk> getSdksOfType(final SdkTypeId type) {
-    List<Sdk> result = new ArrayList<Sdk>();
+    List<Sdk> result = new ArrayList<>();
     final Sdk[] sdks = getAllJdks();
     for (Sdk sdk : sdks) {
       if (sdk.getSdkType() == type) {

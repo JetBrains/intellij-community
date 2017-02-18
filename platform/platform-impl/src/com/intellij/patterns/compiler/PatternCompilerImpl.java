@@ -61,7 +61,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     catch (Exception ex) {
       final Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
       LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
-      return new LazyPresentablePattern<T>(new Node(ERROR_NODE, text, null));
+      return new LazyPresentablePattern<>(new Node(ERROR_NODE, text, null));
     }
   }
 
@@ -93,16 +93,16 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       }
     });
     if (node == null) node = new Node(ERROR_NODE, text, null);
-    return new LazyPresentablePattern<T>(node);
+    return new LazyPresentablePattern<>(node);
   }
 
   private static Set<Method> getStaticMethods(List<Class> patternClasses) {
-    return new THashSet<Method>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
+    return new THashSet<>(ContainerUtil.concat(patternClasses, new Function<Class, Collection<? extends Method>>() {
       public Collection<Method> fun(final Class aClass) {
         return ContainerUtil.findAll(aClass.getMethods(), method -> Modifier.isStatic(method.getModifiers())
-                                                                && Modifier.isPublic(method.getModifiers())
-                                                                && !Modifier.isAbstract(method.getModifiers())
-                                                                && ElementPattern.class.isAssignableFrom(method.getReturnType()));
+                                                                    && Modifier.isPublic(method.getModifiers())
+                                                                    && !Modifier.isAbstract(method.getModifiers())
+                                                                    && ElementPattern.class.isAssignableFrom(method.getReturnType()));
       }
     }));
   }
@@ -117,12 +117,12 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     State state = State.init;
     Object target;
     String methodName;
-    ArrayList<Object> params = new ArrayList<Object>();
+    ArrayList<Object> params = new ArrayList<>();
   }
 
   @Nullable
   private static <T> T processElementPatternText(final String text, final Function<Frame, Object> executor) {
-    final Stack<Frame> stack = new Stack<Frame>();
+    final Stack<Frame> stack = new Stack<>();
     int curPos = 0;
     Frame curFrame = new Frame();
     Object curResult = null;
@@ -362,8 +362,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   @Override
   public String dumpContextDeclarations() {
     final StringBuilder sb = new StringBuilder();
-    final THashMap<Class, Collection<Class>> classes = new THashMap<Class, Collection<Class>>();
-    final THashSet<Class> missingClasses = new THashSet<Class>();
+    final THashMap<Class, Collection<Class>> classes = new THashMap<>();
+    final THashSet<Class> missingClasses = new THashSet<>();
     classes.put(Object.class, missingClasses);
     for (Method method : myStaticMethods) {
       for (Class<?> type = method.getReturnType(); type != null && ElementPattern.class.isAssignableFrom(type); type = type.getSuperclass()) {
@@ -371,7 +371,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         if (enclosingClass != null) {
           Collection<Class> list = classes.get(enclosingClass);
           if (list == null) {
-            list = new THashSet<Class>();
+            list = new THashSet<>();
             classes.put(enclosingClass, list);
           }
           list.add(type);
@@ -548,7 +548,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
   }
 
   private static class FalsePattern extends InitialPatternCondition<Object> implements ElementPattern<Object> {
-    private final ElementPatternCondition<Object> myCondition = new ElementPatternCondition<Object>(this);
+    private final ElementPatternCondition<Object> myCondition = new ElementPatternCondition<>(this);
 
     protected FalsePattern() {
       super(Object.class);

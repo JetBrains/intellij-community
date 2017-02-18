@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,7 @@ public class XSourcePositionImpl implements XSourcePosition {
       if (document == null) {
         return null;
       }
-      int line = offset <= document.getTextLength() ? document.getLineNumber(offset) : -1;
+      int line = DocumentUtil.isValidOffset(offset, document) ? document.getLineNumber(offset) : -1;
       return new XSourcePositionImpl(file, line, offset);
     }
     finally {
@@ -83,6 +84,9 @@ public class XSourcePositionImpl implements XSourcePosition {
     }
   }
 
+  /**
+   * do not call this method from plugins, use {@link XDebuggerUtil#createPositionByElement(PsiElement)} instead
+   */
   @Nullable
   public static XSourcePositionImpl createByElement(@Nullable PsiElement element) {
     if (element == null) return null;

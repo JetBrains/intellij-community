@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Bas Leijdekkers
+ * Copyright 2010-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,17 @@ public class FormatUtils {
    * @noinspection StaticCollection
    */
   @NonNls
-  public static final Set<String> formatMethodNames = new HashSet<String>(2);
+  public static final Set<String> formatMethodNames = new HashSet<>(2);
   /**
    * @noinspection StaticCollection
    */
-  public static final Set<String> formatClassNames = new HashSet<String>(4);
+  public static final Set<String> formatClassNames = new HashSet<>(4);
 
   static {
     formatMethodNames.add("format");
     formatMethodNames.add("printf");
 
+    formatClassNames.add("java.io.Console");
     formatClassNames.add("java.io.PrintWriter");
     formatClassNames.add("java.io.PrintStream");
     formatClassNames.add("java.util.Formatter");

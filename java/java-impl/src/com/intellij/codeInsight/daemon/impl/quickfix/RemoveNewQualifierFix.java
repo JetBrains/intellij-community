@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,9 +57,14 @@ public class RemoveNewQualifierFix implements IntentionAction {
       expression.isValid() && (aClass == null || aClass.isValid()) && expression.getManager().isInProject(expression);
   }
 
+  @NotNull
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+    return expression;
+  }
+
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(expression.getContainingFile())) return;
     PsiJavaCodeReferenceElement classReference = expression.getClassReference();
     expression.getQualifier().delete();
     if (aClass != null && classReference != null) {

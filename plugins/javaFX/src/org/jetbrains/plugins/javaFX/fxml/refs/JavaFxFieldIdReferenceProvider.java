@@ -99,7 +99,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
       final PsiClass exactTagClass = JavaFxPsiUtil.getTagClass(myXmlAttributeValue);
       final PsiClass guessedTagClass = exactTagClass == null ? getGuessedTagClass() : null;
 
-      final List<Object> fieldsToSuggest = new ArrayList<Object>();
+      final List<Object> fieldsToSuggest = new ArrayList<>();
       final PsiField[] fields = myAClass.getAllFields();
       for (PsiField psiField : fields) {
         if (!psiField.hasModifierProperty(PsiModifier.STATIC)) {

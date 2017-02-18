@@ -32,8 +32,8 @@ import java.util.*;
 public class HtmlDescriptorsTable {
   public static final Logger LOG = Logger.getInstance(HtmlDescriptorsTable.class);
 
-  private static final HashMap<String,HtmlTagDescriptor> ourTagTable = new HashMap<String, HtmlTagDescriptor>();
-  private static final HashMap<String,HtmlAttributeDescriptor> ourAttributeTable = new HashMap<String, HtmlAttributeDescriptor>();
+  private static final HashMap<String,HtmlTagDescriptor> ourTagTable = new HashMap<>();
+  private static final HashMap<String,HtmlAttributeDescriptor> ourAttributeTable = new HashMap<>();
 
   @NonNls
   public static final String HTMLTABLE_RESOURCE_NAME = "htmltable.xml";
@@ -83,7 +83,7 @@ public class HtmlDescriptorsTable {
 
   static {
     try {
-      Set<String> htmlTagNames = new HashSet<String>();
+      Set<String> htmlTagNames = new HashSet<>();
 
       loadHtmlElements(HTMLTABLE_RESOURCE_NAME, htmlTagNames);
 

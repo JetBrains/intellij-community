@@ -15,12 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -68,14 +66,9 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
     return processor.getMembersToImport(applicableOnly);
   }
 
-  public static boolean isExcluded(PsiMember method) {
-    String name = PsiUtil.getMemberQualifiedName(method);
-    return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
-  }
-
   @NotNull
   protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMethodQuestionAction<PsiMethod>(project, editor, methodsToImport, myMethodCall);
+    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myMethodCall);
   }
 
   @Nullable

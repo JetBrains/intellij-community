@@ -61,7 +61,7 @@ public class JavaMethodsOverridingStatisticsTest extends JavaCodeInsightFixtureT
       .calculateOverridingPercents(candidateInfos);
     assertSize(resultSize, searchResults);
 
-    final Set<Pair<String, Integer>> actualValues = new HashSet<Pair<String, Integer>>();
+    final Set<Pair<String, Integer>> actualValues = new HashSet<>();
     for (PsiMethodWithOverridingPercentMember searchResult : searchResults) {
       actualValues.add(Pair.<String, Integer>create(searchResult.getElement().getName(), searchResult.getOverridingPercent()));
     }

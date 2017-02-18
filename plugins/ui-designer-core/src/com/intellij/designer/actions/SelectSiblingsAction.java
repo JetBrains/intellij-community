@@ -38,7 +38,7 @@ public class SelectSiblingsAction extends AnAction {
     RadComponent rootComponent = myArea.getRootComponent();
     if (rootComponent != null) {
       final Set<RadComponent> parents = RadComponent.getParents(myArea.getSelection());
-      final List<RadComponent> components = new ArrayList<RadComponent>();
+      final List<RadComponent> components = new ArrayList<>();
       rootComponent.accept(new RadComponentVisitor() {
         @Override
         public void endVisit(RadComponent component) {

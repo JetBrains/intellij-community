@@ -27,14 +27,14 @@ import java.util.Collection;
  */
 
 public class DirectoryContent {
-  private final Collection<VirtualFileEntry> myDirectories = new ArrayList<VirtualFileEntry>();
-  private final Collection<Entry> myDeletedDirectories = new ArrayList<Entry>();
-  private final Collection<VirtualFile> myUnknownDirectories = new ArrayList<VirtualFile>();
-  private final Collection<VirtualFileEntry> myFiles = new ArrayList<VirtualFileEntry>();
-  private final Collection<Entry> myDeletedFiles = new ArrayList<Entry>();
-  private final Collection<VirtualFile> myUnknownFiles = new ArrayList<VirtualFile>();
+  private final Collection<VirtualFileEntry> myDirectories = new ArrayList<>();
+  private final Collection<Entry> myDeletedDirectories = new ArrayList<>();
+  private final Collection<VirtualFile> myUnknownDirectories = new ArrayList<>();
+  private final Collection<VirtualFileEntry> myFiles = new ArrayList<>();
+  private final Collection<Entry> myDeletedFiles = new ArrayList<>();
+  private final Collection<VirtualFile> myUnknownFiles = new ArrayList<>();
   private final CvsInfo myCvsInfo;
-  private final Collection<VirtualFile> myIgnoredFiles = new ArrayList<VirtualFile>();
+  private final Collection<VirtualFile> myIgnoredFiles = new ArrayList<>();
 
   public DirectoryContent(CvsInfo cvsInfo) {
     myCvsInfo = cvsInfo;

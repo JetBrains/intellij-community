@@ -36,8 +36,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlBuilderDriver {
-  private final Stack<String> myNamespacesStack = new Stack<String>();
-  private final Stack<String> myPrefixesStack = new Stack<String>();
+  private final Stack<String> myNamespacesStack = new Stack<>();
+  private final Stack<String> myPrefixesStack = new Stack<>();
   private final CharSequence myText;
   @NonNls private static final String XMLNS = "xmlns";
   @NonNls private static final String XMLNS_COLON = "xmlns:";
@@ -85,7 +85,7 @@ public class XmlBuilderDriver {
                                  XmlBuilder builder,
                                  FlyweightCapableTreeStructure<LighterASTNode> structure,
                                  LighterASTNode prolog) {
-    final Ref<LighterASTNode[]> prologChildren = new Ref<LighterASTNode[]>(null);
+    final Ref<LighterASTNode[]> prologChildren = new Ref<>(null);
     final int prologChildrenCount = structure.getChildren(structure.prepareForGetChildren(prolog), prologChildren);
     for (int i = 0; i < prologChildrenCount; i++) {
       LighterASTNode node = prologChildren.get()[i];
@@ -102,7 +102,7 @@ public class XmlBuilderDriver {
 
   private void processDoctypeNode(final XmlBuilder builder, final FlyweightCapableTreeStructure<LighterASTNode> structure,
                                   final LighterASTNode doctype) {
-    final Ref<LighterASTNode[]> tokens = new Ref<LighterASTNode[]>(null);
+    final Ref<LighterASTNode[]> tokens = new Ref<>(null);
     final int tokenCount = structure.getChildren(structure.prepareForGetChildren(doctype), tokens);
     if (tokenCount > 0) {
       CharSequence publicId = null;

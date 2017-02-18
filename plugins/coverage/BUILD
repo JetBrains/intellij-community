@@ -29,7 +29,6 @@ iml_module(
         "//tools/idea/plugins/testng_rt[module]",
         "//tools/idea/plugins/junit_rt[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
-        "//tools/idea/.idea/libraries:TestNG",
         "//tools/idea/.idea/libraries:JaCoCo",
         "//tools/idea/plugins/coverage/coverage_rt[module]",
         "//tools/idea/java/java-psi-impl[module]",

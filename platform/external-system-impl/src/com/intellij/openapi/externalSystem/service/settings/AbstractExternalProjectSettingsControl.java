@@ -111,6 +111,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
 
   @Override
   public void apply(@NotNull S settings) {
+    settings.setModules(myInitialSettings.getModules());
     if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
       settings.setUseAutoImport(myUseAutoImportBox.isSelected());
     }

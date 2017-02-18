@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.service.notification.*;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,13 +25,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  * @since 1/24/12 7:03 AM
  */
-public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
+public abstract class AbstractExternalSystemTask extends UserDataHolderBase implements ExternalSystemTask {
 
   private static final Logger LOG = Logger.getInstance("#" + AbstractExternalSystemTask.class.getName());
 
   private final AtomicReference<ExternalSystemTaskState> myState =
-    new AtomicReference<ExternalSystemTaskState>(ExternalSystemTaskState.NOT_STARTED);
-  private final AtomicReference<Throwable> myError = new AtomicReference<Throwable>();
+    new AtomicReference<>(ExternalSystemTaskState.NOT_STARTED);
+  private final AtomicReference<Throwable> myError = new AtomicReference<>();
 
   @NotNull private final transient Project myIdeProject;
 

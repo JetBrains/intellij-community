@@ -103,10 +103,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   // Read-only calculation
   private CachedValue<Map<String, XmlElementDescriptor>> doBuildDeclarationMap() {
     return CachedValuesManager.getManager(myElement.getProject()).createCachedValue(() -> {
-      final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
+      final List<XmlElementDecl> result = new ArrayList<>();
       myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
-      final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<String, XmlElementDescriptor>((int)(result.size() * 1.5));
-      Set<PsiFile> dependencies = new THashSet<PsiFile>(1);
+      final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<>((int)(result.size() * 1.5));
+      Set<PsiFile> dependencies = new THashSet<>(1);
       dependencies.add(myDescriptorFile);
 
       for (final XmlElementDecl xmlElementDecl : result) {
@@ -123,7 +123,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
           }
         }
       }
-      return new CachedValueProvider.Result<Map<String, XmlElementDescriptor>>(ret, dependencies.toArray());
+      return new CachedValueProvider.Result<>(ret, dependencies.toArray());
      }, false);
   }
 
@@ -193,7 +193,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   @Override
   public void validate(@NotNull XmlDocument document, @NotNull ValidationHost host) {
     if (document.getLanguage() == DTDLanguage.INSTANCE) {
-      final List<XmlElementDecl> decls = new ArrayList<XmlElementDecl>(3);
+      final List<XmlElementDecl> decls = new ArrayList<>(3);
 
       XmlUtil.processXmlElements(document, new PsiElementProcessor() {
         @Override
@@ -204,7 +204,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       }, false);
       XmlUtil.doDuplicationCheckForElements(
         decls.toArray(new XmlElementDecl[decls.size()]),
-        new HashMap<String, XmlElementDecl>(decls.size()),
+        new HashMap<>(decls.size()),
         XML_ELEMENT_DECL_PROVIDER,
         host
       );

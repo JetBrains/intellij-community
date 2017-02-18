@@ -16,6 +16,7 @@
 
 package com.intellij.history.core.tree;
 
+import com.intellij.history.core.Content;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.StoredContent;
@@ -261,13 +262,13 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
   }
 
   private void assertHasNoUnavailableContent(Entry dir) {
-    List<Entry> ee = new ArrayList<Entry>();
+    List<Entry> ee = new ArrayList<>();
     assertFalse(dir.hasUnavailableContent(ee));
     assertTrue(ee.isEmpty());
   }
 
   private void assertHasUnavailableContent(Entry dir, Entry... entries) {
-    List<Entry> ee = new ArrayList<Entry>();
+    List<Entry> ee = new ArrayList<>();
 
     assertTrue(dir.hasUnavailableContent(ee));
     assertEquals(entries, ee);
@@ -301,6 +302,36 @@ public class DirectoryEntryTest extends LocalHistoryTestCase {
 
     Paths.setCaseSensitive(true);
     assertEquals(1, Entry.getDifferencesBetween(e1, e2).size());
+  }
+
+  @Test
+  public void testCaseInsensitiveChildrenDiffProcessing() {
+    DirectoryEntry e1 = new DirectoryEntry("dir");
+    Content content = c("content");
+
+    final String name = "name";
+    final String name_v2 = "NAME";
+    final String name2 = "Name2";
+    final String name2_v2 = "name2";
+
+    e1.addChild(new FileEntry(name, content, -1, false));
+    e1.addChild(new FileEntry(name2, content, -1, false));
+
+    DirectoryEntry e2 = new DirectoryEntry("dir");
+    e2.addChild(new FileEntry(name_v2, content, -1, false));
+    e2.addChild(new FileEntry(name2_v2, content, -1, false));
+
+    try {
+      Paths.setCaseSensitive(false);
+      List<Difference> differences = Entry.getDifferencesBetween(e1, e2);
+      assertEquals(2, differences.size());
+      assertEquals(name, differences.get(0).getLeft().getName());
+      assertEquals(name_v2, differences.get(0).getRight().getName());
+      assertEquals(name2, differences.get(1).getLeft().getName());
+      assertEquals(name2_v2, differences.get(1).getRight().getName());
+    } finally {
+      Paths.useSystemCaseSensitivity();
+    }
   }
 
   @Test

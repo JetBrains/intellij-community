@@ -80,7 +80,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     if (quickFixes == null) {
       return null;
     }
-    List<String> texts = new ArrayList<String>();
+    List<String> texts = new ArrayList<>();
     for (QuickFixAction quickFix : quickFixes) {
       String text = quickFix.getText();
       if (text == null) continue;
@@ -158,13 +158,8 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
       //noinspection HardCodedStringLiteral
       anchor.append("<a HREF=\"");
-      if (myExporter == null){
-        //noinspection HardCodedStringLiteral
-        anchor.append(appendURL(vFile, "descr:" + i));
-      }
-      else {
-        anchor.append(myExporter.getURL(refElement));
-      }
+      //noinspection HardCodedStringLiteral
+      anchor.append(appendURL(vFile, "descr:" + i));
 
       anchor.append("\">");
       anchor.append(ProblemDescriptorUtil.extractHighlightedText(description, expression).replaceAll("\\$", "\\\\\\$"));
@@ -194,18 +189,16 @@ public class DescriptorComposer extends HTMLComposerImpl {
     String res = descriptionTemplate.replaceAll(reference, anchor.toString());
     final int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
     StringBuffer lineAnchor = new StringBuffer();
-    if (expression != null && lineNumber > 0) {
+    if (expression != null && lineNumber >= 0) {
       Document doc = FileDocumentManager.getInstance().getDocument(vFile);
       lineAnchor.append(InspectionsBundle.message("inspection.export.results.at.line")).append(" ");
-      if (myExporter == null) {
-        //noinspection HardCodedStringLiteral
-        lineAnchor.append("<a HREF=\"");
-        int offset = doc.getLineStartOffset(lineNumber - 1);
-        offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-        lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
-        lineAnchor.append("\">");
-      }
-      lineAnchor.append(Integer.toString(lineNumber));
+      //noinspection HardCodedStringLiteral
+      lineAnchor.append("<a HREF=\"");
+      int offset = doc.getLineStartOffset(lineNumber);
+      offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
+      lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
+      lineAnchor.append("\">");
+      lineAnchor.append(Integer.toString(lineNumber + 1));
       //noinspection HardCodedStringLiteral
       lineAnchor.append("</a>");
       //noinspection HardCodedStringLiteral

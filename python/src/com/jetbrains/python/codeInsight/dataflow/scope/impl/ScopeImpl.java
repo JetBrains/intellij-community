@@ -31,6 +31,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -78,7 +79,7 @@ public class ScopeImpl implements Scope {
     if (myCachedScopeVariables == null) {
       final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
       final PyReachingDefsSemilattice semilattice = new PyReachingDefsSemilattice();
-      final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<ScopeVariable>(myFlow, dfaInstance, semilattice);
+      final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<>(myFlow, dfaInstance, semilattice);
       myCachedScopeVariables = engine.performDFA();
     }
   }
@@ -149,12 +150,15 @@ public class ScopeImpl implements Scope {
       collectDeclarations();
     }
     if (myNamedElements.containsKey(name)) {
-      return myNamedElements.get(name);
+      final Collection<PsiNamedElement> elements = myNamedElements.get(name);
+      elements.forEach(PyPsiUtils::assertValid);
+      return elements;
     }
     if (includeNestedGlobals && isGlobal(name)) {
       for (Scope scope : myNestedScopes) {
         final Collection<PsiNamedElement> globals = scope.getNamedElements(name, true);
         if (!globals.isEmpty()) {
+          globals.forEach(PyPsiUtils::assertValid);
           return globals;
         }
       }
@@ -185,13 +189,13 @@ public class ScopeImpl implements Scope {
   }
 
   private void collectDeclarations() {
-    final Map<String, Collection<PsiNamedElement>> namedElements = new HashMap<String, Collection<PsiNamedElement>>();
-    final List<PyImportedNameDefiner> importedNameDefiners = new ArrayList<PyImportedNameDefiner>();
-    final List<Scope> nestedScopes = new ArrayList<Scope>();
-    final Set<String> globals = new HashSet<String>();
-    final Set<String> nonlocals = new HashSet<String>();
-    final Set<String> augAssignments = new HashSet<String>();
-    final List<PyTargetExpression> targetExpressions = new ArrayList<PyTargetExpression>();
+    final Map<String, Collection<PsiNamedElement>> namedElements = new HashMap<>();
+    final List<PyImportedNameDefiner> importedNameDefiners = new ArrayList<>();
+    final List<Scope> nestedScopes = new ArrayList<>();
+    final Set<String> globals = new HashSet<>();
+    final Set<String> nonlocals = new HashSet<>();
+    final Set<String> augAssignments = new HashSet<>();
+    final List<PyTargetExpression> targetExpressions = new ArrayList<>();
     myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyTargetExpression(PyTargetExpression node) {

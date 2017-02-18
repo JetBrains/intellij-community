@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class JCiPUtil {
+public class JCiPUtil {
   static boolean isJCiPAnnotation(String ref) {
     return "Immutable".equals(ref) || "GuardedBy".equals(ref) || "ThreadSafe".equals(ref) || "NotThreadSafe".equals(ref);
   }
@@ -44,7 +44,7 @@ class JCiPUtil {
   }
 
   @Nullable
-  static String findGuardForMember(@NotNull PsiMember member) {
+  public static String findGuardForMember(@NotNull PsiMember member) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations());
     if (annotation != null) {
       return getGuardValue(annotation);

@@ -73,14 +73,8 @@ public class GenericsHighlightUtil {
   private static HighlightInfo checkInferredTypeArguments(PsiTypeParameter[] typeParameters,
                                                           PsiElement call,
                                                           PsiSubstitutor substitutor) {
-    return checkInferredTypeArguments(typeParameters, call, substitutor, false);
-  }
-
-  @Nullable
-  private static HighlightInfo checkInferredTypeArguments(PsiTypeParameter[] typeParameters,
-                                                          PsiElement call,
-                                                          PsiSubstitutor substitutor, boolean allowUncheckedConversion) {
-    final Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(typeParameters, substitutor, call, allowUncheckedConversion);
+    final Pair<PsiTypeParameter, PsiType> inferredTypeArgument = GenericsUtil.findTypeParameterWithBoundError(typeParameters, substitutor,
+                                                                                                              call, false);
     if (inferredTypeArgument != null) {
       final PsiType extendsType = inferredTypeArgument.second;
       final PsiTypeParameter typeParameter = inferredTypeArgument.first;
@@ -446,7 +440,7 @@ public class GenericsHighlightUtil {
     for (Set<PsiMethod> overrideEquivalentMethods : overrideEquivalent.values()) {
       if (overrideEquivalentMethods.size() <= 1) continue;
       List<PsiMethod> defaults = null;
-      List<PsiMethod> astracts = null;
+      List<PsiMethod> abstracts = null;
       boolean hasConcrete = false;
       for (PsiMethod method : overrideEquivalentMethods) {
         final boolean isDefault = method.hasModifierProperty(PsiModifier.DEFAULT);
@@ -456,53 +450,80 @@ public class GenericsHighlightUtil {
           defaults.add(method);
         }
         if (isAbstract) {
-          if (astracts == null) astracts = new ArrayList<>(2);
-          astracts.add(method);
+          if (abstracts == null) abstracts = new ArrayList<>(2);
+          abstracts.add(method);
         }
         hasConcrete |= !isDefault && !isAbstract;
       }
 
       if (!hasConcrete && defaults != null) {
         final PsiMethod defaultMethod = defaults.get(0);
+        if (MethodSignatureUtil.findMethodBySuperMethod(aClass, defaultMethod, false) != null) continue;
         final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
         if (defaultMethodContainingClass == null) continue;
-        final PsiMethod unrelatedMethod = astracts != null ? astracts.get(0) : defaults.get(1);
+        final PsiMethod unrelatedMethod = abstracts != null ? abstracts.get(0) : defaults.get(1);
         final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
         if (unrelatedMethodContainingClass == null) continue;
         if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter) 
-            && astracts != null && unrelatedMethodContainingClass.isInterface()) {
+            && abstracts != null && unrelatedMethodContainingClass.isInterface()) {
           if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) && 
               MethodSignatureUtil.isSubsignature(unrelatedMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(unrelatedMethodContainingClass, defaultMethodContainingClass, PsiSubstitutor.EMPTY)), 
                                                  defaultMethod.getSignature(PsiSubstitutor.EMPTY))) {
             continue;
           }
           final String key = aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract";
-          final String message = JavaErrorMessages.message(key, HighlightUtil.formatClass(aClass, false), JavaHighlightUtil.formatMethod(astracts.get(0)), 
+          final String message = JavaErrorMessages.message(key, HighlightUtil.formatClass(aClass, false), JavaHighlightUtil.formatMethod(abstracts.get(0)),
                                                            HighlightUtil.formatClass(unrelatedMethodContainingClass, false));
           final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(message).create();
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
           return info;
         }
-        if (isInterface || astracts == null || unrelatedMethodContainingClass.isInterface()) {
-          if (defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) || 
-              unrelatedMethodContainingClass.isInheritor(defaultMethodContainingClass, true)) {
+        if (isInterface || abstracts == null || unrelatedMethodContainingClass.isInterface()) {
+          final List<PsiClass> defaultContainingClasses = ContainerUtil.mapNotNull(defaults, PsiMethod::getContainingClass);
+          final String unrelatedDefaults = hasUnrelatedDefaults(defaultContainingClasses);
+          if (unrelatedDefaults == null &&
+              (abstracts == null || !hasNotOverriddenAbstract(defaultContainingClasses, unrelatedMethodContainingClass))) {
             continue;
           }
-          final String message = astracts != null ? " inherits abstract and default for " : " inherits unrelated defaults for ";
+
+          final String message = unrelatedDefaults != null ? " inherits unrelated defaults for " : " inherits abstract and default for ";
           final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(
             HighlightUtil.formatClass(aClass) +
             message +
-            JavaHighlightUtil.formatMethod(defaultMethod) +
-            " from types " +
-            HighlightUtil.formatClass(defaultMethodContainingClass) +
-            " and " +
-            HighlightUtil.formatClass(unrelatedMethodContainingClass))
+            JavaHighlightUtil.formatMethod(defaultMethod) + " from types " +
+            (unrelatedDefaults != null ? unrelatedDefaults
+                                       : HighlightUtil.formatClass(defaultMethodContainingClass) + " and " + HighlightUtil.formatClass(unrelatedMethodContainingClass)))
             .create();
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
           return info;
         }
       }
     }
+    return null;
+  }
+
+  private static boolean belongToOneHierarchy(@NotNull PsiClass defaultMethodContainingClass, @NotNull PsiClass unrelatedMethodContainingClass) {
+    return defaultMethodContainingClass.isInheritor(unrelatedMethodContainingClass, true) ||
+           unrelatedMethodContainingClass.isInheritor(defaultMethodContainingClass, true);
+  }
+
+  private static boolean hasNotOverriddenAbstract(List<PsiClass> defaultContainingClasses, @NotNull PsiClass abstractMethodContainingClass) {
+    return defaultContainingClasses.stream().noneMatch(containingClass -> belongToOneHierarchy(containingClass, abstractMethodContainingClass));
+  }
+
+  private static String hasUnrelatedDefaults(List<PsiClass> defaults) {
+    if (defaults.size() > 1) {
+      PsiClass[] defaultClasses = defaults.toArray(PsiClass.EMPTY_ARRAY);
+      ArrayList<PsiClass> classes = new ArrayList<>(defaults);
+      for (final PsiClass aClass1 : defaultClasses) {
+        classes.removeIf(aClass2 -> aClass1.isInheritor(aClass2, true));
+      }
+
+      if (classes.size() > 1) {
+        return HighlightUtil.formatClass(classes.get(0)) + " and " + HighlightUtil.formatClass(classes.get(1));
+      }
+    }
+
     return null;
   }
 
@@ -614,7 +635,7 @@ public class GenericsHighlightUtil {
     }
 
     if (superMethod.hasModifierProperty(PsiModifier.STATIC) && superContainingClass != null &&
-        superContainingClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(superContainingClass)) {
+        superContainingClass.isInterface() && !checkEqualsSuper && PsiUtil.isLanguageLevel8OrHigher(superContainingClass)) {
       return null;
     }
 
@@ -753,7 +774,9 @@ public class GenericsHighlightUtil {
     if (itemType == null) {
       String description = JavaErrorMessages.message("foreach.not.applicable",
                                                      JavaHighlightUtil.formatType(expression.getType()));
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+      final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNotIterableForEachLoopFix(expression));
+      return highlightInfo;
     }
     return null;
   }
@@ -1339,12 +1362,12 @@ public class GenericsHighlightUtil {
     return false;
   }
 
-  private static void registerVariableParameterizedTypeFixes(HighlightInfo highlightInfo,
+  private static void registerVariableParameterizedTypeFixes(@Nullable HighlightInfo highlightInfo,
                                                              @NotNull PsiVariable variable,
                                                              @NotNull PsiReferenceParameterList parameterList,
                                                              @NotNull JavaSdkVersion version) {
     PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType)) return;
+    if (!(type instanceof PsiClassType) || highlightInfo == null) return;
 
     if (DumbService.getInstance(variable.getProject()).isDumb()) return;
 
@@ -1504,7 +1527,7 @@ public class GenericsHighlightUtil {
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList != null && extendsList.getReferenceElements().length > 1) {
         //todo suppress erased methods which come from the same class
-        final Collection<HighlightInfo> result = GenericsHighlightUtil.checkOverrideEquivalentMethods(aClass);
+        final Collection<HighlightInfo> result = checkOverrideEquivalentMethods(aClass);
         if (result != null && !result.isEmpty()) {
           return result.iterator().next();
         }

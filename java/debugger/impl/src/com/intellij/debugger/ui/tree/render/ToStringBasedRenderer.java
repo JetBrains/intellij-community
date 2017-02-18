@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,13 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.*;
 
 /**
  * @author egor
+ * @deprecated all CompoundTypeRenderers now have default toString renderer
  */
+@Deprecated
 public abstract class ToStringBasedRenderer extends CompoundReferenceRenderer {
   public ToStringBasedRenderer(NodeRendererSettings rendererSettings,
                                String name,
@@ -32,24 +29,4 @@ public abstract class ToStringBasedRenderer extends CompoundReferenceRenderer {
                                ChildrenRenderer childrenRenderer) {
     super(rendererSettings, name, labelRenderer, childrenRenderer);
   }
-
-  public String calcLabel(ValueDescriptor descriptor,
-                          EvaluationContext evaluationContext,
-                          DescriptorLabelListener listener) throws EvaluateException {
-    String res = calcToStringLabel(descriptor, evaluationContext, listener);
-    if (res != null) {
-      return res;
-    }
-    return super.calcLabel(descriptor, evaluationContext, listener);
-  }
-
-  protected String calcToStringLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener)
-    throws EvaluateException {
-    final ToStringRenderer toStringRenderer = myRendererSettings.getToStringRenderer();
-    if (toStringRenderer.isEnabled() && DebuggerManagerEx.getInstanceEx(evaluationContext.getProject()).getContext().isEvaluationPossible()) {
-      return toStringRenderer.calcLabel(descriptor, evaluationContext, listener);
-    }
-    return null;
-  }
-
 }

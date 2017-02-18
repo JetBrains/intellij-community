@@ -569,7 +569,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     @Override
     public MyNode[] buildChildren() {
       return ContainerUtil.map2Array(myTaskActivationState.getTasks(myPhase), MyNode.class,
-                                     (Function<String, MyNode>)taskName -> new TaskNode(taskName, PhaseNode.this));
+                                     (Function<String, MyNode>)taskName -> new TaskNode(taskName, this));
     }
 
     @Override

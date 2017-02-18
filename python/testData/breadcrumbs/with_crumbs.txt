@@ -1,0 +1,4 @@
+Crumb:
+with open("file…
+Tooltip:
+with open("file.txt")

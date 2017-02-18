@@ -18,7 +18,6 @@ package com.intellij.diff.comparison.iterables;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.TrimUtil;
 import com.intellij.diff.fragments.DiffFragment;
-import com.intellij.diff.fragments.DiffFragmentImpl;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
@@ -88,20 +87,6 @@ public class DiffIterableUtil {
     return diff(data1, data2, indicator);
   }
 
-  /*
-   * Compare two arrays, basing on equals() and hashCode() of it's elements
-   *
-   * If the input arrays are too big, "everything is changed" can be returned.
-   */
-  @NotNull
-  public static <T> FairDiffIterable diffSomehow(@NotNull T[] data1, @NotNull T[] data2, @NotNull ProgressIndicator indicator) {
-    indicator.checkCanceled();
-
-    // TODO: use ProgressIndicator inside
-    Diff.Change change = Diff.buildChangesSomehow(data1, data2);
-    return fair(create(change, data1.length, data2.length));
-  }
-
   //
   // Iterable
   //
@@ -157,15 +142,6 @@ public class DiffIterableUtil {
   //
   // Misc
   //
-
-  @NotNull
-  public static List<DiffFragment> convertIntoFragments(@NotNull DiffIterable changes) {
-    final List<DiffFragment> fragments = new ArrayList<>();
-    for (Range ch : changes.iterateChanges()) {
-      fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
-    }
-    return fragments;
-  }
 
   @NotNull
   public static Iterable<Pair<Range, Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
@@ -281,32 +257,32 @@ public class DiffIterableUtil {
   // Helpers
   //
 
-  public static class ChangeBuilder {
+  public abstract static class ChangeBuilderBase {
     private final int myLength1;
     private final int myLength2;
-
-    @Nullable private Diff.Change myFirstChange;
-    @Nullable private Diff.Change myLastChange;
 
     private int myIndex1 = 0;
     private int myIndex2 = 0;
 
-    public ChangeBuilder(int length1, int length2) {
+    public ChangeBuilderBase(int length1, int length2) {
       myLength1 = length1;
       myLength2 = length2;
     }
 
-    protected void addChange(int start1, int start2, int end1, int end2) {
-      Diff.Change change = new Diff.Change(start1, start2, end1 - start1, end2 - start2, null);
-      if (myLastChange != null) {
-        myLastChange.link = change;
-      }
-      else {
-        myFirstChange = change;
-      }
-      myLastChange = change;
-      myIndex1 = end1;
-      myIndex2 = end2;
+    public int getIndex1() {
+      return myIndex1;
+    }
+
+    public int getIndex2() {
+      return myIndex2;
+    }
+
+    public int getLength1() {
+      return myLength1;
+    }
+
+    public int getLength2() {
+      return myLength2;
     }
 
     public void markEqual(int index1, int index2) {
@@ -332,19 +308,43 @@ public class DiffIterableUtil {
       myIndex2 = end2;
     }
 
-    protected void finish(int length1, int length2) {
-      assert myIndex1 <= length1;
-      assert myIndex2 <= length2;
+    protected void doFinish() {
+      assert myIndex1 <= myLength1;
+      assert myIndex2 <= myLength2;
 
-      if (length1 != myIndex1 || length2 != myIndex2) {
-        addChange(myIndex1, myIndex2, length1, length2);
+      if (myLength1 != myIndex1 || myLength2 != myIndex2) {
+        addChange(myIndex1, myIndex2, myLength1, myLength2);
+        myIndex1 = myLength1;
+        myIndex2 = myLength2;
       }
+    }
+
+    protected abstract void addChange(int start1, int start2, int end1, int end2);
+  }
+
+  public static class ChangeBuilder extends ChangeBuilderBase {
+    @Nullable private Diff.Change myFirstChange;
+    @Nullable private Diff.Change myLastChange;
+
+    public ChangeBuilder(int length1, int length2) {
+      super(length1, length2);
+    }
+
+    protected void addChange(int start1, int start2, int end1, int end2) {
+      Diff.Change change = new Diff.Change(start1, start2, end1 - start1, end2 - start2, null);
+      if (myLastChange != null) {
+        myLastChange.link = change;
+      }
+      else {
+        myFirstChange = change;
+      }
+      myLastChange = change;
     }
 
     @NotNull
     public DiffIterable finish() {
-      finish(myLength1, myLength2);
-      return create(myFirstChange, myLength1, myLength2);
+      doFinish();
+      return create(myFirstChange, getLength1(), getLength2());
     }
   }
 

@@ -68,13 +68,13 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
 
   /**
    * @return TextRange of the XML attribute value.
-   * If quotes are present, it returns <code>new TextRange(1, getTextLength()-1)</code>, otherwise it is <code>new TextRange(0, getTextLength())</code>
+   * If quotes are present, it returns {@code new TextRange(1, getTextLength()-1)}, otherwise it is {@code new TextRange(0, getTextLength())}
    */
   @NotNull
   TextRange getValueTextRange();
 
   /**
-   * @return true if the attribute is a namespace declaration (its name equals to <code>xmlns</code> or starts with <code>xmlns:</code>)
+   * @return true if the attribute is a namespace declaration (its name equals to {@code xmlns} or starts with {@code xmlns:})
    */
   boolean isNamespaceDeclaration();
 

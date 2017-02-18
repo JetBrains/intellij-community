@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -50,7 +51,7 @@ public class HighlightOverridingMethodsHandler extends HighlightUsagesHandlerBas
   protected void selectTargets(final List<PsiClass> targets, final Consumer<List<PsiClass>> selectionConsumer) {
     new ChooseClassAndDoHighlightRunnable(targets, myEditor, CodeInsightBundle.message("highlight.overridden.classes.chooser.title")) {
       @Override
-      protected void selected(PsiClass... classes) {
+      protected void selected(@NotNull PsiClass... classes) {
         selectionConsumer.consume(Arrays.asList(classes));
       }
     }.run();

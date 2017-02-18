@@ -16,10 +16,10 @@
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.formatting.FormattingModelXmlReader;
-import com.intellij.formatting.TestBlock;
-import com.intellij.formatting.TestFormattingModel;
+import com.intellij.formatting.engine.FormatterEngineTestsKt;
+import com.intellij.formatting.engine.TestData;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -37,19 +37,19 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
   }
   
   public void testKotlinComment() throws IOException, JDOMException {
-    String text = "/**\n" +
-                  " *\n" +
-                  " */";
+    String text = "[i_cont]([i_norm]/**\n" +
+                  " [i_norm]([i_space_1]*)\n" +
+                  " [i_space_1]*/)";
 
     List<LineIndentInfo> infos = getLineInfos(text);
     assertLinesWithNormalIndent(infos, 0);
   }
   
   public void testXmlContinuationWithoutFirst() throws IOException, JDOMException {
-    String text = "<idea-plugin>\n" +
-                  "    <name/>\n" +
-                  "    <id/>\n" +
-                  "</idea-plugin>";
+    String text = "[i_none]<idea-plugin>\n" +
+                  "    [i_none]([i_norm]([i_none]<[i_none]name/>)\n" +
+                  "             [i_norm]([i_none]([]<[i_none]id/>)))\n" +
+                  "[i_none]</idea-plugin>";
 
     List<LineIndentInfo> infos = getLineInfos(text);
     assertLinesWithNormalIndent(infos, 4);
@@ -60,12 +60,10 @@ public class FormatterBasedLineInfoBuilderTest extends LightPlatformCodeInsightT
     assertEquals(expected, linesWithNormalIndent);
   }
 
-  private List<LineIndentInfo> getLineInfos(String text) throws IOException, JDOMException {
-    String file = getTestName(false) + ".xml";
-    TestFormattingModel model = new TestFormattingModel(text);
-    Document document = model.getDocument();
-    TestBlock block = new FormattingModelXmlReader(model).readTestBlock(getTestDataPath(), file);
-    FormatterBasedLineIndentInfoBuilder builder = new FormatterBasedLineIndentInfoBuilder(document, block, null);
+  private static List<LineIndentInfo> getLineInfos(String text) throws IOException, JDOMException {
+    TestData data = FormatterEngineTestsKt.extractFormattingTestData(text);
+    Document document = EditorFactory.getInstance().createDocument(data.getTextToFormat());
+    FormatterBasedLineIndentInfoBuilder builder = new FormatterBasedLineIndentInfoBuilder(document, data.getRootBlock(), null);
     return builder.build();
   }
 }

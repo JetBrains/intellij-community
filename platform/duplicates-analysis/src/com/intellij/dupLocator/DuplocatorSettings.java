@@ -40,7 +40,7 @@ public class DuplocatorSettings implements PersistentStateComponent<DuplocatorSe
   public boolean CHECK_VALIDITY = true;
   public int LOWER_BOUND = 10;
   public int  DISCARD_COST = 0;
-  public Set<String> SELECTED_PROFILES = new HashSet<String>();
+  public Set<String> SELECTED_PROFILES = new HashSet<>();
   public String LAST_SELECTED_LANGUAGE = null;
 
   public static DuplocatorSettings getInstance() {

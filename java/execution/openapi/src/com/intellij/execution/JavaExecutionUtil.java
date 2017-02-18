@@ -29,6 +29,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -67,7 +68,7 @@ public class JavaExecutionUtil {
   }
 
   public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<PsiClass> isTestMethod) {
-    final Set<Module> modules = new HashSet<Module>();
+    final Set<Module> modules = new HashSet<>();
     for (String className : patterns) {
       final PsiClass psiClass = findMainClass(project,
                                               className.contains(",") ? className.substring(0, className.indexOf(',')) : className,
@@ -84,7 +85,7 @@ public class JavaExecutionUtil {
       }
     }
     if (contextModule != null && modules.size() > 1) {
-      final HashSet<Module> moduleDependencies = new HashSet<Module>();
+      final HashSet<Module> moduleDependencies = new HashSet<>();
       ModuleUtilCore.getDependencies(contextModule, moduleDependencies);
       if (moduleDependencies.containsAll(modules)) {
         return contextModule;
@@ -194,6 +195,7 @@ public class JavaExecutionUtil {
     final PsiClassOwner psiFile = (PsiClassOwner)element;
     final PsiClass[] classes = psiFile.getClasses();
     if (classes.length != 1) return location;
+    if (classes[0].getTextRange() == null) return location;
     return PsiLocation.fromPsiElement(classes[0]);
   }
 

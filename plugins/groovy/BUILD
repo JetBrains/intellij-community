@@ -4,6 +4,7 @@ iml_module(
     name = "jetgroovy",
     srcs = ["src"],
     javacopts = ["-extra_checks:off"],
+    resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],

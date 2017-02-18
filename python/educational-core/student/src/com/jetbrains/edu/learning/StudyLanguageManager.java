@@ -4,7 +4,7 @@ import com.intellij.lang.LanguageExtension;
 import org.jetbrains.annotations.NotNull;
 
 public interface StudyLanguageManager {
-  LanguageExtension<StudyLanguageManager> INSTANCE = new LanguageExtension<StudyLanguageManager>("Edu.StudyLanguageManager");
+  LanguageExtension<StudyLanguageManager> INSTANCE = new LanguageExtension<>("Edu.StudyLanguageManager");
 
   @NotNull
   String getTestFileName();

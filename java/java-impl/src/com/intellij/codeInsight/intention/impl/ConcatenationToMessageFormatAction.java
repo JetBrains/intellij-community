@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -53,12 +52,11 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiElement element = findElementAtCaret(editor, file);
     PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
     if (concatenation == null) return;
     StringBuilder formatString = new StringBuilder();
-    List<PsiExpression> args = new ArrayList<PsiExpression>();
+    List<PsiExpression> args = new ArrayList<>();
     PsiConcatenationUtil.buildFormatString(concatenation, formatString, args, false);
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -82,7 +80,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
       argumentList.add(arrayArg);
     }
     call = (PsiMethodCallExpression) JavaCodeStyleManager.getInstance(project).shortenClassReferences(call);
-    call = (PsiMethodCallExpression) CodeStyleManager.getInstance(element.getManager().getProject()).reformat(call);
+    call = (PsiMethodCallExpression) CodeStyleManager.getInstance(project).reformat(call);
     concatenation.replace(call);
   }
 
@@ -90,8 +88,8 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_4) < 0) return false;
     final PsiElement element = findElementAtCaret(editor, file);
-    PsiPolyadicExpression binaryExpression = getEnclosingLiteralConcatenation(element);
-    return binaryExpression != null && !AnnotationUtil.isInsideAnnotation(binaryExpression);
+    final PsiPolyadicExpression concatenation = getEnclosingLiteralConcatenation(element);
+    return concatenation != null && !AnnotationUtil.isInsideAnnotation(concatenation) && !PsiUtil.isConstantExpression(concatenation);
   }
 
   @Nullable

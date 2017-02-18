@@ -13,10 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
- */
-@SuppressWarnings("ALL")
 public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
@@ -71,7 +67,6 @@ public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCod
     final Set<Pair<String, Integer>> actualSet = new HashSet<Pair<String, Integer>>();
     for (IntentionAction intentionAction : myFixture.getAvailableIntentions()) {
       if (intentionAction instanceof QuickFixWrapper) {
-        LocalQuickFix localQuickFix = ((QuickFixWrapper)intentionAction).getFix();
         ChangeSuperClassFix changeSuperClassFix = getQuickFixFromWrapper((QuickFixWrapper)intentionAction);
         if (changeSuperClassFix != null) {
           actualSet.add(Pair.create(changeSuperClassFix.getNewSuperClass().getQualifiedName(), changeSuperClassFix.getPercent()));
@@ -80,7 +75,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCod
     }
 
     final Set<Pair<String, Integer>> expectedSet = ContainerUtil.newHashSet(expectedResults);
-    assertEquals(expectedSet, actualSet);
+    assertEquals(actualSet, expectedSet);
   }
 
   private void doTest(final int expectedSize) {
@@ -102,7 +97,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCod
   }
 
   @Nullable
-  private final static ChangeSuperClassFix getQuickFixFromWrapper(final QuickFixWrapper quickFixWrapper) {
+  private static ChangeSuperClassFix getQuickFixFromWrapper(final QuickFixWrapper quickFixWrapper) {
     final LocalQuickFix quickFix = quickFixWrapper.getFix();
     if (quickFix instanceof ChangeSuperClassFix) {
       return (ChangeSuperClassFix)quickFix;

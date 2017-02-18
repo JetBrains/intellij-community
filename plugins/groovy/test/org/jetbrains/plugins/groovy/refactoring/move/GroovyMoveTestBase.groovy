@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,23 +27,23 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 /**
  * @author Max Medvedev
  */
-public abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase {
+abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase {
   protected void doTest(String destination, String... names) {
-    String root = PathManager.homePath.replace(File.separatorChar, '/' as char) + basePath + getTestName(true);
+    String root = PathManager.homePath.replace(File.separatorChar, '/' as char) + basePath + getTestName(true)
 
-    String rootBefore = "$root/before";
-    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.mockJdk17);
-    ArrayList<File> filesToDelete = new ArrayList<File>();
-    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, myModule, rootBefore, filesToDelete);
+    String rootBefore = "$root/before"
+    PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.mockJdk17)
+    ArrayList<File> filesToDelete = new ArrayList<File>()
+    VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myFixture.project, myModule, rootBefore, filesToDelete)
     def localFileSystem = LocalFileSystem.instance
     localFileSystem.refresh(false)
     if (!perform(rootDir, destination, names)) return
 
-    String rootAfter = "$root/after";
-    VirtualFile rootDir2 = localFileSystem.findFileByPath(rootAfter.replace(File.separatorChar, '/' as char));
-    PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting();
+    String rootAfter = "$root/after"
+    VirtualFile rootDir2 = localFileSystem.findFileByPath(rootAfter.replace(File.separatorChar, '/' as char))
+    PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()
     localFileSystem.refresh(false)
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir)
   }
 
   abstract boolean perform(VirtualFile root, String moveTo, String... names)

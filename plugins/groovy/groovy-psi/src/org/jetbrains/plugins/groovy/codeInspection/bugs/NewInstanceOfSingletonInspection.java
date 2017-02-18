@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,99 +15,92 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.dsl.psi.PsiClassCategory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-/**
- * @author Max Medvedev
- */
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_SINGLETON;
+import static org.jetbrains.plugins.groovy.transformations.singleton.ImplKt.getPropertyName;
+
 public class NewInstanceOfSingletonInspection extends BaseInspection {
-  private static final Logger LOG = Logger.getInstance(NewInstanceOfSingletonInspection.class);
 
   @NotNull
   @Override
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitNewExpression(GrNewExpression newExpression) {
-        super.visitNewExpression(newExpression);
-
-        final GrCodeReferenceElement refElement = newExpression.getReferenceElement();
-        if (refElement == null) return;
+      public void visitNewExpression(@NotNull GrNewExpression newExpression) {
         if (newExpression.getArrayDeclaration() != null) return;
 
-        final PsiElement resolved = refElement.resolve();
-        if (resolved instanceof GrTypeDefinition &&
-            PsiClassCategory.hasAnnotation((GrTypeDefinition)resolved, GroovyCommonClassNames.GROOVY_LANG_SINGLETON)) {
-          registerError(newExpression, GroovyInspectionBundle.message("new.instance.of.singleton"));
-        }
+        GrCodeReferenceElement refElement = newExpression.getReferenceElement();
+        if (refElement == null) return;
+
+        PsiElement resolved = refElement.resolve();
+        if (!(resolved instanceof GrTypeDefinition)) return;
+
+        PsiAnnotation annotation = AnnotationUtil.findAnnotation((GrTypeDefinition)resolved, GROOVY_LANG_SINGLETON);
+        if (annotation == null) return;
+
+        registerError(
+          newExpression,
+          GroovyInspectionBundle.message("new.instance.of.singleton"),
+          ContainerUtil.ar(new ReplaceWithInstanceAccessFix()),
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        );
       }
     };
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
+  private static class ReplaceWithInstanceAccessFix extends GroovyFix {
 
-  @Override
-  protected GroovyFix buildFix(@NotNull final PsiElement location) {
-    final GrCodeReferenceElement refElement = ((GrNewExpression)location).getReferenceElement();
-    LOG.assertTrue(refElement != null);
-    final GrTypeDefinition singleton = (GrTypeDefinition)refElement.resolve();
-    LOG.assertTrue(singleton != null);
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return GroovyInspectionBundle.message("replace.new.expression.with.instance.access");
+    }
 
-    return new GroovyFix() {
-      @Override
-      protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-        final GrExpression instanceRef =
-          GroovyPsiElementFactory.getInstance(project).createExpressionFromText(singleton.getQualifiedName() + ".instance");
+    @Override
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
+      PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof GrNewExpression)) return;
 
-        final GrExpression replaced = ((GrNewExpression)location).replaceWithExpression(instanceRef, true);
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
-      }
+      GrNewExpression newExpression = (GrNewExpression)element;
 
-      @NotNull
-      @Override
-      public String getName() {
-        return GroovyInspectionBundle.message("replace.new.expression.with.0.instance", singleton.getName());
-      }
-    };
-  }
+      GrCodeReferenceElement refElement = newExpression.getReferenceElement();
+      if (refElement == null) return;
 
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return CONFUSING_CODE_CONSTRUCTS;
-  }
+      PsiElement resolved = refElement.resolve();
+      if (!(resolved instanceof GrTypeDefinition)) return;
 
-  @Override
-  protected String buildErrorString(Object... args) {
-    return (String)args[0];
-  }
+      GrTypeDefinition singleton = (GrTypeDefinition)resolved;
 
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "New instance of class annotated with @groovy.lang.Singleton";
+      PsiAnnotation annotation = AnnotationUtil.findAnnotation(singleton, GROOVY_LANG_SINGLETON);
+      if (annotation == null) return;
+
+      String qualifiedName = singleton.getQualifiedName();
+      if (qualifiedName == null) return;
+
+      String propertyName = getPropertyName(annotation);
+      GrExpression instanceRef = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(qualifiedName + "." + propertyName);
+
+      final GrExpression replaced = newExpression.replaceWithExpression(instanceRef, true);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
+    }
   }
 }

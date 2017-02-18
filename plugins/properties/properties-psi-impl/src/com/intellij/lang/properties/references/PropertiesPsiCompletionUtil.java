@@ -40,7 +40,7 @@ public class PropertiesPsiCompletionUtil {
   }
 
   static Set<Object> getPropertiesKeys(final PropertyReferenceBase propertyReference) {
-    final Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
+    final Set<Object> variants = new THashSet<>(new TObjectHashingStrategy<Object>() {
       public int computeHashCode(final Object object) {
         if (object instanceof IProperty) {
           final String key = ((IProperty)object).getKey();

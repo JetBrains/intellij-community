@@ -34,7 +34,7 @@ public class SvnMergeSourceTracker {
       -- myMergeLevel;
       return;
     }
-    myConsumer.consume(new Pair<LogEntry, Integer>(logEntry, myMergeLevel));
+    myConsumer.consume(new Pair<>(logEntry, myMergeLevel));
     if (logEntry.hasChildren()) {
       ++ myMergeLevel;
     }

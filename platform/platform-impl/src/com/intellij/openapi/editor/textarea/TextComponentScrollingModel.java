@@ -98,6 +98,11 @@ public class TextComponentScrollingModel implements ScrollingModel {
   }
 
   @Override
+  public void scroll(int horizontalOffset, int verticalOffset) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
   public void addVisibleAreaListener(@NotNull final VisibleAreaListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }

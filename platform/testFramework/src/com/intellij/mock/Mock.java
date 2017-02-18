@@ -256,7 +256,7 @@ public class Mock {
     @Override
     @NotNull
     public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
@@ -352,13 +352,13 @@ public class Mock {
     @Override
     @NotNull
     public VirtualFile[] getOpenFiles() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
     @NotNull
     public VirtualFile[] getSelectedFiles() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
@@ -484,7 +484,7 @@ public class Mock {
 
     @Override
     public VirtualFile[] getChildren() {
-      return new VirtualFile[0];
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @NotNull
@@ -562,7 +562,7 @@ public class Mock {
     public ToolWindow registerToolWindow(@NotNull String id,
                                          @NotNull JComponent component,
                                          @NotNull ToolWindowAnchor anchor,
-                                         Disposable parentDisposable,
+                                         @NotNull Disposable parentDisposable,
                                          boolean canWorkInDumbMode, boolean canCloseContents) {
       throw new RuntimeException();
     }
@@ -572,7 +572,7 @@ public class Mock {
     public ToolWindow registerToolWindow(@NotNull String id,
                                          @NotNull JComponent component,
                                          @NotNull ToolWindowAnchor anchor,
-                                         Disposable parentDisposable,
+                                         @NotNull Disposable parentDisposable,
                                          boolean canWorkInDumbMode) {
       throw new RuntimeException();
     }
@@ -592,7 +592,7 @@ public class Mock {
     @NotNull
     @Override
     public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor,
-                                         final Disposable parentDisposable, final boolean dumbAware) {
+                                         @NotNull final Disposable parentDisposable, final boolean dumbAware) {
       throw new RuntimeException();
     }
 
@@ -601,7 +601,7 @@ public class Mock {
     public ToolWindow registerToolWindow(@NotNull String id,
                                          boolean canCloseContent,
                                          @NotNull ToolWindowAnchor anchor,
-                                         Disposable parentDisposable,
+                                         @NotNull Disposable parentDisposable,
                                          boolean canWorkInDumbMode,
                                          boolean secondary) {
       throw new RuntimeException();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.util.ui.tree;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -60,7 +62,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   /**
-   * Creates new <code>WideSelectionTreeUI</code> object.
+   * Creates new {@code WideSelectionTreeUI} object.
    * 
    * @param wideSelection           flag that determines if wide selection should be used
    * @param wideSelectionCondition  strategy that determine if wide selection should be used for a target row (it's zero-based index
@@ -73,19 +75,15 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   public int getRightChildIndent() {
-    return isSkinny() ? 8 : super.getRightChildIndent();
+    return isCustomIndent() ? getCustomIndent() : super.getRightChildIndent();
   }
 
-  public boolean isSkinny() {
-    return mySkinny;
+  public boolean isCustomIndent() {
+    return getCustomIndent() > 0;
   }
 
-  /**
-   * Setting to <code>true</code> make tree to reduce row offset
-   * @param skinny <code>true</code> to reduce row offset
-   */
-  public void setSkinny(boolean skinny) {
-    mySkinny = skinny;
+  protected int getCustomIndent() {
+    return JBUI.scale(Registry.intValue("ide.ui.tree.indent"));
   }
 
   @Override
@@ -100,8 +98,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
 
+      @NotNull
       @Override
-      protected MouseEvent convert(MouseEvent event) {
+      protected MouseEvent convert(@NotNull MouseEvent event) {
         if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {
           int x = event.getX();
           int y = event.getY();
@@ -170,14 +169,13 @@ public class WideSelectionTreeUI extends BasicTreeUI {
                 boolean leaf = tree.getModel().isLeaf(selectionPath.getLastPathComponent());
                 int toSelect = -1;
                 int toScroll = -1;
-                if (!leaf && tree.isExpanded(selectionRow)) {
+                if ((!leaf && tree.isExpanded(selectionRow)) || leaf) {
                   if (selectionRow + 1 < tree.getRowCount()) {
                     toSelect = selectionRow + 1;
                     toScroll = toSelect;
                   }
-                } else if (leaf) {
-                  toScroll = selectionRow;
                 }
+                //todo[kb]: make cycle scrolling
 
                 if (toSelect != -1) {
                   tree.setSelectionInterval(toSelect, toSelect);
@@ -237,7 +235,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected int getRowX(int row, int depth) {
-    if (isSkinny()) {
+    if (isCustomIndent()) {
       int off = tree.isRootVisible() ? 8 : 0;
       return 8 * depth + 8 + off;
     } else {

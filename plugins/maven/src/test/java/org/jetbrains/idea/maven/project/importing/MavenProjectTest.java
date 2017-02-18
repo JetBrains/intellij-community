@@ -906,7 +906,7 @@ public class MavenProjectTest extends MavenImportingTestCase {
   }
 
   private List<PluginInfo> p(Collection<MavenPlugin> mavenPlugins) {
-    List<PluginInfo> res = new ArrayList<PluginInfo>(mavenPlugins.size());
+    List<PluginInfo> res = new ArrayList<>(mavenPlugins.size());
     for (MavenPlugin mavenPlugin : mavenPlugins) {
       res.add(p(mavenPlugin));
     }

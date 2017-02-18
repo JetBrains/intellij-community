@@ -50,7 +50,7 @@ public class ArtifactVirtualFileListener extends VirtualFileAdapter {
   }
 
   private MultiValuesMap<String, Artifact> computeParentPathToArtifactMap() {
-    final MultiValuesMap<String, Artifact> result = new MultiValuesMap<String, Artifact>();
+    final MultiValuesMap<String, Artifact> result = new MultiValuesMap<>();
     for (final Artifact artifact : myArtifactManager.getArtifacts()) {
       ArtifactUtil.processFileOrDirectoryCopyElements(artifact, new PackagingElementProcessor<FileOrDirectoryCopyPackagingElement<?>>() {
         @Override

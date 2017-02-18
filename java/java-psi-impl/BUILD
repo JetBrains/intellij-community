@@ -19,7 +19,7 @@ iml_module(
         "//tools/idea/java/java-psi-api[module]",
         "//tools/idea/platform/core-impl[module]",
         "//tools/idea/resources-en[module]",
-        "//tools/idea/.idea/libraries:asm5",
+        "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:Guava",
     ],
 )

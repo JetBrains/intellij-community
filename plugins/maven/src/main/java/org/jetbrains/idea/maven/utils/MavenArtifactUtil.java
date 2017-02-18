@@ -123,7 +123,7 @@ public class MavenArtifactUtil {
   }
 
   private static String resolveVersion(File pluginDir) {
-    List<String> versions = new ArrayList<String>();
+    List<String> versions = new ArrayList<>();
 
     File[] children;
     try {

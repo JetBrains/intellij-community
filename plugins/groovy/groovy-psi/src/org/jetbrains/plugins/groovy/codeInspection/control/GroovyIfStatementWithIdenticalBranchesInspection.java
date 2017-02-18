@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,12 +59,12 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Collapse 'if' statement'";
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement identifier = descriptor.getPsiElement();
       final GrIfStatement statement = (GrIfStatement) identifier.getParent();
       assert statement != null;

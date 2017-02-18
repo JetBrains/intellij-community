@@ -18,13 +18,13 @@ package org.jetbrains.builtInWebServer
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.io.host
+import com.intellij.util.io.uriScheme
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
-import org.jetbrains.io.host
 import org.jetbrains.io.response
 import org.jetbrains.io.send
-import org.jetbrains.io.uriScheme
 
 /**
  * By default [WebServerPathToFileManager] will be used to map request to file.

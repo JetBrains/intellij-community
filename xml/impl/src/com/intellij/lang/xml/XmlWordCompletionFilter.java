@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlTokenType;
 
 public class XmlWordCompletionFilter extends DefaultWordCompletionFilter {
   private final static TokenSet ENABLED_TOKENS = TokenSet.create(XmlElementType.XML_CDATA,
-                                                                 XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
                                                                  XmlTokenType.XML_DATA_CHARACTERS);
   @Override
   public boolean isWordCompletionEnabledIn(final IElementType element) {

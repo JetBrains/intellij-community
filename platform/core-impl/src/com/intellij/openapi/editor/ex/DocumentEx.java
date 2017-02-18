@@ -38,10 +38,10 @@ public interface DocumentEx extends Document {
   void replaceText(@NotNull CharSequence chars, long newModificationStamp);
 
   /**
-   * Moves text from the <code>[srcStart; srcEnd)</code> range to the <code>dstOffset</code> offset.
+   * Moves text from the {@code [srcStart; srcEnd)} range to the {@code dstOffset} offset.
    * <p/>
    * The benefit to use this method over usual {@link #deleteString(int, int)} and {@link #replaceString(int, int, CharSequence)}
-   * is that {@link #createRangeMarker(int, int, boolean) range markers} from the <code>[srcStart; srcEnd)</code> range have
+   * is that {@link #createRangeMarker(int, int, boolean) range markers} from the {@code [srcStart; srcEnd)} range have
    * a chance to be preserved.
    *
    * @param srcStart  start offset of the text to move (inclusive)
@@ -49,8 +49,6 @@ public interface DocumentEx extends Document {
    * @param dstOffset the offset to insert the text to. Must be outside of the (srcStart, srcEnd) range.
    */
   void moveText(int srcStart, int srcEnd, int dstOffset);
-
-  int getListenersCount();
 
   void suppressGuardedExceptions();
   void unSuppressGuardedExceptions();
@@ -89,13 +87,13 @@ public interface DocumentEx extends Document {
    * Get all range markers
    * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
    */
-  boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor);
+  boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor);
 
   /**
    * Get range markers which {@link com.intellij.openapi.util.TextRange#intersects(int, int)} the specified range
    * and hand them to the {@code processor} in their {@link RangeMarker#getStartOffset()} order
    */
-  boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor);
+  boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor);
 
   /**
    * @return modification stamp. Guaranteed to be strictly increasing on each change unlike the {@link #getModificationStamp()} which can change arbitrarily.

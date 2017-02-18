@@ -36,7 +36,7 @@ public class CvsConflictsParser {
   private final StringBuilder myLeftBuffer = new StringBuilder();
   private final StringBuilder myCenterBuffer = new StringBuilder();
   private final StringBuilder myRightBuffer = new StringBuilder();
-  private final Stack<State> myStateStack = new Stack<State>();
+  private final Stack<State> myStateStack = new Stack<>();
 
   public String getLeftVersion() {
     return myLeftBuffer.toString();

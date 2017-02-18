@@ -41,13 +41,13 @@ public class WeighingService {
 
   @NotNull
   public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final T element, @Nullable final Loc location) {
-    return weigh(key, new Computable.PredefinedValueComputable<T>(element), location);
+    return weigh(key, new Computable.PredefinedValueComputable<>(element), location);
   }
 
   @NotNull
   public static <T,Loc> WeighingComparable<T,Loc> weigh(final Key<? extends Weigher<T,Loc>> key, final Computable<T> element, @Nullable final Loc location) {
     final List<Weigher> weighers = getWeighers(key);
-    return new WeighingComparable<T,Loc>(element, location, ContainerUtil.toArray(weighers, new Weigher[weighers.size()]));
+    return new WeighingComparable<>(element, location, ContainerUtil.toArray(weighers, new Weigher[weighers.size()]));
   }
 
   public static <T,Loc> List<Weigher> getWeighers(Key<? extends Weigher<T, Loc>> key) {

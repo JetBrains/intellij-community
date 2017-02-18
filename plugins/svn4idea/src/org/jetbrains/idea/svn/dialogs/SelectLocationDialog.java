@@ -139,8 +139,8 @@ public class SelectLocationDialog extends DialogWrapper {
 
   @Nullable
   private static SVNURL initRoot(final Project project, final SVNURL url) throws SvnBindException {
-    final Ref<SVNURL> result = new Ref<SVNURL>();
-    final Ref<SvnBindException> excRef = new Ref<SvnBindException>();
+    final Ref<SVNURL> result = new Ref<>();
+    final Ref<SvnBindException> excRef = new Ref<>();
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {

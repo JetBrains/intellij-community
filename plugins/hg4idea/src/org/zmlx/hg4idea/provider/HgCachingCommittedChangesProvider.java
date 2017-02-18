@@ -72,7 +72,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     String comment = dataInput.readUTF();
     Date commitDate = new Date(dataInput.readLong());
     int changesCount = dataInput.readInt();
-    List<Change> changes = new ArrayList<Change>();
+    List<Change> changes = new ArrayList<>();
     for (int i = 0; i < changesCount; i++) {
       HgContentRevision beforeRevision = readRevision(repositoryLocation, dataInput);
       HgContentRevision afterRevision = readRevision(repositoryLocation, dataInput);
@@ -209,7 +209,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
 
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
 
-    List<CommittedChangeList> result = new LinkedList<CommittedChangeList>();
+    List<CommittedChangeList> result = new LinkedList<>();
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
     List<String> args = null;
@@ -230,7 +230,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
 
       HgRevisionNumber firstParent = parents.isEmpty() ? null : parents.get(0); // can have no parents if it is a root
 
-      List<Change> changes = new ArrayList<Change>();
+      List<Change> changes = new ArrayList<>();
       for (String file : revision.getModifiedFiles()) {
         changes.add(createChange(root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
       }
@@ -306,7 +306,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     final FilePath filePath = VcsUtil.getFilePath(localVirtualFile);
     final CommittedChangeList list = getCommittedChangesForRevision(getLocationFor(filePath), number.asString());
     if (list != null) {
-      return new Pair<CommittedChangeList, FilePath>(list, filePath);
+      return new Pair<>(list, filePath);
     }
     return null;
   }
@@ -331,7 +331,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     HgLogCommand hgLogCommand = new HgLogCommand(project);
     hgLogCommand.setLogFile(false);
     hgLogCommand.setFollowCopies(true);
-    List<String> args = new ArrayList<String>();
+    List<String> args = new ArrayList<>();
     args.add("--rev");
     args.add(revision);
     final List<HgFileRevision> revisions;
@@ -343,7 +343,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     HgRevisionNumber vcsRevisionNumber = localRevision.getRevisionNumber();
     List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
     HgRevisionNumber firstParent = parents.isEmpty() ? null : parents.get(0); // can have no parents if it is a root
-    List<Change> changes = new ArrayList<Change>();
+    List<Change> changes = new ArrayList<>();
     for (String file : localRevision.getModifiedFiles()) {
       changes.add(createChange(root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
     }
@@ -430,7 +430,7 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
       }
 
       if (args.length() > 0) {
-        List<String> logArgs = new ArrayList<String>();
+        List<String> logArgs = new ArrayList<>();
         logArgs.add("-r");
         logArgs.add(args.toString());
         return logArgs;

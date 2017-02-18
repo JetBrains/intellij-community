@@ -32,7 +32,7 @@ import static org.jetbrains.plugins.github.util.GithubUrlUtil.*;
  */
 public class GithubUrlUtilTest extends UsefulTestCase {
   private static class TestCase<T> {
-    @NotNull final public List<Pair<String, T>> tests = new ArrayList<Pair<String, T>>();
+    @NotNull final public List<Pair<String, T>> tests = new ArrayList<>();
 
     public void add(@NotNull String in, @Nullable T out) {
       tests.add(Pair.create(in, out));
@@ -47,7 +47,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testRemoveTrailingSlash() throws Throwable {
-    TestCase<String> tests = new TestCase<String>();
+    TestCase<String> tests = new TestCase<>();
 
     tests.add("http://github.com/", "http://github.com");
     tests.add("http://github.com", "http://github.com");
@@ -64,7 +64,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testRemoveProtocolPrefix() throws Throwable {
-    TestCase<String> tests = new TestCase<String>();
+    TestCase<String> tests = new TestCase<>();
 
     tests.add("github.com/user/repo/", "github.com/user/repo/");
     tests.add("api.github.com/user/repo/", "api.github.com/user/repo/");
@@ -91,7 +91,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testIsGithubUrl1() throws Throwable {
-    TestCase<Boolean> tests = new TestCase<Boolean>();
+    TestCase<Boolean> tests = new TestCase<>();
 
     tests.add("http://github.com/user/repo", true);
     tests.add("https://github.com/user/repo", true);
@@ -130,7 +130,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testIsGithubUrl2() throws Throwable {
-    TestCase<Boolean> tests = new TestCase<Boolean>();
+    TestCase<Boolean> tests = new TestCase<>();
 
     tests.add("http://git.code.example.co.jp/user/repo", true);
     tests.add("https://git.code.example.co.jp/user/repo", true);
@@ -167,7 +167,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testGetApiUrlWithoutProtocol() throws Throwable {
-    TestCase<String> tests = new TestCase<String>();
+    TestCase<String> tests = new TestCase<>();
 
     tests.add("github.com", "api.github.com");
     tests.add("https://github.com/", "api.github.com");
@@ -189,7 +189,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testGetUserAndRepositoryFromRemoteUrl() throws Throwable {
-    TestCase<GithubFullPath> tests = new TestCase<GithubFullPath>();
+    TestCase<GithubFullPath> tests = new TestCase<>();
 
     tests.add("http://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
     tests.add("https://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
@@ -220,7 +220,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testMakeGithubRepoFromRemoteUrl() throws Throwable {
-    TestCase<String> tests = new TestCase<String>();
+    TestCase<String> tests = new TestCase<>();
 
     tests.add("http://github.com/username/reponame/", "https://github.com/username/reponame");
     tests.add("https://github.com/username/reponame/", "https://github.com/username/reponame");
@@ -252,7 +252,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testGetHostFromUrl() throws Throwable {
-    TestCase<String> tests = new TestCase<String>();
+    TestCase<String> tests = new TestCase<>();
 
     tests.add("github.com", "github.com");
     tests.add("api.github.com", "api.github.com");
@@ -284,7 +284,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
   }
 
   public void testGetApiUrl() throws Throwable {
-    TestCase<String> tests = new TestCase<String>();
+    TestCase<String> tests = new TestCase<>();
 
     tests.add("github.com", "https://api.github.com");
     tests.add("https://github.com/", "https://api.github.com");

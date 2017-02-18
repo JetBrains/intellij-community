@@ -16,10 +16,7 @@
 
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -61,7 +58,7 @@ public class ModuleGroup {
   @NotNull
   public Collection<Module> modulesInGroup(Project project, boolean recursively) {
     final Module[] allModules = ModuleManager.getInstance(project).getModules();
-    List<Module> result = new ArrayList<Module>();
+    List<Module> result = new ArrayList<>();
     for (final Module module : allModules) {
       String[] group = ModuleManager.getInstance(project).getModuleGroupPath(module);
       if (group == null) continue;
@@ -76,10 +73,6 @@ public class ModuleGroup {
     return childGroups(null, project);
   }
 
-  public Collection<ModuleGroup> childGroups(DataContext dataContext) {
-    return childGroups(LangDataKeys.MODIFIABLE_MODULE_MODEL.getData(dataContext), CommonDataKeys.PROJECT.getData(dataContext));
-  }
-
   public Collection<ModuleGroup> childGroups(ModifiableModuleModel model, Project project) {
     final Module[] allModules;
     if ( model != null ) {
@@ -88,7 +81,7 @@ public class ModuleGroup {
       allModules = ModuleManager.getInstance(project).getModules();
     }
 
-    Set<ModuleGroup> result = new THashSet<ModuleGroup>();
+    Set<ModuleGroup> result = new THashSet<>();
     for (Module module : allModules) {
       String[] group;
       if ( model != null ) {

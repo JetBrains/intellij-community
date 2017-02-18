@@ -15,39 +15,16 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 
-public class ModuleContentRootSearchScope extends GlobalSearchScope {
-  private final ModuleRootManager myRootManager;
-  private final Module myModule;
+/**
+ * @deprecated use {@link Module#getModuleContentScope()}
+ */
+public class ModuleContentRootSearchScope extends DelegatingGlobalSearchScope {
 
   public ModuleContentRootSearchScope(final Module module) {
-    super(module.getProject());
-    myRootManager = ModuleRootManager.getInstance(module);
-    myModule = module;
+    super(module.getModuleContentScope());
   }
 
-  @Override
-  public boolean contains(@NotNull final VirtualFile file) {
-    return myRootManager.getFileIndex().isInContent(file);
-  }
-
-  @Override
-  public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-    return 0;
-  }
-
-  @Override
-  public boolean isSearchInModuleContent(@NotNull final Module aModule) {
-    return aModule == myModule;
-  }
-
-  @Override
-  public boolean isSearchInLibraries() {
-    return false;
-  }
 }

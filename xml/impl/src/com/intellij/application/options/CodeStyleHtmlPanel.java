@@ -140,9 +140,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
       private ArrayList<String> createCollectionOn(final String data) {
         if (data == null || data.trim().isEmpty()) {
-          return new ArrayList<String>();
+          return new ArrayList<>();
         }
-        return new ArrayList<String>(Arrays.asList(data.split(",")));
+        return new ArrayList<>(Arrays.asList(data.split(",")));
       }
 
     });

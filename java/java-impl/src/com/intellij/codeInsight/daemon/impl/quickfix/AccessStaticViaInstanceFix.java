@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -90,24 +91,31 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
 
     PsiClass containingClass = myMember.getContainingClass();
     if (containingClass == null) return;
-    try {
-      final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
-      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      if (qualifierExpression != null) {
-        if (!checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
-        PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
-        PsiElement qualifiedWithClassName = myExpression.copy();
-        if (myExpression.getTypeParameters().length == 0) {
-          newQualifier.delete();
-          if (myExpression.resolve() != myMember) {
-            myExpression.replace(qualifiedWithClassName);
+    final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    if (qualifierExpression != null) {
+      if (!checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
+      WriteAction.run(() -> {
+        try {
+          PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
+          PsiElement qualifiedWithClassName = myExpression.copy();
+          if (myExpression.getTypeParameters().length == 0) {
+            newQualifier.delete();
+            if (myExpression.resolve() != myMember) {
+              myExpression.replace(qualifiedWithClassName);
+            }
           }
         }
-      }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      });
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   private boolean checkSideEffects(final Project project,
@@ -116,7 +124,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
                                    PsiElementFactory factory,
                                    final PsiElement myExpression,
                                    Editor editor) {
-    final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
+    final List<PsiElement> sideEffects = new ArrayList<>();
     boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(qualifierExpression, null, sideEffects);
     if (hasSideEffects && !myOnTheFly) return false;
     if (!hasSideEffects || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -167,15 +175,17 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     dialog.show();
     int res = dialog.getExitCode();
     if (res == RemoveUnusedVariableUtil.RemoveMode.CANCEL.ordinal()) return false;
-    try {
-      if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT.ordinal()) {
-        final PsiStatement statementFromText = factory.createStatementFromText(qualifierExpression.getText() + ";", null);
-        LOG.assertTrue(statement != null);
-        statement.getParent().addBefore(statementFromText, statement);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT.ordinal()) {
+      final PsiStatement statementFromText = factory.createStatementFromText(qualifierExpression.getText() + ";", null);
+      LOG.assertTrue(statement != null);
+      WriteAction.run(() -> {
+        try {
+          statement.getParent().addBefore(statementFromText, statement);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      });
     }
     return true;
   }

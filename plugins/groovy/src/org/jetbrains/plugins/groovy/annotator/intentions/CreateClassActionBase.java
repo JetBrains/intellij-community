@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -101,43 +100,40 @@ public abstract class CreateClassActionBase extends Intention {
                                                    @Nullable final PsiElement contextElement,
                                                    @NotNull final String templateName,
                                                    boolean allowReformatting) {
-    AccessToken accessToken = WriteAction.start();
-
-    try {
-      GrTypeDefinition targetClass = null;
+    return WriteAction.compute(() -> {
       try {
-        PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName, allowReformatting);
-        for (PsiElement element : file.getChildren()) {
-          if (element instanceof GrTypeDefinition) {
-            targetClass = ((GrTypeDefinition)element);
-            break;
+        GrTypeDefinition targetClass = null;
+        try {
+          PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName, allowReformatting);
+          for (PsiElement element : file.getChildren()) {
+            if (element instanceof GrTypeDefinition) {
+              targetClass = ((GrTypeDefinition)element);
+              break;
+            }
+          }
+          if (targetClass == null) {
+            throw new IncorrectOperationException(GroovyBundle.message("no.class.in.file.template"));
           }
         }
-        if (targetClass == null) {
-          throw new IncorrectOperationException(GroovyBundle.message("no.class.in.file.template"));
+        catch (final IncorrectOperationException e) {
+          ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(
+            GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
+            GroovyBundle.message("cannot.create.class.error.title")));
+          return null;
         }
+        PsiModifierList modifiers = targetClass.getModifierList();
+        if (contextElement != null &&
+            !JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(targetClass, contextElement, null) &&
+            modifiers != null) {
+          modifiers.setModifierProperty(PsiModifier.PUBLIC, true);
+        }
+        return targetClass;
       }
-      catch (final IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(
-          GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
-          GroovyBundle.message("cannot.create.class.error.title")));
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
         return null;
       }
-      PsiModifierList modifiers = targetClass.getModifierList();
-      if (contextElement != null &&
-          !JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().isAccessible(targetClass, contextElement, null) &&
-          modifiers != null) {
-        modifiers.setModifierProperty(PsiModifier.PUBLIC, true);
-      }
-      return targetClass;
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Nullable

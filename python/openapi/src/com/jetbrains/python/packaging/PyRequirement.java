@@ -333,7 +333,7 @@ public class PyRequirement {
   }
 
   @NotNull
-  private static PyRequirementVersionSpec calculateVersionSpec(@NotNull String version, @NotNull PyRequirementRelation expectedRelation) {
+  public static PyRequirementVersionSpec calculateVersionSpec(@NotNull String version, @NotNull PyRequirementRelation expectedRelation) {
     final String normalizedVersion = PyRequirementVersionNormalizer.normalize(version);
 
     return normalizedVersion == null ?
@@ -443,8 +443,8 @@ public class PyRequirement {
   @NotNull
   private static Pair<String, String> parseNameAndVersionFromVcsOrArchive(@NotNull String name) {
     boolean isName = true;
-    final List<String> nameParts = new ArrayList<String>();
-    final List<String> versionParts = new ArrayList<String>();
+    final List<String> nameParts = new ArrayList<>();
+    final List<String> versionParts = new ArrayList<>();
 
     for (String part : StringUtil.split(name, "-")) {
       final boolean partStartsWithDigit = !part.isEmpty() && Character.isDigit(part.charAt(0));

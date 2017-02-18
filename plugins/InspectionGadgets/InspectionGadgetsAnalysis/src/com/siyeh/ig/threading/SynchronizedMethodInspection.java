@@ -82,14 +82,9 @@ public class SynchronizedMethodInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "synchronized.method.move.quickfix");
-    }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

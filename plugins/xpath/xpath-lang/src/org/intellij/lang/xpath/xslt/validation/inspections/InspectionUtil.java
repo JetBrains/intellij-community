@@ -97,7 +97,7 @@ public class InspectionUtil {
     }
 
     public static List<SuppressIntentionAction> getSuppressActions(LocalInspectionTool inspection, final boolean isXPath) {
-        final List<SuppressIntentionAction> actions = new ArrayList<SuppressIntentionAction>(4);
+        final List<SuppressIntentionAction> actions = new ArrayList<>(4);
 
         actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Instruction") {
             @Override

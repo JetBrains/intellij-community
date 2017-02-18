@@ -21,5 +21,6 @@ iml_module(
         "//tools/idea/platform/indexing-impl[module]",
         "//tools/idea/platform/projectModel-api[module]",
         "//tools/idea/platform/analysis-api[module]",
+        "//tools/idea/platform/projectModel-impl[module]",
     ],
 )

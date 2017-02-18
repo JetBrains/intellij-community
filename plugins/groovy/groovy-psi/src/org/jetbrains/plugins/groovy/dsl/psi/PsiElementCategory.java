@@ -53,7 +53,7 @@ public class PsiElementCategory implements PsiEnhancerCategory {
 
   @NotNull
   public static Collection<? extends PsiElement> asList(@Nullable PsiElement elem) {
-    if (elem == null) return new ArrayList<PsiElement>();
+    if (elem == null) return new ArrayList<>();
     if (elem instanceof GrListOrMap) {
       return Arrays.asList(((GrListOrMap)elem).getInitializers());
     } else if (elem instanceof GrAnnotationArrayInitializer){

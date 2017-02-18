@@ -27,7 +27,7 @@ import java.util.Map;
  * @author max
  */
 public class DeletedFilesHolder implements FileHolder {
-  private final Map<String, LocallyDeletedChange> myFiles = new HashMap<String, LocallyDeletedChange>();
+  private final Map<String, LocallyDeletedChange> myFiles = new HashMap<>();
 
   public void cleanAll() {
     myFiles.clear();
@@ -42,7 +42,7 @@ public class DeletedFilesHolder implements FileHolder {
     if (scope == null) {
       myFiles.clear();
     }
-    final List<LocallyDeletedChange> currentFiles = new ArrayList<LocallyDeletedChange>(myFiles.values());
+    final List<LocallyDeletedChange> currentFiles = new ArrayList<>(myFiles.values());
     for (LocallyDeletedChange change : currentFiles) {
       if (scope.belongsTo(change.getPath())) {
         myFiles.remove(change.getPresentableUrl());
@@ -63,7 +63,7 @@ public class DeletedFilesHolder implements FileHolder {
   }
 
   public List<LocallyDeletedChange> getFiles() {
-    return new ArrayList<LocallyDeletedChange>(myFiles.values());
+    return new ArrayList<>(myFiles.values());
   }
 
   public boolean isContainedInLocallyDeleted(final FilePath filePath) {

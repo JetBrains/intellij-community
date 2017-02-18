@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   @NotNull private static final String HEADER_PREFIX = "{\\rtf1\\ansi\\deff0";
   @NotNull private static final String HEADER_SUFFIX = "}";
   @NotNull private static final String TAB           = "\\tab\n";
-  @NotNull private static final String NEW_LINE      = "\\line\n";
+  // using undocumented way to denote line break on Mac (used e.g. by TextEdit) to resolve IDEA-165337
+  @NotNull private static final String NEW_LINE      = SystemInfo.isMac ? "\\\n" : "\\line\n";
   @NotNull private static final String BOLD          = "\\b";
   @NotNull private static final String ITALIC        = "\\i";
 
@@ -65,7 +66,8 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
 
     holder.append("\n\\s0\\box")
       .append("\\cbpat").append(mySyntaxInfo.getDefaultBackground())
-      .append("\\cb").append(mySyntaxInfo.getDefaultBackground());
+      .append("\\cb").append(mySyntaxInfo.getDefaultBackground())
+      .append("\\cf").append(mySyntaxInfo.getDefaultForeground());
     addFontSize(holder, mySyntaxInfo.getFontSize());
     holder.append('\n');
 

@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.SmartStripTrailingSpacesFilter;
 import com.intellij.openapi.editor.StripTrailingSpacesFilter;
 import com.intellij.openapi.editor.StripTrailingSpacesFilterFactory;
 import com.intellij.openapi.project.Project;
@@ -28,7 +29,7 @@ import static com.intellij.openapi.editor.StripTrailingSpacesFilter.ALL_LINES;
 
 public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSpacesFilterFactory {
 
-  private static class KeepTrailingSpacesOnEmptyLinesFilter implements StripTrailingSpacesFilter {
+  private static class KeepTrailingSpacesOnEmptyLinesFilter extends SmartStripTrailingSpacesFilter {
     private @NotNull Document myDocument;
 
     public KeepTrailingSpacesOnEmptyLinesFilter(@NotNull Document document) {
@@ -36,10 +37,10 @@ public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSp
     }
 
     @Override
-    public boolean isStripSpacesAllowedForLine(int line) {
+    public int getTrailingSpacesToLeave(int line) {
       int startOffset = myDocument.getLineStartOffset(line);
       int endOffset = myDocument.getLineEndOffset(line);
-      return !containsWhitespacesOnly(myDocument.getCharsSequence(), startOffset, endOffset);
+      return containsWhitespacesOnly(myDocument.getCharsSequence(), startOffset, endOffset) ? getMaxIndentChars(line): 0;
     }
 
 
@@ -50,6 +51,50 @@ public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSp
         return false;
       }
       return true;
+    }
+    
+    private int getMaxIndentChars(int line) {
+      int lineBefore = getNonEmptyLineBefore(line);
+      int indentCharCount = -1;
+      if (lineBefore >= 0) {
+        indentCharCount = countIndentCharsAt(lineBefore);
+      }
+      int lineAfter = getNonEmptyLineAfter(line);
+      if (lineAfter >= 0) {
+        indentCharCount = Math.max(indentCharCount, countIndentCharsAt(lineAfter));
+      }
+      return indentCharCount;
+    }
+    
+    private int getNonEmptyLineBefore(int line) {
+      CharSequence docChars = myDocument.getCharsSequence();
+      for (int lineBefore = line - 1; lineBefore >= 0; lineBefore --) {
+        if (!containsWhitespacesOnly(docChars, myDocument.getLineStartOffset(lineBefore), myDocument.getLineEndOffset(lineBefore))) {
+          return lineBefore;
+        }
+      }
+      return -1;
+    }
+    
+    private int getNonEmptyLineAfter(int line) {
+      CharSequence docChars = myDocument.getCharsSequence();
+      for (int lineAfter = line + 1; lineAfter < myDocument.getLineCount(); lineAfter ++) {
+        if (!containsWhitespacesOnly(docChars, myDocument.getLineStartOffset(lineAfter), myDocument.getLineEndOffset(lineAfter))) {
+          return lineAfter;
+        }
+      }
+      return -1;
+    }
+    
+    private int countIndentCharsAt(int line) {
+      int count = 0;
+      CharSequence docChars = myDocument.getCharsSequence();
+      for (int offset = myDocument.getLineStartOffset(line); offset < myDocument.getTextLength(); offset ++) {
+        char c = docChars.charAt(offset);
+        if (c != ' ' && c != '\t') break;
+        count ++;
+      }
+      return count;
     }
   }
 

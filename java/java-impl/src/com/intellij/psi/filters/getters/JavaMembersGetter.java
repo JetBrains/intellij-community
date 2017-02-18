@@ -59,7 +59,7 @@ public class JavaMembersGetter extends MembersGetter {
 
   private void addConstantsFromReferencedClassesInSwitch(final Consumer<LookupElement> results) {
     final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(myPlace);
-    final Set<PsiClass> classes = new HashSet<PsiClass>();
+    final Set<PsiClass> classes = new HashSet<>();
     for (PsiField field : fields) {
       ContainerUtil.addIfNotNull(classes, field.getContainingClass());
     }
@@ -106,7 +106,7 @@ public class JavaMembersGetter extends MembersGetter {
         final PsiElement element = result.getElement();
         if (element instanceof PsiMethod) {
           final PsiClass aClass = ((PsiMethod)element).getContainingClass();
-          if (aClass != null && !"java.lang.Math".equals(aClass.getQualifiedName())) {
+          if (aClass != null && !CommonClassNames.JAVA_LANG_MATH.equals(aClass.getQualifiedName())) {
             return aClass;
           }
         }

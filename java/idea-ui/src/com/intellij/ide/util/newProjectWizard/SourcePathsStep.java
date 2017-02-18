@@ -232,7 +232,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
       final List<JavaModuleSourceRoot> selectedElements = mySourcePathsChooser.getMarkedElements();
       if (selectedElements.size() > 0) {
-        paths = new ArrayList<Pair<String, String>>(selectedElements.size());
+        paths = new ArrayList<>(selectedElements.size());
 
         for (final JavaModuleSourceRoot root : selectedElements) {
           paths.add(Pair.create(FileUtil.toSystemIndependentName(root.getDirectory().getAbsolutePath()), root.getPackagePrefix()));
@@ -252,7 +252,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
       myBuilder.setSourcePaths(paths);
     }
     else {
-      myBuilder.setSourcePaths(new ArrayList<Pair<String, String>>());
+      myBuilder.setSourcePaths(new ArrayList<>());
     }
   }
 
@@ -340,7 +340,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   }
 
   protected List<JavaModuleSourceRoot> calculate() {
-    return new ArrayList<JavaModuleSourceRoot>(calculateSourceRoots(getContentRootPath()));
+    return new ArrayList<>(calculateSourceRoots(getContentRootPath()));
   }
 
   @NotNull

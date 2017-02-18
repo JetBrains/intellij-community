@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -60,15 +61,15 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
   public void addTagNameVariants(List<LookupElement> elements, @NotNull XmlTag tag, String prefix) {
     final List<String> namespaces;
     if (prefix.isEmpty()) {
-      namespaces = new ArrayList<String>(Arrays.asList(tag.knownNamespaces()));
+      namespaces = new ArrayList<>(Arrays.asList(tag.knownNamespaces()));
       namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
     }
     else {
-      namespaces = new ArrayList<String>(Collections.singletonList(tag.getNamespace()));
+      namespaces = new ArrayList<>(Collections.singletonList(tag.getNamespace()));
     }
     PsiFile psiFile = tag.getContainingFile();
     XmlExtension xmlExtension = XmlExtension.getExtension(psiFile);
-    List<String> nsInfo = new ArrayList<String>();
+    List<String> nsInfo = new ArrayList<>();
     List<XmlElementDescriptor> variants = TagNameVariantCollector.getTagDescriptors(tag, namespaces, nsInfo);
 
     if (variants.isEmpty() && psiFile instanceof XmlFile && ((XmlFile)psiFile).getRootTag() == tag) {
@@ -76,7 +77,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       return;
     }
 
-    final Set<String> visited = new HashSet<String>();
+    final Set<String> visited = new HashSet<>();
     for (int i = 0; i < variants.size(); i++) {
       XmlElementDescriptor descriptor = variants.get(i);
       String qname = descriptor.getName(tag);
@@ -104,7 +105,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (xmlExtension.useXmlTagInsertHandler()) {
         lookupElement = lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE);
       }
-
+      lookupElement = lookupElement.withCaseSensitivity(!(descriptor instanceof HtmlElementDescriptorImpl));
       elements.add(PrioritizedLookupElement.withPriority(lookupElement, separator > 0 ? 0 : 1));
     }
   }

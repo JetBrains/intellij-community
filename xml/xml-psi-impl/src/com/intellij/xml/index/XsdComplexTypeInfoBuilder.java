@@ -70,7 +70,7 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   }
 
   private XsdComplexTypeInfoBuilder() {
-    myMap = new MultiMap<SchemaTypeInfo, SchemaTypeInfo>();
+    myMap = new MultiMap<>();
   }
 
   public MultiMap<SchemaTypeInfo, SchemaTypeInfo> getMap() {
@@ -194,7 +194,7 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
     private final Map<String, String> myNamespaces;
 
     private NameSpaceHelper() {
-      myNamespaces = new HashMap<String, String>();
+      myNamespaces = new HashMap<>();
     }
 
     @Override

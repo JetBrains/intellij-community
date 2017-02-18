@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports unnecessary <code>def</code> modifiers when used with explicit type declaration.
+<!-- tooltip end -->
+<p>For example:</p>
+<pre>
+def boolean foo() {} // modifier is unnecessary
+def Object bar // modifier is unnecessary
+def (int a, String b) = [] // modifier is required and therefore not highlighted
+</pre>
+</body>
+</html>

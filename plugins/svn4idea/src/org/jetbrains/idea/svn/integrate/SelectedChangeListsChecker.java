@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.vcs.CheckSamePattern;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -35,7 +34,7 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
   private VirtualFile myVcsRoot;
 
   public SelectedChangeListsChecker() {
-    myChangeListsList = new ArrayList<CommittedChangeList>();
+    myChangeListsList = new ArrayList<>();
   }
 
   public void execute(final AnActionEvent event) {
@@ -57,8 +56,8 @@ public class SelectedChangeListsChecker implements SelectedCommittedStuffChecker
   }
 
   private void checkSame() {
-    final CheckSamePattern<SVNURL> sameBranch = new CheckSamePattern<SVNURL>();
-    final CheckSamePattern<VirtualFile> sameRoot = new CheckSamePattern<VirtualFile>();
+    final CheckSamePattern<SVNURL> sameBranch = new CheckSamePattern<>();
+    final CheckSamePattern<VirtualFile> sameRoot = new CheckSamePattern<>();
 
     for (ChangeList changeList : myChangeListsList) {
       final SvnChangeList svnChangeList = (SvnChangeList) changeList;

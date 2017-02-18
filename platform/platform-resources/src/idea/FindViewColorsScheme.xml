@@ -1,9 +1,4 @@
-<component>
-  <scheme name="FindView" default_scheme="true">
-    <colors>
-    </colors>
-
-    <attributes>
+  <list>
       <!-- "INVALID" prefix before invalidated usage -->
       <option name="$INVALID_PREFIX">
         <value>
@@ -90,7 +85,5 @@
           <option name="FONT_TYPE" />
         </value>
       </option>
-    </attributes>
 
-  </scheme>
-</component>
+  </list>

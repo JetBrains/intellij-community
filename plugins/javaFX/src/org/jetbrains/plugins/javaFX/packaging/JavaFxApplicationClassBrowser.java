@@ -71,12 +71,8 @@ public class JavaFxApplicationClassBrowser extends ClassBrowser {
 
   @Override
   protected PsiClass findClass(String className) {
-    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(new Computable<Set<Module>>() {
-      @Override
-      public Set<Module> compute() {
-        return ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(myArtifact), getProject());
-      }
-    });
+    final Set<Module> modules = ApplicationManager.getApplication().runReadAction(
+      (Computable<Set<Module>>)() -> ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(myArtifact), getProject()));
     for (Module module : modules) {
       final PsiClass aClass = JavaExecutionUtil.findMainClass(getProject(), className, GlobalSearchScope.moduleScope(module));
       if (aClass != null) {

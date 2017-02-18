@@ -19,12 +19,10 @@ import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
-import com.intellij.diff.merge.TextMergeViewer
 import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType
-import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -90,7 +88,8 @@ abstract class MergeTestBase : DiffTestCase() {
       val builder = TestBuilder(viewer, toolbar.toolbarActions ?: emptyList())
       builder.assertChangesCount(changesCount)
       builder.f()
-    } finally {
+    }
+    finally {
       Disposer.dispose(viewer)
     }
   }
@@ -101,7 +100,7 @@ abstract class MergeTestBase : DiffTestCase() {
     val editor: EditorEx = viewer.editor
     val document: Document = editor.document
 
-    private val textEditor = TextEditorProvider.getInstance().getTextEditor(editor);
+    private val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
     private val undoManager = UndoManager.getInstance(project!!)
 
     fun change(num: Int): TextMergeChange {
@@ -116,7 +115,7 @@ abstract class MergeTestBase : DiffTestCase() {
     //
 
     fun runActionByTitle(name: String): Boolean {
-      val action = actions.filter { name.equals(it.templatePresentation.text) }
+      val action = actions.filter { name == it.templatePresentation.text }
       assertTrue(action.size == 1, action.toString())
       return runAction(action[0])
     }
@@ -144,7 +143,6 @@ abstract class MergeTestBase : DiffTestCase() {
 
     fun write(f: () -> Unit): Unit {
       ApplicationManager.getApplication().runWriteAction({ CommandProcessor.getInstance().executeCommand(project, f, null, null) })
-      UIUtil.dispatchAllInvocationEvents()
     }
 
     fun Int.ignore(side: Side, modifier: Boolean = false) {
@@ -385,7 +383,11 @@ abstract class MergeTestBase : DiffTestCase() {
         val document = viewer.editor.document;
         val content = DiffUtil.getLinesContent(document, change.startLine, change.endLine)
 
-        val resolved = if (change.isResolved) BOTH else if (change.isResolved(Side.LEFT)) LEFT else if (change.isResolved(Side.RIGHT)) RIGHT else NONE
+        val resolved =
+          if (change.isResolved) BOTH
+          else if (change.isResolved(Side.LEFT)) LEFT
+          else if (change.isResolved(Side.RIGHT)) RIGHT
+          else NONE
 
         val starts = Trio.from { change.getStartLine(it) }
         val ends = Trio.from { change.getStartLine(it) }
@@ -399,7 +401,7 @@ abstract class MergeTestBase : DiffTestCase() {
       if (other !is ViewerState) return false
 
       if (!StringUtil.equals(content, other.content)) return false
-      if (!changes.equals(other.changes)) return false
+      if (changes != other.changes) return false
       return true
     }
 
@@ -414,9 +416,9 @@ abstract class MergeTestBase : DiffTestCase() {
         if (other !is ChangeState) return false
 
         if (!StringUtil.equals(content, other.content)) return false
-        if (!starts.equals(other.starts)) return false
-        if (!ends.equals(other.ends)) return false
-        if (!resolved.equals(other.resolved)) return false
+        if (starts != other.starts) return false
+        if (ends != other.ends) return false
+        if (resolved != other.resolved) return false
         return true
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
-import com.intellij.util.Processor;
-import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.uiDesigner.lw.IComponent;
-import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.uiDesigner.lw.IComponent;
+import com.intellij.uiDesigner.lw.LwRootContainer;
+import com.intellij.util.Processor;
 import org.jdom.input.JDOMParseException;
 
 /**
@@ -61,13 +61,7 @@ public class FormWordsScanner extends SimpleWordsScanner {
                                 }
                               });
     }
-    catch(AlienFormFileException ex) {
-      // ignore
-    }
-    catch(UnexpectedFormElementException ex) {
-      // ignore
-    }
-    catch(JDOMParseException ex) {
+    catch(AlienFormFileException | JDOMParseException | UnexpectedFormElementException ex) {
       // ignore
     }
     catch (Exception e) {

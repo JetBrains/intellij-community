@@ -68,12 +68,12 @@ public class PathInternerTest extends TestCase {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void main(String[] args) throws InterruptedException, IOException {
-    final HashSet<String> hs = new HashSet<String>();
+    final HashSet<String> hs = new HashSet<>();
     FileUtil.processFilesRecursively(new File(PathManager.getHomePath()), file -> {
       hs.add(file.getPath());
       return true;
     });
-    THashSet<String> thm = new THashSet<String>();
+    THashSet<String> thm = new THashSet<>();
     PathInterner.PathEnumerator interner = new PathInterner.PathEnumerator();
     for (String s : hs) {
       thm.add(s);

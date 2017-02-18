@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -29,9 +28,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.hash.HashSet;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.HashMap;
@@ -45,7 +44,7 @@ import java.util.Set;
 public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
   @Override
   public Set<GroovyFile> prepareOperation(UsageInfo[] usages) {
-    Set<GroovyFile> files = new HashSet<GroovyFile>();
+    Set<GroovyFile> files = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;
       PsiFile file = usage.getFile();
@@ -59,7 +58,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
   @Override
   public void performOperation(final Project project, final Set<GroovyFile> files) {
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>>();
+    final Map<GroovyFile, Pair<List<GrImportStatement>, Set<GrImportStatement>>> redundants = new HashMap<>();
     final Runnable findUnusedImports = () -> {
       final ProgressIndicator progressIndicator = progressManager.getProgressIndicator();
       final int total = files.size();
@@ -86,9 +85,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       return;
     }
 
-    AccessToken accessToken = WriteAction.start();
-
-    try {
+    WriteAction.run(() -> {
       for (GroovyFile groovyFile : redundants.keySet()) {
         if (!groovyFile.isValid()) continue;
         final Pair<List<GrImportStatement>, Set<GrImportStatement>> pair = redundants.get(groovyFile);
@@ -100,10 +97,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
           }
         }
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
 }

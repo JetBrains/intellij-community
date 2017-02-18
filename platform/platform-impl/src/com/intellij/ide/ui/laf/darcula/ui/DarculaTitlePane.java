@@ -15,14 +15,20 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.*;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.imgscalr.Scalr;
 import sun.swing.SwingUtilities2;
 
@@ -33,6 +39,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -41,6 +48,7 @@ import java.util.List;
 public class DarculaTitlePane extends JComponent {
   private static final int IMAGE_HEIGHT = 16;
   private static final int IMAGE_WIDTH = 16;
+  private static final JBColor BUTTON_HOVER_BG = new JBColor(0xe5e5e5, 0x55585A);
 
   private PropertyChangeListener myPropertyChangeListener;
   private JMenuBar myMenuBar;
@@ -52,6 +60,7 @@ public class DarculaTitlePane extends JComponent {
   private JButton myToggleButton;
   private JButton myIconifyButton;
   private JButton myCloseButton;
+  private JButton myHelpButton;
   private Icon myMaximizeIcon;
   private Icon myMinimizeIcon;
   private Image mySystemIcon;
@@ -158,6 +167,7 @@ public class DarculaTitlePane extends JComponent {
       }
       add(myMenuBar);
       createButtons();
+      add(myHelpButton);
       add(myIconifyButton);
       add(myToggleButton);
       add(myCloseButton);
@@ -171,6 +181,7 @@ public class DarculaTitlePane extends JComponent {
              decorationStyle == JRootPane.WARNING_DIALOG) {
       createActions();
       createButtons();
+      add(myHelpButton);
       add(myCloseButton);
     }
   }
@@ -220,6 +231,7 @@ public class DarculaTitlePane extends JComponent {
 
   protected JMenuBar createMenuBar() {
     myMenuBar = new SystemMenuBar();
+    myMenuBar.setOpaque(false);
     myMenuBar.setFocusable(false);
     myMenuBar.setBorderPainted(true);
     myMenuBar.add(createMenu());
@@ -293,56 +305,77 @@ public class DarculaTitlePane extends JComponent {
     menu.add(myCloseAction);
   }
 
-  private static JButton createButton(String accessibleName, Icon icon, Action action) {
-    JButton button = new JButton() {
-      boolean mouseOverButton = false;
-      {
-        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-        addMouseListener(new MouseAdapter() {
-          @Override
-          public void mouseEntered(MouseEvent e) {
-            mouseOverButton = true;
-            repaint();
-          }
-
-          @Override
-          public void mouseExited(MouseEvent e) {
-            mouseOverButton = false;
-            repaint();
-          }
-        });
-      }
-      @Override
-      protected void paintComponent(Graphics g) {
-        final Window window = SwingUtilities.windowForComponent(this);
-        float alpha = window.isActive() && mouseOverButton ? 1f : 0.5f;
-        final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, alpha);
-        getIcon().paintIcon(this, g, 0, 0);
-        config.restore();
-      }
-    };
-    button.setFocusPainted(false);
-    button.setFocusable(false);
-    button.setOpaque(false);
-    button.putClientProperty("paintActive", Boolean.TRUE);
-    button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName);
-    button.setBorder(JBUI.Borders.empty());
-    button.setText(null);
-    button.setAction(action);
-    button.setIcon(icon);
-    return button;
+  private static JButton createButton(String accessibleName, Icon icon, Icon hoverIcon, Action action, Color hoverBg) {
+    return new WindowButton(accessibleName, icon, hoverIcon, action, hoverBg);
   }
 
   private void createButtons() {
-    myCloseButton = createButton("Close", UIManager.getIcon("InternalFrame.closeIcon"), myCloseAction);
+    myCloseButton = createButton("Close", AllIcons.Windows.CloseActive, AllIcons.Windows.CloseHover, myCloseAction, Color.red);
 
     if (getWindowDecorationStyle() == JRootPane.FRAME) {
-      myMaximizeIcon = UIManager.getIcon("InternalFrame.maximizeIcon");
-      myMinimizeIcon = UIManager.getIcon("InternalFrame.minimizeIcon");
+      myMaximizeIcon = AllIcons.Windows.MaximizeInactive;
+      myMinimizeIcon = AllIcons.Windows.MinimizeInactive;
 
-      myIconifyButton = createButton("Iconify", UIManager.getIcon("InternalFrame.iconifyIcon"), myIconifyAction);
-      myToggleButton = createButton("Maximize", myMaximizeIcon, myRestoreAction);
+      myIconifyButton = createButton("Iconify", AllIcons.Windows.MinimizeInactive, AllIcons.Windows.Minimize, myIconifyAction, BUTTON_HOVER_BG);
+      myToggleButton = createButton("Maximize", AllIcons.Windows.MaximizeInactive, AllIcons.Windows.MaximizeInactive, myRestoreAction, BUTTON_HOVER_BG);
     }
+
+    myHelpButton = createHelpButton();
+  }
+
+  private JButton createHelpButton() {
+    Ref<WindowButton> button = Ref.create();
+    button.set(new WindowButton("Help", AllIcons.Windows.HelpButton, AllIcons.Windows.HelpButton, new AbstractAction("Help") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final DialogWrapper dialog = DialogWrapper.findInstance(button.get());
+        if (dialog != null) {
+          try {
+            final Method getHelpAction = DialogWrapper.class.getDeclaredMethod("getHelpAction");
+            getHelpAction.setAccessible(true);
+            final Object helpAction = getHelpAction.invoke(dialog);
+            if (helpAction instanceof Action && ((Action)helpAction).isEnabled()) {
+              ((Action)helpAction).actionPerformed(e);
+            }
+          }
+          catch (Exception ex) {
+          }
+        }
+      }
+    }, BUTTON_HOVER_BG) {
+      {
+        setFont(new Font("Segoe UI Regular", Font.PLAIN, JBUI.scale(15)));
+      }
+
+      @Override
+      public void paint(Graphics g) {
+        if (isHelpAvailable()) {
+          super.paint(g);
+        } else {
+          g.setColor(getBackground());
+          g.fillRect(0, 0, getWidth(), getHeight());
+        }
+      }
+
+      private boolean isHelpAvailable() {
+        final DialogWrapper dialog = DialogWrapper.findInstance(this);
+        if (dialog != null) {
+          try {
+            final Method getHelpAction = DialogWrapper.class.getDeclaredMethod("getHelpAction");
+            getHelpAction.setAccessible(true);
+            final Object helpAction = getHelpAction.invoke(dialog);
+            if (helpAction instanceof Action && ((Action)helpAction).isEnabled()) {
+              return true;
+            }
+          }
+          catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+        return false;
+      }
+    });
+    return button.get();
   }
 
   private LayoutManager createLayout() {
@@ -499,10 +532,11 @@ public class DarculaTitlePane extends JComponent {
     //g.drawLine(0, 0, 0, 0);
     //g.drawLine(width - 1, 0, width - 1, 0);
 
-    int xOffset = leftToRight ? 5 : width - 5;
+    int xOffset = leftToRight ? JBUI.scale(5) : width - JBUI.scale(5);
 
-    if (getWindowDecorationStyle() == JRootPane.FRAME) {
-      xOffset += leftToRight ? IMAGE_WIDTH + 5 : -IMAGE_WIDTH - 5;
+    if (getWindowDecorationStyle() == JRootPane.FRAME && myMenuBar != null) {
+      final int menuBarWithOffset = myMenuBar.getWidth() + JBUI.scale(5);
+      xOffset += leftToRight ? menuBarWithOffset : -menuBarWithOffset;
     }
 
     String theTitle = getTitle();
@@ -536,19 +570,19 @@ public class DarculaTitlePane extends JComponent {
       int titleLength = SwingUtilities2.stringWidth(rootPane, fm, theTitle);
       if (myIdeMenu == null) {
         SwingUtilities2.drawString(rootPane, g, theTitle, xOffset, yOffset);
-        xOffset += leftToRight ? titleLength + 5 : -5;
+        xOffset += leftToRight ? titleLength + JBUI.scale(5) : -JBUI.scale(5);
       }
     }
 
 
-    int w = width;
-    int h = height;
-    h--;
+    //int w = width;
+    //int h = height;
+    //h--;
     g.setColor(UIManager.getColor("MenuBar.darcula.borderColor"));
-    g.drawLine(0, h, w, h);
-    h--;
-    g.setColor(UIManager.getColor("MenuBar.darcula.borderShadowColor"));
-    g.drawLine(0, h, w, h);
+    //g.drawLine(0, h, w, h);
+    //h--;
+    //g.setColor(UIManager.getColor("MenuBar.darcula.borderShadowColor"));
+    g.drawLine(0, getHeight()-1, getWidth(), getHeight()-1);
   }
 
   private class CloseAction extends AbstractAction {
@@ -604,7 +638,8 @@ public class DarculaTitlePane extends JComponent {
       }
 
       if (mySystemIcon != null) {
-        g.drawImage(mySystemIcon, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT, null);
+        final int offset = (getHeight() - mySystemIcon.getHeight(null)) / 2;
+        g.drawImage(mySystemIcon, offset, offset, null);
       }
       else {
         Icon icon = UIManager.getIcon("InternalFrame.icon");
@@ -653,7 +688,7 @@ public class DarculaTitlePane extends JComponent {
         iconHeight = IMAGE_HEIGHT;
       }
 
-      return Math.max(Math.max(fontHeight, iconHeight), JBUI.scale(myIdeMenu == null ? 28 : 36));
+      return Math.max(Math.max(fontHeight, iconHeight), JBUI.scale(31));
     }
 
     public void layoutContainer(Container c) {
@@ -661,54 +696,57 @@ public class DarculaTitlePane extends JComponent {
       int h = getHeight();
       int x;
       int spacing;
-      int buttonHeight;
-      int buttonWidth;
+      int buttonHeight = JBUI.scale(29);
+      int buttonWidth = JBUI.scale(45);
 
-      if (myCloseButton != null && myCloseButton.getIcon() != null) {
-        buttonHeight = myCloseButton.getIcon().getIconHeight();
-        buttonWidth = myCloseButton.getIcon().getIconWidth();
-      }
-      else {
-        buttonHeight = IMAGE_HEIGHT;
-        buttonWidth = IMAGE_WIDTH;
-      }
+      //if (myCloseButton != null && myCloseButton.getIcon() != null) {
+      //  buttonHeight = myCloseButton.getIcon().getIconHeight();
+      //  buttonWidth = myCloseButton.getIcon().getIconWidth();
+      //}
+      //else {
+      //  buttonHeight = IMAGE_HEIGHT;
+      //  buttonWidth = IMAGE_WIDTH;
+      //}
 
-      spacing = 5;
+      spacing = JBUI.scale(5);
       x = spacing;
       if (myMenuBar != null) {
-        myMenuBar.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
+        myMenuBar.setBounds(x, (h - JBUI.scale(16)) / 2, JBUI.scale(16), JBUI.scale(16));
       }
 
+      int systemIconSize = mySystemIcon == null ? JBUI.scale(16) : mySystemIcon.getWidth(null);
+
+        x = buttonHeight - systemIconSize + systemIconSize + systemIconSize/2; // offset + width + offset, where offset is (H - iconHeight) / 2
       if (myIdeMenu != null) {
         final Dimension size = myIdeMenu.getPreferredSize();
-
-        x += spacing + (myMenuBar != null ? buttonWidth : 0);
 
         myIdeMenu.setBounds(x, (h - size.height) / 2, size.width, size.height);
       }
 
       x = w;
-      spacing = 8;
-      x += -spacing - buttonWidth;
+      spacing = 0;
+      x -= spacing + buttonWidth;
       if (myCloseButton != null) {
         myCloseButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
       }
-
       if (getWindowDecorationStyle() == JRootPane.FRAME) {
         if (Toolkit.getDefaultToolkit().isFrameStateSupported(
           Frame.MAXIMIZED_BOTH)) {
           if (myToggleButton.getParent() != null) {
             //spacing = 10;
-            x += -spacing - buttonWidth;
+            x -= spacing + buttonWidth;
             myToggleButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
           }
         }
 
         if (myIconifyButton != null && myIconifyButton.getParent() != null) {
-          x += -spacing - buttonWidth;
+          x -= spacing + buttonWidth;
           myIconifyButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
         }
       }
+
+      x-= spacing + buttonWidth;
+      myHelpButton.setBounds(x, (h - buttonHeight) / 2, buttonWidth, buttonHeight);
     }
   }
 
@@ -757,7 +795,7 @@ public class DarculaTitlePane extends JComponent {
     } else if (icons.size() == 1) {
       mySystemIcon = icons.get(0);
     } else {
-      final JBDimension size = JBUI.size(32);
+      final JBDimension size = JBUI.size(16);
       final Image image = icons.get(0);
       mySystemIcon = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, size.width, size.height);
     }
@@ -770,6 +808,50 @@ public class DarculaTitlePane extends JComponent {
 
     public void windowDeactivated(WindowEvent ev) {
       setActive(false);
+    }
+  }
+
+  static class WindowButton extends JButton {
+    private final Icon myHoverIcon;
+    private final Color myHoverBg;
+    boolean mouseOverButton = false;
+    WindowButton(String accessibleName, Icon icon, Icon hoverIcon, Action action, Color hoverBg)
+    {
+      myHoverIcon = hoverIcon;
+      myHoverBg = hoverBg;
+      enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          mouseOverButton = true;
+          repaint();
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          mouseOverButton = false;
+          repaint();
+        }
+      });
+      setFocusPainted(false);
+      setFocusable(false);
+      setOpaque(true);
+      putClientProperty("paintActive", Boolean.TRUE);
+      putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName);
+      setBorder(JBUI.Borders.empty());
+      setText(null);
+      setAction(action);
+      setIcon(icon);
+    }
+    @Override
+    public void paint(Graphics g) {
+      if (mouseOverButton) {
+        g.setColor(myHoverBg);
+      } else {
+        g.setColor(getBackground());
+      }
+      g.fillRect(0, 0, getWidth(), getHeight());
+      IconUtil.paintInCenterOf(this, g, mouseOverButton ? myHoverIcon : getIcon());
     }
   }
 }

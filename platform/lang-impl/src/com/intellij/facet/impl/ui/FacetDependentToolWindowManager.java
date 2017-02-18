@@ -20,14 +20,11 @@ import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,13 +51,9 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
     myFacetListenersRegistry.registerListener(new ProjectWideFacetAdapter<Facet>() {
       @Override
       public void facetAdded(Facet facet) {
-        List<ToolWindowEP> toAdd = new ArrayList<>();
         for (FacetDependentToolWindow extension : getDependentExtensions(facet)) {
-          if (myToolWindowManager.getToolWindow(extension.id) == null) {
-            toAdd.add(extension);
-          }
+          ensureToolWindowExists(extension);
         }
-        ensureToolWindowsExist(toAdd);
       }
 
       @Override
@@ -82,21 +75,21 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
     }, myProject);
 
     FacetDependentToolWindow[] extensions = Extensions.getExtensions(FacetDependentToolWindow.EXTENSION_POINT_NAME);
-    List<ToolWindowEP> toAdd = new ArrayList<>();
     loop: for (FacetDependentToolWindow extension : extensions) {
       for (FacetType type : extension.getFacetTypes()) {
-        if (myFacetManager.hasFacets(type.getId()) && myToolWindowManager.getToolWindow(extension.id) == null) {
-          toAdd.add(extension);
+        if (myFacetManager.hasFacets(type.getId())) {
+          ensureToolWindowExists(extension);
           continue loop;
         }
       }
     }
-    ensureToolWindowsExist(toAdd);
   }
 
-  private void ensureToolWindowsExist(List<ToolWindowEP> extensions) {
-    Collections.reverse(extensions);
-    ToolWindowManagerImpl.checkConditionsInReadAction(myToolWindowManager, myProject, extensions, new ArrayList<>());
+  private void ensureToolWindowExists(FacetDependentToolWindow extension) {
+    ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
+    if (toolWindow == null) {
+      myToolWindowManager.initToolWindow(extension);
+    }
   }
 
   private static List<FacetDependentToolWindow> getDependentExtensions(final Facet facet) {

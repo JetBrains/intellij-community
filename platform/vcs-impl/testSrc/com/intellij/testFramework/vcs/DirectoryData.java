@@ -70,8 +70,8 @@ public class DirectoryData {
       @Override
       public void run() {
         try {
-          final List<VirtualFile> currentLevel = new ArrayList<VirtualFile>();
-          final List<VirtualFile> nextLevel = new ArrayList<VirtualFile>();
+          final List<VirtualFile> currentLevel = new ArrayList<>();
+          final List<VirtualFile> nextLevel = new ArrayList<>();
 
           try {
             myBase.createChildDirectory(this, "dirData");

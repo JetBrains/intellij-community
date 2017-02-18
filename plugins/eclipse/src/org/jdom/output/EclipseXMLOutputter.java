@@ -1113,7 +1113,7 @@ public class EclipseXMLOutputter implements Cloneable {
         // this is illegal; but as yet we don't throw an exception
         // if someone tries to do this
         // Set prefixes = new HashSet();
-        List<Attribute> atts = new ArrayList<Attribute>();
+        List<Attribute> atts = new ArrayList<>();
         for (Object attribute : attributes) {
           atts.add((Attribute)((Attribute)attribute).clone());
         }

@@ -15,22 +15,21 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 
 import java.util.Collections;
 import java.util.List;
 
-import static org.jetbrains.plugins.github.api.GithubGist.FileContent;
-
 /**
  * @author Aleksey Pivovarov
  */
 public class GithubCreateGistTest extends GithubCreateGistTestBase {
-  private final ProgressIndicator myIndicator = new MockProgressIndicator();
+  private final ProgressIndicator myIndicator = DumbProgressIndicator.INSTANCE;
 
   public void testSimple() throws Throwable {
     List<FileContent> expected = createContent();

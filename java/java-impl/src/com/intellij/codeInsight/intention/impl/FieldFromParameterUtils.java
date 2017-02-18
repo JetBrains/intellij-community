@@ -76,7 +76,7 @@ public final class FieldFromParameterUtils {
     final PsiClass psiClass = result.getElement();
     if (psiClass == null) return type;
 
-    final Set<PsiTypeParameter> usedTypeParameters = new HashSet<PsiTypeParameter>();
+    final Set<PsiTypeParameter> usedTypeParameters = new HashSet<>();
     RefactoringUtil.collectTypeParameters(usedTypeParameters, parameter);
     for (Iterator<PsiTypeParameter> iterator = usedTypeParameters.iterator(); iterator.hasNext(); ) {
       PsiTypeParameter usedTypeParameter = iterator.next();
@@ -193,7 +193,8 @@ public final class FieldFromParameterUtils {
                                                  final boolean isStatic,
                                                  final boolean isFinal) throws IncorrectOperationException {
     PsiManager psiManager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(psiManager.getProject());
+    PsiElementFactory factory = psiFacade.getElementFactory();
 
     PsiField field = factory.createField(fieldName, fieldType);
 
@@ -211,12 +212,14 @@ public final class FieldFromParameterUtils {
     if (methodBody == null) return;
     PsiStatement[] statements = methodBody.getStatements();
 
-    Ref<Pair<PsiField, Boolean>> anchorRef = new Ref<Pair<PsiField, Boolean>>();
+    Ref<Pair<PsiField, Boolean>> anchorRef = new Ref<>();
     int i = findFieldAssignmentAnchor(statements, anchorRef, targetClass, parameter);
     Pair<PsiField, Boolean> fieldAnchor = anchorRef.get();
 
     String stmtText = fieldName + " = " + parameter.getName() + ";";
-    if (fieldName.equals(parameter.getName())) {
+
+    final PsiVariable variable = psiFacade.getResolveHelper().resolveReferencedVariable(fieldName, methodBody);
+    if (variable != null && !(variable instanceof PsiField)) {
       String prefix = isStatic ? targetClass.getName() == null ? "" : targetClass.getName() + "." : "this.";
       stmtText = prefix + stmtText;
     }

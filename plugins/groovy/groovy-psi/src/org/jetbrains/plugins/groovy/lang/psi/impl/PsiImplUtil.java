@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ public class PsiImplUtil {
       }
     }
 
-    
+
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
     if (oldParent instanceof GrStringInjection) {
       if (newExpr instanceof GrString || newExpr instanceof GrLiteral && ((GrLiteral)newExpr).getValue() instanceof String) {
@@ -165,7 +165,7 @@ public class PsiImplUtil {
         return ((GrExpression)statements[0]).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
       }
     }
-    
+
     if (PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class, false, GrCodeBlock.class) != null) {
       final GrStringInjection stringInjection = PsiTreeUtil.getParentOfType(oldExpr, GrStringInjection.class);
       GrStringUtil.wrapInjection(stringInjection);
@@ -173,7 +173,7 @@ public class PsiImplUtil {
       final PsiElement replaced = oldExpr.replaceWithExpression(newExpr, removeUnnecessaryParentheses);
       return (GrExpression)replaced;
     }
-    
+
     //check priorities    
     if (oldParent instanceof GrExpression && !(oldParent instanceof GrParenthesizedExpression)) {
       GrExpression addedParenth = addParenthesesIfNeeded(newExpr, oldExpr, (GrExpression)oldParent);
@@ -257,7 +257,8 @@ public class PsiImplUtil {
     else if (parentPriorityLevel == newPriorityLevel && parentPriorityLevel != 0) {
       if (oldParent instanceof GrBinaryExpression) {
         GrBinaryExpression binaryExpression = (GrBinaryExpression)oldParent;
-        if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightOperand())) {
+        if (isNotAssociative(binaryExpression) && oldExpr.equals(binaryExpression.getRightOperand()) ||
+          TokenSets.PARENTHESIZED_BINARY_OP_SET.contains(binaryExpression.getOperationTokenType())) {
           newExpr = factory.createParenthesizedExpr(newExpr);
         }
       }
@@ -567,7 +568,7 @@ public class PsiImplUtil {
     final PsiCodeBlock body = SoftReference.dereference(ref);
     if (body != null) return body;
     final GrSyntheticCodeBlock newBody = new GrSyntheticCodeBlock(block);
-    block.putUserData(PSI_CODE_BLOCK, new SoftReference<PsiCodeBlock>(newBody));
+    block.putUserData(PSI_CODE_BLOCK, new SoftReference<>(newBody));
     return newBody;
   }
 
@@ -578,7 +579,7 @@ public class PsiImplUtil {
     final PsiTypeElement element = SoftReference.dereference(ref);
     if (element != null) return element;
     final GrSyntheticTypeElement newTypeElement = new GrSyntheticTypeElement(typeElement);
-    typeElement.putUserData(PSI_TYPE_ELEMENT, new SoftReference<PsiTypeElement>(newTypeElement));
+    typeElement.putUserData(PSI_TYPE_ELEMENT, new SoftReference<>(newTypeElement));
     return newTypeElement;
   }
 
@@ -589,7 +590,7 @@ public class PsiImplUtil {
     final PsiExpression element = SoftReference.dereference(ref);
     if (element != null) return element;
     final GrSyntheticExpression newExpr = new GrSyntheticExpression(expr);
-    expr.putUserData(PSI_EXPRESSION, new SoftReference<PsiExpression>(newExpr));
+    expr.putUserData(PSI_EXPRESSION, new SoftReference<>(newExpr));
     return newExpr;
   }
 
@@ -600,7 +601,7 @@ public class PsiImplUtil {
     final PsiReferenceList element = SoftReference.dereference(ref);
     if (element != null) return element;
     final GrSyntheticReferenceList newList = new GrSyntheticReferenceList(list, role);
-    list.putUserData(PSI_REFERENCE_LIST, new SoftReference<PsiReferenceList>(newList));
+    list.putUserData(PSI_REFERENCE_LIST, new SoftReference<>(newList));
     return newList;
   }
 
@@ -801,7 +802,7 @@ public class PsiImplUtil {
   }
 
   public static GrStatement[] getStatements(final GrStatementOwner statementOwner) {
-    List<GrStatement> result = new ArrayList<GrStatement>();
+    List<GrStatement> result = new ArrayList<>();
     for (PsiElement cur = statementOwner.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrStatement) {
         result.add((GrStatement)cur);
@@ -964,7 +965,9 @@ public class PsiImplUtil {
     while (expr instanceof GrReferenceExpression) {
       final PsiElement nameElement = ((GrReferenceExpression)expr).getReferenceNameElement();
       if (((GrReferenceExpression)expr).getTypeArguments().length > 0) return false;
-      if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
+      if (nameElement == null || !TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(nameElement.getNode().getElementType())) {
+        return false;
+      }
       IElementType dotType = ((GrReferenceExpression)expr).getDotTokenType();
       if (dotType != null && dotType != GroovyTokenTypes.mDOT) return false;
       expr = ((GrReferenceExpression)expr).getQualifierExpression();

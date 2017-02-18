@@ -299,7 +299,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
       public boolean accept(final VirtualFile file) {
         return !"package-info.java".equals(file.getName());
       }
-    }, myTestRootDisposable);
+    }, getTestRootDisposable());
 
     final PsiClass annotationTypeClass = findClass("annotations.AnnotationType");
     assertTrue(annotationTypeClass.isAnnotationType());
@@ -307,7 +307,7 @@ public class Src15RepositoryUseTest extends PsiTestCase {
     final Collection<PsiMember> all = AnnotatedMembersSearch.search(annotationTypeClass, GlobalSearchScope.moduleScope(myModule)).findAll();
 
     assertEquals(2, all.size());
-    Set<String> correctNames = new HashSet<String>(Arrays.asList("AnnotatedClass", "correctMethod"));
+    Set<String> correctNames = new HashSet<>(Arrays.asList("AnnotatedClass", "correctMethod"));
     for (PsiMember member : all) {
       assertTrue(correctNames.contains(member.getName()));
     }
@@ -321,11 +321,11 @@ public class Src15RepositoryUseTest extends PsiTestCase {
   }
 
   private void setupLoadingFilter() {
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, getTestRootDisposable());
   }
 
   private void tearDownLoadingFilter() {
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, myTestRootDisposable);
+    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE, getTestRootDisposable());
   }
 
   @NotNull

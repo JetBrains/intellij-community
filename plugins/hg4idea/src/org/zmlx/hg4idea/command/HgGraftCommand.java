@@ -47,7 +47,7 @@ public class HgGraftCommand {
 
   @Nullable
   private HgCommandResult graft(@NotNull List<String> params) {
-    List<String> args = new ArrayList<String>();
+    List<String> args = new ArrayList<>();
     args.add("--log");
     args.addAll(params);
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);

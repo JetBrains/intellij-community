@@ -34,7 +34,7 @@ class GetCompositeCollectionInvocation implements Invocation {
 
   @Override
   public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
-    Map<XmlTag,DomElement> map = new THashMap<XmlTag, DomElement>();
+    Map<XmlTag,DomElement> map = new THashMap<>();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
       for (DomElement element : handler.getCollectionChildren(qname)) {
         map.put(element.getXmlTag(), element);
@@ -43,9 +43,9 @@ class GetCompositeCollectionInvocation implements Invocation {
     final XmlTag tag = handler.getXmlTag();
     if (tag == null) return Collections.emptyList();
 
-    final List<DomElement> list = new ArrayList<DomElement>();
+    final List<DomElement> list = new ArrayList<>();
     for (final XmlTag subTag : tag.getSubTags()) {
-      ContainerUtil.addIfNotNull(map.get(subTag), list);
+      ContainerUtil.addIfNotNull(list, map.get(subTag));
     }
     return list;
   }

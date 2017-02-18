@@ -53,7 +53,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   @NotNull
   public Collection<PyExpression> getArgumentExpressions() {
     final PyExpression[] arguments = getArguments();
-    final Collection<PyExpression> result = new ArrayList<PyExpression>(arguments.length);
+    final Collection<PyExpression> result = new ArrayList<>(arguments.length);
     for (final PyExpression expression : arguments) {
       if (expression instanceof PyKeywordArgument) {
         final PyExpression valueExpression = ((PyKeywordArgument)expression).getValueExpression();
@@ -130,7 +130,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   private Deque<PyExpression> getParameters() {
     final PyExpression[] childrenOfType = PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
     if (childrenOfType == null) {
-      return new ArrayDeque<PyExpression>(0);
+      return new ArrayDeque<>(0);
     }
     return Queues.newArrayDeque(Collections2.filter(Arrays.asList(childrenOfType), NO_KEY_ARGUMENTS));
   }

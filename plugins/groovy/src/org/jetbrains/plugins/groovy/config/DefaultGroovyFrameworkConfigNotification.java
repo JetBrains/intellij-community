@@ -16,12 +16,13 @@
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
 * @author sergey.evdokimov
@@ -35,8 +36,9 @@ public class DefaultGroovyFrameworkConfigNotification extends GroovyFrameworkCon
 
   @Override
   public boolean hasFrameworkLibrary(@NotNull Module module) {
-    final Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(module);
-    return libraries.length > 0;
+    return JavaPsiFacade.getInstance(module.getProject()).findClass(
+      GroovyCommonClassNames.GROOVY_OBJECT, module.getModuleWithDependenciesAndLibrariesScope(true)
+    ) != null;
   }
 
   @Override

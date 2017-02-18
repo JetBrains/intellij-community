@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.List;
 
 public interface Tools {
   @NotNull
-  InspectionToolWrapper getInspectionTool(PsiElement element);
+  InspectionToolWrapper getInspectionTool(@Nullable PsiElement element);
 
   @NotNull
   String getShortName();
@@ -39,6 +39,8 @@ public interface Tools {
   @NotNull
   List<ScopeToolState> getTools();
 
+  void collectTools(@NotNull List<ScopeToolState> result);
+
   @NotNull
   ScopeToolState getDefaultState();
 
@@ -48,4 +50,9 @@ public interface Tools {
 
   @Nullable
   InspectionToolWrapper getEnabledTool(@Nullable PsiElement element);
+
+  @Nullable
+  default InspectionToolWrapper getEnabledTool(@Nullable PsiElement element, boolean includeDoNotShow) {
+    return getEnabledTool(element);
+  }
 }

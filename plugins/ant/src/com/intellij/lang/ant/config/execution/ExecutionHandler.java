@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.CommandLineBuilder;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.junit.JUnitProcessHandler;
-import com.intellij.execution.junit2.segments.OutputPacketProcessor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
@@ -33,6 +30,7 @@ import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
+import com.intellij.lang.ant.segments.OutputPacketProcessor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -78,10 +76,7 @@ public final class ExecutionHandler {
       try {
         return result.get();
       }
-      catch (InterruptedException e) {
-        LOG.warn(e);
-      }
-      catch (java.util.concurrent.ExecutionException e) {
+      catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         LOG.warn(e);
       }
     }
@@ -123,7 +118,7 @@ public final class ExecutionHandler {
       builder.getCommandLine().setCharset(EncodingProjectManager.getInstance(buildFile.getProject()).getDefaultCharset());
 
       messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
-      commandLine = CommandLineBuilder.createFromJavaParameters(builder.getCommandLine());
+      commandLine = builder.getCommandLine().toCommandLine();
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
     }
     catch (RunCanceledException e) {
@@ -145,7 +140,7 @@ public final class ExecutionHandler {
       LOG.error(e);
       return null;
     }
-    final FutureResult<ProcessHandler> future = new FutureResult<ProcessHandler>();
+    final FutureResult<ProcessHandler> future = new FutureResult<>();
     new Task.Backgroundable(buildFile.getProject(), AntBundle.message("ant.build.progress.dialog.title"), true) {
 
       public boolean shouldStartInBackground() {
@@ -183,9 +178,9 @@ public final class ExecutionHandler {
 
     final long startTime = System.currentTimeMillis();
     LocalHistory.getInstance().putSystemLabel(project, AntBundle.message("ant.build.local.history.label", buildFile.getName()));
-    final JUnitProcessHandler handler;
+    final AntProcessHandler handler;
     try {
-      handler = JUnitProcessHandler.runCommandLine(commandLine);
+      handler = AntProcessHandler.runCommandLine(commandLine);
     }
     catch (final ExecutionException e) {
       ApplicationManager.getApplication().invokeLater(
@@ -199,7 +194,7 @@ public final class ExecutionHandler {
   }
 
   private static void processRunningAnt(final ProgressIndicator progress,
-                                        final JUnitProcessHandler handler,
+                                        final AntProcessHandler handler,
                                         final AntBuildMessageView errorView,
                                         final AntBuildFileBase buildFile,
                                         final long startTime,

@@ -83,7 +83,7 @@ public class RatedResolveResult implements ResolveResult {
     if (targets.size() == 1) {
       return targets;
     }
-    List<RatedResolveResult> ret = new SortedList<RatedResolveResult>((one, another) -> another.getRate() - one.getRate());
+    List<RatedResolveResult> ret = new SortedList<>((one, another) -> another.getRate() - one.getRate());
     ret.addAll(targets);
     return ret;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase
  * User: anna
  */
 class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
-  public void "test start caret position"() {
+  void "test start caret position"() {
     def text = """\
      class <caret>Test {
      }
@@ -37,7 +37,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     doTestPositionInvariance(text, false, false)
   }
 
-  public void "test middle caret position"() {
+  void "test middle caret position"() {
     def text = """\
       class Te<caret>st {
       }
@@ -47,7 +47,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     doTestPositionInvariance(text, false, false)
   }
 
-  public void "test end caret position"() {
+  void "test end caret position"() {
     def text = """\
       class Test<caret> {
       }
@@ -57,7 +57,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     doTestPositionInvariance(text, false, false)
   }
 
-  public void "test end caret position typing"() {
+  void "test end caret position typing"() {
     def text = """\
        class Test {
          Test<caret> myTest;
@@ -69,7 +69,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
   }
 
 
-  public void "test start caret position preselect"() {
+  void "test start caret position preselect"() {
     def text = """\
        class <caret>Test {
        }
@@ -79,7 +79,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     doTestPositionInvariance(text, true, false)
   }
 
-  public void "test middle caret position preselect"() {
+  void "test middle caret position preselect"() {
     def text = """\
         class Te<caret>st {
         }
@@ -89,7 +89,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     doTestPositionInvariance(text, true, false)
   }
 
-  public void "test end caret position preselect"() {
+  void "test end caret position preselect"() {
     def text = """\
         class Test<caret> {
         }
@@ -104,8 +104,8 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
     TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project)
     def oldPreselectSetting = myEditor.settings.preselectRename
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
-      myEditor.settings.preselectRename = preselect;
+      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
+      myEditor.settings.preselectRename = preselect
       int offset = myEditor.caretModel.offset
       final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted())
 
@@ -114,7 +114,7 @@ class InplaceRenameInvariantTest extends LightCodeInsightTestCase {
       MemberInplaceRenameHandler handler = new MemberInplaceRenameHandler()
 
 
-      handler.doRename(element, editor, null);
+      handler.doRename(element, editor, null)
       
       if (checkTyping){
         type '1'

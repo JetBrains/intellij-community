@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@ package com.intellij.ui.plaf.gtk;
 import com.intellij.Patches;
 
 import javax.swing.*;
-import javax.swing.plaf.MenuItemUI;
 import javax.swing.plaf.synth.SynthContext;
+import javax.swing.plaf.synth.SynthUI;
 import java.awt.*;
 import java.lang.reflect.Method;
 
 public class IconWrapper implements Icon {
   private final Icon myIcon;
-  private final MenuItemUI myOriginalUI;
+  private final SynthUI myOriginalUI;
 
-  public IconWrapper(final Icon icon, final MenuItemUI originalUI) {
+  public IconWrapper(final Icon icon, final SynthUI originalUI) {
     myIcon = icon;
     myOriginalUI = originalUI;
   }
@@ -36,10 +36,9 @@ public class IconWrapper implements Icon {
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
     if (Patches.USE_REFLECTION_TO_ACCESS_JDK7) {
       try {
-        final Method paintIcon = myIcon.getClass().getMethod("paintIcon", SynthContext.class, Graphics.class,
-                                                             int.class, int.class, int.class, int.class);
+        Method paintIcon = myIcon.getClass().getMethod("paintIcon", SynthContext.class, Graphics.class, int.class, int.class, int.class, int.class);
         paintIcon.setAccessible(true);
-        paintIcon.invoke(myIcon, GtkPaintingUtil.getSynthContext(myOriginalUI, (JComponent)c), g, x, y, getIconWidth(), getIconHeight());
+        paintIcon.invoke(myIcon, myOriginalUI.getContext((JComponent)c), g, x, y, getIconWidth(), getIconHeight());
         return;
       }
       catch (Exception ignore) { }

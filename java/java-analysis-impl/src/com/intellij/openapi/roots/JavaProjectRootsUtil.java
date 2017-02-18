@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFile;
@@ -42,6 +43,7 @@ public class JavaProjectRootsUtil {
     if (psiFile instanceof PsiCodeFragment) return false;
     final VirtualFile file = psiFile.getVirtualFile();
     if (file == null) return false;
+    if (file.getFileSystem() instanceof NonPhysicalFileSystem) return false;
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(psiFile.getProject()).getFileIndex();
     return !projectFileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) && !projectFileIndex.isInLibrarySource(file)
            && !projectFileIndex.isInLibraryClasses(file);
@@ -52,7 +54,7 @@ public class JavaProjectRootsUtil {
    */
   @NotNull
   public static List<VirtualFile> getSuitableDestinationSourceRoots(@NotNull Project project) {
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    List<VirtualFile> roots = new ArrayList<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       collectSuitableDestinationSourceRoots(module, roots);
     }

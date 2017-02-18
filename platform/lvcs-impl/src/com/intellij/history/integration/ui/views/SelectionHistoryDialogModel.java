@@ -63,7 +63,7 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
 
   private SelectionCalculator getCalculator() {
     if (myCalculatorCache == null) {
-      List<Revision> revisionList = new ArrayList<Revision>();
+      List<Revision> revisionList = new ArrayList<>();
       revisionList.add(getCurrentRevision());
       
       revisionList.addAll(ContainerUtil.map(getRevisions(), revisionItem -> revisionItem.revision));

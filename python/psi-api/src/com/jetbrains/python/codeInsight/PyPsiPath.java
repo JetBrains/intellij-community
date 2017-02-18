@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -47,7 +48,7 @@ public abstract class PyPsiPath {
   public static class ToClassQName extends PyPsiPath {
     private final QualifiedName myQualifiedName;
 
-    public ToClassQName(String qualifiedName) {
+    public ToClassQName(@NotNull final String qualifiedName) {
       myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     }
 

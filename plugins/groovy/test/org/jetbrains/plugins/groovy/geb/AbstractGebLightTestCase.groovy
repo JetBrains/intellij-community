@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,29 +36,29 @@ abstract class AbstractGebLightTestCase extends LightCodeInsightFixtureTestCase 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return descriptor;
+    return descriptor
   }
 
 
 }
 
 class GebProjectDescriptor extends DefaultLightProjectDescriptor {
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel();
+  void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      final Library.ModifiableModel modifiableModel = model.getModuleLibraryTable().createLibrary("GROOVY").getModifiableModel()
 
       def fs = JarFileSystem.instance
-      modifiableModel.addRoot(fs.findFileByPath("$TestUtils.mockGroovyLibraryHome/$TestUtils.GROOVY_JAR!/"), OrderRootType.CLASSES);
+      modifiableModel.addRoot(fs.findFileByPath("$TestUtils.mockGroovyLibraryHome/$TestUtils.GROOVY_JAR!/"), OrderRootType.CLASSES)
 
       def gebJarFolder = new File(TestUtils.absoluteTestDataPath + "/mockGeb")
       for (File gebJar : gebJarFolder.listFiles()) {
         if (gebJar.name.endsWith('sources.jar')) {
-          modifiableModel.addRoot(fs.findFileByPath("${gebJar.path}!/"), OrderRootType.SOURCES);
+          modifiableModel.addRoot(fs.findFileByPath("${gebJar.path}!/"), OrderRootType.SOURCES)
         }
         else if  (gebJar.name.endsWith(".jar")) {
-          modifiableModel.addRoot(fs.findFileByPath("${gebJar.path}!/"), OrderRootType.CLASSES);
+          modifiableModel.addRoot(fs.findFileByPath("${gebJar.path}!/"), OrderRootType.CLASSES)
         }
       }
 
-      modifiableModel.commit();
+      modifiableModel.commit()
     }
 }

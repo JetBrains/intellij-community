@@ -16,7 +16,6 @@
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.jira.jql.JqlLanguage;
 import com.intellij.ui.EditorTextField;
@@ -74,8 +73,7 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   }
 
   private void updateNote() {
-    myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. " +
-                        String.format("Your version: %s.", StringUtil.notNullize(myRepository.getJiraVersion(), "unknown")));
+    myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. Your version: " + myRepository.getPresentableVersion());
   }
 
   @Override

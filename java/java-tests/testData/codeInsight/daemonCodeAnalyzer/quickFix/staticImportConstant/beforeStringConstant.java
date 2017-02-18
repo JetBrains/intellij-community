@@ -1,4 +1,4 @@
-// "Static import constant 'foo.B.String'" "false"
+// "Import static constant 'foo.B.String'" "false"
 package foo;
 
 public class X {

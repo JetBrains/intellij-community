@@ -139,7 +139,7 @@ public class IdeRepaintManager extends RepaintManager {
       if (SoftReference.dereference(myLastComponent) == c) {
         return;
       }
-      myLastComponent = new WeakReference<JComponent>(c);
+      myLastComponent = new WeakReference<>(c);
 
       LOG.warn("Access to realized (ever shown) UI components should be done only from the AWT event dispatch thread," +
                " revalidate(), invalidate() & repaint() is ok from any thread", exception);

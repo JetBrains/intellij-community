@@ -18,8 +18,11 @@ package com.intellij.util.indexing;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.impl.ChangeTrackingValueContainer;
+import com.intellij.util.indexing.impl.DebugAssertions;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.UpdatableValueContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,8 +34,8 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 10, 2007
  */
-public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
-  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<Key, ChangeTrackingValueContainer<Value>>();
+public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+  private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
   @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -91,7 +94,8 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     }
   }
 
-  void clearCaches() {
+  @Override
+  public void clearCaches() {
     if (myMap.size() == 0) return;
 
     if (DebugAssertions.DEBUG) {
@@ -120,17 +124,9 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     myBackendStorage.flush();
   }
 
-  @NotNull
-  @Override
-  public Collection<Key> getKeys() throws StorageException {
-    final Set<Key> keys = new HashSet<Key>();
-    processKeys(Processors.cancelableCollectProcessor(keys), null, null);
-    return keys;
-  }
-
   @Override
   public boolean processKeys(@NotNull final Processor<Key> processor, GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
-    final Set<Key> stopList = new HashSet<Key>();
+    final Set<Key> stopList = new HashSet<>();
 
     Processor<Key> decoratingProcessor = key -> {
       if (stopList.contains(key)) return true;
@@ -148,7 +144,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       }
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(stopList.isEmpty() && myMap.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
+    return ((VfsAwareIndexStorage<Key, Value>) myBackendStorage).processKeys(stopList.isEmpty() && myMap.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
   }
 
   @Override
@@ -182,7 +178,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   private UpdatableValueContainer<Value> getMemValueContainer(final Key key) {
     ChangeTrackingValueContainer<Value> valueContainer = myMap.get(key);
     if (valueContainer == null) {
-      valueContainer = new ChangeTrackingValueContainer<Value>(new ChangeTrackingValueContainer.Initializer<Value>() {
+      valueContainer = new ChangeTrackingValueContainer<>(new ChangeTrackingValueContainer.Initializer<Value>() {
         @Override
         public Object getLock() {
           return this;

@@ -30,8 +30,8 @@ public class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
     return new JsonSchemaProviderFactory[]{
       new JsonSchemaProviderFactory() {
         @Override
-        public List getProviders(@Nullable Project project) {
-          return Collections.singletonList(provider);
+        public List<JsonSchemaFileProvider> getProviders(@Nullable Project project) {
+          return provider == null ? Collections.emptyList() : Collections.singletonList(provider);
         }
       }
     };

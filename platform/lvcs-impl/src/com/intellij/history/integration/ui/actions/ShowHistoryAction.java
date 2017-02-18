@@ -27,9 +27,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowHistoryAction extends LocalHistoryActionWithDialog {
+public class ShowHistoryAction extends LocalHistoryAction {
   @Override
-  protected void showDialog(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
+  protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull VirtualFile f, @NotNull AnActionEvent e) {
     HistoryDialog frame = f.isDirectory() ? new DirectoryHistoryDialog(p, gw, f) : new FileHistoryDialog(p, gw, f);
     frame.show();
   }

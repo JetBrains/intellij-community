@@ -35,7 +35,7 @@ public class SequentialLimitedLifoExecutor<Task> implements Disposable {
                                        @NotNull ThrowableConsumer<Task, ? extends Throwable> loadProcess) {
     myMaxTasks = maxTasks;
     myLoadProcess = loadProcess;
-    myLoader = new QueueProcessor<Task>(new DetailsLoadingTask());
+    myLoader = new QueueProcessor<>(new DetailsLoadingTask());
     Disposer.register(parentDisposable, this);
   }
 

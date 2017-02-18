@@ -20,11 +20,9 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleAction;
@@ -225,7 +223,7 @@ public class HyperlinkLabel extends HighlightableComponent {
 
         @Override
         public void handleText(char[] data, int pos) {
-          highlightedText.appendText(new String(data), currentAttributes);
+          highlightedText.appendText(data, currentAttributes);
         }
 
         @Override

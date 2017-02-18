@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -283,7 +282,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull PsiElement psiElement) {
+  public IntentionAction createShowModulePropertiesFix(@NotNull PsiElement psiElement) {
     return QuickFixes.EMPTY_ACTION;
   }
 
@@ -550,6 +549,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull String qualifiedName) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createCreateGetterOrSetterFix(boolean b, boolean b2, @NotNull PsiField psiField) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -586,7 +591,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAndQuickFixAction createShowModulePropertiesFix(@NotNull Module module) {
+  public IntentionAction createShowModulePropertiesFix(@NotNull Module module) {
     return QuickFixes.EMPTY_ACTION;
   }
 
@@ -624,6 +629,24 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @Nullable
+  @Override
+  public IntentionAction createNotIterableForEachLoopFix(@NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
     return QuickFixes.EMPTY_FIX;
   }
 }

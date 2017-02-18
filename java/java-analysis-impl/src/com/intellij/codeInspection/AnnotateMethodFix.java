@@ -28,7 +28,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -54,12 +53,17 @@ public class AnnotateMethodFix implements LocalQuickFix {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
 
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (method == null) return;
-    final List<PsiMethod> toAnnotate = new ArrayList<PsiMethod>();
+    final List<PsiMethod> toAnnotate = new ArrayList<>();
     toAnnotate.add(method);
     List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
@@ -104,12 +108,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   }
 
   private void annotateMethod(@NotNull PsiMethod method) {
-    try {
-      AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, PsiNameValuePair.EMPTY_ARRAY, myAnnotationsToRemove);
-      fix.invoke(method.getProject(), method.getContainingFile(), method, method);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, PsiNameValuePair.EMPTY_ARRAY, myAnnotationsToRemove);
+    fix.invoke(method.getProject(), method.getContainingFile(), method, method);
   }
 }

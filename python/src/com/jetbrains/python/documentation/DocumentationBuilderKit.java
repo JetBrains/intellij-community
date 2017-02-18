@@ -59,7 +59,7 @@ class DocumentationBuilderKit {
   }
 
   static ChainIterable<String> wrapInTag(String tag, Iterable<String> content) {
-    return new ChainIterable<String>("<" + tag + ">").add(content).addItem("</" + tag + ">");
+    return new ChainIterable<>("<" + tag + ">").add(content).addItem("</" + tag + ">");
   }
 
   @NonNls
@@ -68,11 +68,11 @@ class DocumentationBuilderKit {
   }
 
   static ChainIterable<String> $(String... content) {
-    return new ChainIterable<String>(Arrays.asList(content));
+    return new ChainIterable<>(Arrays.asList(content));
   }
 
   static <T> Iterable<T> interleave(Iterable<T> source, T filler) {
-    final List<T> ret = new LinkedList<T>();
+    final List<T> ret = new LinkedList<>();
     boolean isNext = false;
     for (T what : source) {
       if (isNext) ret.add(filler);

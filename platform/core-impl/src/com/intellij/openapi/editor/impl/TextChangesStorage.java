@@ -109,18 +109,18 @@ public class TextChangesStorage {
   /**
    * Store given change merging it with previously stored ones if necessary.
    * <p/>
-   * <b>Note:</b> it's assumed that given change offsets are related to the current state of the text (<code>'client text'</code>),
+   * <b>Note:</b> it's assumed that given change offsets are related to the current state of the text ({@code 'client text'}),
    * i.e. with all stored changes applied to it. Example:
    * <ol>
-   *   <li>Say, we have initial text <code>'12345'</code>;</li>
+   *   <li>Say, we have initial text {@code '12345'};</li>
    *   <li>
-   *     Suppose the change <code>'replace text at [2; 3) range with 'ABC''</code> is applied to it (stored at the current object).
-   *     End-users see the text <code>'12ABC45'</code> now;
+   *     Suppose the change {@code 'replace text at [2; 3) range with 'ABC''} is applied to it (stored at the current object).
+   *     End-users see the text {@code '12ABC45'} now;
    *   </li>
    *   <li>
-   *     This method is called with change like <code>'replace text at [1; 6) range with 'XY''</code>. Change range is assumed to
-   *     be related to the text visible to end-user, not initial one (<code>'12ABC45'</code>, not <code>'12345'</code>).
-   *     I.e. the user will see text <code>'1XY5'</code> now;
+   *     This method is called with change like {@code 'replace text at [1; 6) range with 'XY''}. Change range is assumed to
+   *     be related to the text visible to end-user, not initial one ({@code '12ABC45'}, not {@code '12345'}).
+   *     I.e. the user will see text {@code '1XY5'} now;
    *   </li>
    * </ol>
    *
@@ -329,12 +329,12 @@ public class TextChangesStorage {
    * Example:
    * <pre>
    * <ul>
-   *   <li>Consider that original text is <code>'01234'</code>;</li>
+   *   <li>Consider that original text is {@code '01234'};</li>
    *   <li>
-   *     Consider that two changes are registered: <code>'insert text 'a' at index 1'</code> and
-   *     <code>'insert text 'bc' at index 3'</code>;
+   *     Consider that two changes are registered: {@code 'insert text 'a' at index 1'} and
+   *     {@code 'insert text 'bc' at index 3'};
    *   </li>
-   *   <li><code>'client text'</code> now is <code>'0a12bc34'</code>;</li>
+   *   <li>{@code 'client text'} now is {@code '0a12bc34'};</li>
    *   <li>This method is called with index '5' - symbol 'c' is returned;</li>
    * </ul>
    * </pre>
@@ -446,13 +446,13 @@ public class TextChangesStorage {
   }
   
   /**
-   * Allows to find index of the change that contains given offset (assuming that it is used against <code>'client text'</code>)
+   * Allows to find index of the change that contains given offset (assuming that it is used against {@code 'client text'})
    * or index of the first change that lays after the given offset.
    * 
-   * @param clientOffset      target offset against the <code>'client text'</code>
+   * @param clientOffset      target offset against the {@code 'client text'}
    * @return                  non-negative value that defines index of the stored change that contains given client offset;
    *                          negative value that indicates index of the first change that lays beyond the given offset and
-   *                          is calculated by by <code>'-returned_index - 1'</code> formula
+   *                          is calculated by by {@code '-returned_index - 1'} formula
    */
   private int getChangeIndex(int clientOffset) {
     if (myChanges.isEmpty()) {

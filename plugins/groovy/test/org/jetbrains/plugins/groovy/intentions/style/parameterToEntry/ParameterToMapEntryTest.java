@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * @author ilyas
@@ -154,9 +157,6 @@ public class ParameterToMapEntryTest extends GroovyFormatterTestCase {
         if (line != null) expected += "\n";
       }
       reader.close();
-    }
-    catch (FileNotFoundException e) {
-      e.printStackTrace();
     }
     catch (IOException e) {
       e.printStackTrace();

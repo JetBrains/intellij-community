@@ -16,41 +16,28 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapExtension;
 import com.intellij.openapi.keymap.KeymapGroup;
+import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * @author yole
  */
 public class DebuggerKeymapExtension implements KeymapExtension {
   public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
-    ActionManager actionManager = ActionManager.getInstance();
-    AnAction[] xDebuggerActions = ((DefaultActionGroup)actionManager.getActionOrStub("XDebugger.Actions")).getChildActionsOrStubs();
-    AnAction[] javaDebuggerActions = ((DefaultActionGroup)actionManager.getActionOrStub("JavaDebuggerActions")).getChildActionsOrStubs();
+    AnAction[] xDebuggerActions = ActionsTreeUtil.getActions("XDebugger.Actions");
+    AnAction[] javaDebuggerActions = ActionsTreeUtil.getActions("JavaDebuggerActions");
 
-    ArrayList<String> ids = new ArrayList<>();
-    for (AnAction debuggerAction : ArrayUtil.mergeArrays(xDebuggerActions, javaDebuggerActions)) {
-      String actionId = debuggerAction instanceof ActionStub ? ((ActionStub)debuggerAction).getId() : actionManager.getId(debuggerAction);
-      if (filtered == null || filtered.value(debuggerAction)) {
-        ids.add(actionId);
-      }
-    }
-
-    Collections.sort(ids);
     Group group = new Group(KeyMapBundle.message("debugger.actions.group.title"), AllIcons.General.Debug);
-    for (String id : ids) {
-      group.addActionId(id);
+    for (AnAction action : ArrayUtil.mergeArrays(xDebuggerActions, javaDebuggerActions)) {
+      ActionsTreeUtil.addAction(group, action, filtered);
     }
-
     return group;
   }
 }

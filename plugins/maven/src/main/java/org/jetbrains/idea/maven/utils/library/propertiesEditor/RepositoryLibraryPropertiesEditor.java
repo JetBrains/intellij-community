@@ -33,6 +33,7 @@ public class RepositoryLibraryPropertiesEditor {
   @NotNull private final Project project;
   State currentState;
   List<String> versions;
+  @Nullable
   private VersionKind versionKind;
   private RepositoryLibraryPropertiesModel initialModel;
   private RepositoryLibraryPropertiesModel model;
@@ -131,7 +132,7 @@ public class RepositoryLibraryPropertiesEditor {
       ProjectBundle.message("maven.version.kind.selector.release"),
       ProjectBundle.message("maven.version.kind.selector.latest"),
       ProjectBundle.message("maven.version.kind.selector.select"));
-    CollectionComboBoxModel<String> versionKindSelectorModel = new CollectionComboBoxModel<String>(versionKinds);
+    CollectionComboBoxModel<String> versionKindSelectorModel = new CollectionComboBoxModel<>(versionKinds);
     //noinspection unchecked
     versionKindSelector.setModel(versionKindSelectorModel);
     versionKindSelector.addItemListener(new ItemListener() {
@@ -210,7 +211,7 @@ public class RepositoryLibraryPropertiesEditor {
 
   private void initVersionsPanel() {
     final int selection = getSelection(model.getVersion(), versions);
-    CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<String>(versions);
+    CollectionComboBoxModel<String> versionSelectorModel = new CollectionComboBoxModel<>(versions);
     //noinspection unchecked
     versionSelector.setModel(versionSelectorModel);
     versionSelector.setSelectedIndex(selection);
@@ -256,7 +257,10 @@ public class RepositoryLibraryPropertiesEditor {
     ApplicationManager.getApplication().invokeLater(() -> setState(State.FailedToLoad), ModalityState.any());
   }
 
+  @Nullable
   public String getSelectedVersion() {
+    if(versionKind == null) return null;
+
     switch (versionKind) {
       case Unselected:
         return null;

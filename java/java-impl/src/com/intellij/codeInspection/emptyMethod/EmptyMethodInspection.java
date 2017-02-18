@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.util.Query;
-import com.intellij.util.containers.BidirectionalMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +54,6 @@ import java.util.List;
 public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   @NonNls private static final String SHORT_NAME = "EmptyMethod";
-
-  private final BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<Boolean, QuickFix>();
 
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
   @SuppressWarnings("PublicField")
@@ -136,7 +133,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
 
     if (message != null) {
-      final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
+      final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
       if (globalContext instanceof GlobalInspectionContextBase && ((GlobalInspectionContextBase)globalContext).getCurrentProfile().getSingleTool() == null) {
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), qualifiedName -> {
@@ -263,21 +260,13 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private LocalQuickFix getFix(final ProblemDescriptionsProcessor processor, final boolean needToDeleteHierarchy) {
-    QuickFix fix = myQuickFixes.get(needToDeleteHierarchy);
-    if (fix == null) {
-      fix = new DeleteMethodQuickFix(processor, needToDeleteHierarchy);
-      myQuickFixes.put(needToDeleteHierarchy, fix);
-      return (LocalQuickFix)fix;
-    }
-    return (LocalQuickFix)fix;
+    return new DeleteMethodQuickFix(processor, needToDeleteHierarchy);
   }
 
   @Override
   public String getHint(@NotNull final QuickFix fix) {
-    final List<Boolean> list = myQuickFixes.getKeysByValue(fix);
-    if (list != null) {
-      LOG.assertTrue(list.size() == 1);
-      return String.valueOf(list.get(0));
+    if (fix instanceof DeleteMethodQuickFix) {
+      return String.valueOf(((DeleteMethodQuickFix)fix).myNeedToDeleteHierarchy);
     }
     return null;
   }
@@ -309,12 +298,6 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return QUICK_FIX_NAME;
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
       return QUICK_FIX_NAME;
     }
@@ -323,7 +306,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class, false);
       if (psiMethod != null) {
-        final List<PsiElement> psiElements = new ArrayList<PsiElement>();
+        final List<PsiElement> psiElements = new ArrayList<>();
         psiElements.add(psiMethod);
         if (Boolean.valueOf(myHint).booleanValue()) {
           final Query<Pair<PsiMethod, PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
@@ -352,19 +335,13 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return QUICK_FIX_NAME;
     }
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-       applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<PsiElement>(), null);
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
+       applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<>(), null);
     }
 
     private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result) {
@@ -389,7 +366,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
                          @Nullable final Runnable refreshViews) {
       for (CommonProblemDescriptor descriptor : descriptors) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
-        if (refElement.isValid() && refElement instanceof RefMethod) {
+        if (refElement instanceof RefMethod && refElement.isValid()) {
           RefMethod refMethod = (RefMethod)refElement;
           if (myNeedToDeleteHierarchy) {
             deleteHierarchy(refMethod, psiElementsToIgnore);

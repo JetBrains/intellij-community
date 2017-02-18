@@ -167,7 +167,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
       myIgnoreDirectoryTextField.setText(virtualFiles.get(0).getParent().getPresentableUrl());
     }
 
-    final Set<String> extensions = new HashSet<String>();
+    final Set<String> extensions = new HashSet<>();
     for(VirtualFile vf: virtualFiles) {
       final String extension = vf.getExtension();
       if (extension != null) {
@@ -224,7 +224,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
   }
 
   private IgnoredFileBean[] getBeansFromFilesToIgnore(boolean onlyDirs) {
-    List<IgnoredFileBean> result = new ArrayList<IgnoredFileBean>();
+    List<IgnoredFileBean> result = new ArrayList<>();
     for (VirtualFile fileToIgnore : myFilesToIgnore) {
       String path = ChangesUtil.getProjectRelativePath(myProject, new File(fileToIgnore.getPath()));
       if (path != null) {

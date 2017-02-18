@@ -98,7 +98,8 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
               public void visitClass(PsiClass candidate) {
                 ProgressManager.checkCanceled();
                 if (!success[0]) return;
-                PsiMethod overridingMethod = candidate == methodContainingClass ? null : findOverridingMethod(project, candidate, method, methodContainingClass);
+                PsiMethod overridingMethod = candidate.isInheritor(methodContainingClass, true)
+                                             ? findOverridingMethod(project, candidate, method, methodContainingClass) : null;
                 if (overridingMethod != null && !consumer.process(overridingMethod)) {
                   success[0] = false;
                 }
@@ -116,11 +117,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @NotNull
   private static Iterable<PsiMethod> compute(@NotNull PsiMethod method, @NotNull Project project) {
-    Collection<PsiMethod> result = new LinkedHashSet<>();
-
     Application application = ApplicationManager.getApplication();
     final PsiClass containingClass = application.runReadAction((Computable<PsiClass>)method::getContainingClass);
     assert containingClass != null;
+    Collection<PsiMethod> result = new LinkedHashSet<>();
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
       PsiMethod found = application.runReadAction((Computable<PsiMethod>)() -> findOverridingMethod(project, inheritor, method, containingClass));
       if (found != null) {

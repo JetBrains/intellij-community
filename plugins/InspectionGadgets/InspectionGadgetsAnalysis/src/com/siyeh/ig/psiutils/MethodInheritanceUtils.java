@@ -27,8 +27,8 @@ public class MethodInheritanceUtils {
   private MethodInheritanceUtils() {}
 
   public static Set<RefMethod> calculateSiblingMethods(RefMethod method) {
-    final Set<RefMethod> siblingMethods = new HashSet<RefMethod>();
-    final Stack<RefMethod> pendingMethods = new Stack<RefMethod>();
+    final Set<RefMethod> siblingMethods = new HashSet<>();
+    final Stack<RefMethod> pendingMethods = new Stack<>();
     pendingMethods.add(method);
     while (!pendingMethods.isEmpty()) {
       final RefMethod methodToAnalyze = pendingMethods.pop();

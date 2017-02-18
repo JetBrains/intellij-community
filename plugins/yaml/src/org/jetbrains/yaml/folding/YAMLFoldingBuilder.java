@@ -26,12 +26,12 @@ import java.util.List;
  */
 public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
-  private static final int PLACEHOLDER_LEN = 10;
+  private static final int PLACEHOLDER_LEN = 20;
 
   @NotNull
   @Override
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
-    List<FoldingDescriptor> descriptors = new LinkedList<FoldingDescriptor>();
+    List<FoldingDescriptor> descriptors = new LinkedList<>();
     collectDescriptors(root, descriptors);
     return descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
   }
@@ -110,6 +110,6 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     if (text.length() <= PLACEHOLDER_LEN) {
       return text;
     }
-    return text.substring(0, Math.min(text.length(), PLACEHOLDER_LEN)) + "...";
+    return StringUtil.trimMiddle(text, PLACEHOLDER_LEN);
   }
 }

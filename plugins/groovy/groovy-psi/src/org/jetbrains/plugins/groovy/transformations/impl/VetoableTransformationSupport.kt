@@ -23,7 +23,7 @@ import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DOCUMENTATION_DELEGATE_FQN
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
 
@@ -40,7 +40,7 @@ class VetoableTransformationSupport : AstTransformationSupport {
 
     val methods = mutableListOf<GrLightMethodBuilder>()
 
-    methods += context.memberBuilder.method ("addVetoableChangeListener") {
+    methods += context.memberBuilder.method("addVetoableChangeListener") {
       returnType = PsiType.VOID
       addParameter("propertyName", CommonClassNames.JAVA_LANG_STRING)
       addParameter("listener", VCL_FQN)
@@ -80,11 +80,10 @@ class VetoableTransformationSupport : AstTransformationSupport {
       addParameter("propertyName", CommonClassNames.JAVA_LANG_STRING)
     }
 
-    val docDelegate = context.psiFacade.findClass(VCS_FQN, context.resolveScope)
     for (method in methods) {
       method.addModifier(PsiModifier.PUBLIC)
       method.originInfo = ORIGIN_INFO
-      method.putUserData(ResolveUtil.DOCUMENTATION_DELEGATE, docDelegate?.findMethodBySignature(method, false))
+      method.putUserData(DOCUMENTATION_DELEGATE_FQN, VCS_FQN)
     }
 
     context.addMethods(methods)

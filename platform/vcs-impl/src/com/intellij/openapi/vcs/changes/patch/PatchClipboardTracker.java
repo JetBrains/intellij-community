@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,43 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ClipboardAnalyzeListener;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
 
-
-public class PatchClipboardTracker extends ApplicationComponent.Adapter {
+public class PatchClipboardTracker implements ApplicationComponentAdapter, Disposable {
   private static final PatchClipboardListener LISTENER = new PatchClipboardListener();
-  private MessageBusConnection myConnection;
 
   @Override
   public void initComponent() {
-    myConnection = ApplicationManagerEx.getApplicationEx().getMessageBus().connect();
-    myConnection.subscribe(ApplicationActivationListener.TOPIC, LISTENER);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ApplicationActivationListener.TOPIC, LISTENER);
   }
 
   @Override
-  public void disposeComponent() {
-    myConnection.disconnect();
-    myConnection = null;
+  public void dispose() {
   }
 
   private static class PatchClipboardListener extends ClipboardAnalyzeListener {
+    @Override
+    public void applicationActivated(IdeFrame ideFrame) {
+      // we can't get clipboard details especially content size, so we should avoid clipboard processing when it's possible;
+      if (!VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY) return;
+      super.applicationActivated(ideFrame);
+    }
+
+    @Override
+    public void applicationDeactivated(IdeFrame ideFrame) {
+      if (!VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY) return;
+      super.applicationDeactivated(ideFrame);
+    }
+
     @Override
     protected void handle(@NotNull Project project, @NotNull String value) {
       new ApplyPatchFromClipboardAction.MyApplyPatchFromClipboardDialog(project, value).show();
@@ -50,7 +59,6 @@ public class PatchClipboardTracker extends ApplicationComponent.Adapter {
 
     @Override
     public boolean canHandle(@NotNull String value) {
-      if (!VcsApplicationSettings.getInstance().DETECT_PATCH_ON_THE_FLY) return false;
       return PatchReader.isPatchContent(value);
     }
   }

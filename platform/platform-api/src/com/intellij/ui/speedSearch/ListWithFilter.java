@@ -61,7 +61,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   }
 
   public static <T> JComponent wrap(JList list, JScrollPane scroller, Function<T, String> namer) {
-    return new ListWithFilter<T>(list, scroller, namer);
+    return new ListWithFilter<>(list, scroller, namer);
   }
 
   private ListWithFilter(JList list, JScrollPane scroller, Function<T, String> namer) {
@@ -107,7 +107,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     //}.registerCustomShortcutSet(CustomShortcutSet.fromString("BACK_SPACE", "DELETE"), list);
     final int selectedIndex = myList.getSelectedIndex();
     final int modelSize = myList.getModel().getSize();
-    myModel = new NameFilteringListModel<T>(myList, namer, s -> mySpeedSearch.shouldBeShowing(s), mySpeedSearch);
+    myModel = new NameFilteringListModel<>(myList, namer, s -> mySpeedSearch.shouldBeShowing(s), mySpeedSearch);
     if (myModel.getSize() == modelSize) {
       myList.setSelectedIndex(selectedIndex);
     }

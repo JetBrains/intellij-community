@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class StructGeneralAttribute {
   public static final String ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS = "RuntimeVisibleTypeAnnotations";
   public static final String ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS = "RuntimeInvisibleTypeAnnotations";
   public static final String ATTRIBUTE_LOCAL_VARIABLE_TABLE = "LocalVariableTable";
+  public static final String ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE = "LocalVariableTypeTable";
   public static final String ATTRIBUTE_CONSTANT_VALUE = "ConstantValue";
   public static final String ATTRIBUTE_BOOTSTRAP_METHODS = "BootstrapMethods";
   public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
@@ -49,7 +50,6 @@ public class StructGeneralAttribute {
   public static final String ATTRIBUTE_SOURCE_FILE = "SourceFile";
 
   private String name;
-  private byte[] info;
 
   public static StructGeneralAttribute createAttribute(String name) {
     StructGeneralAttribute attr;
@@ -84,6 +84,9 @@ public class StructGeneralAttribute {
     else if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name)) {
       attr = new StructLocalVariableTableAttribute();
     }
+    else if (ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name)) {
+      attr = new StructLocalVariableTypeTableAttribute();
+    }
     else if (ATTRIBUTE_BOOTSTRAP_METHODS.equals(name)) {
       attr = new StructBootstrapMethodsAttribute();
     }
@@ -105,15 +108,7 @@ public class StructGeneralAttribute {
     return attr;
   }
 
-  protected DataInputFullStream stream() {
-    return new DataInputFullStream(info);
-  }
-
-  public void initContent(ConstantPool pool) throws IOException { }
-
-  public void setInfo(byte[] info) {
-    this.info = info;
-  }
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException { }
 
   public String getName() {
     return name;

@@ -213,7 +213,7 @@ public class CompletionUtil {
       return ContainerUtil.newLinkedHashSet(_names);
     }
 
-    List<String> sorted = new ArrayList<String>();
+    List<String> sorted = new ArrayList<>();
     for (String name : _names) {
       if (matcher.prefixMatches(name)) {
         sorted.add(name);
@@ -224,7 +224,7 @@ public class CompletionUtil {
     Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
     ProgressManager.checkCanceled();
 
-    LinkedHashSet<String> result = new LinkedHashSet<String>();
+    LinkedHashSet<String> result = new LinkedHashSet<>();
     for (String name : sorted) {
       if (matcher.isStartMatch(name)) {
         result.add(name);

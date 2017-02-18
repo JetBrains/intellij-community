@@ -56,7 +56,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
   @NotNull
   @Override
   public List<BalloonImpl.ActionButton> createActions() {
-    myActions = new ArrayList<BalloonImpl.ActionButton>();
+    myActions = new ArrayList<>();
 
     if (!myLayoutData.showSettingButton || myDisplayGroupId == null ||
         !NotificationsConfigurationImpl.getInstanceImpl().isRegistered(myDisplayGroupId)) {
@@ -97,7 +97,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
 
     myCloseButton = myBalloon.new ActionButton(
       AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
-      "Alt-click to close all notifications",
+      "Close. Alt-click to close all notifications",
       event -> {
         final int modifiers = event.getModifiers();
         //noinspection SSBasedInspection

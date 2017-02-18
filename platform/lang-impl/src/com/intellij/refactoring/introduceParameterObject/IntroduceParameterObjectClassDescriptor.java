@@ -36,12 +36,12 @@ public abstract class IntroduceParameterObjectClassDescriptor<M extends PsiNamed
   private final String myPackageName;
 
   /**
-   * Flag to search for existing class with fqn: <code>myPackageName.myClassName</code>
+   * Flag to search for existing class with fqn: {@code myPackageName.myClassName}
    */
   private final boolean myUseExistingClass;
 
   /**
-   * Flag that inner class with name <code>myClassName</code> should be created in outer class: <code>method.getContainingClass()</code>
+   * Flag that inner class with name {@code myClassName} should be created in outer class: {@code method.getContainingClass()}
    */
   private final boolean myCreateInnerClass;
 

@@ -49,7 +49,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware {
     ChangesSelection selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION);
 
     int index = 0;
-    List<Change> changesToLocal = new ArrayList<Change>();
+    List<Change> changesToLocal = new ArrayList<>();
     for (int i = 0; i < selection.getChanges().size(); i++) {
       if (i == selection.getIndex()) index = changesToLocal.size();
       ContentRevision afterRevision = selection.getChanges().get(i).getAfterRevision();

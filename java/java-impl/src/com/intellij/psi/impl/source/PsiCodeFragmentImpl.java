@@ -49,7 +49,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
   private boolean myPhysical;
   private PsiType myThisType;
   private PsiType mySuperType;
-  private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<String, String>();
+  private LinkedHashMap<String, String> myPseudoImports = new LinkedHashMap<>();
   private VisibilityChecker myVisibilityChecker;
   private ExceptionHandler myExceptionHandler;
   private GlobalSearchScope myResolveScope;
@@ -82,7 +82,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements JavaCodeFragment
     final PsiCodeFragmentImpl clone = (PsiCodeFragmentImpl)cloneImpl((FileElement)calcTreeElement().clone());
     clone.myPhysical = false;
     clone.myOriginalFile = this;
-    clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
+    clone.myPseudoImports = new LinkedHashMap<>(myPseudoImports);
     FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
     SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(
       getName(),

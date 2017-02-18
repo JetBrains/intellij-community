@@ -46,8 +46,8 @@ public class RequestsMerger {
   private MyState myState;
   private final Consumer<Runnable> myAlarm;
 
-  private final List<Runnable> myWaitingStartListeners = new ArrayList<Runnable>();
-  private final List<Runnable> myWaitingFinishListeners = new ArrayList<Runnable>();
+  private final List<Runnable> myWaitingStartListeners = new ArrayList<>();
+  private final List<Runnable> myWaitingFinishListeners = new ArrayList<>();
 
   public RequestsMerger(final Runnable runnable, final Consumer<Runnable> alarm) {
     myAlarm = alarm;
@@ -124,7 +124,7 @@ public class RequestsMerger {
             myWaitingStartListeners.clear();
           }
           else if (MyExitAction.markEnd.equals(exitAction)) {
-            toBeCalled = new ArrayList<Runnable>(myWaitingFinishListeners);
+            toBeCalled = new ArrayList<>(myWaitingFinishListeners);
             myWaitingFinishListeners.clear();
           }
         }
@@ -212,7 +212,7 @@ public class RequestsMerger {
   }
 
   private static class MyTransitionAction {
-    private static final Map<Couple<MyState>, MyExitAction[]> myMap = new HashMap<Couple<MyState>, MyExitAction[]>();
+    private static final Map<Couple<MyState>, MyExitAction[]> myMap = new HashMap<>();
 
     static {
       add(MyState.empty, MyState.requestSubmitted, MyExitAction.submitRequestToExecutor);

@@ -36,7 +36,7 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
   private final Consumer<PsiClass> myConsumer;
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
   private int myCount;
-  private final Set<String> myQNames = new THashSet<String>();
+  private final Set<String> myQNames = new THashSet<>();
   private final boolean myPkgContext;
   private final String myPackagePrefix;
 

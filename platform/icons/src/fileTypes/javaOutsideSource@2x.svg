@@ -1,0 +1,13 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>javaOutsideSource@2x</title>
+  <g>
+    <ellipse cx="8.98873" cy="25" rx="6.98873" ry="7" fill="#f26522" opacity="0.6"/>
+    <g>
+      <polygon points="12 0 4 8 12 8 12 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <path d="M14,0V10H4v7.52344A8.97344,8.97344,0,0,1,14.58691,32H26V0H14Z" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+    </g>
+    <g opacity="0.6">
+      <path d="M5.64062,28.40826l1.11616-1.18349A2.36953,2.36953,0,0,0,8.69855,28.3945c0.90975,0,1.53009-.62041,1.53009-1.94381V20h1.74883v6.50688a3.627,3.627,0,0,1-.90863,2.61927A3.17879,3.17879,0,0,1,8.72659,30,3.60939,3.60939,0,0,1,5.64062,28.40826Z" fill="#231f20"/>
+    </g>
+  </g>
+</svg>

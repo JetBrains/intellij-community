@@ -304,7 +304,6 @@ public class MultiMap<K, V> implements Serializable {
    * @deprecated Use {@link #createSmart()}
    */
   @Deprecated
-  @SuppressWarnings("unused")
   @NotNull
   public static <K, V> MultiMap<K, V> createSmartList() {
     return createSmart();

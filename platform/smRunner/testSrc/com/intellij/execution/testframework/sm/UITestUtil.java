@@ -28,7 +28,7 @@ import java.util.ArrayList;
 public class UITestUtil {
   public static class ListOfFragments extends ArrayList<Pair<String, SimpleTextAttributes>> {
     public void add(@NotNull @Nls final String fragment, @NotNull final SimpleTextAttributes attributes) {
-      add(new Pair<String, SimpleTextAttributes>(fragment, attributes));
+      add(new Pair<>(fragment, attributes));
     }
   }
 

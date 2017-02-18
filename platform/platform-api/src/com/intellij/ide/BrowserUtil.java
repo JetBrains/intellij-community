@@ -83,7 +83,6 @@ public class BrowserUtil {
   /**
    * @deprecated Use {@link #browse(String)}
    */
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public static void launchBrowser(@NotNull @NonNls String url) {
     browse(url);
@@ -113,7 +112,6 @@ public class BrowserUtil {
     getBrowserLauncher().browse(url, null, project);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   @Deprecated
   public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPathOrName) {

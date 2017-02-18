@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
+import com.intellij.ide.actions.WindowAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -137,7 +138,7 @@ public class AbstractPopup implements JBPopup {
 
     @Override
     public void update() {
-      mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
+      mySpeedSearchPatternField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
       if (isHoldingFilter() && !searchFieldShown) {
@@ -152,11 +153,11 @@ public class AbstractPopup implements JBPopup {
 
     @Override
     public void noHits() {
-      mySpeedSearchPatternField.setBackground(LightColors.RED);
+      mySpeedSearchPatternField.getTextEditor().setBackground(LightColors.RED);
     }
   };
 
-  private JTextField mySpeedSearchPatternField;
+  protected SearchTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
   private boolean myMayBeParent;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
@@ -302,7 +303,7 @@ public class AbstractPopup implements JBPopup {
     myCallBack = callback;
     myCancelOnClickOutside = cancelOnClickOutside;
     myCancelOnMouseOutCallback = cancelOnMouseOutCallback;
-    myListeners = listeners == null ? new HashSet<JBPopupListener>() : listeners;
+    myListeners = listeners == null ? new HashSet<>() : listeners;
     myUseDimServiceForXYLocation = useDimServiceForXYLocation;
     myCancelOnWindow = cancelOnWindow;
     myMinSize = minSize;
@@ -646,7 +647,7 @@ public class AbstractPopup implements JBPopup {
         if (root != null) {
           final Container popupWindow = root.getParent();
           if (popupWindow != null && popupWindow.isShowing()) {
-            storeLocation(popupWindow.getLocationOnScreen());
+            storeLocation(fixLocateByContent(popupWindow.getLocationOnScreen(), true));
           }
         }
       }
@@ -693,6 +694,7 @@ public class AbstractPopup implements JBPopup {
 
   private void disposePopup() {
     if (myPopup != null) {
+      resetWindow();
       myPopup.hide(true);
     }
     myPopup = null;
@@ -761,9 +763,9 @@ public class AbstractPopup implements JBPopup {
       sizeToSet = myForcedSize;
     }
 
+    Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
     if (myLocateWithinScreen) {
       Dimension size = sizeToSet != null ? sizeToSet : myContent.getPreferredSize();
-      Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
       if (size.width > screen.width) {
         size.width = screen.width;
         sizeToSet = size;
@@ -804,15 +806,15 @@ public class AbstractPopup implements JBPopup {
       xy = myForcedLocation;
     }
 
-    if (myLocateByContent) {
-      final Dimension captionSize = myHeaderPanel.getPreferredSize();
-      xy.y -= captionSize.height;
-    }
+    fixLocateByContent(xy, false);
 
     Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
+    if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
+      LOG.warn("huge popup requested: " + targetBounds.width + " x " + targetBounds.height);
+    }
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
-      ScreenUtil.moveToFit(targetBounds, ScreenUtil.getScreenRectangle(aScreenX, aScreenY), null);
+      ScreenUtil.moveToFit(targetBounds, screen, null);
     }
 
     if (myMouseOutCanceller != null) {
@@ -868,7 +870,7 @@ public class AbstractPopup implements JBPopup {
       int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
       WindowResizeListener resizeListener = new WindowResizeListener(
         myContent,
-        myMovable ? new Insets(i, i, i, i) : new Insets(0, 0, i, i),
+        myMovable ? JBUI.insets(i, i, i, i) : JBUI.insets(0, 0, i, i),
         isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
         private Cursor myCursor;
 
@@ -918,6 +920,8 @@ public class AbstractPopup implements JBPopup {
     myPopup.setRequestFocus(myRequestFocus);
     myPopup.show();
 
+    WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
+
     final Window window = getContentWindow(myContent);
 
     myWindow = window;
@@ -956,6 +960,8 @@ public class AbstractPopup implements JBPopup {
     };
 
     if (myRequestFocus) {
+      getPopupWindow().setFocusableWindowState(true);
+      getPopupWindow().setFocusable(true);
       getFocusManager().requestFocus(new FocusCommand() {
         @NotNull
         @Override
@@ -1127,8 +1133,8 @@ public class AbstractPopup implements JBPopup {
     };
     Disposer.register(this, focusWatcher);
 
-    mySpeedSearchPatternField = new JTextField();
-    mySpeedSearchPatternField.setFocusable(false);
+    mySpeedSearchPatternField = new SearchTextField(false);
+    mySpeedSearchPatternField.getTextEditor().setFocusable(false);
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
@@ -1228,7 +1234,7 @@ public class AbstractPopup implements JBPopup {
   private PopupComponent.Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
     if (Registry.is("allow.dialog.based.popups")) {
       boolean noFocus = !myFocusable || !myRequestFocus;
-      boolean cannotBeDialog = noFocus && SystemInfo.isXWindow;
+      boolean cannotBeDialog = noFocus; // && SystemInfo.isXWindow
 
       if (!cannotBeDialog && (isPersistent() || forceDialog)) {
         return new PopupComponent.Factory.Dialog();
@@ -1354,6 +1360,8 @@ public class AbstractPopup implements JBPopup {
     }
 
     if (myContent != null) {
+      Container parent = myContent.getParent();
+      if (parent != null) parent.remove(myContent);
       myContent.removeAll();
       myContent.removeKeyListener(mySearchKeyListener);
     }
@@ -1373,8 +1381,6 @@ public class AbstractPopup implements JBPopup {
       }
     }
     myMouseOutCanceller = null;
-
-    resetWindow();
 
     if (myFinalRunnable != null) {
       final ActionCallback typeAheadDone = new ActionCallback();
@@ -1553,14 +1559,9 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public Point getLocationOnScreen() {
-    Dimension headerCorrectionSize = myLocateByContent ? myHeaderPanel.getPreferredSize() : null;
     Point screenPoint = myContent.getLocation();
     SwingUtilities.convertPointToScreen(screenPoint, myContent);
-    if (headerCorrectionSize != null) {
-      screenPoint.y -= headerCorrectionSize.height;
-    }
-
-    return screenPoint;
+    return fixLocateByContent(screenPoint, false);
   }
 
 
@@ -1880,6 +1881,12 @@ public class AbstractPopup implements JBPopup {
 
   public static boolean isCloseRequest(KeyEvent e) {
     return e != null && e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+  }
+
+  private Point fixLocateByContent(Point location, boolean save) {
+    Dimension size = !myLocateByContent ? null : myHeaderPanel.getPreferredSize();
+    if (size != null) location.y -= save ? -size.height : size.height;
+    return location;
   }
 
   private boolean isBusy() {

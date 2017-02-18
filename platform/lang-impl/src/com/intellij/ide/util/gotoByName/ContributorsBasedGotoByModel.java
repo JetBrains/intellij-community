@@ -121,10 +121,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
             }
           }
         }
-        catch (ProcessCanceledException ex) {
-          // index corruption detected, ignore
-        }
-        catch (IndexNotReadyException ex) {
+        catch (ProcessCanceledException | IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
         catch (Exception ex) {
@@ -171,7 +168,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
   private List<ChooseByNameContributor> filterDumb(ChooseByNameContributor[] contributors) {
     if (!DumbService.getInstance(myProject).isDumb()) return Arrays.asList(contributors);
-    List<ChooseByNameContributor> answer = new ArrayList<ChooseByNameContributor>(contributors.length);
+    List<ChooseByNameContributor> answer = new ArrayList<>(contributors.length);
     for (ChooseByNameContributor contributor : contributors) {
       if (DumbService.isDumbAware(contributor)) {
         answer.add(contributor);
@@ -269,6 +266,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
   @Override
   public String getElementName(Object element) {
+    if (!(element instanceof NavigationItem)) {
+      throw new AssertionError(element + " of " + element.getClass());
+    }
     return ((NavigationItem)element).getName();
   }
 

@@ -45,7 +45,7 @@ public class RestColorsPage implements ColorSettingsPage {
     new AttributesDescriptor("Literal and line blocks", RestSyntaxHighlighter.REST_INLINE),
   };
 
-  @NonNls private static final HashMap<String, TextAttributesKey> ourTagToDescriptorMap = new HashMap<String, TextAttributesKey>();
+  @NonNls private static final HashMap<String, TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();
 
 
   @NotNull

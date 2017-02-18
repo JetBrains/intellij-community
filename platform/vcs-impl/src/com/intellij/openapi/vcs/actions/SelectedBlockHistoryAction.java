@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -109,16 +108,12 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     }
   }
 
-  protected void update(VcsContext context, Presentation presentation) {
+  protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
     presentation.setEnabled(isEnabled(context));
     VcsSelection selection = VcsSelectionUtil.getSelection(context);
     if (selection != null) {
       presentation.setText(selection.getActionName());
     }
-  }
-
-  protected boolean forceSyncUpdate(final AnActionEvent e) {
-    return true;
   }
 
   protected static void reportError(Exception exception) {

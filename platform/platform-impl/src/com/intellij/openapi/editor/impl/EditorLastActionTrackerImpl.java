@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorLastActionTracker;
@@ -27,12 +27,9 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EditorLastActionTrackerImpl extends EditorLastActionTracker implements ApplicationComponent,
-                                                                                    AnActionListener,
-                                                                                    EditorMouseListener {
+public class EditorLastActionTrackerImpl extends EditorLastActionTracker implements ApplicationComponentAdapter, AnActionListener, EditorMouseListener, Disposable {
   private static final Key<Boolean> DISPOSABLE_SET = Key.create("EditorLastActionTracker.dispose.handler.set");
 
   private final ActionManager myActionManager;
@@ -49,20 +46,12 @@ public class EditorLastActionTrackerImpl extends EditorLastActionTracker impleme
 
   @Override
   public void initComponent() {
-    myActionManager.addAnActionListener(this);
-    myEditorEventMulticaster.addEditorMouseListener(this);
+    myActionManager.addAnActionListener(this, this);
+    myEditorEventMulticaster.addEditorMouseListener(this, this);
   }
 
   @Override
-  public void disposeComponent() {
-    myEditorEventMulticaster.removeEditorMouseListener(this);
-    myActionManager.removeAnActionListener(this);
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "EditorLastActionTracker";
+  public void dispose() {
   }
 
   @Override

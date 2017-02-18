@@ -42,7 +42,7 @@ public class AdjustWhiteSpacesState extends State {
   private boolean myReformatContext;
   private Set<Alignment> myAlignmentsInsideRangesToModify = null;
 
-  private final HashSet<WhiteSpace> myAlignAgain = new HashSet<WhiteSpace>();
+  private final HashSet<WhiteSpace> myAlignAgain = new HashSet<>();
   private LeafBlockWrapper myFirstBlock;
 
   public AdjustWhiteSpacesState(WrapBlocksState state, 

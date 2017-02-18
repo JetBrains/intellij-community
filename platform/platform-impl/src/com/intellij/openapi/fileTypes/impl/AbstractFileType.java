@@ -332,7 +332,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
       return Collections.emptyList();
     }
 
-    List<Pair<FileNameMatcher, String>> result = new SmartList<Pair<FileNameMatcher, String>>();
+    List<Pair<FileNameMatcher, String>> result = new SmartList<>();
     for (Element mapping : children) {
       String ext = mapping.getAttributeValue(ATTRIBUTE_EXT);
       String pattern = mapping.getAttributeValue(ATTRIBUTE_PATTERN);
@@ -345,7 +345,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
 
   @NotNull
   public static List<Trinity<FileNameMatcher, String, Boolean>> readRemovedAssociations(@NotNull Element element) {
-    List<Trinity<FileNameMatcher, String, Boolean>> result = new SmartList<Trinity<FileNameMatcher, String, Boolean>>();
+    List<Trinity<FileNameMatcher, String, Boolean>> result = new SmartList<>();
     List<Element> children = element.getChildren(ELEMENT_REMOVED_MAPPING);
     if (children.isEmpty()) {
       return Collections.emptyList();

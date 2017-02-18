@@ -28,7 +28,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 
 /**
- * @see com.intellij.lang.properties.psi.PropertiesElementFactory
+ * @see PropertiesElementFactory
  */
 public interface Property extends PsiNamedElement, StubBasedPsiElement<PropertyStub>, NavigatablePsiElement, IProperty {
 

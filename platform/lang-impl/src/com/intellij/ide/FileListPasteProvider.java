@@ -62,7 +62,7 @@ public class FileListPasteProvider implements PasteProvider {
       return;
     }
 
-    final List<PsiElement> elements = new ArrayList<PsiElement>();
+    final List<PsiElement> elements = new ArrayList<>();
     for (File file : fileList) {
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       if (vFile != null) {

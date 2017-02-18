@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,12 +62,11 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
     if (editor != null && startElement instanceof PyClass) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        ArrayList<PyMethodMember> list = new ArrayList<PyMethodMember>();
+        ArrayList<PyMethodMember> list = new ArrayList<>();
         for (PyFunction function: myToImplement) {
           list.add(new PyMethodMember(function));
         }
         PyOverrideImplementUtil.overrideMethods(editor, (PyClass)startElement, list, true);
-
       }
       else {
         PyOverrideImplementUtil
@@ -76,5 +75,10 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
                                                "Select Methods to Implement", true);
       }
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

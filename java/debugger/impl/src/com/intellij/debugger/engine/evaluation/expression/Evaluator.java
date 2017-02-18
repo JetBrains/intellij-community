@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,5 +34,7 @@ public interface Evaluator {
    * @return a modifier object allowing to set a value in case the expression is lvalue,
    *         otherwise null is returned
    */
-  Modifier getModifier();
+  default Modifier getModifier() {
+    return null;
+  }
 }

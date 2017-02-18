@@ -28,7 +28,7 @@ public final class Entries {
 
   // Fields =================================================================
 
-  private final Map<String, Entry> fileNameToEntryMap = new THashMap<String, Entry>();
+  private final Map<String, Entry> fileNameToEntryMap = new THashMap<>();
   @NonNls private static final String DIRECTORY_PREFIX = "D";
 
   // Accessing ==============================================================

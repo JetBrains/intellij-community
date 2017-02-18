@@ -157,7 +157,7 @@ public class ChooseModulesDialog extends DialogWrapper {
   }
 
   public List<Module> getSelectedModules() {
-    final ArrayList<Module> list = new ArrayList<Module>(myCandidateModules);
+    final ArrayList<Module> list = new ArrayList<>(myCandidateModules);
     final Iterator<Module> modules = list.iterator();
     for (boolean b : myStates) {
       modules.next();

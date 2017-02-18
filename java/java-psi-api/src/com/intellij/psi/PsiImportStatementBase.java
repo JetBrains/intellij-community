@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>import</code> or <code>import static</code> statement.
+ * Represents a Java {@code import} or {@code import static} statement.
  *
  * @author dsl
  */

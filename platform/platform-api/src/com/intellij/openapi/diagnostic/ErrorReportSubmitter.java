@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   /**
    * @return an action text to be used in Error Reporter user interface, e.g. "Report to JetBrains".
    */
+  @NotNull
   public abstract String getReportActionText();
 
   /**
@@ -82,7 +83,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
 
   /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} (to be removed in IDEA 16) */
   @SuppressWarnings({"deprecation", "unused"})
-  public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
+  public SubmittedReportInfo submit(IdeaLoggingEvent[] events, @Nullable Component parent) {
     throw new UnsupportedOperationException("Deprecated API called");
   }
 }

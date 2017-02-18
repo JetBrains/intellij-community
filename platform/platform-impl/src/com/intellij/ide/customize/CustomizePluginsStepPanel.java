@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.internal.statistic.ideSettings.IdeInitialConfigButtonUsages;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -35,6 +36,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +84,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       gbc.fill = GridBagConstraints.BOTH;
       gbc.gridwidth = GridBagConstraints.REMAINDER;
       gbc.weightx = 1;
-      JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + group + "</h2></body></html>", SwingConstants.CENTER) {
+      JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:center;\">" + group + "</h2></body></html>", SwingConstants.CENTER) {
         @Override
         public boolean isEnabled() {
           return isGroupEnabled(group);
@@ -146,7 +148,6 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   static JBScrollPane createScrollPane(JPanel gridPanel) {
     JBScrollPane scrollPane =
       new JBScrollPane(gridPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.getVerticalScrollBar().setUnitIncrement(10);
     scrollPane.setBorder(JBUI.Borders.empty()); // to disallow resetting border on LaF change
     return scrollPane;
   }
@@ -230,14 +231,10 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   }
 
   @Override
-  public String getHTMLFooter() {
-    return null;
-  }
-
-  @Override
   public boolean beforeOkAction() {
     try {
       PluginManager.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
+      IdeInitialConfigButtonUsages.setPredefinedDisabledPlugins(new HashSet<>(myPluginGroups.getDisabledPluginIds()));
     }
     catch (IOException ignored) {
     }
@@ -259,8 +256,8 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       gbc.insets.right = 25;
       gbc.gridy = 0;
       buttonPanel.add(mySaveButton, gbc);
-      buttonPanel.add(new LinkLabel<String>("Enable All", null, this, "enable"), gbc);
-      buttonPanel.add(new LinkLabel<String>("Disable All", null, this, "disable"), gbc);
+      buttonPanel.add(new LinkLabel<>("Enable All", null, this, "enable"), gbc);
+      buttonPanel.add(new LinkLabel<>("Disable All", null, this, "disable"), gbc);
       gbc.weightx = 1;
       buttonPanel.add(Box.createHorizontalGlue(), gbc);
       add(buttonPanel);

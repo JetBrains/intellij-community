@@ -24,7 +24,7 @@ public class GroupsValidator implements Runnable {
   private boolean myStopped;
 
   public GroupsValidator(final ValidationListener listener) {
-    myComponents = new ArrayList<SvnConfigureProxiesComponent>();
+    myComponents = new ArrayList<>();
     myListener = listener;
   }
 

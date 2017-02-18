@@ -145,7 +145,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     if (BitUtil.isSet(changeStatus, RangeHighlighterImpl.CHANGED_MASK)) {
       fireAttributesChanged(highlighter, 
                             BitUtil.isSet(changeStatus, RangeHighlighterImpl.RENDERERS_CHANGED_MASK),
-                            BitUtil.isSet(changeStatus, RangeHighlighterImpl.FONT_STYLE_CHANGED_MASK));
+                            BitUtil.isSet(changeStatus, RangeHighlighterImpl.FONT_STYLE_OR_COLOR_CHANGED_MASK));
     }
   }
 
@@ -219,9 +219,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @Override
-  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged) {
+  public void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter,
+                                    boolean renderersChanged, boolean fontStyleOrColorChanged) {
     for (MarkupModelListener listener : myListeners) {
-      listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleChanged);
+      listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleOrColorChanged);
     }
   }
 
@@ -275,12 +276,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     endOffset = Math.max(startOffset, endOffset);
     return IntervalTreeImpl
       .mergingOverlappingIterator(myHighlighterTree, new TextRangeInterval(startOffset, endOffset), myHighlighterTreeForLines,
-                                  roundToLineBoundaries(startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+                                  roundToLineBoundaries(getDocument(), startOffset, endOffset), RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
   }
 
   @NotNull
-  private TextRangeInterval roundToLineBoundaries(int startOffset, int endOffset) {
-    Document document = getDocument();
+  public static TextRangeInterval roundToLineBoundaries(@NotNull Document document, int startOffset, int endOffset) {
     int textLength = document.getTextLength();
     int lineStartOffset = startOffset <= 0 ? 0 : startOffset > textLength ? textLength : document.getLineStartOffset(document.getLineNumber(startOffset));
     int lineEndOffset = endOffset <= 0 ? 0 : endOffset >= textLength ? textLength : document.getLineEndOffset(document.getLineNumber(endOffset));

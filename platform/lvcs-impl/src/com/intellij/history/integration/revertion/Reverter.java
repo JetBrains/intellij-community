@@ -60,7 +60,7 @@ public abstract class Reverter {
   }
 
   protected List<VirtualFile> getFilesToClearROStatus() throws IOException {
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+    final Set<VirtualFile> files = new HashSet<>();
 
     myVcs.accept(selective(new ChangeVisitor() {
       @Override
@@ -69,7 +69,7 @@ public abstract class Reverter {
       }
     }));
 
-    return new ArrayList<VirtualFile>(files);
+    return new ArrayList<>(files);
   }
 
   protected ChangeVisitor selective(ChangeVisitor v) {

@@ -29,7 +29,7 @@ public class DelegationUtils {
 
 
   public static Set<PsiMethod> getDelegatingMethodsForField(PsiField field) {
-    final Set<PsiMethod> out = new HashSet<PsiMethod>();
+    final Set<PsiMethod> out = new HashSet<>();
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass == null) {
       return out;

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
-public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
+abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
 
   JavaCodeInsightTestFixture getFixture() {
     myFixture
@@ -47,7 +47,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_2_1;
+    return GroovyLightProjectDescriptor.GROOVY_2_1
   }
 
   /**
@@ -62,7 +62,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
 
 
   protected void addGroovyTransformField() {
-    myFixture.addClass('''package groovy.transform; public @interface Field{}''');
+    myFixture.addClass('''package groovy.transform; public @interface Field{}''')
   }
 
   protected void addGroovyObject() throws IOException {
@@ -75,7 +75,7 @@ public interface GroovyObject {
     groovy.lang.MetaClass getMetaClass();
     void setMetaClass(groovy.lang.MetaClass metaClass);
 }
-''');
+''')
   }
 
 
@@ -260,7 +260,7 @@ public abstract class TestCase extends junit.framework.Assert implements junit.f
 ''')
   }
 
-  public static void assertType(@Nullable String expected, @Nullable PsiType actual) {
+  static void assertType(@Nullable String expected, @Nullable PsiType actual) {
     if (expected == null) {
       assertNull(actual)
       return

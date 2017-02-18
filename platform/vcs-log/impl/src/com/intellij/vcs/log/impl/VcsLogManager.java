@@ -28,16 +28,12 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogFiltererImpl;
-import com.intellij.vcs.log.data.VcsLogTabsProperties;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -48,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
@@ -77,7 +74,7 @@ public class VcsLogManager implements Disposable {
     myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsConsumer());
+    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler());
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
     myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher, myLogData);
 
@@ -96,7 +93,7 @@ public class VcsLogManager implements Disposable {
   public void scheduleInitialization() {
     if (!myInitialized) {
       myInitialized = true;
-      myLogData.refreshCompletely();
+      myLogData.initialize();
     }
   }
 
@@ -111,17 +108,19 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public JComponent createLogPanel(@Nullable String contentTabName) {
-    VcsLogUiImpl ui = createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName);
+  public JComponent createLogPanel(@NotNull String logId, @Nullable String contentTabName) {
+    VcsLogUiImpl ui = createLogUi(logId, contentTabName, null);
     return new VcsLogPanel(this, ui);
   }
 
   @NotNull
-  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
-    VcsLogUiProperties properties = myUiProperties.createProperties(logId);
-    VcsLogFiltererImpl filterer =
-      new VcsLogFiltererImpl(myProject, myLogData, PermanentGraph.SortType.values()[properties.getBekSortType()]);
+  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName, @Nullable VcsLogFilter filter) {
+    MainVcsLogUiProperties properties = myUiProperties.createProperties(logId);
+    VcsLogFiltererImpl filterer = new VcsLogFiltererImpl(myProject, myLogData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
     VcsLogUiImpl ui = new VcsLogUiImpl(myLogData, myProject, myColorManager, properties, filterer);
+    if (filter != null) {
+      ui.getFilterUi().setFilter(filter);
+    }
 
     Disposable disposable;
     if (contentTabName != null) {
@@ -201,37 +200,45 @@ public class VcsLogManager implements Disposable {
     disposeLog();
   }
 
-  private class MyFatalErrorsConsumer implements Consumer<Exception> {
-    private boolean myIsBroken = false;
+  private class MyFatalErrorsHandler implements FatalErrorHandler {
+    private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
-    public void consume(@NotNull final Exception e) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!myIsBroken) {
-          myIsBroken = true;
-          processErrorFirstTime(e);
-        }
-        else {
-          LOG.debug(e);
-        }
-      });
+    public void consume(@Nullable Object source, @NotNull final Exception e) {
+      if (myIsBroken.compareAndSet(false, true)) {
+        processError(source, e);
+      }
+      else {
+        LOG.debug(e);
+      }
     }
 
-    protected void processErrorFirstTime(@NotNull Exception e) {
+    protected void processError(@Nullable Object source, @NotNull Exception e) {
       if (myRecreateMainLogHandler != null) {
-        String message = "Fatal error, VCS Log recreated: " + e.getMessage();
-        if (isLogVisible()) {
-          LOG.info(e);
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
-        }
-        else {
-          LOG.error(message, e);
-        }
-        myRecreateMainLogHandler.run();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String message = "Fatal error, VCS Log re-created: " + e.getMessage();
+          if (isLogVisible()) {
+            LOG.info(e);
+            displayFatalErrorMessage(message);
+          }
+          else {
+            LOG.error(message, e);
+          }
+          myRecreateMainLogHandler.run();
+        });
       }
       else {
         LOG.error(e);
       }
+
+      if (source instanceof VcsLogStorage) {
+        myLogData.getIndex().markCorrupted();
+      }
+    }
+
+    @Override
+    public void displayFatalErrorMessage(@NotNull String message) {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
   }
 }

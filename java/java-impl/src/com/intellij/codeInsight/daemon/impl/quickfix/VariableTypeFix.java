@@ -94,7 +94,6 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     if (changeMethodSignatureIfNeeded(myVariable)) return;
-    if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
     new WriteCommandAction.Simple(project, getText(), file) {
 
       @Override
@@ -123,7 +122,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
         if (psiMethod == null) return true;
         final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)myVariable);
         if (!FileModificationService.getInstance().prepareFileForWrite(psiMethod.getContainingFile())) return true;
-        final ArrayList<ParameterInfoImpl> infos = new ArrayList<ParameterInfoImpl>();
+        final ArrayList<ParameterInfoImpl> infos = new ArrayList<>();
         int i = 0;
         for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
           final boolean changeType = i == parameterIndex;

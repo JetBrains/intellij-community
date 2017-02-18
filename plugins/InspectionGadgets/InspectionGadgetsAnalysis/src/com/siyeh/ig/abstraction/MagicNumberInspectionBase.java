@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -53,9 +56,9 @@ public class MagicNumberInspectionBase extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("magic.number.ignore.option"), "ignoreInHashCode");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.annotations"),"ignoreInAnnotations");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.as.initial.capacity"), "ignoreInitialCapacity");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.hashcode"), "ignoreInHashCode");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.in.annotations"), "ignoreInAnnotations");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.option.ignore.as.initial.capacity"), "ignoreInitialCapacity");
     return panel;
   }
 

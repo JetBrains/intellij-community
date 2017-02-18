@@ -44,7 +44,7 @@ public class FieldHidesSuperclassFieldInspectionBase extends BaseInspection {
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
-    for (Element child : new ArrayList<Element>(node.getChildren())) {
+    for (Element child : new ArrayList<>(node.getChildren())) {
       final String name = child.getAttributeValue("name");
       final String value = child.getAttributeValue("value");
       if ("ignoreStaticFields".equals(name) && "true".equals(value)) {
@@ -103,7 +103,7 @@ public class FieldHidesSuperclassFieldInspectionBase extends BaseInspection {
         return;    //special case
       }
       PsiClass ancestorClass = aClass.getSuperClass();
-      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>();
+      final Set<PsiClass> visitedClasses = new HashSet<>();
       while (ancestorClass != null) {
         if (!visitedClasses.add(ancestorClass)) {
           return;

@@ -29,7 +29,7 @@ import java.util.*;
 public class PropertyResolver extends PropertyProviderFinder {
   private final String myPropertyName;
   private PropertiesProvider myResult;
-  private Set<String> myVariants = new HashSet<String>();
+  private Set<String> myVariants = new HashSet<>();
 
   private PropertyResolver(@NotNull String propertyName, DomElement contextElement) {
     super(contextElement);
@@ -55,7 +55,7 @@ public class PropertyResolver extends PropertyProviderFinder {
   @NotNull
   public Trinity<PsiElement, Collection<String>, PropertiesProvider> getResult() {
     final PsiElement element = myResult != null ? myResult.getNavigationElement(myPropertyName) : null;
-    return new Trinity<PsiElement, Collection<String>, PropertiesProvider>(element, Collections.unmodifiableSet(myVariants), myResult);
+    return new Trinity<>(element, Collections.unmodifiableSet(myVariants), myResult);
   }
 
   @Override

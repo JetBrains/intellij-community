@@ -35,38 +35,47 @@ import java.util.EnumSet;
 
 public class RegExpParserDefinition implements ParserDefinition {
     private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
+    private static final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
+                                                                             RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
+                                                                             RegExpCapability.UNICODE_CATEGORY_SHORTHAND,
+                                                                             RegExpCapability.EXTENDED_UNICODE_CHARACTER);
 
+    @Override
     @NotNull
     public Lexer createLexer(Project project) {
-        return new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
-                                          RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS,
-                                          RegExpCapability.UNICODE_CATEGORY_SHORTHAND));
+        return new RegExpLexer(CAPABILITIES);
     }
 
+    @Override
     public PsiParser createParser(Project project) {
-        return new RegExpParser();
+        return new RegExpParser(CAPABILITIES);
     }
 
+    @Override
     public IFileElementType getFileNodeType() {
         return RegExpElementTypes.REGEXP_FILE;
     }
 
+    @Override
     @NotNull
     public TokenSet getWhitespaceTokens() {
         // trick to hide quote tokens from parser... should actually go into the lexer
         return TokenSet.create(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, TokenType.WHITE_SPACE);
     }
 
+    @Override
     @NotNull
     public TokenSet getStringLiteralElements() {
         return TokenSet.EMPTY;
     }
 
+    @Override
     @NotNull
     public TokenSet getCommentTokens() {
         return COMMENT_TOKENS;
     }
 
+    @Override
     @NotNull
     public PsiElement createElement(ASTNode node) {
         final IElementType type = node.getElementType();
@@ -86,6 +95,8 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpGroupImpl(node);
         } else if (type == RegExpElementTypes.PROPERTY) {
             return new RegExpPropertyImpl(node);
+        } else if (type == RegExpElementTypes.NAMED_CHARACTER) {
+            return new RegExpNamedCharacterImpl(node);
         } else if (type == RegExpElementTypes.SET_OPTIONS) {
             return new RegExpSetOptionsImpl(node);
         } else if (type == RegExpElementTypes.OPTIONS) {
@@ -108,15 +119,19 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpPyCondRefImpl(node);
         } else if (type == RegExpElementTypes.POSIX_BRACKET_EXPRESSION) {
             return new RegExpPosixBracketExpressionImpl(node);
+        } else if (type == RegExpElementTypes.NUMBER) {
+            return new RegExpNumberImpl(node);
         }
       
         return new ASTWrapperPsiElement(node);
     }
 
+    @Override
     public PsiFile createFile(FileViewProvider viewProvider) {
         return new RegExpFile(viewProvider, RegExpLanguage.INSTANCE);
     }
 
+    @Override
     public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
         return SpaceRequirements.MUST_NOT;
     }

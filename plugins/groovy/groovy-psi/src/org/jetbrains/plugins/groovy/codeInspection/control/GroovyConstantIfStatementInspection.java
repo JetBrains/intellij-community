@@ -68,12 +68,12 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Simplify";
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement ifKeyword = descriptor.getPsiElement();
       final GrIfStatement ifStatement = (GrIfStatement) ifKeyword.getParent();
@@ -98,7 +98,7 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
       extends BaseInspectionVisitor {
 
     @Override
-    public void visitIfStatement(GrIfStatement statement) {
+    public void visitIfStatement(@NotNull GrIfStatement statement) {
       super.visitIfStatement(statement);
       final GrExpression condition = statement.getCondition();
       if (condition == null) {

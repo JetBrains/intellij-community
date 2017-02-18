@@ -48,7 +48,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   public FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
     myProject = project;
     myFilePointerManager = filePointerManager;
-    myAssociations = new LinkedHashMap<VirtualFilePointer, VirtualFilePointerContainer>();
+    myAssociations = new LinkedHashMap<>();
   }
   
   public void markAsTempCopy() {
@@ -127,7 +127,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   }
 
   private static HashMap<VirtualFilePointer, VirtualFilePointerContainer> copy(FileAssociationsManagerImpl other) {
-    final HashMap<VirtualFilePointer, VirtualFilePointerContainer> hashMap = new LinkedHashMap<VirtualFilePointer, VirtualFilePointerContainer>();
+    final HashMap<VirtualFilePointer, VirtualFilePointerContainer> hashMap = new LinkedHashMap<>();
 
     final Set<VirtualFilePointer> virtualFilePointers = other.myAssociations.keySet();
     for (VirtualFilePointer pointer : virtualFilePointers) {
@@ -212,7 +212,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
   }
 
   public Map<VirtualFile, VirtualFile[]> getAssociations() {
-    final HashMap<VirtualFile, VirtualFile[]> map = new LinkedHashMap<VirtualFile, VirtualFile[]>();
+    final HashMap<VirtualFile, VirtualFile[]> map = new LinkedHashMap<>();
     final Set<VirtualFilePointer> set = myAssociations.keySet();
     for (VirtualFilePointer pointer : set) {
       if (pointer.isValid()) {
@@ -236,7 +236,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Pro
         final VirtualFilePointerContainer container = myAssociations.get(pointer);
         if (container != null) {
           final VirtualFile[] files = container.getFiles();
-          final Set<PsiFile> list = new HashSet<PsiFile>();
+          final Set<PsiFile> list = new HashSet<>();
           final PsiManager psiManager = PsiManager.getInstance(myProject);
           for (VirtualFile assoc : files) {
             final PsiFile psiFile = psiManager.findFile(assoc);

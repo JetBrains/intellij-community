@@ -50,20 +50,20 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
 
   static class CCRenameListener extends RefactoringElementAdapter {
 
-    private String myElementName;
+    private String myElementRelativePath;
 
     public CCRenameListener(PsiElement element) {
       if (element instanceof PsiFile) {
         PsiFile psiFile = (PsiFile)element;
-        myElementName = psiFile.getName();
+        myElementRelativePath = StudyUtils.pathRelativeToTask(psiFile.getVirtualFile());
       }
     }
 
     @Override
     protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
-      if (newElement instanceof PsiFile && myElementName != null) {
+      if (newElement instanceof PsiFile && myElementRelativePath != null) {
         PsiFile psiFile = (PsiFile)newElement;
-        tryToRenameTaskFile(psiFile, myElementName);
+        tryToRenameTaskFile(psiFile, myElementRelativePath);
       }
     }
 
@@ -107,7 +107,7 @@ public class CCRefactoringElementListenerProvider implements RefactoringElementL
       });
 
       taskFiles.remove(oldName);
-      taskFiles.put(file.getName(), taskFile);
+      taskFiles.put(StudyUtils.pathRelativeToTask(file.getVirtualFile()), taskFile);
       CCUtils.createResourceFile(file.getVirtualFile(), course, taskDir.getVirtualFile());
     }
 

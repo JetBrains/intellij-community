@@ -33,7 +33,7 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 public class CachedRelevantStaticMethodSearcher {
-  private final HashMap<MethodIncompleteSignature, PsiMethod> myCachedResolveResults = new HashMap<MethodIncompleteSignature, PsiMethod>();
+  private final HashMap<MethodIncompleteSignature, PsiMethod> myCachedResolveResults = new HashMap<>();
   private final MethodsUsageIndexReader myIndexReader;
   private final ChainCompletionContext myCompletionContext;
 
@@ -52,7 +52,7 @@ public class CachedRelevantStaticMethodSearcher {
     final TreeSet<UsageIndexValue> indexValues = myIndexReader.getMethods(resultQualifiedClassName);
     if (!indexValues.isEmpty()) {
       int occurrences = 0;
-      final List<ContextRelevantStaticMethod> relevantMethods = new ArrayList<ContextRelevantStaticMethod>();
+      final List<ContextRelevantStaticMethod> relevantMethods = new ArrayList<>();
       for (final UsageIndexValue indexValue : extractStaticMethods(indexValues)) {
         final MethodIncompleteSignature methodInvocation = indexValue.getMethodIncompleteSignature();
         final PsiMethod method;
@@ -88,7 +88,7 @@ public class CachedRelevantStaticMethodSearcher {
   }
 
   private static List<UsageIndexValue> extractStaticMethods(final TreeSet<UsageIndexValue> indexValues) {
-    final List<UsageIndexValue> relevantStaticMethods = new SmartList<UsageIndexValue>();
+    final List<UsageIndexValue> relevantStaticMethods = new SmartList<>();
     for (final UsageIndexValue indexValue : indexValues) {
       if (indexValue.getMethodIncompleteSignature().isStatic()) {
         relevantStaticMethods.add(indexValue);

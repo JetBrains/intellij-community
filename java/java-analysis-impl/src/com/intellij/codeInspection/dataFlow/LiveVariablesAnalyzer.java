@@ -27,6 +27,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,22 +69,8 @@ public class LiveVariablesAnalyzer {
     myBackwardMap = calcBackwardMap();
   }
 
-  private List<Instruction> getSuccessors(Instruction i) {
-    if (i instanceof GotoInstruction) {
-      return Arrays.asList(myInstructions[((GotoInstruction)i).getOffset()]);
-    }
-
-    int index = i.getIndex();
-    if (i instanceof ConditionalGotoInstruction) {
-      return Arrays.asList(myInstructions[((ConditionalGotoInstruction)i).getOffset()], myInstructions[index + 1]);
-    }
-
-    if (i instanceof ReturnInstruction) {
-      return Collections.emptyList();
-    }
-
-    return Arrays.asList(myInstructions[index + 1]);
-
+  private List<Instruction> getSuccessors(Instruction ins) {
+    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).mapToObj(i -> myInstructions[i]).toList();
   }
 
   private MultiMap<Instruction, Instruction> calcBackwardMap() {
@@ -149,7 +136,7 @@ public class LiveVariablesAnalyzer {
     return instruction instanceof FinishElementInstruction ||
            instruction instanceof GotoInstruction ||
            instruction instanceof ConditionalGotoInstruction ||
-           instruction instanceof ReturnInstruction;
+           instruction instanceof ControlTransferInstruction;
   }
 
   @Nullable
@@ -237,7 +224,7 @@ public class LiveVariablesAnalyzer {
       entryPoints.addAll(ContainerUtil.findAll(myInstructions, FilteringIterator.instanceOf(ReturnInstruction.class)));
     }
 
-    Queue<InstructionState> queue = new Queue<InstructionState>(10);
+    Queue<InstructionState> queue = new Queue<>(10);
     for (Instruction i : entryPoints) {
       queue.addLast(new InstructionState(i, new BitSet()));
     }

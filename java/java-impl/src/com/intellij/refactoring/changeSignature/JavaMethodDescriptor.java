@@ -40,7 +40,7 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
 
   @Override
   public List<ParameterInfoImpl> getParameters() {
-    final ArrayList<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
+    final ArrayList<ParameterInfoImpl> result = new ArrayList<>();
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];

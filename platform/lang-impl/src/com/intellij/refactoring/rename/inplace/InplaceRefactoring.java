@@ -35,13 +35,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -49,6 +49,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -72,6 +73,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.DottedBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.CommonProcessors;
@@ -84,6 +86,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -96,7 +99,7 @@ public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
   @NonNls protected static final String OTHER_VARIABLE_NAME = "OtherVariable";
-  protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<InplaceRefactoring>();
+  protected static final Stack<InplaceRefactoring> ourRenamersStack = new Stack<>();
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
 
@@ -208,7 +211,7 @@ public abstract class InplaceRefactoring {
     myEditor.putUserData(INPLACE_RENAMER, this);
     ourRenamersStack.push(this);
 
-    final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<Pair<PsiElement, TextRange>>();
+    final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<>();
     collectAdditionalElementsToRename(stringUsages);
     return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
   }
@@ -391,7 +394,7 @@ public abstract class InplaceRefactoring {
     Template template = builder.buildInlineTemplate();
     template.setToShortenLongNames(false);
     template.setToReformat(false);
-    myHighlighters = new ArrayList<RangeHighlighter>();
+    myHighlighters = new ArrayList<>();
     topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
@@ -402,7 +405,7 @@ public abstract class InplaceRefactoring {
   private void highlightTemplateVariables(Template template, Editor topLevelEditor) {
     //add highlights
     if (myHighlighters != null) { // can be null if finish is called during testing
-      Map<TextRange, TextAttributes> rangesToHighlight = new HashMap<TextRange, TextAttributes>();
+      Map<TextRange, TextAttributes> rangesToHighlight = new HashMap<>();
       final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
       if (templateState != null) {
         EditorColorsManager colorsManager = EditorColorsManager.getInstance();
@@ -484,6 +487,32 @@ public abstract class InplaceRefactoring {
   @Nullable
   protected PsiElement getNameIdentifier() {
     return myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
+  }
+
+  public static EditorEx createPreviewComponent(Project project, FileType languageFileType) {
+    Document document = EditorFactory.getInstance().createDocument("");
+    UndoUtil.disableUndoFor(document);
+    EditorEx previewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, project, languageFileType, true);
+    previewEditor.setOneLineMode(true);
+    final EditorSettings settings = previewEditor.getSettings();
+    settings.setAdditionalLinesCount(0);
+    settings.setAdditionalColumnsCount(1);
+    settings.setRightMarginShown(false);
+    settings.setFoldingOutlineShown(false);
+    settings.setLineNumbersShown(false);
+    settings.setLineMarkerAreaShown(false);
+    settings.setIndentGuidesShown(false);
+    settings.setVirtualSpace(false);
+    previewEditor.setHorizontalScrollbarVisible(false);
+    previewEditor.setVerticalScrollbarVisible(false);
+    previewEditor.setCaretEnabled(false);
+    settings.setLineCursorWidth(1);
+
+    final Color bg = previewEditor.getColorsScheme().getColor(EditorColors.CARET_ROW_COLOR);
+    previewEditor.setBackgroundColor(bg);
+    previewEditor.setBorder(BorderFactory.createCompoundBorder(new DottedBorder(Color.gray), new LineBorder(bg, 2)));
+
+    return previewEditor;
   }
 
   @Nullable
@@ -802,6 +831,7 @@ public abstract class InplaceRefactoring {
         myEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
       }
     });
+    EditorUtil.disposeWithEditor(myEditor, myBalloon);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {

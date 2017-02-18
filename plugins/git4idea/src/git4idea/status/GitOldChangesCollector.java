@@ -94,9 +94,9 @@ import java.util.*;
  */
 class GitOldChangesCollector extends GitChangesCollector {
 
-  private final List<VirtualFile> myUnversioned = new ArrayList<VirtualFile>(); // Unversioned files
-  private final Set<String> myUnmergedNames = new HashSet<String>(); // Names of unmerged files
-  private final List<Change> myChanges = new ArrayList<Change>(); // all changes
+  private final List<VirtualFile> myUnversioned = new ArrayList<>(); // Unversioned files
+  private final Set<String> myUnmergedNames = new HashSet<>(); // Names of unmerged files
+  private final List<Change> myChanges = new ArrayList<>(); // all changes
 
   /**
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.

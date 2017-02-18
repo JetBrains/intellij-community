@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -39,6 +40,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
@@ -71,6 +73,11 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   public ShowImplementationsAction() {
     setEnabledInModalContext(true);
     setInjectedContext(true);
+  }
+
+  @Override
+  public boolean startInTransaction() {
+    return true;
   }
 
   @Override
@@ -153,17 +160,20 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     String text = "";
-    PsiElement[] impls = new PsiElement[0];
+    PsiElement[] impls = PsiElement.EMPTY_ARRAY;
     if (element != null) {
-      //if (element instanceof PsiPackage) return;
-
       impls = getSelfAndImplementations(editor, element, createImplementationsSearcher());
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
     if (impls.length == 0 && ref instanceof PsiPolyVariantReference) {
       final PsiPolyVariantReference polyReference = (PsiPolyVariantReference)ref;
-      text = polyReference.getRangeInElement().substring(polyReference.getElement().getText());
+      PsiElement refElement = polyReference.getElement();
+      TextRange rangeInElement = polyReference.getRangeInElement();
+      String refElementText = refElement.getText();
+      LOG.assertTrue(rangeInElement.getEndOffset() <= refElementText.length(),
+                     "Ref:" + polyReference + "; refElement: " + refElement + "; refText:" + refElementText);
+      text = rangeInElement.substring(refElementText);
       final ResolveResult[] results = polyReference.multiResolve(false);
       final List<PsiElement> implsList = new ArrayList<>(results.length);
 
@@ -176,7 +186,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
 
       if (!implsList.isEmpty()) {
-        implsList.toArray( impls = new PsiElement[implsList.size()] );
+        impls = implsList.toArray(new PsiElement[implsList.size()]);
       }
     }
 
@@ -200,19 +210,24 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  static ImplementationSearcher createImplementationsSearcher() {
+  ImplementationSearcher createImplementationsSearcher() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
         @Override
-        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
+        protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
           return ShowImplementationsAction.filterElements(targetElements);
         }
       };
     }
     return new ImplementationSearcher.FirstImplementationsSearcher() {
       @Override
-      protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, final int offset) {
+      protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
         return ShowImplementationsAction.filterElements(targetElements);
+      }
+
+      @Override
+      protected boolean isSearchDeep() {
+        return ShowImplementationsAction.this.isSearchDeep();
       }
     };
   }
@@ -300,7 +315,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         })
         .setCancelCallback(() -> {
           ImplementationsUpdaterTask task = SoftReference.dereference(myTaskRef);
-          cancelTask(task);
+          if (task != null) {
+            task.cancelTask();
+          }
           return Boolean.TRUE;
         })
         .createPopup();
@@ -314,17 +331,6 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
   }
 
-  private static boolean cancelTask(@Nullable ImplementationsUpdaterTask task) {
-    if (task != null) {
-      ProgressIndicator indicator = task.myIndicator;
-      if (indicator != null) {
-        indicator.cancel();
-      }
-      return task.setCanceled();
-    }
-    return false;
-  }
-
   private void updateInBackground(Editor editor,
                                   @Nullable PsiElement element,
                                   @NotNull ImplementationViewComponent component,
@@ -332,7 +338,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                   @NotNull AbstractPopup popup,
                                   @NotNull Ref<UsageView> usageView) {
     final ImplementationsUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
-    cancelTask(updaterTask);
+    if (updaterTask != null) {
+      updaterTask.cancelTask();
+    }
 
     if (element == null) return; //already found
     final ImplementationsUpdaterTask task = new ImplementationsUpdaterTask(element, editor, title, isIncludeAlwaysSelf());
@@ -358,23 +366,25 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
                                                 @NotNull PsiElement element,
                                                 @NotNull ImplementationSearcher handler,
                                                 final boolean includeSelfAlways) {
-    int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
-    final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, offset, includeSelfAlways, true);
+    final PsiElement[] handlerImplementations = handler.searchImplementations(element, editor, includeSelfAlways, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
-    PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) {
-      // Magically, it's null for ant property declarations.
-      element = element.getNavigationElement();
-      psiFile = element.getContainingFile();
+    return ReadAction.compute(() -> {
+      PsiElement psiElement = element;
+      PsiFile psiFile = psiElement.getContainingFile();
       if (psiFile == null) {
-        return PsiElement.EMPTY_ARRAY;
+        // Magically, it's null for ant property declarations.
+        psiElement = psiElement.getNavigationElement();
+        psiFile = psiElement.getContainingFile();
+        if (psiFile == null) {
+          return PsiElement.EMPTY_ARRAY;
+        }
       }
-    }
-    if (psiFile.getVirtualFile() != null && (element.getTextRange() != null || element instanceof PsiFile)) {
-      return new PsiElement[]{element};
-    }
-    return PsiElement.EMPTY_ARRAY;
+      if (psiFile.getVirtualFile() != null && (psiElement.getTextRange() != null || psiElement instanceof PsiFile)) {
+        return new PsiElement[]{psiElement};
+      }
+      return PsiElement.EMPTY_ARRAY;
+    });
   }
 
   @NotNull
@@ -405,14 +415,17 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     return PsiUtilCore.toPsiElementArray(unique);
   }
 
-  private static class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
+  protected boolean isSearchDeep() {
+    return false;
+  }
+
+  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask<ImplementationViewComponent> {
     private final String myCaption;
     private final Editor myEditor;
     @NotNull
     private final PsiElement myElement;
     private final boolean myIncludeSelf;
     private PsiElement[] myElements;
-    private volatile ProgressIndicator myIndicator;
 
     private ImplementationsUpdaterTask(@NotNull PsiElement element, final Editor editor, final String caption, boolean includeSelf) {
       super(element.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS);
@@ -445,10 +458,14 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
-      myIndicator = indicator;
       super.run(indicator);
       final ImplementationSearcher.BackgroundableImplementationSearcher implementationSearcher =
         new ImplementationSearcher.BackgroundableImplementationSearcher() {
+          @Override
+          protected boolean isSearchDeep() {
+            return ShowImplementationsAction.this.isSearchDeep();
+          }
+
           @Override
           protected void processElement(PsiElement element) {
             if (!updateComponent(element, null)) {
@@ -458,13 +475,14 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
           }
 
           @Override
-          protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements, int offset) {
+          protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
             return ShowImplementationsAction.filterElements(targetElements);
           }
         };
       if (!myIncludeSelf) {
         myElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher, false);
-      } else {
+      }
+      else {
         myElements = getSelfAndImplementations(myEditor, myElement, implementationSearcher);
       }
     }
@@ -477,7 +495,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     @Override
     public void onSuccess() {
-      if (!cancelTask(this)) {
+      if (!cancelTask()) {
         myComponent.update(myElements, myComponent.getIndex());
       }
       super.onSuccess();

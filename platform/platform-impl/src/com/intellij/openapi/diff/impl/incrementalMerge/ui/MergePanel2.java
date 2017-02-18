@@ -89,7 +89,7 @@ public class MergePanel2 implements DiffViewer {
   private final MyDataProvider myProvider;
 
   public MergePanel2(DialogBuilder builder, @NotNull Disposable parent) {
-    ArrayList<EditorPlace> editorPlaces = new ArrayList<EditorPlace>();
+    ArrayList<EditorPlace> editorPlaces = new ArrayList<>();
     EditorPlace.EditorListener placeListener = new EditorPlace.EditorListener() {
       public void onEditorCreated(EditorPlace place) {
         if (myDuringCreation) return;
@@ -164,7 +164,7 @@ public class MergePanel2 implements DiffViewer {
 
   @NotNull
   private Collection<Editor> getEditors() {
-    Collection<Editor> editors = new ArrayList<Editor>(3);
+    Collection<Editor> editors = new ArrayList<>(3);
     for (EditorPlace place : getEditorPlaces()) {
       editors.add(place.getEditor());
     }
@@ -173,7 +173,7 @@ public class MergePanel2 implements DiffViewer {
 
   @NotNull
   private Collection<EditorPlace> getEditorPlaces() {
-    Collection<EditorPlace> editorPlaces = new ArrayList<EditorPlace>(3);
+    Collection<EditorPlace> editorPlaces = new ArrayList<>(3);
     for (LabeledComponent editorsPanel : myEditorsPanels) {
       editorPlaces.add((EditorPlace) editorsPanel.getComponent());
     }

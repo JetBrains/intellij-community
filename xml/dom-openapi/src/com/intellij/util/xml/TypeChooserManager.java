@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author peter
  */
 public class TypeChooserManager {
-  private final Map<Type, TypeChooser> myClassChoosers = new ConcurrentHashMap<Type, TypeChooser>();
+  private final Map<Type, TypeChooser> myClassChoosers = new ConcurrentHashMap<>();
 
   public TypeChooser getTypeChooser(final Type type) {
     final TypeChooser typeChooser = myClassChoosers.get(type);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,15 @@
  */
 package com.intellij.openapi.options;
 
+import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * This interface represents a named configurable component that provides a Swing form
@@ -153,15 +158,6 @@ public interface Configurable extends UnnamedConfigurable {
   String getHelpTopic();
 
   /**
-   * @deprecated
-   * This marker interface was intended to hide a configurable component from the Settings dialog.
-   * However, it makes no sense to register it as extension if you don't want to see it.
-   */
-  @Deprecated
-  interface Assistant extends Configurable {
-  }
-
-  /**
    * This interface represents a configurable component that has child components.
    * It is not recommended to use this approach to specify children of a configurable component,
    * because it causes loading additional classes during the building a setting tree.
@@ -197,5 +193,22 @@ public interface Configurable extends UnnamedConfigurable {
      *         (IDE) settings.
      */
     boolean isProjectLevel();
+  }
+
+  default boolean isModified(@NotNull JTextField textField, @NotNull String value) {
+    return !StringUtil.equals(textField.getText().trim(), value);
+  }
+
+  default boolean isModified(@NotNull JTextField textField, int value, @NotNull UINumericRange range) {
+    try {
+      return range.fit(Integer.parseInt(textField.getText().trim())) != value;
+    }
+    catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
+    return toggleButton.isSelected() != value;
   }
 }

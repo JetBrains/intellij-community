@@ -49,7 +49,7 @@ public class GenericDomValueConvertersRegistry {
   }
 
   private final Map<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>> myConditionConverters =
-    new LinkedHashMap<Condition<Pair<PsiType, GenericDomValue>>, Converter<?>>();
+    new LinkedHashMap<>();
 
   public void registerDefaultConverters() {
     registerBooleanConverters();

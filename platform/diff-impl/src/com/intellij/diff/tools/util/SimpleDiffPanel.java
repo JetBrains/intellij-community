@@ -35,7 +35,6 @@ public class SimpleDiffPanel extends DiffPanelBase {
     JPanel centerPanel = JBUI.Panels.simplePanel(editorPanel).addToTop(myNotificationsPanel);
 
     myContentPanel.add(centerPanel, GOOD_CONTENT);
-    myContentPanel.add(DiffUtil.createMessagePanel("Error"), ERROR_CONTENT);
 
     setCurrentCard(GOOD_CONTENT, false);
   }
@@ -49,6 +48,11 @@ public class SimpleDiffPanel extends DiffPanelBase {
   }
 
   public void setErrorContent() {
+    setErrorContent("Error");
+  }
+
+  public void setErrorContent(@NotNull String message) {
+    myContentPanel.add(DiffUtil.createMessagePanel(message), ERROR_CONTENT);
     setCurrentCard(ERROR_CONTENT);
   }
 

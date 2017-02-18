@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ public class CoreJavaFileManager implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
 
   private final List<VirtualFile> myClasspath = new ArrayList<VirtualFile>();
-
   private final PsiManager myPsiManager;
 
   public CoreJavaFileManager(PsiManager psiManager) {
@@ -198,6 +197,12 @@ public class CoreJavaFileManager implements JavaFileManager {
   @Override
   public Collection<String> getNonTrivialPackagePrefixes() {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+    return Collections.emptySet();
   }
 
   public void addToClasspath(VirtualFile root) {

@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,15 +28,15 @@ public abstract class FinalizableCommand implements Runnable{
 
   protected ToolWindowManager myManager;
 
-  public FinalizableCommand(final Runnable finishCallBack){
-    myFinishCallBack=finishCallBack;
+  public FinalizableCommand(Runnable finishCallBack){
+    myFinishCallBack = finishCallBack;
   }
 
   public final void finish(){
     myFinishCallBack.run();
   }
 
-  public void beforeExecute(final ToolWindowManager toolWindowManager) {
+  public void beforeExecute(@NotNull ToolWindowManager toolWindowManager) {
     myManager = toolWindowManager;
   }
 

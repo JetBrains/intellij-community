@@ -37,7 +37,7 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
   public static final int TASKS_WEIGHT = 300;
   protected final Project myProject;
   private final String myListName;
-  protected final List<AbstractTreeNode<T>> myChildren = new ArrayList<AbstractTreeNode<T>>();
+  protected final List<AbstractTreeNode<T>> myChildren = new ArrayList<>();
   protected final FavoritesListNode myNode;
 
   protected AbstractFavoritesListProvider(@NotNull Project project, final String listName) {

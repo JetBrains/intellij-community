@@ -20,8 +20,8 @@ java_import(
 )
 
 java_import(
-    name = "guava-18.0",
-    jars = ["guava-18.0.jar"],
+    name = "guava-19.0",
+    jars = ["guava-19.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -62,29 +62,29 @@ java_import(
 )
 
 java_import(
-    name = "httpcore-4.4.1",
-    jars = ["httpcore-4.4.1.jar"],
+    name = "httpcore-4.4.5",
+    jars = ["httpcore-4.4.5.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "httpmime-4.4.1",
-    jars = ["httpmime-4.4.1.jar"],
+    name = "httpmime-4.5.2",
+    jars = ["httpmime-4.5.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "httpclient-4.4.1",
-    jars = ["httpclient-4.4.1.jar"],
+    name = "httpclient-4.5.2",
+    jars = ["httpclient-4.5.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
 
 java_import(
-    name = "fluent-hc-4.4.1",
-    jars = ["fluent-hc-4.4.1.jar"],
+    name = "fluent-hc-4.5.2",
+    jars = ["fluent-hc-4.5.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -279,22 +279,8 @@ java_import(
 )
 
 java_import(
-    name = "asm",
-    jars = ["asm.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "asm-commons",
-    jars = ["asm-commons.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "cglib-2.2.2",
-    jars = ["cglib-2.2.2.jar"],
+    name = "cglib-nodep-3.2.4",
+    jars = ["cglib-nodep-3.2.4.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -314,8 +300,8 @@ java_import(
 )
 
 java_import(
-    name = "netty-all-4.1.2.Final",
-    jars = ["netty-all-4.1.2.Final.jar"],
+    name = "netty-all-4.1.6.Final.Patched",
+    jars = ["netty-all-4.1.6.Final.Patched.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -433,8 +419,15 @@ java_import(
 )
 
 java_import(
-    name = "miglayout-swing",
-    jars = ["miglayout-swing.jar"],
+    name = "miglayout-core-5.0",
+    jars = ["miglayout-core-5.0.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "miglayout-swing-5.0",
+    jars = ["miglayout-swing-5.0.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -510,8 +503,8 @@ java_import(
 )
 
 java_import(
-    name = "jsch-0.1.53",
-    jars = ["jsch-0.1.53.jar"],
+    name = "jsch-0.1.54",
+    jars = ["jsch-0.1.54.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -608,8 +601,8 @@ java_import(
 )
 
 java_import(
-    name = "ecj-4.5.2",
-    jars = ["ecj-4.5.2.jar"],
+    name = "ecj-4.6.2",
+    jars = ["ecj-4.6.2.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
@@ -631,6 +624,20 @@ java_import(
 java_import(
     name = "markdownj-core-0.4.2-SNAPSHOT",
     jars = ["markdownj-core-0.4.2-SNAPSHOT.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "streamex-0.6.2",
+    jars = ["streamex-0.6.2.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "snakeyaml-1.17",
+    jars = ["snakeyaml-1.17.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

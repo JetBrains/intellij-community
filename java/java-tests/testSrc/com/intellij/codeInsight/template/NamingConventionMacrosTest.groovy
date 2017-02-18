@@ -24,7 +24,7 @@ import junit.framework.TestCase
  */
 class NamingConventionMacrosTest extends TestCase {
 
-  public void "test capitalize and underscore"() {
+  void "test capitalize and underscore"() {
     assert "FOO_BAR" == cau("fooBar")
     assert "FOO_BAR" == cau("fooBar")
     assert "FOO_BAR" == cau("foo-Bar")
@@ -32,7 +32,7 @@ class NamingConventionMacrosTest extends TestCase {
     assert "" == cau("")
   }
 
-  public void "test snake case"() {
+  void "test snake case"() {
     assert "foo" == snakeCase("foo")
     assert "foo_bar" == snakeCase("foo-bar")
     assert "foo_bar" == snakeCase("fooBar")
@@ -44,25 +44,25 @@ class NamingConventionMacrosTest extends TestCase {
     assert "" == snakeCase("")
   }
 
-  public void "test lowercase and dash"() {
+  void "test lowercase and dash"() {
     assert "foo-bar" == new SplitWordsMacro.LowercaseAndDash().convertString("FOO_BAR")
     assert "" == new SplitWordsMacro.LowercaseAndDash().convertString("")
   }
 
-  public void "test to camel case"() {
+  void "test to camel case"() {
     assert "fooBar" == new ConvertToCamelCaseMacro().convertString("foo-bar")?.toString()
     assert "fooBar" == new ConvertToCamelCaseMacro().convertString("FOO-BAR")?.toString()
     assert "fooBar" == new ConvertToCamelCaseMacro().convertString("foo bar")?.toString()
     assert "" == new ConvertToCamelCaseMacro().convertString("")?.toString()
   }
 
-  public void "test space separated"() {
+  void "test space separated"() {
     assert "foo Bar" == new SplitWordsMacro.SpaceSeparated().convertString("fooBar")
     assert "foo bar" == new SplitWordsMacro.SpaceSeparated().convertString("foo-bar")
     assert "" == new SplitWordsMacro.SpaceSeparated().convertString("")
   }
 
-  public void "test underscoresToCamelCase"() {
+  void "test underscoresToCamelCase"() {
     assert "fooBar-goo" == new ConvertToCamelCaseMacro.ReplaceUnderscoresToCamelCaseMacro().convertString("foo_bar-goo")?.toString()
     assert "" == new ConvertToCamelCaseMacro.ReplaceUnderscoresToCamelCaseMacro().convertString("")?.toString()
   }

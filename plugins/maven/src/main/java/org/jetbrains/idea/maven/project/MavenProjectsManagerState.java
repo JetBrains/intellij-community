@@ -28,8 +28,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class MavenProjectsManagerState {
-  public List<String> originalFiles = new ArrayList<String>();
+  public List<String> originalFiles = new ArrayList<>();
 
-  public Set<String> ignoredFiles = new TreeSet<String>();
-  public List<String> ignoredPathMasks = new ArrayList<String>();
+  public Set<String> ignoredFiles = new TreeSet<>();
+  public List<String> ignoredPathMasks = new ArrayList<>();
 }

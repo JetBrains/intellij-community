@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnnecessarySemicolonInspection extends BaseInspection implements CleanupLocalInspectionTool {
-
   @Override
   @NotNull
   public String getDisplayName() {
@@ -64,15 +63,10 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
   }
 
   private static class UnnecessarySemicolonFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.semicolon.remove.quickfix");
     }
@@ -113,6 +107,12 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     public void visitImportList(PsiImportList list) {
       findTopLevelSemicolons(list);
       super.visitImportList(list);
+    }
+
+    @Override
+    public void visitModule(PsiJavaModule module) {
+      findTopLevelSemicolons(module);
+      super.visitModule(module);
     }
 
     private void findTopLevelSemicolons(PsiElement element) {
@@ -159,25 +159,18 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
       registerError(element, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }
 
-    private void findUnnecessarySemicolonsAfterEnumConstants(
-      @NotNull PsiClass aClass) {
+    private void findUnnecessarySemicolonsAfterEnumConstants(@NotNull PsiClass aClass) {
       PsiElement child = aClass.getFirstChild();
       while (child != null) {
         if (child instanceof PsiJavaToken) {
           final PsiJavaToken token = (PsiJavaToken)child;
           final IElementType tokenType = token.getTokenType();
           if (tokenType.equals(JavaTokenType.SEMICOLON)) {
-            final PsiElement prevSibling =
-              skipBackwardWhiteSpacesAndComments(child);
+            final PsiElement prevSibling = skipBackwardWhiteSpacesAndComments(child);
             if (!(prevSibling instanceof PsiEnumConstant)) {
               if (prevSibling instanceof PsiJavaToken) {
-                final PsiJavaToken javaToken =
-                  (PsiJavaToken)prevSibling;
-                final IElementType prevTokenType =
-                  javaToken.getTokenType();
-                if (!JavaTokenType.COMMA.equals(prevTokenType)
-                    && !JavaTokenType.LBRACE.equals(
-                  prevTokenType)) {
+                final IElementType prevTokenType = ((PsiJavaToken)prevSibling).getTokenType();
+                if (!JavaTokenType.COMMA.equals(prevTokenType) && !JavaTokenType.LBRACE.equals(prevTokenType)) {
                   registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
                 }
               }
@@ -192,17 +185,13 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     }
 
     @Nullable
-    private static PsiElement skipForwardWhiteSpacesAndComments(
-      PsiElement element) {
-      return PsiTreeUtil.skipSiblingsForward(element,
-                                             PsiWhiteSpace.class, PsiComment.class);
+    private static PsiElement skipForwardWhiteSpacesAndComments(PsiElement element) {
+      return PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class, PsiComment.class);
     }
 
     @Nullable
-    private static PsiElement skipBackwardWhiteSpacesAndComments(
-      PsiElement element) {
-      return PsiTreeUtil.skipSiblingsBackward(element,
-                                              PsiWhiteSpace.class, PsiComment.class);
+    private static PsiElement skipBackwardWhiteSpacesAndComments(PsiElement element) {
+      return PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class, PsiComment.class);
     }
 
     @Override

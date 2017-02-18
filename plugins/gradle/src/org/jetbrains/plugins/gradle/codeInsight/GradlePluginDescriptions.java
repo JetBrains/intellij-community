@@ -31,7 +31,7 @@ public class GradlePluginDescriptions implements GradlePluginDescriptionsExtensi
       "java,groovy,idea,eclipse,scala,antlr,application,ear,jetty,maven,osgi,war,announce," +
       "build-announcements,checkstyle,codenarc,eclipse-wtp,findbugs,jdepend,pmd,project-report,signing,sonar", ",");
 
-    Map<String, String> descriptions = new HashMap<String, String>(plugins.size());
+    Map<String, String> descriptions = new HashMap<>(plugins.size());
     for (String plugin : plugins) {
       descriptions.put(plugin, getDescription(plugin));
     }

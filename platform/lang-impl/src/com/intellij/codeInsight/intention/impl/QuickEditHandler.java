@@ -59,7 +59,6 @@ import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -404,7 +403,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final PsiFile origPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myOrigDocument);
     String newText = myNewDocument.getText();
     // prepare guarded blocks
-    LinkedHashMap<String, String> replacementMap = new LinkedHashMap<String, String>();
+    LinkedHashMap<String, String> replacementMap = new LinkedHashMap<>();
     int count = 0;
     for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
       String replacement = o.getUserData(REPLACEMENT_KEY);
@@ -430,16 +429,13 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
     // reformat
     PsiDocumentManager.getInstance(myProject).commitDocument(myOrigDocument);
-    Runnable task = () -> {
-      try {
-        CodeStyleManager.getInstance(myProject).reformatRange(
-          origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
-      }
-      catch (IncorrectOperationException e1) {
-        //LOG.error(e);
-      }
-    };
-    DocumentUtil.executeInBulk(myOrigDocument, true, task);
+    try {
+      CodeStyleManager.getInstance(myProject).reformatRange(
+        origPsiFile, hostStartOffset, myAltFullRange.getEndOffset(), true);
+    }
+    catch (IncorrectOperationException e1) {
+      //LOG.error(e);
+    }
 
     PsiElement newInjected = InjectedLanguageManager.getInstance(myProject).findInjectedElementAt(origPsiFile, hostStartOffset);
     DocumentWindow documentWindow = newInjected == null ? null : InjectedLanguageUtil.getDocumentWindow(newInjected);

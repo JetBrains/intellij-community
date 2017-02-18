@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 /**
- * Handles tooltip links in format <code>#navigation/file_path:offset</code>.
+ * Handles tooltip links in format {@code #navigation/file_path:offset}.
  * On a click opens specified file in an editor and positions caret to the given offset.
  */
 public class NavigationLinkHandler extends TooltipLinkHandler {

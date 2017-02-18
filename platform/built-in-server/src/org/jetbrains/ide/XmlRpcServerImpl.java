@@ -42,7 +42,7 @@ import java.util.Vector;
 public class XmlRpcServerImpl implements XmlRpcServer {
   private static final Logger LOG = Logger.getInstance(XmlRpcServerImpl.class);
 
-  private final Map<String, Object> handlerMapping = new THashMap<String, Object>();
+  private final Map<String, Object> handlerMapping = new THashMap<>();
 
   public XmlRpcServerImpl() {
   }

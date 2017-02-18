@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.lang.java.JavaLanguage;
@@ -31,7 +32,7 @@ import java.util.List;
 public class JavaReferenceImporter implements ReferenceImporter {
   @Override
   public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
-    return autoImportReferenceAtCursor(editor, file, false);
+    return CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY && autoImportReferenceAtCursor(editor, file, false);
   }
 
   public static boolean autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, final boolean allowCaretNearRef) {
@@ -61,6 +62,9 @@ public class JavaReferenceImporter implements ReferenceImporter {
 
   @Override
   public boolean autoImportReferenceAt(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
+    if (!CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) {
+      return false;
+    }
     if (!file.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE)) {
       return false;
     }

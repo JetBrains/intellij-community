@@ -42,7 +42,7 @@ public class ControlFlowCache {
     ControlFlow flow = SoftReference.dereference(ref);
     if (flow == null) {
       flow = new PyControlFlowBuilder().buildControlFlow(element);
-      element.putUserData(CONTROL_FLOW_KEY, new SoftReference<ControlFlow>(flow));
+      element.putUserData(CONTROL_FLOW_KEY, new SoftReference<>(flow));
     }
     return flow;
   }
@@ -53,7 +53,7 @@ public class ControlFlowCache {
     Scope scope = SoftReference.dereference(ref);
     if (scope == null) {
       scope = new ScopeImpl(element);
-      element.putUserData(SCOPE_KEY, new SoftReference<Scope>(scope));
+      element.putUserData(SCOPE_KEY, new SoftReference<>(scope));
     }
     return scope;
   }

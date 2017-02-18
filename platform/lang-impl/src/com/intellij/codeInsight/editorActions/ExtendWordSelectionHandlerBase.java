@@ -83,7 +83,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
   }
 
   public static List<TextRange> expandToWholeLine(CharSequence text, @Nullable TextRange range, boolean isSymmetric) {
-    List<TextRange> result = new ArrayList<TextRange>();
+    List<TextRange> result = new ArrayList<>();
 
     if (range == null) {
       return result;

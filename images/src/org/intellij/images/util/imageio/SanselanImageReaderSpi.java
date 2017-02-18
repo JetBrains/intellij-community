@@ -36,7 +36,7 @@ import java.util.*;
 
 public class SanselanImageReaderSpi extends ImageReaderSpi {
 
-  private ThreadLocal<ImageFormat> myFormat = new ThreadLocal<ImageFormat>();
+  private ThreadLocal<ImageFormat> myFormat = new ThreadLocal<>();
   private final List<ImageFormat> myFormats;
 
   public SanselanImageReaderSpi() {
@@ -49,7 +49,7 @@ public class SanselanImageReaderSpi extends ImageReaderSpi {
     // tiff reader seems to be broken
     // PNG reader has bugs with well-compressed PNG images, use standard one instead
     // BMP reader cannot handle images with negative height (top down images)
-    myFormats = new ArrayList<ImageFormat>(Arrays.asList(ImageFormat.getAllFormats()));
+    myFormats = new ArrayList<>(Arrays.asList(ImageFormat.getAllFormats()));
     myFormats.removeAll(Arrays.asList(ImageFormat.IMAGE_FORMAT_UNKNOWN,
                                          ImageFormat.IMAGE_FORMAT_JPEG,
                                          ImageFormat.IMAGE_FORMAT_TIFF,

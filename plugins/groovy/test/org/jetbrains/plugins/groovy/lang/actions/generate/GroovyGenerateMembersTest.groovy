@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +16,31 @@
 package org.jetbrains.plugins.groovy.lang.actions.generate
 
 import com.intellij.codeInsight.generation.*
-import com.intellij.openapi.application.Result
-import com.intellij.openapi.application.RunResult
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateGetterSetterAction
 import org.jetbrains.plugins.groovy.actions.generate.constructors.GroovyGenerateConstructorHandler
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author peter
  */
-public class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
-  public void testConstructorAtOffset() {
-    doConstructorTest();
+class GroovyGenerateMembersTest extends LightCodeInsightFixtureTestCase {
+  void testConstructorAtOffset() {
+    doConstructorTest()
   }
 
-  public void testConstructorAtEnd() {
-    doConstructorTest();
+  void testConstructorAtEnd() {
+    doConstructorTest()
   }
 
-  public void testLonelyConstructor() {
-    doConstructorTest();
+  void testLonelyConstructor() {
+    doConstructorTest()
   }
 
-  public void testConstructorInJavaInheritor() {
+  void testConstructorInJavaInheritor() {
     myFixture.configureByText "GrBase.groovy", """
 abstract class GrBase {
     GrBase(int i) { }
@@ -69,7 +61,7 @@ class Inheritor extends GrBase {
 """
   }
 
-  public void testExplicitArgumentTypes() {
+  void testExplicitArgumentTypes() {
     myFixture.configureByText("a.groovy", """
 class Super {
   def Super(a, int b) {}
@@ -374,36 +366,21 @@ class GrImportStatementStub {
   }
 
   private void generateGetter() {
-    //noinspection GroovyResultOfObjectAllocationIgnored
-    new GroovyGenerateGetterSetterAction() //don't remove it!!!
-    new WriteCommandAction(project, PsiFile.EMPTY_ARRAY) {
-      protected void run(@NotNull Result result) throws Throwable {
-        new GenerateGetterHandler() {
-          @Nullable
-          protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
-            return members
-          }
-        }.invoke(project, myFixture.editor, myFixture.file);
-        UIUtil.dispatchAllInvocationEvents()
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+    new GenerateGetterHandler() {
+      @Nullable
+      protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
+        return members
       }
-    }.execute()
+    }.invoke(project, myFixture.editor, myFixture.file)
   }
 
   private void generateSetter() {
-    //noinspection GroovyResultOfObjectAllocationIgnored
-    new GroovyGenerateGetterSetterAction() //don't remove it!!!
-    new WriteCommandAction(project, PsiFile.EMPTY_ARRAY) {
-      protected void run(@NotNull Result result) throws Throwable {
-        new GenerateSetterHandler() {
-          @Nullable
-          protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
-            return members
-          }
-        }.invoke(project, myFixture.editor, myFixture.file);
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+    new GenerateSetterHandler() {
+      @Nullable
+      protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
+        return members
       }
-    }.execute()
+    }.invoke(project, myFixture.editor, myFixture.file)
   }
 
   private void doConstructorTest(String before = null, String after = null) {
@@ -411,24 +388,24 @@ class GrImportStatementStub {
       myFixture.configureByText('_a.groovy', before)
     }
     else {
-      myFixture.configureByFile(getTestName(false) + ".groovy");
+      myFixture.configureByFile(getTestName(false) + ".groovy")
     }
-    generateConstructor();
+    generateConstructor()
     if (after != null) {
       myFixture.checkResult(after)
     }
     else {
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+      myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
     }
   }
 
-  private RunResult generateConstructor(boolean javaHandler = false) {
+  private void generateConstructor(boolean javaHandler = false) {
     GenerateMembersHandlerBase handler
     if (javaHandler) {
       handler = new GenerateConstructorHandler() {
         @Override
         protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
-          return members;
+          return members
         }
       }
     }
@@ -443,12 +420,8 @@ class GrImportStatementStub {
       }
     }
 
-    return new WriteCommandAction(project, new PsiFile[0]) {
-      protected void run(@NotNull Result result) throws Throwable {
-        handler.invoke(project, myFixture.editor, myFixture.file);
-        PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
-      }
-    }.execute()
+    handler.invoke(project, myFixture.editor, myFixture.file)
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
   }
 
   final String basePath = TestUtils.testDataPath + "generate"

@@ -36,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -70,9 +71,11 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     project.getMessageBus().connect().subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
       @Override
       public void powerSaveStateChanged() {
-        for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-          ((EditorEx)editor).reinitSettings();
-        }
+        UIUtil.invokeLaterIfNeeded(() -> {
+          for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+            ((EditorEx)editor).reinitSettings();
+          }
+        });
       }
     });
   }

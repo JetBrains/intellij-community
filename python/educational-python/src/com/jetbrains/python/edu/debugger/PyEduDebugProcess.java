@@ -55,7 +55,7 @@ class PyEduDebugProcess extends PyDebugProcess {
   @NotNull
   @Override
   protected PySuspendContext createSuspendContext(PyThreadInfo threadInfo) {
-    threadInfo.updateState(threadInfo.getState(), new ArrayList<PyStackFrameInfo>(filterFrames(threadInfo.getFrames())));
+    threadInfo.updateState(threadInfo.getState(), new ArrayList<>(filterFrames(threadInfo.getFrames())));
     return new PySuspendContext(this, threadInfo);
   }
 
@@ -82,6 +82,7 @@ class PyEduDebugProcess extends PyDebugProcess {
       @Override
       public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
         final PythonDebugLanguageConsoleView view = ((PythonDebugLanguageConsoleView)console);
+        view.initialized();
         view.enableConsole(false);
 
         Content eduConsole =

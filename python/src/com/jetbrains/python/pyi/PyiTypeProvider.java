@@ -91,42 +91,49 @@ public class PyiTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     if (callSite != null) {
       final PsiElement pythonStub = PyiUtil.getPythonStub(function);
+
       if (pythonStub instanceof PyFunction) {
-        final PyFunction functionStub = (PyFunction)pythonStub;
-        return getOverloadedCallType(functionStub, callSite, context);
+        return getOverloadedCallType((PyFunction)pythonStub, callSite, context);
       }
       else if (function.getContainingFile() instanceof PyiFile) {
         return getOverloadedCallType(function, callSite, context);
       }
     }
+
     return null;
   }
 
   @Nullable
-  private static PyType getOverloadedCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite,
-                                              @NotNull TypeEvalContext context) {
+  private static Ref<PyType> getOverloadedCallType(@NotNull PyFunction function,
+                                                   @NotNull PyCallSiteExpression callSite,
+                                                   @NotNull TypeEvalContext context) {
     if (isOverload(function, context)) {
-      final List<PyType> matchedReturnTypes = new ArrayList<PyType>();
-      final List<PyType> allReturnTypes = new ArrayList<PyType>();
       final List<PyFunction> overloads = getOverloads(function, context);
+      final List<PyType> allReturnTypes = new ArrayList<>();
+      final List<PyType> matchedReturnTypes = new ArrayList<>();
+
       for (PyFunction overload : overloads) {
-        final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload, context);
-        final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
-        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
         final PyType returnType = context.getReturnType(overload);
         if (!PyTypeChecker.hasGenerics(returnType, context)) {
           allReturnTypes.add(returnType);
         }
+
+        final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
+        final Map<PyExpression, PyNamedParameter> mapping = mapArguments(callSite, overload, context);
+        final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping, context);
+
         final PyType unifiedType = substitutions != null ? PyTypeChecker.substitute(returnType, substitutions, context) : null;
         if (unifiedType != null) {
           matchedReturnTypes.add(unifiedType);
         }
       }
-      return PyUnionType.union(matchedReturnTypes.isEmpty() ? allReturnTypes : matchedReturnTypes);
+
+      return Ref.create(PyUnionType.union(matchedReturnTypes.isEmpty() ? allReturnTypes : matchedReturnTypes));
     }
+
     return null;
   }
 
@@ -148,7 +155,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   private static PyType getOverloadType(@NotNull PyFunction function, @NotNull final TypeEvalContext context) {
     final List<PyFunction> overloads = getOverloads(function, context);
     if (!overloads.isEmpty()) {
-      final List<PyType> overloadTypes = new ArrayList<PyType>();
+      final List<PyType> overloadTypes = new ArrayList<>();
       for (PyFunction overload : overloads) {
         overloadTypes.add(new PyFunctionTypeImpl(overload));
       }
@@ -161,7 +168,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   private static List<PyFunction> getOverloads(@NotNull PyFunction function, final @NotNull TypeEvalContext context) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(function);
     final String name = function.getName();
-    final List<PyFunction> overloads = new ArrayList<PyFunction>();
+    final List<PyFunction> overloads = new ArrayList<>();
     final Processor<PyFunction> overloadsProcessor = f -> {
       if (name != null && name.equals(f.getName()) && isOverload(f, context)) {
         overloads.add(f);

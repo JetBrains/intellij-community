@@ -57,23 +57,15 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
     final VirtualFile[] files = getFiles(e);
     if (project == null || files == null || files.length == 0) return;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        for (VirtualFile file : files) {
-          if (file instanceof NewVirtualFile) {
-            ((NewVirtualFile)file).markDirtyRecursively();
-          }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (VirtualFile file : files) {
+        if (file instanceof NewVirtualFile) {
+          ((NewVirtualFile)file).markDirtyRecursively();
         }
       }
     });
 
-    RefreshQueue.getInstance().refresh(true, true, new Runnable() {
-      @Override
-      public void run() {
-        postRefresh(project, files);
-      }
-    }, files);
+    RefreshQueue.getInstance().refresh(true, true, () -> postRefresh(project, files), files);
   }
 
   private static void postRefresh(Project project, VirtualFile[] files) {

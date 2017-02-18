@@ -24,6 +24,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -83,7 +84,7 @@ public class TipPanel extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    return new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+    return new JBDimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
   }
 
   public void prevTip() {

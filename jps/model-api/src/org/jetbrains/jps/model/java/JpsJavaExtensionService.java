@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,6 @@ public abstract class JpsJavaExtensionService {
   @Nullable
   public abstract JpsJavaProjectExtension getProjectExtension(@NotNull JpsProject project);
 
-
   @NotNull
   public abstract JpsJavaModuleExtension getOrCreateModuleExtension(@NotNull JpsModule module);
 
@@ -101,8 +100,7 @@ public abstract class JpsJavaExtensionService {
   @Nullable
   public abstract File getOutputDirectory(JpsModule module, boolean forTests);
 
-  public abstract JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name,
-                                                                      @NotNull String homePath);
+  public abstract JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath);
 
   @Nullable
   public abstract JpsJavaCompilerConfiguration getCompilerConfiguration(@NotNull JpsProject project);
@@ -130,4 +128,7 @@ public abstract class JpsJavaExtensionService {
 
   @NotNull
   public abstract JavaResourceRootProperties createResourceRootProperties(@NotNull String relativeOutputPath, boolean forGeneratedResource);
+
+  @NotNull
+  public abstract JavaModuleIndex getJavaModuleIndex(@NotNull JpsProject project, @NotNull File storageRoot);
 }

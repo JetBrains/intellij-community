@@ -111,7 +111,7 @@ public class ZoomingDelegate {
 
       if (myCachedImage == null) {
         Rectangle bounds = myViewportComponent.getBounds();
-        BufferedImage image = UIUtil.createImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
+        BufferedImage image = UIUtil.createImage(myViewportComponent.getGraphics(), bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB);
 
         Graphics graphics = image.getGraphics();
         graphics.setClip(0, 0, bounds.width, bounds.height);

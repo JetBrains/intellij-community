@@ -37,7 +37,7 @@ public class ControlledCycle {
 
   private final AtomicBoolean myActive;
 
-  public ControlledCycle(final Project project, final Getter<Boolean> callback, @NotNull final String name, final int refreshInterval) {
+  public ControlledCycle(@NotNull Project project, final Getter<Boolean> callback, @NotNull final String name, final int refreshInterval) {
     myRefreshInterval = (refreshInterval <= 0) ? ourRefreshInterval : refreshInterval;
     myActive = new AtomicBoolean(false);
     myRunnable = new Runnable() {

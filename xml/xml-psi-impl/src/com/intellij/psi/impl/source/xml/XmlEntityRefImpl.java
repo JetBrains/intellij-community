@@ -98,7 +98,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     return RecursionManager.doPreventingRecursion(targetElement, true, new Computable<CachedValueProvider.Result<XmlEntityDecl>>() {
       @Override
       public CachedValueProvider.Result<XmlEntityDecl> compute() {
-        final List<PsiElement> deps = new ArrayList<PsiElement>();
+        final List<PsiElement> deps = new ArrayList<>();
         final XmlEntityDecl[] result = {null};
 
         PsiElementProcessor processor = new PsiElementProcessor() {
@@ -177,7 +177,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           }
         }
 
-        return new CachedValueProvider.Result<XmlEntityDecl>(result[0], ArrayUtil.toObjectArray(deps));
+        return new CachedValueProvider.Result<>(result[0], ArrayUtil.toObjectArray(deps));
       }
     });
   }

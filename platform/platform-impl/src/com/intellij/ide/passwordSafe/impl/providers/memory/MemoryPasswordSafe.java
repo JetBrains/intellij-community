@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeTimed;
 import com.intellij.ide.passwordSafe.impl.providers.BasePasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper;
 import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,11 +33,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * so all passwords are forgotten after application exit. Some efforts are done to complicate retrieving passwords
  * from page file. However the passwords could be still retrieved from the memory using debugger or full memory dump.
  */
+@Deprecated
+// used in https://github.com/groboclown/p4ic4idea, cannot be deleted
 public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   /**
    * The key to use to encrypt data
    */
-  private final transient AtomicReference<byte[]> key = new AtomicReference<byte[]>();
+  private final transient AtomicReference<byte[]> key = new AtomicReference<>();
   /**
    * The password database
    */
@@ -60,7 +61,7 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
 
   @NotNull
   @Override
-  protected byte[] key(Project project, @NotNull Class requestor) {
+  protected byte[] key() {
     if (key.get() == null) {
       byte[] rnd = new byte[EncryptionUtil.SECRET_KEY_SIZE_BYTES * 16];
       new SecureRandom().nextBytes(rnd);
@@ -70,7 +71,7 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   }
 
   @Override
-  protected byte[] getEncryptedPassword(byte[] key) {
+  protected byte[] getEncryptedPassword(@NotNull byte[] key) {
     return database.get().get(new ByteArrayWrapper(key));
   }
 
@@ -82,21 +83,6 @@ public class MemoryPasswordSafe extends BasePasswordSafeProvider {
   @Override
   protected void storeEncryptedPassword(byte[] key, byte[] encryptedPassword) {
     database.get().put(new ByteArrayWrapper(key), encryptedPassword);
-  }
-
-  @Override
-  public boolean isSupported() {
-    return true;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Memory-based password safe provider. The passwords are stored only for the duration of IDEA process.";
-  }
-
-  @Override
-  public String getName() {
-    return "Memory PasswordSafe";
   }
 
   public void clear() {

@@ -622,7 +622,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     MavenProject project = myTree.findProject(myProjectPom);
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
-    final List<NativeMavenProjectHolder> nativeProject = new ArrayList<NativeMavenProjectHolder>();
+    final List<NativeMavenProjectHolder> nativeProject = new ArrayList<>();
     try {
       myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
         @Override
@@ -1869,7 +1869,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     File f = new File(myDir, "tree.dat");
     myTree.save(f);
-    MavenProjectsTree read = MavenProjectsTree.read(f);
+    MavenProjectsTree read = MavenProjectsTree.read(myProject, f);
 
     List<MavenProject> roots = read.getRootProjects();
     assertEquals(1, roots.size());

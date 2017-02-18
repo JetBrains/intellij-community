@@ -9,8 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="testFramework" />
-    <orderEntry type="library" name="cucumber-core" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="cucumber-core" level="project" />
     <orderEntry type="module" module-name="cucumber-jvm-formatter" scope="RUNTIME" />
-    <orderEntry type="library" name="cucumber-java" level="project" />
   </component>
 </module>

@@ -33,7 +33,7 @@ import java.util.ArrayList;
  */
 public abstract class CloseEditorsActionBase extends AnAction implements DumbAware {
   protected ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
-    final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
+    final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<>();
     final DataContext dataContext = event.getDataContext();
     final Project project = event.getData(CommonDataKeys.PROJECT);
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);

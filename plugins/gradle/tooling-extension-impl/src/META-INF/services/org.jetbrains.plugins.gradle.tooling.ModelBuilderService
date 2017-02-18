@@ -19,3 +19,4 @@ org.jetbrains.plugins.gradle.tooling.builder.ModuleExtendedModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ScalaModelBuilderImpl
 org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl
+org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl

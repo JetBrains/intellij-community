@@ -64,7 +64,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     assert baseDir != null;
     final Change[] changes = myForPerformConvertor.convert(e);
     if (changes == null || changes.length == 0) return;
-    final List<Change> changesList = new ArrayList<Change>();
+    final List<Change> changesList = new ArrayList<>();
     Collections.addAll(changesList, changes);
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -80,7 +80,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
       return;
     }
 
-    final List<FilePatch> patches = new ArrayList<FilePatch>();
+    final List<FilePatch> patches = new ArrayList<>();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("revert.changes.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

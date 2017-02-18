@@ -208,7 +208,9 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     final AbstractTreeStructure structure = getTreeStructure();
     structure.asyncCommit().doWhenDone(() -> {
       ((SmartTreeStructure)structure).rebuildTree();
-      getUpdater().addSubtreeToUpdate(getRootNode());
+      if (!isDisposed()) {
+        getUpdater().addSubtreeToUpdate(getRootNode());
+      }
     });
   }
 

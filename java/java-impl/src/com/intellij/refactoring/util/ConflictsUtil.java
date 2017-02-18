@@ -53,7 +53,7 @@ public class ConflictsUtil {
   }
 
   public static void checkMethodConflicts(@Nullable PsiClass aClass,
-                                          PsiMethod refactoredMethod,
+                                          @Nullable PsiMethod refactoredMethod,
                                           final PsiMethod prototype,
                                           final MultiMap<PsiElement,String> conflicts) {
     if (prototype == null) return;

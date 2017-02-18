@@ -64,8 +64,8 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     final Collection<PsiClass> classes = JavaShortClassNameIndex.getInstance().get(name, myManager.getProject(), scope);
 
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
-    ArrayList<PsiClass> list = new ArrayList<PsiClass>(classes.size());
-    Map<String, List<PsiClass>> uniqueQName2Classes = new THashMap<String, List<PsiClass>>(classes.size());
+    ArrayList<PsiClass> list = new ArrayList<>(classes.size());
+    Map<String, List<PsiClass>> uniqueQName2Classes = new THashMap<>(classes.size());
     Set<PsiClass> hiddenClassesToRemove = null;
 
     OuterLoop:
@@ -79,7 +79,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
         List<PsiClass> qNamedClasses;
 
         if (previousQNamedClasses != null) {
-          qNamedClasses = new SmartList<PsiClass>();
+          qNamedClasses = new SmartList<>();
 
           for(PsiClass previousClass:previousQNamedClasses) {
             VirtualFile previousClassVFile = previousClass.getContainingFile().getVirtualFile();
@@ -89,7 +89,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
             }
             else if (res < 0) {
               // aClass hides previousClass in classpath, so remove it from list later
-              if (hiddenClassesToRemove == null) hiddenClassesToRemove = new THashSet<PsiClass>();
+              if (hiddenClassesToRemove == null) hiddenClassesToRemove = new THashSet<>();
               hiddenClassesToRemove.add(previousClass);
               qNamedClasses.add(aClass);
             } else {
@@ -97,7 +97,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
             }
           }
         } else {
-          qNamedClasses = new SmartList<PsiClass>(aClass);
+          qNamedClasses = new SmartList<>(aClass);
         }
         uniqueQName2Classes.put(qName, qNamedClasses);
       }
@@ -156,7 +156,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public PsiMethod[] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
-    final List<PsiMethod> methods = new SmartList<PsiMethod>();
+    final List<PsiMethod> methods = new SmartList<>();
     StubIndex.getInstance().processElements(JavaStubIndexKeys.METHODS, name, myManager.getProject(), scope, PsiMethod.class, new
                                             CommonProcessors.CollectProcessor < PsiMethod > (methods){
     @Override
@@ -191,7 +191,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   @Override
   @NotNull
   public PsiField[] getFieldsByNameIfNotMoreThan(@NotNull String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
-    final List<PsiField> methods = new SmartList<PsiField>();
+    final List<PsiField> methods = new SmartList<>();
     StubIndex.getInstance().processElements(JavaStubIndexKeys.FIELDS, name, myManager.getProject(), scope, PsiField.class, new
                                             CommonProcessors.CollectProcessor < PsiField > (methods){
     @Override
@@ -256,8 +256,8 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   }
 
   private <T extends PsiMember> List<T> filterMembers(Collection<T> members, final GlobalSearchScope scope) {
-    List<T> result = new ArrayList<T>(members.size());
-    Set<PsiMember> set = new THashSet<PsiMember>(members.size(), new TObjectHashingStrategy<PsiMember>() {
+    List<T> result = new ArrayList<>(members.size());
+    Set<PsiMember> set = new THashSet<>(members.size(), new TObjectHashingStrategy<PsiMember>() {
       @Override
       public int computeHashCode(PsiMember member) {
         int code = 0;

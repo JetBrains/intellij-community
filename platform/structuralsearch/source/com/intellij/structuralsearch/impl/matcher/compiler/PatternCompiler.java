@@ -77,7 +77,7 @@ public class PatternCompiler {
 
       if (context.getSearchHelper().doOptimizing() && context.getSearchHelper().isScannedSomething()) {
         final Set<PsiFile> set = context.getSearchHelper().getFilesSetToScan();
-        final List<PsiFile> filesToScan = new ArrayList<PsiFile>(set.size());
+        final List<PsiFile> filesToScan = new ArrayList<>(set.size());
         final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
 
         for (final PsiFile file : set) {
@@ -487,7 +487,7 @@ public class PatternCompiler {
 
     GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
     compilingVisitor.compile(matchStatements,context);
-    ArrayList<PsiElement> elements = new ArrayList<PsiElement>();
+    ArrayList<PsiElement> elements = new ArrayList<>();
 
     for (PsiElement matchStatement : matchStatements) {
       if (!filter.accepts(matchStatement)) {
@@ -500,7 +500,7 @@ public class PatternCompiler {
   }
 
   private static void addExtensionPredicates(MatchOptions options, MatchVariableConstraint constraint, SubstitutionHandler handler) {
-    Set<MatchPredicate> predicates = new LinkedHashSet<MatchPredicate>();
+    Set<MatchPredicate> predicates = new LinkedHashSet<>();
     for (MatchPredicateProvider matchPredicateProvider : Extensions.getExtensions(MatchPredicateProvider.EP_NAME)) {
       matchPredicateProvider.collectPredicates(constraint, handler.getName(), options, predicates);
     }

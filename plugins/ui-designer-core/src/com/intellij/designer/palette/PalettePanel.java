@@ -154,8 +154,8 @@ public class PalettePanel extends JPanel implements DataProvider, PaletteToolWin
     }
     else {
       myGroups = designer.getPaletteGroups();
-      myGroupComponents = new ArrayList<PaletteGroupComponent>();
-      myItemsComponents = new ArrayList<PaletteItemsComponent>();
+      myGroupComponents = new ArrayList<>();
+      myItemsComponents = new ArrayList<>();
     }
 
     for (PaletteGroup group : myGroups) {

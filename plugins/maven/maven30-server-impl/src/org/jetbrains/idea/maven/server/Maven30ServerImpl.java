@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 
@@ -33,9 +34,10 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     }
   }
 
-  public MavenServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException {
+  @Override
+  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     try {
-      Maven30ServerEmbedderImpl result = new Maven30ServerEmbedderImpl(settings);
+      Maven30ServerEmbedderImpl result = new Maven30ServerEmbedderImpl(settings.getSettings());
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
@@ -60,6 +62,7 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     }
   }
 
+  @NotNull
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
     try {
       return Maven30ServerEmbedderImpl.interpolateAndAlignModel(model, basedir);

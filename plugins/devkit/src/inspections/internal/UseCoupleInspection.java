@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.UseCoupleQuickFix;
 
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class UseCoupleInspection extends InternalInspection {
+public class UseCoupleInspection extends DevKitInspectionBase {
   private static final String PAIR_FQN = "com.intellij.openapi.util.Pair";
 
   @Override

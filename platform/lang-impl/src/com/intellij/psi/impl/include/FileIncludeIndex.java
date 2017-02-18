@@ -47,7 +47,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   private static final int BASE_VERSION = 5;
 
   public static List<FileIncludeInfoImpl> getIncludes(VirtualFile file, GlobalSearchScope scope) {
-    final List<FileIncludeInfoImpl> result = new ArrayList<FileIncludeInfoImpl>();
+    final List<FileIncludeInfoImpl> result = new ArrayList<>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
       @Override
       public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
@@ -59,7 +59,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
   }
 
   public static MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, GlobalSearchScope scope) {
-    final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<VirtualFile, FileIncludeInfoImpl>();
+    final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, new IncludeKey(fileName), null, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
       @Override
       public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
@@ -91,7 +91,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
         Map<Key, List<FileIncludeInfoImpl>> map = new FactoryMap<Key, List<FileIncludeInfoImpl>>() {
           @Override
           protected List<FileIncludeInfoImpl> create(Key key) {
-            return new ArrayList<FileIncludeInfoImpl>();
+            return new ArrayList<>();
           }
         };
 
@@ -158,7 +158,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       @Override
       public List<FileIncludeInfoImpl> read(@NotNull DataInput in) throws IOException {
         int size = in.readInt();
-        ArrayList<FileIncludeInfoImpl> infos = new ArrayList<FileIncludeInfoImpl>(size);
+        ArrayList<FileIncludeInfoImpl> infos = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
           infos.add(new FileIncludeInfoImpl(IOUtil.readUTF(in), in.readInt(), in.readBoolean(), IOUtil.readUTF(in)));
         }

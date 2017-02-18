@@ -1,0 +1,7 @@
+class Log {
+  {
+    try {
+
+    } <caret>
+  }
+}

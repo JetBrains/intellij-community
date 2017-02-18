@@ -67,7 +67,7 @@ public abstract class OccurrencesChooser<T> {
     };
   }
 
-  private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<RangeHighlighter>();
+  private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<>();
   private final Editor myEditor;
   private final TextAttributes myAttributes;
 

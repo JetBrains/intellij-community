@@ -37,6 +37,10 @@ public class InspectionSearchableOptionContributor extends SearchableOptionContr
                            InspectionToolsConfigurable.ID,
                            InspectionToolsConfigurable.DISPLAY_NAME, false);
 
+      for (String group : toolWrapper.getGroupPath()) {
+        processor.addOptions(group, toolWrapper.getShortName(), hit, InspectionToolsConfigurable.ID, InspectionToolsConfigurable.DISPLAY_NAME, false);
+      }
+
       final String description = toolWrapper.loadDescription();
       if (description != null) {
         @NonNls String descriptionText = HTML_PATTERN.matcher(description).replaceAll(" ");

@@ -24,7 +24,7 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.startup.StartupManager;
@@ -64,7 +64,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
 
   @Override
   public boolean isStepVisible() {
-    final Ref<Boolean> result = new Ref<Boolean>(false);
+    final Ref<Boolean> result = new Ref<>(false);
     new RootIterator() {
 
       @Override
@@ -83,7 +83,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
   @Override
   public void updateDataModel() {
     super.updateDataModel();
-    final MultiMap<CloudGitProjectRoot, DetectedSourceRoot> project2sourceRoots = new MultiMap<CloudGitProjectRoot, DetectedSourceRoot>();
+    final MultiMap<CloudGitProjectRoot, DetectedSourceRoot> project2sourceRoots = new MultiMap<>();
     new RootIterator() {
 
       CloudGitProjectRoot lastProjectRoot = null;
@@ -91,7 +91,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
       @Override
       protected void processProjectRoot(CloudGitProjectRoot root) {
         lastProjectRoot = root;
-        project2sourceRoots.put(lastProjectRoot, new ArrayList<DetectedSourceRoot>());
+        project2sourceRoots.put(lastProjectRoot, new ArrayList<>());
       }
 
       @Override
@@ -100,7 +100,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
       }
     }.iterate();
 
-    List<ModuleDescriptor> modules = new ArrayList<ModuleDescriptor>(myProjectDescriptor.getModules());
+    List<ModuleDescriptor> modules = new ArrayList<>(myProjectDescriptor.getModules());
     for (Map.Entry<CloudGitProjectRoot, Collection<DetectedSourceRoot>> project2sourceRootsEntry : project2sourceRoots.entrySet()) {
       final CloudGitProjectRoot projectRoot = project2sourceRootsEntry.getKey();
       final File directory = projectRoot.getDirectory();
@@ -111,7 +111,7 @@ public class CloudGitChooseAccountStepImpl extends CloudGitChooseAccountStepBase
         @Override
         public void update(final @NotNull Module module, @NotNull ModifiableRootModel rootModel) {
           final MessageBusConnection connection = module.getProject().getMessageBus().connect();
-          connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+          connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
 
             @Override
             public void moduleAdded(@NotNull Project project, @NotNull Module addedModule) {

@@ -27,15 +27,31 @@ import java.util.EventListener;
  */
 public interface ExecutionListener extends EventListener {
 
-  void processStartScheduled(String executorId, ExecutionEnvironment env);
+  default void processStartScheduled(@NotNull String executorId, @NotNull ExecutionEnvironment env) {}
   
-  void processStarting(String executorId, @NotNull ExecutionEnvironment env);
+  default void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {}
 
-  void processNotStarted(String executorId, @NotNull ExecutionEnvironment env);
+  default void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env) {}
 
-  void processStarted(String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler);
+  default void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {}
 
-  void processTerminating(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler);
+  default void processTerminating(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) { 
+    processTerminating(env.getRunProfile(), handler);
+  }
+  
+  default void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+    processTerminated(env.getRunProfile(), handler);
+  }
 
-  void processTerminated(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler);
+  /**
+   * @deprecated use {@link #processTerminating(String, ExecutionEnvironment, ProcessHandler)}
+   */
+  @Deprecated
+  default void processTerminating(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler) {}
+
+  /**
+   * @deprecated use {@link #processTerminated(String, ExecutionEnvironment, ProcessHandler, int)}
+   */
+  @Deprecated
+  default void processTerminated(@NotNull RunProfile runProfile, @NotNull ProcessHandler handler) {}
 }

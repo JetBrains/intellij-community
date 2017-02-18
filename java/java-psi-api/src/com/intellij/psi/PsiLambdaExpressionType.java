@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 public class PsiLambdaExpressionType extends PsiType {
   private final PsiLambdaExpression myExpression;
 
-  public PsiLambdaExpressionType(PsiLambdaExpression expression) {
+  public PsiLambdaExpressionType(@NotNull PsiLambdaExpression expression) {
     super(TypeAnnotationProvider.EMPTY);
     myExpression = expression;
   }
@@ -33,19 +32,13 @@ public class PsiLambdaExpressionType extends PsiType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return "<lambda expression>";
+    return getCanonicalText();
   }
 
   @NotNull
   @Override
   public String getCanonicalText() {
-    return getPresentableText();
-  }
-
-  @NotNull
-  @Override
-  public String getInternalCanonicalText() {
-    return getCanonicalText();
+    return "<lambda expression>";
   }
 
   @Override
@@ -54,12 +47,12 @@ public class PsiLambdaExpressionType extends PsiType {
   }
 
   @Override
-  public boolean equalsToText(@NotNull @NonNls final String text) {
+  public boolean equalsToText(@NotNull String text) {
     return false;
   }
 
   @Override
-  public <A> A accept(@NotNull final PsiTypeVisitor<A> visitor) {
+  public <A> A accept(@NotNull PsiTypeVisitor<A> visitor) {
     return visitor.visitLambdaExpressionType(this);
   }
 

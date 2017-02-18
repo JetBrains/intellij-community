@@ -86,8 +86,8 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
   }
 
   private static boolean doCompleteIfNeeded(int offset, PsiFile file, PsiElement lastElement) {
-    final Ref<Boolean> isRelevantLanguage = new Ref<Boolean>();
-    final Ref<Boolean> isAnt = new Ref<Boolean>();
+    final Ref<Boolean> isRelevantLanguage = new Ref<>();
+    final Ref<Boolean> isAnt = new Ref<>();
     String text = lastElement.getText();
     final int len = offset - lastElement.getTextRange().getStartOffset();
     if (len < text.length()) {

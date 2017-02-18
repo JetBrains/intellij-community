@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,26 +34,39 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @auther ven
  */
-public class ReachingDefsTest extends LightCodeInsightFixtureTestCase {
+class ReachingDefsTest extends LightCodeInsightFixtureTestCase {
 
   String basePath = TestUtils.testDataPath + 'groovy/reachingDefs/'
 
-  public void testAssign() { doTest() }
-  public void testClosure() { doTest() }
-  public void testClosure1() { doTest() }
-  public void testEm1() { doTest() }
-  public void testEm2() { doTest() }
-  public void testEm3() { doTest() }
-  public void testIf1() { doTest() }
-  public void testInner() { doTest() }
-  public void testLocal1() { doTest() }
-  public void testLocal2() { doTest() }
-  public void testSimpl1() { doTest() }
-  public void testSimpl2() { doTest() }
-  public void testSimpl3() { doTest() }
-  public void testWhile1() { doTest() }
+  void testAssign() { doTest() }
 
-  public void doTest() {
+  void testClosure() { doTest() }
+
+  void testClosure1() { doTest() }
+
+  void testEm1() { doTest() }
+
+  void testEm2() { doTest() }
+
+  void testEm3() { doTest() }
+
+  void testIf1() { doTest() }
+
+  void testInner() { doTest() }
+
+  void testLocal1() { doTest() }
+
+  void testLocal2() { doTest() }
+
+  void testSimpl1() { doTest() }
+
+  void testSimpl2() { doTest() }
+
+  void testSimpl3() { doTest() }
+
+  void testWhile1() { doTest() }
+
+  void doTest() {
     final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
     String text = data.get(0)
 

@@ -65,7 +65,7 @@ public class ExternalProjectsState {
 
       @Override
       protected Map<String, TaskActivationState> createMap() {
-        return new LinkedHashMap<String, TaskActivationState>();
+        return new LinkedHashMap<>();
       }
     };
 

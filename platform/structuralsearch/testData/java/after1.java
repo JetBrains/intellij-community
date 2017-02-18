@@ -8,7 +8,6 @@ package somepackage;
  * Title: ForecastSummaryReportTest
  */
 public class ForecastSummaryReportTest extends SOTestCase {
-
     ForecastSummaryReport oReport = null;
     ScheduleGroupData oSkdgrp = null;
     SODate oStart = null;
@@ -79,4 +78,5 @@ public class ForecastSummaryReportTest extends SOTestCase {
         oReport.refresh();
         assertNotNull(oReport);
     }
+
 }

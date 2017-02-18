@@ -13,7 +13,7 @@ import java.util.Map;
  * @author traff
  */
 public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
-  private final Map<String, String> myEnvs = new LinkedHashMap<String, String>();
+  private final Map<String, String> myEnvs = new LinkedHashMap<>();
   private boolean myPassParentEnvs = true;
 
   public AbstractRunConfiguration(String name, RunConfigurationModule configurationModule, ConfigurationFactory factory) {

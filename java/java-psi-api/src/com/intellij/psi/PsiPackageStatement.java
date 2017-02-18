@@ -16,7 +16,7 @@
 package com.intellij.psi;
 
 /**
- * Represents a <code>package</code> Java statement.
+ * Represents a {@code package} Java statement.
  */
 public interface PsiPackageStatement extends PsiElement {
   /**

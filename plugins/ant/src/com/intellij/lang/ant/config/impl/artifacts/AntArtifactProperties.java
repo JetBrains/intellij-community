@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,8 +129,7 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensi
     String targetName = getTargetName();
     if (fileUrl == null || targetName == null) return null;
 
-    final AntBuildFile[] buildFiles = antConfiguration.getBuildFiles();
-    for (AntBuildFile buildFile : buildFiles) {
+    for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       final VirtualFile file = buildFile.getVirtualFile();
       if (file != null && file.getUrl().equals(fileUrl)) {
         final AntBuildModel buildModel = buildFile.getModel();
@@ -141,7 +140,7 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensi
   }
 
   public List<BuildFileProperty> getAllProperties(@NotNull Artifact artifact) {
-    final List<BuildFileProperty> properties = new ArrayList<BuildFileProperty>();
+    final List<BuildFileProperty> properties = new ArrayList<>();
     properties.add(new BuildFileProperty(JpsAntArtifactExtensionImpl.ARTIFACT_OUTPUT_PATH_PROPERTY, artifact.getOutputPath()));
     properties.addAll(myExtensionProperties.myUserProperties);
     return properties;

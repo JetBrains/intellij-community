@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Kirill Likhodedov
  * @author Nadya Zabrodina
  */
-public class RootAction<T extends Repository> extends ActionGroup {
+public class RootAction<T extends Repository> extends ActionGroup implements PopupElementWithAdditionalInfo {
 
   @NotNull protected final T myRepository;
   @NotNull private final ActionGroup myGroup;
@@ -55,18 +55,19 @@ public class RootAction<T extends Repository> extends ActionGroup {
 
   @NotNull
   public String getCaption() {
-    return "Current branch in " + DvcsUtil.getShortRepositoryName(myRepository) + ": " + getDisplayableBranchText();
-  }
-
-  @NotNull
-  public String getDisplayableBranchText() {
-    return myBranchText;
+    return "Current branch in " + DvcsUtil.getShortRepositoryName(myRepository) + ": " + getInfoText();
   }
 
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myGroup.getChildren(e);
+  }
+
+  @NotNull
+  @Override
+  public String getInfoText() {
+    return myBranchText;
   }
 }
 

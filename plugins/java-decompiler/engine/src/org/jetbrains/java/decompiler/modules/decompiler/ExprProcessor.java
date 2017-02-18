@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class ExprProcessor implements CodeConstants {
   public static final String UNKNOWN_TYPE_STRING = "<unknown>";
   public static final String NULL_TYPE_STRING = "<null>";
 
-  private static final Map<Integer, Integer> mapConsts = new HashMap<Integer, Integer>();
+  private static final Map<Integer, Integer> mapConsts = new HashMap<>();
   static {
     mapConsts.put(opc_arraylength, FunctionExprent.FUNCTION_ARRAY_LENGTH);
     mapConsts.put(opc_checkcast, FunctionExprent.FUNCTION_CAST);
@@ -120,32 +120,32 @@ public class ExprProcessor implements CodeConstants {
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
     // collect finally entry points
-    Set<String> setFinallyShortRangeEntryPoints = new HashSet<String>();
+    Set<String> setFinallyShortRangeEntryPoints = new HashSet<>();
     for (List<FinallyPathWrapper> lst : dgraph.mapShortRangeFinallyPaths.values()) {
       for (FinallyPathWrapper finwrap : lst) {
         setFinallyShortRangeEntryPoints.add(finwrap.entry);
       }
     }
 
-    Set<String> setFinallyLongRangeEntryPaths = new HashSet<String>();
+    Set<String> setFinallyLongRangeEntryPaths = new HashSet<>();
     for (List<FinallyPathWrapper> lst : dgraph.mapLongRangeFinallyPaths.values()) {
       for (FinallyPathWrapper finwrap : lst) {
         setFinallyLongRangeEntryPaths.add(finwrap.source + "##" + finwrap.entry);
       }
     }
 
-    Map<String, VarExprent> mapCatch = new HashMap<String, VarExprent>();
+    Map<String, VarExprent> mapCatch = new HashMap<>();
     collectCatchVars(root, flatthelper, mapCatch);
 
-    Map<DirectNode, Map<String, PrimitiveExprsList>> mapData = new HashMap<DirectNode, Map<String, PrimitiveExprsList>>();
+    Map<DirectNode, Map<String, PrimitiveExprsList>> mapData = new HashMap<>();
 
-    LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
-    LinkedList<LinkedList<String>> stackEntryPoint = new LinkedList<LinkedList<String>>();
+    LinkedList<DirectNode> stack = new LinkedList<>();
+    LinkedList<LinkedList<String>> stackEntryPoint = new LinkedList<>();
 
     stack.add(dgraph.first);
-    stackEntryPoint.add(new LinkedList<String>());
+    stackEntryPoint.add(new LinkedList<>());
 
-    Map<String, PrimitiveExprsList> map = new HashMap<String, PrimitiveExprsList>();
+    Map<String, PrimitiveExprsList> map = new HashMap<>();
     map.put(null, new PrimitiveExprsList());
     mapData.put(dgraph.first, map);
 
@@ -187,10 +187,10 @@ public class ExprProcessor implements CodeConstants {
 
           Map<String, PrimitiveExprsList> mapSucc = mapData.get(nd);
           if (mapSucc == null) {
-            mapData.put(nd, mapSucc = new HashMap<String, PrimitiveExprsList>());
+            mapData.put(nd, mapSucc = new HashMap<>());
           }
 
-          LinkedList<String> ndentrypoints = new LinkedList<String>(entrypoints);
+          LinkedList<String> ndentrypoints = new LinkedList<>(entrypoints);
 
           if (setFinallyLongRangeEntryPaths.contains(node.id + "##" + nd.id)) {
             ndentrypoints.addLast(node.id);
@@ -341,7 +341,7 @@ public class ExprProcessor implements CodeConstants {
         case opc_fload:
         case opc_dload:
         case opc_aload:
-          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor));
+          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offset));
           break;
         case opc_iaload:
         case opc_laload:
@@ -371,8 +371,8 @@ public class ExprProcessor implements CodeConstants {
         case opc_astore:
           Exprent top = stack.pop();
           int varindex = instr.getOperand(0);
-          AssignmentExprent assign =
-            new AssignmentExprent(new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor), top, bytecode_offsets);
+          AssignmentExprent assign = new AssignmentExprent(
+            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i)), top, bytecode_offsets);
           exprlist.add(assign);
           break;
         case opc_iastore:
@@ -624,6 +624,23 @@ public class ExprProcessor implements CodeConstants {
     }
   }
 
+  private static int nextMeaningfulOffset(BasicBlock block, int index) {
+    InstructionSequence seq = block.getSeq();
+    while (++index < seq.length()) {
+      switch (seq.getInstr(index).opcode) {
+        case opc_nop:
+        case opc_istore:
+        case opc_lstore:
+        case opc_fstore:
+        case opc_dstore:
+        case opc_astore:
+          continue;
+      }
+      return block.getOldOffset(index);
+    }
+    return -1;
+  }
+
   private void pushEx(ExprentStack stack, List<Exprent> exprlist, Exprent exprent) {
     pushEx(stack, exprlist, exprent, null);
   }
@@ -641,7 +658,7 @@ public class ExprProcessor implements CodeConstants {
 
     int base = VarExprent.STACK_BASE + stack.size();
 
-    LinkedList<VarExprent> lst = new LinkedList<VarExprent>();
+    LinkedList<VarExprent> lst = new LinkedList<>();
 
     for (int i = -1; i >= offset; i--) {
       Exprent varex = stack.pop();

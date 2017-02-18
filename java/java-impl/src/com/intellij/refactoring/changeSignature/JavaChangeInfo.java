@@ -68,4 +68,9 @@ public interface JavaChangeInfo extends ChangeInfo {
   void updateMethod(PsiMethod psiMethod);
 
   Collection<PsiMethod> getMethodsToPropagateParameters();
+
+  default boolean checkUnusedParameter() {
+    return false;
+  }
+
 }

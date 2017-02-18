@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public abstract class AntConfigurationBase extends AntConfiguration {
     super(project);
   }
 
-  public static AntConfigurationBase getInstance(final Project project) {
+  public static AntConfigurationBase getInstance(@NotNull Project project) {
     return (AntConfigurationBase)AntConfiguration.getInstance(project);
   }
 
@@ -73,12 +73,12 @@ public abstract class AntConfigurationBase extends AntConfiguration {
 
   @Nullable
   public abstract XmlFile getContextFile(@Nullable XmlFile file);
-  
+
   @Nullable
   public abstract XmlFile getEffectiveContextFile(@Nullable XmlFile file);
 
   @Nullable
   public abstract AntBuildFileBase getAntBuildFile(@NotNull PsiFile file);
-  
-  public abstract AntBuildFileBase[] getBuildFiles();
+
+  public abstract AntBuildFile[] getBuildFiles();
 }

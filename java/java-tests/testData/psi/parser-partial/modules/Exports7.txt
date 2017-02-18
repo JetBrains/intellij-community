@@ -1,0 +1,28 @@
+PsiJavaFile:Exports7.java
+  PsiJavaModule:M
+    PsiKeyword:module('module')
+    PsiWhiteSpace(' ')
+    PsiJavaModuleReference
+      PsiIdentifier:M('M')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace(' ')
+    PsiExportsStatement
+      PsiKeyword:exports('exports')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:pkg
+        PsiIdentifier:pkg('pkg')
+        PsiReferenceParameterList
+          <empty list>
+      PsiWhiteSpace(' ')
+      PsiKeyword:to('to')
+      PsiWhiteSpace(' ')
+      PsiJavaModuleReference
+        PsiIdentifier:A('A')
+      PsiJavaToken:COMMA(',')
+      PsiErrorElement:Identifier expected
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:RBRACE('}')

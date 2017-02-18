@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -119,7 +119,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -144,7 +144,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -176,7 +176,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.mySourceDir, "s2.txt");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -212,7 +212,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     Assert.assertEquals(SubTree.ourS1Contents, text.toString());
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Test
@@ -235,7 +235,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.myRootDir, "target");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
 
     for (VirtualFile file : files) {
       Assert.assertTrue(file.getPath(), clManager.isUnversioned(file));
@@ -243,7 +243,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
   }
 
   private List<VirtualFile> getAllFiles(final SubTree subTree) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    final List<VirtualFile> files = new ArrayList<>();
     files.addAll(Arrays.asList(subTree.myRootDir, subTree.mySourceDir, subTree.myS2File, subTree.myS1File, subTree.myTargetDir));
     files.addAll(subTree.myTargetFiles);
     return files;
@@ -278,7 +278,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     assertVF(subTree.myTargetDir, "t15.txt");
 
     clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {}, clManager.getDefaultListName(), clManager);
+    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
   @Nullable

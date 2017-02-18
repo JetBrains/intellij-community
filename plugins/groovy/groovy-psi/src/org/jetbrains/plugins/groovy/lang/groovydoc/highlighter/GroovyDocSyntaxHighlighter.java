@@ -34,7 +34,7 @@ import java.util.Map;
  * @author ilyas
  */
 public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase {
-  private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
+  private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<>();
   private static final IElementType mGDOC_COMMENT_CONTENT = new GroovyDocElementTypeImpl("GDOC_COMMENT_CONTENT");
 
   @Override

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -106,7 +105,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
                                     findStringPart() != null;
 
     TObjectIntHashMap<GrParameter> parametersToRemove = GroovyIntroduceParameterUtil.findParametersToRemove(info);
-    toRemoveCBs = new TObjectIntHashMap<JCheckBox>(parametersToRemove.size());
+    toRemoveCBs = new TObjectIntHashMap<>(parametersToRemove.size());
     for (Object p : parametersToRemove.keys()) {
       JCheckBox cb = new JCheckBox(GroovyRefactoringBundle.message("remove.parameter.0.no.longer.used", ((GrParameter)p).getName()));
       toRemoveCBs.put(cb, parametersToRemove.get((GrParameter)p));
@@ -340,19 +339,11 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     final ExtractClosureHelperImpl mockHelper =
       new ExtractClosureHelperImpl(myInfo, "__test___n_", false, new TIntArrayList(), false,
                                    IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
-    final PsiType returnType;
-    final AccessToken token = WriteAction.start();
-    try {
-      returnType = ExtractClosureProcessorBase.generateClosure(mockHelper).getReturnType();
-    }
-    finally {
-      token.finish();
-    }
-    return returnType;
+    return WriteAction.compute(() -> ExtractClosureProcessorBase.generateClosure(mockHelper).getReturnType());
   }
 
   private NameSuggestionsField createNameField(GrVariable var) {
-    List<String> names = new ArrayList<String>();
+    List<String> names = new ArrayList<>();
     if (var != null) {
       names.add(var.getName());
     }
@@ -400,7 +391,7 @@ public class GrIntroduceParameterDialog extends DialogWrapper {
     }
 
     if (myTypeComboBox.isClosureSelected()) {
-      final Ref<ValidationInfo> info = new Ref<ValidationInfo>();
+      final Ref<ValidationInfo> info = new Ref<>();
       toRemoveCBs.forEachEntry(new TObjectIntProcedure<JCheckBox>() {
         @Override
         public boolean execute(JCheckBox checkbox, int index) {

@@ -45,14 +45,13 @@ class ChangeNullableDefaultsFix implements LocalQuickFix {
 
   @NotNull
   @Override
-  public String getName() {
+  public String getFamilyName() {
     return "Make \"" + (myNotNullName != null ? myNotNullName : myNullableName) + "\" default annotation";
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return getName();
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override

@@ -57,7 +57,7 @@ public class BuildoutFacetType extends FacetType<BuildoutFacet, BuildoutFacetCon
     return moduleType instanceof PythonModuleTypeBase;
   }
 
-  public static final FacetTypeId<BuildoutFacet> ID = new FacetTypeId<BuildoutFacet>("buildout-python");
+  public static final FacetTypeId<BuildoutFacet> ID = new FacetTypeId<>("buildout-python");
 
   public static BuildoutFacetType getInstance() {
     return (BuildoutFacetType)FacetTypeRegistry.getInstance().findFacetType(ID);

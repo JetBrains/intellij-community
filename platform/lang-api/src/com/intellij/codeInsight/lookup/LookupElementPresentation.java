@@ -72,7 +72,7 @@ public class LookupElementPresentation {
 
   private void appendTailText(@NotNull TextFragment fragment) {
     if (myTail == null) {
-      myTail = new SmartList<TextFragment>();
+      myTail = new SmartList<>();
     }
     myTail.add(fragment);
   }
@@ -182,7 +182,7 @@ public class LookupElementPresentation {
     myItemText = presentation.myItemText;
 
     List<TextFragment> thatTail = presentation.myTail;
-    myTail = thatTail == null ? null : new SmartList<TextFragment>(thatTail);
+    myTail = thatTail == null ? null : new SmartList<>(thatTail);
 
     myTypeText = presentation.myTypeText;
     myStrikeout = presentation.myStrikeout;

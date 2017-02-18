@@ -45,7 +45,7 @@ public class HgShowConfigCommand {
       return Collections.emptyMap();
     }
 
-    Map<String, Map<String, String>> configMap = new HashMap<String, Map<String, String>>();
+    Map<String, Map<String, String>> configMap = new HashMap<>();
     for (String line : result.getOutputLines()) {
       List<String> option = StringUtil.split(line, "=", true, false);
       if (option.size() == 2) {
@@ -60,7 +60,7 @@ public class HgShowConfigCommand {
             configMap.get(sectionName).put(optionName, value);
           }
           else {
-            HashMap<String, String> sectionMap = new HashMap<String, String>();
+            HashMap<String, String> sectionMap = new HashMap<>();
             sectionMap.put(optionName, value);
             configMap.put(sectionName, sectionMap);
           }

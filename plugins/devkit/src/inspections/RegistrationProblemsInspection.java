@@ -116,7 +116,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
             checkedClass.getQualifiedName() != null &&
             checkedClass.getContainingFile().getVirtualFile() != null)
     {
-      final Set<PsiClass> componentClasses = getRegistrationTypes(checkedClass, CHECK_ACTIONS);
+      final Set<PsiClass> componentClasses = RegistrationCheckerUtil.getRegistrationTypes(checkedClass, CHECK_ACTIONS);
       if (componentClasses != null) {
         List<ProblemDescriptor> problems = null;
 
@@ -149,14 +149,14 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return null;
   }
 
-  private List<ProblemDescriptor> addProblem(List<ProblemDescriptor> problems, ProblemDescriptor problemDescriptor) {
-    if (problems == null) problems = new SmartList<ProblemDescriptor>();
+  private static List<ProblemDescriptor> addProblem(List<ProblemDescriptor> problems, ProblemDescriptor problemDescriptor) {
+    if (problems == null) problems = new SmartList<>();
     problems.add(problemDescriptor);
     return problems;
   }
 
   @Nullable
-  private ProblemDescriptor[] checkPluginXml(XmlFile xmlFile, InspectionManager manager, boolean isOnTheFly) {
+  private static ProblemDescriptor[] checkPluginXml(XmlFile xmlFile, InspectionManager manager, boolean isOnTheFly) {
     final XmlDocument document = xmlFile.getDocument();
     if (document == null) {
       return null;
@@ -174,16 +174,33 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     return checker.getProblems();
   }
 
-  static class RegistrationChecker implements ComponentType.Processor, ActionType.Processor {
+  private static boolean isAbstract(PsiModifierListOwner checkedClass) {
+    return checkedClass.hasModifierProperty(PsiModifier.ABSTRACT);
+  }
+
+  @Nullable
+  private static PsiElement getAttValueToken(@NotNull XmlAttribute attribute) {
+    final XmlAttributeValue valueElement = attribute.getValueElement();
+    if (valueElement == null) return null;
+
+    final PsiElement[] children = valueElement.getChildren();
+    if (children.length == 3 && children[1] instanceof XmlToken) {
+      return children[1];
+    }
+    if (children.length == 1 && children[0] instanceof PsiErrorElement) return null;
+    return valueElement;
+  }
+
+  private static class RegistrationChecker implements ComponentType.Processor, ActionType.Processor {
     private List<ProblemDescriptor> myList;
     private final InspectionManager myManager;
     private final XmlFile myXmlFile;
     private final PsiManager myPsiManager;
     private final GlobalSearchScope myScope;
-    private final Set<String> myInterfaceClasses = new THashSet<String>();
+    private final Set<String> myInterfaceClasses = new THashSet<>();
     private final boolean myOnTheFly;
 
-    public RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
+    private RegistrationChecker(InspectionManager manager, XmlFile xmlFile, boolean onTheFly) {
       myManager = manager;
       myXmlFile = xmlFile;
       myOnTheFly = onTheFly;
@@ -275,7 +292,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       for (XmlTag child : children) {
         if ("type".equals(child.getAttributeValue("name"))) {
           final String value = child.getAttributeValue("value");
-          final SmartList<String> names = new SmartList<String>();
+          final SmartList<String> names = new SmartList<>();
           if (value != null) {
             final String[] moduleTypes = value.split(";");
             for (String moduleType : moduleTypes) {
@@ -337,7 +354,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
     }
 
     private void addProblem(PsiElement element, String problem, ProblemHighlightType type, boolean onTheFly, LocalQuickFix... fixes) {
-      if (myList == null) myList = new SmartList<ProblemDescriptor>();
+      if (myList == null) myList = new SmartList<>();
       myList.add(myManager.createProblemDescriptor(element, problem, onTheFly, fixes, type));
     }
 
@@ -370,7 +387,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
         }
         return null;
       }
-      return ConstructorType.DEFAULT;
+      return DEFAULT;
     }
   }
 }

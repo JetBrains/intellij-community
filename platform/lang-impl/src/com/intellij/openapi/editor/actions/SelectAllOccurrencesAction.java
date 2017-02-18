@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
@@ -34,8 +35,8 @@ public class SelectAllOccurrencesAction extends EditorAction {
 
   private static class Handler extends SelectOccurrencesActionHandler {
     @Override
-    public boolean isEnabled(Editor editor, DataContext dataContext) {
-      return super.isEnabled(editor, dataContext) && editor.getProject() != null && editor.getCaretModel().supportsMultipleCarets();
+    public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
+      return editor.getProject() != null && editor.getCaretModel().supportsMultipleCarets();
     }
 
     @Override

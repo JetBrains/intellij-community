@@ -74,12 +74,12 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
 
   @Override
   public Iterator<T> iterator() {
-    return new ChainIterator<T>(this);
+    return new ChainIterator<>(this);
   }
 
   @Override
   public String toString() {
-    return FP.fold(new FP.StringCollector<T>(), this, new StringBuilder()).toString();
+    return FP.fold(new FP.StringCollector<>(), this, new StringBuilder()).toString();
   }
 
   private static class ChainIterator<T> implements Iterator<T> {

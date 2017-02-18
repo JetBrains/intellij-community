@@ -24,5 +24,6 @@ iml_module(
         "//tools/idea:java-impl[module]",
         "//tools/idea/plugins/eclipse/jps-plugin:eclipse-jps-plugin[module]",
         "//tools/idea/plugins/eclipse/common-eclipse-util[module]",
+        "//tools/idea:platform-impl_and_others[module]",
     ],
 )

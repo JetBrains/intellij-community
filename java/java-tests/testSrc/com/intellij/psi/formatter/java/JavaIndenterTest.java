@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
@@ -43,7 +44,7 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
     int end = initial.indexOf("\n", start);
     myTextRange = new TextRange(start, end);
 
-    doTextTest(initial,                     
+    doTextTest(initial,
       "class BrokenAlignment {\n" +
       "    public\n" +
       "\tstatic int foo(String a, String b, String c,\n" +
@@ -64,7 +65,7 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
       "<caret>\n" +
       "        }" +
       "}",
-      
+
       "class Test {\n" +
       "   // some comment\n" +
       "        public void doSmth(int[] p) {\n" +
@@ -74,7 +75,7 @@ public class JavaIndenterTest extends AbstractJavaFormatterTest {
   }
 
   @Override
-  public void doTextTest(String text, String textAfter) throws IncorrectOperationException {
+  public void doTextTest(@NotNull String text, @NotNull String textAfter) throws IncorrectOperationException {
     doTextTest(Action.INDENT, adjustTextIfNecessary(text), textAfter);
   }
 

@@ -30,6 +30,15 @@ public class MockCommandProcessor extends CommandProcessor {
   }
 
   @Override
+  public void executeCommand(@Nullable Project project,
+                             @NotNull Runnable command,
+                             @Nullable String name,
+                             @Nullable Object groupId,
+                             @NotNull UndoConfirmationPolicy confirmationPolicy,
+                             boolean shouldRecordCommandForActiveDocument) {
+  }
+
+  @Override
   public void setCurrentCommandName(String name) {
   }
 

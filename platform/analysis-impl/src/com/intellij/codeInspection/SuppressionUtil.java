@@ -194,6 +194,10 @@ public class SuppressionUtil extends SuppressionUtilCore {
   }
 
   public static boolean inspectionResultSuppressed(@NotNull PsiElement place, @NotNull LocalInspectionTool tool) {
+    return inspectionResultSuppressed(place, (InspectionProfileEntry)tool);
+  }
+
+  public static boolean inspectionResultSuppressed(@NotNull PsiElement place, @NotNull InspectionProfileEntry tool) {
     return tool.isSuppressedFor(place);
   }
 }

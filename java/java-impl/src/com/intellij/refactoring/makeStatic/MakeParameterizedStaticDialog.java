@@ -74,7 +74,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
   }
 
   private boolean buildVariableData(InternalUsageInfo[] internalUsages) {
-    ArrayList<VariableData> variableDatum = new ArrayList<VariableData>();
+    ArrayList<VariableData> variableDatum = new ArrayList<>();
     boolean nonFieldUsages = MakeStaticUtil.collectVariableData(myMember, internalUsages, variableDatum);
 
     myVariableData = variableDatum.toArray(new VariableData[0]);

@@ -22,9 +22,6 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 public class ValidateAction extends PatchAction {
-  // Only used on patch creation
-  protected transient File myOlderDir;
-
   public ValidateAction(Patch patch, String path, long checksum) {
     super(patch, path, checksum);
   }

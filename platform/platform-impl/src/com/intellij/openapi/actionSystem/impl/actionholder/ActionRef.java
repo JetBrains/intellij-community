@@ -29,7 +29,7 @@ public abstract class ActionRef<T extends AnAction> {
 
   public static <T extends AnAction> ActionRef<T> fromAction(T action) {
     String id = getManager().getId(action);
-    return id == null ? new SimpleActionRef<T>(action) : new IdActionRef<T>(id);
+    return id == null ? new SimpleActionRef<>(action) : new IdActionRef<>(id);
   }
 
 

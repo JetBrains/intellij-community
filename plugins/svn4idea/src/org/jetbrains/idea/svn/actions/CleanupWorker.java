@@ -55,7 +55,7 @@ public class CleanupWorker {
     chanceToFillRoots();
     if (myRoots.length == 0) return;
 
-    final List<Pair<VcsException, VirtualFile>> exceptions = new LinkedList<Pair<VcsException, VirtualFile>>();
+    final List<Pair<VcsException, VirtualFile>> exceptions = new LinkedList<>();
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
 
     final Task.Backgroundable task = new Task.Backgroundable(myProject, SvnBundle.message(myTitleKey), true) {
@@ -121,7 +121,7 @@ public class CleanupWorker {
         }
 
         if (! exceptions.isEmpty()) {
-          final List<VcsException> vcsExceptions = new LinkedList<VcsException>();
+          final List<VcsException> vcsExceptions = new LinkedList<>();
           for (Pair<VcsException, VirtualFile> pair : exceptions) {
             final VcsException exception = pair.first;
             vcsExceptions.add(new VcsException(SvnBundle.message("action.Subversion.cleanup.error.message",

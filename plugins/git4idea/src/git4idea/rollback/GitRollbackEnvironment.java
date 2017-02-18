@@ -76,10 +76,10 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
   public void rollbackChanges(@NotNull List<Change> changes,
                               final List<VcsException> exceptions,
                               @NotNull final RollbackProgressListener listener) {
-    HashMap<VirtualFile, List<FilePath>> toUnindex = new HashMap<VirtualFile, List<FilePath>>();
-    HashMap<VirtualFile, List<FilePath>> toUnversion = new HashMap<VirtualFile, List<FilePath>>();
-    HashMap<VirtualFile, List<FilePath>> toRevert = new HashMap<VirtualFile, List<FilePath>>();
-    List<FilePath> toDelete = new ArrayList<FilePath>();
+    HashMap<VirtualFile, List<FilePath>> toUnindex = new HashMap<>();
+    HashMap<VirtualFile, List<FilePath>> toUnversion = new HashMap<>();
+    HashMap<VirtualFile, List<FilePath>> toRevert = new HashMap<>();
+    List<FilePath> toDelete = new ArrayList<>();
 
     listener.determinate();
     // collect changes to revert
@@ -159,7 +159,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       DvcsUtil.workingTreeChangeFinished(myProject,token);
     }
     LocalFileSystem lfs = LocalFileSystem.getInstance();
-    HashSet<File> filesToRefresh = new HashSet<File>();
+    HashSet<File> filesToRefresh = new HashSet<>();
     for (Change c : changes) {
       ContentRevision before = c.getBeforeRevision();
       if (before != null) {
@@ -236,7 +236,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     }
     List<FilePath> paths = files.get(root);
     if (paths == null) {
-      paths = new ArrayList<FilePath>();
+      paths = new ArrayList<>();
       files.put(root, paths);
     }
     paths.add(file);

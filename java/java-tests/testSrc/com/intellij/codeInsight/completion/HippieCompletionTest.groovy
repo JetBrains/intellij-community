@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
  */
 class HippieCompletionTest extends LightCodeInsightFixtureTestCase {
 
-  public void testDollars() {
+  void testDollars() {
     myFixture.configureByText "a.txt", '''
 $some_long_variable_name = Obj::instance();
 $some_lon<caret>
@@ -34,7 +34,7 @@ $some_long_variable_name<caret>
 '''
   }
 
-  public void testFromAnotherFile() {
+  void testFromAnotherFile() {
     myFixture.configureByText "b.txt", '''
 $some_local = 1;
 '''
@@ -61,7 +61,7 @@ $some_long_variable_name<caret>
 
   }
 
-  public void testFromAnotherFile2() {
+  void testFromAnotherFile2() {
     myFixture.configureByText "b.txt", '''
 foo function foo2
 '''
@@ -99,7 +99,7 @@ foo2<caret>
 '''
   }
 
-  public void "test no middle matching"() {
+  void "test no middle matching"() {
     myFixture.configureByText "a.txt", '''
 fooExpression
 exp<caret>
@@ -111,7 +111,7 @@ exp<caret>
 '''
   }
 
-  public void "test words from javadoc"() {
+  void "test words from javadoc"() {
     myFixture.configureByText "a.java", '''
 /** some comment */
 com<caret>
@@ -122,8 +122,8 @@ com<caret>
 comment<caret>
 '''
   }
-  
-  public void "test words from line comments"() {
+
+  void "test words from line comments"() {
     myFixture.configureByText "a.java", '''
 // some comment2
 com<caret>
@@ -134,7 +134,8 @@ com<caret>
 comment2<caret>
 '''
   }
-  public void "test words from block comments"() {
+
+  void "test words from block comments"() {
     myFixture.configureByText "a.java", '''
 /* some comment3 */
 com<caret>
@@ -146,7 +147,7 @@ comment3<caret>
 '''
   }
 
-  public void "test complete in string literal"() {
+  void "test complete in string literal"() {
     myFixture.configureByText "a.java", '''
 class Foo {
   public Collection<JetFile> allInScope(@NotNull GlobalSearchScope scope) {
@@ -164,7 +165,7 @@ class Foo {
 '''
   }
 
-  public void "test complete variable name in string literal"() {
+  void "test complete variable name in string literal"() {
     myFixture.configureByText "a.java", '''
 class Xoo {
   String foobar = "foo<caret>";
@@ -179,7 +180,7 @@ class Xoo {
 
   }
 
-  public void "test file start"() {
+  void "test file start"() {
     myFixture.configureByText "a.java", '''<caret>
 class Xoo {
 }
@@ -191,7 +192,7 @@ class Xoo {
 '''
   }
 
-  public void "test cpp indirection"() {
+  void "test cpp indirection"() {
     myFixture.configureByText "a.c", '''f<caret>
 foo->bar
 '''
@@ -201,7 +202,7 @@ foo->bar
 '''
   }
 
-  public void "test numbers"() {
+  void "test numbers"() {
     myFixture.configureByText "a.c", '''246<caret>
 24601
 '''
@@ -211,7 +212,7 @@ foo->bar
 '''
   }
 
-  public void "test inside word"() {
+  void "test inside word"() {
     myFixture.configureByText "a.c", 'foo fox f<caret>bar'
     complete()
     myFixture.checkResult 'foo fox fox<caret>bar'
@@ -219,7 +220,7 @@ foo->bar
     myFixture.checkResult 'foo fox foo<caret>bar'
   }
 
-  public void "test multiple carets"() {
+  void "test multiple carets"() {
     myFixture.configureByText "a.txt", "fox food floor f<caret> f<caret>"
     complete()
     myFixture.checkResult "fox food floor floor<caret> floor<caret>"
@@ -229,7 +230,7 @@ foo->bar
     myFixture.checkResult "fox food floor fox<caret> fox<caret>"
   }
 
-  public void "test multiple carets backward"() {
+  void "test multiple carets backward"() {
     myFixture.configureByText "a.txt", "f<caret> f<caret> fox food floor"
     backComplete()
     myFixture.checkResult "fox<caret> fox<caret> fox food floor"

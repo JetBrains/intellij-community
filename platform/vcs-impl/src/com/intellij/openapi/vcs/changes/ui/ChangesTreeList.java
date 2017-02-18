@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
@@ -29,22 +30,20 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -104,7 +103,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     myHighlightProblems = highlightProblems;
     myInclusionListener = inclusionListener;
     myChangeDecorator = decorator;
-    myIncludedChanges = new HashSet<T>(initiallyIncluded);
+    myIncludedChanges = new HashSet<>(initiallyIncluded);
     myAlwaysExpandList = true;
     final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
     myNodeRenderer = new MyTreeCellRenderer(nodeRenderer);
@@ -114,13 +113,7 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
-    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        ChangesBrowserNode node = (ChangesBrowserNode) o.getLastPathComponent();
-        return node.getTextPresentation();
-      }
-    });
+    new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
     setCellRenderer(myNodeRenderer);
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
@@ -318,12 +311,11 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
               }
             }
           }
-        } else {
-          if (toSelect != null) {
-            int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
-            if (rowInTree > -1) {
-              selectedTreeRow = rowInTree;
-            }
+        }
+        if (toSelect != null) {
+          int rowInTree = findRowContainingFile((TreeNode)model.getRoot(), toSelect);
+          if (rowInTree > -1) {
+            selectedTreeRow = rowInTree;
           }
         }
 
@@ -342,21 +334,18 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
     final Ref<Integer> row = Ref.create(-1);
-    TreeUtil.traverse(root, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        if (node instanceof DefaultMutableTreeNode) {
-          Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-          if (userObject instanceof Change) {
-            if (matches((Change)userObject, toSelect)) {
-              TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
-              row.set(getRowForPath(new TreePath(path)));
-            }
+    TreeUtil.traverse(root, node -> {
+      if (node instanceof DefaultMutableTreeNode) {
+        Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+        if (userObject instanceof Change) {
+          if (matches((Change)userObject, toSelect)) {
+            TreeNode[] path = ((DefaultMutableTreeNode)node).getPath();
+            row.set(getRowForPath(new TreePath(path)));
           }
         }
-
-        return row.get() == -1;
       }
+
+      return row.get() == -1;
     });
     return row.get();
   }
@@ -644,17 +633,14 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
   }
 
   public void select(final List<T> changes) {
-    final List<TreePath> treeSelection = new ArrayList<TreePath>(changes.size());
-    TreeUtil.traverse(getRoot(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        @SuppressWarnings("unchecked")
-        final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
-        if (changes.contains(change)) {
-          treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
-        }
-        return true;
+    final List<TreePath> treeSelection = new ArrayList<>(changes.size());
+    TreeUtil.traverse(getRoot(), node -> {
+      @SuppressWarnings("unchecked")
+      final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
+      if (changes.contains(change)) {
+        treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
       }
+      return true;
     });
     setSelectionPaths(treeSelection.toArray(new TreePath[treeSelection.size()]));
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
@@ -673,27 +659,20 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
 
   @Override
   public boolean isFileColorsEnabled() {
-    final boolean enabled = Registry.is("file.colors.in.commit.dialog")
-                            && FileColorManager.getInstance(myProject).isEnabled()
-                            && FileColorManager.getInstance(myProject).isEnabledForProjectView();
-    final boolean opaque = isOpaque();
-    if (enabled && opaque) {
-      setOpaque(false);
-    }
-    else if (!enabled && !opaque) {
-      setOpaque(true);
-    }
-    return enabled;
+    return ProjectViewTree.isFileColorsEnabledFor(this);
   }
 
   @Override
   public Color getFileColorFor(Object object) {
-    VirtualFile file = null;
+    VirtualFile file;
     if (object instanceof FilePath) {
-      file = LocalFileSystem.getInstance().findFileByPath(((FilePath)object).getPath());
+      file = ((FilePath)object).getVirtualFile();
     }
     else if (object instanceof Change) {
       file = ((Change)object).getVirtualFile();
+    }
+    else {
+      file = ObjectUtils.tryCast(object, VirtualFile.class);
     }
 
     if (file != null) {

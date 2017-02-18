@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
-import com.google.common.base.Joiner;
 import com.intellij.execution.configurations.CommandLineTokenizer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -162,7 +161,7 @@ public class GradleExecutionHelper {
     }
 
     if (!commandLineArgs.isEmpty()) {
-      LOG.info("Passing command-line args to Gradle Tooling API: " + Joiner.on(' ').join(commandLineArgs));
+      LOG.info("Passing command-line args to Gradle Tooling API: " + StringUtil.join(commandLineArgs, " "));
       // filter nulls and empty strings
       List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, s -> StringUtil.isEmpty(s) ? null : s);
 

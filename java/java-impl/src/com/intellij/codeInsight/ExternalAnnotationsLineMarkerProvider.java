@@ -39,6 +39,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
@@ -85,7 +86,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
 
     return new LineMarkerInfo<PsiElement>(element, element.getTextRange(),
                                           AllIcons.Gutter.ExtAnnotation,
-                                          Pass.UPDATE_ALL,
+                                          Pass.LINE_MARKERS,
                                           ourTooltipProvider, MyIconGutterHandler.INSTANCE,
                                           GutterIconRenderer.Alignment.RIGHT);
   }
@@ -138,7 +139,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
   }
 
   static boolean isSourceCode(PsiModifierListOwner element) {
-    return !(BaseExternalAnnotationsManager.preferCompiledElement(element) instanceof PsiCompiledElement);
+    return !(PsiUtil.preferCompiledElement(element) instanceof PsiCompiledElement);
   }
 
   private static boolean isVisibleAnnotation(@NotNull PsiAnnotation annotation) {

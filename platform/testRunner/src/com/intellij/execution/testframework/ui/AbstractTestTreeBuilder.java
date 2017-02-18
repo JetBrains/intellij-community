@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import java.util.Comparator;
 
 /**
  * @author: Roman Chernyatchik
@@ -69,16 +68,8 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  public void setTestsComparator(boolean sortAlphabetically) {
-    setNodeDescriptorComparator(sortAlphabetically ? AlphaComparator.INSTANCE : null);
-    queueUpdate();
-  }
-
-  public void setStatisticsComparator(TestConsoleProperties properties, boolean sortByStatistics) {
-    if (!sortByStatistics) {
-      setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(properties));
-    }
-    else {
+  public void setTestsComparator(TestConsoleProperties properties) {
+    if (TestConsoleProperties.SORT_BY_DURATION.value(properties)) {
       setNodeDescriptorComparator((o1, o2) -> {
         if (o1.getParentDescriptor() == o2.getParentDescriptor() &&
             o1 instanceof BaseTestProxyNodeDescriptor &&
@@ -89,6 +80,9 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
         }
         return 0;
       });
+    }
+    else {
+      setNodeDescriptorComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(properties) ? AlphaComparator.INSTANCE : null);
     }
     queueUpdate();
   }

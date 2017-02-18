@@ -44,7 +44,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.List;
 
 public class ExtractSuperclassHandler implements RefactoringActionHandler, ExtractSuperclassDialog.Callback, ElementsHandler {
@@ -134,7 +133,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     else {
       targetPackage = null;
     }
-    final MultiMap<PsiElement,String> conflicts = new MultiMap<PsiElement, String>();
+    final MultiMap<PsiElement,String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass superClass =
         mySubclass.getExtendsListTypes().length > 0 || mySubclass instanceof PsiAnonymousClass ? mySubclass.getSuperClass() : null;
@@ -164,12 +163,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
       }
 
       // ask whether to search references to subclass and turn them into refs to superclass if possible
-      if (superclass != null) {
-        final SmartPsiElementPointer<PsiClass> classPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(subclass);
-        final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(superclass);
-        final Runnable turnRefsToSuperRunnable = () -> ExtractClassUtil.askAndTurnRefsToSuper(project, classPointer, interfacePointer);
-        SwingUtilities.invokeLater(turnRefsToSuperRunnable);
-      }
+      ExtractClassUtil.suggestToTurnRefsToSuper(project, superclass, subclass);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

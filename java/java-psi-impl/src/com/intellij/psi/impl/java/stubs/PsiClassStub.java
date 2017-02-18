@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,11 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
-  @NonNls
-  @Nullable
-  String getQualifiedName();
-
-  @NonNls 
-  @Nullable
-  String getBaseClassReferenceText();
+  @Nullable String getQualifiedName();
+  @Nullable String getBaseClassReferenceText();
 
   boolean hasDeprecatedAnnotation();
   boolean isInterface();
@@ -41,6 +35,8 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
   boolean isAnonymousInQualifiedNew();
   boolean isAnnotationType();
 
+  @Nullable String getSourceFileName();
+
+  /** @deprecated use {@link PsiJavaFileStub#getLanguageLevel()} (to be removed in IDEA 18) */
   LanguageLevel getLanguageLevel();
-  String getSourceFileName();
 }

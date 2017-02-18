@@ -1,7 +1,24 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -17,16 +34,13 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
-    Runner.logger.info("building PatchFile");
-    ZipEntry entry = new ZipEntry(myPath);
-    patchOutput.putNextEntry(entry);
+    Runner.logger().info("building PatchFile");
+    patchOutput.putNextEntry(new ZipEntry(myPath));
     if (!newerFile.isDirectory()) {
-      writeExecutableFlag(patchOutput, newerFile);
-      writeSymlinkFlag(patchOutput, newerFile);
-      if (Utils.isSymlink(newerFile)) {
-        patchOutput.write(Utils.getSymlinkTarget(newerFile).getBytes(StandardCharsets.UTF_8));
-      }
-      else {
+      if (Utils.isLink(newerFile)) {
+        writeLinkInfo(newerFile, patchOutput);
+      } else {
+        writeExecutableFlag(patchOutput, newerFile);
         Utils.copyFileToStream(newerFile, patchOutput);
       }
     }
@@ -58,6 +72,7 @@ public class CreateAction extends PatchAction {
 
   @Override
   protected void doApply(ZipFile patchFile, File backupDir, File toFile) throws IOException {
+    Runner.logger().info("Create action. File: " + toFile.getAbsolutePath());
     prepareToWriteFile(toFile);
 
     ZipEntry entry = Utils.getZipEntry(patchFile, myPath);
@@ -67,33 +82,18 @@ public class CreateAction extends PatchAction {
       }
     } else {
       InputStream in = Utils.findEntryInputStreamForEntry(patchFile, entry);
+      if (in == null) {
+        return;
+      }
       try {
-        boolean executable = readFlag(in);
-        boolean link = readFlag(in);
-        if (link) {
-          ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-          Utils.copyStream(in, bytesOut);
-          File containingDir = toFile.getAbsoluteFile().getParentFile();
-          if (!containingDir.exists() && !containingDir.mkdirs()) {
-            throw new IOException("Failed to mkdirs: " + toFile.getAbsoluteFile().getParent());
-          }
-          Process proc = Runtime.getRuntime().exec(new String[] {"ln", "-s", bytesOut.toString(), toFile.getAbsolutePath()});
-          BufferedReader errorReader = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
-          try {
-            String error = errorReader.readLine();
-            if (error != null && !error.isEmpty()) {
-              throw new IOException(error);
-            }
-          }
-          finally {
-            errorReader.close();
-          }
-
+        int filePermissions = in.read();
+        if (filePermissions > 1 ) {
+          Utils.createLink(readLinkInfo(in, filePermissions), toFile);
         }
         else {
           Utils.copyStreamToFile(in, toFile);
+          Utils.setExecutable(toFile, filePermissions == 1 );
         }
-        Utils.setExecutable(toFile, executable);
       }
       finally {
         in.close();

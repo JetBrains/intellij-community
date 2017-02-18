@@ -7,7 +7,6 @@ package com.intellij.refactoring.typeMigration.rules;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -212,7 +211,6 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
         final PsiType initial = resolveResult.getSubstitutor().substitute(typeParameters[0]);
         final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(initial);
         if (unboxedInitialType != null) {
-          LOG.assertTrue(initial != null);
           if (tryType != null) {
             final PsiType exprType = labeler.getTypeEvaluator().evaluateType(
               JavaPsiFacade.getElementFactory(threadLocalClass.getProject()).createExpressionFromText(tryType, context));

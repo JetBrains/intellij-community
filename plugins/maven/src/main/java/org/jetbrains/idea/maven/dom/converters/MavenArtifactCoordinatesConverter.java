@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -166,6 +165,11 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return MavenDomBundle.message("fix.update.indices");
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       MavenProjectIndicesManager.getInstance(project).scheduleUpdateAll();
     }
@@ -311,7 +315,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
       if (StringUtil.isEmpty(id.getGroupId())) {
-        Set<String> result = new THashSet<String>();
+        Set<String> result = new THashSet<>();
 
         for (String each : manager.getGroupIds()) {
           id = new MavenId(each, id.getArtifactId(), id.getVersion());
@@ -362,7 +366,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     @Override
     public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
       if (StringUtil.isEmpty(id.getGroupId())) {
-        Set<String> result = new THashSet<String>();
+        Set<String> result = new THashSet<>();
 
         for (String each : getGroupIdVariants(manager, coordinates)) {
           id = new MavenId(each, id.getArtifactId(), id.getVersion());

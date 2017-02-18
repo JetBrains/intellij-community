@@ -73,7 +73,7 @@ public abstract class ToolWindowManager {
   public abstract ToolWindow registerToolWindow(@NotNull String id,
                                                 @NotNull JComponent component,
                                                 @NotNull ToolWindowAnchor anchor,
-                                                Disposable parentDisposable,
+                                                @NotNull Disposable parentDisposable,
                                                 boolean canWorkInDumbMode);
   /**
   * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
@@ -83,7 +83,7 @@ public abstract class ToolWindowManager {
   public abstract ToolWindow registerToolWindow(@NotNull String id,
                                                 @NotNull JComponent component,
                                                 @NotNull ToolWindowAnchor anchor,
-                                                Disposable parentDisposable,
+                                                @NotNull Disposable parentDisposable,
                                                 boolean canWorkInDumbMode,
                                                 boolean canCloseContents);
 
@@ -91,19 +91,31 @@ public abstract class ToolWindowManager {
   public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor);
 
   @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, boolean secondary);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,
+                                                boolean canCloseContent,
+                                                @NotNull ToolWindowAnchor anchor,
+                                                boolean secondary);
 
   @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable, boolean canWorkInDumbMode);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,
+                                                boolean canCloseContent,
+                                                @NotNull ToolWindowAnchor anchor,
+                                                @NotNull Disposable parentDisposable,
+                                                boolean canWorkInDumbMode);
 
   @NotNull
-  public abstract ToolWindow registerToolWindow(@NotNull String id, boolean canCloseContent, @NotNull ToolWindowAnchor anchor, Disposable parentDisposable, boolean canWorkInDumbMode, boolean secondary);
+  public abstract ToolWindow registerToolWindow(@NotNull String id,
+                                                boolean canCloseContent,
+                                                @NotNull ToolWindowAnchor anchor,
+                                                @NotNull Disposable parentDisposable,
+                                                boolean canWorkInDumbMode,
+                                                boolean secondary);
 
   @NotNull
   public ToolWindow registerToolWindow(@NotNull final String id,
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
-                                       final Disposable parentDisposable) {
+                                       @NotNull Disposable parentDisposable) {
     return registerToolWindow(id, canCloseContent, anchor, parentDisposable, false);
   }
 

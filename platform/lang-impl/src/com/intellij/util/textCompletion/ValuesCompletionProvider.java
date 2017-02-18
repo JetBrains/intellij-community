@@ -122,7 +122,7 @@ public class ValuesCompletionProvider<T> implements TextCompletionProvider {
   }
 
   @NotNull
-  private LookupElement installInsertHandler(@NotNull LookupElementBuilder builder) {
+  protected LookupElement installInsertHandler(@NotNull LookupElementBuilder builder) {
     InsertHandler<LookupElement> handler = builder.getInsertHandler();
     if (handler == null) return builder.withInsertHandler(myInsertHandler);
     return builder.withInsertHandler(new InsertHandler<LookupElement>() {

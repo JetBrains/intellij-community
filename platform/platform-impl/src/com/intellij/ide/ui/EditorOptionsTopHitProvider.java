@@ -36,6 +36,7 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     editorApp("Appearance: " + messageApp("checkbox.use.block.caret"), "IS_BLOCK_CURSOR"),
     editorApp("Appearance: Show right margin", "IS_RIGHT_MARGIN_SHOWN"),
     editorCode("Appearance: " + messageApp("checkbox.show.method.separators"), "SHOW_METHOD_SEPARATORS"),
+    editorApp("Appearance: " + messageApp("checkbox.show.parameter.name.hints"), "SHOW_PARAMETER_NAME_HINTS"),
     editorApp("Appearance: " + messageApp("checkbox.show.whitespaces"), "IS_WHITESPACES_SHOWN"),
     editorApp("Appearance: Show leading whitespaces", "IS_LEADING_WHITESPACES_SHOWN"),
     editorApp("Appearance: Show inner whitespaces", "IS_INNER_WHITESPACES_SHOWN"),

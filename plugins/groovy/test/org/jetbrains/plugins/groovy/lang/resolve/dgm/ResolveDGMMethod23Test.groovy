@@ -41,7 +41,7 @@ class ResolveDGMMethod23Test extends GroovyResolveTestCase {
   // TODO groovy-all-2.3.0.jar was stripped to run on java 6. Unignore when it will contain NioGroovyMethods
   @SuppressWarnings("GroovyUnusedDeclaration")
   void _testCloseable() {
-    myFixture.addClass('package java.io; class Closeable {}');
+    myFixture.addClass('package java.io; class Closeable {}')
     def resolved = resolveByText('''\
 class A implements Closeable {}
 new A().withC<caret>loseable {}

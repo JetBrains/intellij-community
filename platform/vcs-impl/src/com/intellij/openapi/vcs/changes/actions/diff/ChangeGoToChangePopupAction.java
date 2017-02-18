@@ -40,7 +40,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     Project project = e.getProject();
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
 
-    Ref<JBPopup> popup = new Ref<JBPopup>();
+    Ref<JBPopup> popup = new Ref<>();
     ChangesBrowser cb = new MyChangesBrowser(project, getChanges(), getCurrentSelection(), popup);
 
     popup.set(JBPopupFactory.getInstance()
@@ -136,7 +136,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
       // we want to show ChangeBrowser-based popup, so have to create some fake changes
       List<? extends DiffRequestProducer> requests = chain.getRequests();
 
-      myChanges = new ArrayList<Change>(requests.size());
+      myChanges = new ArrayList<>(requests.size());
       for (int i = 0; i < requests.size(); i++) {
         FilePath path = getFilePath(i);
         FileStatus status = getFileStatus(i);

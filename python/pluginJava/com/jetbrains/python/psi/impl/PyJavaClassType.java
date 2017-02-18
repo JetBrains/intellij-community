@@ -142,7 +142,7 @@ public class PyJavaClassType implements PyClassLikeType {
   @NotNull
   @Override
   public List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
-    final List<PyClassLikeType> result = new ArrayList<PyClassLikeType>();
+    final List<PyClassLikeType> result = new ArrayList<>();
     for (PsiClass cls : myClass.getSupers()) {
       result.add(new PyJavaClassType(cls, myDefinition));
     }

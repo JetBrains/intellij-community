@@ -19,8 +19,9 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
-public class FileEqualsUsageInspection extends InternalInspection {
+public class FileEqualsUsageInspection extends DevKitInspectionBase {
   static final String MESSAGE =
     "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on MacOS. " +
     "Please use FileUtil.filesEquals/fileHashCode/compareFiles instead";

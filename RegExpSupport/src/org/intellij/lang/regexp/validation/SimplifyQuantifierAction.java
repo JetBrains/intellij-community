@@ -16,6 +16,7 @@
 package org.intellij.lang.regexp.validation;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -57,7 +58,9 @@ class SimplifyQuantifierAction implements IntentionAction {
         } else {
             final PsiFileFactory factory = PsiFileFactory.getInstance(project);
 
-            final PsiFile f = factory.createFileFromText("dummy.regexp", RegExpFileType.INSTANCE, "a" + myReplacement + myQuantifier.getType().getToken());
+            final ASTNode modifier = myQuantifier.getModifier();
+            final PsiFile f = factory.createFileFromText("dummy.regexp", RegExpFileType.INSTANCE,
+                                                         "a" + myReplacement + (modifier != null ? modifier.getText() : ""));
             final RegExpPattern pattern = PsiTreeUtil.getChildOfType(f, RegExpPattern.class);
             assert pattern != null;
 

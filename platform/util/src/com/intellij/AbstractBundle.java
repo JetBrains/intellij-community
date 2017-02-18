@@ -30,7 +30,7 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
- * Base class for particular scoped bundles (e.g. <code>'vcs'</code> bundles, <code>'aop'</code> bundles etc).
+ * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
  * <p/>
  * Usage pattern:
  * <pre>

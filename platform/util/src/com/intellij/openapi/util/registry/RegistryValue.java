@@ -98,7 +98,7 @@ public class RegistryValue {
     return myDoubleCachedValue.doubleValue();
   }
 
-  public Color asColor(Color defaultValue) {
+  Color asColor(Color defaultValue) {
     final String s = get(myKey, null, true);
     if (s != null) {
       final String[] rgb = s.split(",");
@@ -106,7 +106,7 @@ public class RegistryValue {
         try {
           return new Color(Integer.parseInt(rgb[0]), Integer.parseInt(rgb[1]), Integer.parseInt(rgb[2]));
         }
-        catch (Exception e) {//
+        catch (Exception e) {
         }
       }
     }
@@ -118,7 +118,7 @@ public class RegistryValue {
     return get(myKey + ".description", "", false);
   }
 
-  public boolean isRestartRequired() {
+  boolean isRestartRequired() {
     return Boolean.valueOf(get(myKey + ".restartRequired", "false", false));
   }
 
@@ -132,15 +132,17 @@ public class RegistryValue {
 
   private String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
     if (isValue) {
-      if (myStringCachedValue == null) {
-        myStringCachedValue = _get(key, defaultValue, isValue);
-        if (isBoolean()) {
-          myStringCachedValue = Boolean.valueOf(myStringCachedValue).toString();
+      String stringCachedValue = myStringCachedValue;
+      if (stringCachedValue == null) {
+        stringCachedValue = _get(key, defaultValue, true);
+        if (isBoolean(stringCachedValue)) {
+          stringCachedValue = Boolean.valueOf(stringCachedValue).toString();
         }
+        myStringCachedValue = stringCachedValue;
       }
-      return myStringCachedValue;
+      return stringCachedValue;
     }
-    return _get(key, defaultValue, isValue);
+    return _get(key, defaultValue, false);
   }
 
   private String _get(@NotNull String key, String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
@@ -200,7 +202,7 @@ public class RegistryValue {
     myChangedSinceStart = true;
   }
 
-  public boolean isChangedSinceAppStart() {
+  boolean isChangedSinceAppStart() {
     return myChangedSinceStart;
   }
 
@@ -230,6 +232,9 @@ public class RegistryValue {
   }
 
   public boolean isBoolean() {
-    return "true".equals(asString()) || "false".equals(asString());
+    return isBoolean(asString());
+  }
+  private static boolean isBoolean(String s) {
+    return "true".equals(s) || "false".equals(s);
   }
 }

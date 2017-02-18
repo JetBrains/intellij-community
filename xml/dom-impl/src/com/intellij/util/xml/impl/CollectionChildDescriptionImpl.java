@@ -105,7 +105,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
       return ContainerUtil.concat(collection, (Function<DomElement, Collection<? extends DomElement>>)domElement -> {
         final DomInvocationHandler<?,?> handler1 = DomManagerImpl.getDomInvocationHandler(domElement);
         assert handler1 != null : domElement;
-        return handler1.getCollectionChildren(CollectionChildDescriptionImpl.this);
+        return handler1.getCollectionChildren(this);
       });
     }
     //noinspection unchecked

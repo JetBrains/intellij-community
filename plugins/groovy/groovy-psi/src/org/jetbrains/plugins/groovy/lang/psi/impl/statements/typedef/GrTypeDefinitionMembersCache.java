@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
-import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
@@ -31,17 +30,16 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.transformations.TransformationResult;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
+import static com.intellij.psi.util.PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT;
 
 public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
 
-  private final SimpleModificationTracker myTreeChangeTracker = new SimpleModificationTracker();
   private final T myDefinition;
   private final GrCodeMembersProvider<? super T> myCodeMembersProvider;
-  private final Collection<?> myDependencies = Arrays.asList(myTreeChangeTracker, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+  private final Collection<?> myDependencies = Collections.singletonList(JAVA_STRUCTURE_MODIFICATION_COUNT);
 
   public GrTypeDefinitionMembersCache(@NotNull T definition) {
     this(definition, BodyCodeMembersProvider.INSTANCE);
@@ -52,51 +50,47 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     myCodeMembersProvider = provider;
   }
 
-  public void dropCaches() {
-    myTreeChangeTracker.incModificationCount();
-  }
-
   public GrTypeDefinition[] getCodeInnerClasses() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       myCodeMembersProvider.getCodeInnerClasses(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public GrMethod[] getCodeMethods() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       myCodeMembersProvider.getCodeMethods(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public GrMethod[] getCodeConstructors() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       GrClassImplUtil.getCodeConstructors(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public GrField[] getCodeFields() {
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       myCodeMembersProvider.getCodeFields(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public PsiClass[] getInnerClasses() {
-    return getTransformationResult().getInnerClasses();
+    return getTransformationResult().getInnerClasses().clone();
   }
 
   public PsiMethod[] getMethods() {
-    return getTransformationResult().getMethods();
+    return getTransformationResult().getMethods().clone();
   }
 
   public PsiMethod[] getConstructors() {
     assert !TransformationUtilKt.isUnderTransformation(myDefinition);
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       GrClassImplUtil.getConstructors(myDefinition), myDependencies
-    ));
+    )).clone();
   }
 
   public GrField[] getFields() {
-    return getTransformationResult().getFields();
+    return getTransformationResult().getFields().clone();
   }
 
   @NotNull
@@ -104,13 +98,11 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     if (includeSynthetic && TransformationUtilKt.isUnderTransformation(myDefinition)) includeSynthetic = false;
     return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] extendsTypes = getTransformationResult().getExtendsTypes();
-      PsiClassType[] result = GrClassImplUtil.getExtendsListTypes(myDefinition, extendsTypes);
-      return CachedValueProvider.Result.create(result, myDependencies);
+      return CachedValueProvider.Result.create(extendsTypes, myDependencies);
     } : () -> {
       PsiClassType[] extendsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getExtendsClause());
-      PsiClassType[] result = GrClassImplUtil.getExtendsListTypes(myDefinition, extendsTypes);
-      return CachedValueProvider.Result.create(result, myDependencies);
-    });
+      return CachedValueProvider.Result.create(extendsTypes, myDependencies);
+    }).clone();
   }
 
   @NotNull
@@ -118,18 +110,17 @@ public class GrTypeDefinitionMembersCache<T extends GrTypeDefinition> {
     if (includeSynthetic && TransformationUtilKt.isUnderTransformation(myDefinition)) includeSynthetic = false;
     return CachedValuesManager.getCachedValue(myDefinition, includeSynthetic ? () -> {
       PsiClassType[] implementsTypes = getTransformationResult().getImplementsTypes();
-      PsiClassType[] result = GrClassImplUtil.getImplementsListTypes(myDefinition, implementsTypes);
-      return CachedValueProvider.Result.create(result, myDependencies);
+      return CachedValueProvider.Result.create(implementsTypes, myDependencies);
     } : () -> {
       PsiClassType[] implementsTypes = GrClassImplUtil.getReferenceListTypes(myDefinition.getImplementsClause());
-      PsiClassType[] result = GrClassImplUtil.getImplementsListTypes(myDefinition, implementsTypes);
-      return CachedValueProvider.Result.create(result, myDependencies);
-    });
+      return CachedValueProvider.Result.create(implementsTypes, myDependencies);
+    }).clone();
   }
 
   @NotNull
   private TransformationResult getTransformationResult() {
-    assert !TransformationUtilKt.isUnderTransformation(myDefinition);
+    boolean underTransformation = TransformationUtilKt.isUnderTransformation(myDefinition);
+    assert !underTransformation;
     return CachedValuesManager.getCachedValue(myDefinition, () -> CachedValueProvider.Result.create(
       TransformationUtilKt.transformDefinition(myDefinition), myDependencies
     ));

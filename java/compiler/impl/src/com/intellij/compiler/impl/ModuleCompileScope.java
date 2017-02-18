@@ -54,7 +54,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
 
   private ModuleCompileScope(Project project, final Collection<Module> modules, boolean includeDependentModules, boolean includeRuntimeDeps) {
     myProject = project;
-    myScopeModules = new HashSet<Module>();
+    myScopeModules = new HashSet<>();
     for (Module module : modules) {
       if (module == null) {
         continue; // prevent NPE
@@ -64,7 +64,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
         if (!includeRuntimeDeps) {
           enumerator = enumerator.compileOnly();
         }
-        enumerator.forEachModule(new CommonProcessors.CollectProcessor<Module>(myScopeModules));
+        enumerator.forEachModule(new CommonProcessors.CollectProcessor<>(myScopeModules));
       }
       else {
         myScopeModules.add(module);
@@ -152,7 +152,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     return (url.length() > root.length()) && url.charAt(root.length()) == '/' && FileUtil.startsWith(url, root);
   }
 
-  private final Map<Module, String[]> myContentUrlsCache = new HashMap<Module, String[]>();
+  private final Map<Module, String[]> myContentUrlsCache = new HashMap<>();
 
   private String[] getModuleContentUrls(final Module module) {
     String[] contentRootUrls = myContentUrlsCache.get(module);

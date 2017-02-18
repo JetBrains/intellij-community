@@ -28,11 +28,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
   public boolean isValidFor(Editor editor, PsiFile file) {
-    return (file instanceof PyFile) && (PyOverrideImplementUtil.getContextClass(file.getProject(), editor, file) != null);
+    return (file instanceof PyFile) && (PyOverrideImplementUtil.getContextClass(editor, file) != null);
   }
 
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PyClass aClass = PyOverrideImplementUtil.getContextClass(project, editor, file);
+    PyClass aClass = PyOverrideImplementUtil.getContextClass(editor, file);
     if (aClass != null) {
       PyOverrideImplementUtil.chooseAndOverrideMethods(project, editor, aClass);
     }

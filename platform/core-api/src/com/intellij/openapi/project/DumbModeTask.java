@@ -20,9 +20,32 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * A task that should be executed in IDE dumb mode, via {@link DumbService#queueTask(DumbModeTask)}.
+ *
  * @author peter
  */
 public abstract class DumbModeTask implements Disposable {
+  private final Object myEquivalenceObject;
+
+  public DumbModeTask() {
+    myEquivalenceObject = this;
+  }
+
+  /**
+   * @param equivalenceObject see {@link #getEquivalenceObject()}
+   */
+  public DumbModeTask(@NotNull Object equivalenceObject) {
+    myEquivalenceObject = equivalenceObject;
+  }
+
+  /**
+   * @return an object whose {@link Object#equals(Object)} determines task equivalence. If several equivalent tasks are queued
+   * for dumb mode execution at once, only one of them will be executed. By default the task object itself is returned.
+   */
+  @NotNull
+  public final Object getEquivalenceObject() {
+    return myEquivalenceObject;
+  }
 
   public abstract void performInDumbMode(@NotNull ProgressIndicator indicator);
 

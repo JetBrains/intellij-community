@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -38,13 +39,14 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl;
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 
 import java.io.File;
 import java.util.*;
@@ -127,7 +129,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       compilerModuleExtension.setCompilerOutputPathForTests(testOutputElement.getAttributeValue(IdeaXml.URL_ATTR));
     }
 
-    final String inheritedOutput = root.getAttributeValue(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR);
+    final String inheritedOutput = root.getAttributeValue(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE);
     if (inheritedOutput != null && Boolean.valueOf(inheritedOutput).booleanValue()) {
       compilerModuleExtension.inheritCompilerOutputPath(true);
     }
@@ -137,7 +139,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @Override
   protected void readLanguageLevel(Element root, ModifiableRootModel model) {
-    model.getModuleExtension(LanguageLevelModuleExtensionImpl.class).readExternal(root);
+    LanguageLevelModuleExtensionImpl component = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
+    component.loadState(XmlSerializer.deserialize(root, ComponentSerializationUtil.getStateClass((component.getClass()))));
   }
 
   @Override
@@ -251,7 +254,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       isModified = true;
     }
     if (compilerModuleExtension.isCompilerOutputPathInherited()) {
-      root.setAttribute(IdeaXml.INHERIT_COMPILER_OUTPUT_ATTR, String.valueOf(true));
+      root.setAttribute(JpsJavaModelSerializerExtension.INHERIT_COMPILER_OUTPUT_ATTRIBUTE, String.valueOf(true));
       isModified = true;
     }
     if (compilerModuleExtension.isExcludeOutput()) {
@@ -298,7 +301,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       }
     }
 
-    Map<String, String> libLevels = new LinkedHashMap<String, String>();
+    Map<String, String> libLevels = new LinkedHashMap<>();
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         final DependencyScope scope = ((ModuleOrderEntry)entry).getScope();
@@ -424,7 +427,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
   public static void replaceModuleRelatedRoots(final Project project,
                                                final Library.ModifiableModel modifiableModel, final Element libElement,
                                                final OrderRootType orderRootType, final String relativeModuleName) {
-    final List<String> urls = new ArrayList<String>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
+    final List<String> urls = new ArrayList<>(Arrays.asList(modifiableModel.getUrls(orderRootType)));
     for (Element r : libElement.getChildren(relativeModuleName)) {
       final String root = PathMacroManager.getInstance(project).expandPath(r.getAttributeValue(PROJECT_RELATED));
       for (Iterator<String> iterator = urls.iterator(); iterator.hasNext();) {

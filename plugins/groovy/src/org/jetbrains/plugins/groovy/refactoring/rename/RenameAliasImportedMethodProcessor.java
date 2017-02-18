@@ -29,7 +29,6 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -77,8 +76,8 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     boolean isGetter = GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)psiElement);
     boolean isSetter = GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)psiElement);
 
-    List<UsageInfo> methodAccess = new ArrayList<UsageInfo>(usages.length);
-    List<UsageInfo> propertyAccess = new ArrayList<UsageInfo>(usages.length);
+    List<UsageInfo> methodAccess = new ArrayList<>(usages.length);
+    List<UsageInfo> propertyAccess = new ArrayList<>(usages.length);
 
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
@@ -131,7 +130,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
       for (UsageInfo usage : propertyAccess) {
         final PsiReference ref = usage.getReference();
         if (ref != null) {
-          ((GrReferenceExpression)ref).handleElementRenameSimple(propertyName);
+          ref.handleElementRename(propertyName);
         }
       }
     }

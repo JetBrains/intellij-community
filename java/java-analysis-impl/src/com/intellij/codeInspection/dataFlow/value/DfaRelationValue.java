@@ -48,7 +48,7 @@ public class DfaRelationValue extends DfaValue {
     Factory(DfaValueFactory factory) {
       myFactory = factory;
       mySharedInstance = new DfaRelationValue(factory);
-      myStringToObject = new HashMap<String, ArrayList<DfaRelationValue>>();
+      myStringToObject = new HashMap<>();
     }
 
     public DfaRelationValue createRelation(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
@@ -99,7 +99,7 @@ public class DfaRelationValue extends DfaValue {
       String id = mySharedInstance.toString();
       ArrayList<DfaRelationValue> conditions = myStringToObject.get(id);
       if (conditions == null) {
-        conditions = new ArrayList<DfaRelationValue>();
+        conditions = new ArrayList<>();
         myStringToObject.put(id, conditions);
       }
       else {

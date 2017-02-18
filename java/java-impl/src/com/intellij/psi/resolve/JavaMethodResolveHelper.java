@@ -42,7 +42,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaMethodResolveHelper {
-  private final Set<MethodSignature> myDuplicates = new THashSet<MethodSignature>();
+  private final Set<MethodSignature> myDuplicates = new THashSet<>();
 
   private final MethodCandidatesProcessor myProcessor;
   @Nullable private final PsiType[] myArgumentTypes;

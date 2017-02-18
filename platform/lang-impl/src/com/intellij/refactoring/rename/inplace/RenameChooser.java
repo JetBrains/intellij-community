@@ -43,7 +43,7 @@ import java.util.*;
 abstract class RenameChooser {
   @NonNls private static final String CODE_OCCURRENCES = "Rename code occurrences";
   @NonNls private static final String ALL_OCCURRENCES = "Rename all occurrences";
-  private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<RangeHighlighter>();
+  private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<>();
   private final Editor myEditor;
   private final TextAttributes myAttributes;
 
@@ -58,7 +58,7 @@ abstract class RenameChooser {
                           final Collection<Pair<PsiElement, TextRange>> stringUsages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runRenameTemplate(
-        RefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FILE ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>());
+        RefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FILE ? stringUsages : new ArrayList<>());
       return;
     }
 
@@ -102,7 +102,7 @@ abstract class RenameChooser {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(() -> runRenameTemplate(ALL_OCCURRENCES.equals(list.getSelectedValue()) ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>()))
+      .setItemChoosenCallback(() -> runRenameTemplate(ALL_OCCURRENCES.equals(list.getSelectedValue()) ? stringUsages : new ArrayList<>()))
       .addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {

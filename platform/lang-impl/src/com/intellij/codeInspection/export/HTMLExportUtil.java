@@ -19,48 +19,68 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
 public class HTMLExportUtil {
   public static void writeFile(final String folder, @NonNls final String fileName, CharSequence buf, final Project project) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final File fullPath = new File(folder + File.separator + fileName);
+
+    if (indicator != null) {
+      ProgressManager.checkCanceled();
+      indicator.setText(InspectionsBundle.message("inspection.export.generating.html.for", fullPath.getAbsolutePath()));
+    }
+
     try {
-      HTMLExporter.writeFileImpl(folder, fileName, buf);
+      FileWriter writer = null;
+      try {
+        final File dir = fullPath.getParentFile();
+        if (!dir.exists() && !dir.mkdirs()) {
+          showErrorMessage("Can't create dir", dir, project);
+          return;
+        }
+        if (!dir.canWrite() && !fullPath.canWrite()) {
+          showErrorMessage("Permission denied", fullPath, project);
+          return;
+        }
+        writer = new FileWriter(fullPath, false);
+        writer.write(buf.toString().toCharArray());
+      }
+      finally {
+        if (writer != null) {
+          try {
+            writer.close();
+          }
+          catch (IOException e) {
+            //Cannot do anything in case of exception
+          }
+        }
+      }
     }
     catch (IOException e) {
-      Runnable showError = () -> {
-        final String fullPath = folder + File.separator + fileName;
-        Messages.showMessageDialog(
-          project,
-          InspectionsBundle.message("inspection.export.error.writing.to", fullPath),
-          InspectionsBundle.message("inspection.export.results.error.title"),
-          Messages.getErrorIcon()
-        );
-      };
-      ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
-      throw new ProcessCanceledException();
+      showErrorMessage(String.valueOf(e.getCause()), fullPath, project);
     }
   }
 
-  public static void runExport(final Project project, @NotNull ThrowableRunnable<IOException> runnable) {
-    try {
-      runnable.run();
-    }
-    catch (IOException e) {
-      Runnable showError = () -> Messages.showMessageDialog(
-        project,
-        InspectionsBundle.message("inspection.export.error.writing.to", "export file"),
-        InspectionsBundle.message("inspection.export.results.error.title"),
-        Messages.getErrorIcon()
-      );
-      ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
-      throw new ProcessCanceledException();
-    }
+  private static void showErrorMessage(@NotNull String message,
+                                       @NotNull File file,
+                                       @NotNull Project project) {
+    Runnable showError = () -> Messages.showMessageDialog(
+      project,
+      InspectionsBundle.message("inspection.export.error.writing.to", file.getAbsolutePath(), message),
+      InspectionsBundle.message("inspection.export.results.error.title"),
+      Messages.getErrorIcon()
+    );
+    ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
+    throw new ProcessCanceledException();
   }
 }

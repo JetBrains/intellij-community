@@ -119,9 +119,9 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
   public Palette(Project project) {
     myProject = project;
     myLafManagerListener = project == null ? null : new MyLafManagerListener();
-    myClass2Properties = new HashMap<Class, IntrospectedProperty[]>();
-    myClassName2Item = new HashMap<String, ComponentItem>();
-    myGroups = new ArrayList<GroupItem>();
+    myClass2Properties = new HashMap<>();
+    myClassName2Item = new HashMap<>();
+    myGroups = new ArrayList<>();
 
     if (project != null) {
       mySpecialGroup.setReadOnly(true);
@@ -378,7 +378,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       constraints = new GridConstraints();
     }
 
-    final HashMap<String, StringDescriptor> propertyName2initialValue = new HashMap<String, StringDescriptor>();
+    final HashMap<String, StringDescriptor> propertyName2initialValue = new HashMap<>();
     {
       final Element initialValues = itemElement.getChild(ELEMENT_INITIAL_VALUES);
       if (initialValues != null) {
@@ -584,7 +584,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       return myClass2Properties.get(aClass);
     }
 
-    final ArrayList<IntrospectedProperty> result = new ArrayList<IntrospectedProperty>();
+    final ArrayList<IntrospectedProperty> result = new ArrayList<>();
     try {
       final BeanInfo beanInfo = Introspector.getBeanInfo(aClass);
       final PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();

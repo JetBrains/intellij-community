@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ public interface SMTestLocator {
   @NotNull
   List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope);
 
+  /** @deprecated consoles should provide specific locators; the implementation is trivial (to be removed in IDEA 18) */
   class Composite implements SMTestLocator, DumbAware {
     private final Map<String, ? extends SMTestLocator> myLocators;
 

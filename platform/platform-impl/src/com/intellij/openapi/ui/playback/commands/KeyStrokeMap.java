@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class KeyStrokeMap {
 
     String symbol = null;
     int beforeSymbol = -1;
-    boolean haveSymbol = false;
+    boolean haveSymbol;
     KeyStroke symbolStroke = null;
 
     if (hasModifiers) {
@@ -102,7 +102,7 @@ public class KeyStrokeMap {
     return KeyStroke.getKeyStroke(symbolStroke.getKeyCode(), modifiers, false);
   }
 
-  private KeyStroke throwUnrecognized(String symbol) {
+  private static KeyStroke throwUnrecognized(String symbol) {
     throw new IllegalArgumentException("Unrecoginzed symbol: " + symbol);
   }
 
@@ -134,10 +134,9 @@ public class KeyStrokeMap {
         {'<', KeyEvent.VK_COMMA, shift,}, {'.', KeyEvent.VK_PERIOD, 0,}, {'>', KeyEvent.VK_PERIOD, shift,}, {'/', KeyEvent.VK_SLASH, 0,},
         {'?', KeyEvent.VK_SLASH, shift,}, {'\\', KeyEvent.VK_BACK_SLASH, 0,}, {'|', KeyEvent.VK_BACK_SLASH, shift,},
         {'\'', KeyEvent.VK_QUOTE, 0,}, {'"', KeyEvent.VK_QUOTE, shift,},};
-    HashMap<Character, KeyStroke> map = new HashMap<Character, KeyStroke>();
+    HashMap<Character, KeyStroke> map = new HashMap<>();
     // Universal mappings
-    for (int i = 0; i < universalMappings.length; i++) {
-      int[] entry = universalMappings[i];
+    for (int[] entry : universalMappings) {
       KeyStroke stroke = KeyStroke.getKeyStroke(entry[1], entry[2]);
       map.put(new Character((char)entry[0]), stroke);
     }
@@ -151,8 +150,7 @@ public class KeyStrokeMap {
     //}
 
     // Basic symbol/punctuation mappings
-    for (int i = 0; i < mappings.length; i++) {
-      int[] entry = mappings[i];
+    for (int[] entry : mappings) {
       KeyStroke stroke = KeyStroke.getKeyStroke(entry[1], entry[2]);
       map.put(new Character((char)entry[0]), stroke);
     }
@@ -164,9 +162,7 @@ public class KeyStrokeMap {
       stroke = KeyStroke.getKeyStroke(KeyEvent.VK_A + i - 'a', ctrl);
       Character key = new Character((char)(i - 'a' + 1));
       // Make sure we don't overwrite something already there
-      if (map.get(key) == null) {
-        map.put(key, stroke);
-      }
+      map.putIfAbsent(key, stroke);
     }
     // Capitals
     for (int i = 'A'; i <= 'Z'; i++) {

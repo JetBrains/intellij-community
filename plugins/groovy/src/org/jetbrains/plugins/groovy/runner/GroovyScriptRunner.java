@@ -16,12 +16,9 @@
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -47,7 +44,7 @@ public abstract class GroovyScriptRunner {
 
   public abstract boolean isValidModule(@NotNull Module module);
 
-  public abstract boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException;
+  public abstract void ensureRunnerConfigured(@NotNull GroovyScriptRunConfiguration configuration) throws RuntimeConfigurationException;
 
   public abstract void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script,
                                             GroovyScriptRunConfiguration configuration) throws CantRunException;
@@ -146,7 +143,7 @@ public abstract class GroovyScriptRunner {
       return null;
     }
 
-    Set<VirtualFile> core = new HashSet<VirtualFile>(params.getClassPath().getVirtualFiles());
+    Set<VirtualFile> core = new HashSet<>(params.getClassPath().getVirtualFiles());
 
     for (VirtualFile virtualFile : tmp.getClassPath().getVirtualFiles()) {
       if (allowDuplication || !core.contains(virtualFile)) {

@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -33,11 +32,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Use this class to postpone task execution and optionally merge identical tasks. This is needed e.g. to reflect in UI status of some
+ * background activity: it doesn't make sense and would be inefficient to update UI 1000 times per second, so it's better to postpone 'update UI'
+ * task execution for e.g. 500ms and if new updates are added during this period they can be simply ignored.
+ *
+ * <p/>
+ * Create instance of this class and use {@link #queue(Update)} method to add new tasks.
+ */
 public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   public static final JComponent ANY_COMPONENT = new JComponent() {
   };
@@ -96,6 +102,16 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
          executeInDispatchThread ? Alarm.ThreadToUse.SWING_THREAD : Alarm.ThreadToUse.POOLED_THREAD);
   }
 
+  /**
+   * @param name                   name of this queue, used only for debugging purposes
+   * @param mergingTimeSpan        time (in milliseconds) for which execution of tasks will be postponed
+   * @param isActive               if {@code true} the queue will execute tasks otherwise it'll just collect them and execute only after {@link #activate()} is called
+   * @param modalityStateComponent makes sense only if {@code thread} is {@linkplain Alarm.ThreadToUse#SWING_THREAD SWING_THREAD}, in that
+   *                               case the tasks will be processed in {@link ModalityState} corresponding the given component
+   * @param parent                 if not {@code null} the queue will be disposed when the given parent is disposed
+   * @param activationComponent    if not {@code null} the tasks will be processing only when the given component is showing
+   * @param thread                 specifies on which thread the tasks are executed
+   */
   public MergingUpdateQueue(@NonNls @NotNull String name,
                             int mergingTimeSpan,
                             boolean isActive,
@@ -125,8 +141,8 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
-    return AlarmFactory.getInstance().create(thread, parent);
+  protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, @Nullable Disposable parent) {
+    return parent == null ? AlarmFactory.getInstance().create(thread) : AlarmFactory.getInstance().create(thread, parent);
   }
 
   public void setMergingTimeSpan(int timeSpan) {
@@ -159,11 +175,12 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return myPassThrough;
   }
 
+  /**
+   * @param passThrough if {@code true} the tasks won't be postponed but executed immediately instead (this is default mode for tests)
+   */
   public final void setPassThrough(boolean passThrough) {
     myPassThrough = passThrough;
   }
-
-
 
   public void activate() {
     showNotify();
@@ -210,16 +227,16 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     restart(myMergingTimeSpan);
   }
 
-  private void restart(final int mergingTimeSpan) {
+  private void restart(final int mergingTimeSpanMillis) {
     if (!myActive) return;
 
     clearWaiter();
 
     if (myExecuteInDispatchThread) {
-      myWaiterForMerge.addRequest(this, mergingTimeSpan, getMergerModalityState());
+      myWaiterForMerge.addRequest(this, mergingTimeSpanMillis, getMergerModalityState());
     }
     else {
-      myWaiterForMerge.addRequest(this, mergingTimeSpan);
+      myWaiterForMerge.addRequest(this, mergingTimeSpanMillis);
     }
   }
 
@@ -321,6 +338,9 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
+  /**
+   * Adds a task to be executed.
+   */
   public void queue(@NotNull final Update update) {
     if (myDisposed) return;
 

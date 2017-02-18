@@ -46,11 +46,11 @@ public class ResourceFileUtil {
     String packageName = index >= 0 ? resourceName.substring(0, index).replace('/', '.') : "";
     final String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
 
-    final VirtualFile dir = new FilteredQuery<VirtualFile>(
+    final VirtualFile dir = new FilteredQuery<>(
       DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, false), file -> {
-        final VirtualFile child = file.findChild(fileName);
-        return child != null && scope.contains(child);
-      }).findFirst();
+      final VirtualFile child = file.findChild(fileName);
+      return child != null && scope.contains(child);
+    }).findFirst();
     return dir != null ? dir.findChild(fileName) : null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsAdd;
 
 import com.intellij.cvsSupport2.cvsoperations.common.CompositeOperation;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsOperation;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
@@ -28,8 +27,8 @@ import java.util.Map;
  */
 public class AddFilesOperation extends CompositeOperation {
 
-  private final Map<KeywordSubstitution, AddFileOperation> mySubstitutionToOperation = new HashMap<KeywordSubstitution, AddFileOperation>();
-  private final Map<VirtualFile, AddFileOperation> myAlreadyProcessedParentToOperation = new HashMap<VirtualFile, AddFileOperation>();
+  private final Map<KeywordSubstitution, AddFileOperation> mySubstitutionToOperation = new HashMap<>();
+  private final Map<VirtualFile, AddFileOperation> myAlreadyProcessedParentToOperation = new HashMap<>();
   private int myFilesCount = -1;
   private int myMainPartSize;
 
@@ -81,11 +80,6 @@ public class AddFilesOperation extends CompositeOperation {
   }
 
   private int calculateAllFilesCount() {
-    int result = 0;
-    for (final CvsOperation cvsOperation : getSubOperations()) {
-      AddFileOperation addFileOperation = (AddFileOperation)cvsOperation;
-      result += addFileOperation.getFilesCount();
-    }
-    return result;
+    return getSubOperations().stream().mapToInt(cvsOperation -> ((AddFileOperation)cvsOperation).getFilesCount()).sum();
   }
 }

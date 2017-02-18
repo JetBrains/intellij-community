@@ -106,7 +106,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
       try {
         final byte[] content = file.contentsToByteArray();
         final BufferedImage image = readImageFromBytes(content);
-        file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<BufferedImage>(image));
+        file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<>(image));
         return true;
       }
       finally {

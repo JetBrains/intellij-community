@@ -22,6 +22,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.uiDesigner.designSurface.InplaceEditingLayer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,10 @@ public abstract class AbstractGuiEditorAction extends AnAction implements DumbAw
       final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(editor);
       if (myModifying) {
         if (!editor.ensureEditable()) return;
+      }
+      InplaceEditingLayer editingLayer = editor.getInplaceEditingLayer();
+      if (editingLayer.isEditing()) {
+        editingLayer.finishInplaceEditing();
       }
       Runnable runnable = () -> {
         actionPerformed(editor, selection, e);

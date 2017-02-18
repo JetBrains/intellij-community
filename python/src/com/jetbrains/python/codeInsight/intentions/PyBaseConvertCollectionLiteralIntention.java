@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -36,7 +35,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntentionAction {
+public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseIntentionAction {
   private final Class<? extends PySequenceExpression> myTargetCollectionClass;
   private final String myTargetCollectionName;
   private final String myRightBrace;
@@ -87,7 +86,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends BaseIntent
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PySequenceExpression literal = findCollectionLiteralUnderCaret(editor, file);
     assert literal != null;
 
