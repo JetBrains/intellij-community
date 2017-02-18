@@ -104,8 +104,7 @@ public class Notification {
 
     LOG.assertTrue(isTitle() || isContent(),
                    "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
-
-    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(this));
+    id = calcId(this);
   }
 
   public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
@@ -133,7 +132,7 @@ public class Notification {
     myTimestamp = System.currentTimeMillis();
 
     LOG.assertTrue(isContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
-    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(hashCode());
+    id = calcId(this);
   }
 
   /**
@@ -346,5 +345,10 @@ public class Notification {
     }
 
     return getListener() != null || !ContainerUtil.isEmpty(myActions);
+  }
+
+  @NotNull
+  private static String calcId(@NotNull Notification notification) {
+    return String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(notification));
   }
 }
