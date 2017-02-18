@@ -67,8 +67,6 @@
     <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
     <action class="com.intellij.vcs.log.ui.actions.CloseLogTabAction" id="Vcs.Log.CloseLogTabAction"/>
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowGraphHistoryAction" id="Vcs.Show.Graph.History"
-            text="Show History as Graph" description="Show History as Graph" internal="true"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
             text="Show Commit Tooltip" description="Show tooltip for currently selected commit in the Log"
             use-shortcut-of="QuickJavaDoc"/>
