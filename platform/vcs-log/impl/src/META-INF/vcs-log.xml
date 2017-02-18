@@ -136,6 +136,15 @@
       <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
+      <reference id="Vcs.Log.ShowDiff"/>
+      <reference id="Vcs.Log.ShowDiffWithLocal"/>
+      <reference id="Vcs.Log.CreatePatchFromHistory"/>
+      <reference id="Vcs.Log.GetVersion"/>
+      <reference id="Vcs.Log.AnnotateRevisionAction"/>
+      <reference id="Vcs.Log.ShowAllAffected"/>
+      <reference id="Vcs.CopyRevisionNumberAction"/>
+      <reference id="VcsHistoryActionsGroup"/>
+      <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
