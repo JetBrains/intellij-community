@@ -102,7 +102,7 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
-    LOG.assertTrue(isTitle() || isContent(),
+    LOG.assertTrue(hasTitle() || hasContent(),
                    "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
     id = calcId(this);
   }
@@ -131,7 +131,7 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
-    LOG.assertTrue(isContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
+    LOG.assertTrue(hasContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
     id = calcId(this);
   }
 
@@ -158,7 +158,7 @@ public class Notification {
     return myGroupId;
   }
 
-  public boolean isTitle() {
+  public boolean hasTitle() {
     return !StringUtil.isEmptyOrSpaces(myTitle) || !StringUtil.isEmptyOrSpaces(mySubtitle);
   }
 
@@ -189,7 +189,7 @@ public class Notification {
     return this;
   }
 
-  public boolean isContent() {
+  public boolean hasContent() {
     return !StringUtil.isEmptyOrSpaces(myContent);
   }
 
