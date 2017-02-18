@@ -873,7 +873,7 @@ public class GitHistoryUtils {
 
     StopWatch sw = StopWatch.start("loading details");
 
-    processHandlerOutputByLine(h, parser, record -> converter.consume(record));
+    processHandlerOutputByLine(h, parser, converter);
 
     sw.report();
   }
