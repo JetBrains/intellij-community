@@ -45,13 +45,14 @@ public abstract class FileHistorySingleCommitAction extends AnAction implements 
       return;
     }
 
+    e.getPresentation().setVisible(true);
+
     List<VcsFullCommitDetails> details = ui.getVcsLog().getSelectedDetails();
     if (details.isEmpty()) {
-      e.getPresentation().setEnabledAndVisible(false);
+      e.getPresentation().setEnabled(false);
       return;
     }
 
-    e.getPresentation().setVisible(true);
     VcsFullCommitDetails detail = getFirstItem(details);
     if (detail instanceof LoadingDetails) detail = null;
     e.getPresentation().setEnabled(details.size() == 1 && isEnabled(ui, detail, e));

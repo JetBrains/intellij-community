@@ -56,9 +56,9 @@ public class CompareRevisionsFromHistoryAction extends AnAction {
       return;
     }
 
+    e.getPresentation().setVisible(true);
+    
     List<VcsFullCommitDetails> details = ui.getVcsLog().getSelectedDetails();
-    e.getPresentation().setVisible(!details.isEmpty());
-
     if (details.size() == 2) {
       VcsFullCommitDetails detail0 = details.get(0);
       VcsFullCommitDetails detail1 = details.get(1);

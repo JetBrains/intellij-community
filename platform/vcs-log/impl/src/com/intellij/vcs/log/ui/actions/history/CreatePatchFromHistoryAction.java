@@ -42,9 +42,11 @@ public class CreatePatchFromHistoryAction extends AnAction implements DumbAware 
       return;
     }
 
+    e.getPresentation().setVisible(true);
+
     List<CommitId> selectedCommits = ui.getVcsLog().getSelectedCommits();
     String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
-    e.getPresentation().setEnabledAndVisible(!selectedCommits.isEmpty() && commitMessage != null);
+    e.getPresentation().setEnabled(!selectedCommits.isEmpty() && commitMessage != null);
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
