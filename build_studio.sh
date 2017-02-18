@@ -81,9 +81,9 @@ $ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.
 
 # Temp: figure out how to preserve symlinks
 cd "$OUT/artifacts"
-unzip -q "android-studio-$BRANCH_PREFIX$BNUM.mac.zip"
-cd "Android Studio.app/Contents/jre/jdk/Contents/MacOS" && ln -fs ../Home/jre/lib/jli/libjli.dylib && cd ../../../../../../
-zip --symlinks -r "android-studio-$BRANCH_PREFIX$BNUM.mac.zip" Android*.app/Contents/jre/jdk/Contents/MacOS
+unzip -q android-studio-*.mac.zip
+cd Android*.app/Contents/jre/jdk/Contents/MacOS && ln -fs ../Home/jre/lib/jli/libjli.dylib && cd ../../../../../../
+zip --symlinks -r android-studio-$BRANCH_PREFIX$BNUM.mac.zip Android*.app/Contents/jre/jdk/Contents/MacOS
 cd ../../
 
 echo "## Copying android-studio distribution files"
