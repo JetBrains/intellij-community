@@ -804,13 +804,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/adt/idea/android/lib:dexlib2-2.0.8-dev",
-        "//tools/adt/idea/android/lib:dexlib2-util-2.0.8-dev",
+        "//prebuilts/tools/common/m2/repository/org/smali/util/2.1.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/smali/dexlib2/2.1.3:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/adt/idea/android/lib:dexlib2-2.0.8-dev",
-        "//tools/adt/idea/android/lib:dexlib2-util-2.0.8-dev",
+        "//prebuilts/tools/common/m2/repository/org/smali/util/2.1.3:jar",
+        "//prebuilts/tools/common/m2/repository/org/smali/dexlib2/2.1.3:jar",
     ],
 )
 
