@@ -16,7 +16,6 @@
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -140,7 +139,7 @@ class GitAbortRebaseProcess {
   private void doAbort(final boolean rollback) {
     new GitFreezingProcess(myProject, "rebase", new Runnable() {
       public void run() {
-        AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
+        DvcsUtil.workingTreeChangeStarted(myProject);
         List<GitRepository> repositoriesToRefresh = ContainerUtil.newArrayList();
         try {
           if (myRepositoryToAbort != null) {
@@ -187,7 +186,7 @@ class GitAbortRebaseProcess {
         }
         finally {
           refresh(repositoriesToRefresh);
-          DvcsUtil.workingTreeChangeFinished(myProject, token);
+          DvcsUtil.workingTreeChangeFinished(myProject);
         }
       }
     }).execute();

@@ -13,7 +13,6 @@
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.FilePath;
@@ -72,7 +71,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
         }
       }
     }
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
+    DvcsUtil.workingTreeChangeStarted(project);
     try {
       revert(filePaths);
       for (FilePath file : toDelete) {
@@ -93,18 +92,18 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      DvcsUtil.workingTreeChangeFinished(project);
     }
   }
 
   public void rollbackMissingFileDeletion(List<FilePath> files,
                                           List<VcsException> exceptions, RollbackProgressListener listener) {
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
+    DvcsUtil.workingTreeChangeStarted(project);
     try {
       revert(files);
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      DvcsUtil.workingTreeChangeFinished(project);
     }
   }
 

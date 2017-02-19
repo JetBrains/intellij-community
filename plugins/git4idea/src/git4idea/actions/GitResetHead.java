@@ -53,12 +53,12 @@ public class GitResetHead extends GitRepositoryAction {
       return;
     }
     GitLineHandler h = d.handler();
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
+    DvcsUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("resetting.title"), h.printableCommandLine());
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      DvcsUtil.workingTreeChangeFinished(project);
     }
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
     manager.updateRepository(d.getGitRoot());
