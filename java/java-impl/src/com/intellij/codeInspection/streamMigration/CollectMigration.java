@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.CountingLoopSource;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -670,12 +671,22 @@ class CollectMigration extends BaseStreamApiMigration {
       PsiExpression comparedToZero = getExpressionComparedToZero(condition);
       if (comparedToZero == null) return null;
       PsiMethodCallExpression maybeLength = tryCast(PsiUtil.skipParenthesizedExprDown(comparedToZero), PsiMethodCallExpression.class);
-      if (!isCallOf(maybeLength, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "length")) return null;
-      PsiLocalVariable builder = extractQualifierVariable(tb, maybeLength);
-      if (builder == null) return null;
+      PsiLocalVariable builder = null;
+      if (isCallOf(maybeLength, CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "length")) {
+        builder = extractQualifierVariable(tb, maybeLength);
+        if (builder == null) return null;
+      }
+      else {
+        CountingLoopSource source = tb.getLastOperation(CountingLoopSource.class);
+        if (source == null ||
+            !ExpressionUtils.isZero(source.getExpression()) ||
+            !ExpressionUtils.isReferenceTo(comparedToZero, source.getVariable())) {
+          return null;
+        }
+      }
       PsiMethodCallExpression call = tryCast(thenBranch.getExpression(), PsiMethodCallExpression.class);
       if (!APPEND.test(call)) return null;
-      return extractQualifierVariable(tb, call) == builder ? call : null;
+      return builder == null || extractQualifierVariable(tb, call) == builder ? call : null;
     }
 
     static StringBuilderTerminal tryExtract(TerminalBlock tb, PsiMethodCallExpression call, PsiMethodCallExpression delimiterAppend) {
