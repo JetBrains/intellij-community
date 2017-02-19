@@ -18,7 +18,6 @@ package com.intellij.vcs.log.ui.actions.history;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ public class AnnotateRevisionFromHistoryAction extends FileHistorySingleCommitAc
     VcsKey key = e.getData(VcsDataKeys.VCS);
     if (key == null) return false;
 
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(e.getProject()).findVcsByName(key.getName());
+    AbstractVcs vcs = VcsUtil.findVcsByKey(notNull(e.getProject()), key);
     if (vcs == null) return false;
     AnnotationProvider provider = vcs.getAnnotationProvider();
     if (provider == null) return false;
@@ -63,7 +63,7 @@ public class AnnotateRevisionFromHistoryAction extends FileHistorySingleCommitAc
 
     if (revision != null && vcsVirtualFile != null) {
       AnnotateRevisionActionBase.annotate(vcsVirtualFile, revision,
-                                          notNull(ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName())),
+                                          notNull(VcsUtil.findVcsByKey(project, vcsKey)),
                                           null, 0);
     }
   }
