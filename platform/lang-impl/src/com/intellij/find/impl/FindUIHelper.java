@@ -23,7 +23,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -64,7 +63,7 @@ class FindUIHelper implements Disposable {
   }
 
   protected FindUI getOrCreateUI() {
-    if (Registry.is("ide.find.as.popup") && ApplicationManager.getApplication().isInternal()) {
+    if (Registry.is("ide.find.as.popup")) {
       return myUI != null ? myUI : new FindPopupPanel(this);
     }
     else {
