@@ -24,6 +24,7 @@ class FunctionType:
     __closure__ = ...  # type: Optional[Tuple[_Cell, ...]]
     __code__ = ...  # type: CodeType
     __defaults__ = ...  # type: Optional[Tuple[Any, ...]]
+    __dict__ = ...  # type: Dict[str, Any]
     __globals__ = ...  # type: Dict[str, Any]
     __name__ = ...  # type: str
     __annotations__ = ...  # type: Dict[str, Any]

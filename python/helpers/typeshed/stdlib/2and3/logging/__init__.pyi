@@ -1,7 +1,7 @@
 # Stubs for logging (Python 3.4)
 
 from typing import (
-    Any, Callable, Dict, Iterable, Mapping, MutableMapping, Optional, IO,
+    Any, Callable, Dict, Iterable, List, Mapping, MutableMapping, Optional, IO,
     Tuple, Text, Union, overload,
 )
 from string import Template

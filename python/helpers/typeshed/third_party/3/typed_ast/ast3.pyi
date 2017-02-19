@@ -8,7 +8,10 @@ class NodeVisitor():
 class NodeTransformer(NodeVisitor):
     def generic_visit(self, node: AST) -> None: ...
 
-def parse(source: Union[str, bytes], filename: Union[str, bytes] = ..., mode: str = ...) -> AST: ...
+def parse(source: Union[str, bytes],
+          filename: Union[str, bytes] = ...,
+          mode: str = ...,
+          feature_version: int = ...) -> AST: ...
 def copy_location(new_node: AST, old_node: AST) -> AST: ...
 def dump(node: AST, annotate_fields: bool = ..., include_attributes: bool = ...) -> str: ...
 def fix_missing_locations(node: AST) -> AST: ...
@@ -86,14 +89,19 @@ class Delete(stmt):
 
 class Assign(stmt):
     targets = ...  # type: typing.List[expr]
-    value = ...  # type: Optional[expr]
+    value = ...  # type: expr
     type_comment = ...  # type: Optional[str]
-    annotation = ...  # type: Optional[expr]
 
 class AugAssign(stmt):
     target = ...  # type: expr
     op = ...  # type: operator
     value = ...  # type: expr
+
+class AnnAssign(stmt):
+    target = ...  # type: expr
+    annotation = ...  # type: expr
+    value = ...  # type: Optional[expr]
+    simple = ...  # type: int
 
 class For(stmt):
     target = ...  # type: expr
@@ -107,6 +115,7 @@ class AsyncFor(stmt):
     iter = ...  # type: expr
     body = ...  # type: typing.List[stmt]
     orelse = ...  # type: typing.List[stmt]
+    type_comment = ...  # type: Optional[str]
 
 class While(stmt):
     test = ...  # type: expr
@@ -126,6 +135,7 @@ class With(stmt):
 class AsyncWith(stmt):
     items = ...  # type: typing.List[withitem]
     body = ...  # type: typing.List[stmt]
+    type_comment = ...  # type: Optional[str]
 
 class Raise(stmt):
     exc = ...  # type: Optional[expr]
@@ -255,6 +265,14 @@ class Num(expr):
 class Str(expr):
     s = ...  # type: str
 
+class FormattedValue(expr):
+    value = ...  # type: expr
+    conversion = ...  # type: typing.Optional[int]
+    format_spec = ...  # type: typing.Optional[expr]
+
+class JoinedStr(expr):
+    values = ...  # type: typing.List[expr]
+
 class Bytes(expr):
     s = ...  # type: bytes
 
@@ -351,6 +369,7 @@ class comprehension(AST):
     target = ...  # type: expr
     iter = ...  # type: expr
     ifs = ...  # type: typing.List[expr]
+    is_async = ...  # type: int
 
 
 class ExceptHandler(AST):
@@ -374,6 +393,7 @@ class arg(AST):
     annotation = ...  # type: Optional[expr]
     lineno = ...  # type: int
     col_offset = ...  # type: int
+    type_comment = ...  # type: typing.Optional[str]
 
 class keyword(AST):
     arg = ...  # type: Optional[identifier]

@@ -1,5 +1,6 @@
 # Stubs for urllib.parse
-from typing import Any, List, Dict, Tuple, AnyStr, Generic, overload, Sequence, Mapping, Union, NamedTuple
+from typing import Any, List, Dict, Tuple, AnyStr, Generic, overload, Sequence, Mapping, Union, NamedTuple, Callable
+import sys
 
 __all__ = (
     'urlparse',
@@ -123,11 +124,19 @@ def urldefrag(url: str) -> DefragResult: ...
 @overload
 def urldefrag(url: bytes) -> DefragResultBytes: ...
 
-def urlencode(query: Union[Mapping[Any, Any],
-                           Mapping[Any, Sequence[Any]],
-                           Sequence[Tuple[Any, Any]],
-                           Sequence[Tuple[Any, Sequence[Any]]]],
-              doseq: bool = ..., safe: AnyStr = ..., encoding: str = ..., errors: str = ...) -> str: ...
+if sys.version_info >= (3, 5):
+    def urlencode(query: Union[Mapping[Any, Any],
+                               Mapping[Any, Sequence[Any]],
+                               Sequence[Tuple[Any, Any]],
+                               Sequence[Tuple[Any, Sequence[Any]]]],
+                  doseq: bool = ..., safe: AnyStr = ..., encoding: str = ..., errors: str = ...,
+                  quote_via: Callable[[str, AnyStr, str, str], str] = ...) -> str: ...
+else:
+    def urlencode(query: Union[Mapping[Any, Any],
+                               Mapping[Any, Sequence[Any]],
+                               Sequence[Tuple[Any, Any]],
+                               Sequence[Tuple[Any, Sequence[Any]]]],
+                  doseq: bool = ..., safe: AnyStr = ..., encoding: str = ..., errors: str = ...) -> str: ...
 
 def urljoin(base: AnyStr, url: AnyStr, allow_fragments: bool = ...) -> AnyStr: ...
 

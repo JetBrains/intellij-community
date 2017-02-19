@@ -1,12 +1,12 @@
-import socket
-from typing import Any, Callable, Generator, Iterable, Tuple
+import sys
+from typing import Any, Awaitable, Callable, Generator, Iterable, Optional, Tuple
 
 from . import coroutines
 from . import events
 from . import protocols
 from . import transports
 
-ClientConnectedCallback = Callable[[Tuple[StreamReader, StreamWriter]], None]
+ClientConnectedCallback = Callable[[StreamReader, StreamWriter], Optional[Awaitable[None]]]
 
 
 __all__ = ...  # type: str
@@ -38,7 +38,7 @@ def start_server(
     **kwds: Any
 ) -> Generator[Any, None, events.AbstractServer]: ...
 
-if hasattr(socket, 'AF_UNIX'):
+if sys.platform != 'win32':
     @coroutines.coroutine
     def open_unix_connection(
         path: str = ...,
@@ -84,7 +84,7 @@ class StreamWriter:
     def close(self) -> None: ...
     def get_extra_info(self, name: str, default: Any = ...) -> Any: ...
     @coroutines.coroutine
-    def drain(self) -> None: ...
+    def drain(self) -> Generator[Any, None, None]: ...
 
 class StreamReader:
     def __init__(self,
