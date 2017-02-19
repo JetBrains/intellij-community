@@ -28,6 +28,7 @@ import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -35,6 +36,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -50,6 +52,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -86,7 +89,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NonNls private static final String REMOVE_FILES_FROM_SHELF_STRATEGY = "remove_strategy";
 
   @NotNull private final PathMacroManager myPathMacroSubstitutor;
-  @NotNull private final SchemeManager<ShelvedChangeList> mySchemeManager;
+  @NotNull private SchemeManager<ShelvedChangeList> mySchemeManager;
+
   private ScheduledFuture<?> myCleaningFuture;
   private boolean myRemoveFilesFromShelf;
 
@@ -104,7 +108,12 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NotNull
   public static String getDefaultShelfPresentationPath(@NotNull Project project) {
     //noinspection deprecation
-    return project.isDefault() ? PROJECT_CONFIG_DIR : Paths.get(getConfigDirPath(project), SHELVE_MANAGER_DIR_PATH).toString();
+    return project.isDefault() ? PROJECT_CONFIG_DIR : getProjectShelfPath(project);
+  }
+
+  @NotNull
+  static String getProjectShelfPath(@NotNull Project project) {
+    return Paths.get(getConfigDirPath(project), SHELVE_MANAGER_DIR_PATH).toString();
   }
 
   private static String getConfigDirPath(Project project) {
@@ -153,6 +162,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   private SchemeManager<ShelvedChangeList> createShelveSchemeManager(@NotNull Project project,
                                                                      @Nullable String customPath) {
     FilePath customShelfFilePath = customPath != null ? VcsUtil.getFilePath(customPath) : null;
+    //don't collapse custom paths
+    final boolean shouldCollapsePath = !VcsConfiguration.getInstance(myProject).USE_CUSTOM_SHELF_PATH;
     return SchemeManagerFactory.getInstance(project)
       .create(customShelfFilePath != null ? customShelfFilePath.getName() : SHELVE_MANAGER_DIR_PATH,
               new NonLazySchemeProcessor<ShelvedChangeList, ShelvedChangeList>() {
@@ -167,7 +178,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                 public Parent writeScheme(@NotNull ShelvedChangeList scheme) throws WriteExternalException {
                   Element child = new Element(ELEMENT_CHANGELIST);
                   scheme.writeExternal(child);
-                  myPathMacroSubstitutor.collapsePaths(child);
+                  if (shouldCollapsePath) {
+                    myPathMacroSubstitutor.collapsePaths(child);
+                  }
                   return child;
                 }
               }, null, customPath != null ? Paths.get(customPath) : null);
@@ -195,6 +208,90 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       return true;
     });
   }
+
+
+  public void checkAndMigrateUnderProgress(@Nullable String fromDirPath,
+                                           @Nullable String toDirPath, boolean wasCustom) throws ConfigurationException {
+    final SchemeManager<ShelvedChangeList> newSchemeManager =
+      createShelveSchemeManager(myProject, myPathMacroSubstitutor.expandPath(toDirPath));
+    File fromFile = new File(getShelfPath(fromDirPath));
+    File toFile = new File(getShelfPath(toDirPath));
+    if (!fromFile.exists()) return; //previous shelf directory may do not exist at all
+    String validationError = validateDestinationDirectory(toFile);
+    if (validationError != null) throw new ConfigurationException(validationError);
+    new Task.Modal(myProject, "Moving shelves from " + fromFile + " to " + toFile, true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        newSchemeManager.loadSchemes();
+        for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
+          if (!list.isValid()) continue;
+          ShelvedChangeList migratedList = ShelvedChangeList.copy(list);
+          //find new name;
+          File newTargetDirectory = suggestPatchName(myProject, migratedList.DESCRIPTION, toFile, "");
+          migrateResourcesTo(migratedList, newTargetDirectory, false);
+          newSchemeManager.addNewScheme(migratedList, false);
+          // migrate resources and scheme path
+          indicator.checkCanceled();
+        }
+        clearShelvedLists(mySchemeManager.getAllSchemes(), false);
+      }
+
+      @Override
+      public void onSuccess() {
+        super.onSuccess();
+        updateShelveSchemaManager();
+      }
+
+      void updateShelveSchemaManager() {
+        myProject.save();
+        ApplicationManager.getApplication().saveSettings();
+        SchemeManagerFactory.getInstance(myProject).dispose(mySchemeManager);
+        mySchemeManager = newSchemeManager;
+        notifyStateChanged();
+      }
+
+      @Override
+      public void onCancel() {
+        super.onCancel();
+        suggestToCancelMigrationOrRevertPathToPrevious();
+      }
+
+      private void suggestToCancelMigrationOrRevertPathToPrevious() {
+        if (Messages.showOkCancelDialog(myProject,
+                                        "Shelves moving failed. <br/>Would you like to use new shelf directory path or revert it to previous?",
+                                        "Shelf Error",
+                                        "&Use New",
+                                        "&Revert",
+                                        UIUtil.getWarningIcon()) == Messages.OK) {
+          updateShelveSchemaManager();
+        }
+        else {
+          VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
+          vcsConfiguration.USE_CUSTOM_SHELF_PATH = wasCustom;
+          vcsConfiguration.CUSTOM_SHELF_PATH = fromDirPath;
+        }
+      }
+
+      @Override
+      public void onThrowable(@NotNull Throwable error) {
+        super.onThrowable(error);
+        suggestToCancelMigrationOrRevertPathToPrevious();
+      }
+    }.queue();
+  }
+
+  @Nullable
+  private static String validateDestinationDirectory(@NotNull File destinationDir) {
+    if (!destinationDir.exists() && !destinationDir.mkdirs()) return "Destination shelf directory doesn't exist and failed to be created";
+    if (!destinationDir.canRead()) return "Destination shelf directory should have read access";
+    if (!destinationDir.canWrite()) return "Destination shelf directory should have write access";
+    return null;
+  }
+
+  @NotNull
+  private String getShelfPath(@Nullable String path) {
+    return ObjectUtils.chooseNotNull(path, getDefaultShelfPresentationPath(myProject));
+  }                          
 
   @NotNull
   public File getShelfResourcesDirectory() {
@@ -247,25 +344,30 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   public Collection<String> checkAndMigrateOldPatchResourcesToNewSchemeStorage() {
     Collection<String> nonMigratedPaths = ContainerUtil.newArrayList();
     for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
-      File patchDir = new File(getShelfResourcesDirectory(), list.getName());
-      nonMigratedPaths.addAll(migrateIfNeededToSchemeDir(list, patchDir));
+      File newPatchDir = new File(getShelfResourcesDirectory(), list.getName());
+      // it should be enough for migration to check if resource directory exists. If any bugs appeared add isAncestor checks for each path
+      if (!newPatchDir.exists() && newPatchDir.mkdirs()) {
+        nonMigratedPaths.addAll(migrateResourcesTo(list, newPatchDir, true));
+      }
     }
     return nonMigratedPaths;
   }
 
   @NotNull
-  private static Collection<String> migrateIfNeededToSchemeDir(@NotNull ShelvedChangeList list, @NotNull File targetDirectory) {
-    // it should be enough for migration to check if resource directory exists. If any bugs appeared add isAncestor checks for each path
-    if (targetDirectory.exists() || !targetDirectory.mkdirs()) return ContainerUtil.emptyList();
+  private static Collection<String> migrateResourcesTo(@NotNull ShelvedChangeList list,
+                                                       @NotNull File targetDirectory,
+                                                       boolean deleteOld) {
     Collection<String> nonMigratedPaths = ContainerUtil.newArrayList();
-    //try to move .patch file
+    //try to copy/move .patch file
     File patchFile = new File(list.PATH);
     if (patchFile.exists()) {
       File newPatchFile = getPatchFileInConfigDir(targetDirectory);
       try {
         FileUtil.copy(patchFile, newPatchFile);
         list.PATH = FileUtil.toSystemIndependentName(newPatchFile.getPath());
-        FileUtil.delete(patchFile);
+        if (deleteOld) {
+          FileUtil.delete(patchFile);
+        }
       }
       catch (IOException e) {
         nonMigratedPaths.add(list.PATH);
@@ -280,7 +382,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
           try {
             FileUtil.copy(shelvedFile, newShelvedFile);
             file.SHELVED_PATH = FileUtil.toSystemIndependentName(newShelvedFile.getPath());
-            FileUtil.delete(shelvedFile);
+            if (deleteOld) {
+              FileUtil.delete(shelvedFile);
+            }
           }
           catch (IOException e) {
             nonMigratedPaths.add(shelvedFile.getPath());
@@ -650,7 +754,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                                                                                            list.DATE.before(limitDate) &&
                                                                                                            (!onlyMarkedToDelete ||
                                                                                                             list.isMarkedToDelete()));
-    clearShelvedLists(toDelete);
+    clearShelvedLists(toDelete, true);
   }
 
   @CalledInAwt
@@ -867,16 +971,18 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   public void clearRecycled() {
-    clearShelvedLists(getRecycledShelvedChangeLists());
+    clearShelvedLists(getRecycledShelvedChangeLists(), true);
   }
 
-  private void clearShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists) {
+  private void clearShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists, boolean updateView) {
     if (shelvedLists.isEmpty()) return;
     for (ShelvedChangeList list : shelvedLists) {
       deleteListImpl(list);
       mySchemeManager.removeScheme(list);
     }
-    notifyStateChanged();
+    if (updateView) {
+      notifyStateChanged();
+    }
   }
 
   private void recycleChangeList(@NotNull final ShelvedChangeList listCopy, @Nullable final ShelvedChangeList newList) {

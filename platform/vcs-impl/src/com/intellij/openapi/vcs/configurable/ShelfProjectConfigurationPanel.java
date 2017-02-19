@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -61,8 +63,8 @@ public class ShelfProjectConfigurationPanel extends JPanel {
       public boolean verify(JComponent input) {
         File file = new File(myShelfDirectoryPath.getText());
         String errorMessage = null;
-        if (!file.exists()) {
-          errorMessage = "Shelf directory doesn't exist";
+        if (!file.exists() && !file.mkdirs()) {
+          errorMessage = "Shelf directory doesn't exist and can't be created";
         }
         else if (!file.canWrite() || !file.canRead()) {
           errorMessage = "Shelf directory should have read and write access";
@@ -158,10 +160,20 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     return false;
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     boolean customShelfDir = myUseCustomShelfDirectory.isSelected();
+    String myPrevShelfPath = myVcsConfiguration.CUSTOM_SHELF_PATH;
+    boolean wasCustom = myVcsConfiguration.USE_CUSTOM_SHELF_PATH;
     myVcsConfiguration.USE_CUSTOM_SHELF_PATH = customShelfDir;
     myVcsConfiguration.CUSTOM_SHELF_PATH = customShelfDir ? myShelfDirectoryPath.getText() : null;
+    if (!myProject.isDefault()) {
+      myProject.save();
+      if (wasCustom) {
+        ApplicationManager.getApplication().saveSettings();
+      }
+      ShelveChangesManager.getInstance(myProject)
+        .checkAndMigrateUnderProgress(myPrevShelfPath, myVcsConfiguration.CUSTOM_SHELF_PATH, wasCustom);
+    }
   }
 }
