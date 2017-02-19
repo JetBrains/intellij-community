@@ -52,7 +52,7 @@ public class HgRebaseCommand {
 
   @Nullable
   private HgCommandResult performRebase(@NotNull String... args) {
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
+    DvcsUtil.workingTreeChangeStarted(project);
     try {
       final List<String> list = ContainerUtil.newArrayList(args);
       list.add("--config");
@@ -64,7 +64,7 @@ public class HgRebaseCommand {
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      DvcsUtil.workingTreeChangeFinished(project);
     }
   }
 }

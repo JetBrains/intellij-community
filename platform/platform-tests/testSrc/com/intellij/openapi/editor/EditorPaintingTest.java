@@ -116,6 +116,14 @@ public class EditorPaintingTest extends AbstractEditorTest {
     checkResult();
   }
 
+  public void testMultilineBorderWithInlays() throws Exception {
+    initText("abc\ndef");
+    myEditor.getInlayModel().addInlineElement(1, new MyInlayRenderer());
+    myEditor.getInlayModel().addInlineElement(6, new MyInlayRenderer());
+    addBorderHighlighter(0, 7, 0, Color.red);
+    checkResult();
+  }
+
   private static void setUniformEditorHighlighter(TextAttributes attributes) {
     ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
   }

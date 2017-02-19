@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -453,7 +453,7 @@ idea.fatal.error.notification=disabled
 
     def kotlinPluginLibPath = "$buildContext.paths.communityHome/build/kotlinc/plugin/Kotlin/lib"
     if (new File(kotlinPluginLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar"].each {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", buildContext.ant)
       }
     }

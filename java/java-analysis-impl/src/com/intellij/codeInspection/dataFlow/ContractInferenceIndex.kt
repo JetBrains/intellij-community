@@ -17,7 +17,6 @@ package com.intellij.codeInspection.dataFlow
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -93,11 +92,7 @@ private fun createData(body: LighterASTNode,
   return MethodData(nullity, purity, contracts, body.startOffset, body.endOffset)
 }
 
-fun getIndexedData(method: PsiMethod): MethodData? {
-  if (method !is PsiMethodImpl || !InferenceFromSourceUtil.shouldInferFromSource(method)) return null
-
-  return gist.getFileData(method.containingFile)?.get(methodIndex(method))
-}
+fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(methodIndex(method))
 
 private fun methodIndex(method: PsiMethodImpl): Int {
   val file = method.containingFile as PsiFileImpl

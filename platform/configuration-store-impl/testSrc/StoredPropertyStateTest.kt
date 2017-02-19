@@ -3,20 +3,21 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.BaseState
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.loadElement
-import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Test
 
-private class AState : BaseState() {
+internal class AState : BaseState() {
   @get:Attribute("customName")
   var languageLevel by storedProperty<String?>()
 
   var property2 by storedProperty(0)
 
+  var floatProperty by storedProperty(0.3)
+
   var nestedComplex by storedProperty<NestedState?>()
 }
 
-private class NestedState : BaseState() {
+internal class NestedState : BaseState() {
   var childProperty by storedProperty<String?>()
 }
 
@@ -36,7 +37,7 @@ class StoredPropertyStateTest {
 
     assertThat(state).isNotEqualTo(AState())
 
-    assertThat(XmlSerializer.serialize(state)).isEqualTo("""<AState customName="foo" />""")
+    assertThat(state.serialize()).isEqualTo("""<AState customName="foo" />""")
     assertThat(loadElement("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
   }
 

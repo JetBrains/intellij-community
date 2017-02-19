@@ -16,7 +16,6 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -64,28 +63,30 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @Override
-  public synchronized void init(@NotNull Type originalType) {
+  public synchronized void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     assert myBindings == null;
 
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      myBindings[i] = createBinding(accessors.get(i));
+      Binding binding = createBinding(accessors.get(i), serializer);
+      binding.init(originalType, serializer);
+      myBindings[i] = binding;
     }
   }
 
   @Override
   @Nullable
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     return serializeInto(o, context == null ? null : new Element(myTagName), filter);
   }
 
-  public Element serialize(@NotNull Object object, boolean createElementIfEmpty, @NotNull SerializationFilter filter) {
+  public Element serialize(@NotNull Object object, boolean createElementIfEmpty, @Nullable SerializationFilter filter) {
     return serializeInto(object, createElementIfEmpty ? new Element(myTagName) : null, filter);
   }
 
   @Nullable
-  public Element serializeInto(@NotNull Object o, @Nullable Element element, @NotNull SerializationFilter filter) {
+  public Element serializeInto(@NotNull Object o, @Nullable Element element, @Nullable SerializationFilter filter) {
     for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
 
@@ -93,13 +94,15 @@ public class BeanBinding extends NotNullDeserializeBinding {
         continue;
       }
 
-      if (filter instanceof SkipDefaultsSerializationFilter) {
-        if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
+      if (filter != null) {
+        if (filter instanceof SkipDefaultsSerializationFilter) {
+          if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
+            continue;
+          }
+        }
+        else if (!filter.accepts(accessor, o)) {
           continue;
         }
-      }
-      else if (!filter.accepts(accessor, o)) {
-        continue;
       }
 
       //todo: optimize. Cache it.
@@ -119,7 +122,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
           element.setAttribute((org.jdom.Attribute)node);
         }
         else {
-          JDOMUtil.addContent(element, node);
+          addContent(element, node);
         }
       }
     }
@@ -414,8 +417,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  private Binding createBinding(@NotNull MutableAccessor accessor) {
-    Binding binding = getBinding(accessor);
+  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer) {
+    Binding binding = serializer.getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
     }
@@ -453,10 +456,5 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
-  }
-
-
-  protected Binding getBinding(@NotNull MutableAccessor accessor) {
-    return XmlSerializerImpl.getBinding(accessor);
   }
 }

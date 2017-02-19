@@ -1387,12 +1387,9 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (variable instanceof PsiParameter) {
       final PsiModifierList modifierList = variable.getModifierList();
       if (modifierList != null) {
-        for (PsiAnnotation annotation : modifierList.getAnnotations()) {
-          if (SuppressWarnings.class.getName().equals(annotation.getQualifiedName())) continue;
-          final PsiModifierList parmModifierList = parm.getModifierList();
-          LOG.assertTrue(parmModifierList != null, parm);
-          parmModifierList.add(annotation);
-        }
+        PsiModifierList parmModifierList = parm.getModifierList();
+        LOG.assertTrue(parmModifierList != null);
+        GenerateMembersUtil.copyAnnotations(modifierList, parmModifierList, SuppressWarnings.class.getName());
       }
     }
   }
@@ -1529,7 +1526,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (classes.size() > 1) {
         final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
-        NavigationUtil.getPsiElementPopup(psiClasses, PsiClassListCellRenderer.INSTANCE, "Choose Destination Class", processor, preselection)
+        NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
           .showInBestPositionFor(myEditor);
         return true;
       }

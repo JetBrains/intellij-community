@@ -113,12 +113,9 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   private String errMsg(@NotNull RMNode<T> node) {
     System.gc();
     final AtomicInteger alive = new AtomicInteger();
-    node.processAliveKeys(new Processor<Object>() {
-      @Override
-      public boolean process(Object t) {
-        alive.incrementAndGet();
-        return true;
-      }
+    node.processAliveKeys(t -> {
+      alive.incrementAndGet();
+      return true;
     });
     if (alive.get() > DUPLICATE_LIMIT) {
       return "Too many range markers (" + alive + ") registered for interval "+node;
@@ -130,7 +127,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   @NotNull
   @Override
   protected RMNode<T> createNewNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    return new RMNode<T>(this, key, start, end, greedyToLeft, greedyToRight);
+    return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight);
   }
 
   @Override
@@ -187,12 +184,14 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       checkMax(true);
 
       modCount++;
-      List<IntervalNode<T>> affected = new SmartList<IntervalNode<T>>();
+      List<IntervalNode<T>> affected = new SmartList<>();
       collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
       checkMax(false);
 
       if (!affected.isEmpty()) {
-        for (IntervalNode<T> node : affected) {
+        // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
+        for (int i = affected.size() - 1; i >= 0; i--) {
+          IntervalNode<T> node = affected.get(i);
           // assumption: interval.getEndOffset() will never be accessed during remove()
           int startOffset = node.intervalStart();
           int endOffset = node.intervalEnd();
@@ -322,39 +321,31 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
-    final Queue<T> ends = new PriorityQueue<T>(5, new Comparator<T>() {
-      @Override
-      public int compare(@NotNull T o1, @NotNull T o2) {
-        return o1.getEndOffset() - o2.getEndOffset();
-      }
-    });
-    final List<T> starts = new ArrayList<T>();
-    if (!generator.generateInStartOffsetOrder(new Processor<T>() {
-      @Override
-      public boolean process(T marker) {
-        // decide whether previous marker ends here or new marker begins
-        int start = marker.getStartOffset();
-        while (true) {
-          assert ends.size() == starts.size();
-          T previous = ends.peek();
-          if (previous != null) {
-            int prevEnd = previous.getEndOffset();
-            if (prevEnd <= start) {
-              if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
-              ends.remove();
-              boolean removed = starts.remove(previous);
-              assert removed;
-              continue;
-            }
+    final Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
+    final List<T> starts = new ArrayList<>();
+    if (!generator.generateInStartOffsetOrder(marker -> {
+      // decide whether previous marker ends here or new marker begins
+      int start = marker.getStartOffset();
+      while (true) {
+        assert ends.size() == starts.size();
+        T previous = ends.peek();
+        if (previous != null) {
+          int prevEnd = previous.getEndOffset();
+          if (prevEnd <= start) {
+            if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
+            ends.remove();
+            boolean removed = starts.remove(previous);
+            assert removed;
+            continue;
           }
-          break;
         }
-        if (!sweepProcessor.process(start, marker, true, ends)) return false;
-        starts.add(marker);
-        ends.offer(marker);
-
-        return true;
+        break;
       }
+      if (!sweepProcessor.process(start, marker, true, ends)) return false;
+      starts.add(marker);
+      ends.offer(marker);
+
+      return true;
     })) return false;
 
     while (!ends.isEmpty()) {
@@ -374,7 +365,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     try {
       checkMax(true);
 
-      List<IntervalNode<T>> affected = new ArrayList<IntervalNode<T>>();
+      List<IntervalNode<T>> affected = new ArrayList<>();
       collectNodesToRetarget(getRoot(), start, end, affected);
       if (affected.isEmpty()) return;
       // remove all first because findOrInsert can remove gced nodes which could interfere with not-yet-removed nodes

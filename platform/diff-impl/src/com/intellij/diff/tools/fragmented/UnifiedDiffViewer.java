@@ -122,7 +122,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myEditorSettingsAction = new SetEditorSettingsAction(getTextSettings(), getEditors());
     myEditorSettingsAction.applyDefaults();
 
-    myTextDiffProvider = DiffUtil.createNoIgnoreTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff);
+    myTextDiffProvider = DiffUtil.createNoIgnoreTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
 

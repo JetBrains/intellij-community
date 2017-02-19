@@ -132,7 +132,8 @@ open class FileBasedStorage(file: Path,
       else {
         val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray()))
         lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return JDOMUtil.loadDocument(charBuffer).detachRootElement()
+        @Suppress("DEPRECATION")
+        return loadElement(charBuffer)
       }
       return null
     }
@@ -242,7 +243,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
         out.write(lineSeparator.separatorBytes)
       }
       if (content is Element) {
-        JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
+        JDOMUtil.write(content, out, lineSeparator.separatorString)
       }
       else {
         (content as BufferExposingByteArrayOutputStream).writeTo(out)
@@ -253,7 +254,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
 
 internal fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.writeParent(this, out, lineSeparator)
+  JDOMUtil.write(this, out, lineSeparator)
   return out
 }
 

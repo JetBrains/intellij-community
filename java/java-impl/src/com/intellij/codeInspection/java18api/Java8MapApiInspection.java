@@ -406,7 +406,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
 
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CommentTracker ct = new CommentTracker();
-      ExpressionUtils.renameCall(call, myMethodName);
+      ExpressionUtils.bindCallTo(call, myMethodName);
       PsiExpression replacement;
       if(myMethodName.equals("computeIfAbsent")) {
         PsiExpression key = args[0];
@@ -432,7 +432,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
         }
         String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(nameCandidate, value, true);
         for(PsiReferenceExpression ref : refs) {
-          ExpressionUtils.renameReference(ref, varName);
+          ExpressionUtils.bindReferenceTo(ref, varName);
         }
         replacement = factory.createExpressionFromText(varName + " -> " + ct.text(value), value);
       } else if (myMethodName.equals("merge")) {

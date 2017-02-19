@@ -29,8 +29,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.branch.GitNewBranchOptions;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitNewBranchNameValidator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +42,7 @@ import java.util.List;
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.*;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
+import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
 import static java.util.stream.Collectors.toList;
@@ -78,7 +81,8 @@ class GitBranchPopupActions {
         .collect(toList());
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
     wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(localBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null);
+                               getNumOfTopShownBranches(localBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_LOCALS_KEY : null,
+                               firstLevelGroup);
 
     popupGroup.addSeparator("Remote Branches" + repoInfo);
     List<BranchActionGroup> remoteBranchActions =
@@ -99,11 +103,17 @@ class GitBranchPopupActions {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      final String name = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
-      if (name != null) {
+      GitNewBranchOptions options = GitBranchUtil.getNewBranchNameFromUser(myProject, myRepositories, "Create New Branch");
+      if (options != null) {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
-        brancher.checkoutNewBranch(name, myRepositories);
-        reportUsage("git.branch.create.new");
+        if (options.shouldCheckout()) {
+          reportUsage("git.branch.create.new");
+          brancher.checkoutNewBranch(options.getName(), myRepositories);
+        }
+        else {
+          reportUsage("git.branch.create.new.nocheckout");
+          brancher.createBranch(options.getName(), StreamEx.of(myRepositories).toMap(position -> HEAD));
+        }
       }
     }
   }

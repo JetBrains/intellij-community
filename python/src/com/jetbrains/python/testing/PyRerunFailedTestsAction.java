@@ -118,12 +118,12 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     }
 
     @Override
-    public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
+    public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
       // Insane rerun tests with out of spec.
       if (getTestSpecs().isEmpty()) {
         throw new ExecutionException(PyBundle.message("runcfg.tests.cant_rerun"));
       }
-      return super.execute(executor, patchers);
+      return super.execute(executor, processStarter, patchers);
     }
 
     @NotNull

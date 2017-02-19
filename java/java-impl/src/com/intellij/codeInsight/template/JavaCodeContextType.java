@@ -129,7 +129,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       if (((PsiJavaCodeReferenceElement)parent).isQualified()) {
         return false;
       }
-      if (parent.getParent() instanceof PsiMethodCallExpression) {
+      if (parent.getParent() instanceof PsiMethodCallExpression || parent.getParent() instanceof PsiReferenceList) {
         return false;
       }
 

@@ -40,7 +40,7 @@ public class ExtensionsComplexTest {
 
   @Before
   public void setUp() throws Exception {
-    myAreasToDispose = new ArrayList<MyAreaInstance>();
+    myAreasToDispose = new ArrayList<>();
     Extensions.registerAreaClass("area", null);
     Extensions.registerAreaClass("child_area", "area");
   }

@@ -33,8 +33,6 @@
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.application.TransactionGuard"
-                        serviceImplementation="com.intellij.openapi.application.TransactionGuardImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
@@ -335,7 +333,8 @@
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
+    <applicationService serviceInterface="com.intellij.ide.RemoteDesktopService"
+                        serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
@@ -362,6 +361,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UiInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.FontSizeInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.BuildNumberUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ScaleInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$ConfigImport"/>

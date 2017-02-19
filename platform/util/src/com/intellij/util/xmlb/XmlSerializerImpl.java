@@ -36,14 +36,124 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public class XmlSerializerImpl {
-  private static Reference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
+public final class XmlSerializerImpl {
+  public abstract static class XmlSerializerBase implements Serializer {
+    @Override
+    @Nullable
+    public final Binding getBinding(@NotNull Type type) {
+      return getBinding(typeToClass(type), type, null);
+    }
+
+    @Nullable
+    protected final Binding getBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
+      return isPrimitive(aClass) ? null : getClassBinding(aClass, originalType, accessor);
+    }
+
+    @Nullable
+    @Override
+    public final Binding getBinding(@NotNull Class<?> aClass, @NotNull Type type) {
+      return getBinding(aClass, type, null);
+    }
+
+    @Nullable
+    @Override
+    public final Binding getBinding(@NotNull MutableAccessor accessor) {
+      Type type = accessor.getGenericType();
+      return getBinding(typeToClass(type), type, accessor);
+    }
+
+    @NotNull
+    @Override
+    public final Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType) {
+      return getClassBinding(aClass, originalType, null);
+    }
+
+    @Override
+    public final Binding getClassBinding(@NotNull Class<?> aClass) {
+      return getClassBinding(aClass, aClass, null);
+    }
+
+    @Nullable
+    protected static Binding createClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
+      if (aClass.isArray()) {
+        if (Element.class.isAssignableFrom(aClass.getComponentType())) {
+          assert accessor != null;
+          return new JDOMElementBinding(accessor);
+        }
+        else {
+          return new ArrayBinding(aClass, accessor);
+        }
+      }
+      if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+        if (accessor != null) {
+          CollectionBean listBean = accessor.getAnnotation(CollectionBean.class);
+          if (listBean != null) {
+            return new CompactCollectionBinding(accessor);
+          }
+        }
+        return new CollectionBinding((ParameterizedType)originalType, accessor);
+      }
+      if (accessor != null) {
+        if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+          return new MapBinding(accessor);
+        }
+        if (Element.class.isAssignableFrom(aClass)) {
+          return new JDOMElementBinding(accessor);
+        }
+        //noinspection deprecation
+        if (JDOMExternalizableStringList.class == aClass) {
+          return new CompactCollectionBinding(accessor);
+        }
+      }
+      return null;
+    }
+  }
+
+  static class XmlSerializer extends XmlSerializerBase {
+    private Reference<Map<Pair<Type, MutableAccessor>, Binding>> ourBindings;
+
+    @NotNull
+    private Map<Pair<Type, MutableAccessor>, Binding> getBindingCacheMap() {
+      Map<Pair<Type, MutableAccessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
+      if (map == null) {
+        map = ContainerUtil.newConcurrentMap();
+        ourBindings = new SoftReference<Map<Pair<Type, MutableAccessor>, Binding>>(map);
+      }
+      return map;
+    }
+
+    @NotNull
+    @Override
+    public synchronized Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
+      Pair<Type, MutableAccessor> key = Pair.create(originalType, accessor);
+      Map<Pair<Type, MutableAccessor>, Binding> map = getBindingCacheMap();
+      Binding binding = map.get(key);
+      if (binding == null) {
+        binding = createClassBinding(aClass, accessor, originalType);
+        if (binding == null) {
+          binding = new BeanBinding(aClass, accessor);
+        }
+
+        map.put(key, binding);
+        try {
+          binding.init(originalType, this);
+        }
+        catch (XmlSerializationException e) {
+          map.remove(key);
+          throw e;
+        }
+      }
+      return binding;
+    }
+  }
+
+  static final XmlSerializer serializer = new XmlSerializer();
 
   @NotNull
-  static Element serialize(@NotNull Object object, @NotNull SerializationFilter filter) throws XmlSerializationException {
+  static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws XmlSerializationException {
     try {
       Class<?> aClass = object.getClass();
-      Binding binding = getClassBinding(aClass, aClass, null);
+      Binding binding = serializer.getClassBinding(aClass);
       if (binding instanceof BeanBinding) {
         // top level expects not null (null indicates error, empty element will be omitted)
         return ((BeanBinding)binding).serialize(object, true, filter);
@@ -61,25 +171,8 @@ public class XmlSerializerImpl {
     }
   }
 
-  @Nullable
-  static Element serializeIfNotDefault(@NotNull Object object, @NotNull SerializationFilter filter) {
-    Class<?> aClass = object.getClass();
-    return (Element)getMainBinding(aClass, aClass, null).serialize(object, null, filter);
-  }
-
-  @Nullable
-  public static Binding getBinding(@NotNull Type type) {
-    return getClassBinding(typeToClass(type), type, null);
-  }
-
-  @Nullable
-  static Binding getBinding(@NotNull MutableAccessor accessor) {
-    Type type = accessor.getGenericType();
-    return getClassBinding(typeToClass(type), type, accessor);
-  }
-
   @NotNull
-  public static Class<?> typeToClass(@NotNull Type type) {
+  static Class<?> typeToClass(@NotNull Type type) {
     if (type instanceof Class) {
       return (Class<?>)type;
     }
@@ -95,12 +188,7 @@ public class XmlSerializerImpl {
     }
   }
 
-  @Nullable
-  static synchronized Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
-    return isPrimitive(aClass) ? null : getMainBinding(aClass, originalType, accessor);
-  }
-
-  public static boolean isPrimitive(@NotNull Class<?> aClass) {
+  private static boolean isPrimitive(@NotNull Class<?> aClass) {
     return aClass.isPrimitive() ||
         aClass == String.class ||
         aClass == Integer.class ||
@@ -110,74 +198,6 @@ public class XmlSerializerImpl {
         aClass == Float.class ||
         aClass.isEnum() ||
         Date.class.isAssignableFrom(aClass);
-  }
-
-  @NotNull
-  synchronized static Binding getMainBinding(@NotNull Class<?> aClass, @NotNull Type originalType, @Nullable MutableAccessor accessor) {
-    Pair<Type, MutableAccessor> key = Pair.create(originalType, accessor);
-    Map<Pair<Type, MutableAccessor>, Binding> map = getBindingCacheMap();
-    Binding binding = map.get(key);
-    if (binding == null) {
-      binding = createClassBinding(aClass, accessor, originalType);
-      if (binding == null) {
-        binding = new BeanBinding(aClass, accessor);
-      }
-
-      map.put(key, binding);
-      try {
-        binding.init(originalType);
-      }
-      catch (XmlSerializationException e) {
-        map.remove(key);
-        throw e;
-      }
-    }
-    return binding;
-  }
-
-  @NotNull
-  private static Map<Pair<Type, MutableAccessor>, Binding> getBindingCacheMap() {
-    Map<Pair<Type, MutableAccessor>, Binding> map = com.intellij.reference.SoftReference.dereference(ourBindings);
-    if (map == null) {
-      map = ContainerUtil.newConcurrentMap();
-      ourBindings = new SoftReference<Map<Pair<Type, MutableAccessor>, Binding>>(map);
-    }
-    return map;
-  }
-
-  @Nullable
-  public static Binding createClassBinding(@NotNull Class<?> aClass, @Nullable MutableAccessor accessor, @NotNull Type originalType) {
-    if (aClass.isArray()) {
-      if (Element.class.isAssignableFrom(aClass.getComponentType())) {
-        assert accessor != null;
-        return new JDOMElementBinding(accessor);
-      }
-      else {
-        return new ArrayBinding(aClass, accessor);
-      }
-    }
-    if (Collection.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-      if (accessor != null) {
-        CollectionBean listBean = accessor.getAnnotation(CollectionBean.class);
-        if (listBean != null) {
-          return new CompactCollectionBinding(accessor);
-        }
-      }
-      return new CollectionBinding((ParameterizedType)originalType, accessor);
-    }
-    if (accessor != null) {
-      if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-        return new MapBinding(accessor);
-      }
-      if (Element.class.isAssignableFrom(aClass)) {
-        return new JDOMElementBinding(accessor);
-      }
-      //noinspection deprecation
-      if (JDOMExternalizableStringList.class == aClass) {
-        return new CompactCollectionBinding(accessor);
-      }
-    }
-    return null;
   }
 
   @Nullable

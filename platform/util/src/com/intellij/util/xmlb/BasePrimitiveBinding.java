@@ -21,6 +21,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
+
 abstract class BasePrimitiveBinding extends Binding {
   protected final String myName;
 
@@ -34,26 +36,25 @@ abstract class BasePrimitiveBinding extends Binding {
     super(accessor);
 
     myName = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
-    if (converterClass == null || converterClass == Converter.class) {
-      myConverter = null;
-      if (!(this instanceof AttributeBinding)) {
-        myBinding = XmlSerializerImpl.getBinding(myAccessor);
-      }
-    }
-    else {
-      //noinspection unchecked
-      myConverter = ReflectionUtil.newInstance(converterClass);
+    //noinspection unchecked
+    myConverter = converterClass == null || converterClass == Converter.class ? null : ReflectionUtil.newInstance(converterClass);
+  }
+
+  @Override
+  public final void init(@NotNull Type originalType, @NotNull Serializer serializer) {
+    if (myConverter == null && !(this instanceof AttributeBinding)) {
+      myBinding = serializer.getBinding(myAccessor);
     }
   }
 
   @Nullable
   @Override
-  public final Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public final Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     return serialize(o, filter);
   }
 
   @Nullable
-  public abstract Object serialize(@NotNull Object o, @NotNull SerializationFilter filter);
+  public abstract Object serialize(@NotNull Object o, @Nullable SerializationFilter filter);
 
   @NotNull
   public Object deserialize(@NotNull Object context, @NotNull Element element) {

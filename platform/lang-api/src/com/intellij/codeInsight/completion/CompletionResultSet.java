@@ -132,11 +132,27 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     myCompletionService.getVariantsFromContributors(parameters, myContributor, consumer);
   }
 
+  /**
+   * Request that the completion contributors be run again when the user changes the prefix so that it becomes equal to the one given.
+   */
   public void restartCompletionOnPrefixChange(String prefix) {
     restartCompletionOnPrefixChange(StandardPatterns.string().equalTo(prefix));
   }
 
+  /**
+   * Request that the completion contributors be run again when the user changes the prefix in a way satisfied by the given condition.
+   */
   public abstract void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition);
 
+  /**
+   * Request that the completion contributors be run again when the user changes the prefix in any way.
+   */
+  public void restartCompletionOnAnyPrefixChange() {
+    restartCompletionOnPrefixChange(StandardPatterns.string());
+  }
+
+  /**
+   * Request that the completion contributors be run again when the user types something into the editor so that no existing lookup elements match that prefix anymore.
+   */
   public abstract void restartCompletionWhenNothingMatches();
 }

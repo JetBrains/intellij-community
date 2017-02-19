@@ -16,13 +16,13 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.JTextComponent;
@@ -55,22 +55,29 @@ public class DarculaTextBorder implements Border, UIResource {
   }
 
   @Override
-  public void paintBorder(Component c, Graphics g2, int x, int y, int width, int height) {
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (DarculaTextFieldUI.isSearchField(c)) return;
-    Graphics2D g = (Graphics2D)g2;
-    final GraphicsConfig config = new GraphicsConfig(g);
-    g.translate(x, y);
 
-    if (c.hasFocus()) {
-      DarculaUIUtil.paintFocusRing(g, 2, 2, width - 4, height - 4);
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.translate(x, y);
+
+      Object eop = ((JTextComponent)c).getClientProperty("JComponent.error.outline");
+      if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+        DarculaUIUtil.paintErrorRing(g2, width, height, c.hasFocus());
+        if (Registry.is("ide.inplace.errors.balloon")) {
+          DarculaUIUtil.showErrorTip((JComponent)c);
+        }
+      } else if (c.hasFocus()) {
+        DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4)));
+      } else {
+        boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
+        g2.setColor(getBorderColor(c.isEnabled() && editable));
+        g2.drawRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2));
+      }
+    } finally {
+      g2.dispose();
     }
-    else {
-      boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
-      g.setColor(getBorderColor(c.isEnabled() && editable));
-      g.drawRect(1, 1, width - 2, height - 2);
-    }
-    g.translate(-x, -y);
-    config.restore();
   }
 
   private static Color getBorderColor(boolean enabled) {

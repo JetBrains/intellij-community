@@ -459,9 +459,9 @@
       <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
     </extensionPoint>
 
-    <extensionPoint name="runtimeDashboardContributor"
-                    interface="com.intellij.execution.dashboard.RuntimeDashboardContributor"/>
-    <extensionPoint name="runtimeDashboardGroupingRule"
+    <extensionPoint name="runDashboardContributor"
+                    interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
+    <extensionPoint name="runDashboardGroupingRule"
                     interface="com.intellij.execution.dashboard.DashboardGroupingRule"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"

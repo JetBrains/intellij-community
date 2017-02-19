@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -427,32 +428,6 @@ public class ExpressionUtils {
       return VariableAccessUtils.evaluatesToVariable(rhs, variable);
     }
     return false;
-  }
-
-  public static boolean isZeroLengthArrayConstruction(
-    @Nullable PsiExpression expression) {
-    if (!(expression instanceof PsiNewExpression)) {
-      return false;
-    }
-    final PsiNewExpression newExpression = (PsiNewExpression)expression;
-    final PsiExpression[] dimensions = newExpression.getArrayDimensions();
-    if (dimensions.length == 0) {
-      final PsiArrayInitializerExpression arrayInitializer =
-        newExpression.getArrayInitializer();
-      if (arrayInitializer == null) {
-        return false;
-      }
-      final PsiExpression[] initializers =
-        arrayInitializer.getInitializers();
-      return initializers.length == 0;
-    }
-    for (PsiExpression dimension : dimensions) {
-      final String dimensionText = dimension.getText();
-      if (!"0".equals(dimensionText)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public static boolean isStringConcatenationOperand(PsiExpression expression) {
@@ -938,12 +913,12 @@ public class ExpressionUtils {
   }
 
   /**
-   * Rename reference element. The qualifier and type arguments (if present) remain the same
+   * Bind a reference element to a new name. The qualifier and type arguments (if present) remain the same
    *
    * @param ref reference element to rename
    * @param newName new name
    */
-  public static void renameReference(@NotNull PsiReferenceExpression ref, @NotNull String newName) {
+  public static void bindReferenceTo(@NotNull PsiReferenceExpression ref, @NotNull String newName) {
     PsiElement nameElement = ref.getReferenceNameElement();
     if(nameElement == null) {
       throw new IllegalStateException("Name element is null: "+ref);
@@ -954,12 +929,36 @@ public class ExpressionUtils {
   }
 
   /**
-   * Rename method call. Everything else like qualifier, type arguments or call arguments remain the same.
+   * Bind method call to a new name. Everything else like qualifier, type arguments or call arguments remain the same.
    *
    * @param call to rename
    * @param newName new name
    */
-  public static void renameCall(@NotNull PsiMethodCallExpression call, @NotNull String newName) {
-    renameReference(call.getMethodExpression(), newName);
+  public static void bindCallTo(@NotNull PsiMethodCallExpression call, @NotNull String newName) {
+    bindReferenceTo(call.getMethodExpression(), newName);
+  }
+
+  /**
+   * Returns the expression itself (probably with stripped parentheses) or the corresponding value if the expression is a local variable
+   * reference which is initialized and not used anywhere else
+   *
+   * @param expression
+   * @return a resolved expression or expression itself
+   */
+  @Contract("null -> null")
+  @Nullable
+  public static PsiExpression resolveExpression(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiReferenceExpression) {
+      PsiReferenceExpression reference = (PsiReferenceExpression)expression;
+      PsiLocalVariable variable = ObjectUtils.tryCast(reference.resolve(), PsiLocalVariable.class);
+      if (variable != null) {
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null && ReferencesSearch.search(variable).forEach(ref -> ref == reference)) {
+          return initializer;
+        }
+      }
+    }
+    return expression;
   }
 }

@@ -128,7 +128,7 @@ public class JavaModuleInsight extends ModuleInsight {
         if (javaModule == null) {
           throw new IncorrectOperationException("Incorrect module declaration '" + file.getPath() + "'");
         }
-        ModuleInfo info = new ModuleInfo(javaModule.getModuleName());
+        ModuleInfo info = new ModuleInfo(javaModule.getName());
         javaModule.accept(new ModuleInfoVisitor(info));
         return info;
       });
@@ -303,7 +303,7 @@ public class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitExportsStatement(PsiExportsStatement statement) {
+    public void visitExportsStatement(PsiPackageAccessibilityStatement statement) {
       super.visitExportsStatement(statement);
       PsiJavaCodeReferenceElement reference = statement.getPackageReference();
       if (reference != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class CharsetToolkit {
   private final byte[] buffer;
   @NotNull
   private final Charset defaultCharset;
-  private boolean enforce8Bit = false;
+  private boolean enforce8Bit;
 
   public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf};
   public static final byte[] UTF16LE_BOM = {-1, -2, };
@@ -128,7 +128,10 @@ public class CharsetToolkit {
 
   @NotNull
   public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
-    assert stream.markSupported() :stream;
+    if (!stream.markSupported()) {
+      stream = new BufferedInputStream(stream);
+    }
+
     stream.mark(4);
     boolean mustReset = true;
     try {

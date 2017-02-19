@@ -49,7 +49,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
       }
     };
 
-  private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<VirtualFileSystem>();
+  private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<>();
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;

@@ -53,6 +53,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.ui.RangeBlinker;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -278,7 +279,9 @@ class SearchForUsagesRunnable implements Runnable {
         }
       }
       else {
-        Disposer.dispose(usageView);
+        UsageViewImpl finalUsageView = usageView;
+        // later because dispose does some sort of swing magic e.g. AnAction.unregisterCustomShortcutSet()
+        UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(finalUsageView));
       }
       return myUsageViewRef.get();
     }

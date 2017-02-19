@@ -42,13 +42,13 @@ import static com.intellij.lang.folding.CompositeFoldingBuilder.FOLDING_BUILDER;
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
   private CustomFoldingProvider myDefaultProvider;
   private static final RegistryValue myMaxLookupDepth = Registry.get("custom.folding.max.lookup.depth");
-  private static final ThreadLocal<Set<ASTNode>> ourCustomRegionElements = new ThreadLocal<Set<ASTNode>>();
+  private static final ThreadLocal<Set<ASTNode>> ourCustomRegionElements = new ThreadLocal<>();
 
   @NotNull
   @Override
   public final FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
-    ourCustomRegionElements.set(new HashSet<ASTNode>());
-    List<FoldingDescriptor> descriptors = new ArrayList<FoldingDescriptor>();
+    ourCustomRegionElements.set(new HashSet<>());
+    List<FoldingDescriptor> descriptors = new ArrayList<>();
     try {
       if (CustomFoldingProvider.getAllProviders().length > 0) {
         myDefaultProvider = null;

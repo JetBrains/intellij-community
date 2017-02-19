@@ -96,11 +96,6 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
       VirtualFile root = myRoots.iterator().next();
       return "Directory '" + root.getName() + "'";
     }
-    return "Directories " + StringUtil.join(myRoots, new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile file) {
-        return "'" + file.getName() + "'";
-      }
-    }, ", ");
+    return "Directories " + StringUtil.join(myRoots, file -> "'" + file.getName() + "'", ", ");
   }
 }

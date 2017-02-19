@@ -23,15 +23,26 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.rules.FileGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author max
@@ -348,6 +359,29 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     @Override
     public boolean isReadOnly() {
       return false;
+    }
+  }
+
+  public void testFilesWithTheSameNameButDifferentPathsEndUpInDifferentGroups() throws IOException {
+    File ioDir = FileUtil.createTempDirectory("t", null, false);
+    VirtualFile dir = null;
+    try {
+      dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioDir);
+      PsiFile f1 = getPsiManager().findFile(VfsTestUtil.createFile(dir, "/x/X.java", "class X{}"));
+      PsiFile f2 = getPsiManager().findFile(VfsTestUtil.createFile(dir, "/y/X.java", "class X{}"));
+      PsiElement class1 = ArrayUtil.getLastElement(f1.getChildren());
+      PsiElement class2 = ArrayUtil.getLastElement(f2.getChildren());
+      FileGroupingRule fileGroupingRule = new FileGroupingRule(getProject());
+      UsageGroup group1 = fileGroupingRule.groupUsage(new UsageInfo2UsageAdapter(new UsageInfo(class1)));
+      UsageGroup group2 = fileGroupingRule.groupUsage(new UsageInfo2UsageAdapter(new UsageInfo(class2)));
+      int compareTo = group1.compareTo(group2);
+      assertTrue(String.valueOf(compareTo), compareTo < 0);
+    }
+    finally {
+      if (dir != null) {
+        VfsTestUtil.deleteFile(dir);
+      }
+      FileUtil.delete(ioDir);
     }
   }
 }

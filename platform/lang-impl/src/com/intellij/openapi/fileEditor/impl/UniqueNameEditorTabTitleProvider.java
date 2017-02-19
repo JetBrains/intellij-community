@@ -31,13 +31,16 @@ import java.io.File;
 public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider {
   @Override
   public String getEditorTabTitle(Project project, VirtualFile file) {
-    UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings == null || !uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES || DumbService.isDumb(project)) return null;
+    UISettings uiSettings = UISettings.getInstanceOrNull();
+    if (uiSettings == null || !uiSettings.getShowDirectoryForNonUniqueFilenames() || DumbService.isDumb(project)) {
+      return null;
+    }
+
     // Even though this is a 'tab title provider' it is used also when tabs are not shown, namely for building IDE frame title.
     String uniqueName = uiSettings.getEditorTabPlacement() == UISettings.TABS_NONE ?
                         UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file) :
                         UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePathWithinOpenedFileEditors(project, file);
-    uniqueName = getEditorTabText(uniqueName, File.separator, uiSettings.HIDE_KNOWN_EXTENSION_IN_TABS);
+    uniqueName = getEditorTabText(uniqueName, File.separator, uiSettings.getHdeKnownExtensionInTabs());
     return uniqueName.equals(file.getName()) ? null : uniqueName;
   }
 

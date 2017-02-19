@@ -15,62 +15,77 @@
  */
 package com.jetbrains.python.debugger.containerview;
 
+import com.intellij.execution.Executor;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
+import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.openapi.wm.ToolWindowType;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
+import com.jetbrains.python.console.PythonConsoleToolWindowFactory;
+import com.jetbrains.python.debugger.PyDebugProcess;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
+import org.jetbrains.annotations.Nullable;
 
 public class PyDataViewToolWindowFactory implements ToolWindowFactory {
-  private JBLabel myEmptyContent = new JBLabel("Run debugger to view available data ", SwingConstants.CENTER);
+  public static final String EMPTY_TEXT = "Run debugger to view available data ";
+  private static final Logger LOG = Logger.getInstance(PyDataViewToolWindowFactory.class);
+
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session == null) {
-      createEmptyContent(toolWindow);
-    }
-    else {
-      PyDataView.getInstance(project).init(toolWindow, session.getDebugProcess());
-    }
+    PyDataView.getInstance(project).init(toolWindow);
     final MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
+    connection.subscribe(XDebuggerManager.TOPIC, new ChangeContentXDebuggerManagerListener(project));
+
+    connection.subscribe(RunContentManager.TOPIC, new RunContentWithExecutorListener() {
       @Override
-      public void processStarted(@NotNull XDebugProcess debugProcess) {
-        toolWindow.getContentManager().removeAllContents(true);
-        PyDataView.getInstance(project).init(toolWindow, debugProcess);
+      public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+        if (!(executor instanceof DefaultDebugExecutor)) {
+          return;
+        }
+        if (descriptor == null) {
+          return;
+        }
+        ProcessHandler handler = descriptor.getProcessHandler();
+        if (handler == null) {
+          return;
+        }
+        PyDataView.getInstance(project).updateTabs(handler);
       }
 
       @Override
-      public void processStopped(@NotNull XDebugProcess debugProcess) {
-        createEmptyContent(toolWindow);
+      public void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+
       }
     });
 
+    addPythonConsoleListener(project);
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(new DefaultActionGroup(new ColoredByDefaultAction()));
   }
 
-  private void createEmptyContent(@NotNull ToolWindow toolWindow) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      ContentManager manager = toolWindow.getContentManager();
-      manager.removeAllContents(true);
-      manager.addContent(ContentFactory.SERVICE.getInstance().createContent(myEmptyContent, "", false));
+  private static void addPythonConsoleListener(@NotNull Project project) {
+    final ToolWindow pythonConsole = ToolWindowManager.getInstance(project).getToolWindow(PythonConsoleToolWindowFactory.Companion.getID());
+    if (pythonConsole == null) {
+      return;
+    }
+    pythonConsole.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void contentRemoved(ContentManagerEvent event) {
+        PyDataView.getInstance(project).closeDisconnectedFromConsoleTabs();
+      }
     });
   }
 
@@ -92,6 +107,26 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       PropertiesComponent.getInstance(e.getProject()).setValue(PyDataView.COLORED_BY_DEFAULT, state, true);
+    }
+  }
+
+  private static class ChangeContentXDebuggerManagerListener implements XDebuggerManagerListener {
+    private final Project myProject;
+
+    public ChangeContentXDebuggerManagerListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void processStarted(@NotNull XDebugProcess debugProcess) {
+
+    }
+
+    @Override
+    public void processStopped(@NotNull XDebugProcess debugProcess) {
+      if (debugProcess instanceof PyDebugProcess) {
+        PyDataView.getInstance(myProject).closeTabs(frameAccessor -> frameAccessor instanceof PyDebugProcess && frameAccessor == debugProcess);
+      }
     }
   }
 }

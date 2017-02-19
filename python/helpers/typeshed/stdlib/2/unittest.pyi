@@ -6,7 +6,7 @@
 
 from typing import (
     Any, Callable, Dict, Iterable, Tuple, List, TextIO, Sequence,
-    overload, Set, TypeVar, Union, Pattern
+    overload, Set, TypeVar, Union, Pattern, Type
 )
 from abc import abstractmethod, ABCMeta
 
@@ -41,7 +41,7 @@ class TestResult:
 
 class _AssertRaisesBaseContext:
     expected = ...  # type: Any
-    failureException = ...  # type: type
+    failureException = ...  # type: Type[BaseException]
     obj_name = ...  # type: str
     expected_regex = ...  # type: Pattern[str]
 
@@ -51,8 +51,8 @@ class _AssertRaisesContext(_AssertRaisesBaseContext):
     def __exit__(self, exc_type, exc_value, tb) -> bool: ...
 
 class TestCase(Testable):
+    failureException = ...  # type: Type[BaseException]
     def __init__(self, methodName: str = ...) -> None: ...
-    # TODO failureException
     def setUp(self) -> None: ...
     def tearDown(self) -> None: ...
     def run(self, result: TestResult = ...) -> None: ...

@@ -26,7 +26,7 @@ import java.util.Collection;
  */
 class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
-  private final TIntObjectHashMap<Collection<V>> myMap = new TIntObjectHashMap<Collection<V>>();
+  private final TIntObjectHashMap<Collection<V>> myMap = new TIntObjectHashMap<>();
   private final CollectionFactory<V> myCollectionFactory;
 
   public IntObjectTransientMultiMaplet(CollectionFactory<V> collectionFactory) {

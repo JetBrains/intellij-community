@@ -12,7 +12,7 @@ import traceback
 
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_pop, dict_contains, \
     dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
-    clear_cached_thread_id
+    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -670,6 +670,11 @@ class PyDB:
         if stop_reason == CMD_SET_BREAK and self.suspend_on_breakpoint_exception:
             self._send_breakpoint_condition_exception(thread)
 
+        if self.frame_eval_func is not None and stop_reason == CMD_THREAD_SUSPEND:
+            thread_id = get_thread_id(thread)
+            int_cmd = InternalSetTracingThread(thread_id)
+            self.post_internal_command(int_cmd, thread_id)
+
 
     def _send_breakpoint_condition_exception(self, thread):
         """If conditional breakpoint raises an exception during evaluation
@@ -993,7 +998,8 @@ class PyDB:
             send_message("asyncio_event", 0, "Task", "Task", "thread", "stop", file, 1, frame=None, parent=None)
 
         try:
-            self.init_matplotlib_support()
+            if INTERACTIVE_MODE_AVAILABLE:
+                self.init_matplotlib_support()
         except:
             sys.stderr.write("Matplotlib support in debugger failed\n")
             traceback.print_exc()

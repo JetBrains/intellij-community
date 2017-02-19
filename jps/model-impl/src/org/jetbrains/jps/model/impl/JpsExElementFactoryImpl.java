@@ -41,6 +41,6 @@ public class JpsExElementFactoryImpl extends JpsExElementFactory {
 
   @Override
   public <E extends JpsElement> JpsElementCollection<E> createCollection(JpsElementChildRole<E> role) {
-    return new JpsElementCollectionImpl<E>(role);
+    return new JpsElementCollectionImpl<>(role);
   }
 }

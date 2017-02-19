@@ -410,6 +410,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     super.processMouseEvent(e2);
   }
 
+  /**
+   * Returns true if <code>mouseX</code> falls
+   * in the area of row that is used to expand/collapse the node and
+   * the node at <code>row</code> does not represent a leaf.
+   */
+  protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
+    if (path == null) return false;
+    Rectangle bounds = getRowBounds(getRowForPath(path));
+    return isLocationInExpandControl(path, mouseX, bounds.y + bounds.height / 2);
+  }
+
+
   private boolean isLocationInExpandControl(final TreePath path, final int x, final int y) {
     final TreeUI ui = getUI();
     if (!(ui instanceof BasicTreeUI)) return false;
@@ -682,32 +694,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         e.consume();
       }
     }
-    /*
-      Returns true if <code>mouseX</code> falls
-      in the area of row that is used to expand/collapse the node and
-      the node at <code>row</code> does not represent a leaf.
-     */
-  }
-
-  protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
-    if (path == null) return false;
-    TreeUI ui = getUI();
-    if (!(ui instanceof BasicTreeUI)) return false;
-    BasicTreeUI treeUI = (BasicTreeUI)ui;
-    if (!treeModel.isLeaf(path.getLastPathComponent())) {
-      Insets insets = this.getInsets();
-      int boxWidth = treeUI.getExpandedIcon() != null ? treeUI.getExpandedIcon().getIconWidth() : 8;
-      int boxLeftX = treeUI.getLeftChildIndent() + treeUI.getRightChildIndent() * (path.getPathCount() - 1);
-      if (getComponentOrientation().isLeftToRight()) {
-        boxLeftX = boxLeftX + insets.left - treeUI.getRightChildIndent() + 1;
-      }
-      else {
-        boxLeftX = getWidth() - boxLeftX - insets.right + treeUI.getRightChildIndent() - 1;
-      }
-      boxLeftX -= getComponentOrientation().isLeftToRight() ? (int)Math.ceil(boxWidth / 2.0) : (int)Math.floor(boxWidth / 2.0);
-      return mouseX >= boxLeftX && mouseX < boxLeftX + boxWidth;
-    }
-    return false;
   }
 
   /**

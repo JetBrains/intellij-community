@@ -51,13 +51,19 @@ public class MemoryViewComponent extends AbstractProjectComponent {
     @Override
     public void processStarted(@NotNull XDebugProcess debugProcess) {
       final XDebugSession session = debugProcess.getSession();
+      final Project project = session.getProject();
       final DebugProcess javaProcess =
-        DebuggerManager.getInstance(session.getProject()).getDebugProcess(debugProcess.getProcessHandler());
+        DebuggerManager.getInstance(project).getDebugProcess(debugProcess.getProcessHandler());
       if (javaProcess instanceof DebugProcessImpl) {
         final DebugProcessImpl processImpl = (DebugProcessImpl)javaProcess;
         ApplicationManager.getApplication().invokeLater(() -> {
+          if (project.isDisposed()) {
+            return;
+          }
+
+          final InstancesTracker tracker = InstancesTracker.getInstance(project);
           final RunnerLayoutUi ui = session.getUI();
-          final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session);
+          final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, processImpl, tracker);
           classesFilteredView.setActive(true);
           final Content memoryViewContent =
             ui.createContent(MEMORY_VIEW_CONTENT_ID, classesFilteredView, "Memory View",
@@ -69,7 +75,7 @@ public class MemoryViewComponent extends AbstractProjectComponent {
 
           final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
           processImpl.putUserData(MemoryViewDebugProcessData.KEY, data);
-          ui.addContent(memoryViewContent, -1, PlaceInGrid.right, true);
+          ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
 
           ui.addListener(new ContentManagerAdapter() {
             @Override

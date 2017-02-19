@@ -455,7 +455,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       
       try {
         if (!transparent()) {
-          g.setColor(getEditor().getColorsScheme().getDefaultBackground());
+          g.setColor(myEditor.getBackgroundColor());
           Rectangle bounds = getBounds();
           g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         }
@@ -479,16 +479,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
   
   private boolean transparent() {
-    /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
-
-       Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
-       This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
-
-       When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
-    boolean opaque = EditorImpl.shouldScrollBarBeOpaque(myEditor.getProject());
-    return !opaque &&
-           Registry.is("editor.transparent.scrollbar", false) &&
-           EditorUtil.isRealFileEditor(myEditor);
+    return !myEditor.shouldScrollBarBeOpaque();
   }
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
@@ -686,7 +677,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
       }
       else {
-        g.setColor(getEditor().getColorsScheme().getDefaultBackground());
+        g.setColor(myEditor.getBackgroundColor());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
     }
@@ -1362,7 +1353,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myEditorPreviewHint.setForceLightweightPopup(true);
       }
       Point point = new Point(hintInfo.getOriginalPoint());
-      hintInfo.setTextBg(myEditor.getColorsScheme().getDefaultBackground());
+      hintInfo.setTextBg(myEditor.getBackgroundColor());
       hintInfo.setBorderColor(myEditor.getColorsScheme().getDefaultForeground());
       point = SwingUtilities.convertPoint(((EditorImpl)editor).getVerticalScrollBar(), point, myEditor.getComponent().getRootPane());
       myPointHolder.set(point);

@@ -7,6 +7,7 @@ from typing import (
     List, Sequence, Any, Dict, Tuple, TextIO, overload, Optional, Union,
     TypeVar, Callable, Type,
 )
+import sys
 from types import TracebackType
 from mypy_extensions import NoReturn
 
@@ -146,6 +147,10 @@ def getprofile() -> Any: ...  # TODO return type
 def gettrace() -> Any: ...  # TODO return
 def getwindowsversion() -> Any: ...  # Windows only, TODO return type
 def intern(string: str) -> str: ...
+
+if sys.version_info >= (3, 5):
+    def is_finalizing() -> bool: ...
+
 def setcheckinterval(interval: int) -> None: ...  # deprecated
 def setdlopenflags(n: int) -> None: ...  # Linux only
 def setprofile(profilefunc: Any) -> None: ...  # TODO type

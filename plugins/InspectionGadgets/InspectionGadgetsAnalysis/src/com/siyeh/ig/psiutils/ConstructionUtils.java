@@ -17,12 +17,24 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * @author Tagir Valeev
  */
 public class ConstructionUtils {
+  private static final Set<String> GUAVA_UTILITY_CLASSES =
+    ContainerUtil.set("com.google.common.collect.Maps", "com.google.common.collect.Lists", "com.google.common.collect.Sets");
+  private static final CallMatcher ENUM_SET_NONE_OF =
+    CallMatcher.staticCall("java.util.EnumSet", "noneOf").parameterCount(1);
+
   /**
    * Checks that given expression initializes empty StringBuilder or StringBuffer (either with explicit default capacity or not)
    *
@@ -78,10 +90,11 @@ public class ConstructionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiNewExpression) {
       PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
-      if (argumentList == null || argumentList.getExpressions().length != 0) return false;
-      PsiType type = expression.getType();
-      return com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
-             com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
+      if (argumentList != null && argumentList.getExpressions().length == 0) {
+        PsiType type = expression.getType();
+        return com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+               com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
+      }
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
@@ -93,15 +106,78 @@ public class ConstructionUtils {
           PsiClass aClass = method.getContainingClass();
           if(aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
-            if("com.google.common.collect.Maps".equals(qualifiedName) ||
-               "com.google.common.collect.Lists".equals(qualifiedName) ||
-               "com.google.common.collect.Sets".equals(qualifiedName)) {
+            if (GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
               return true;
             }
           }
         }
       }
     }
+    return isCustomizedEmptyCollectionInitializer(expression);
+  }
+
+  /**
+   * Checks that given expression initializes empty Collection or Map with custom initial capacity or load factor
+   *
+   * @param expression expression to check
+   * @return true if the expression is the empty Collection or Map initializer with custom initial capacity or load factor
+   */
+  @Contract("null -> false")
+  public static boolean isCustomizedEmptyCollectionInitializer(PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiNewExpression) {
+      PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
+      if (argumentList == null || argumentList.getExpressions().length == 0) return false;
+      PsiMethod constructor = ((PsiNewExpression)expression).resolveConstructor();
+      if (constructor == null) return false;
+      PsiClass aClass = constructor.getContainingClass();
+      if (aClass == null || aClass.getQualifiedName() == null || !aClass.getQualifiedName().startsWith("java.util.")) return false;
+      Predicate<PsiType> allowedParameterType = t -> t instanceof PsiPrimitiveType ||
+                                                     com.intellij.psi.util.InheritanceUtil.isInheritor(t, CommonClassNames.JAVA_LANG_CLASS);
+      return Stream.of(constructor.getParameterList().getParameters()).map(PsiParameter::getType).allMatch(allowedParameterType);
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (ENUM_SET_NONE_OF.test(call)) return true;
+      String name = call.getMethodExpression().getReferenceName();
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (name != null && name.startsWith("new") && argumentList.getExpressions().length > 0) {
+        PsiMethod method = call.resolveMethod();
+        if (method != null && method.getParameterList().getParametersCount() > 0) {
+          PsiClass aClass = method.getContainingClass();
+          if (aClass != null) {
+            String qualifiedName = aClass.getQualifiedName();
+            if (GUAVA_UTILITY_CLASSES.contains(qualifiedName)) {
+              return Stream.of(method.getParameterList().getParameters()).allMatch(p -> p.getType() instanceof PsiPrimitiveType);
+            }
+          }
+        }
+      }
+    }
     return false;
+  }
+
+  /**
+   * Returns true if given expression is an empty array initializer
+   *
+   * @param expression expression to test
+   * @return true if supplied expression is an empty array initializer
+   */
+  public static boolean isEmptyArrayInitializer(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (!(expression instanceof PsiNewExpression)) return false;
+    final PsiNewExpression newExpression = (PsiNewExpression)expression;
+    final PsiExpression[] dimensions = newExpression.getArrayDimensions();
+    if (dimensions.length == 0) {
+      final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
+      if (arrayInitializer == null) return false;
+      final PsiExpression[] initializers = arrayInitializer.getInitializers();
+      return initializers.length == 0;
+    }
+    for (PsiExpression dimension : dimensions) {
+      final String dimensionText = dimension.getText();
+      if (!"0".equals(dimensionText)) return false;
+    }
+    return true;
   }
 }

@@ -1,4 +1,4 @@
-from typing import List, Tuple, Optional, Callable, Union, IO, Any
+from typing import List, Tuple, Optional, Callable, Union, IO, Any, Dict
 from datetime import datetime
 
 __all__ = ...  # type: List[str]

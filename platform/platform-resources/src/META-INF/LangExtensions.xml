@@ -710,8 +710,6 @@
                          implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$PageDownHandler"/>
     <editorActionHandler action="EditorLeft" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$LeftHandler"/>
     <editorActionHandler action="EditorRight" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$RightHandler"/>
-    <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.lookup.impl.HomeHandler"/>
-    <editorActionHandler action="EditorLineEnd" implementationClass="com.intellij.codeInsight.lookup.impl.EndHandler"/>
     <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
 
     <!-- CodeInsightSettings -->
@@ -872,6 +870,7 @@
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
 
     <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
+    <refactoring.elementListenerProvider implementation="com.intellij.ui.EditorNotificationsImpl$RefactoringListenerProvider"/>
 
     <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
 
@@ -952,11 +951,11 @@
     <projectService serviceInterface="com.intellij.execution.ExecutionManager" serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.execution.dashboard.RuntimeDashboardManager" serviceImplementation="com.intellij.execution.dashboard.RuntimeDashboardManagerImpl"/>
-    <runtimeDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"/>
-    <runtimeDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"/>
-    <runtimeDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"/>
-    <runtimeDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"/>
+    <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager" serviceImplementation="com.intellij.execution.dashboard.RunDashboardManagerImpl"/>
+    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"/>
+    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.StatusDashboardGroupingRule"/>
+    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.FolderDashboardGroupingRule"/>
+    <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"/>
 
     <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
@@ -975,11 +974,20 @@
     <schemeExporter
       name="Intellij IDEA code style XML"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
-      implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeCopyExporter"/>
+      implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
     <schemeImporter
       name="Intellij IDEA code style XML"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
       implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
+
+    <schemeExporter
+      name="Intellij IDEA inspection profile XML"
+      schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
+      implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
+    <schemeImporter
+      name="Intellij IDEA inspection profile XML"
+      schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
+      implementationClass="com.intellij.profile.codeInspection.ui.InspectionProfileImporter"/>
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>

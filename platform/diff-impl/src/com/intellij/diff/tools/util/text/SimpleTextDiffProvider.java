@@ -21,7 +21,8 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
-import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUserDataKeysEx.DiffComputer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ import static com.intellij.diff.tools.util.base.HighlightPolicy.*;
 import static com.intellij.diff.tools.util.base.IgnorePolicy.*;
 
 public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implements TwosideTextDiffProvider {
-  static final DiffUserDataKeysEx.DiffComputer DEFAULT_COMPUTER = (text1, text2, policy, innerChanges, indicator) -> {
+  static final DiffComputer DEFAULT_COMPUTER = (text1, text2, policy, innerChanges, indicator) -> {
     if (innerChanges) {
       return ComparisonManager.getInstance().compareLinesInner(text1, text2, policy, indicator);
     }
@@ -44,25 +45,28 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
   private static final IgnorePolicy[] IGNORE_POLICIES = {DEFAULT, TRIM_WHITESPACES, IGNORE_WHITESPACES, IGNORE_WHITESPACES_CHUNKS};
   private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD, BY_WORD_SPLIT, DO_NOT_HIGHLIGHT};
 
-  @NotNull private final DiffUserDataKeysEx.DiffComputer myDiffComputer;
+  @NotNull private final DiffComputer myDiffComputer;
 
   public SimpleTextDiffProvider(@NotNull TextDiffSettings settings,
-                                @NotNull Runnable rediff) {
-    this(settings, rediff, DEFAULT_COMPUTER);
+                                @NotNull Runnable rediff,
+                                @NotNull Disposable disposable) {
+    this(settings, rediff, disposable, DEFAULT_COMPUTER);
   }
 
   public SimpleTextDiffProvider(@NotNull TextDiffSettings settings,
                                 @NotNull Runnable rediff,
-                                @NotNull DiffUserDataKeysEx.DiffComputer diffComputer) {
-    this(settings, rediff, diffComputer, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
+                                @NotNull Disposable disposable,
+                                @NotNull DiffComputer diffComputer) {
+    this(settings, rediff, disposable, diffComputer, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
   }
 
   private SimpleTextDiffProvider(@NotNull TextDiffSettings settings,
                                  @NotNull Runnable rediff,
-                                 @NotNull DiffUserDataKeysEx.DiffComputer diffComputer,
+                                 @NotNull Disposable disposable,
+                                 @NotNull DiffComputer diffComputer,
                                  @NotNull IgnorePolicy[] ignorePolicies,
                                  @NotNull HighlightPolicy[] highlightPolicies) {
-    super(settings, rediff, ignorePolicies, highlightPolicies);
+    super(settings, rediff, disposable, ignorePolicies, highlightPolicies);
     myDiffComputer = diffComputer;
   }
 
@@ -79,12 +83,12 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
 
 
   public static class NoIgnore extends SimpleTextDiffProvider implements TwosideTextDiffProvider.NoIgnore {
-    public NoIgnore(@NotNull TextDiffSettings settings, @NotNull Runnable rediff) {
-      this(settings, rediff, DEFAULT_COMPUTER);
+    public NoIgnore(@NotNull TextDiffSettings settings, @NotNull Runnable rediff, @NotNull Disposable disposable) {
+      this(settings, rediff, disposable, DEFAULT_COMPUTER);
     }
 
-    public NoIgnore(@NotNull TextDiffSettings settings, @NotNull Runnable rediff, @NotNull DiffUserDataKeysEx.DiffComputer diffComputer) {
-      super(settings, rediff, diffComputer, IGNORE_POLICIES, ArrayUtil.remove(HIGHLIGHT_POLICIES, DO_NOT_HIGHLIGHT));
+    public NoIgnore(@NotNull TextDiffSettings settings, @NotNull Runnable rediff, @NotNull Disposable disposable, @NotNull DiffComputer diffComputer) {
+      super(settings, rediff, disposable, diffComputer, IGNORE_POLICIES, ArrayUtil.remove(HIGHLIGHT_POLICIES, DO_NOT_HIGHLIGHT));
     }
 
     @NotNull

@@ -59,7 +59,8 @@ class TerminalBlock {
       if(statements.length == 1 && statements[0] instanceof PsiBlockStatement) {
         statements = ((PsiBlockStatement)statements[0]).getCodeBlock().getStatements();
       } else if(statements.length == 1 && statements[0] instanceof PsiLabeledStatement) {
-        statements = new PsiStatement[] {((PsiLabeledStatement)statements[0]).getStatement()};
+        PsiStatement statement = ((PsiLabeledStatement)statements[0]).getStatement();
+        statements = statement == null ? PsiStatement.EMPTY_ARRAY : new PsiStatement[] {statement};
       } else break;
     }
     myStatements = statements;

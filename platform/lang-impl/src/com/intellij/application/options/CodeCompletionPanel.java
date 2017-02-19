@@ -43,6 +43,7 @@ public class CodeCompletionPanel {
   private JCheckBox myCbAutopopupJavaDoc;
   private JTextField myAutopopupJavaDocField;
 
+  private  JLabel myAutoInsertLabel;
   private JCheckBox myCbOnCodeCompletion;
   private JCheckBox myCbOnSmartTypeCompletion;
 
@@ -101,6 +102,9 @@ public class CodeCompletionPanel {
    );
 
     hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
+    hideOption(myCbOnCodeCompletion, OptionId.AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION);
+    if(!myCbOnSmartTypeCompletion.isVisible() && !myCbOnCodeCompletion.isVisible())
+      myAutoInsertLabel.setVisible(false);
 
     reset();
   }

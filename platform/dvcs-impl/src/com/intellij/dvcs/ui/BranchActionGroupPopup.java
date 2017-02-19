@@ -388,18 +388,25 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     @NotNull private final Project myProject;
     @Nullable private final String mySettingName;
+    private final boolean myDefaultExpandValue;
     private boolean myIsExpanded;
     @NotNull private final String myToCollapseText;
     @NotNull private final String myToExpandText;
 
-    public MoreAction(@NotNull Project project, int numberOfHiddenNodes, @Nullable String settingName) {
+    public MoreAction(@NotNull Project project,
+                      int numberOfHiddenNodes,
+                      @Nullable String settingName,
+                      boolean defaultExpandValue,
+                      boolean hasFavorites) {
       super();
       myProject = project;
       mySettingName = settingName;
+      myDefaultExpandValue = defaultExpandValue;
       assert numberOfHiddenNodes > 0;
       myToExpandText = "Show " + numberOfHiddenNodes + " More...";
-      myToCollapseText = "Show Only Favorites";
-      setExpanded(settingName != null && PropertiesComponent.getInstance(project).getBoolean(settingName, false));
+      myToCollapseText = "Show " + (hasFavorites ? "Only Favorites" : "Less");
+      setExpanded(
+        settingName != null ? PropertiesComponent.getInstance(project).getBoolean(settingName, defaultExpandValue) : defaultExpandValue);
     }
 
     @Override
@@ -430,7 +437,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     public void saveState() {
       if (mySettingName != null) {
-        PropertiesComponent.getInstance(myProject).setValue(mySettingName, myIsExpanded);
+        PropertiesComponent.getInstance(myProject).setValue(mySettingName, myIsExpanded, myDefaultExpandValue);
       }
     }
   }
@@ -456,8 +463,16 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
                                                 @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
                                                 int maxIndex, @Nullable String settingName) {
+    wrapWithMoreActionIfNeeded(project, parentGroup, actionList, maxIndex, settingName, false);
+  }
+
+  public static void wrapWithMoreActionIfNeeded(@NotNull Project project,
+                                                @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
+                                                int maxIndex, @Nullable String settingName, boolean defaultExpandValue) {
     if (actionList.size() > maxIndex) {
-      MoreAction moreAction = new MoreAction(project, actionList.size() - maxIndex, settingName);
+      boolean hasFavorites =
+        actionList.stream().anyMatch(action -> action instanceof BranchActionGroup && ((BranchActionGroup)action).isFavorite());
+      MoreAction moreAction = new MoreAction(project, actionList.size() - maxIndex, settingName, defaultExpandValue, hasFavorites);
       for (int i = 0; i < actionList.size(); i++) {
         parentGroup.add(i < maxIndex ? actionList.get(i) : new HideableActionGroup(actionList.get(i), moreAction));
       }

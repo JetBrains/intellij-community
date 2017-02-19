@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * <p>
- * A standard set of scheme actions: copy, reset, rename, etc. used in {@link AbstractSchemesPanel}. More actions can be added via
+ * A standard set of scheme actions: copy, reset, rename, etc. used in {@link SimpleSchemesPanel}. More actions can be added via
  * {@link #addAdditionalActions(List)} method. Available actions depend on {@link SchemesModel}. If schemes model supports both IDE and
  * project schemes, {@link #copyToIDE(Scheme)} and {@link #copyToProject(Scheme)} must be overridden to do the actual job, default
  * implementation for the methods does nothing.
@@ -38,7 +40,7 @@ import java.util.List;
  * Import and export actions are available only if there are importer/exporter implementations for the actual scheme type.
  *
  * @param <T> The actual scheme type.
- * @see AbstractSchemesPanel
+ * @see SimpleSchemesPanel
  * @see SchemesModel
  * @see SchemeImporter
  * @see SchemeExporter
@@ -47,9 +49,9 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private final Collection<String> mySchemeImportersNames;
   private final Collection<String> mySchemeExporterNames;
-  private final AbstractSchemesPanel<T> mySchemesPanel;
+  protected final AbstractSchemesPanel<T, ?> mySchemesPanel;
 
-  protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T> schemesPanel) {
+  protected AbstractSchemeActions(@NotNull AbstractSchemesPanel<T, ?> schemesPanel) {
     mySchemesPanel = schemesPanel;
     mySchemeImportersNames = getSchemeImportersNames();
     mySchemeExporterNames = getSchemeExporterNames();
@@ -83,26 +85,18 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     actions.add(new RenameAction());
     actions.add(new ResetAction());
     actions.add(new DeleteAction());
+    addAdditionalActions(actions);
     if (!mySchemeExporterNames.isEmpty()) {
-      actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.export"), mySchemeExporterNames) {
-        @NotNull
-        @Override
-        protected AnAction createAction(@NotNull String actionName) {
-          return new ExportAction(actionName);
-        }
-      });
+      actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.export"),
+                                           mySchemeExporterNames,
+                                           ExportAction::new));
     }
     actions.add(new Separator());
     if (!mySchemeImportersNames.isEmpty()) {
-      actions.add(new ActionGroupPopupAction(ApplicationBundle.message("settings.editor.scheme.import"), mySchemeImportersNames) {
-        @NotNull
-        @Override
-        protected AnAction createAction(@NotNull String actionName) {
-          return new ImportAction(actionName);
-        }
-      });
+      actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.import", mySchemesPanel.getSchemeTypeName()),
+                                           mySchemeImportersNames,
+                                           ImportAction::new));
     }
-    addAdditionalActions(actions);
     return actions;
   }
   
@@ -194,10 +188,11 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       T currentScheme = getCurrentScheme();
       if (currentScheme != null) {
         mySchemesPanel.cancelEdit();
+        final boolean isProjectScheme = mySchemesPanel.supportsProjectSchemes() && getModel().isProjectScheme(currentScheme);
         duplicateScheme(currentScheme,
                         SchemeNameGenerator.getUniqueName(
                       SchemeManager.getDisplayName(currentScheme), 
-                      name -> mySchemesPanel.getModel().containsScheme(name)));
+                      name -> mySchemesPanel.getModel().containsScheme(name, isProjectScheme)));
         currentScheme = getCurrentScheme();
         if (currentScheme != null)  {
           mySchemesPanel.startEdit();
@@ -254,6 +249,22 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme(); 
       p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme));
+    }
+  }
+
+  private AnAction createImportExportAction(@NotNull String groupName,
+                                            @NotNull Collection<String> actionNames,
+                                            @NotNull Function<String, AnAction> createActionByName) {
+    if (actionNames.size() == 1) {
+      return createActionByName.apply(groupName);
+    } else {
+      return new ActionGroupPopupAction(groupName, actionNames) {
+        @NotNull
+        @Override
+        protected AnAction createAction(@NotNull String actionName) {
+          return createActionByName.apply(actionName);
+        }
+      };
     }
   }
 
@@ -348,7 +359,14 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    *
    * @param scheme The scheme to delete.
    */
-  protected abstract void deleteScheme(@NotNull T scheme);
+  protected void deleteScheme(@NotNull T scheme) {
+    if (Messages.showOkCancelDialog(
+      "Do you want to delete \"" + scheme.getName() + "\" scheme?",
+      "Delete Scheme",
+      Messages.getQuestionIcon()) == Messages.OK) {
+      mySchemesPanel.getModel().removeScheme(scheme);
+    }
+  }
 
   /**
    * Export the scheme using the given exporter name.
@@ -406,7 +424,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    */
   protected abstract Class<T> getSchemeType();
 
-  public final AbstractSchemesPanel<T> getSchemesPanel() {
+  public final AbstractSchemesPanel<T, ?> getSchemesPanel() {
     return mySchemesPanel;
   }
 }

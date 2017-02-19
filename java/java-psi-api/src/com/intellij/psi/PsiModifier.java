@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,33 @@
 package com.intellij.psi;
 
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Provides a list of possible modifier keywords for Java classes, methods and fields.
  */
 public interface PsiModifier {
-  @NonNls String PUBLIC = "public";
-  @NonNls String PROTECTED = "protected";
-  @NonNls String PRIVATE = "private";
-  @NonNls String PACKAGE_LOCAL = "packageLocal";
-  @NonNls String STATIC = "static";
-  @NonNls String ABSTRACT = "abstract";
-  @NonNls String FINAL = "final";
-  @NonNls String NATIVE = "native";
-  @NonNls String SYNCHRONIZED = "synchronized";
-  @NonNls String STRICTFP = "strictfp";
-  @NonNls String TRANSIENT = "transient";
-  @NonNls String VOLATILE = "volatile";
-  @NonNls String DEFAULT = "default";
+  String PUBLIC = "public";
+  String PROTECTED = "protected";
+  String PRIVATE = "private";
+  String PACKAGE_LOCAL = "packageLocal";
+  String STATIC = "static";
+  String ABSTRACT = "abstract";
+  String FINAL = "final";
+  String NATIVE = "native";
+  String SYNCHRONIZED = "synchronized";
+  String STRICTFP = "strictfp";
+  String TRANSIENT = "transient";
+  String VOLATILE = "volatile";
+  String DEFAULT = "default";
+  String OPEN = "open";
+  String TRANSITIVE = "transitive";
 
-  @NonNls String[] MODIFIERS = {
-    PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, DEFAULT
+  String[] MODIFIERS = {
+    PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, DEFAULT, OPEN, TRANSITIVE
   };
 
   @MagicConstant(stringValues = {
-    PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, DEFAULT, PACKAGE_LOCAL
+    PUBLIC, PROTECTED, PRIVATE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, STRICTFP, TRANSIENT, VOLATILE, DEFAULT, OPEN, TRANSITIVE, PACKAGE_LOCAL
   })
   @interface ModifierConstant { }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,26 +22,33 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestDataProvider;
+import com.intellij.testFramework.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -207,7 +214,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
                                                   GlobalSearchScope.allScope(project),
                                                   false,
                                                   false);
-    console.getComponent();
+    console.getComponent(); // initConsoleEditor()
     ProcessHandler processHandler = new NopProcessHandler();
     processHandler.startNotify();
     console.attachToProcess(processHandler);
@@ -228,12 +235,27 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       }).cpuBound().assertTiming());
   }
 
-  private static void withCycleConsole(int capacityKB, Consumer<ConsoleViewImpl> runnable) {
-    boolean oldUse = UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE;
-    int oldSize = UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB;
+  public void testPerformanceOfMergeableTokens() throws Exception {
+    withCycleConsole(1000, console ->
+      PlatformTestUtil.startPerformanceTest("console print", 5500, () -> {
+        console.clear();
+        for (int i=0; i<10_000_000; i++) {
+          console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);
+        }
+        UIUtil.dispatchAllInvocationEvents();
+        console.waitAllRequests();
+        MarkupModel model = DocumentMarkupModel.forDocument(console.getEditor().getDocument(), getProject(), true);
+        RangeHighlighter highlighter = assertOneElement(model.getAllHighlighters());
+        assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), TextRange.create(highlighter));
+      }).cpuBound().assertTiming());
+  }
 
-    UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = true;
-    UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB = capacityKB;
+  private static void withCycleConsole(int capacityKB, Consumer<ConsoleViewImpl> runnable) {
+    boolean oldUse = UISettings.getInstance().getOverrideConsoleCycleBufferSize();
+    int oldSize = UISettings.getInstance().getConsoleCycleBufferSizeKb();
+
+    UISettings.getInstance().setOverrideConsoleCycleBufferSize(true);
+    UISettings.getInstance().setConsoleCycleBufferSizeKb(capacityKB);
     // create new to reflect changed buffer size
     ConsoleViewImpl console = createConsole();
     try {
@@ -245,8 +267,8 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     }
     finally {
       Disposer.dispose(console);
-      UISettings.getInstance().OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = oldUse;
-      UISettings.getInstance().CONSOLE_CYCLE_BUFFER_SIZE_KB = oldSize;
+      UISettings.getInstance().setOverrideConsoleCycleBufferSize(oldUse);
+      UISettings.getInstance().setConsoleCycleBufferSizeKb(oldSize);
     }
 
   }
@@ -317,5 +339,39 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     DataContext dataContext = ((EditorEx)editor).getDataContext();
 
     action.actionPerformed(editor, c, dataContext);
+  }
+
+  public void testBackspaceDoesDeleteTheLastTypedChar() throws Exception {
+    final ConsoleViewImpl console = myConsole;
+    final Editor editor = console.getEditor();
+    console.print("xxxx", ConsoleViewContentType.NORMAL_OUTPUT);
+    console.print("a", ConsoleViewContentType.USER_INPUT);
+    console.print("b", ConsoleViewContentType.USER_INPUT);
+    console.print("c", ConsoleViewContentType.USER_INPUT);
+    console.print("d", ConsoleViewContentType.USER_INPUT);
+    console.flushDeferredText();
+    assertEquals("xxxxabcd", editor.getDocument().getText());
+
+    backspace(console);
+    assertEquals("xxxxabc", editor.getDocument().getText());
+    backspace(console);
+    assertEquals("xxxxab", editor.getDocument().getText());
+    backspace(console);
+    assertEquals("xxxxa", editor.getDocument().getText());
+    backspace(console);
+    assertEquals("xxxx", editor.getDocument().getText());
+  }
+
+  private static void backspace(ConsoleViewImpl consoleView) {
+    Editor editor = consoleView.getEditor();
+    Set<Shortcut> backShortcuts = new THashSet<>(Arrays.asList(ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE).getShortcutSet().getShortcuts()));
+    List<AnAction> actions = ActionUtil.getActions(consoleView.getEditor().getContentComponent());
+    AnAction handler = actions.stream()
+      .filter(a -> new THashSet<>(Arrays.asList(a.getShortcutSet().getShortcuts())).equals(backShortcuts))
+      .findFirst()
+      .get();
+    CommandProcessor.getInstance().executeCommand(getProject(),
+                                                  () -> EditorTestUtil.executeAction(editor, true, handler),
+                                                  "", null, editor.getDocument());
   }
 }

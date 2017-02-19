@@ -36,6 +36,13 @@ import java.util.Set;
  */
 public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
 
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "Duplicate branch in alternation";
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -56,6 +63,9 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
       final RegExpBranch[] branches = pattern.getBranches();
       for (int i = 0; i < branches.length - 1; i++) {
         final RegExpBranch branch1 = branches[i];
+        if (branch1.getAtoms().length == 0) {
+          continue;
+        }
         for (int j = i + 1; j < branches.length; j++) {
           final RegExpBranch branch2 = branches[j];
           if (RegExpEquivalenceChecker.areElementsEquivalent(branch1, branch2)) {

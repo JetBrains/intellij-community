@@ -16,10 +16,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.ModuleCompilerUtil;
-import com.intellij.compiler.ModuleSourceSet;
-import com.intellij.compiler.ProblemsView;
+import com.intellij.compiler.*;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
@@ -296,6 +293,14 @@ public class CompileDriver {
           final long column = message.hasColumn() ? message.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column);
+          if (compileContext.shouldUpdateProblemsView() && kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
+            // treat JPS_INFO messages in a special way: add them as info messages to the problems view
+            final Project project = compileContext.getProject();
+            ProblemsView.SERVICE.getInstance(project).addMessage(
+              new CompilerMessageImpl(project, category, messageText),
+              compileContext.getSessionId()
+            );
+          }
         }
       }
 

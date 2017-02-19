@@ -25,8 +25,8 @@ import com.intellij.icons.AllIcons;
  */
 public class RunAction extends ExecutorAction {
   public RunAction() {
-    super(ExecutionBundle.message("runtime.dashboard.run.action.name"),
-          ExecutionBundle.message("runtime.dashboard.run.action.name"),
+    super(ExecutionBundle.message("run.dashboard.run.action.name"),
+          ExecutionBundle.message("run.dashboard.run.action.description"),
           AllIcons.Toolwindows.ToolWindowRun);
   }
 

@@ -357,7 +357,7 @@ public class GitUnstashDialog extends DialogWrapper {
     h.addLineListener(untrackedFilesDetector);
     h.addLineListener(localChangesDetector);
 
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       final Ref<GitCommandResult> result = Ref.create();
       final ProgressManager progressManager = ProgressManager.getInstance();
@@ -387,7 +387,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
     super.doOKAction();
   }

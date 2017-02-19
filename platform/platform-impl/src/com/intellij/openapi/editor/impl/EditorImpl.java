@@ -29,6 +29,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -57,6 +58,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -231,10 +234,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT})
   private int         myScrollBarOrientation;
   private boolean     myMousePressedInsideSelection;
-  private FontMetrics myPlainFontMetrics;
-  private FontMetrics myBoldFontMetrics;
-  private FontMetrics myItalicFontMetrics;
-  private FontMetrics myBoldItalicFontMetrics;
 
   private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
@@ -319,6 +318,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private volatile int myExpectedCaretOffset = -1;
+
+  private boolean myBackgroundImageSet;
 
   EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
     assertIsDispatchThread();
@@ -505,15 +506,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    myVerticalScrollBar.setOpaque(shouldScrollBarBeOpaque(project));
+    myVerticalScrollBar.setOpaque(false);
     myPanel = new JPanel();
 
-    // JBScrollPane.Layout relies on "opaque" property directly (instead of "editor.transparent.scrollbar")
-    if (myVerticalScrollBar.isOpaque()) {
-      //Do not set opaque to false if a scroll bar is opaque (System Preferences / Show scroll bars / Always)
-      myScrollPane.getHorizontalScrollBar().setOpaque(true);
-    }
     UIUtil.putClientProperty(
       myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
         JComponent component = getPermanentHeaderComponent();
@@ -540,7 +535,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }, myCaretModel);
 
     if (UISettings.getInstance().getPresentationMode()) {
-      setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+      setFontSize(UISettings.getInstance().getPresentationModeFontSize());
     }
 
     myGutterComponent.updateSize();
@@ -552,12 +547,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetbrainsJvm && Registry.is("ide.mac.forceTouch")) {
       new MacGestureSupportForEditor(getComponent());
     }
-
   }
 
-  static boolean shouldScrollBarBeOpaque(Project project) {
-    if (IdeBackgroundUtil.isBackgroundImageSet(project)) return false;
-    return JBScrollPane.isPreciseRotationSupported() || SystemProperties.isTrueSmoothScrollingEnabled();
+  /**
+   * This method is intended to control a blit-accelerated scrolling, because transparent scrollbars suppress it.
+   * Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+   * It is possible to disable blit-acceleration using by the registry key {@code editor.transparent.scrollbar=true}.
+   * Also, when there's a background image, blit-acceleration cannot be used (because of the static overlay).
+   * In such cases this method returns {@code false} to use transparent scrollbars as designed.
+   * Enabled blit-acceleration improves scrolling performance and reduces CPU usage
+   * (especially if drawing is compute-intensive).
+   * <p>
+   * To have both the hardware acceleration and the background image
+   * we need to completely redesign JViewport machinery to support independent layers,
+   * which is (probably) possible, but it's a rather cumbersome task.
+   * Smooth scrolling still works event without the blit-acceleration,
+   * but with suboptimal performance and CPU usage.
+   *
+   * @return {@code true} if a scrollbar should be opaque, {@code false} otherwise
+   */
+  boolean shouldScrollBarBeOpaque() {
+    return !myBackgroundImageSet && !Registry.is("editor.transparent.scrollbar");
   }
 
   public boolean shouldSoftWrapsBeForced() {
@@ -747,7 +757,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void reinitSettings() {
     assertIsDispatchThread();
-    clearSettingsCache();
 
     for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
       if (scheme instanceof MyColorSchemeDelegate) {
@@ -794,10 +803,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void clearSettingsCache() {
-    myPlainFontMetrics = null;
-  }
-
   /**
    * To be called when editor was not disposed while it should
    */
@@ -821,7 +826,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.kill(null);
 
     isReleased = true;
-    clearSettingsCache();
     mySizeAdjustmentStrategy.cancelAllRequests();
 
     myFoldingModel.dispose();
@@ -878,10 +882,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setTransferHandler(new MyTransferHandler());
     myEditorComponent.setAutoscrolls(true);
 
-   /*  Default mode till 1.4.0
-    *   myScrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
-    */
-
     if (mayShowToolbar()) {
       JLayeredPane layeredPane = new JBLayeredPane() {
         @Override
@@ -907,16 +907,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       };
 
       layeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
-      // When there's a background image, suppress hardware-accelerated scrolling as blitting cannot be used with the static overlay.
-      // For the simplicity, editor re-opening is required for the toggle to take effect.
-      // To have both the hardware acceleration and the background image we need to completely redesign JViewport machinery to support
-      // independent layers, which is (probably) possible, but it's a rather cumbersome task.
-      // Smooth scrolling still works event without the blit-acceleration, but with suboptimal performance and CPU usage.
-      if (SystemProperties.isTrueSmoothScrollingEnabled() && IdeBackgroundUtil.isBackgroundImageSet(myProject)) {
-        JComponent component = new JComponent() {}; // transparent
-        component.setPreferredSize(new Dimension(1, 1));
-        layeredPane.add(component, JLayeredPane.POPUP_LAYER);
-      }
       myPanel.add(layeredPane);
 
       new ContextMenuImpl(layeredPane, myScrollPane, this);
@@ -1519,7 +1509,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     assertIsDispatchThread();
     if (!updatingSize) {
       updatingSize = true;
-      SwingUtilities.invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
         try {
           if (!isDisposed()) {
             myGutterComponent.updateSize();
@@ -1528,7 +1518,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         finally {
           updatingSize = false;
         }
-      });
+      }, ModalityState.any(), __->isDisposed());
     }
   }
 
@@ -1615,7 +1605,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void stopDumbLater() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ApplicationManager.getApplication().invokeLater(this::stopDumb, ModalityState.current());
+    ApplicationManager.getApplication().invokeLater(this::stopDumb, ModalityState.current(), __ -> isDisposed());
   }
 
   private void stopDumb() {
@@ -1665,6 +1655,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myProject != null && myProject.isDisposed()) return;
 
     myView.paint(g);
+
+    boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
+    if (myBackgroundImageSet != isBackgroundImageSet) {
+      myBackgroundImageSet = isBackgroundImageSet;
+      updateOpaque(myScrollPane.getHorizontalScrollBar());
+      updateOpaque(myScrollPane.getVerticalScrollBar());
+    }
   }
 
   Color getDisposedBackground() {
@@ -1842,22 +1839,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public FontMetrics getFontMetrics(@JdkConstants.FontStyle int fontType) {
-    if (myPlainFontMetrics == null) {
-      assertIsDispatchThread();
-      myPlainFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
-      myBoldFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.BOLD));
-      myItalicFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.ITALIC));
-      myBoldItalicFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.BOLD_ITALIC));
+    EditorFontType ft;
+    if (fontType == Font.PLAIN) ft = EditorFontType.PLAIN;
+    else if (fontType == Font.BOLD) ft = EditorFontType.BOLD;
+    else if (fontType == Font.ITALIC) ft = EditorFontType.ITALIC;
+    else if (fontType == (Font.BOLD | Font.ITALIC)) ft = EditorFontType.BOLD_ITALIC;
+    else {
+      LOG.error("Unknown font type: " + fontType);
+      ft = EditorFontType.PLAIN;
     }
 
-    if (fontType == Font.PLAIN) return myPlainFontMetrics;
-    if (fontType == Font.BOLD) return myBoldFontMetrics;
-    if (fontType == Font.ITALIC) return myItalicFontMetrics;
-    if (fontType == (Font.BOLD | Font.ITALIC)) return myBoldItalicFontMetrics;
-
-    LOG.error("Unknown font type: " + fontType);
-
-    return myPlainFontMetrics;
+    return myEditorComponent.getFontMetrics(myScheme.getFont(ft));
   }
 
   public int getPreferredHeight() {
@@ -1866,7 +1858,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getPreferredSize() {
     return isReleased ? new Dimension()
-                      : SystemProperties.isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().areDynamicScrollbarsEnabled()
+                      : Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")
                         ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
                         : myView.getPreferredSize();
   }
@@ -2746,10 +2738,39 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  private static void updateOpaque(JScrollBar bar) {
+    if (bar instanceof OpaqueAwareScrollBar) {
+      bar.setOpaque(((OpaqueAwareScrollBar)bar).myOpaque);
+    }
+  }
+
+  private class OpaqueAwareScrollBar extends JBScrollBar {
+    private boolean myOpaque;
+
+    private OpaqueAwareScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
+      super(orientation);
+      addPropertyChangeListener("opaque", event -> {
+        revalidate();
+        repaint();
+      });
+    }
+
+    @Override
+    public void setOpaque(boolean opaque) {
+      myOpaque = opaque;
+      super.setOpaque(opaque || shouldScrollBarBeOpaque());
+    }
+
+    @Override
+    public boolean isOptimizedDrawingEnabled() {
+      return !myBackgroundImageSet;
+    }
+  }
+
   private static final Field decrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "decrButton");
   private static final Field incrButtonField = ReflectionUtil.getDeclaredField(BasicScrollBarUI.class, "incrButton");
 
-  class MyScrollBar extends JBScrollBar {
+  class MyScrollBar extends OpaqueAwareScrollBar {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
 
@@ -2767,14 +2788,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setUI(ScrollBarUI ui) {
       if (myPersistentUI == null) myPersistentUI = ui;
       super.setUI(myPersistentUI);
-
-      /* Placing component(s) on top of JViewport suppresses blit-accelerated scrolling (for obvious reasons).
-
-        Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
-        This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive).
-
-        When there's a background image, blit-acceleration cannot be used (because of the static overlay). */
-      setOpaque(shouldScrollBarBeOpaque(myProject));
     }
 
     /**
@@ -3726,15 +3739,35 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
   }
 
   private static boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
   private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+  }
+
+  private static boolean isMouseActionEvent(@NotNull MouseEvent e, String actionId) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null) return false;
+    Keymap keymap = keymapManager.getActiveKeymap();
+    if (keymap == null) return false;
+    MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut(e);
+    String[] mappedActions = keymap.getActionIds(mouseShortcut);
+    if (!ArrayUtil.contains(actionId, mappedActions)) return false;
+    if (mappedActions.length < 2) return true;
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String mappedActionId : mappedActions) {
+      if (actionId.equals(mappedActionId)) continue;
+      AnAction action = actionManager.getAction(mappedActionId);
+      AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU,
+                                                                   DataManager.getInstance().getDataContext(e.getComponent()));
+      if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) return false;
+    }
+    return true;
   }
 
   private void selectWordAtCaret(boolean honorCamelCase) {
@@ -4086,7 +4119,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int globalFontSize = getDelegate().getEditorFontSize();
       myMaxFontSize = Math.max(EditorFontsConstants.getMaxEditorFontSize(), globalFontSize);
       reinitFonts();
-      clearSettingsCache();
     }
 
     @Override
@@ -4468,6 +4500,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       super.processMouseWheelEvent(e);
+    }
+
+    @NotNull
+    @Override
+    public JScrollBar createHorizontalScrollBar() {
+      return new OpaqueAwareScrollBar(Adjustable.HORIZONTAL);
     }
 
     @NotNull

@@ -597,7 +597,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       StringBuilder textToSend = new StringBuilder();
       // compute text input from the console contents:
       // all range markers beginning from the caret offset backwards, marked as user input and not marked as already sent
-      for (RangeMarker marker = findTokenMarker(myEditor.getCaretModel().getOffset());
+      for (RangeMarker marker = findTokenMarker(myEditor.getCaretModel().getOffset()-1);
            marker != null;
            marker = ((RangeMarkerImpl)marker).findRangeMarkerBefore()) {
         ConsoleViewContentType tokenType = getTokenType(marker);
@@ -698,18 +698,25 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         // add token information as range markers
         // start from the end because portion of the text can be stripped from the document beginning because of a cycle buffer
         int offset = document.getTextLength();
+        int tokenLength = 0;
         for (int i = deferredTokens.size() - 1; i >= startIndex; i--) {
           TokenBuffer.TokenInfo token = deferredTokens.get(i);
           contentTypes.add(token.contentType);
-          int tokenLength = token.length();
-          final HyperlinkInfo info = token.getHyperlinkInfo();
+          tokenLength += token.length();
+          TokenBuffer.TokenInfo prevToken = i == startIndex ? null : deferredTokens.get(i - 1);
+          if (prevToken != null && token.contentType == prevToken.contentType && token.getHyperlinkInfo() == prevToken.getHyperlinkInfo()) {
+            // do not create highlighter yet because can merge previous token with the current
+            continue;
+          }
           int start = Math.max(0, offset - tokenLength);
           if (start == offset) break;
+          final HyperlinkInfo info = token.getHyperlinkInfo();
           if (info != null) {
             myHyperlinks.createHyperlink(start, offset, null, info).putUserData(MANUAL_HYPERLINK, true);
           }
           createTokenRangeHighlighter(token.contentType, start, offset);
           offset = start;
+          tokenLength = 0;
         }
       }
       finally {
@@ -741,7 +748,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ApplicationManager.getApplication().assertIsDispatchThread();
     TextAttributes attributes = contentType.getAttributes();
     MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
-    RangeHighlighter tokenMarker = model.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.CONSOLE_FILTER,
+    int layer = HighlighterLayer.SYNTAX + 1; // make custom filters able to draw their text attributes over the default ones
+    RangeHighlighter tokenMarker = model.addRangeHighlighter(startOffset, endOffset, layer,
                                                              attributes, HighlighterTargetArea.EXACT_RANGE);
     tokenMarker.putUserData(CONTENT_TYPE, contentType);
   }
@@ -930,7 +938,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
       return;
     }
-    int endLine = myEditor.getDocument().getLineCount() - 1;
+    DocumentEx document = myEditor.getDocument();
+    if (document.getTextLength() == 0) return;
+
+    int endLine = Math.max(0, document.getLineCount() - 1);
 
     if (canHighlightHyperlinks) {
       myHyperlinks.highlightHyperlinks(myFilters, startLine, endLine);
@@ -1126,11 +1137,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
+  // finds range marker the [offset..offset+1) belongs to
   private RangeMarker findTokenMarker(int offset) {
     RangeMarker[] marker = new RangeMarker[1];
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
     model.processRangeHighlightersOverlappingWith(offset, offset, m->{
-      if (getTokenType(m) == null) return true;
+      if (getTokenType(m) == null || m.getStartOffset() > offset || offset + 1 > m.getEndOffset()) return true;
       marker[0] = m;
       return false;
     });
@@ -1165,8 +1177,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     flushDeferredText();
     SelectionModel selectionModel = editor.getSelectionModel();
 
-    int start = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
-    RangeMarker marker = findTokenMarker(start);
+    int lastOffset = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset() - 1;
+    RangeMarker marker = findTokenMarker(lastOffset);
     if (getTokenType(marker) != ConsoleViewContentType.USER_INPUT) {
       print(text, ConsoleViewContentType.USER_INPUT);
       moveScrollRemoveSelection(editor, editor.getDocument().getTextLength());
@@ -1178,7 +1190,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       replaceUserText(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), textToUse);
     }
     else {
-      insertUserText(start, textToUse);
+      int typeOffset = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
+      insertUserText(typeOffset, textToUse);
     }
   }
 

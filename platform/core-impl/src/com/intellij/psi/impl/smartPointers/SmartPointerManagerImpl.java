@@ -83,11 +83,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return pointer;
     }
 
-    pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile, forInjected);
+    pointer = new SmartPsiElementPointerImpl<>(myProject, element, containingFile, forInjected);
     if (containingFile != null) {
       trackPointer(pointer, containingFile.getViewProvider().getVirtualFile());
     }
-    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPsiElementPointerImpl>(pointer));
+    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<>(pointer));
     return pointer;
   }
 

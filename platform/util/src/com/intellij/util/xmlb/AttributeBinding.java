@@ -30,7 +30,7 @@ class AttributeBinding extends BasePrimitiveBinding {
 
   @Override
   @Nullable
-  public Object serialize(@NotNull Object o, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       return null;

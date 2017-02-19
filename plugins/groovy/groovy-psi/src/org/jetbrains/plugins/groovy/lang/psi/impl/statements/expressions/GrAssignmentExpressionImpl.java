@@ -17,33 +17,31 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveState;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
+import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
@@ -187,16 +185,45 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     }
   }
 
-  private static final ResolveCache.PolyVariantResolver<GrAssignmentExpression> RESOLVER = (assignmentExpression, incompleteCode) -> {
-    final IElementType opType = assignmentExpression.getOperationTokenType();
-    if (opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
+  private static final ResolveCache.PolyVariantResolver<GrAssignmentExpression> RESOLVER = new DependentResolver<GrAssignmentExpression>() {
 
-    PsiType lType = assignmentExpression.getLeftType();
-    if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
+    @Override
+    public Collection<PsiPolyVariantReference> collectDependencies(@NotNull GrAssignmentExpression ref) {
+      List<PsiPolyVariantReference> result = new SmartList<>();
+      ref.accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (element instanceof GrAssignmentExpression) {
+            super.visitElement(element);
+          }
+          else if (element instanceof GrParenthesizedExpression) {
+            super.visitElement(((GrParenthesizedExpression)element).getOperand());
+          }
+        }
 
-    PsiType rType = assignmentExpression.getRightType();
+        @Override
+        protected void elementFinished(PsiElement element) {
+          if (element instanceof GrAssignmentExpression) {
+            result.add(((GrAssignmentExpression)element));
+          }
+        }
+      });
+      return result;
+    }
 
-    final IElementType operatorToken = TokenSets.ASSIGNMENTS_TO_OPERATORS.get(opType);
-    return TypesUtil.getOverloadedOperatorCandidates(lType, operatorToken, assignmentExpression, new PsiType[]{rType});
+    @NotNull
+    @Override
+    public ResolveResult[] doResolve(@NotNull GrAssignmentExpression assignmentExpression, boolean incomplete) {
+      final IElementType opType = assignmentExpression.getOperationTokenType();
+      if (opType == GroovyTokenTypes.mASSIGN) return GroovyResolveResult.EMPTY_ARRAY;
+
+      PsiType lType = assignmentExpression.getLeftType();
+      if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
+
+      PsiType rType = assignmentExpression.getRightType();
+
+      final IElementType operatorToken = TokenSets.ASSIGNMENTS_TO_OPERATORS.get(opType);
+      return TypesUtil.getOverloadedOperatorCandidates(lType, operatorToken, assignmentExpression, new PsiType[]{rType});
+    }
   };
 }

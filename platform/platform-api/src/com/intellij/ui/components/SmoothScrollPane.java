@@ -16,8 +16,6 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.ComponentSettings;
 import com.intellij.ui.InputSource;
 import com.intellij.util.SystemProperties;
@@ -39,12 +37,6 @@ import static java.lang.Math.*;
 public class SmoothScrollPane extends JScrollPane {
   private static final Logger LOG = Logger.getInstance(SmoothScrollPane.class);
   private static final double EPSILON = 1E-5D;
-
-  private static final RegistryValue SCROLLBAR_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.scrollbar.delay");
-  private static final RegistryValue PRECISION_TOUCHPAD_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad.delay");
-  private static final RegistryValue MOUSE_WHEEL_MIN_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel.delay.min");
-  private static final RegistryValue MOUSE_WHEEL_MAX_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel.delay.max");
-  private static final RegistryValue DEFAULT_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.other.delay");
 
   private InputSource myInputSource = InputSource.UNKNOWN;
   private double myWheelRotation;
@@ -84,6 +76,7 @@ public class SmoothScrollPane extends JScrollPane {
     return new SmoothScrollBar(Adjustable.HORIZONTAL);
   }
 
+  /*
   @Override
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
@@ -108,6 +101,7 @@ public class SmoothScrollPane extends JScrollPane {
       }
     }
   }
+  */
 
   private void handleMouseWheelEvent(MouseWheelEvent e, MouseWheelListener delegate) {
     ComponentSettings settings = ComponentSettings.getInstance();
@@ -195,23 +189,10 @@ public class SmoothScrollPane extends JScrollPane {
     return viewport != null && (viewport.getView() instanceof Scrollable) ? (Scrollable)(viewport.getView()) : null;
   }
 
-  public InputSource getInputSource(boolean valueIsAdjusting) {
-    return valueIsAdjusting ? InputSource.SCROLLBAR : myInputSource;
-  }
-
-  public int getInitialDelay(InputSource source) {
-    switch (source) {
-      case SCROLLBAR:
-        return SCROLLBAR_DELAY.asInteger();
-      case PRECISION_TOUCHPAD:
-        return PRECISION_TOUCHPAD_DELAY.asInteger();
-      case MOUSE_WHEEL:
-        return max(MOUSE_WHEEL_MIN_DELAY.asInteger(),
-                   min((int)round(abs(myWheelRotation) * MOUSE_WHEEL_MAX_DELAY.asInteger()),
-                       MOUSE_WHEEL_MAX_DELAY.asInteger()));
-      default:
-        return DEFAULT_DELAY.asInteger();
-    }
+  int getInitialDelay(boolean valueIsAdjusting) {
+    InputSource source = valueIsAdjusting ? InputSource.SCROLLBAR : myInputSource;
+    ComponentSettings settings = ComponentSettings.getInstance();
+    return !settings.isInterpolationEnabledFor(source) ? 0 : settings.getInterpolationDelay(source, myWheelRotation);
   }
 
   protected class SmoothScrollBar extends ScrollBar implements Interpolable, FinelyAdjustable {
@@ -227,15 +208,14 @@ public class SmoothScrollPane extends JScrollPane {
 
     @Override
     public void setValue(int value) {
+      int delay = 0;
       ComponentSettings settings = ComponentSettings.getInstance();
 
-      InputSource source = getInputSource(getValueIsAdjusting());
-
-      if (settings.isTrueSmoothScrollingEligibleFor(getViewport().getView()) &&
-          settings.isInterpolationEligibleFor(this) &&
-          settings.isInterpolationEnabledFor(source)) {
-
-        myInterpolator.setTarget(value, getInitialDelay(source));
+      if (settings.isTrueSmoothScrollingEligibleFor(getViewport().getView()) && settings.isInterpolationEligibleFor(this)) {
+        delay = getInitialDelay(getValueIsAdjusting());
+      }
+      if (delay > 0) {
+        myInterpolator.setTarget(value, delay);
       }
       else {
         super.setValue(value);

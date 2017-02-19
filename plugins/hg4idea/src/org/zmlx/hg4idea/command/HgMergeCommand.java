@@ -64,14 +64,14 @@ public class HgMergeCommand {
       arguments.add("--rev");
       arguments.add(revision);
     }
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
+    DvcsUtil.workingTreeChangeStarted(project);
     try {
       HgCommandResult result = commandExecutor.executeInCurrentThread(repo.getRoot(), "merge", arguments);
       repo.update();
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      DvcsUtil.workingTreeChangeFinished(project);
     }
   }
 

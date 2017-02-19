@@ -18,16 +18,31 @@ package com.intellij.execution.dashboard.actions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author konstantin.aleev
  */
-public class StopAction extends RuntimeDashboardTreeLeafAction<DashboardRunConfigurationNode> {
+public class StopAction extends RunDashboardTreeLeafAction<DashboardRunConfigurationNode> {
   public StopAction() {
-    super(ExecutionBundle.message("runtime.dashboard.stop.action.name"),
-          ExecutionBundle.message("runtime.dashboard.stop.action.name"),
+    super(ExecutionBundle.message("run.dashboard.stop.action.name"),
+          ExecutionBundle.message("run.dashboard.stop.action.description"),
           AllIcons.Actions.Suspend);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    List<DashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
+    e.getPresentation().setEnabled(targetNodes.stream().anyMatch(node -> {
+      Content content = node.getContent();
+      return content != null && !RunContentManagerImpl.isTerminated(content);
+    }));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         return CLASS_OR_PACKAGE_NAME_KIND; // incomplete code
       }
     }
-    if (i == JavaElementType.PACKAGE_STATEMENT || i == JavaElementType.EXPORTS_STATEMENT) {
+    if (i == JavaElementType.PACKAGE_STATEMENT || i == JavaElementType.EXPORTS_STATEMENT || i == JavaElementType.OPENS_STATEMENT) {
       return PACKAGE_NAME_KIND;
     }
     if (i == JavaElementType.IMPORT_STATEMENT) {
@@ -175,8 +175,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       PsiJavaCodeReferenceCodeFragment fragment = (PsiJavaCodeReferenceCodeFragment)treeParent.getPsi();
       return fragment.isClassesAccepted() ? CLASS_FQ_OR_PACKAGE_NAME_KIND : PACKAGE_NAME_KIND;
     }
-    if (i == JavaElementType.USES_STATEMENT || i == JavaElementType.PROVIDES_STATEMENT) {
-      return CLASS_FQ_NAME_KIND;
+    if (i == JavaElementType.USES_STATEMENT || i == JavaElementType.PROVIDES_STATEMENT || i == JavaElementType.PROVIDES_WITH_LIST) {
+      return CLASS_NAME_KIND;
     }
 
     diagnoseUnknownParent();

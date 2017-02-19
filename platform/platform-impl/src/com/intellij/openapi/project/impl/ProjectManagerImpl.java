@@ -19,7 +19,6 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
@@ -48,9 +47,9 @@ import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.GCUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UnsafeWeakList;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -385,9 +384,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return true;
     }
 
-    // process all pending events that can interrupt focus flow
-    IdeEventQueue.getInstance().flushQueue();
-
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
     if (!ok) {
       closeProject(project, false, false, true);
@@ -415,7 +411,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     synchronized (lock) {
       myOpenProjects = ArrayUtil.remove(myOpenProjects, project);
       ProjectCoreUtil.theProject = myOpenProjects.length == 1 ? myOpenProjects[0] : null;
-      myOpenProjectByHash.remove(project.getLocationHash());
+      myOpenProjectByHash.values().remove(project); // remove by value and not by key!
     }
   }
 

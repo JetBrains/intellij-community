@@ -18,6 +18,7 @@ package com.intellij.diff.comparison;
 import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.*;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
@@ -519,10 +520,10 @@ public class ComparisonManagerImpl extends ComparisonManager {
 
       newInner = ContainerUtil.mapNotNull(fragment.getInnerFragments(), it -> {
         // update offsets, as some lines might have been ignored completely
-        int start1 = Math.max(it.getStartOffset1() - shift1, 0);
-        int start2 = Math.max(it.getStartOffset2() - shift2, 0);
-        int end1 = Math.max(Math.min(it.getEndOffset1() - shift1, newCount1), 0);
-        int end2 = Math.max(Math.min(it.getEndOffset2() - shift2, newCount2), 0);
+        int start1 = DiffUtil.bound(it.getStartOffset1() - shift1, 0, newCount1);
+        int start2 = DiffUtil.bound(it.getStartOffset2() - shift2, 0, newCount2);
+        int end1 = DiffUtil.bound(it.getEndOffset1() - shift1, 0, newCount1);
+        int end2 = DiffUtil.bound(it.getEndOffset2() - shift2, 0, newCount2);
 
         // trim inner fragments
         TextRange range1 = trimIgnoredRange(start1, end1, ignored1, startOffset1);

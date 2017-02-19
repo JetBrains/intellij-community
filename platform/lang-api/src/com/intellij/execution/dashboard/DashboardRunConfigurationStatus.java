@@ -25,13 +25,11 @@ import javax.swing.*;
  */
 public class DashboardRunConfigurationStatus {
   public static final DashboardRunConfigurationStatus STARTED = new DashboardRunConfigurationStatus(
-    ExecutionBundle.message("runtime.dashboard.started.group.name"), AllIcons.Toolwindows.ToolWindowRun);
+    ExecutionBundle.message("run.dashboard.started.group.name"), AllIcons.Toolwindows.ToolWindowRun);
   public static final DashboardRunConfigurationStatus STOPPED = new DashboardRunConfigurationStatus(
-    ExecutionBundle.message("runtime.dashboard.stopped.group.name"), AllIcons.Actions.Suspend);
+    ExecutionBundle.message("run.dashboard.stopped.group.name"), AllIcons.Actions.Suspend);
   public static final DashboardRunConfigurationStatus FAILED = new DashboardRunConfigurationStatus(
-    ExecutionBundle.message("runtime.dashboard.failed.group.name"), AllIcons.General.Error);
-  public static final DashboardRunConfigurationStatus STARTING = new DashboardRunConfigurationStatus(
-    ExecutionBundle.message("runtime.dashboard.starting.group.name"), AllIcons.Process.Step_4);
+    ExecutionBundle.message("run.dashboard.failed.group.name"), AllIcons.General.Error);
 
   private final String myName;
   private final Icon myIcon;

@@ -248,6 +248,26 @@ public final class IconLoader {
   }
 
   @Nullable
+  public static Image toImage(@NotNull Icon icon) {
+    if (icon instanceof CachedImageIcon) {
+      icon = ((CachedImageIcon)icon).getRealIcon();
+    }
+    if (icon instanceof ImageIcon) {
+      return ((ImageIcon)icon).getImage();
+    }
+    else {
+      final int w = icon.getIconWidth();
+      final int h = icon.getIconHeight();
+      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
+      final Graphics2D g = image.createGraphics();
+      icon.paintIcon(null, g, 0, 0);
+      g.dispose();
+      return image;
+    }
+  }
+
+  @Nullable
   private static ImageIcon checkIcon(final Image image, @NotNull URL url) {
     if (image == null || image.getHeight(LabelHolder.ourFakeComponent) < 1) { // image wasn't loaded or broken
       return null;
@@ -285,7 +305,7 @@ public final class IconLoader {
       if (icon instanceof CachedImageIcon) {
         disabledIcon = ((CachedImageIcon)icon).asDisabledIcon();
       } else {
-        final float scale = UIUtil.isJDKManagedHiDPIScreen() ? JBUI.sysScale() : 1f;  // [tav] todo: no screen available
+        final float scale = UIUtil.isJreHiDPI() ? JBUI.sysScale() : 1f;  // [tav] todo: no screen available
         @SuppressWarnings("UndesirableClassUsage")
         BufferedImage image = new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);
         final Graphics2D graphics = image.createGraphics();
@@ -298,7 +318,7 @@ public final class IconLoader {
         graphics.dispose();
 
         Image img = ImageUtil.filter(image, UIUtil.getGrayFilter());
-        if (UIUtil.isJDKManagedHiDPIScreen()) img = RetinaImage.createFrom(img, scale, null);
+        if (UIUtil.isJreHiDPI()) img = RetinaImage.createFrom(img, scale, null);
 
         disabledIcon = new JBImageIcon(img);
       }
@@ -391,7 +411,16 @@ public final class IconLoader {
       return myFilters[0];
     }
 
-      @NotNull
+    @Override
+    public boolean updateJBUIScale(Graphics2D g) {
+      if (needUpdateJBUIScale(g)) {
+        getRealIcon(g); // force update
+        return true;
+      }
+      return false;
+    }
+
+    @NotNull
     private synchronized ImageIcon getRealIcon() {
       return getRealIcon(null);
     }
@@ -402,7 +431,7 @@ public final class IconLoader {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myRealIcon = null;
         dark = USE_DARK_ICONS;
-        updateJBUIScale((Graphics2D)g);
+        super.updateJBUIScale((Graphics2D)g);
         setGlobalFilter(IMAGE_FILTER);
         if (!isValid()) myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
@@ -480,7 +509,7 @@ public final class IconLoader {
 
       getRealIcon(); // force state update & cache reset
 
-      Icon icon = myScaledIconsCache.getOrScaleIcon(getJBUIScale(ScaleType.PIX), scale, UIUtil.isUnderDarcula());
+      Icon icon = myScaledIconsCache.getOrScaleIcon(getJBUIScale(ScaleType.PIX), scale);
       if (icon != null) {
         return icon;
       }
@@ -507,19 +536,14 @@ public final class IconLoader {
         }
       });
 
-      private Image getOrLoadOrigImage(float pixScale) {
-        return getOrLoadOrigImage(pixScale, true);
-      }
-
       /**
-       * Retrieves the orig image based on the pixScale.
+       * Retrieves the orig image (1x, 2x) based on the pixScale.
        */
-      private Image getOrLoadOrigImage(float pixScale, boolean allowFloatScaling) {
-        boolean needRetinaImage = (pixScale > 1.0f);
+      private Image getOrLoadOrigImage(boolean needRetinaImage) {
         Image image = SoftReference.dereference(origImagesCache.get(needRetinaImage));
         if (image != null) return image;
 
-        image = ImageLoader.loadFromUrl(myUrl, allowFloatScaling, myFilters, pixScale);
+        image = ImageLoader.loadFromUrl(myUrl, false, myFilters, needRetinaImage ? 2f : 1f);
         if (image == null) return null;
         origImagesCache.put(needRetinaImage, new SoftReference<Image>(image));
         return image;
@@ -528,15 +552,20 @@ public final class IconLoader {
       /**
        * Retrieves the orig icon based on the pixScale, then scale it by the instanceScale.
        */
-      public ImageIcon getOrScaleIcon(float pixScale, float instanceScale, boolean allowFloatScaling) {
+      public ImageIcon getOrScaleIcon(float pixScale, float instanceScale) {
         float effectiveScale = pixScale * instanceScale;
         ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(effectiveScale));
         if (icon != null) {
           return icon;
         }
 
-        Image image = getOrLoadOrigImage(pixScale, allowFloatScaling);
+        boolean needRetinaImage = JBUI.isHiDPI(effectiveScale);
+        Image image = getOrLoadOrigImage(needRetinaImage);
         if (image == null) return null;
+
+        if (!UIUtil.isJreHiDPIEnabled() && needRetinaImage) {
+          instanceScale = effectiveScale / 2f; // the image is 2x raw BufferedImage, compensate it
+        }
 
         image = ImageUtil.scaleImage(image, instanceScale);
         icon = checkIcon(image, myUrl);
@@ -548,7 +577,7 @@ public final class IconLoader {
        * Retrieves the orig icon based on the pixScale.
        */
       public ImageIcon getOrLoadIcon(float pixScale) {
-        return getOrScaleIcon(pixScale, 1f, true);
+        return getOrScaleIcon(pixScale, 1f);
       }
 
       public void clear() {
@@ -567,7 +596,7 @@ public final class IconLoader {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      final Icon icon = getOrComputeIcon((Graphics2D)g);
+      final Icon icon = getOrComputeIcon(g);
       if (icon != null) {
         icon.paintIcon(c, g, x, y);
       }
@@ -589,10 +618,10 @@ public final class IconLoader {
       return getOrComputeIcon(null);
     }
 
-    protected final synchronized Icon getOrComputeIcon(@Nullable Graphics2D g) {
-      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || needUpdateJBUIScale(g) || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
+    protected final synchronized Icon getOrComputeIcon(@Nullable Graphics g) {
+      if (!myWasComputed || isDarkVariant != USE_DARK_ICONS || needUpdateJBUIScale((Graphics2D)g) || filter != IMAGE_FILTER || numberOfPatchers != ourPatchers.size()) {
         isDarkVariant = USE_DARK_ICONS;
-        updateJBUIScale(g);
+        updateJBUIScale((Graphics2D)g);
         filter = IMAGE_FILTER;
         myWasComputed = true;
         numberOfPatchers = ourPatchers.size();
@@ -612,7 +641,7 @@ public final class IconLoader {
       Icon icon = getOrComputeIcon();
       if (icon != null) {
         if (icon instanceof CachedImageIcon) {
-          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(1f);
+          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrLoadOrigImage(false);
           if (img != null) {
             icon = new ImageIcon(img);
           }

@@ -22,7 +22,7 @@ class DecalredMethod2 {
 class Test {
   void method(){}
   void method2(A a, B b){}
-  void method3(){}
+  void method1(){}
 }
 
 class A {}

@@ -89,6 +89,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private final JLabel infoLabel;
 
   private final PropertyChangeListener optionsChangeListener = new OptionsChangeListener();
+  private final JScrollPane myScrollPane;
 
   ImageEditorUI(@Nullable ImageEditor editor) {
     this.editor = editor;
@@ -130,12 +131,12 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     view.addMouseListener(new EditorMouseAdapter());
     view.addMouseListener(new FocusRequester());
 
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(view);
-    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane = ScrollPaneFactory.createScrollPane(view);
+    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
     // Zoom by wheel listener
-    scrollPane.addMouseWheelListener(wheelAdapter);
+    myScrollPane.addMouseWheelListener(wheelAdapter);
 
     // Construct UI
     setLayout(new BorderLayout());
@@ -164,7 +165,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     errorPanel.add(errorLabel, BorderLayout.CENTER);
 
     contentPanel = new JPanel(new CardLayout());
-    contentPanel.add(scrollPane, IMAGE_PANEL);
+    contentPanel.add(myScrollPane, IMAGE_PANEL);
     contentPanel.add(errorPanel, ERROR_PANEL);
 
     JPanel topPanel = new JPanel(new BorderLayout());
@@ -331,12 +332,29 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       ZoomOptions zoomOptions = editorOptions.getZoomOptions();
       if (zoomOptions.isWheelZooming() && e.isControlDown()) {
         int rotation = e.getWheelRotation();
+        double oldZoomFactor = zoomModel.getZoomFactor();
+        Point oldPosition = myScrollPane.getViewport().getViewPosition();
+
         if (rotation < 0) {
           zoomModel.zoomOut();
         }
         else if (rotation > 0) {
           zoomModel.zoomIn();
         }
+
+        // reset view, otherwise view size is not obtained correctly sometimes
+        Component view = myScrollPane.getViewport().getView();
+        myScrollPane.setViewport(null);
+        myScrollPane.setViewportView(view);
+
+        if (oldZoomFactor > 0 && rotation != 0) {
+          Point mousePoint = e.getPoint();
+          double zoomChange = zoomModel.getZoomFactor() / oldZoomFactor;
+          Point newPosition = new Point((int)Math.max(0, (oldPosition.getX() + mousePoint.getX()) * zoomChange - mousePoint.getX()),
+                                        (int)Math.max(0, (oldPosition.getY() + mousePoint.getY()) * zoomChange - mousePoint.getY()));
+          myScrollPane.getViewport().setViewPosition(newPosition);
+        }
+
         e.consume();
       }
     }

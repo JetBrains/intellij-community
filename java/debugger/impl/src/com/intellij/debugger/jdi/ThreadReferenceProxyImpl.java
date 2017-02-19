@@ -312,8 +312,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (IllegalThreadStateException e) {
       // must be zombie thread
       LOG.info(e);
-      return false;
+    } catch (ObjectCollectedException ignored) {
     }
+
+    return false;
   }
 
   public boolean isAtBreakpoint() {
@@ -321,6 +323,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
       return getThreadReference().isAtBreakpoint();
     } catch (InternalException e) {
       LOG.info(e);
+    } catch (ObjectCollectedException ignored) {
     }
     return false;
   }

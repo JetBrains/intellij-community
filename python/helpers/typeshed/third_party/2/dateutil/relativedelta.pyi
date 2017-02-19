@@ -1,4 +1,4 @@
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 from datetime import date, datetime, timedelta
 
 __all__ = ...  # type: List[str]

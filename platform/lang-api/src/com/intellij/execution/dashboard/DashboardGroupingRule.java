@@ -23,12 +23,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 
 /**
- * Action for grouping items in a runtime dashboard tree.
+ * Action for grouping items in a run dashboard tree.
  *
  * @author konstantin.aleev
  */
 public interface DashboardGroupingRule extends TreeAction {
-  ExtensionPointName<DashboardGroupingRule> EP_NAME = ExtensionPointName.create("com.intellij.runtimeDashboardGroupingRule");
+  ExtensionPointName<DashboardGroupingRule> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
 
   Comparator<DashboardGroupingRule> PRIORITY_COMPARATOR = (o1, o2) -> {
     final int res = o2.getPriority() - o1.getPriority();

@@ -44,6 +44,7 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     return new Visitor(settings).processElement(source);
   }
 
+  @NotNull
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     return new Visitor(settings).processTextRange(source, rangeToReformat);

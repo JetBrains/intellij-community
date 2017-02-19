@@ -44,7 +44,8 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
                                         final DataExternalizer<V> valueExternalizer,
                                         final CollectionFactory<V> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
-    myMap = new PersistentHashMap<Integer, Collection<V>>(file, keyExternalizer, new CollectionDataExternalizer<V>(valueExternalizer, collectionFactory));
+    myMap = new PersistentHashMap<>(file, keyExternalizer,
+                                    new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
     myCache = new SLRUCache<Integer, Collection>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override
@@ -217,15 +218,12 @@ public class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   @Override
   public void forEachEntry(final TIntObjectProcedure<Collection<V>> procedure) {
     try {
-      myMap.processKeysWithExistingMapping(new Processor<Integer>() {
-        @Override
-        public boolean process(Integer key) {
-          try {
-            return procedure.execute(key, myMap.get(key));
-          }
-          catch (IOException e) {
-            throw new BuildDataCorruptedException(e);
-          }
+      myMap.processKeysWithExistingMapping(key -> {
+        try {
+          return procedure.execute(key, myMap.get(key));
+        }
+        catch (IOException e) {
+          throw new BuildDataCorruptedException(e);
         }
       });
     }

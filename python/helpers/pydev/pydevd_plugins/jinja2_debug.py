@@ -326,7 +326,7 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
     jinja2_breakpoint = None
     flag = False
     type = 'jinja2'
-    if event in ('line', 'call') and info.pydev_state != STATE_SUSPEND and \
+    if event == 'line' and info.pydev_state != STATE_SUSPEND and \
             pydb.jinja2_breakpoints and _is_jinja2_render_call(frame):
         filename = _get_jinja2_template_filename(frame)
         jinja2_breakpoints_for_file = pydb.jinja2_breakpoints.get(filename)
@@ -345,6 +345,13 @@ def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
 
 def suspend(plugin, pydb, thread, frame, bp_type):
     if bp_type == 'jinja2':
+        if pydb.frame_eval_func is not None:
+            thread_id = get_thread_id(thread)
+            if thread_id not in pydb.disable_tracing_after_exit_frames:
+                pydb.disable_tracing_after_exit_frames[thread_id] = set()
+                # tracing function inside frame shouldn't be removed until the program exits this frame
+            pydb.disable_tracing_after_exit_frames[thread_id].add(frame)
+
         return _suspend_jinja2(pydb, thread, frame)
     return None
 

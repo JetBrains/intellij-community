@@ -94,6 +94,8 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -424,6 +426,16 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         throw new ProcessCanceledException();
       }
 
+      boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
+      Stream.concat(getWrappersFromTools(localTools, file, includeDoNotShow).stream(),
+                    getWrappersFromTools(globalSimpleTools, file, includeDoNotShow).stream())
+        .filter(wrapper -> wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)
+        .forEach(wrapper -> {
+          ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
+          InspectionToolPresentation toolPresentation = getPresentation(wrapper);
+          ReadAction.run(() -> LocalDescriptorsUtil.addProblemDescriptors(Arrays.asList(descriptors), false, this, null, CONVERT, toolPresentation));
+        });
+
       return true;
     };
     try {
@@ -496,9 +508,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     try {
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
       final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file, includeDoNotShow);
-      pass.doInspectInBatch(this, inspectionManager, lTools);
+      List<LocalInspectionToolWrapper> nonExternalAnnotators = lTools.stream().filter(wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)).collect(Collectors.toList());
+      pass.doInspectInBatch(this, inspectionManager, nonExternalAnnotators);
 
-      final List<GlobalInspectionToolWrapper> tools = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
+      List<GlobalInspectionToolWrapper> globalSTools = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
+      final List<GlobalInspectionToolWrapper> tools = globalSTools.stream()
+        .filter(wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)).collect(Collectors.toList());
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, false, toolWrapper -> {
         GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
         ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);

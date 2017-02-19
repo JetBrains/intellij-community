@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore.xml
 
+import com.intellij.configurationStore.StoredPropertyStateTest
 import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
@@ -39,6 +40,7 @@ import java.util.*
   XmlSerializerTest::class,
   XmlSerializerMapTest::class,
   XmlSerializerCollectionTest::class,
+  StoredPropertyStateTest::class,
   KotlinXmlSerializerTest::class
 )
 class XmlSerializerTestSuite
@@ -240,7 +242,7 @@ internal class XmlSerializerTest {
     bean.INT_V = 987
     bean.STRING_V = "1234"
 
-    val element = bean.serialize(null)
+    val element = bean.serialize()
 
     val node = element.children.get(0)
     element.removeContent(node)
@@ -632,7 +634,7 @@ internal class XmlSerializerTest {
 
   private fun checkSmartSerialization(bean: Bean2, serialized: String) {
     val serializer = SmartSerializer()
-    serializer.readExternal(bean, JDOMUtil.loadDocument(serialized).rootElement)
+    serializer.readExternal(bean, JDOMUtil.load(serialized))
     val serializedState = Element("Bean2")
     serializer.writeExternal(bean, serializedState)
     assertThat(JDOMUtil.writeElement(serializedState)).isEqualTo(serialized)

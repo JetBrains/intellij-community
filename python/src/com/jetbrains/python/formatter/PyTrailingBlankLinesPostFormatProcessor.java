@@ -64,6 +64,7 @@ public class PyTrailingBlankLinesPostFormatProcessor implements PostFormatProces
     return source;
   }
 
+  @NotNull
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     if (!isApplicableTo(source)) {

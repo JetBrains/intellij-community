@@ -1,4 +1,4 @@
-from typing import List, Union, Iterator, Tuple, Optional, Any, IO, NamedTuple
+from typing import List, Union, Iterator, Tuple, Optional, Any, IO, NamedTuple, Dict
 
 from opcode import (hasconst, hasname, hasjrel, hasjabs, haslocal, hascompare,
                     hasfree, hasnargs, cmp_op, opname, opmap, HAVE_ARGUMENT,

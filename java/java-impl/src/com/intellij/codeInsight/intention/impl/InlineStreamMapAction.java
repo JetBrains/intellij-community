@@ -244,7 +244,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       ct.replace(e, replacement);
     }
     ct.replace(nextParameters[0], ct.markUnchanged(prevParameters[0]));
-    ExpressionUtils.renameReference(nextRef, newName);
+    ExpressionUtils.bindReferenceTo(nextRef, newName);
     PsiExpression prevQualifier = mapCall.getMethodExpression().getQualifierExpression();
     if(prevQualifier == null) {
       ct.deleteAndRestoreComments(nextQualifier);

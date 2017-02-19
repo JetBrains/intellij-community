@@ -105,6 +105,8 @@ class BundledJreManager {
         buildContext.ant.exec(executable: "tar", dir: archive.parent) {
           arg(value: "-xf")
           arg(value: archive.name)
+          arg(value: "--strip")
+          arg(value: "1")
           arg(value: "--directory")
           arg(value: destination)
         }
@@ -130,7 +132,7 @@ class BundledJreManager {
   }
 
   private enum JreVendor {
-    Oracle("jre8", "jdk8"), JetBrains("jbre8", "jbsdk8")
+    Oracle("jre8", "jdk8"), JetBrains("jbre8", "jbrex8")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix

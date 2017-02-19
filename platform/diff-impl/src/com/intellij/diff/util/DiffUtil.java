@@ -600,28 +600,30 @@ public class DiffUtil {
   public static TwosideTextDiffProvider createTextDiffProvider(@Nullable Project project,
                                                                @NotNull ContentDiffRequest request,
                                                                @NotNull TextDiffSettings settings,
-                                                               @NotNull Runnable rediff) {
+                                                               @NotNull Runnable rediff,
+                                                               @NotNull Disposable disposable) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
-    if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, diffComputer);
+    if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, disposable, diffComputer);
 
-    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff);
+    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff, disposable);
     if (smartProvider != null) return smartProvider;
 
-    return new SimpleTextDiffProvider(settings, rediff);
+    return new SimpleTextDiffProvider(settings, rediff, disposable);
   }
 
   @NotNull
   public static TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@Nullable Project project,
                                                                                 @NotNull ContentDiffRequest request,
                                                                                 @NotNull TextDiffSettings settings,
-                                                                                @NotNull Runnable rediff) {
+                                                                                @NotNull Runnable rediff,
+                                                                                @NotNull Disposable disposable) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
-    if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, diffComputer);
+    if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable, diffComputer);
 
-    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff);
+    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff, disposable);
     if (smartProvider != null) return smartProvider;
 
-    return new SimpleTextDiffProvider.NoIgnore(settings, rediff);
+    return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable);
   }
 
   @Nullable
@@ -912,6 +914,11 @@ public class DiffUtil {
       result.add(document.getText(new TextRange(start, end)));
     }
     return result;
+  }
+
+  public static int bound(int value, int lowerBound, int upperBound) {
+    assert lowerBound <= upperBound : String.format("%s - [%s, %s]", value, lowerBound, upperBound);
+    return Math.max(Math.min(value, upperBound), lowerBound);
   }
 
   //

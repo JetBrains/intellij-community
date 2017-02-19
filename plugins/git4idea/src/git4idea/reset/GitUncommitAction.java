@@ -86,7 +86,7 @@ public class GitUncommitAction extends DumbAwareAction {
     VcsShortCommitDetails commit = log.getSelectedShortDetails().get(0);
     Hash hash = commit.getId();
     VirtualFile root = commit.getRoot();
-    GitRepository repository = getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
+    GitRepository repository = getRepositoryManager(project).getRepositoryForRootQuick(commit.getRoot());
     if (repository == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;

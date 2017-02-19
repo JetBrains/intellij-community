@@ -62,14 +62,9 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
       if (myCache == null) {
         myExtensionPoint = getExtensionPoint();
         myExtensionPoint.addExtensionPointListener(this);
-        myCache = new ArrayList<V>(myExplicitExtensions);
-        myCache.addAll(ContainerUtil.mapNotNull(myExtensionPoint.getExtensions(), new NullableFunction<Extension, V>() {
-          @Override
-          @Nullable
-          public V fun(final Extension extension) {
-            return getExtension(extension);
-          }
-        }));
+        myCache = new ArrayList<>(myExplicitExtensions);
+        myCache.addAll(ContainerUtil.mapNotNull(myExtensionPoint.getExtensions(),
+                                                (NullableFunction<Extension, V>)extension -> getExtension(extension)));
       }
       return myCache;
     }

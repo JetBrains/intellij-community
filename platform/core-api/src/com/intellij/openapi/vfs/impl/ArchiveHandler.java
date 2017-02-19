@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.reference.SoftReference;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.ref.Reference;
 import java.util.Collections;
 import java.util.List;
@@ -57,8 +59,8 @@ public abstract class ArchiveHandler {
 
   private final File myPath;
   private final Object myLock = new Object();
-  private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<Map<String, EntryInfo>>(null);
-  private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<AddonlyKeylessHash<EntryInfo, Object>>(null);
+  private volatile Reference<Map<String, EntryInfo>> myEntries = new SoftReference<>(null);
+  private volatile Reference<AddonlyKeylessHash<EntryInfo, Object>> myChildrenEntries = new SoftReference<>(null);
   private boolean myCorrupted;
 
   protected ArchiveHandler(@NotNull String path) {
@@ -114,7 +116,7 @@ public abstract class ArchiveHandler {
 
         if (map == null) {
           if (myCorrupted) {
-            map = new AddonlyKeylessHash<EntryInfo, Object>(ourKeyValueMapper);
+            map = new AddonlyKeylessHash<>(ourKeyValueMapper);
           }
           else {
             try {
@@ -123,11 +125,11 @@ public abstract class ArchiveHandler {
             catch (Exception e) {
               myCorrupted = true;
               Logger.getInstance(getClass()).warn(e.getMessage() + ": " + myPath, e);
-              map = new AddonlyKeylessHash<EntryInfo, Object>(ourKeyValueMapper);
+              map = new AddonlyKeylessHash<>(ourKeyValueMapper);
             }
           }
 
-          myChildrenEntries = new SoftReference<AddonlyKeylessHash<EntryInfo, Object>>(map);
+          myChildrenEntries = new SoftReference<>(map);
         }
       }
     }
@@ -135,17 +137,17 @@ public abstract class ArchiveHandler {
   }
 
   private AddonlyKeylessHash<EntryInfo, Object> createParentChildrenMap() {
-    THashMap<EntryInfo, List<EntryInfo>> map = new THashMap<EntryInfo, List<EntryInfo>>();
+    THashMap<EntryInfo, List<EntryInfo>> map = new THashMap<>();
     for (EntryInfo info : getEntriesMap().values()) {
-      if (info.isDirectory && !map.containsKey(info)) map.put(info, new SmartList<EntryInfo>());
+      if (info.isDirectory && !map.containsKey(info)) map.put(info, new SmartList<>());
       if (info.parent != null) {
         List<EntryInfo> parentChildren = map.get(info.parent);
-        if (parentChildren == null) map.put(info.parent, parentChildren = new SmartList<EntryInfo>());
+        if (parentChildren == null) map.put(info.parent, parentChildren = new SmartList<>());
         parentChildren.add(info);
       }
     }
 
-    final AddonlyKeylessHash<EntryInfo, Object> result = new AddonlyKeylessHash<EntryInfo, Object>(map.size(), ourKeyValueMapper);
+    final AddonlyKeylessHash<EntryInfo, Object> result = new AddonlyKeylessHash<>(map.size(), ourKeyValueMapper);
     map.forEachEntry(new TObjectObjectProcedure<EntryInfo, List<EntryInfo>>() {
       @Override
       public boolean execute(EntryInfo a, List<EntryInfo> b) {
@@ -194,7 +196,7 @@ public abstract class ArchiveHandler {
             }
           }
 
-          myEntries = new SoftReference<Map<String, EntryInfo>>(map);
+          myEntries = new SoftReference<>(map);
         }
       }
     }
@@ -232,6 +234,11 @@ public abstract class ArchiveHandler {
 
   @NotNull
   public abstract byte[] contentsToByteArray(@NotNull String relativePath) throws IOException;
+
+  @NotNull
+  public InputStream getInputStream(@NotNull String relativePath) throws IOException {
+    return new BufferExposingByteArrayInputStream(contentsToByteArray(relativePath));
+  }
 
   private static final AddonlyKeylessHash.KeyValueMapper<EntryInfo, Object> ourKeyValueMapper = new AddonlyKeylessHash.KeyValueMapper<EntryInfo, Object>() {
     @Override

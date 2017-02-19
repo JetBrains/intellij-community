@@ -16,11 +16,12 @@
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.ComponentSerializationUtil
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.xmlb.*
-import com.intellij.util.xmlb.XmlSerializerImpl.isPrimitive
-import com.intellij.util.xmlb.XmlSerializerImpl.typeToClass
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -30,12 +31,28 @@ import java.net.URL
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.primaryConstructor
 
-fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultValuesSerializationFilters()): Element = XmlSerializer.serialize(this, filter)
-
-fun serialize(`object`: Any): Element {
-  return XmlSerializer.serialize(`object`)
+@JvmOverloads
+fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultsSerializationFilter()): Element {
+  try {
+    val clazz = javaClass
+    val binding = serializer.getClassBinding(clazz)
+    return if (binding is BeanBinding) {
+      // top level expects not null (null indicates error, empty element will be omitted)
+      binding.serialize(this, true, filter)
+    }
+    else {
+      binding.serialize(this, null, filter) as Element
+    }
+  }
+  catch (e: XmlSerializationException) {
+    throw e
+  }
+  catch (e: Exception) {
+    throw XmlSerializationException("Can't serialize instance of ${this.javaClass}", e)
+  }
 }
 
 inline fun <reified T: Any> Element.deserialize(): T = deserialize(T::class.java)
@@ -43,7 +60,7 @@ inline fun <reified T: Any> Element.deserialize(): T = deserialize(T::class.java
 fun <T> Element.deserialize(aClass: Class<T>): T {
   @Suppress("UNCHECKED_CAST")
   try {
-    return (getBinding(aClass) as NotNullDeserializeBinding).deserialize(null, this) as T
+    return (serializer.getClassBinding(aClass) as NotNullDeserializeBinding).deserialize(null, this) as T
   }
   catch (e: XmlSerializationException) {
     throw e
@@ -69,7 +86,7 @@ fun <T> deserialize(url: URL, aClass: Class<T>): T {
 
 fun Element.deserializeInto(bean: Any) {
   try {
-    (getBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, this)
+    (serializer.getClassBinding(bean.javaClass) as BeanBinding).deserializeInto(bean, this)
   }
   catch (e: XmlSerializationException) {
     throw e
@@ -79,38 +96,60 @@ fun Element.deserializeInto(bean: Any) {
   }
 }
 
-private var _bindingCache: SoftReference<MutableMap<BindingCacheKey, Binding>>? = null
+fun PersistentStateComponent<*>.deserializeAndLoadState(element: Element) {
+  val state = element.deserialize(ComponentSerializationUtil.getStateClass<Any>(javaClass))
+  (state as? BaseState)?.resetModificationCount()
+  @Suppress("UNCHECKED_CAST")
+  (this as PersistentStateComponent<Any>).loadState(state)
+}
 
-private val bindingCache: MutableMap<BindingCacheKey, Binding>
-  get() {
-    var map = _bindingCache?.get()
-    if (map == null) {
-      map = THashMap()
-      _bindingCache = SoftReference(map)
-    }
-    return map
+fun <T : Any> T.serializeInto(element: Element) {
+  try {
+    val binding = serializer.getClassBinding(javaClass)
+    (binding as BeanBinding).serializeInto(this, element, null)
   }
+  catch (e: XmlSerializationException) {
+    throw e
+  }
+  catch (e: Exception) {
+    throw XmlSerializationException(e)
+  }
+}
 
-private val cacheLock = ReentrantReadWriteLock()
+private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
+  private var _bindingCache: SoftReference<MutableMap<BindingCacheKey, Binding>>? = null
 
-private fun <T> getBinding(aClass: Class<T>, originalType: Type = aClass, accessor: MutableAccessor? = null): Binding {
-  val key = BindingCacheKey(originalType, accessor)
-  val map = bindingCache
-  return cacheLock.read { map.get(key) } ?: cacheLock.write {
-    map.get(key)?.let {
-      return it
+  private val bindingCache: MutableMap<BindingCacheKey, Binding>
+    get() {
+      var map = _bindingCache?.get()
+      if (map == null) {
+        map = THashMap()
+        _bindingCache = SoftReference(map)
+      }
+      return map
     }
 
-    val binding = XmlSerializerImpl.createClassBinding(aClass, accessor, originalType) ?: KotlinAwareBeanBinding(aClass, accessor)
-    map.put(key, binding)
-    try {
-      binding.init(originalType)
+  private val cacheLock = ReentrantReadWriteLock()
+
+  override fun getClassBinding(aClass: Class<*>, originalType: Type, accessor: MutableAccessor?): Binding {
+    val key = BindingCacheKey(originalType, accessor)
+    val map = bindingCache
+    return cacheLock.read { map.get(key) } ?: cacheLock.write {
+      map.get(key)?.let {
+        return it
+      }
+
+      val binding = createClassBinding(aClass, accessor, originalType) ?: KotlinAwareBeanBinding(aClass, accessor)
+      map.put(key, binding)
+      try {
+        binding.init(originalType, this)
+      }
+      catch (e: XmlSerializationException) {
+        map.remove(key)
+        throw e
+      }
+      binding
     }
-    catch (e: XmlSerializationException) {
-      map.remove(key)
-      throw e
-    }
-    binding
   }
 }
 
@@ -121,12 +160,6 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
     val instance = newInstance()
     deserializeInto(instance, element)
     return instance
-  }
-
-  override fun getBinding(accessor: MutableAccessor): Binding? {
-    val type = accessor.genericType
-    val aClass = typeToClass(type)
-    return if (isPrimitive(aClass)) null else getBinding(aClass, type, accessor)
   }
 
   private fun newInstance(): Any {
@@ -142,13 +175,22 @@ private class KotlinAwareBeanBinding(beanClass: Class<*>, accessor: MutableAcces
       return constructor.newInstance()
     }
     catch (e: RuntimeException) {
-      // if cannot create data class
-      val kClass = clazz.kotlin
-      (kClass.primaryConstructor ?: kClass.constructors.firstOrNull())?.let {
-        return it.callBy(emptyMap())
-      }
-
-      throw e
+      return createUsingKotlin(clazz) ?: throw e
     }
+    catch (e: NoSuchMethodException) {
+      return createUsingKotlin(clazz) ?: throw e
+    }
+  }
+
+  private fun createUsingKotlin(clazz: Class<*>): Any? {
+    // if cannot create data class
+    val kClass = clazz.kotlin
+    val kFunction = kClass.primaryConstructor ?: kClass.constructors.first()
+    try {
+      kFunction.isAccessible = true
+    }
+    catch (e: SecurityException) {
+    }
+    return kFunction.callBy(emptyMap())
   }
 }

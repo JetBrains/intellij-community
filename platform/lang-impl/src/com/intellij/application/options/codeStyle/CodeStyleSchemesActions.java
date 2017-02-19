@@ -42,7 +42,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
 
   private final static String SHARED_IMPORT_SOURCE = ApplicationBundle.message("import.scheme.shared");
 
-  protected CodeStyleSchemesActions(@NotNull AbstractSchemesPanel<CodeStyleScheme> schemesPanel) {
+  protected CodeStyleSchemesActions(@NotNull AbstractSchemesPanel<CodeStyleScheme, ?> schemesPanel) {
     super(schemesPanel);
   }
 
@@ -66,11 +66,6 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
   }
 
   @Override
-  protected void deleteScheme(@NotNull CodeStyleScheme scheme) {
-    getModel().removeScheme(scheme);
-  }
-
-  @Override
   protected void importScheme(@NotNull String importerName) {
     CodeStyleScheme currentScheme = getCurrentScheme();
     if (currentScheme != null) {
@@ -80,8 +75,9 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
 
   @Override
   protected void copyToIDE(@NotNull CodeStyleScheme scheme) {
+    final boolean isProjectScheme = getModel().isProjectScheme(scheme);
     String name =
-      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getModel().containsScheme(schemeName));
+      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getModel().containsScheme(schemeName, isProjectScheme));
     CodeStyleScheme newScheme = getModel().exportProjectScheme(name);
     getModel().setUsePerProjectSettings(false);
     getModel().selectScheme(newScheme, null);

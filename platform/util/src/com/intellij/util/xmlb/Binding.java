@@ -16,6 +16,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +39,13 @@ public abstract class Binding {
   }
 
   @Nullable
-  public abstract Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter);
+  public abstract Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter);
 
   public boolean isBoundTo(@NotNull Element element) {
     return false;
   }
 
-  public void init(@NotNull Type originalType) {
+  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
   }
 
   @Nullable
@@ -66,4 +67,18 @@ public abstract class Binding {
   }
 
   public abstract Object deserializeUnsafe(Object context, @NotNull Element element);
+
+  protected static void addContent(@NotNull final Element targetElement, final Object node) {
+    if (node instanceof Content) {
+      Content content = (Content)node;
+      targetElement.addContent(content);
+    }
+    else if (node instanceof List) {
+      //noinspection unchecked
+      targetElement.addContent((List)node);
+    }
+    else {
+      throw new IllegalArgumentException("Wrong node: " + node);
+    }
+  }
 }

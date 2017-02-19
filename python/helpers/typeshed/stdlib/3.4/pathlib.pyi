@@ -1,6 +1,6 @@
 # Stubs for pathlib (Python 3.4)
 
-from typing import Any, Generator, IO, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Generator, IO, Optional, Sequence, Tuple, Type, TypeVar, Union, List
 import os
 import sys
 

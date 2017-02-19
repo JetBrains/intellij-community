@@ -606,6 +606,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
     return result;
   }
 
+  @NotNull
+  public Set<RunnerAndConfigurationSettings> getConfigurations(RunContentDescriptor descriptor) {
+    Set<RunnerAndConfigurationSettings> result = new HashSet<>();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      if (descriptor == trinity.first) result.add(trinity.second);
+    }
+    return result;
+  }
+
   private static class ProcessExecutionListener extends ProcessAdapter {
     @NotNull private final Project myProject;
     @NotNull private final String myExecutorId;

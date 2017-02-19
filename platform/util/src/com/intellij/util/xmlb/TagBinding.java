@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -36,7 +35,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     Element serialized = new Element(myName);
     if (value == null) {
@@ -49,7 +48,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     else {
       Object node = myBinding.serialize(value, serialized, filter);
       if (node != null && node != serialized) {
-        JDOMUtil.addContent(serialized, node);
+        addContent(serialized, node);
       }
     }
     return serialized;

@@ -69,16 +69,16 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   private volatile boolean myIsBackgroundTrackingEnabled;
 
   public ConstructorInstancesTracker(@NotNull ReferenceType ref,
-                                     @NotNull XDebugSession debugSession) {
+                                     @NotNull XDebugSession debugSession,
+                                     @NotNull InstancesTracker instancesTracker) {
     myReference = ref;
     myProject = debugSession.getProject();
-    myIsBackgroundTrackingEnabled = InstancesTracker.getInstance(myProject)
-      .isBackgroundTrackingEnabled();
+    myIsBackgroundTrackingEnabled = instancesTracker.isBackgroundTrackingEnabled();
 
     final DebugProcessImpl debugProcess = (DebugProcessImpl)DebuggerManager.getInstance(myProject)
       .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
 
-    InstancesTracker.getInstance(myProject).addTrackerListener(new InstancesTrackerListener() {
+    instancesTracker.addTrackerListener(new InstancesTrackerListener() {
       @Override
       public void backgroundTrackingValueChanged(boolean newState) {
         if (myIsBackgroundTrackingEnabled != newState) {
@@ -243,8 +243,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
           if (myReference.equals(thisRef.referenceType()) && data != null) {
             thisRef.disableCollection();
             myTrackedObjects.add(thisRef);
-            final List<StackFrameItem> frame = StackFrameItem.createFrames(suspendContext.getThread(), suspendContext, false);
-            data.getTrackedStacks().addStack(thisRef, frame);
+            data.getTrackedStacks().addStack(thisRef, StackFrameItem.createFrames(suspendContext, false));
           }
         }
       }

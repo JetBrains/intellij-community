@@ -15,6 +15,7 @@
  */
 package com.intellij.configurationStore.xml
 
+import com.intellij.configurationStore.AState
 import com.intellij.configurationStore.deserialize
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.annotations.MapAnnotation
@@ -36,6 +37,16 @@ class KotlinXmlSerializerTest {
     <bean>
       <option name="PLACES_MAP" value="new" />
     </bean>""", data)
+  }
+
+  @Test fun floatProperty() {
+    val state = AState()
+    state.floatProperty = 3.4
+    doSerializerTest("""
+    <AState>
+      <option name="floatProperty" value="3.4" />
+    </AState>
+    """, state)
   }
 
   @Test fun nullInMap() {

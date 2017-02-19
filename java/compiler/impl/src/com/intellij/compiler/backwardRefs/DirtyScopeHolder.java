@@ -197,7 +197,8 @@ public class DirtyScopeHolder extends UserDataHolderBase {
       if (m != null) dirtyModules.add(m);
     }
     for (Document document : myPsiDocManager.getUncommittedDocuments()) {
-      final PsiFile psiFile = ObjectUtils.notNull(myPsiDocManager.getPsiFile(document));
+      final PsiFile psiFile = myPsiDocManager.getPsiFile(document);
+      if (psiFile == null) continue;
       final VirtualFile file = psiFile.getVirtualFile();
       if (file == null) continue;
       final Module m = getModuleForSourceContentFile(file);

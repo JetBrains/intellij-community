@@ -44,8 +44,8 @@ public class ConfigurationTypeDashboardGroupingRule implements DashboardGrouping
   @NotNull
   @Override
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(ExecutionBundle.message("runtime.dashboard.group.by.type.action.name"),
-                                      ExecutionBundle.message("runtime.dashboard.group.by.type.action.name"),
+    return new ActionPresentationData(ExecutionBundle.message("run.dashboard.group.by.type.action.name"),
+                                      ExecutionBundle.message("run.dashboard.group.by.type.action.name"),
                                       AllIcons.Actions.GroupByFile);
   }
 

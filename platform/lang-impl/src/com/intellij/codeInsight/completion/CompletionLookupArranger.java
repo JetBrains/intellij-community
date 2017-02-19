@@ -279,7 +279,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private static void ensureEverythingVisibleAdded(LookupImpl lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
     JList list = lookup.getList();
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
-    final int limit = Math.max(list.getLastVisibleIndex(), model.size()) + ourUISettings.MAX_LOOKUP_LIST_HEIGHT * 3;
+    final int limit = Math.max(list.getLastVisibleIndex(), model.size()) + ourUISettings.getMaxLookupListHeight() * 3;
     addSomeItems(model, byRelevance, lastAdded -> !testMode && model.size() >= limit);
   }
 

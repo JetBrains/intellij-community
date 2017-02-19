@@ -54,8 +54,8 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
     myBuildTarget = target;
     myModel = model;
     myBuildDataPaths = dataPaths;
-    myJarByPath = new HashMap<String, JarInfo>();
-    myDescriptors = new ArrayList<ArtifactRootDescriptor>();
+    myJarByPath = new HashMap<>();
+    myDescriptors = new ArrayList<>();
     myCopyingHandlerProviders = JpsServiceManager.getInstance().getExtensions(ArtifactRootCopyingHandlerProvider.class);
   }
 

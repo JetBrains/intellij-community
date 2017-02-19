@@ -16,13 +16,16 @@
 package com.intellij.debugger.memory.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 
 abstract class ShowInstancesAction extends ClassesActionBase {
   @Override
   public void update(AnActionEvent e) {
+    final Presentation presentation = e.getPresentation();
     boolean enabled = isEnabled(e);
+    presentation.setEnabled(enabled);
     if (enabled) {
-      e.getPresentation().setText(String.format("%s (%d)", getLabel(), getInstancesCount(e)));
+      presentation.setText(String.format("%s (%d)", getLabel(), getInstancesCount(e)));
     }
   }
 

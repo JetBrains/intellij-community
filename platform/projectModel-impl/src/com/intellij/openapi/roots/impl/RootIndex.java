@@ -86,6 +86,10 @@ public class RootIndex {
     };
   }
 
+  public void onLowMemory() {
+    myPackageDirectoryCache.onLowMemory();
+  }
+
   @NotNull
   private RootInfo buildRootInfo(@NotNull Project project) {
     final RootInfo info = new RootInfo();

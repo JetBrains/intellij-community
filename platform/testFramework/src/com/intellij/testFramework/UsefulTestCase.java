@@ -42,10 +42,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
-import com.intellij.util.Consumer;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -430,6 +427,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected boolean runInDispatchThread() {
     return true;
+  }
+
+  /**
+   * If you want a more shorter name than runInEdtAndWait.
+   */
+  protected void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
+    EdtTestUtil.runInEdtAndWait(runnable);
   }
 
   public static String toString(@NotNull Iterable<?> collection) {

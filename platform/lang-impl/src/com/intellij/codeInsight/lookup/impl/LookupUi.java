@@ -317,7 +317,7 @@ class LookupUi {
         public Dimension preferredLayoutSize(@Nullable Container parent) {
           int maxCellWidth = myLookup.myLookupTextWidth + myLookup.myCellRenderer.getTextIndent();
           int scrollBarWidth = myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width;
-          int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().MAX_LOOKUP_WIDTH2);
+          int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().getMaxLookupWidth());
 
           Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
 
@@ -337,12 +337,12 @@ class LookupUi {
           if (!myLookup.myResizePending) {
             Dimension preferredSize = preferredLayoutSize(null);
             if (preferredSize.width != size.width) {
-              UISettings.getInstance().MAX_LOOKUP_WIDTH2 = Math.max(500, size.width);
+              UISettings.getInstance().setMaxLookupWidth(Math.max(500, size.width));
             }
 
             int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
             if (listHeight != myList.getModel().getSize() && listHeight != myList.getVisibleRowCount() && preferredSize.height != size.height) {
-              UISettings.getInstance().MAX_LOOKUP_LIST_HEIGHT = Math.max(5, listHeight);
+              UISettings.getInstance().setMaxLookupListHeight(Math.max(5, listHeight));
             }
           }
 

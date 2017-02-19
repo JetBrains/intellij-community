@@ -106,6 +106,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return new DfaMemoryStateImpl(this);
   }
 
+  @NotNull
+  @Override
+  public DfaMemoryStateImpl createClosureState() {
+    DfaMemoryStateImpl copy = createCopy();
+    copy.flushFields();
+    Set<DfaVariableValue> vars = new HashSet<>(copy.getVariableStates().keySet());
+    for (DfaVariableValue value : vars) {
+      copy.flushDependencies(value);
+    }
+    copy.emptyStack();
+    return copy;
+  }
+
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if (!(obj instanceof DfaMemoryStateImpl)) return false;
@@ -617,7 +630,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void applyIsPresentCheck(boolean present, DfaValue qualifier) {
-    if (qualifier instanceof DfaVariableValue) {
+    if (qualifier instanceof DfaVariableValue && !isUnknownState(qualifier)) {
       setVariableState((DfaVariableValue)qualifier, getVariableState((DfaVariableValue)qualifier).withOptionalPresense(present));
     }
   }
@@ -1116,7 +1129,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         @Override
         public boolean execute(int id, int[] set) {
           DfaValue value = myFactory.getValue(id);
-          s.append(value + " -> " + Arrays.toString(set) + ", ");
+          s.append(value).append(" -> ").append(Arrays.toString(set)).append(", ");
           return true;
         }
       });

@@ -59,12 +59,7 @@ public final class DocumentUtil {
   }
 
   public static void writeInRunUndoTransparentAction(@NotNull final Runnable runnable) {
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(runnable);
-      }
-    });
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(runnable));
   }
 
   public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {

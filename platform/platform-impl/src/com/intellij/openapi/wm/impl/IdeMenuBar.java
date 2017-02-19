@@ -347,7 +347,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myNewVisibleActions = temp;
 
       removeAll();
-      final boolean enableMnemonics = !UISettings.getInstance().DISABLE_MNEMONICS;
+      final boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
       for (final AnAction action : myVisibleActions) {
         add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true));
       }
@@ -439,7 +439,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   private void updateMnemonicsVisibility() {
-    final boolean enabled = !UISettings.getInstance().DISABLE_MNEMONICS;
+    final boolean enabled = !UISettings.getInstance().getDisableMnemonics();
     for (int i = 0; i < getMenuCount(); i++) {
       ((ActionMenu)getMenu(i)).setMnemonicEnabled(enabled);
     }

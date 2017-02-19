@@ -366,7 +366,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
 
     if (hasFocus) {
       g.setClip(clip);
-      DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4));
+      DarculaUIUtil.paintFocusRing(g, new Rectangle(JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4)));
     }
     else {
       g.setColor(borderColor);

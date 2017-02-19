@@ -141,13 +141,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     LOG.assertTrue(myDebugProcess != null);
 
-    int lineNumber;
-    try {
-      lineNumber = location.lineNumber() - 1;
-    }
-    catch (InternalError e) {
-      lineNumber = -1;
-    }
+    int lineNumber = DebuggerUtilsEx.getLineNumber(location, true);
 
     String qName = location.declaringType().name();
 
@@ -168,14 +162,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       sourcePosition = calcLineMappedSourcePosition(psiFile, lineNumber);
     }
 
-    final Method method = location.method();
+    final Method method = DebuggerUtilsEx.getMethod(location);
 
     if (sourcePosition == null && (psiFile instanceof PsiCompiledElement || lineNumber < 0)) {
-      String methodSignature = method.signature();
-      String methodName = method.name();
-      if (methodSignature != null && methodName != null) {
+      if (method != null && method.name() != null && method.signature() != null) {
         PsiClass psiClass = findPsiClassByName(qName, null);
-        PsiMethod compiledMethod = findMethod(psiClass != null ? psiClass : psiFile, qName, methodName, methodSignature);
+        PsiMethod compiledMethod = findMethod(psiClass != null ? psiClass : psiFile, qName, method.name(), method.signature());
         if (compiledMethod != null) {
           sourcePosition = SourcePosition.createFromElement(compiledMethod);
           if (lineNumber >= 0) {
@@ -193,11 +185,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     int lambdaOrdinal = -1;
-    if (DebuggerUtilsEx.isLambdaName(method.name())) {
+    if (DebuggerUtilsEx.isLambda(method)) {
       Set<Method> lambdas =
         ContainerUtil.map2SetNotNull(locationsOfLine(location.declaringType(), sourcePosition), location1 -> {
           Method method1 = location1.method();
-          if (DebuggerUtilsEx.isLambdaName(method1.name())) {
+          if (DebuggerUtilsEx.isLambda(method1)) {
             return method1;
           }
           return null;
@@ -557,71 +549,67 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
     if (fromClass.isPrepared()) {
-      try {
-        if (currentDepth < requiredDepth) {
-          final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);
-          for (ReferenceType nested : nestedTypes) {
-            final ReferenceType found = findNested(nested, currentDepth + 1, classToFind, requiredDepth, position);
-            if (found != null) {
-              return found;
-            }
+      if (currentDepth < requiredDepth) {
+        final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);
+        for (ReferenceType nested : nestedTypes) {
+          final ReferenceType found = findNested(nested, currentDepth + 1, classToFind, requiredDepth, position);
+          if (found != null) {
+            return found;
           }
-          return null;
         }
-
-        int rangeBegin = Integer.MAX_VALUE;
-        int rangeEnd = Integer.MIN_VALUE;
-        for (Location location : fromClass.allLineLocations()) {
-          final int lnumber = location.lineNumber();
-          if (lnumber <= 1) {
-            // should be a native method, skipping
-            // sometimes compiler generates location where line number is exactly 1 (e.g. GWT)
-            // such locations are hardly correspond to real lines in code, so skipping them too
-            continue;
-          }
-          final Method method = location.method();
-          if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge()) {
-            // do not take into account synthetic stuff
-            continue;
-          }
-          int locationLine = lnumber - 1;
-          PsiFile psiFile = position.getFile().getOriginalFile();
-          if (psiFile instanceof PsiCompiledFile) {
-            locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine);
-            if (locationLine < 0) continue;
-          }
-          rangeBegin = Math.min(rangeBegin,  locationLine);
-          rangeEnd = Math.max(rangeEnd,  locationLine);
-        }
-
-        final int positionLine = position.getLine();
-        if (positionLine >= rangeBegin && positionLine <= rangeEnd) {
-          // Now we use the last line to find the class, previously it was:
-          // choose the second line to make sure that only this class' code exists on the line chosen
-          // Otherwise the line (depending on the offset in it) can contain code that belongs to different classes
-          // and JVMNameUtil.getClassAt(candidatePosition) will return the wrong class.
-          // Example of such line:
-          // list.add(new Runnable(){......
-          // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
-          if (!classToFind.isValid()) {
-            return null;
-          }
-          Set<PsiClass> lineClasses = getLineClasses(position.getFile(), rangeEnd);
-          if (lineClasses.size() > 1) {
-            // if there's more than one class on the line - try to match by name
-            for (PsiClass aClass : lineClasses) {
-              if (classToFind.equals(aClass)) {
-                return fromClass;
-              }
-            }
-          }
-          else if (!lineClasses.isEmpty()){
-            return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
-          }
-          return null;
-        }
+        return null;
       }
-      catch (AbsentInformationException ignored) {
+
+      int rangeBegin = Integer.MAX_VALUE;
+      int rangeEnd = Integer.MIN_VALUE;
+      for (Location location : DebuggerUtilsEx.allLineLocations(fromClass)) {
+        final int lnumber = DebuggerUtilsEx.getLineNumber(location, false);
+        if (lnumber <= 1) {
+          // should be a native method, skipping
+          // sometimes compiler generates location where line number is exactly 1 (e.g. GWT)
+          // such locations are hardly correspond to real lines in code, so skipping them too
+          continue;
+        }
+        final Method method = DebuggerUtilsEx.getMethod(location);
+        if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge()) {
+          // do not take into account synthetic stuff
+          continue;
+        }
+        int locationLine = lnumber - 1;
+        PsiFile psiFile = position.getFile().getOriginalFile();
+        if (psiFile instanceof PsiCompiledFile) {
+          locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine);
+          if (locationLine < 0) continue;
+        }
+        rangeBegin = Math.min(rangeBegin,  locationLine);
+        rangeEnd = Math.max(rangeEnd,  locationLine);
+      }
+
+      final int positionLine = position.getLine();
+      if (positionLine >= rangeBegin && positionLine <= rangeEnd) {
+        // Now we use the last line to find the class, previously it was:
+        // choose the second line to make sure that only this class' code exists on the line chosen
+        // Otherwise the line (depending on the offset in it) can contain code that belongs to different classes
+        // and JVMNameUtil.getClassAt(candidatePosition) will return the wrong class.
+        // Example of such line:
+        // list.add(new Runnable(){......
+        // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
+        if (!classToFind.isValid()) {
+          return null;
+        }
+        Set<PsiClass> lineClasses = getLineClasses(position.getFile(), rangeEnd);
+        if (lineClasses.size() > 1) {
+          // if there's more than one class on the line - try to match by name
+          for (PsiClass aClass : lineClasses) {
+            if (classToFind.equals(aClass)) {
+              return fromClass;
+            }
+          }
+        }
+        else if (!lineClasses.isEmpty()){
+          return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
+        }
+        return null;
       }
     }
     return null;

@@ -36,17 +36,15 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
   private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {
     public void save(@NotNull final DataOutput out, TIntHashSet value) throws IOException {
       final Ref<IOException> exRef = Ref.create(null);
-      value.forEach(new TIntProcedure() {
-        public boolean execute(int value) {
-          try {
-            out.writeInt(value);
-          }
-          catch (IOException e) {
-            exRef.set(e);
-            return false;
-          }
-          return true;
+      value.forEach(value1 -> {
+        try {
+          out.writeInt(value1);
         }
+        catch (IOException e) {
+          exRef.set(e);
+          return false;
+        }
+        return true;
       });
       final IOException error = exRef.get();
       if (error != null) {
@@ -112,7 +110,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
     if (size == 0) {
       return outputPaths;
     }
-    final Collection<String> result = new ArrayList<String>(size);
+    final Collection<String> result = new ArrayList<>(size);
     for (String outputPath : outputPaths) {
       final int key = FileUtil.pathHashCode(outputPath);
       synchronized (myDataLock) {

@@ -72,7 +72,7 @@ public class DefUseUtil {
 
     public InstructionState(@NotNull InstructionKey instructionKey) {
       myInstructionKey = instructionKey;
-      myBackwardTraces = new ArrayList<InstructionKey>(2);
+      myBackwardTraces = new ArrayList<>(2);
       myUsed = null;
     }
 
@@ -99,7 +99,7 @@ public class DefUseUtil {
     }
 
     private void touch() {
-      if (myUsed == null) myUsed = new THashSet<PsiVariable>();
+      if (myUsed == null) myUsed = new THashSet<>();
     }
 
     public void addUsedFrom(InstructionState state) {
@@ -149,8 +149,8 @@ public class DefUseUtil {
       LOG.debug(flow.toString());
     }
 
-    Set<PsiVariable> assignedVariables = new THashSet<PsiVariable>();
-    Set<PsiVariable> readVariables = new THashSet<PsiVariable>();
+    Set<PsiVariable> assignedVariables = new THashSet<>();
+    Set<PsiVariable> readVariables = new THashSet<>();
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
       ProgressManager.checkCanceled();
@@ -182,7 +182,7 @@ public class DefUseUtil {
 
     BitSet usefulWrites = new BitSet(instructions.size());
 
-    Queue<InstructionState> queue = new Queue<InstructionState>(8);
+    Queue<InstructionState> queue = new Queue<>(8);
 
     for (int i = states.length - 1; i >= 0; i--) {
       final InstructionState outerState = states[i];
@@ -234,7 +234,7 @@ public class DefUseUtil {
       }
     }
 
-    List<Info> unusedDefs = new ArrayList<Info>();
+    List<Info> unusedDefs = new ArrayList<>();
 
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
@@ -403,7 +403,7 @@ public class DefUseUtil {
           elem += 1;
         }
 
-        final Set<PsiElement> res = new THashSet<PsiElement>();
+        final Set<PsiElement> res = new THashSet<>();
         class Inner {
 
           void traverse (int index) {
@@ -478,8 +478,8 @@ public class DefUseUtil {
 
     WalkThroughStack(int size) {
       if (size < 2) size = 2;
-      myFrom = new Stack<InstructionKey>(size);
-      myNext = new Stack<InstructionKey>(size);
+      myFrom = new Stack<>(size);
+      myNext = new Stack<>(size);
     }
 
     void push(InstructionKey fromKey, InstructionKey nextKey) {
@@ -517,7 +517,7 @@ public class DefUseUtil {
     private final List<Instruction> myInstructions;
 
     private InstructionStateWalker(List<Instruction> instructions) {
-      myStates = new THashMap<InstructionKey, InstructionState>(instructions.size());
+      myStates = new THashMap<>(instructions.size());
       myWalkThroughStack = new WalkThroughStack(instructions.size() / 2);
       myInstructions = instructions;
     }

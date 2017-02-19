@@ -21,7 +21,6 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.ide.file.BatchFileChangeListener;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -52,7 +51,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -196,14 +194,11 @@ public class DvcsUtil {
     return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp()) + " ";
   }
 
-  @NotNull
-  public static AccessToken workingTreeChangeStarted(@NotNull Project project) {
+  public static void workingTreeChangeStarted(@NotNull Project project) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
-    return HeavyProcessLatch.INSTANCE.processStarted("Changing DVCS working tree");
   }
 
-  public static void workingTreeChangeFinished(@NotNull Project project, @NotNull AccessToken token) {
-    token.finish();
+  public static void workingTreeChangeFinished(@NotNull Project project) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
   }
 

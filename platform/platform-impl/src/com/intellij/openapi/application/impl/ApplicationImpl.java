@@ -96,7 +96,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
 
-  private final ReadMostlyRWLock myLock;
+  final ReadMostlyRWLock myLock;
 
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
@@ -110,7 +110,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final String myName;
 
   private final Stack<Class> myWriteActionsStack = new Stack<>(); // accessed from EDT only, no need to sync
-  private int myWriteStackBase = 0;
+  private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
+  private int myWriteStackBase;
   private volatile Thread myWriteActionThread;
 
   private int myInEditorPaintCounter; // EDT only
@@ -158,12 +159,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     ApplicationManager.setApplication(this, myLastDisposable); // reset back to null only when all components already disposed
 
     getPicoContainer().registerComponentInstance(Application.class, this);
+    getPicoContainer().registerComponentInstance(TransactionGuard.class.getName(), myTransactionGuard);
 
     BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
 
-    Disposer.setDebugMode((isInternal || isUnitTestMode || Disposer.isDebugDisposerOn()));
+    Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
 
     myStartTime = System.currentTimeMillis();
     mySplash = splash;
@@ -401,11 +403,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition expired) {
-    TransactionGuard guard = TransactionGuard.getInstance();
-    if (guard != null) {
-      runnable = ((TransactionGuardImpl)guard).wrapLaterInvocation(runnable, state);
-    }
-    myInvokator.invokeLater(runnable, state, expired);
+    myInvokator.invokeLater(myTransactionGuard.wrapLaterInvocation(runnable, state), state, expired);
   }
 
   @Override
@@ -487,7 +485,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @Override
   protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
     float start = PluginManagerCore.PLUGINS_PROGRESS_PART + PluginManagerCore.LOADERS_PROGRESS_PART;
-    indicator.setFraction(start + (getPercentageOfComponentsLoaded() * (1 - start)));
+    indicator.setFraction(start + getPercentageOfComponentsLoaded() * (1 - start));
   }
 
   private static void createLocatorFile() {
@@ -679,11 +677,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
-    TransactionGuard guard = TransactionGuard.getInstance();
-    if (guard != null) {
-      runnable = ((TransactionGuardImpl)guard).wrapLaterInvocation(runnable, modalityState);
-    }
-    LaterInvocator.invokeAndWait(runnable, modalityState);
+    LaterInvocator.invokeAndWait(myTransactionGuard.wrapLaterInvocation(runnable, modalityState), modalityState);
   }
 
   @Override
@@ -1187,11 +1181,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       if (!myLock.isWriteLocked()) {
         assertNoPsiLock();
         if (!myLock.tryWriteLock()) {
-          Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting > 0 ?
-                                      JobScheduler.getScheduler()
-                                        .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
-                                                                ourDumpThreadsOnLongWriteActionWaiting,
-                                                                ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS) : null;
+          Future<?> reportSlowWrite = ourDumpThreadsOnLongWriteActionWaiting <= 0 ? null :
+              JobScheduler.getScheduler().scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true),
+                                                                 ourDumpThreadsOnLongWriteActionWaiting,
+                                                                 ourDumpThreadsOnLongWriteActionWaiting, TimeUnit.MILLISECONDS);
           myLock.writeLock();
           if (reportSlowWrite != null) {
             reportSlowWrite.cancel(false);
@@ -1331,7 +1324,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       return;
     }
 
-    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+    myTransactionGuard.submitTransactionAndWait(() -> {
       int prevBase = myWriteStackBase;
       myWriteStackBase = myWriteActionsStack.size();
       try (AccessToken ignored = myLock.writeSuspend()) {

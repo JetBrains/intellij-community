@@ -38,31 +38,34 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
     String mainClass = javaParameters.getMainClass();
 
     if (ourMayUseLauncher && mainClass != null) {
-      try {
-        ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
+      String rtJarPath = JavaSdkUtil.getIdeaRtJarPath();
+      boolean runtimeJarFile = new File(rtJarPath).isFile();
 
-        String rtJarPath = JavaSdkUtil.getIdeaRtJarPath();
-        String port = String.valueOf(proxy.getPortNumber());
-        String binPath = PathManager.getBinPath();
+      if (runtimeJarFile || javaParameters.getModuleName() == null) {
+        try {
+          ProcessProxyImpl proxy = new ProcessProxyImpl(StringUtil.getShortName(mainClass));
+          String port = String.valueOf(proxy.getPortNumber());
+          String binPath = PathManager.getBinPath();
 
-        if (new File(rtJarPath).isFile() && JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_5)) {
-          javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
+          if (runtimeJarFile && JavaSdkUtil.isJdkAtLeast(javaParameters.getJdk(), JavaSdkVersion.JDK_1_5)) {
+            javaParameters.getVMParametersList().add("-javaagent:" + rtJarPath + '=' + port + ':' + binPath);
+          }
+          else {
+            JavaSdkUtil.addRtJar(javaParameters.getClassPath());
+
+            ParametersList vmParametersList = javaParameters.getVMParametersList();
+            vmParametersList.defineProperty(AppMainV2.LAUNCHER_PORT_NUMBER, port);
+            vmParametersList.defineProperty(AppMainV2.LAUNCHER_BIN_PATH, binPath);
+
+            javaParameters.getProgramParametersList().prepend(mainClass);
+            javaParameters.setMainClass(AppMainV2.class.getName());
+          }
+
+          return proxy;
         }
-        else {
-          JavaSdkUtil.addRtJar(javaParameters.getClassPath());
-
-          ParametersList vmParametersList = javaParameters.getVMParametersList();
-          vmParametersList.defineProperty(AppMainV2.LAUNCHER_PORT_NUMBER, port);
-          vmParametersList.defineProperty(AppMainV2.LAUNCHER_BIN_PATH, binPath);
-
-          javaParameters.getProgramParametersList().prepend(mainClass);
-          javaParameters.setMainClass(AppMainV2.class.getName());
+        catch (Exception e) {
+          Logger.getInstance(ProcessProxy.class).warn(e);
         }
-
-        return proxy;
-      }
-      catch (Exception e) {
-        Logger.getInstance(ProcessProxy.class).warn(e);
       }
     }
 

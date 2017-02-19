@@ -31,6 +31,7 @@ import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -266,8 +267,10 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
       final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;
       if (module.getModule() != null) {
-        final int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false);
-        JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+        DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
+          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false);
+          JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+        });
       }
       else {
         JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
@@ -298,7 +301,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
         if (mainClass != null) {
           PsiJavaModule mainModule = JavaModuleGraphUtil.findDescriptorByElement(mainClass);
           if (mainModule != null) {
-            params.setModuleName(mainModule.getModuleName());
+            params.setModuleName(mainModule.getName());
             PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
             modulePath.addAll(classPath.getPathList());
             classPath.clear();

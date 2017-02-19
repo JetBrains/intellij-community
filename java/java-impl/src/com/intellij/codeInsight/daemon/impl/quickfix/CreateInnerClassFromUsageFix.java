@@ -109,7 +109,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     final Project project = classes[0].getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
+    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);

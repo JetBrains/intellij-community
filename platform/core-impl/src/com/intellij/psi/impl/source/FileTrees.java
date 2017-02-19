@@ -70,13 +70,13 @@ final class FileTrees {
   FileTrees withExclusiveStub(@NotNull StubTree stub) {
     assert derefTreeElement() == null;
     assert !useStrongRefs;
-    return new FileTrees(new SoftReference<StubTree>(stub), null, false, false);
+    return new FileTrees(new SoftReference<>(stub), null, false, false);
   }
 
   FileTrees withGreenStub(@NotNull StubTree stub) {
     assert derefTreeElement() != null;
     assert astLoaded;
-    return new FileTrees(new SoftReference<StubTree>(stub), myTreeElementPointer, true, useStrongRefs);
+    return new FileTrees(new SoftReference<>(stub), myTreeElementPointer, true, useStrongRefs);
   }
 
   static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file) {

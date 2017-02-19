@@ -146,18 +146,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       throw new IllegalStateException();
     }
 
-    final RunResult<T> result = new RunResult<T>(this);
+    final RunResult<T> result = new RunResult<>(this);
     if (dispatchThread) {
       performWriteCommandAction(result);
     }
     else {
       try {
-        TransactionGuard.getInstance().submitTransactionAndWait(new Runnable() {
-          @Override
-          public void run() {
-            performWriteCommandAction(result);
-          }
-        });
+        TransactionGuard.getInstance().submitTransactionAndWait(() -> performWriteCommandAction(result));
       }
       catch (ProcessCanceledException ignored) { }
     }
@@ -170,18 +165,12 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     // this is needed to prevent memory leak, since the command is put into undo queue
     final RunResult[] results = {result};
 
-    doExecuteCommand(new Runnable() {
-      @Override
-      public void run() {
-        //noinspection deprecation
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            results[0].run();
-            results[0] = null;
-          }
-        });
-      }
+    doExecuteCommand(() -> {
+      //noinspection deprecation
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        results[0].run();
+        results[0] = null;
+      });
     });
   }
 
@@ -203,15 +192,12 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   public void performCommand() throws Throwable {
     //this is needed to prevent memory leak, since command
     // is put into undo queue
-    final RunResult[] results = {new RunResult<T>(this)};
-    final Ref<Throwable> exception = new Ref<Throwable>();
+    final RunResult[] results = {new RunResult<>(this)};
+    final Ref<Throwable> exception = new Ref<>();
 
-    doExecuteCommand(new Runnable() {
-      @Override
-      public void run() {
-        exception.set(results[0].run().getThrowable());
-        results[0] = null;
-      }
+    doExecuteCommand(() -> {
+      exception.set(results[0].run().getThrowable());
+      results[0] = null;
     });
 
     Throwable throwable = exception.get();
@@ -219,12 +205,9 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   private void doExecuteCommand(final Runnable runnable) {
-    Runnable wrappedRunnable = new Runnable() {
-      @Override
-      public void run() {
-        if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(getProject());
-        runnable.run();
-      }
+    Runnable wrappedRunnable = () -> {
+      if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(getProject());
+      runnable.run();
     };
     CommandProcessor.getInstance().executeCommand(getProject(), wrappedRunnable, getCommandName(), getGroupID(),
                                                   getUndoConfirmationPolicy(), shouldRecordActionForActiveDocument());

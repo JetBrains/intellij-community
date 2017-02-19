@@ -37,7 +37,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NonNls;
@@ -79,14 +78,15 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private volatile List<ReferenceType> myItems = Collections.unmodifiableList(new ArrayList<>());
 
-  ClassesTable(@NotNull XDebugSession session, boolean onlyWithDiff, boolean onlyWithInstances,
-               boolean onlyTracked, @NotNull ClassesFilteredView parent) {
+  public ClassesTable(@NotNull InstancesTracker tracker, @NotNull ClassesFilteredView parent, boolean onlyWithDiff,
+                      boolean onlyWithInstances,
+                      boolean onlyTracked) {
     setModel(myModel);
 
     myOnlyWithDiff = onlyWithDiff;
     myOnlyWithInstances = onlyWithInstances;
     myOnlyTracked = onlyTracked;
-    myInstancesTracker = InstancesTracker.getInstance(session.getProject());
+    myInstancesTracker = tracker;
     myParent = parent;
 
     TableColumn classesColumn = getColumnModel().getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
@@ -277,6 +277,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public void clean() {
     if (!myItems.isEmpty()) {
       ApplicationManager.getApplication().invokeLater(() -> {
+        clearSelection();
         myItems = Collections.emptyList();
         myCounts.clear();
         getRowSorter().allRowsChanged();

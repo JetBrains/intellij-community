@@ -43,8 +43,8 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  protected JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
-  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
+  protected JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter(this);
+  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
 
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
@@ -103,7 +103,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean useSmallLabels() {
-    return UISettings.getInstance().USE_SMALL_LABELS_ON_TABS;
+    return UISettings.getInstance().getUseSmallLabelsOnTabs();
   }
 
   @Override
@@ -113,10 +113,8 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean hasUnderline() {
-    return isSingleRow() && !Registry.is("ide.new.editor.tabs.selection");
+    return isSingleRow() && !hasUnderlineSelection();
   }
-
-
 
   @Override
   protected void doPaintInactive(Graphics2D g2d,
@@ -161,7 +159,11 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public int getActiveTabUnderlineHeight() {
-    return hasUnderline() ? super.getActiveTabUnderlineHeight() : Registry.is("ide.new.editor.tabs.selection") ? 0 : 1;
+    return hasUnderline() ? super.getActiveTabUnderlineHeight() : hasUnderlineSelection() ? 0 : 1;
+  }
+
+  public boolean hasUnderlineSelection() {
+    return false;
   }
 
   protected JBEditorTabsPainter getPainter() {
@@ -246,9 +248,8 @@ public class JBEditorTabs extends JBTabsImpl {
     Insets insets = getTabsBorder().getEffectiveBorder();
 
     Color tabColor = label.getInfo().getTabColor();
-    final boolean isHorizontalTabs = isHorizontalTabs();
 
-    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor, isHorizontalTabs, getTabsPosition());
+    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor);
   }
 
   @Override

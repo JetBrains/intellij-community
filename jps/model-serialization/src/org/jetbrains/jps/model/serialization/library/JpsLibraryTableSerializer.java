@@ -67,19 +67,14 @@ public class JpsLibraryTableSerializer {
   }
 
   public static void saveLibraries(JpsLibraryCollection libraryCollection, Element libraryTableElement) {
-    List<JpsLibrary> libraries = new ArrayList<JpsLibrary>();
+    List<JpsLibrary> libraries = new ArrayList<>();
     for (JpsLibrary library : libraryCollection.getLibraries()) {
       if (!(library.getType() instanceof JpsSdkType<?>)) {
         libraries.add(library);
       }
     }
 
-    Collections.sort(libraries, new Comparator<JpsLibrary>() {
-      @Override
-      public int compare(JpsLibrary o1, JpsLibrary o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    libraries.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
     for (JpsLibrary library : libraries) {
       Element libraryTag = new Element(LIBRARY_TAG);
@@ -97,8 +92,8 @@ public class JpsLibraryTableSerializer {
     final JpsLibraryPropertiesSerializer<?> loader = getLibraryPropertiesSerializer(typeId);
     JpsLibrary library = createLibrary(name, loader, libraryElement.getChild(PROPERTIES_TAG));
 
-    MultiMap<JpsOrderRootType, String> jarDirectories = new MultiMap<JpsOrderRootType, String>();
-    MultiMap<JpsOrderRootType, String> recursiveJarDirectories = new MultiMap<JpsOrderRootType, String>();
+    MultiMap<JpsOrderRootType, String> jarDirectories = new MultiMap<>();
+    MultiMap<JpsOrderRootType, String> recursiveJarDirectories = new MultiMap<>();
     for (Element jarDirectory : JDOMUtil.getChildren(libraryElement, JAR_DIRECTORY_TAG)) {
       String url = jarDirectory.getAttributeValue(URL_ATTRIBUTE);
       String rootTypeId = jarDirectory.getAttributeValue(TYPE_ATTRIBUTE);
@@ -135,7 +130,7 @@ public class JpsLibraryTableSerializer {
       libraryElement.setAttribute(NAME_ATTRIBUTE, libraryName);
     }
     saveProperties((JpsTypedLibrary<?>)library, libraryElement);
-    List<Element> jarDirectoryElements = new ArrayList<Element>();
+    List<Element> jarDirectoryElements = new ArrayList<>();
     for (JpsLibraryRootTypeSerializer serializer : getSortedSerializers()) {
       List<JpsLibraryRoot> roots = library.getRoots(serializer.getType());
       if (roots.isEmpty() && !serializer.isWriteIfEmpty()) continue;
@@ -193,7 +188,7 @@ public class JpsLibraryTableSerializer {
   }
 
   private static Collection<JpsLibraryRootTypeSerializer> getSortedSerializers() {
-    List<JpsLibraryRootTypeSerializer> serializers = new ArrayList<JpsLibraryRootTypeSerializer>();
+    List<JpsLibraryRootTypeSerializer> serializers = new ArrayList<>();
     Collections.addAll(serializers, PREDEFINED_ROOT_TYPES_SERIALIZERS);
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       serializers.addAll(extension.getLibraryRootTypeSerializers());

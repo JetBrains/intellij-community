@@ -134,13 +134,8 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
 
   @Override
   public PsiMember getPotentiallyApplicableMember() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiMember>() {
-      @Nullable
-      @Override
-      public Result<PsiMember> compute() {
-        return Result.create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, PsiMethodReferenceExpressionImpl.this);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result
+      .create(getPotentiallyApplicableMemberInternal(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, PsiMethodReferenceExpressionImpl.this));
   }
 
   private PsiMember getPotentiallyApplicableMemberInternal() {
@@ -162,7 +157,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     PsiMethod[] methods = null;
     if (element instanceof PsiIdentifier) {
       final String identifierName = element.getText();
-      final List<PsiMethod> result = new ArrayList<PsiMethod>();
+      final List<PsiMethod> result = new ArrayList<>();
       for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
         if (identifierName.equals(signature.getName())) {
           result.add(signature.getMethod());

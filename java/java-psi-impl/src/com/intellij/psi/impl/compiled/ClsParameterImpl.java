@@ -66,17 +66,11 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
 
   @Override
   public String getName() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<String>() {
-      @Nullable
-      @Override
-      public Result<String> compute() {
-        return Result.create(calcName(), 
-                             getContainingFile(),
-                             getContainingFile().getNavigationElement(),
-                             FileIndexFacade.getInstance(getProject()).getRootModificationTracker(),
-                             DumbService.getInstance(getProject()).getModificationTracker());
-      }
-    });
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(calcName(),
+                                                                                            getContainingFile(),
+                                                                                            getContainingFile().getNavigationElement(),
+                                                                                            FileIndexFacade.getInstance(getProject()).getRootModificationTracker(),
+                                                                                            DumbService.getInstance(getProject()).getModificationTracker()));
   }
 
   @Nullable 

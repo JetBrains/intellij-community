@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.SystemProperties;
@@ -27,6 +28,9 @@ import java.awt.*;
  * IDE-agnostic component settings.
  */
 public class ComponentSettings {
+  private static final boolean SUPPORTED_JAVA = SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("1.9");
+  private static final RegistryValue SUPPORTED = Registry.get("ide.scroll.precise");
+
   private static final RegistryValue HIGH_PRECISION_SCROLLING = Registry.get("idea.true.smooth.scrolling.high.precision");
 
   private static final RegistryValue PIXEL_PERFECT_SCROLLING = Registry.get("idea.true.smooth.scrolling.pixel.perfect");
@@ -37,7 +41,11 @@ public class ComponentSettings {
   private static final RegistryValue PRECISION_TOUCHPAD_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad");
   private static final RegistryValue OTHER_SOURCES_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.other");
 
-  private static final RegistryValue DYNAMIC_SCROLLBARS = Registry.get("idea.true.smooth.scrolling.dynamic.scrollbars");
+  private static final RegistryValue SCROLLBAR_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.scrollbar.delay");
+  private static final RegistryValue MOUSE_WHEEL_MIN_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel.delay.min");
+  private static final RegistryValue MOUSE_WHEEL_MAX_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel.delay.max");
+  private static final RegistryValue PRECISION_TOUCHPAD_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad.delay");
+  private static final RegistryValue OTHER_SOURCES_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.other.delay");
 
   private boolean mySmoothScrollingEnabled = true;
   private boolean myRemoteDesktopConnected;
@@ -51,13 +59,18 @@ public class ComponentSettings {
 
   // Returns whether "true smooth scrolling" is applicable to the particular component
   public boolean isTrueSmoothScrollingEligibleFor(Component component) {
-    return SystemProperties.isTrueSmoothScrollingEnabled() &&
+    return isSmoothScrollingSupported() &&
            !ApplicationManager.getApplication().isUnitTestMode() &&
            mySmoothScrollingEnabled &&
            !myRemoteDesktopConnected &&
            !myPowerSaveModeEnabled &&
            component != null &&
            component.isShowing();
+  }
+
+  // Returns whether smooth scrolling supported
+  public boolean isSmoothScrollingSupported() {
+    return SUPPORTED.asBoolean() || (SUPPORTED_JAVA && SystemInfo.isMac);
   }
 
   // Returns whether high-precision scrolling events are enabled
@@ -72,6 +85,9 @@ public class ComponentSettings {
 
   // Returns whether scrolling interpolation is enabled for particular input source
   public boolean isInterpolationEnabledFor(InputSource source) {
+    if (!SystemProperties.isTrueSmoothScrollingEnabled()) {
+      return false;
+    }
     if (!SCROLLING_INTERPOLATION.asBoolean()) {
       return false;
     }
@@ -88,9 +104,19 @@ public class ComponentSettings {
     }
   }
 
-  // Returns whether dymaics scrollbars are enabled (currently applies only to editor's horizontal scrollbar)
-  public boolean areDynamicScrollbarsEnabled() {
-    return DYNAMIC_SCROLLBARS.asBoolean();
+  public int getInterpolationDelay(InputSource source, double rotation) {
+    switch (source) {
+      case SCROLLBAR:
+        return SCROLLBAR_DELAY.asInteger();
+      case MOUSE_WHEEL:
+        int min = MOUSE_WHEEL_MIN_DELAY.asInteger();
+        int max = MOUSE_WHEEL_MAX_DELAY.asInteger();
+        return Math.max(min, Math.min(max, (int)Math.round(max * Math.abs(rotation))));
+      case PRECISION_TOUCHPAD:
+        return PRECISION_TOUCHPAD_DELAY.asInteger();
+      default:
+        return OTHER_SOURCES_DELAY.asInteger();
+    }
   }
 
   /* A heuristics that disables scrolling interpolation in diff / merge windows.

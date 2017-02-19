@@ -81,6 +81,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         return true;
       }
     };
+    myGraphTable.setCompactReferencesView(true);
+    myGraphTable.setShowTagNames(false);
+
     myDetailsPanel = new DetailsPanel(logData, myUi.getColorManager(), this);
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 

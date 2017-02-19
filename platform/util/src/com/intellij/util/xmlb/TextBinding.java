@@ -31,7 +31,7 @@ class TextBinding extends Binding {
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     return value == null ? null : new Text(XmlSerializerImpl.convertToString(value));
   }

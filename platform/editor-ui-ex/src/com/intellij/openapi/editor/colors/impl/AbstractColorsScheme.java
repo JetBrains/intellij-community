@@ -219,9 +219,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   @Override
   public Font getFont(EditorFontType key) {
-    if (UISettings.getInstance().getPresentationMode()) {
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.getPresentationMode()) {
       final Font font = myFonts.get(key);
-      return new Font(font.getName(), font.getStyle(), UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+      return new Font(font.getName(), font.getStyle(), uiSettings.getPresentationModeFontSize());
     }
     return myFonts.get(key);
   }
@@ -307,7 +308,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   @Override
   public void readExternal(@NotNull Element parentNode) {
     UISettings settings = UISettings.getInstanceOrNull();
-    ColorBlindness blindness = settings == null ? null : settings.COLOR_BLINDNESS;
+    ColorBlindness blindness = settings == null ? null : settings.getColorBlindness();
     myValueReader.setAttribute(blindness == null ? null : blindness.name());
     if (SCHEME_ELEMENT.equals(parentNode.getName())) {
       readScheme(parentNode);
@@ -560,8 +561,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
 
     /**
-     * FONT_SCALE is used to correctly identify the font size in both the JDK-managed HiDPI mode and
-     * the IDE-managed HiDPI mode: {@link UIUtil#isJDKManagedHiDPI()}. Also, it helps to distinguish
+     * FONT_SCALE is used to correctly identify the font size in both the JRE-managed HiDPI mode and
+     * the IDE-managed HiDPI mode: {@link UIUtil#isJreHiDPIEnabled()}. Also, it helps to distinguish
      * the "hidpi-aware" scheme version from the previous one. Namely, the absence of the FONT_SCALE
      * attribute in the scheme indicates the previous "hidpi-unaware" scheme and the restored font size
      * is reset to default. It's assumed this (transition case) happens only once, after which the IDE

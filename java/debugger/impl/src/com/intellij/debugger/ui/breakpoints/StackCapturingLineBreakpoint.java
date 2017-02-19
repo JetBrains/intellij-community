@@ -15,33 +15,31 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -63,10 +61,11 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private final CapturePoint myCapturePoint;
   private final String mySignature;
 
-  private final NullableLazyValue<ExpressionEvaluator> myEvaluator;
+  private final MyEvaluator myCaptureEvaluator;
+  private final MyEvaluator myInsertEvaluator;
 
   public static final Key<List<StackCapturingLineBreakpoint>> CAPTURE_BREAKPOINTS = Key.create("CAPTURE_BREAKPOINTS");
-  public static final Key<Map<ObjectReference, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
+  private static final Key<Map<Object, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
   public static final int MAX_STACK_LENGTH = 500;
 
@@ -81,16 +80,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     myProperties.myClassPattern = myCapturePoint.myClassName;
     myProperties.myMethodName = myCapturePoint.myMethodName;
 
-    myEvaluator = NullableLazyValue.createValue(() -> ReadAction.compute(() -> {
-        try {
-          return EvaluatorBuilderImpl.build(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myCapturePoint.myInsertKeyExpression),
-                                            null, null, project);
-        }
-        catch (EvaluateException e) {
-          LOG.warn(e);
-        }
-        return null;
-      }));
+    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression);
+    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression);
   }
 
   @NotNull
@@ -112,23 +103,24 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
         if (frameProxy != null) {
           DebugProcessImpl process = suspendContext.getDebugProcess();
-          Map<ObjectReference, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
+          Map<Object, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
           if (stacks == null) {
             stacks = new CapturedStacksMap();
             process.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
           }
-          Value key = ContainerUtil.getOrElse(frameProxy.getArgumentValues(), myCapturePoint.myParamNo, null);
+          Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy, frameProxy.thisObject()));
           if (key instanceof ObjectReference) {
-            List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext.getThread(), suspendContext, true);
+            List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext, true);
             if (frames.size() > MAX_STACK_LENGTH) {
               frames = frames.subList(0, MAX_STACK_LENGTH);
             }
-            stacks.put((ObjectReference)key, frames);
+            stacks.put(getKey((ObjectReference)key), frames);
           }
         }
       }
     }
-    catch (EvaluateException ignored) {
+    catch (EvaluateException e) {
+      LOG.debug(e);
     }
     return false;
   }
@@ -137,7 +129,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   protected void fireBreakpointChanged() {
   }
 
-  private static class CapturedStacksMap extends LinkedHashMap<ObjectReference, List<StackFrameItem>> {
+  private static class CapturedStacksMap extends LinkedHashMap<Object, List<StackFrameItem>> {
     @Override
     protected boolean removeEldestEntry(Map.Entry eldest) {
       return size() > MAX_STORED_STACKS;
@@ -164,10 +156,14 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
   }
 
-  private static void track(DebugProcessImpl debugProcess, CapturePoint capturePoint) {
-    if (StringUtil.isEmpty(capturePoint.myClassName)) {
-      return;
+  @Override
+  public void createRequest(DebugProcessImpl debugProcess) {
+    if (!StringUtil.isEmpty(getClassName())) {
+      super.createRequest(debugProcess);
     }
+  }
+
+  private static void track(DebugProcessImpl debugProcess, CapturePoint capturePoint) {
     StackCapturingLineBreakpoint breakpoint = new StackCapturingLineBreakpoint(debugProcess.getProject(), capturePoint);
     breakpoint.createRequest(debugProcess);
     List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
@@ -182,7 +178,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   public static List<StackFrameItem> getRelatedStack(@Nullable StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
     if (frame != null) {
       DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-      Map<ObjectReference, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
+      Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
       if (ContainerUtil.isEmpty(capturedStacks)) {
         return null;
       }
@@ -194,33 +190,25 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         Location location = frame.location();
         String className = location.declaringType().name();
         String methodName = location.method().name();
-        List<Value> argumentValues = null;
 
         for (StackCapturingLineBreakpoint b : captureBreakpoints) {
           String insertClassName = b.myCapturePoint.myInsertClassName;
           if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
               StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
-            if (argumentValues == null) {
-              argumentValues = frame.getArgumentValues();
-            }
-
             try {
-              ExpressionEvaluator evaluator = b.myEvaluator.getValue();
-              if (evaluator != null) {
-                EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, frame, frame.thisObject());
-                Value key = evaluator.evaluate(evaluationContext);
-
-                if (key instanceof ObjectReference) {
-                  return capturedStacks.get(key);
-                }
+              Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame, frame.thisObject()));
+              if (key instanceof ObjectReference) {
+                return capturedStacks.get(getKey((ObjectReference)key));
               }
             }
-            catch (EvaluateException ignore) {
+            catch (EvaluateException e) {
+              LOG.debug(e);
             }
           }
         }
       }
-      catch (EvaluateException ignore) {
+      catch (EvaluateException e) {
+        LOG.debug(e);
       }
     }
     return null;
@@ -229,11 +217,39 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   @Nullable
   public static List<StackFrameItem> getRelatedStack(@Nullable ObjectReference key, @Nullable DebugProcessImpl process) {
     if (process != null && key != null) {
-      Map<ObjectReference, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
+      Map<Object, List<StackFrameItem>> data = process.getUserData(CAPTURED_STACKS);
       if (data != null) {
         return data.get(key);
       }
     }
     return null;
+  }
+
+  private static Object getKey(ObjectReference reference) {
+    return reference instanceof StringReference ? ((StringReference)reference).value() : reference;
+  }
+
+  private static class MyEvaluator {
+    private final String myExpression;
+    ExpressionEvaluator myEvaluator;
+
+    public MyEvaluator(String expression) {
+      myExpression = expression;
+    }
+
+    Value evaluate(final EvaluationContext context) throws EvaluateException {
+      if (myEvaluator == null) {
+        myEvaluator = ApplicationManager.getApplication().runReadAction(
+          (ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
+            SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);
+            PsiElement contextElement = ContextUtil.getContextElement(sourcePosition);
+            return EvaluatorBuilderImpl.build(
+              new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myExpression), contextElement, sourcePosition, context.getProject());
+          });
+      }
+      Value value = myEvaluator.evaluate(context);
+      DebuggerUtilsEx.keep(value, context);
+      return value;
+    }
   }
 }

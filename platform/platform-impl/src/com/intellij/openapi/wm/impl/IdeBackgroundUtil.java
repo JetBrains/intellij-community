@@ -179,9 +179,8 @@ public class IdeBackgroundUtil {
     return StringUtil.notNullize(spec, System.getProperty(propertyName, ""));
   }
 
-  public static boolean isBackgroundImageSet(@Nullable Project project) {
-    return StringUtil.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP)) ||
-           StringUtil.isNotEmpty(getBackgroundSpec(project, FRAME_PROP));
+  public static boolean isEditorBackgroundImageSet(@Nullable Project project) {
+    return StringUtil.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP));
   }
 
   public static void repaintAllWindows() {

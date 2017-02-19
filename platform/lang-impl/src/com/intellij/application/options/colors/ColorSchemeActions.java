@@ -40,7 +40,7 @@ import java.util.List;
 
 public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorColorsScheme> {
 
-  protected ColorSchemeActions(@NotNull AbstractSchemesPanel<EditorColorsScheme> schemesPanel) {
+  protected ColorSchemeActions(@NotNull AbstractSchemesPanel<EditorColorsScheme, ?> schemesPanel) {
     super(schemesPanel);
   }
 
@@ -69,7 +69,7 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
                                   name -> {
                                     String newName = SchemeNameGenerator.getUniqueName(name != null ? name : "Unnamed",
                                                                                        candidate -> getSchemesPanel().getModel()
-                                                                                         .containsScheme(candidate));
+                                                                                         .containsScheme(candidate, false));
                                     AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
                                     newScheme.setName(newName);
                                     newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE);
@@ -110,11 +110,6 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   @Override
   protected void duplicateScheme(@NotNull  EditorColorsScheme scheme, @NotNull String newName) {
       getOptions().saveSchemeAs(scheme, newName);
-  }
-
-  @Override
-  protected void deleteScheme(@NotNull EditorColorsScheme scheme) {
-    getOptions().removeScheme(scheme.getName());
   }
 
   @Override

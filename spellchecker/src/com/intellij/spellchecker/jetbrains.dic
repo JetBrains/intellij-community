@@ -488,6 +488,7 @@ proto
 proven
 proxool
 pycharm
+queryable
 readme
 readonly
 readwrite
@@ -616,6 +617,7 @@ stepic
 stmt
 strictfp
 stringify
+stringifier
 stylesheet
 stylesheets
 subexpression

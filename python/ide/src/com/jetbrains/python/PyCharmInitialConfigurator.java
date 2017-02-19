@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class PyCharmInitialConfigurator {
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
       settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-      UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
+      UISettings.getInstance().setShowDirectoryForNonUniqueFilenames(true);
     }
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V3")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V3", "true");
@@ -88,6 +88,7 @@ public class PyCharmInitialConfigurator {
     }
 
     Registry.get("ide.scratch.enabled").setValue(true);
+    Registry.get("ide.ssh.one.time.password").setValue(true);
   }
 
   private static void showInitialConfigurationDialog() {

@@ -27,6 +27,11 @@ import java.awt.*;
  */
 public abstract class JBEditorTabsPainter {
   protected Color myDefaultTabColor;
+  protected final JBEditorTabs myTabs;
+
+  public JBEditorTabsPainter(JBEditorTabs tabs) {
+    myTabs = tabs;
+  }
 
   public abstract void doPaintInactive(Graphics2D g2d,
                        Rectangle effectiveBounds,
@@ -46,14 +51,15 @@ public abstract class JBEditorTabsPainter {
                                       Rectangle rect,
                                       JBTabsImpl.ShapeInfo selectedShape,
                                       Insets insets,
-                                      Color tabColor,
-                                      boolean horizontalTabs, JBTabsPosition position) {
+                                      Color tabColor) {
     Insets i = selectedShape.path.transformInsets(insets);
     int _x = rect.x;
     int _y = rect.y;
     int _height = rect.height;
+    final JBTabsPosition position = myTabs.getPosition();
+    final boolean horizontalTabs = myTabs.isHorizontalTabs();
 
-    if (Registry.is("ide.new.editor.tabs.selection")) {
+    if (myTabs.hasUnderlineSelection() && myTabs.getTabCount() > 1) {
       fillSelectionAndBorder(g2d, selectedShape, tabColor, _x, _y, _height);
 
       //todo[kb] move to editor scheme

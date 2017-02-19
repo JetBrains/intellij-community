@@ -66,14 +66,12 @@ public class StackFrameItem {
   }
 
   public int line() {
-    return myLocation.lineNumber();
+    return DebuggerUtilsEx.getLineNumber(myLocation, false);
   }
 
   @NotNull
-  public static List<StackFrameItem> createFrames(@Nullable ThreadReferenceProxyImpl threadReferenceProxy,
-                                                  @NotNull SuspendContextImpl suspendContext,
-                                                  boolean withVars)
-    throws EvaluateException {
+  public static List<StackFrameItem> createFrames(@NotNull SuspendContextImpl suspendContext, boolean withVars) throws EvaluateException {
+    ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
     if (threadReferenceProxy != null) {
       List<StackFrameItem> res = new ArrayList<>();
       for (StackFrameProxyImpl frame : threadReferenceProxy.frames()) {
@@ -81,12 +79,6 @@ public class StackFrameItem {
           List<XNamedValue> vars = null;
           if (withVars) {
             vars = new ArrayList<>();
-            List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
-            if (!ContainerUtil.isEmpty(relatedStack)) {
-              res.add(null); // separator
-              res.addAll(relatedStack);
-              break;
-            }
 
             try {
               ObjectReference thisObject = frame.thisObject();
@@ -132,6 +124,13 @@ public class StackFrameItem {
 
           StackFrameItem frameItem = new StackFrameItem(frame.location(), vars);
           res.add(frameItem);
+
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
+          if (!ContainerUtil.isEmpty(relatedStack)) {
+            res.add(null); // separator
+            res.addAll(relatedStack);
+            break;
+          }
         }
         catch (EvaluateException e) {
           LOG.debug(e);

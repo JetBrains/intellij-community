@@ -61,9 +61,11 @@ public interface SchemesModel<T extends Scheme> {
 
   /**
    * @param name The scheme to check.
+   * @param projectScheme Level of the scheme to check. If schemes model does not support project level schemes
+   *                      then the parameter is always equal to false.
    * @return True if a scheme by the given name already exists.
    */
-  boolean containsScheme(@NotNull String name);
+  boolean containsScheme(@NotNull String name, boolean projectScheme);
 
   /**
    * @param scheme The scheme to check.
@@ -71,4 +73,6 @@ public interface SchemesModel<T extends Scheme> {
    *         returns {@code true}.
    */
   boolean differsFromDefault(@NotNull T scheme);
+
+  void removeScheme(@NotNull T scheme);
 }

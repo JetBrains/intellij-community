@@ -21,7 +21,7 @@ package org.jetbrains.jps.incremental.messages;
  */
 public abstract class BuildMessage {
   public enum Kind {
-    ERROR, WARNING, INFO, PROGRESS
+    ERROR, WARNING, INFO, PROGRESS, JPS_INFO, OTHER
   }
 
   private final String myMessageText;

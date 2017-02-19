@@ -667,7 +667,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  protected void doClose() throws IOException {
+  private void doClose() throws IOException {
     myEnumerator.lockStorage();
     try {
       try {

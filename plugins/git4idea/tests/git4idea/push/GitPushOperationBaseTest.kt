@@ -53,7 +53,7 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     val parentRepo = createParentRepo(parentName)
     val broRepo = createBroRepo(broName, parentRepo)
 
-    val repository = GitTestUtil.createRepository(myProject, repoRoot)
+    val repository = createRepository(myProject, repoRoot)
     cd(repository)
     git("remote add origin " + parentRepo.path)
     git("push --set-upstream origin master:master")

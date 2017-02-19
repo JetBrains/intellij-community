@@ -24,7 +24,7 @@ import java.util.Map;
 
 class IsConstantExpressionVisitor extends JavaElementVisitor {
   private boolean myIsConstant;
-  private final Map<PsiVariable, Boolean> varIsConst = new THashMap<PsiVariable, Boolean>();
+  private final Map<PsiVariable, Boolean> varIsConst = new THashMap<>();
 
   public boolean isConstant() {
     return myIsConstant;

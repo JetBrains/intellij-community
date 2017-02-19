@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
@@ -48,12 +49,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -73,6 +72,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
   public boolean REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = true;
+  public boolean REPORT_UNCHECKED_OPTIONALS = true;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -97,6 +97,9 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
     if (!REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL").setAttribute("value", "false"));
+    }
+    if (!REPORT_UNCHECKED_OPTIONALS) {
+      node.addContent(new Element("option").setAttribute("name", "REPORT_UNCHECKED_OPTIONALS").setAttribute("value", "false"));
     }
   }
 
@@ -338,6 +341,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportOptionalOfNullableImprovements(holder, reportedAnchors, runner.getInstructions());
 
+    reportUncheckedOptionalGet(holder, visitor.getOptionalCalls(), visitor.getOptionalQualifiers());
 
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
@@ -345,6 +349,36 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull()) {
       reportAlwaysReturnsNotNull(holder, scope);
+    }
+  }
+
+  private void reportUncheckedOptionalGet(ProblemsHolder holder,
+                                          Map<PsiMethodCallExpression, ThreeState> calls,
+                                          List<PsiExpression> qualifiers) {
+    for (Map.Entry<PsiMethodCallExpression, ThreeState> entry : calls.entrySet()) {
+      ThreeState state = entry.getValue();
+      if (state == ThreeState.YES || state == ThreeState.UNSURE && !REPORT_UNCHECKED_OPTIONALS) {
+        continue;
+      }
+      PsiMethodCallExpression call = entry.getKey();
+      PsiMethod method = call.resolveMethod();
+      if (method == null) continue;
+      PsiClass optionalClass = method.getContainingClass();
+      if (optionalClass == null) continue;
+      if (state == ThreeState.NO) {
+        holder.registerProblem(getElementToHighlight(call),
+                               InspectionsBundle.message("dataflow.message.optional.get.definitely.absent", optionalClass.getName()));
+      } else if (state == ThreeState.UNSURE) {
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+        if (qualifier instanceof PsiMethodCallExpression &&
+            qualifiers.stream().anyMatch(q -> PsiEquivalenceUtil.areElementsEquivalent(q, qualifier))) {
+          // Conservatively do not report methodCall().get() cases if methodCall().isPresent() was found in the same method
+          // without deep correspondence analysis
+          continue;
+        }
+        holder.registerProblem(getElementToHighlight(call),
+                               InspectionsBundle.message("dataflow.message.optional.get.without.is.present", optionalClass.getName()));
+      }
     }
   }
 
@@ -895,6 +929,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
     private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
     private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
+    private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
+    private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
     private boolean myAlwaysReturnsNotNull = true;
 
     @Override
@@ -912,6 +948,14 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       });
     }
 
+    Map<PsiMethodCallExpression, ThreeState> getOptionalCalls() {
+      return myOptionalCalls;
+    }
+
+    List<PsiExpression> getOptionalQualifiers() {
+      return myOptionalQualifiers;
+    }
+
     Collection<PsiCall> getAlwaysFailingCalls() {
       return StreamEx.ofKeys(myFailingCalls, v -> v).map(MethodCallInstruction::getCallExpression).toList();
     }
@@ -924,12 +968,30 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
                                                  DataFlowRunner runner,
                                                  DfaMemoryState memState) {
+      PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
+      if (call != null) {
+        String methodName = call.getMethodExpression().getReferenceName();
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+        if (qualifier != null && TypeUtils.isOptional(qualifier.getType())) {
+          if ("isPresent".equals(methodName) && qualifier instanceof PsiMethodCallExpression) {
+            myOptionalQualifiers.add(qualifier);
+          }
+          else if (isOptionalGetMethodName(methodName)) {
+            ThreeState state = memState.checkOptional(memState.peek());
+            myOptionalCalls.merge(call, state, (s1, s2) -> s1 == s2 ? s1 : ThreeState.UNSURE);
+          }
+        }
+      }
       DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
       if (hasNonTrivialFailingContracts(instruction)) {
         boolean allFail = Arrays.stream(states).allMatch(s -> s.getMemoryState().peek() == runner.getFactory().getConstFactory().getContractFail());
         myFailingCalls.merge(instruction, allFail, Boolean::logicalAnd);
       }
       return states;
+    }
+
+    private static boolean isOptionalGetMethodName(String name) {
+      return "get".equals(name) || "getAsDouble".equals(name) || "getAsInt".equals(name) || "getAsLong".equals(name);
     }
 
     private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {

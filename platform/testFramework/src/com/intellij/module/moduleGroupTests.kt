@@ -31,12 +31,13 @@ fun getQualifiedNameModuleGrouper(project: Project): ModuleGrouper {
 
 fun <T> runWithQualifiedModuleNamesEnabled(action: () -> T): T {
   val property = Registry.get("project.qualified.module.names")
+  val oldValue = property.asBoolean()
   return try {
     property.setValue(true)
     action()
   }
   finally {
-    property.setValue(false)
+    property.setValue(oldValue)
   }
 }
 

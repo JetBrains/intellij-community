@@ -177,14 +177,6 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
     };
     myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
     Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
-    final ActionListener listener = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        checkValid();
-      }
-    };
-    myLocationField.getTextField().addActionListener(listener);
-    Disposer.register(this, () -> myLocationField.getTextField().removeActionListener(listener));
     if (myProjectGenerator instanceof WebProjectTemplate && !((WebProjectTemplate)myProjectGenerator).postponeValidation()) {
       checkValid();
     }

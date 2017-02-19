@@ -17,7 +17,6 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.MethodInvocator;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -118,10 +117,9 @@ public class GraphicsUtil {
    * and don't forget to invoke {@link Graphics#dispose()} afterwards.
    *
    * @see JRootPane#disableTrueDoubleBuffering()
-   * @see JBViewport#isTrueDoubleBufferingAvailableFor(JComponent)
    */
   public static Graphics safelyGetGraphics(Component c) {
-    return SystemProperties.isTrueSmoothScrollingEnabled() && ourSafelyGetGraphicsMethod.isAvailable()
+    return ourSafelyGetGraphicsMethod.isAvailable()
            ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c)
            : c.getGraphics();
   }

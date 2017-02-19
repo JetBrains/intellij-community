@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,15 @@
  */
 package com.intellij.codeInspection.javaDoc
 
-import com.intellij.codeInspection.ExternalAnnotatorInspectionVisitor
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.SuppressQuickFix
-import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool
+import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection
 import com.intellij.psi.PsiElement
 
-class JavadocHtmlLintInspection : LocalInspectionTool(), PairedUnfairLocalInspectionTool {
+class JavadocHtmlLintInspection : LocalInspectionTool(), ExternalAnnotatorBatchInspection {
   companion object {
     val SHORT_NAME = "JavadocHtmlLint"
   }
 
-  private val annotator = lazy { JavadocHtmlLintAnnotator(true) }
-
-  override fun buildVisitor(holder: ProblemsHolder, onTheFly: Boolean) = ExternalAnnotatorInspectionVisitor(holder, annotator.value, onTheFly)
-
-  override fun getBatchSuppressActions(element: PsiElement?) = SuppressQuickFix.EMPTY_ARRAY
-
-  override fun getInspectionForBatchShortName() = SHORT_NAME
+  override fun getBatchSuppressActions(element: PsiElement?): Array<out SuppressQuickFix> = SuppressQuickFix.EMPTY_ARRAY
 }

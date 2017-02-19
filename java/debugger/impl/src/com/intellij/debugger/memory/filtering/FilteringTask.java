@@ -19,7 +19,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XExpression;
 import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,12 +33,12 @@ public class FilteringTask implements Runnable {
 
   private volatile boolean myIsCancelled = false;
 
-  public FilteringTask(@NotNull ReferenceType referenceType, @NotNull DebugProcessImpl debugProcess,
+  public FilteringTask(@NotNull String className, @NotNull DebugProcessImpl debugProcess,
                        @NotNull XExpression expression, @NotNull List<ObjectReference> references,
                        @NotNull FilteringTaskCallback callback) {
     myChecker = StringUtil.isEmptyOrSpaces(expression.getExpression())
                 ? ConditionChecker.ALL_MATCHED_CHECKER
-                : new ConditionCheckerImpl(debugProcess, expression, referenceType.name());
+                : new ConditionCheckerImpl(debugProcess, expression, className);
     myReferences = references;
     myCallback = callback;
   }

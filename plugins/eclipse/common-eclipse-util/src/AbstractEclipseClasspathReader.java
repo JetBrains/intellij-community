@@ -241,7 +241,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
           if (eclipseModuleManager != null) {
             eclipseModuleManager.registerUnknownCons(path);
           }
-          addNamedLibrary(rootModel, new ArrayList<String>(), exported, path, true);
+          addNamedLibrary(rootModel, new ArrayList<>(), exported, path, true);
         }
       }
     }

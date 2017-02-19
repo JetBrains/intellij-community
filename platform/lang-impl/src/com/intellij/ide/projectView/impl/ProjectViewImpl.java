@@ -137,7 +137,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourAutoscrollFromSourceDefaults = false;
   
   private boolean myFoldersAlwaysOnTop = true;
-  
 
   private String myCurrentViewId;
   private String myCurrentViewSubId;
@@ -1383,7 +1382,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return getGlobalOptions().getAutoscrollToSource();
     }
 
-    return getPaneOptionValue(myAutoscrollToSource, paneId, UISettings.getInstance().DEFAULT_AUTOSCROLL_TO_SOURCE);
+    return getPaneOptionValue(myAutoscrollToSource, paneId, UISettings.getInstance().getDefaultAutoScrollToSource());
   }
 
   public void setAutoscrollToSource(boolean autoscrollMode, String paneId) {

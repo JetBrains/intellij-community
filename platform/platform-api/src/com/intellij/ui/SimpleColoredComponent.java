@@ -852,7 +852,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
 
       if (attributes.isSearchMatch()) {
-        searchMatches.add(new Object[]{(int)offset, (int)(offset + fragmentWidth), textBaseline, myFragments.get(i), g.getFont(), attributes});
+        searchMatches.add(new Object[]{offset, offset + fragmentWidth, (float)textBaseline, myFragments.get(i), g.getFont(), attributes});
       }
 
       offset = endOffset;
@@ -870,12 +870,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     // draw search matches after all
     for (final Object[] info : searchMatches) {
-      Integer x1 = (Integer)info[0];
-      Integer x2 = (Integer)info[1];
+      float x1 = (float)info[0];
+      float x2 = (float)info[1];
       UIUtil.drawSearchMatch(g, x1, x2, getHeight());
       g.setFont((Font)info[4]);
 
-      Integer baseline = (Integer)info[2];
+      float baseline = (float)info[2];
       String text = (String)info[3];
       if (shouldDrawMacShadow()) {
         g.setColor(SHADOW_COLOR);
@@ -886,7 +886,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.drawString(text, x1, baseline);
 
       if (((SimpleTextAttributes)info[5]).isStrikeout()) {
-        EffectPainter.STRIKE_THROUGH.paint(g, x1, baseline, x2 - x1, getCharHeight(g), g.getFont());
+        EffectPainter.STRIKE_THROUGH.paint(g, (int)x1, (int)baseline, (int)(x2 - x1), getCharHeight(g), g.getFont());
       }
     }
     return (int)offset;
