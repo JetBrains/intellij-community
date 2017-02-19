@@ -24,10 +24,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.List;
 
 public class ShelfFileProcessorUtil {
@@ -36,14 +33,10 @@ public class ShelfFileProcessorUtil {
                                    List<FilePatch> patches,
                                    @Nullable PatchEP[] extensions,
                                    @NotNull CommitContext context) throws IOException {
-    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(patchFile), CharsetToolkit.UTF8_CHARSET);
-    try {
+    try (Writer writer = new OutputStreamWriter(new FileOutputStream(patchFile), CharsetToolkit.UTF8_CHARSET)) {
       UnifiedDiffWriter
         .write(project, patches, writer, "\n", extensions != null ? extensions : UnifiedDiffWriter.getPatchExtensions(project),
                context);
-    }
-    finally {
-      writer.close();
     }
   }
 }
