@@ -24,3 +24,25 @@ def test_property():
     assert C.f.fget(c).f
     assert C.f.fset(c, c) is None
     assert C.f.fdel(c) is None
+
+
+def test_object_module():
+    class C(object):
+        pass
+
+    c = C()
+
+    assert c.__module__ is not None
+    assert c.__module__.strip() == c.__module__
+    assert C.__module__ is not None
+    assert object.__module__ is not None
+    assert type.__module__ is not None
+
+
+def test_object_reduce():
+    class C(object):
+        pass
+
+    c = C()
+    assert isinstance(c.__reduce__(), (str, tuple))
+    assert isinstance(c.__reduce_ex__(), (str, tuple))
