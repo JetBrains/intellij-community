@@ -72,10 +72,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,7 +151,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private ComboBox myModuleComboBox;
   private ComboBox myDirectoryComboBox;
   private FixedSizeButton mySelectDirectoryButton;
-  private JToggleButton myRecursiveDirectoryButton;
   private ScopeChooserCombo myScopeCombo;
 
   private JBTable myResultsPreviewTable;
@@ -406,15 +402,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceComponent.getDocument().addDocumentListener(documentAdapter);
 
 
-    DefaultActionGroup scopeActionGroup = new DefaultActionGroup();
-    scopeActionGroup.add(new MySelectScopeToggleAction(Scope.PROJECT));
-    scopeActionGroup.add(new MySelectScopeToggleAction(Scope.MODULE));
-    scopeActionGroup.add(new MySelectScopeToggleAction(Scope.DIRECTORY));
-    scopeActionGroup.add(new MySelectScopeToggleAction(Scope.SCOPE));
-    myScopeSelectionToolbar =
-      (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, scopeActionGroup, true);
-    myScopeSelectionToolbar.setForceMinimumSize(true);
-    myScopeSelectionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    myScopeSelectionToolbar = createToolbar(
+      new MySelectScopeToggleAction(Scope.PROJECT),
+      new MySelectScopeToggleAction(Scope.MODULE),
+      new MySelectScopeToggleAction(Scope.DIRECTORY),
+      new MySelectScopeToggleAction(Scope.SCOPE));
 
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     String[] names = new String[modules.length];
@@ -424,12 +416,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     Arrays.sort(names, String.CASE_INSENSITIVE_ORDER);
     myModuleComboBox = new ComboBox(names);
-    myModuleComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        scheduleResultsUpdate();
-      }
-    });
+    ActionListener restartSearchListener = e -> scheduleResultsUpdate();
+    myModuleComboBox.addActionListener(restartSearchListener);
     myDirectoryComboBox = new ComboBox(200);
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
@@ -437,12 +425,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       field.setColumns(40);
     }
     initCombobox(myDirectoryComboBox);
-    myDirectoryComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        scheduleResultsUpdate();
-      }
-    });
+    myDirectoryComboBox.addActionListener(restartSearchListener);
     mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
     mySelectDirectoryButton.setMargin(JBUI.emptyInsets());
@@ -466,22 +449,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
     });
 
-    myRecursiveDirectoryButton = new JToggleButton(AllIcons.General.Recursive, myHelper.getModel().isWithSubdirectories());
-    myRecursiveDirectoryButton.setIcon(AllIcons.General.Recursive);
-    myRecursiveDirectoryButton.setMargin(JBUI.emptyInsets());
-    myRecursiveDirectoryButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        scheduleResultsUpdate();
-      }
-    });
-    //DefaultActionGroup recursiveActionGroup = new DefaultActionGroup();
-    //ActionToolbar recursiveDirectoryToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, recursiveActionGroup, true);
+    MyRecursiveDirectoryAction recursiveDirectoryAction = new MyRecursiveDirectoryAction();
+    int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+    recursiveDirectoryAction
+      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), this);
     JPanel directoryPanel = new JPanel(new BorderLayout());
     directoryPanel.add(myDirectoryComboBox, BorderLayout.CENTER);
     JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
     buttonsPanel.add(mySelectDirectoryButton);
-    buttonsPanel.add(myRecursiveDirectoryButton);
+    buttonsPanel.add(createToolbar(recursiveDirectoryAction).getComponent());//check if toolbar updates the button with no delays
     directoryPanel.add(buttonsPanel, BorderLayout.EAST);
 
     myScopeCombo = new ScopeChooserCombo();
@@ -523,12 +499,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
       }
     });
-    myScopeCombo.getComboBox().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        scheduleResultsUpdate();
-      }
-    });
+    myScopeCombo.getComboBox().addActionListener(restartSearchListener);
     Disposer.register(myDisposable, myScopeCombo);
 
 
@@ -574,7 +545,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
           myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
           VirtualFile file = usageInfo.getVirtualFile();
-          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? "  "+file.getPath() : "", false));
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? "  "+file.getPath() : "", false, new JBInsets(0, 0, 0, 0)));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
@@ -607,7 +578,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     bottomPanel.add(myOKButton);
 
     myCodePreviewComponent = myUsagePreviewPanel.createComponent();
-    myCodePreviewComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
     splitter.setSecondComponent(myCodePreviewComponent);
 
     setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gap 0"));
@@ -624,10 +594,18 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(myReplaceTextArea, "pushx, growx, sx 10, wrap");
     add(myScopeSelectionToolbar.getComponent(), "gaptop 4");
     add(myScopeDetailsPanel, "sx 9, pushx, growx, wrap");
-    add(splitter, "pushx, growx, sx 10, wrap, pad 0 -4 0 4");
-    add(bottomPanel, "pushx, growx, sx 10, pad 0 -4 0 4");
+    add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad 0 -4 0 4");
+    add(bottomPanel, "pushx, growx, dock south, sx 10, pad 0 -4 0 4");
     
     MnemonicHelper.init(this);
+  }
+
+  private static ActionToolbarImpl createToolbar(AnAction... actions) {
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true);
+    toolbar.setForceMinimumSize(true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    return toolbar;
   }
 
   private void adjustPopup() {
@@ -779,7 +757,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         myCbCaseSensitive.makeSelectable();
       }
     }
-    myRecursiveDirectoryButton.setSelected(myModel.isWithSubdirectories());
   }
 
   public void updateReplaceVisibility() {
@@ -872,13 +849,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myResultsPreviewTable.setModel(model);
 
     if (result != null) {
-      myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+      myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow") + " ("+result.message+")");
       adjustPopup();
       return;
     }
 
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false));
     myResultsPreviewTable.getEmptyText().setText("Searching...");
+    adjustPopup();//It wouldn't be called later if there are no usages at all, so let's call it now.
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
@@ -1067,7 +1045,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     if (mySelectedScope == Scope.DIRECTORY) {
       String directory = getDirectory();
       model.setDirectoryName(directory == null ? "" : directory);
-      model.setWithSubdirectories(myRecursiveDirectoryButton.isSelected());
     }
     else if (mySelectedScope == Scope.MODULE) {
       model.setModuleName((String)myModuleComboBox.getSelectedItem());
@@ -1150,6 +1127,23 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         updateScopeDetailsPanel();
         scheduleResultsUpdate();
       }
+    }
+  }
+
+  private class MyRecursiveDirectoryAction extends ToggleAction {
+    public MyRecursiveDirectoryAction() {
+      super(FindBundle.message("find.scope.directory.recursive.checkbox"), null, AllIcons.General.Recursive);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myHelper.getModel().isWithSubdirectories();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myHelper.getModel().setWithSubdirectories(state);
+      scheduleResultsUpdate();
     }
   }
 
