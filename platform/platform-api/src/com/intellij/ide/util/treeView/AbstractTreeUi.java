@@ -1757,7 +1757,7 @@ public class AbstractTreeUi {
               @Override
               public void perform() {
                 if (!pass.isExpired()) {
-                  getUpdater().requeue(pass);
+                  queueUpdate(node);
                 }
               }
             });
