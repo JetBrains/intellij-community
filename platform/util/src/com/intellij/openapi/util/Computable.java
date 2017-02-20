@@ -69,6 +69,7 @@ public interface Computable <T> {
         final T value = internalCompute();
         myValue = value != null ? value : NULL_VALUE;
       }
+      //noinspection unchecked
       return myValue != NULL_VALUE ? (T)myValue : null;
     }
   }
