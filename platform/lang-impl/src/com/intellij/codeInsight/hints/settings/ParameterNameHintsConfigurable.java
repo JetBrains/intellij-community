@@ -213,7 +213,11 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     return panel;
   }
 
+  @Nullable
   private JPanel createBlacklistPanel(@NotNull Language language) {
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    if (!provider.isBlackListSupported()) return null;
+
     String blackList = getLanguageBlackList(language);
 
     EditorTextField editorTextField = createEditorField(blackList);

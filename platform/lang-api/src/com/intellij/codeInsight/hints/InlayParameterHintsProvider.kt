@@ -53,6 +53,11 @@ interface InlayParameterHintsProvider {
    */
   fun getSupportedOptions(): List<Option> = emptyList()
 
+  /**
+   * If false no blacklist panel will be shown in "Parameter Name Hints Settings"
+   */
+  fun isBlackListSupported() = true
+
 }
 
 
