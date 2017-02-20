@@ -20,6 +20,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -548,8 +549,14 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       int nodeLength = fileElement.getTextLength();
       if (nodeLength != fileLength) {
         PsiUtilCore.ensureValid(fileElement.getPsi());
+        List<Attachment> attachments = ContainerUtil.newArrayList(new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText()),
+                                                                  new Attachment(myVirtualFile.getNameWithoutExtension() + ".file.txt", myContent.toString()));
+        if (document != null) {
+          attachments.add(new Attachment(myVirtualFile.getNameWithoutExtension() + ".document.txt", document.getText()));
+        }
         // exceptions here should be assigned to peter
-        LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength);
+        LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength,
+                  attachments.toArray(Attachment.EMPTY_ARRAY));
       }
     }
   }
