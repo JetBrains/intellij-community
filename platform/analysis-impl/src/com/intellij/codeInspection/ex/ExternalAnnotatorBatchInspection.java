@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.ExternalAnnotatorInspectionVisitor;
+import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ExternalLanguageAnnotators;
@@ -38,7 +39,12 @@ public interface ExternalAnnotatorBatchInspection extends PairedUnfairLocalInspe
     return getShortName();
   }
 
-  default ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager) {
+  /**
+   * To be invoked during batch run
+   */
+  default ProblemDescriptor[] checkFile(@NotNull PsiFile file,
+                                        @NotNull GlobalInspectionContext context,
+                                        @NotNull InspectionManager manager) {
     final String shortName = getShortName();
     final FileViewProvider viewProvider = file.getViewProvider();
     final Set<Language> relevantLanguages = viewProvider.getLanguages();

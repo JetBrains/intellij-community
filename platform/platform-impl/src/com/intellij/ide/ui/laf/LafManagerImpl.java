@@ -55,6 +55,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -503,6 +504,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     initInputMapDefaults(uiDefaults);
 
     uiDefaults.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
+    uiDefaults.put("Balloon.error.textInsets", new JBInsets(3, 8, 3, 8).asUIResource());
 
     patchFileChooserStrings(uiDefaults);
 
@@ -744,8 +746,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
-      JBUI.setUserScaleFactor(uiSettings.FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE);
-      initFontDefaults(uiDefaults, uiSettings.FONT_SIZE, new FontUIResource(uiSettings.FONT_FACE, Font.PLAIN, uiSettings.FONT_SIZE));
+      JBUI.setUserScaleFactor(uiSettings.getFontSize() / UIUtil.DEF_SYSTEM_FONT_SIZE);
+      initFontDefaults(uiDefaults, uiSettings.getFontSize(), new FontUIResource(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);

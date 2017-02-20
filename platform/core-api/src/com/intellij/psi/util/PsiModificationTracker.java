@@ -84,7 +84,7 @@ public interface PsiModificationTracker extends ModificationTracker {
    * A topic to subscribe for all PSI modification count changes.
    * @see com.intellij.util.messages.MessageBus
    */
-  Topic<Listener> TOPIC = new Topic<Listener>("modification tracker", Listener.class, Topic.BroadcastDirection.TO_PARENT);
+  Topic<Listener> TOPIC = new Topic<>("modification tracker", Listener.class, Topic.BroadcastDirection.TO_PARENT);
 
   /**
    * Tracks any PSI modification.

@@ -40,6 +40,7 @@ import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
@@ -290,7 +291,9 @@ public class CreateSubclassAction extends BaseIntentionAction {
                 final PsiElement psiElement = containingFile.findElementAt(startClassOffset.getStartOffset());
                 final PsiClass aTargetClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
                 LOG.assertTrue(aTargetClass != null, psiElement);
-                chooseAndImplement(psiClass, project, aTargetClass, editor);
+                if (!brokenOff) {
+                  TransactionGuard.getInstance().submitTransactionAndWait(() -> chooseAndImplement(psiClass, project, aTargetClass, editor));
+                }
               }
               finally {
                 startClassOffset.dispose();

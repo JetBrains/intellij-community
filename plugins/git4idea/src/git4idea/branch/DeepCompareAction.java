@@ -122,7 +122,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     return ContainerUtil.exists(roots, new Condition<VirtualFile>() {
       @Override
       public boolean value(VirtualFile root) {
-        return manager.getRepositoryForRoot(root) != null;
+        return manager.getRepositoryForRootQuick(root) != null;
       }
     });
   }

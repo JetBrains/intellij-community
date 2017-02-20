@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -220,9 +221,10 @@ public class MavenUtil {
     Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
   }
 
-  public static File getPluginSystemDir(String folder) {
+  @NotNull
+  public static java.nio.file.Path getPluginSystemDir(@NotNull String folder) {
     // PathManager.getSystemPath() may return relative path
-    return new File(PathManager.getSystemPath(), "Maven" + "/" + folder).getAbsoluteFile();
+    return Paths.get(PathManager.getSystemPath()).toAbsolutePath().resolve("Maven").resolve(folder);
   }
 
   public static File getBaseDir(@NotNull VirtualFile file) {

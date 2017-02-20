@@ -163,10 +163,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     stmt = (PsiStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(stmt);
     method.getBody().add(stmt);
 
-    for (PsiAnnotation annotation : methodCandidate.getElement().getModifierList().getAnnotations()) {
-      if (SuppressWarnings.class.getName().equals(annotation.getQualifiedName())) continue;
-      method.getModifierList().add(annotation.copy());
-    }
+    GenerateMembersUtil.copyAnnotations(methodCandidate.getElement().getModifierList(), method.getModifierList(), SuppressWarnings.class.getName());
 
     if (isMethodStatic || modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
       PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);

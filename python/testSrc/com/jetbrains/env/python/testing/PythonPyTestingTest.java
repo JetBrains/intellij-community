@@ -11,7 +11,9 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.*;
+import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalPyTestFactory;
+import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -32,6 +34,36 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
       new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+  }
+
+  /**
+   * Checks tests are resolved when launched from subfolder
+   */
+  @Test
+  public void testTestsInSubFolderResolvable() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+  /**
+   * Ensures test output works
+   */
+  @Test
+  public void testOutput() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("tests", 0);
+        }
+      });
   }
 
   @Test(expected = RuntimeConfigurationWarning.class)

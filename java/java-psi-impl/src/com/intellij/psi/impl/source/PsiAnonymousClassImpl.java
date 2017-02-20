@@ -91,7 +91,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
         type = PsiType.getJavaLangObject(getManager(), getResolveScope());
       }
 
-      myCachedBaseType = new SoftReference<PsiClassType>(type);
+      myCachedBaseType = new SoftReference<>(type);
       return type;
     }
     else {

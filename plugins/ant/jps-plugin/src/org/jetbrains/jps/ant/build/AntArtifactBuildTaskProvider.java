@@ -132,7 +132,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         throw new StopBuildException();
       }
 
-      List<String> classpath = new ArrayList<String>();
+      List<String> classpath = new ArrayList<>();
       File jreHome = new File(jdk.getHomePath(), "jre");
       for (File file : jdkLibrary.getFiles(JpsOrderRootType.COMPILED)) {
         if (!FileUtil.isAncestor(jreHome, file, false)) {
@@ -144,12 +144,12 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       JpsAntInstallationImpl.addAllJarsFromDirectory(classpath, new File(SystemProperties.getUserHome(), ".ant/lib"));
       classpath.add(PathManager.getJarPathForClass(AntMain2.class));
 
-      List<String> vmParams = new ArrayList<String>();
+      List<String> vmParams = new ArrayList<>();
       vmParams.add("-Xmx" + options.getMaxHeapSize() + "m");
       vmParams.add("-Xss" + options.getMaxStackSize() + "m");
       vmParams.add("-Dant.home=" + antInstallation.getAntHome().getAbsolutePath());
 
-      List<String> programParams = new ArrayList<String>();
+      List<String> programParams = new ArrayList<>();
       for (String param : ParametersListUtil.parse(options.getAntCommandLineParameters())) {
         if (param.startsWith("-J")) {
           String vmParam = StringUtil.trimStart(param, "-J");

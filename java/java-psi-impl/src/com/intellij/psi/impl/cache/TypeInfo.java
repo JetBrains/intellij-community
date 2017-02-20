@@ -58,7 +58,7 @@ public class TypeInfo {
       CommonClassNames.JAVA_LANG_STRING_SHORT, CommonClassNames.JAVA_LANG_STRING
     };
 
-    ourFrequentTypeIndex = new TObjectIntHashMap<String>();
+    ourFrequentTypeIndex = new TObjectIntHashMap<>();
     for (int i = 0; i < ourIndexFrequentType.length; i++) {
       ourFrequentTypeIndex.put(ourIndexFrequentType[i], i);
     }
@@ -93,7 +93,7 @@ public class TypeInfo {
       if (!(child instanceof PsiAnnotationStub)) continue;
       PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
       if (PsiImplUtil.isTypeAnnotation(annotationStub.getPsiElement())) {
-        if (annotationStubs == null) annotationStubs = new SmartList<PsiAnnotationStub>();
+        if (annotationStubs == null) annotationStubs = new SmartList<>();
         annotationStubs.add(annotationStub);
       }
     }

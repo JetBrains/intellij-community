@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -323,7 +324,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         final List<LightRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
                                                                                      psiElement,
                                                                                      myReader.getNameEnumerator(),
-                                                                                     LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
+                                                                                     LibraryScopeCache.getInstance(myProject)
+                                                                                       .getLibrariesOnlyScope());
         final LightRef[] fullHierarchy = new LightRef[elements.size() + 1];
         fullHierarchy[0] = ref;
         int i = 1;
@@ -335,6 +337,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       else {
         return new CompilerElementInfo(place, ref);
       }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     } finally {
       myReadDataLock.unlock();
     }

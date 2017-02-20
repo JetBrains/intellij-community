@@ -121,7 +121,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         @Override
         @NotNull
         public PsiElement[] getVariants() {
-          final List<PsiMethod> lst = new ArrayList<PsiMethod>();
+          final List<PsiMethod> lst = new ArrayList<>();
           for (PsiMethod method : methods) {
             if (name.equals(method.getName())) {
               lst.add(method);
@@ -136,14 +136,14 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   public static PsiVariable[] getAllVariables(PsiElement scope, PsiElement place) {
-    final SmartList<PsiVariable> result = new SmartList<PsiVariable>();
-    scope.processDeclarations(new FilterScopeProcessor<PsiVariable>(ElementClassFilter.VARIABLE, result), ResolveState.initial(), null, place);
+    final SmartList<PsiVariable> result = new SmartList<>();
+    scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.VARIABLE, result), ResolveState.initial(), null, place);
     return result.toArray(new PsiVariable[result.size()]);
   }
 
   public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
-    final SmartList<PsiMethod> result = new SmartList<PsiMethod>();
-    scope.processDeclarations(new FilterScopeProcessor<PsiMethod>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
+    final SmartList<PsiMethod> result = new SmartList<>();
+    scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
     return result.toArray(new PsiMethod[result.size()]);
   }
 
@@ -170,7 +170,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
     if (element == null) return null;
 
-    List<String> types = new ArrayList<String>();
+    List<String> types = new ArrayList<>();
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child.getNode().getElementType() == DOC_TYPE_HOLDER) {
         final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm method(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
@@ -248,7 +248,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     @Override
     @NotNull
     public PsiElement[] getVariants(){
-      final List<PsiModifierListOwner> vars = new ArrayList<PsiModifierListOwner>();
+      final List<PsiModifierListOwner> vars = new ArrayList<>();
       PsiClass scope = getScope();
       while (scope != null) {
         ContainerUtil.addAll(vars, getAllMethods(scope, PsiDocMethodOrFieldRef.this));
@@ -342,12 +342,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         if (hasSignature) {
           newText.append('(');
           PsiParameter[] parameters = method.getParameterList().getParameters();
-          newText.append(StringUtil.join(parameters, new Function<PsiParameter, String>() {
-            @Override
-            public String fun(PsiParameter parameter) {
-              return TypeConversionUtil.erasure(parameter.getType()).getCanonicalText();
-            }
-          }, ","));
+          newText.append(StringUtil.join(parameters, parameter -> TypeConversionUtil.erasure(parameter.getType()).getCanonicalText(), ","));
           newText.append(')');
         }
         newText.append("*/");

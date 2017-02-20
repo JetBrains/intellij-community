@@ -242,6 +242,22 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testUnfilledSentinelInBuiltinIter() {
+    doTest();
+  }
+
+  public void testUnfilledDefaultInBuiltinNext() {
+    doTest();
+  }
+
+  public void testUnfilledIter4InBuiltinZip() {
+    doTest();
+  }
+
+  public void testUnfilledIter2InBuiltinMap() {
+    doTest();
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 

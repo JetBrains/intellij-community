@@ -48,4 +48,11 @@ public class Main {
             System.out.println("In flatmap: "+l);
         })).count());
     }
+
+    void test(List<String> list) {
+        list.forEach(x -> {
+            if(x.isEmpty()) return;
+            System.out.println(x);
+        });
+    }
 }

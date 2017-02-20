@@ -165,7 +165,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
 
       List<PsiJavaModule> transitiveModules = StreamEx
         .of(dependencyModule.getRequires().iterator())
-        .filter(PsiRequiresStatement::isPublic)
+        .filter(statement -> statement.hasModifierProperty(PsiModifier.TRANSITIVE))
         .filter(requiresStatement -> !directDependencies.contains(requiresStatement.getModuleName()))
         .map(Java9RedundantRequiresStatementInspection::resolveRequiredModule)
         .nonNull()

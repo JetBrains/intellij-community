@@ -16,10 +16,12 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -103,23 +105,28 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myUseUserManifest.isSelected() && myManifest.getText() != null && !new File(myManifest.getText()).exists()){
+    if (myUseUserManifest.isSelected() && !new File(myManifest.getText()).exists()){
       throw new ConfigurationException(DevKitBundle.message("error.file.not.found.message", myManifest.getText()));
     }
     final File plugin = new File(myBuildProperties.getPluginXmlPath());
     final String newPluginPath = myPluginXML.getText() + File.separator + META_INF + File.separator + PLUGIN_XML;
-    if (plugin.exists() && !plugin.getPath().equals(newPluginPath) && 
-        Messages.showYesNoDialog(myModule.getProject(), DevKitBundle.message("deployment.view.delete", plugin.getPath()),
-                                 DevKitBundle.message("deployment.cleanup", META_INF), null) == Messages.YES) {
-
-      CommandProcessor.getInstance().executeCommand(myModule.getProject(),
-                                                    () -> FileUtil.delete(plugin.getParentFile()),
-                                                    DevKitBundle.message("deployment.cleanup", META_INF),
-                                                    null);
+    if (plugin.exists() && !plugin.getPath().equals(newPluginPath)) {
+      Project project = myModule.getProject();
+      // later because we're in a write action and can't show a dialog
+      ApplicationManager.getApplication().invokeLater(() -> askToDeleteOldPlugin(plugin, project), project.getDisposed());
     }
     myBuildProperties.setPluginXmlPathAndCreateDescriptorIfDoesntExist(newPluginPath);
     myBuildProperties.setManifestPath(myManifest.getText());
     myBuildProperties.setUseUserManifest(myUseUserManifest.isSelected());
+  }
+
+  protected void askToDeleteOldPlugin(File plugin, Project project) {
+    if (Messages.showYesNoDialog(project, DevKitBundle.message("deployment.view.delete", plugin.getPath()),
+                                 DevKitBundle.message("deployment.cleanup", META_INF), null) == Messages.YES) {
+      WriteCommandAction.writeCommandAction(project)
+        .withName(DevKitBundle.message("deployment.cleanup", META_INF))
+        .run(() -> FileUtil.delete(plugin.getParentFile()));
+    }
   }
 
   @Override

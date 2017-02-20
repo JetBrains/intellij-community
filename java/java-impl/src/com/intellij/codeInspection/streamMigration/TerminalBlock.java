@@ -216,7 +216,7 @@ class TerminalBlock {
         }
       }
       PsiExpression rValue = ExpressionUtils.getAssignmentTo(first, myVariable);
-      if(rValue != null) {
+      if(rValue != null && operations().allMatch(op -> op.canReassignVariable(myVariable))) {
         PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
         MapOp op = new MapOp(rValue, myVariable, myVariable.getType());
         return new TerminalBlock(this, op, myVariable, leftOver);

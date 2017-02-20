@@ -45,6 +45,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -587,13 +588,7 @@ public class TemplateState implements Disposable {
 
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
       Expression expressionNode = getCurrentExpression();
-      List<TemplateExpressionLookupElement> lookupItems;
-      try {
-        lookupItems = getCurrentExpressionLookupItems();
-      }
-      catch (IndexNotReadyException e) {
-        lookupItems = Collections.emptyList();
-      }
+      List<TemplateExpressionLookupElement> lookupItems = getCurrentExpressionLookupItems();
       final PsiFile psiFile = getPsiFile();
       if (!lookupItems.isEmpty()) {
         if (((TemplateManagerImpl)TemplateManager.getInstance(myProject)).shouldSkipInTests()) {
@@ -604,7 +599,7 @@ public class TemplateState implements Disposable {
             assert lookupItem != null : expressionNode;
           }
 
-          runLookup(lookupItems, expressionNode.getAdvertisingText());
+          AsyncEditorLoader.performWhenLoaded(myEditor, () -> runLookup(lookupItems, expressionNode.getAdvertisingText()));
         }
       }
       else {
@@ -635,7 +630,11 @@ public class TemplateState implements Disposable {
 
   @NotNull
   List<TemplateExpressionLookupElement> getCurrentExpressionLookupItems() {
-    LookupElement[] elements = getCurrentExpression().calculateLookupItems(getCurrentExpressionContext());
+    LookupElement[] elements = null;
+    try {
+      elements = getCurrentExpression().calculateLookupItems(getCurrentExpressionContext());
+    }
+    catch (IndexNotReadyException ignored) { }
     if (elements == null) return Collections.emptyList();
 
     List<TemplateExpressionLookupElement> result = ContainerUtil.newArrayList();

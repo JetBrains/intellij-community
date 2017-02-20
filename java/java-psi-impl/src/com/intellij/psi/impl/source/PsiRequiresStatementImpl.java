@@ -20,9 +20,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
   public PsiRequiresStatementImpl(@NotNull PsiRequiresStatementStub stub) {
@@ -33,37 +33,20 @@ public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStat
     super(node);
   }
 
-  @Nullable
   @Override
   public PsiJavaModuleReferenceElement getReferenceElement() {
     return PsiTreeUtil.getChildOfType(this, PsiJavaModuleReferenceElement.class);
   }
 
-  @Nullable
   @Override
   public String getModuleName() {
     PsiRequiresStatementStub stub = getGreenStub();
     if (stub != null) {
-      return stub.getModuleName();
+      return nullize(stub.getModuleName());
     }
     else {
       PsiJavaModuleReferenceElement refElement = getReferenceElement();
       return refElement != null ? refElement.getReferenceText() : null;
-    }
-  }
-
-  @Override
-  public boolean isPublic() {
-    PsiRequiresStatementStub stub = getGreenStub();
-    if (stub != null) {
-      return stub.isPublic();
-    }
-    else {
-      for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (PsiUtil.isJavaToken(child, JavaTokenType.PUBLIC_KEYWORD)) return true;
-        if (child instanceof PsiJavaModuleReferenceElement) break;
-      }
-      return false;
     }
   }
 

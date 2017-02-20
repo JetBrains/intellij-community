@@ -59,7 +59,7 @@ public interface PrePushHandler {
   String getPresentableName();
 
   /**
-   * Check synchronously if the push operation should be performed or canceled for specified {@link PushDetail}s
+   * Check synchronously if the push operation should be performed or canceled for specified {@link PushInfo}s
    * <p>
    * Note: it is permissible for a handler to show it's own modal dialogs with specifying
    * the supplied {@code indicator}'s {@link ProgressIndicator#getModalityState() modality} state.
@@ -70,6 +70,6 @@ public interface PrePushHandler {
    */
   @CalledInAny
   @NotNull
-  Result handle(@NotNull List<PushDetail> pushDetails, @NotNull ProgressIndicator indicator);
+  Result handle(@NotNull List<PushInfo> pushDetails, @NotNull ProgressIndicator indicator);
 
 }

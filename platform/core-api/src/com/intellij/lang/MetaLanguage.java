@@ -39,5 +39,5 @@ public abstract class MetaLanguage extends Language {
   /**
    * Checks if the given language matches the criterion of this meta-language.
    */
-  public abstract boolean matchesLanguage(Language language);
+  public abstract boolean matchesLanguage(@NotNull Language language);
 }

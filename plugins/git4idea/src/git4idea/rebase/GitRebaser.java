@@ -102,7 +102,7 @@ public class GitRebaser {
       return GitUpdateResult.CANCEL;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
   }
 
@@ -138,7 +138,7 @@ public class GitRebaser {
       return success;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
   }
 

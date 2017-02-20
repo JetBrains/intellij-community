@@ -17,7 +17,7 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 
-/*
+/**
  * @author max
  */
 public abstract class StubPsiFactory {
@@ -60,6 +60,14 @@ public abstract class StubPsiFactory {
   }
 
   public PsiPackageAccessibilityStatement createPackageAccessibilityStatement(PsiPackageAccessibilityStatementStub stub) {
+    return null;
+  }
+
+  public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
+    return null;
+  }
+
+  public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
     return null;
   }
 }

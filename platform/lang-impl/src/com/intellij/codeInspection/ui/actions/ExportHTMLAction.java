@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,9 +172,9 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       if (profileName != null) {
         element.setAttribute(InspectionApplication.PROFILE, profileName);
       }
-      JDOMUtil.writeParent(element,
-                             new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
-                             CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+      JDOMUtil.write(element,
+                     new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
+                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
     }
     catch (IOException e) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myView, e.getMessage()));

@@ -387,7 +387,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
     super.doOKAction();
   }

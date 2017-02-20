@@ -229,7 +229,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (methodName == null || !OPTIONAL_METHOD_NAMES.contains(methodName)) return Collections.emptyList();
     PsiMethod method = call.resolveMethod();
     if (method == null || !TypeUtils.isOptional(method.getContainingClass())) return Collections.emptyList();
-    List<DfaMemoryState> closures = ((DfaMemoryStateImpl)memState).getStackTopClosures();
+    List<DfaMemoryState> closures = runner.getStackTopClosures();
     DfaValue[] argValues = popCallArguments(instruction, runner, memState);
     final DfaValue qualifier = popQualifier(instruction, runner, memState);
     switch (methodName) {

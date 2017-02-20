@@ -35,7 +35,7 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
   @Override
   public List<T> computeAllTargets(@NotNull JpsModel model) {
     Collection<JpsArtifact> artifacts = JpsBuilderArtifactService.getInstance().getArtifacts(model, true);
-    List<T> targets = new ArrayList<T>(artifacts.size());
+    List<T> targets = new ArrayList<>(artifacts.size());
     for (JpsArtifact artifact : artifacts) {
       if (!StringUtil.isEmpty(artifact.getOutputPath())) {
         targets.add(createArtifactBasedTarget(artifact));
@@ -56,7 +56,7 @@ public abstract class ArtifactBasedBuildTargetType<T extends ArtifactBasedBuildT
     private final Map<String, JpsArtifact> myArtifacts;
 
     public Loader(JpsModel model) {
-      myArtifacts = new HashMap<String, JpsArtifact>();
+      myArtifacts = new HashMap<>();
       for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(model, true)) {
         myArtifacts.put(artifact.getName(), artifact);
       }

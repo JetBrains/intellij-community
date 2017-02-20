@@ -18,7 +18,7 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.*;
 
-/*
+/**
  * @author max
  */
 public class ClsStubPsiFactory extends StubPsiFactory {
@@ -112,5 +112,15 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   @Override
   public PsiPackageAccessibilityStatement createPackageAccessibilityStatement(PsiPackageAccessibilityStatementStub stub) {
     return new ClsPackageAccessibilityStatementImpl(stub);
+  }
+
+  @Override
+  public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
+    return new ClsUsesStatementImpl(stub);
+  }
+
+  @Override
+  public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
+    return new ClsProvidesStatementImpl(stub);
   }
 }

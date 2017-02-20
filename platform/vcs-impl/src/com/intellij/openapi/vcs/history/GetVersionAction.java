@@ -84,6 +84,10 @@ public class GetVersionAction extends AnAction implements DumbAware {
     VcsFileRevision revision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISION);
     FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
 
+    doGet(project, revision, filePath);
+  }
+
+  public static void doGet(@NotNull Project project, @NotNull VcsFileRevision revision, @NotNull FilePath filePath) {
     VirtualFile virtualFile = filePath.getVirtualFile();
     if (virtualFile != null) {
       ReplaceFileConfirmationDialog confirmationDialog =

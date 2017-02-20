@@ -107,14 +107,15 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
             isOnTheFly && (DO_NOT_HIGHLIGHT_LOOP || InspectionProjectProfileManager.isInformationLevel(getShortName(), loop));
           TextRange range;
           PsiJavaToken rParenth = loop.getRParenth();
+          PsiElement firstChild = loop.getFirstChild();
           if (wholeStatement && rParenth != null) {
             range = new TextRange(0, rParenth.getStartOffsetInParent() + 1);
           }
           else {
-            range = new TextRange(0, loop.getFirstChild().getTextLength());
+            range = new TextRange(0, firstChild.getTextLength());
           }
-          holder.registerProblem(loop.getFirstChild(), InspectionsBundle.message("inspection.map.foreach.message"),
-                                 type, range, new ReplaceWithMapForEachFix());
+          holder.registerProblem(new ProblemDescriptorBase(firstChild, firstChild, InspectionsBundle.message("inspection.map.foreach.message"),
+                                 new LocalQuickFix[]{new ReplaceWithMapForEachFix()}, type, false, range, type != ProblemHighlightType.INFORMATION, holder.isOnTheFly()));
         }
       }
     };
@@ -191,7 +192,7 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
       LambdaRefactoringUtil.simplifyToExpressionLambda(newLambda);
       entrySetCall.getArgumentList().add(newLambda);
       ExpressionUtils.bindCallTo(entrySetCall, "forEach");
-      return entrySetCall.getText();
+      return ct.text(entrySetCall);
     }
 
     private static void fixInForeach(PsiForeachStatement loop) {

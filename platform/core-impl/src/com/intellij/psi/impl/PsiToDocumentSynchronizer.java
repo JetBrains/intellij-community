@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -47,7 +46,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
 
   private final PsiDocumentManagerBase myPsiDocumentManager;
   private final MessageBus myBus;
-  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<Document, Pair<DocumentChangeTransaction, Integer>>();
+  private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new HashMap<>();
 
   private volatile Document mySyncDocument;
 
@@ -103,12 +102,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     final DocumentEx document = getCachedDocument(psiFile, force);
     if (document == null) return;
 
-    performAtomically(psiFile, new Runnable() {
-      @Override
-      public void run() {
-        syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event);
-      }
-    });
+    performAtomically(psiFile, () -> syncAction.syncDocument(document, (PsiTreeChangeEventImpl)event));
 
     final boolean insideTransaction = myTransactionsMap.containsKey(document);
     if (!insideTransaction) {
@@ -242,11 +236,11 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     Pair<DocumentChangeTransaction, Integer> pair = myTransactionsMap.get(doc);
     if (pair == null) {
       final PsiFile psiFile = scope.getContainingFile();
-      pair = new Pair<DocumentChangeTransaction, Integer>(new DocumentChangeTransaction(doc, psiFile), 0);
+      pair = new Pair<>(new DocumentChangeTransaction(doc, psiFile), 0);
       myBus.syncPublisher(PsiDocumentTransactionListener.TOPIC).transactionStarted(doc, psiFile);
     }
     else {
-      pair = new Pair<DocumentChangeTransaction, Integer>(pair.getFirst(), pair.getSecond().intValue() + 1);
+      pair = new Pair<>(pair.getFirst(), pair.getSecond().intValue() + 1);
     }
     myTransactionsMap.put(doc, pair);
   }
@@ -318,12 +312,8 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
   }
 
   public static class DocumentChangeTransaction{
-    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<TextRange, CharSequence>(new Comparator<TextRange>() {
-      @Override
-      public int compare(TextRange o1, TextRange o2) {
-        return o1.getStartOffset() - o2.getStartOffset();
-      }
-    });
+    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<>(
+      Comparator.comparingInt(TextRange::getStartOffset));
     private final PsiFile myChangeScope;
     private ImmutableCharSequence myPsiText;
 
@@ -430,12 +420,7 @@ public class PsiToDocumentSynchronizer extends PsiTreeChangeAdapter {
     }
 
     private TextRange findFragment(final int docOffset) {
-      return ContainerUtil.find(myAffectedFragments.keySet(), new Condition<TextRange>() {
-        @Override
-        public boolean value(TextRange range) {
-          return range.containsOffset(docOffset);
-        }
-      });
+      return ContainerUtil.find(myAffectedFragments.keySet(), range -> range.containsOffset(docOffset));
     }
 
     private int psiToDocumentOffset(int offset) {

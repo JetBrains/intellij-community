@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -23,7 +22,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -80,7 +78,8 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
   @Override
   public String getName() {
     SyntheticLibrary library = getLibrary();
-    return StringUtil.notNullize(library.getName());
+    //noinspection CastToIncompatibleInterface
+    return ((ItemPresentation)library).getPresentableText();
   }
 
   @NotNull
@@ -90,14 +89,8 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
 
   @Override
   protected void update(PresentationData presentation) {
-    ItemPresentation itemPresentation = ObjectUtils.tryCast(getLibrary(), ItemPresentation.class);
-    if (itemPresentation != null) {
-      presentation.updateFrom(itemPresentation);
-    }
-    else {
-      presentation.setPresentableText(getName());
-      presentation.setIcon(AllIcons.Nodes.PpLibFolder);
-    }
+    //noinspection CastToIncompatibleInterface
+    presentation.updateFrom((ItemPresentation)getLibrary());
   }
 
   @Nullable

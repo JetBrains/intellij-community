@@ -150,7 +150,7 @@ public class PropertyUtil {
   @NotNull
   public static Map<String, PsiMethod> getAllProperties(final boolean acceptSetters,
                                                         final boolean acceptGetters, PsiMethod[] methods) {
-    final Map<String, PsiMethod> map = new HashMap<String, PsiMethod>();
+    final Map<String, PsiMethod> map = new HashMap<>();
 
     for (PsiMethod method : methods) {
       if (filterMethods(method)) continue;
@@ -176,7 +176,7 @@ public class PropertyUtil {
   public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass, final String propertyName) {
     final String setterName = suggestSetterName(propertyName);
     final PsiMethod[] psiMethods = psiClass.findMethodsByName(setterName, true);
-    final ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(psiMethods.length);
+    final ArrayList<PsiMethod> list = new ArrayList<>(psiMethods.length);
     for (PsiMethod method : psiMethods) {
       if (filterMethods(method)) continue;
       if (isSimplePropertySetter(method)) {
@@ -189,7 +189,7 @@ public class PropertyUtil {
   @NotNull
   public static List<PsiMethod> getGetters(@NotNull final PsiClass psiClass, final String propertyName) {
     final String[] names = suggestGetterNames(propertyName);
-    final ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    final ArrayList<PsiMethod> list = new ArrayList<>();
     for (String name : names) {
       final PsiMethod[] psiMethods = psiClass.findMethodsByName(name, true);
       for (PsiMethod method : psiMethods) {
@@ -353,7 +353,7 @@ public class PropertyUtil {
 
   @NotNull
   public static String[] getReadableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     PsiMethod[] methods = includeSuperClass ? aClass.getAllMethods() : aClass.getMethods();
 
@@ -370,7 +370,7 @@ public class PropertyUtil {
 
   @NotNull
   public static String[] getWritableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     PsiMethod[] methods = includeSuperClass ? aClass.getAllMethods() : aClass.getMethods();
 

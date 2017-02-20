@@ -667,6 +667,9 @@ abstract class FunctionHelper {
 
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {
       super.transform(context, argumentValues);
+      if(!myBody.isValid()) {
+        myBody = ((PsiLambdaExpression)context.createExpression("()->"+myBody.getText())).getBody();
+      }
       List<PsiReturnStatement> returns = getReturns(myBody);
       String continueStatement = "continue;";
       returns.forEach(ret -> ret.replace(context.createStatement(continueStatement)));

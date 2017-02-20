@@ -32,8 +32,8 @@ import java.util.*;
 
 public class TreeChangeImpl implements TreeChange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.events.impl.TreeChangeImpl");
-  private final Map<ASTNode, ChangeInfo> myChanges = new THashMap<ASTNode, ChangeInfo>();
-  private final List<Pair<ASTNode,Integer>> mySortedChanges = new ArrayList<Pair<ASTNode, Integer>>(); // change, oldoffset
+  private final Map<ASTNode, ChangeInfo> myChanges = new THashMap<>();
+  private final List<Pair<ASTNode,Integer>> mySortedChanges = new ArrayList<>(); // change, oldoffset
   private final ASTNode myParent;
 
   @SuppressWarnings("FieldMayBeFinal")

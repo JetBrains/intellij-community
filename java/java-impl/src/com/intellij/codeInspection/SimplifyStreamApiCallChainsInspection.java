@@ -890,6 +890,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         .parameterCount(1);
     private static final CallMatcher INT_STREAM_RANGE =
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM, "range").parameterTypes("int", "int");
+    private static final CallMatcher MIN_INT =
+      CallMatcher.anyOf(
+        CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
+        CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"));
 
     private final String myName;
 
@@ -913,8 +917,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     public PsiElement simplify(PsiMethodCallExpression mapToObjCall) {
       Project project = mapToObjCall.getProject();
       PsiExpression mapper = ArrayUtil.getFirstElement(mapToObjCall.getArgumentList().getExpressions());
-      IndexedContainer container = extractContainer(getQualifierMethodCall(mapToObjCall), mapper);
-      if (container == null) return null;
+      LimitedContainer limitedContainer = extractContainer(getQualifierMethodCall(mapToObjCall), mapper);
+      if (limitedContainer == null) return null;
+      IndexedContainer container = limitedContainer.myContainer;
+      PsiExpression limit = limitedContainer.myLimit;
       PsiExpression containerQualifier = container.getQualifier();
       PsiType type = containerQualifier.getType();
       PsiType elementType = container.getElementType();
@@ -929,6 +935,9 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       }
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CommentTracker ct = new CommentTracker();
+      if (limit != null) {
+        replacement += ".limit(" + ct.text(limit) + ")";
+      }
       if (mapper instanceof PsiMethodReferenceExpression) {
         mapper = LambdaRefactoringUtil.convertMethodReferenceToLambda((PsiMethodReferenceExpression)mapper, false, true);
       }
@@ -975,22 +984,39 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(INT_STREAM_MAP, call -> {
         PsiExpression mapper = call.getArgumentList().getExpressions()[0];
-        IndexedContainer container = extractContainer(getQualifierMethodCall(call), mapper);
-        if (container == null) return null;
-        return new ReplaceWithElementIterationFix(container, call.getMethodExpression().getReferenceName());
+        LimitedContainer limitedContainer = extractContainer(getQualifierMethodCall(call), mapper);
+        if (limitedContainer == null) return null;
+        return new ReplaceWithElementIterationFix(limitedContainer.myContainer, call.getMethodExpression().getReferenceName());
       });
     }
 
     @Contract("null, _ -> null")
-    private static IndexedContainer extractContainer(PsiMethodCallExpression qualifierCall, PsiExpression mapper) {
+    private static LimitedContainer extractContainer(PsiMethodCallExpression qualifierCall, PsiExpression mapper) {
       if (!INT_STREAM_RANGE.test(qualifierCall)) return null;
       PsiExpression[] rangeArgs = qualifierCall.getArgumentList().getExpressions();
       if (!ExpressionUtils.isZero(rangeArgs[0])) return null;
-      PsiExpression bound = rangeArgs[1];
+      PsiExpression bound = ExpressionUtils.resolveExpression(rangeArgs[1]);
       IndexedContainer container = IndexedContainer.fromLengthExpression(bound);
-      if (container == null || !StreamApiUtil.isSupportedStreamElement(container.getElementType())) return null;
+      PsiExpression limit = null;
+      if (container == null) {
+        if(bound instanceof PsiMethodCallExpression && MIN_INT.test((PsiMethodCallExpression)bound)) {
+          PsiExpression[] args = ((PsiMethodCallExpression)bound).getArgumentList().getExpressions();
+          container = IndexedContainer.fromLengthExpression(args[0]);
+          if(container != null) {
+            limit = args[1];
+          } else {
+            container = IndexedContainer.fromLengthExpression(args[1]);
+            if(container != null) {
+              limit = args[0];
+            }
+          }
+        }
+        if(container == null) return null;
+      }
+      if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return null;
+      LimitedContainer limitedContainer = new LimitedContainer(container, limit);
       if (mapper instanceof PsiMethodReferenceExpression && container.isGetMethodReference((PsiMethodReferenceExpression)mapper)) {
-        return container;
+        return limitedContainer;
       }
       if (mapper instanceof PsiLambdaExpression) {
         PsiLambdaExpression lambda = (PsiLambdaExpression)mapper;
@@ -1001,11 +1027,22 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         if (body == null) return null;
         Collection<PsiReference> refs = ReferencesSearch.search(indexParameter, new LocalSearchScope(body)).findAll();
         if (!refs.isEmpty() &&
-            refs.stream().allMatch(ref -> container.extractGetExpressionFromIndex(tryCast(ref, PsiExpression.class)) != null)) {
-          return container;
+            refs.stream()
+              .allMatch(ref -> limitedContainer.myContainer.extractGetExpressionFromIndex(tryCast(ref, PsiExpression.class)) != null)) {
+          return limitedContainer;
         }
       }
       return null;
+    }
+
+    static class LimitedContainer {
+      @NotNull final IndexedContainer myContainer;
+      @Nullable final PsiExpression myLimit;
+
+      LimitedContainer(@NotNull IndexedContainer container, @Nullable PsiExpression limit) {
+        myContainer = container;
+        myLimit = limit;
+      }
     }
   }
 

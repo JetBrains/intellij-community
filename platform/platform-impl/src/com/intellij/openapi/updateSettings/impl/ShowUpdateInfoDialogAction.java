@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.JdomKt;
 
 import java.util.Collections;
 
@@ -32,11 +32,10 @@ public class ShowUpdateInfoDialogAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     try {
       myShowBigData = ! myShowBigData;
-      UpdateChannel channel = new UpdateChannel(JDOMUtil.loadDocument(getXML(myShowBigData)).getRootElement());
+      UpdateChannel channel = new UpdateChannel(JdomKt.loadElement(getXML(myShowBigData)));
       BuildInfo newBuild = channel.getBuilds().get(0);
       PatchInfo patchInfo = new PatchInfo(
-        JDOMUtil.loadDocument("<patch from=\"" + ApplicationInfo.getInstance().getBuild().asString() + "\" size=\"from 733 to 800\"/>")
-          .getRootElement());
+        JdomKt.loadElement("<patch from=\"" + ApplicationInfo.getInstance().getBuild().asString() + "\" size=\"from 733 to 800\"/>"));
       new UpdateInfoDialog(channel, newBuild, patchInfo, true, UpdateSettings.getInstance().canUseSecureConnection(),
                            Collections.emptyList(), Collections.emptyList()).show();
     }

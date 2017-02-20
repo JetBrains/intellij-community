@@ -308,6 +308,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/xslt-debugger-engine-impl.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" filepath="$PROJECT_DIR$/plugins/xpath/xslt-rt/xslt-rt.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/yaml.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/python/build/patches/python-community-plugin-build-patches.iml" filepath="$PROJECT_DIR$/python/build/patches/python-community-plugin-build-patches.iml" group="python" />
     </modules>
   </component>
 </project>

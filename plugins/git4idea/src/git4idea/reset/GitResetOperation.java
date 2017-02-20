@@ -98,7 +98,7 @@ public class GitResetOperation {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
     notifyResult(results);
   }

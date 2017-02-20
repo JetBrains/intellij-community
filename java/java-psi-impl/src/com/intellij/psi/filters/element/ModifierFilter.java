@@ -34,7 +34,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public class ModifierFilter extends ClassFilter{
-  public final List<ModifierRestriction> myModifierRestrictions = new ArrayList<ModifierRestriction>();
+  public final List<ModifierRestriction> myModifierRestrictions = new ArrayList<>();
 
   private ModifierFilter(){
     super(PsiModifierListOwner.class);

@@ -112,7 +112,7 @@ public class GitCherryPicker extends VcsCherryPicker {
       notifyResult(successfulCommits, alreadyPicked);
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
   }
 

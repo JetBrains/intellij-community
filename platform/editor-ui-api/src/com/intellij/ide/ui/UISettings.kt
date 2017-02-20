@@ -47,68 +47,23 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   // These font properties should not be set in the default ctor,
   // so that to make the serialization logic judge if a property
   // should be stored or shouldn't by the provided filter only.
-  @JvmField
-  @Property(filter = FontFilter::class) var FONT_FACE: String? = null
+  @get:Property(filter = FontFilter::class)
+  @get:OptionTag("FONT_FACE")
+  var fontFace by storedProperty<String?>()
 
-  @JvmField
-  @Property(filter = FontFilter::class) var FONT_SIZE: Int = 0
+  @get:Property(filter = FontFilter::class)
+  @get:OptionTag("FONT_SIZE")
+  var fontSize by storedProperty(0)
 
-  @Property(filter = FontFilter::class) private var FONT_SCALE: Float = 0.toFloat()
+  @get:Property(filter = FontFilter::class)
+  @get:OptionTag("FONT_SCALE")
+  private var fontScale by storedProperty(0f)
 
   @get:OptionTag("RECENT_FILES_LIMIT") var recentFilesLimit by storedProperty(50)
-
-  @JvmField var CONSOLE_COMMAND_HISTORY_LIMIT = 300
-  @JvmField var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
-  @JvmField var CONSOLE_CYCLE_BUFFER_SIZE_KB = 1024
-  @JvmField var EDITOR_TAB_LIMIT = 10
-
-  @Suppress("unused")
-  @Deprecated("Use hideToolStripes", replaceWith = ReplaceWith("hideToolStripes"))
-  @JvmField
-  @Transient
-  var HIDE_TOOL_STRIPES = true
-
-  @Suppress("unused")
-  @Deprecated("Use cycleScrolling", replaceWith = ReplaceWith("cycleScrolling"))
-  @JvmField
-  @Transient
-  var CYCLE_SCROLLING = true
-
-  @Suppress("unused")
-  @Deprecated("Use showMainToolbar", replaceWith = ReplaceWith("showMainToolbar"))
-  @JvmField
-  @Transient
-  var SHOW_MAIN_TOOLBAR = false
-
-  @Suppress("unused")
-  @Deprecated("Use showCloseButton", replaceWith = ReplaceWith("showCloseButton"))
-  @JvmField
-  @Transient
-  var SHOW_CLOSE_BUTTON = true
-
-  @Suppress("unused")
-  @Deprecated("Use editorAAType", replaceWith = ReplaceWith("editorAAType"))
-  @JvmField
-  @Transient
-  var EDITOR_AA_TYPE: AntialiasingType? = AntialiasingType.SUBPIXEL
-
-  @Suppress("unused")
-  @Deprecated("Use presentationMode", replaceWith = ReplaceWith("presentationMode"))
-  @JvmField
-  @Transient
-  var PRESENTATION_MODE = false
-
-  @Suppress("unused")
-  @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
-  @JvmField
-  @Transient
-  var OVERRIDE_NONIDEA_LAF_FONTS = false
-
-  @Suppress("unused")
-  @Deprecated("Use presentationModeFontSize", replaceWith = ReplaceWith("presentationModeFontSize"))
-  @JvmField
-  @Transient
-  var PRESENTATION_MODE_FONT_SIZE = 24
+  @get:OptionTag("CONSOLE_COMMAND_HISTORY_LIMIT") var consoleCommandHistoryLimit by storedProperty(300)
+  @get:OptionTag("OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE") var overrideConsoleCycleBufferSize by storedProperty(false)
+  @get:OptionTag("CONSOLE_CYCLE_BUFFER_SIZE_KB") var consoleCycleBufferSizeKb by storedProperty(1024)
+  @get:OptionTag("EDITOR_TAB_LIMIT") var editorTabLimit by storedProperty(10)
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS") var reuseNotModifiedTabs by storedProperty(false)
   @get:OptionTag("ANIMATE_WINDOWS") var animateWindows by storedProperty(true)
@@ -136,7 +91,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRigtEditorOnClose by storedProperty(false)
   @get:OptionTag("IDE_AA_TYPE") var ideAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @get:OptionTag("EDITOR_AA_TYPE") var editorAAType by storedProperty(AntialiasingType.SUBPIXEL)
-  @JvmField var COLOR_BLINDNESS: ColorBlindness? = null
+  @get:OptionTag("COLOR_BLINDNESS") var colorBlindness by storedProperty<ColorBlindness?>()
   @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON") var moveMouseOnDefaultButton by storedProperty(false)
   @get:OptionTag("ENABLE_ALPHA_MODE") var enableAlphaMode by storedProperty(false)
   @get:OptionTag("ALPHA_MODE_DELAY") var alphaModeDelay by storedProperty(1500)
@@ -160,16 +115,11 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by storedProperty(false)
 
+  @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by storedProperty(false)
+  @get:OptionTag("MERGE_EQUAL_STACKTRACES") var mergeEqualStackTraces by storedProperty(true)
+  @get:OptionTag("SORT_BOOKMARKS") var sortBookmarks by storedProperty(false)
+
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
-
-  @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY")
-  var sortLookupElementsLexicographically by storedProperty(false)
-
-  @get:OptionTag("MERGE_EQUAL_STACKTRACES")
-  var mergeEqualStackTraces by storedProperty(true)
-
-  @get:OptionTag("SORT_BOOKMARKS")
-  var sortBookmarks by storedProperty(false)
 
   init {
     tweakPlatformDefaults()
@@ -193,7 +143,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     }
   }
 
-
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Please use {@link UISettingsListener#TOPIC}")
   fun addUISettingsListener(listener: UISettingsListener, parentDisposable: Disposable) {
@@ -209,7 +158,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     // todo remove when all old properties will be converted
     incrementModificationCount()
 
-    IconLoader.setFilter(ColorBlindnessSupport.get(COLOR_BLINDNESS)?.filter)
+    IconLoader.setFilter(ColorBlindnessSupport.get(colorBlindness)?.filter)
 
     // if this is the main UISettings instance (and not on first call to getInstance) push event to bus and to all current components
     if (this === _instance) {
@@ -228,13 +177,19 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     PRESENTATION_MODE = presentationMode
     OVERRIDE_NONIDEA_LAF_FONTS = overrideLafFonts
     PRESENTATION_MODE_FONT_SIZE = presentationModeFontSize
+    CONSOLE_COMMAND_HISTORY_LIMIT = consoleCommandHistoryLimit
+    FONT_SIZE = fontSize
+    FONT_FACE = fontFace
+    EDITOR_TAB_LIMIT = editorTabLimit
+    OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = overrideConsoleCycleBufferSize
+    CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
   }
 
   private fun initDefFont() {
     val fontData = systemFontFaceAndSize
-    if (FONT_FACE == null) FONT_FACE = fontData.first
-    if (FONT_SIZE <= 0) FONT_SIZE = fontData.second
-    if (FONT_SCALE <= 0) FONT_SCALE = JBUI.scale(1f)
+    if (fontFace == null) fontFace = fontData.first
+    if (fontSize <= 0) fontSize = fontData.second
+    if (fontScale <= 0) fontScale = JBUI.scale(1f)
   }
 
   class FontFilter : SerializationFilter {
@@ -242,10 +197,10 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       val settings = bean as UISettings
       val fontData = systemFontFaceAndSize
       if ("FONT_FACE" == accessor.name) {
-        return fontData.first != settings.FONT_FACE
+        return fontData.first != settings.fontFace
       }
       // store only in pair
-      return !(fontData.second == settings.FONT_SIZE && 1f == settings.FONT_SCALE)
+      return !(fontData.second == settings.fontSize && 1f == settings.fontScale)
     }
   }
 
@@ -273,23 +228,23 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       alphaModeRatio = 0.5f
     }
 
-    if (FONT_SCALE <= 0) {
-      // Reset font to default on switch from IDEA-managed HiDPI to JDK-managed HiDPI. Doesn't affect OSX.
-      if (UIUtil.isJDKManagedHiDPI() && !SystemInfo.isMac) FONT_SIZE = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
+    if (fontScale <= 0) {
+      // Reset font to default on switch from IDEA-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
+      if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) fontSize = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
     }
     else {
-      FONT_SIZE = JBUI.scale(FONT_SIZE / FONT_SCALE).toInt()
+      fontSize = JBUI.scale(fontSize / fontScale).toInt()
     }
-    FONT_SCALE = JBUI.scale(1f)
+    fontScale = JBUI.scale(1f)
     initDefFont()
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
     // find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = isValidFont(Font(FONT_FACE, Font.PLAIN, FONT_SIZE))
+    var fontIsValid = isValidFont(Font(fontFace, Font.PLAIN, fontSize))
     if (!fontIsValid) {
       for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (isValidFont(Font(preferredFont, Font.PLAIN, FONT_SIZE))) {
-          FONT_FACE = preferredFont
+        if (isValidFont(Font(preferredFont, Font.PLAIN, fontSize))) {
+          fontFace = preferredFont
           fontIsValid = true
           break
         }
@@ -300,7 +255,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       if (!fontIsValid) {
         val fontNames = UIUtil.getValidFontNames(false)
         if (fontNames.isNotEmpty()) {
-          FONT_FACE = fontNames[0]
+          fontFace = fontNames[0]
         }
       }
     }
@@ -412,4 +367,90 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       instance.editorAAType?.let { component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, it.textInfo) }
     }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  @Suppress("unused")
+  @Deprecated("Use fontFace", replaceWith = ReplaceWith("fontFace"))
+  @JvmField
+  @Transient
+  var FONT_FACE: String? = null
+
+  @Suppress("unused")
+  @Deprecated("Use fontSize", replaceWith = ReplaceWith("fontSize"))
+  @JvmField
+  @Transient
+  var FONT_SIZE: Int? = 0
+
+  @Suppress("unused")
+  @Deprecated("Use hideToolStripes", replaceWith = ReplaceWith("hideToolStripes"))
+  @JvmField
+  @Transient
+  var HIDE_TOOL_STRIPES = true
+
+  @Suppress("unused")
+  @Deprecated("Use consoleCommandHistoryLimit", replaceWith = ReplaceWith("consoleCommandHistoryLimit"))
+  @JvmField
+  @Transient
+  var CONSOLE_COMMAND_HISTORY_LIMIT = 300
+
+  @Suppress("unused")
+  @Deprecated("Use cycleScrolling", replaceWith = ReplaceWith("cycleScrolling"))
+  @JvmField
+  @Transient
+  var CYCLE_SCROLLING = true
+
+  @Suppress("unused")
+  @Deprecated("Use showMainToolbar", replaceWith = ReplaceWith("showMainToolbar"))
+  @JvmField
+  @Transient
+  var SHOW_MAIN_TOOLBAR = false
+
+  @Suppress("unused")
+  @Deprecated("Use showCloseButton", replaceWith = ReplaceWith("showCloseButton"))
+  @JvmField
+  @Transient
+  var SHOW_CLOSE_BUTTON = true
+
+  @Suppress("unused")
+  @Deprecated("Use editorAAType", replaceWith = ReplaceWith("editorAAType"))
+  @JvmField
+  @Transient
+  var EDITOR_AA_TYPE: AntialiasingType? = AntialiasingType.SUBPIXEL
+
+  @Suppress("unused")
+  @Deprecated("Use presentationMode", replaceWith = ReplaceWith("presentationMode"))
+  @JvmField
+  @Transient
+  var PRESENTATION_MODE = false
+
+  @Suppress("unused")
+  @Deprecated("Use overrideLafFonts", replaceWith = ReplaceWith("overrideLafFonts"))
+  @JvmField
+  @Transient
+  var OVERRIDE_NONIDEA_LAF_FONTS = false
+
+  @Suppress("unused")
+  @Deprecated("Use presentationModeFontSize", replaceWith = ReplaceWith("presentationModeFontSize"))
+  @JvmField
+  @Transient
+  var PRESENTATION_MODE_FONT_SIZE = 24
+
+  @Suppress("unused")
+  @Deprecated("Use editorTabLimit", replaceWith = ReplaceWith("editorTabLimit"))
+  @JvmField
+  @Transient
+  var EDITOR_TAB_LIMIT = editorTabLimit
+
+  @Suppress("unused")
+  @Deprecated("Use overrideConsoleCycleBufferSize", replaceWith = ReplaceWith("overrideConsoleCycleBufferSize"))
+  @JvmField
+  @Transient
+  var OVERRIDE_CONSOLE_CYCLE_BUFFER_SIZE = false
+
+  @Suppress("unused")
+  @Deprecated("Use consoleCycleBufferSizeKb", replaceWith = ReplaceWith("consoleCycleBufferSizeKb"))
+  @JvmField
+  @Transient
+  var CONSOLE_CYCLE_BUFFER_SIZE_KB = consoleCycleBufferSizeKb
+  //</editor-fold>
 }

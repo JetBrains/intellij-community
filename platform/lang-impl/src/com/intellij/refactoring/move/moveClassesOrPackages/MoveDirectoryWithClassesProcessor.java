@@ -189,7 +189,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
       for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-        helper.postProcessUsages(usages, dir -> getResultDirectory(dir).getTargetDirectory());
+        helper.postProcessUsages(usages, dir -> getResultDirectory(dir).findOrCreateTargetDirectory());
       }
       for (PsiDirectory directory : myDirectories) {
         final TargetDirectoryWrapper wrapper = myNestedDirsToMove.get(directory);

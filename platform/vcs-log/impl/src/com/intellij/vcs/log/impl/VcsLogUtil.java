@@ -27,9 +27,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,5 +230,14 @@ public class VcsLogUtil {
     List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
     logProvider.readFullDetails(root, hashes, result::add);
     return result;
+  }
+
+  @NotNull
+  public static CommittedChangeListForRevision createCommittedChangeList(@NotNull VcsFullCommitDetails detail) {
+    return new CommittedChangeListForRevision(detail.getSubject(), detail.getFullMessage(),
+                                              VcsUserUtil.getShortPresentation(detail.getCommitter()),
+                                              new Date(detail.getCommitTime()),
+                                              detail.getChanges(),
+                                              convertToRevisionNumber(detail.getId()));
   }
 }

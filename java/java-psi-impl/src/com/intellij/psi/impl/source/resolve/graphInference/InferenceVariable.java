@@ -36,7 +36,7 @@ public class InferenceVariable extends LightTypeParameter {
   }
 
   private boolean myThrownBound;
-  private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
+  private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<>();
   private final String myName;
 
   private PsiType myInstantiation = PsiType.NULL;
@@ -59,7 +59,7 @@ public class InferenceVariable extends LightTypeParameter {
   @NotNull
   @Override
   public PsiClassType[] getExtendsListTypes() {
-    final List<PsiClassType> result = new ArrayList<PsiClassType>();
+    final List<PsiClassType> result = new ArrayList<>();
     for (PsiType type : getBounds(InferenceBound.UPPER)) {
       if (type instanceof PsiClassType) {
         result.add((PsiClassType)type);
@@ -91,7 +91,7 @@ public class InferenceVariable extends LightTypeParameter {
     }
     List<PsiType> bounds = myBounds.get(inferenceBound);
     if (bounds == null) {
-      bounds = new ArrayList<PsiType>();
+      bounds = new ArrayList<>();
       myBounds.put(inferenceBound, bounds);
     }
 
@@ -111,7 +111,7 @@ public class InferenceVariable extends LightTypeParameter {
 
   public List<PsiType> getBounds(InferenceBound inferenceBound) {
     final List<PsiType> bounds = myBounds.get(inferenceBound);
-    return bounds != null ? new ArrayList<PsiType>(bounds) : Collections.<PsiType>emptyList();
+    return bounds != null ? new ArrayList<>(bounds) : Collections.<PsiType>emptyList();
   }
 
   public List<PsiType> getReadOnlyBounds(InferenceBound inferenceBound) {
@@ -120,7 +120,7 @@ public class InferenceVariable extends LightTypeParameter {
   }
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {
-    final Set<InferenceVariable> dependencies = new LinkedHashSet<InferenceVariable>();
+    final Set<InferenceVariable> dependencies = new LinkedHashSet<>();
     collectBoundDependencies(session, dependencies);
     collectTransitiveDependencies(session, dependencies, dependencies);
     
@@ -144,7 +144,7 @@ public class InferenceVariable extends LightTypeParameter {
   private void collectTransitiveDependencies(InferenceSession session, 
                                              Set<InferenceVariable> dependencies,
                                              Set<InferenceVariable> rootDependencies) {
-    final LinkedHashSet<InferenceVariable> newDependencies = new LinkedHashSet<InferenceVariable>();
+    final LinkedHashSet<InferenceVariable> newDependencies = new LinkedHashSet<>();
 
     for (InferenceVariable dependency : dependencies) {
       dependency.collectBoundDependencies(session, newDependencies);

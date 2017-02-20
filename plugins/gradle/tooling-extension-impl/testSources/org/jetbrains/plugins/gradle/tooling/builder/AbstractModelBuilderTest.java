@@ -136,7 +136,8 @@ public abstract class AbstractModelBuilderTest {
 
     GradleConnector connector = GradleConnector.newConnector();
 
-    final URI distributionUri = new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion));
+    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
+    final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
     connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
     int daemonMaxIdleTime = 10;
@@ -149,7 +150,10 @@ public abstract class AbstractModelBuilderTest {
     ProjectConnection connection = connector.connect();
 
     try {
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false);
+      boolean isGradleProjectDirSupported = _gradleVersion.compareTo(GradleVersion.version("2.4")) >= 0;
+      boolean isCompositeBuildsSupported = isGradleProjectDirSupported && _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isGradleProjectDirSupported,
+                                                                              isCompositeBuildsSupported);
       projectImportAction.addExtraProjectModelClasses(getModels());
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());

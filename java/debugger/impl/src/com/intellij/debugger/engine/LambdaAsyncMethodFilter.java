@@ -82,7 +82,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
         return false;
       }
 
-      if (!DebuggerUtilsEx.isLambdaName(event.location().method().name())) {
+      if (!DebuggerUtilsEx.isLambda(event.location().method())) {
         return false;
       }
 

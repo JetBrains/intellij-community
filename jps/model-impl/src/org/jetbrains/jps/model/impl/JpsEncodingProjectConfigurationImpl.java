@@ -45,7 +45,7 @@ public class JpsEncodingProjectConfigurationImpl extends JpsElementBase<JpsEncod
   private static final Logger LOG = Logger.getInstance(JpsEncodingProjectConfigurationImpl.class);
   public static final JpsElementChildRole<JpsEncodingProjectConfiguration> ROLE = JpsElementChildRoleBase.create("encoding configuration");
   private static final String XML_NAME_SUFFIX = ".xml";
-  private final Map<String, String> myUrlToEncoding = new HashMap<String, String>();
+  private final Map<String, String> myUrlToEncoding = new HashMap<>();
   private final String myProjectEncoding;
 
   public JpsEncodingProjectConfigurationImpl(Map<String, String> urlToEncoding, String projectEncoding) {

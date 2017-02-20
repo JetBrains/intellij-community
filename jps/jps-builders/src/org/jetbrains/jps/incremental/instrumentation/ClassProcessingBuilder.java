@@ -86,7 +86,7 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
       InstrumentationClassFinder finder = CLASS_FINDER.get(context); // try using shared finder
       if (finder == null) {
         final Collection<File> platformCp = ProjectPaths.getPlatformCompilationClasspath(chunk, false);
-        final Collection<File> classpath = new ArrayList<File>();
+        final Collection<File> classpath = new ArrayList<>();
         classpath.addAll(ProjectPaths.getCompilationClasspath(chunk, false));
         classpath.addAll(ProjectPaths.getSourceRootsWithDependents(chunk).keySet());
         final JpsSdk<JpsDummyElement> sdk = chunk.representativeTarget().getModule().getSdk(JpsJavaSdkType.INSTANCE);
@@ -154,7 +154,7 @@ public abstract class ClassProcessingBuilder extends ModuleLevelBuilder {
   }
 
   public static int getClassFileVersion(ClassReader reader) {
-    final Ref<Integer> result = new Ref<Integer>(0);
+    final Ref<Integer> result = new Ref<>(0);
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         result.set(version);

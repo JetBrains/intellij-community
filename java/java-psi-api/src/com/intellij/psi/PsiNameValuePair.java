@@ -33,13 +33,7 @@ public interface PsiNameValuePair extends PsiElement {
    */
   PsiNameValuePair[] EMPTY_ARRAY = new PsiNameValuePair[0];
 
-  ArrayFactory<PsiNameValuePair> ARRAY_FACTORY = new ArrayFactory<PsiNameValuePair>() {
-    @NotNull
-    @Override
-    public PsiNameValuePair[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiNameValuePair[count];
-    }
-  };
+  ArrayFactory<PsiNameValuePair> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiNameValuePair[count];
 
   /**
    * Returns the identifier specifying the name of the element.

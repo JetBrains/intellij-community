@@ -455,7 +455,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       
       try {
         if (!transparent()) {
-          g.setColor(getEditor().getColorsScheme().getDefaultBackground());
+          g.setColor(myEditor.getBackgroundColor());
           Rectangle bounds = getBounds();
           g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
         }
@@ -479,7 +479,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
   
   private boolean transparent() {
-    return !myEditor.shouldScrollBarBeOpaque() && EditorUtil.isRealFileEditor(myEditor);
+    return !myEditor.shouldScrollBarBeOpaque();
   }
 
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
@@ -677,7 +677,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
       }
       else {
-        g.setColor(getEditor().getColorsScheme().getDefaultBackground());
+        g.setColor(myEditor.getBackgroundColor());
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
     }
@@ -1353,7 +1353,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myEditorPreviewHint.setForceLightweightPopup(true);
       }
       Point point = new Point(hintInfo.getOriginalPoint());
-      hintInfo.setTextBg(myEditor.getColorsScheme().getDefaultBackground());
+      hintInfo.setTextBg(myEditor.getBackgroundColor());
       hintInfo.setBorderColor(myEditor.getColorsScheme().getDefaultForeground());
       point = SwingUtilities.convertPoint(((EditorImpl)editor).getVerticalScrollBar(), point, myEditor.getComponent().getRootPane());
       myPointHolder.set(point);

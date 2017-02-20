@@ -85,7 +85,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
         final PsiConflictResolver conflictResolver = createResolver(reference, qualifierResolveResult, interfaceMethod, signature);
         final MethodCandidatesProcessor processor =
-          new MethodCandidatesProcessor(reference, containingFile, new PsiConflictResolver[] {conflictResolver}, new SmartList<CandidateInfo>()) {
+          new MethodCandidatesProcessor(reference, containingFile, new PsiConflictResolver[] {conflictResolver}, new SmartList<>()) {
             @Override
             protected boolean acceptVarargs() {
               return true;
@@ -239,8 +239,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       final PsiType[] argTypes = mySignature.getParameterTypes();
       boolean hasReceiver = PsiMethodReferenceUtil.isSecondSearchPossible(argTypes, myQualifierResolveResult, myReferenceExpression);
 
-      final List<CandidateInfo> firstCandidates = new ArrayList<CandidateInfo>();
-      final List<CandidateInfo> secondCandidates = new ArrayList<CandidateInfo>();
+      final List<CandidateInfo> firstCandidates = new ArrayList<>();
+      final List<CandidateInfo> secondCandidates = new ArrayList<>();
 
       for (CandidateInfo conflict : conflicts) {
         if (!(conflict instanceof MethodCandidateInfo)) continue;

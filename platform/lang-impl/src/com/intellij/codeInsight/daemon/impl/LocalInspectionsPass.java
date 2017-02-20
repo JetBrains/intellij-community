@@ -355,22 +355,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                               .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
                               .description(message)
                               .severity(severity);
-    boolean invisible = HighlightSeverity.INFORMATION.equals(severity);
-    if (toolTip != null && !invisible) b.escapedToolTip(toolTip);
+    if (toolTip != null) b.escapedToolTip(toolTip);
     if (attributes != null) b.textAttributes(attributes);
     if (problemDescriptor.isAfterEndOfLine()) b.endOfLine();
     if (isFileLevel) b.fileLevelAnnotation();
     if (problemDescriptor.getProblemGroup() != null) b.problemGroup(problemDescriptor.getProblemGroup());
-    if (!invisible) return b.create();
 
-    HighlightInfo info = b.createUnconditionally();
-    for (HighlightInfoFilter filter : HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions()) {
-      if (!(filter instanceof HighlightInfoFilterImpl) && !filter.accept(info, myFile)) {
-        return null;
-      }
-    }
-    info.psiElement = psiElement;
-    return info;
+    return b.create();
   }
 
   private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>();

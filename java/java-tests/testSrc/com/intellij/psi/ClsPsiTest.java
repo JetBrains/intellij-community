@@ -32,7 +32,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.util.GCUtil;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.FileBasedIndex;
 

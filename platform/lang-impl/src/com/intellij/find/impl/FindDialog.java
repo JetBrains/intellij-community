@@ -607,7 +607,8 @@ public class FindDialog extends DialogWrapper implements FindUI {
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
-      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
+      myCbToSkipResultsWhenOneUsage = createCheckbox(myHelper.isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.occurrence.checkbox"));
+      myCbToSkipResultsWhenOneUsage.addActionListener(e -> myHelper.setSkipResultsWithOneUsage(myCbToSkipResultsWhenOneUsage.isSelected()));
       resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
       resultsOptionPanel.add(myCbToSkipResultsWhenOneUsage);
 
@@ -672,8 +673,9 @@ public class FindDialog extends DialogWrapper implements FindUI {
     if (myHelper.getModel().isOpenInNewTabVisible()){
       myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
       myCbToOpenInNewTab.setFocusable(false);
-      myCbToOpenInNewTab.setSelected(myHelper.getModel().isOpenInNewTab());
+      myCbToOpenInNewTab.setSelected(myHelper.isUseSeparateView());
       myCbToOpenInNewTab.setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
+      myCbToOpenInNewTab.addActionListener(e -> myHelper.setUseSeparateView(myCbToOpenInNewTab.isSelected()));
 
       if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
       resultsOptionPanel.add(myCbToOpenInNewTab);
@@ -778,7 +780,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
     if (validationInfo == null) {
       myHelper.getModel().copyFrom(validateModel);
-      updateFindSettings();
+      myHelper.updateFindSettings();
 
       rememberResultsPreviewWasOpen();
       super.doOKAction();
@@ -793,51 +795,6 @@ public class FindDialog extends DialogWrapper implements FindUI {
         Messages.getErrorIcon()
       );
     }
-  }
-
-  private void updateFindSettings() {
-    FindModel myModel = myHelper.getModel();
-    FindSettings findSettings = FindSettings.getInstance();
-    findSettings.setCaseSensitive(myModel.isCaseSensitive());
-    if (myModel.isReplaceState()) {
-      findSettings.setPreserveCase(myModel.isPreserveCase());
-    }
-
-    findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
-    boolean saveContextBetweenRestarts = false;
-    findSettings.setInStringLiteralsOnly(saveContextBetweenRestarts && myModel.isInStringLiteralsOnly());
-    findSettings.setInCommentsOnly(saveContextBetweenRestarts && myModel.isInCommentsOnly());
-    findSettings.setExceptComments(saveContextBetweenRestarts && myModel.isExceptComments());
-    findSettings.setExceptStringLiterals(saveContextBetweenRestarts && myModel.isExceptStringLiterals());
-    findSettings.setExceptCommentsAndLiterals(saveContextBetweenRestarts && myModel.isExceptCommentsAndStringLiterals());
-
-    findSettings.setRegularExpressions(myModel.isRegularExpressions());
-    if (!myModel.isMultipleFiles()){
-      findSettings.setForward(myModel.isForward());
-      findSettings.setFromCursor(myModel.isFromCursor());
-
-      findSettings.setGlobal(myModel.isGlobal());
-    } else{
-      String directoryName = myModel.getDirectoryName();
-      if (directoryName != null && !directoryName.isEmpty()) {
-        findSettings.setWithSubdirectories(myModel.isWithSubdirectories());
-      }
-      else if (myRbModule.isSelected()) {
-      }
-      else if (myRbCustomScope.isSelected()) {
-        SearchScope selectedScope = myScopeCombo.getSelectedScope();
-        String customScopeName = selectedScope == null ? null : selectedScope.getDisplayName();
-        findSettings.setCustomScope(customScopeName);
-      }
-    }
-
-    if (myCbToSkipResultsWhenOneUsage != null){
-      findSettings.setSkipResultsWithOneUsage(
-        isSkipResultsWhenOneUsage()
-      );
-    }
-
-    findSettings.setFileMask(myModel.getFileFilter());
   }
 
   @Nullable("null means OK")
@@ -910,10 +867,6 @@ public class FindDialog extends DialogWrapper implements FindUI {
                 ? myModel.isMultipleFiles() ? HelpID.REPLACE_IN_PATH : HelpID.REPLACE_OPTIONS
                 : myModel.isMultipleFiles() ? HelpID.FIND_IN_PATH : HelpID.FIND_OPTIONS;
     HelpManager.getInstance().invokeHelp(id);
-  }
-
-  private boolean isSkipResultsWhenOneUsage() {
-    return myCbToSkipResultsWhenOneUsage!=null && myCbToSkipResultsWhenOneUsage.isSelected();
   }
 
   @NotNull
@@ -1710,7 +1663,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
       myOmitFileExtension = omitFileExtension;
       myUseBold = useBold;
       setLayout(new BorderLayout());
-      add(myUsageRenderer, BorderLayout.WEST);
+      add(myUsageRenderer, BorderLayout.CENTER);
       add(myFileAndLineNumber, BorderLayout.EAST);
       setBorder(IdeBorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, 0));
     }

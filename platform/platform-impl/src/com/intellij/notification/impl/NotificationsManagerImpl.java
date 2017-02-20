@@ -449,7 +449,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     LinkLabel<Void> expandAction = null;
 
     int lines = 3;
-    if (notification.isTitle()) {
+    if (notification.hasTitle()) {
       lines--;
     }
     if (actions) {
@@ -564,7 +564,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     };
     content.add(centerPanel, BorderLayout.CENTER);
 
-    if (notification.isTitle()) {
+    if (notification.hasTitle()) {
       String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
       String titleR = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundR, null);
       String titleD = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundD, null);
@@ -582,7 +582,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       centerPanel.add(expandAction, BorderLayout.EAST);
     }
 
-    if (notification.isContent()) {
+    if (notification.hasContent()) {
       centerPanel.add(layoutData.welcomeScreen ? text : pane, BorderLayout.CENTER);
     }
 

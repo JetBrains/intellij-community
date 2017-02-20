@@ -136,6 +136,6 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
   }
 
   private fun readFullDetails(hashes: List<String>): List<VcsFullCommitDetails> =
-    GitTestUtil.findGitLogProvider(myProject).readFullDetails(myProjectRoot, hashes)
+    findGitLogProvider(myProject).readFullDetails(myProjectRoot, hashes)
 
 }

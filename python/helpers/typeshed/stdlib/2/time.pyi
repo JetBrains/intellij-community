@@ -20,7 +20,7 @@ class struct_time(NamedTuple('_struct_time',
 
 _TIME_TUPLE = Tuple[int, int, int, int, int, int, int, int, int]
 
-def asctime(t: struct_time = ...) -> str:
+def asctime(t: Union[struct_time, _TIME_TUPLE] = ...) -> str:
     raise ValueError()
 
 def clock() -> float: ...
@@ -38,7 +38,7 @@ def mktime(t: struct_time) -> float:
 
 def sleep(secs: float) -> None: ...
 
-def strftime(format: str, t: struct_time = ...) -> str:
+def strftime(format: str, t: Union[struct_time, _TIME_TUPLE] = ...) -> str:
     raise MemoryError()
     raise ValueError()
 

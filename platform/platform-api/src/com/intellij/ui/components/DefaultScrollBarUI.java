@@ -71,7 +71,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   private int myOldValue;
 
   DefaultScrollBarUI() {
-    this(13, 14, 10);
+    this(Registry.is("ide.scroll.thumb.small.if.opaque") ? 13 : 10, 14, 10);
   }
 
   DefaultScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
@@ -127,7 +127,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.DARCULA : ScrollPainter.Thumb.DEFAULT;
-    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
+    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
   }
 
   void onThumbMove() {
@@ -195,6 +195,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     myScrollBar = (JScrollBar)c;
     ScrollColorProducer.setBackground(c);
     ScrollColorProducer.setForeground(c);
+    myScrollBar.setOpaque(false);
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
     myScrollBar.addMouseMotionListener(myListener);

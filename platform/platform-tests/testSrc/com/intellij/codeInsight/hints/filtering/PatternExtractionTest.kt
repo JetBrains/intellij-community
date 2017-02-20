@@ -31,6 +31,16 @@ class PatternExtractionTest : TestCase() {
     assertThat(nameMatcher).isEqualTo(matcher.first)
     assertThat(paramsMatcher).isEqualTo(matcher.second)
   }
+  
+  fun String.assertError() {
+    val matcher = MatcherConstructor.extract(this)
+    assertThat(matcher).isNull()
+  }
+  
+  fun `test error when no closing brace`() {
+    val text = "Test.foo(paramName"
+    text.assertError()
+  }
 
   fun `test match all methods from package`() {
     val text = "java.lang.*"

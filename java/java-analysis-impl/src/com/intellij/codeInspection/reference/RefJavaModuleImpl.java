@@ -91,7 +91,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
             PsiJavaModule requiredModule = (PsiJavaModule)element;
             Map<String, List<String>> packagesExportedByModule = getPackagesExportedByModule(requiredModule);
             if (myRequiredModules == null) myRequiredModules = new ArrayList<>(1);
-            myRequiredModules.add(new RequiredModule(requiredModule.getName(), packagesExportedByModule, statement.isPublic()));
+            myRequiredModules.add(new RequiredModule(requiredModule.getName(), packagesExportedByModule, statement.hasModifierProperty(PsiModifier.TRANSITIVE)));
           }
         }
       }

@@ -27,7 +27,7 @@ PY2 = True
 PY3 = False
 PY34 = False
 
-string_types = basestring,
+string_types = (str, unicode)
 integer_types = (int, long)
 class_types = (type, types.ClassType)
 text_type = unicode

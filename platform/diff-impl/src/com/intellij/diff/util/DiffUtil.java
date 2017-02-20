@@ -25,6 +25,7 @@ import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DiffPsiFileSupport;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.fragments.DiffFragment;
@@ -97,10 +98,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -233,6 +231,14 @@ public class DiffUtil {
       return ((EditorEx)editor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_LEFT;
     }
     return false;
+  }
+
+  @Contract("null, _ -> false; _, null -> false")
+  public static boolean canNavigateToFile(@Nullable Project project, @Nullable VirtualFile file) {
+    if (project == null || project.isDefault()) return false;
+    if (file == null || !file.isValid()) return false;
+    if (DiffPsiFileSupport.isDiffFile(file)) return false;
+    return true;
   }
 
   //
@@ -600,28 +606,30 @@ public class DiffUtil {
   public static TwosideTextDiffProvider createTextDiffProvider(@Nullable Project project,
                                                                @NotNull ContentDiffRequest request,
                                                                @NotNull TextDiffSettings settings,
-                                                               @NotNull Runnable rediff) {
+                                                               @NotNull Runnable rediff,
+                                                               @NotNull Disposable disposable) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
-    if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, diffComputer);
+    if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, disposable, diffComputer);
 
-    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff);
+    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff, disposable);
     if (smartProvider != null) return smartProvider;
 
-    return new SimpleTextDiffProvider(settings, rediff);
+    return new SimpleTextDiffProvider(settings, rediff, disposable);
   }
 
   @NotNull
   public static TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@Nullable Project project,
                                                                                 @NotNull ContentDiffRequest request,
                                                                                 @NotNull TextDiffSettings settings,
-                                                                                @NotNull Runnable rediff) {
+                                                                                @NotNull Runnable rediff,
+                                                                                @NotNull Disposable disposable) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
-    if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, diffComputer);
+    if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable, diffComputer);
 
-    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff);
+    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff, disposable);
     if (smartProvider != null) return smartProvider;
 
-    return new SimpleTextDiffProvider.NoIgnore(settings, rediff);
+    return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable);
   }
 
   @Nullable

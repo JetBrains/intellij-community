@@ -34,8 +34,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class PsiTypesUtil {
-  @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<String, String>();
-  @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<String, String>();
+  @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<>();
+  @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<>();
 
   static {
     ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
@@ -338,7 +338,7 @@ public class PsiTypesUtil {
                                                               final PsiTypeParameter[] typeParameters) {
     if (typeParameters.length == 0) return typeParameters;
 
-    final Set<PsiTypeParameter> usedParameters = new HashSet<PsiTypeParameter>();
+    final Set<PsiTypeParameter> usedParameters = new HashSet<>();
     superReturnTypeInBaseClassType.accept(new PsiTypeVisitor<Object>(){
       @Nullable
       @Override

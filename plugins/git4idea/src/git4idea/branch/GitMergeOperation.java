@@ -144,7 +144,7 @@ class GitMergeOperation extends GitBranchOperation {
       restoreLocalChanges();
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
   }
 

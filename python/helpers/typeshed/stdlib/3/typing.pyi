@@ -2,7 +2,6 @@
 
 import sys
 from abc import abstractmethod, ABCMeta
-from types import CodeType, FrameType
 
 # Definitions of special type checking related constructs.  Their definition
 # are not used, so their value does not matter.
@@ -33,6 +32,10 @@ List = TypeAlias(object)
 Dict = TypeAlias(object)
 DefaultDict = TypeAlias(object)
 Set = TypeAlias(object)
+Counter = TypeAlias(object)
+Deque = TypeAlias(object)
+if sys.version_info >= (3, 3):
+    ChainMap = TypeAlias(object)
 
 # Predefined type variables.
 AnyStr = TypeVar('AnyStr', str, bytes)
@@ -116,11 +119,6 @@ class Generator(Iterator[_T_co], Generic[_T_co, _T_contra, _V_co]):
     @abstractmethod
     def __iter__(self) -> 'Generator[_T_co, _T_contra, _V_co]': ...
 
-    gi_code = ...  # type: CodeType
-    gi_frame = ...  # type: FrameType
-    gi_running = ...  # type: bool
-    gi_yieldfrom = ...  # type: Optional[Generator]
-
 # TODO: Several types should only be defined if sys.python_version >= (3, 5):
 # Awaitable, AsyncIterator, AsyncIterable, Coroutine, Collection, ContextManager.
 # See https: //github.com/python/typeshed/issues/655 for why this is not easy.
@@ -175,11 +173,6 @@ if sys.version_info >= (3, 6):
 
         @abstractmethod
         def __aiter__(self) -> 'AsyncGenerator[_T_co, _T_contra]': ...
-
-        ag_await = ...  # type: Any
-        ag_code = ...  # type: CodeType
-        ag_frame = ...  # type: FrameType
-        ag_running = ...  # type: bool
 
 class Container(Generic[_T_co]):
     @abstractmethod
@@ -343,7 +336,7 @@ class IO(Iterator[AnyStr], Generic[AnyStr]):
     @abstractmethod
     def readline(self, limit: int = ...) -> AnyStr: ...
     @abstractmethod
-    def readlines(self, hint: int = ...) -> List[AnyStr]: ...
+    def readlines(self, hint: int = ...) -> list[AnyStr]: ...
     @abstractmethod
     def seek(self, offset: int, whence: int = ...) -> int: ...
     @abstractmethod
@@ -428,10 +421,12 @@ class Match(Generic[AnyStr]):
               *groups: str) -> Sequence[AnyStr]: ...
 
     def groups(self, default: AnyStr = ...) -> Sequence[AnyStr]: ...
-    def groupdict(self, default: AnyStr = ...) -> Dict[str, AnyStr]: ...
+    def groupdict(self, default: AnyStr = ...) -> dict[str, AnyStr]: ...
     def start(self, group: Union[int, str] = ...) -> int: ...
     def end(self, group: Union[int, str] = ...) -> int: ...
     def span(self, group: Union[int, str] = ...) -> Tuple[int, int]: ...
+    if sys.version_info >= (3, 6):
+        def __getitem__(self, g: Union[int, str]) -> AnyStr: ...
 
 class Pattern(Generic[AnyStr]):
     flags = 0
@@ -446,9 +441,9 @@ class Pattern(Generic[AnyStr]):
     # New in Python 3.4
     def fullmatch(self, string: AnyStr, pos: int = ...,
                   endpos: int = ...) -> Optional[Match[AnyStr]]: ...
-    def split(self, string: AnyStr, maxsplit: int = ...) -> List[AnyStr]: ...
+    def split(self, string: AnyStr, maxsplit: int = ...) -> list[AnyStr]: ...
     def findall(self, string: AnyStr, pos: int = ...,
-                endpos: int = ...) -> List[Any]: ...
+                endpos: int = ...) -> list[Any]: ...
     def finditer(self, string: AnyStr, pos: int = ...,
                  endpos: int = ...) -> Iterator[Match[AnyStr]]: ...
 
@@ -468,7 +463,7 @@ class Pattern(Generic[AnyStr]):
 
 # Functions
 
-def get_type_hints(obj: Callable) -> Dict[str, Any]: ...
+def get_type_hints(obj: Callable) -> dict[str, Any]: ...
 
 def cast(tp: Type[_T], obj: Any) -> _T: ...
 

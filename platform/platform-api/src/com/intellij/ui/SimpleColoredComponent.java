@@ -872,7 +872,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     for (final Object[] info : searchMatches) {
       float x1 = (float)info[0];
       float x2 = (float)info[1];
-      UIUtil.drawSearchMatch(g, (int)x1, (int)x2, getHeight());
+      UIUtil.drawSearchMatch(g, x1, x2, getHeight());
       g.setFont((Font)info[4]);
 
       float baseline = (float)info[2];

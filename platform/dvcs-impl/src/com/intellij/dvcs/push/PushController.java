@@ -524,7 +524,7 @@ public class PushController implements Disposable {
   @CalledInAny
   public PrePushHandler.Result executeHandlers(@NotNull ProgressIndicator indicator) throws ProcessCanceledException, HandlerException {
     if (myHandlers.isEmpty()) return PrePushHandler.Result.OK;
-    List<PushDetail> pushDetails = preparePushDetails();
+    List<PushInfo> pushDetails = preparePushDetails();
     StepsProgressIndicator stepsIndicator = new StepsProgressIndicator(indicator, myHandlers.size());
     stepsIndicator.setIndeterminate(false);
     stepsIndicator.setFraction(0);
@@ -588,8 +588,8 @@ public class PushController implements Disposable {
   }
 
   @NotNull
-  private List<PushDetail> preparePushDetails() {
-    List<PushDetail> allDetails = ContainerUtil.newArrayList();
+  private List<PushInfo> preparePushDetails() {
+    List<PushInfo> allDetails = ContainerUtil.newArrayList();
     Collection<MyRepoModel<?, ?, ?>> repoModels = getSelectedRepoNode();
 
     for (MyRepoModel<?, ?, ?> model : repoModels) {
@@ -608,7 +608,7 @@ public class PushController implements Disposable {
 
       //sort commits in the time-ascending order
       Collections.reverse(loadedCommits);
-      allDetails.add(new PushDetailImpl(model.getRepository(), pushSpec, loadedCommits));
+      allDetails.add(new PushInfoImpl(model.getRepository(), pushSpec, loadedCommits));
     }
     return Collections.unmodifiableList(allDetails);
   }
@@ -736,15 +736,15 @@ public class PushController implements Disposable {
     }) ? commonTarget : null;
   }
 
-  private static class PushDetailImpl implements PushDetail {
+  private static class PushInfoImpl implements PushInfo {
 
     private final Repository myRepository;
     private final PushSpec<PushSource, PushTarget> myPushSpec;
     private final List<VcsFullCommitDetails> myCommits;
 
-    private PushDetailImpl(@NotNull Repository repository,
-                           @NotNull PushSpec<PushSource, PushTarget> spec,
-                           @NotNull List<VcsFullCommitDetails> commits) {
+    private PushInfoImpl(@NotNull Repository repository,
+                         @NotNull PushSpec<PushSource, PushTarget> spec,
+                         @NotNull List<VcsFullCommitDetails> commits) {
       myRepository = repository;
       myPushSpec = spec;
       myCommits = commits;
@@ -752,19 +752,19 @@ public class PushController implements Disposable {
 
     @NotNull
     @Override
-    public Repository repository() {
+    public Repository getRepository() {
       return myRepository;
     }
 
     @NotNull
     @Override
-    public PushSpec<PushSource, PushTarget> pushSpec() {
+    public PushSpec<PushSource, PushTarget> getPushSpec() {
       return myPushSpec;
     }
 
     @NotNull
     @Override
-    public List<VcsFullCommitDetails> commits() {
+    public List<VcsFullCommitDetails> getCommits() {
       return myCommits;
     }
   }

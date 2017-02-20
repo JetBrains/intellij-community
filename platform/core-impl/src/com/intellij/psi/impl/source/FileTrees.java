@@ -68,15 +68,13 @@ final class FileTrees {
   }
 
   FileTrees withExclusiveStub(@NotNull StubTree stub) {
-    assert derefTreeElement() == null;
-    assert !useStrongRefs;
-    return new FileTrees(new SoftReference<StubTree>(stub), null, false, false);
+    assert derefTreeElement() == null && !useStrongRefs : this;
+    return new FileTrees(new SoftReference<>(stub), null, false, false);
   }
 
   FileTrees withGreenStub(@NotNull StubTree stub) {
-    assert derefTreeElement() != null;
-    assert astLoaded;
-    return new FileTrees(new SoftReference<StubTree>(stub), myTreeElementPointer, true, useStrongRefs);
+    assert derefTreeElement() != null && astLoaded : this;
+    return new FileTrees(new SoftReference<>(stub), myTreeElementPointer, true, useStrongRefs);
   }
 
   static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file) {
@@ -86,8 +84,8 @@ final class FileTrees {
   @Override
   public String toString() {
     return "FileTrees{" +
-           "stub=" + derefStub() +
-           ", AST=" + derefTreeElement() +
+           "stub=" + (myStub == null ? "noRef" : derefStub()) +
+           ", AST=" + (myTreeElementPointer == null ? "noRef" : derefTreeElement()) +
            ", astLoaded=" + astLoaded +
            ", useStrongRefs=" + useStrongRefs +
            '}' ;

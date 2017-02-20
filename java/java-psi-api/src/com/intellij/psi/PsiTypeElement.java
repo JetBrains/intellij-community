@@ -29,13 +29,7 @@ public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
    */
   PsiTypeElement[] EMPTY_ARRAY = new PsiTypeElement[0];
 
-  ArrayFactory<PsiTypeElement> ARRAY_FACTORY = new ArrayFactory<PsiTypeElement>() {
-    @NotNull
-    @Override
-    public PsiTypeElement[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiTypeElement[count];
-    }
-  };
+  ArrayFactory<PsiTypeElement> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiTypeElement[count];
 
   /**
    * Returns the type referenced by the type element.

@@ -229,7 +229,7 @@ class SSLContext:
     def wrap_socket(self, sock: socket.socket, server_side: bool = ...,
                     do_handshake_on_connect: bool = ...,
                     suppress_ragged_eofs: bool = ...,
-                    server_hostname: Optional[str] = ...) -> 'SSLContext': ...
+                    server_hostname: Optional[str] = ...) -> SSLSocket: ...
     if sys.version_info >= (3, 5):
         def wrap_bio(self, incoming: 'MemoryBIO', outgoing: 'MemoryBIO',
                      server_side: bool = ...,
