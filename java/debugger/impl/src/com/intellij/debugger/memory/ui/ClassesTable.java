@@ -46,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -77,6 +78,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private String myFilteringPattern = "";
 
   private volatile List<ReferenceType> myItems = Collections.unmodifiableList(new ArrayList<>());
+  private boolean myIsShowCounts = true;
 
   public ClassesTable(@NotNull InstancesTracker tracker, @NotNull ClassesFilteredView parent, boolean onlyWithDiff,
                       boolean onlyWithInstances,
@@ -89,9 +91,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myInstancesTracker = tracker;
     myParent = parent;
 
-    TableColumn classesColumn = getColumnModel().getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
-    TableColumn countColumn = getColumnModel().getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
-    TableColumn diffColumn = getColumnModel().getColumn(DiffViewTableModel.DIFF_COLUMN_INDEX);
+    final TableColumnModel columnModel = getColumnModel();
+    TableColumn classesColumn = columnModel.getColumn(DiffViewTableModel.CLASSNAME_COLUMN_INDEX);
+    TableColumn countColumn = columnModel.getColumn(DiffViewTableModel.COUNT_COLUMN_INDEX);
+    TableColumn diffColumn = columnModel.getColumn(DiffViewTableModel.DIFF_COLUMN_INDEX);
 
     setAutoResizeMode(AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     classesColumn.setPreferredWidth(JBUI.scale(CLASSES_COLUMN_PREFERRED_WIDTH));
@@ -151,6 +154,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   public interface ReferenceCountProvider {
+
     int getTotalCount(@NotNull ReferenceType ref);
 
     int getDiffCount(@NotNull ReferenceType ref);
@@ -216,30 +220,16 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  void setClassesAndUpdateCounts(@NotNull List<ReferenceType> classes, @NotNull long[] counts) {
-    assert classes.size() == counts.length;
-    ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
-    int newSelectedIndex = classes.indexOf(selectedClass);
-    boolean isInitialized = !myItems.isEmpty();
-    myItems = Collections.unmodifiableList(new ArrayList<>(classes));
+  public void updateClassesOnly(@NotNull List<ReferenceType> classes) {
+    myIsShowCounts = false;
+    final LinkedHashMap<ReferenceType, Long> class2Count = new LinkedHashMap<>();
+    classes.forEach(x -> class2Count.put(x, 0L));
+    updateCountsInternal(class2Count);
+  }
 
-    for (int i = 0, size = classes.size(); i < size; i++) {
-      ReferenceType ref = classes.get(i);
-      DiffValue oldValue = isInitialized && !myCounts.containsKey(ref)
-                           ? new DiffValue(0, 0)
-                           : myCounts.getOrDefault(ref, UNKNOWN_VALUE);
-      myCounts.put(ref, oldValue.update(counts[i]));
-    }
-
-    showContent();
-
-    if (newSelectedIndex != -1 && !myModel.isHided()) {
-      int ix = convertRowIndexToView(newSelectedIndex);
-      changeSelection(ix,
-                      DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
-    }
-
-    getRowSorter().allRowsChanged();
+  public void updateContent(@NotNull Map<ReferenceType, Long> class2Count) {
+    myIsShowCounts = true;
+    updateCountsInternal(class2Count);
   }
 
   void hideContent() {
@@ -248,6 +238,37 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private void showContent() {
     myModel.show();
+  }
+
+  private void updateCountsInternal(@NotNull Map<ReferenceType, Long> class2Count) {
+    final ReferenceType selectedClass = myModel.getSelectedClassBeforeHided();
+    int newSelectedIndex = -1;
+    final boolean isInitialized = !myItems.isEmpty();
+    myItems = Collections.unmodifiableList(new ArrayList<>(class2Count.keySet()));
+
+    int i = 0;
+    for (final ReferenceType ref : class2Count.keySet()) {
+      if (ref.equals(selectedClass)) {
+        newSelectedIndex = i;
+      }
+
+      final DiffValue oldValue = isInitialized && !myCounts.containsKey(ref)
+                                 ? new DiffValue(0, 0)
+                                 : myCounts.getOrDefault(ref, UNKNOWN_VALUE);
+      myCounts.put(ref, oldValue.update(class2Count.get(ref)));
+
+      i++;
+    }
+
+    showContent();
+
+    if (newSelectedIndex != -1 && !myModel.isHided()) {
+      final int ix = convertRowIndexToView(newSelectedIndex);
+      changeSelection(ix,
+                      DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
+    }
+
+    getRowSorter().allRowsChanged();
   }
 
   @Nullable
@@ -276,18 +297,16 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   public void clean() {
     if (!myItems.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        clearSelection();
-        myItems = Collections.emptyList();
-        myCounts.clear();
-        getRowSorter().allRowsChanged();
-      });
+      clearSelection();
+      myItems = Collections.emptyList();
+      myCounts.clear();
+      getRowSorter().allRowsChanged();
     }
   }
 
   @Override
   public void dispose() {
-    clean();
+    ApplicationManager.getApplication().invokeLater(() -> clean());
   }
 
   @Nullable
@@ -370,7 +389,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
    */
   private static class UnknownDiffValue extends DiffValue {
     UnknownDiffValue() {
-      super(0);
+      super(-1);
     }
 
     @Override
@@ -418,20 +437,13 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  private abstract class MyTableCellRenderer extends ColoredTableCellRenderer {
+  private abstract static class MyTableCellRenderer extends ColoredTableCellRenderer {
     @Override
     protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean isSelected,
                                          boolean hasFocus, int row, int column) {
-      column = convertColumnIndexToModel(column);
-      TrackingType trackingType = getTrackingType(row);
 
       if (hasFocus) {
         setBorder(EMPTY_BORDER);
-      }
-
-      if (trackingType != null && column == DiffViewTableModel.DIFF_COLUMN_INDEX) {
-        setIcon(AllIcons.Debugger.MemoryView.ClassTracked);
-        setTransparentIconBackground(true);
       }
 
       if (value != null) {
@@ -463,23 +475,36 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  private class MyCountColumnRenderer extends MyTableCellRenderer {
+  private abstract class MyNumericRenderer extends MyTableCellRenderer {
     @Override
-    protected void addText(@NotNull Object value, boolean isSelected,
-                           int row) {
-      setTextAlign(SwingConstants.RIGHT);
+    protected void addText(@NotNull Object value, boolean isSelected, int row) {
+      if (myIsShowCounts) {
+        setTextAlign(SwingConstants.RIGHT);
+        appendText(value, row);
+      }
+    }
+
+    abstract void appendText(@NotNull Object value, int row);
+  }
+
+  private class MyCountColumnRenderer extends MyNumericRenderer {
+    @Override
+    void appendText(@NotNull Object value, int row) {
       append(value.toString());
     }
   }
 
-  private class MyDiffColumnRenderer extends MyTableCellRenderer {
+  private class MyDiffColumnRenderer extends MyNumericRenderer {
     private final SimpleTextAttributes myClickableCellAttributes =
       new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.BLUE);
 
     @Override
-    protected void addText(@NotNull Object value, boolean isSelected,
-                           int row) {
-      setTextAlign(SwingConstants.RIGHT);
+    void appendText(@NotNull Object value, int row) {
+      TrackingType trackingType = getTrackingType(row);
+      if (trackingType != null) {
+        setIcon(AllIcons.Debugger.MemoryView.ClassTracked);
+        setTransparentIconBackground(true);
+      }
 
       ReferenceType ref = myItems.get(convertRowIndexToModel(row));
 

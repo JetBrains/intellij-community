@@ -173,7 +173,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
                                     messageType.getPopupBackground(), null);
     balloonBuilder.setFadeoutTime(5000);
     final Balloon balloon = balloonBuilder.createBalloon();
-    balloon.showInCenterOf(myToolbar);
+    Point pointOnComponent = new Point(myToolbar.getWidth() / 4, myToolbar.getHeight() / 4);
+    balloon.show(new RelativePoint(myToolbar, pointOnComponent), Balloon.Position.above);
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 

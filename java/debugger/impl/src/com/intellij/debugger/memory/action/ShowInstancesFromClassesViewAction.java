@@ -27,11 +27,6 @@ public class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
   private static final String POPUP_ELEMENT_LABEL = "Show Instances";
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
-    return super.isEnabled(e) && getSelectedClass(e) != null;
-  }
-
-  @Override
   protected void perform(AnActionEvent e) {
     final Project project = e.getProject();
     final ReferenceType selectedClass = getSelectedClass(e);
