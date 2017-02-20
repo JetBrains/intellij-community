@@ -17,6 +17,7 @@ public class ThisEscapedInConstructorInspection{
         final List list = new ArrayList(3);
         list.add(<warning descr="Escape of 'this' during object construction">this</warning>); //escape
         new Testing().boom = <warning descr="Escape of 'this' during object construction">this</warning>; // escape
+        Runnable r = () -> System.out.println(this);
     }
 
     private class NoEscape {
