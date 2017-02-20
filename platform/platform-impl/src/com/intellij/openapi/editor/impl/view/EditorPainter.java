@@ -716,19 +716,28 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void drawSimpleBorder(Graphics2D g, float xStart, float xEnd, float y, boolean rounded) {
-    float width = xEnd - xStart;
-    float height = myView.getLineHeight();
-    if (width > 2 && height > 2) {
-      Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-      path.append(rounded
-                  ? new RoundRectangle2D.Float(xStart, y, width, height, 2, 2)
-                  : new Rectangle2D.Float(xStart, y, width, height), false);
-      path.append(new Rectangle2D.Float(xStart + 1, y + 1, width - 2, height - 2), false);
+    Shape border = getBorderShape(xStart, y, xEnd - xStart, myView.getLineHeight(), rounded);
+    if (border != null) {
       Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.fill(path);
+      g.fill(border);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }
+  }
+
+  private static Shape getBorderShape(float x, float y, float width, int height, boolean rounded) {
+    if (width <= 0 || height <= 0) return null;
+    Shape outer = rounded
+                  ? new RoundRectangle2D.Float(x, y, width, height, 2, 2)
+                  : new Rectangle2D.Float(x, y, width, height);
+
+    if (width <= 2 || height <= 2) return outer;
+    Shape inner = new Rectangle2D.Float(x + 1, y + 1, width - 2, height - 2);
+
+    Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    path.append(outer, false);
+    path.append(inner, false);
+    return path;
   }
 
   private static void drawLine(Graphics2D g, float x1, int y1, float x2, int y2, boolean rounded) {
