@@ -1,7 +1,6 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -11,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -56,9 +54,12 @@ public class JsonSchemaWalker {
                  @NotNull List<Step> steps);
   }
 
-  public static void findSchemasForAnnotation(@NotNull final PsiElement element, @NotNull final CompletionSchemesConsumer consumer,
-                                              @NotNull final JsonSchemaObject rootSchema, @NotNull VirtualFile schemaFile) {
-    final List<Step> position = findPosition(element, false, true);
+  public static void findSchemasForAnnotation(@NotNull final PsiElement element,
+                                              @NotNull JsonLikePsiWalker walker,
+                                              @NotNull final CompletionSchemesConsumer consumer,
+                                              @NotNull final JsonSchemaObject rootSchema,
+                                              @NotNull VirtualFile schemaFile) {
+    final List<Step> position = walker.findPosition(element, false, true);
     if (position == null || position.isEmpty()) return;
     // but this does not validate definitions section against general schema --> should be done separately
     if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType()) &&
@@ -68,13 +69,14 @@ public class JsonSchemaWalker {
   }
 
   public static void findSchemasForCompletion(@NotNull final PsiElement element,
+                                              @NotNull JsonLikePsiWalker walker,
                                               @NotNull final CompletionSchemesConsumer consumer,
                                               @NotNull final JsonSchemaObject rootSchema,
                                               @NotNull VirtualFile schemaFile) {
-    final PsiElement checkable = goUpToCheckable(element);
+    final PsiElement checkable = walker.goUpToCheckable(element);
     if (checkable == null) return;
-    final boolean isName = isName(checkable);
-    final List<Step> position = findPosition(checkable, isName, !isName);
+    final boolean isName = walker.isName(checkable);
+    final List<Step> position = walker.findPosition(checkable, isName, !isName);
     if (position == null || position.isEmpty()) {
       if (isName) consumer.consume(true, rootSchema, schemaFile, Collections.emptyList());
       return;
@@ -267,14 +269,8 @@ public class JsonSchemaWalker {
     return true;
   }
 
-  private static boolean isName(PsiElement checkable) {
-    final PsiElement parent = checkable.getParent();
-    if (parent instanceof JsonObject) {
-      return true;
-    } else if (parent instanceof JsonProperty) {
-      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), checkable, false);
-    }
-    return false;
+  public static JsonLikePsiWalker getWalker(@NotNull final PsiElement element) {
+    return getJsonLikeThing(element, walker -> walker);
   }
 
   @Nullable
@@ -288,65 +284,6 @@ public class JsonSchemaWalker {
       if (walker.handles(element)) return convertor.convert(walker);
     }
     return null;
-  }
-
-  @Nullable
-  private static PsiElement goUpToCheckable(@NotNull final PsiElement element) {
-    return getJsonLikeThing(element, walker -> walker.goUpToCheckable(element));
-    //PsiElement current = element;
-    //while (current != null && !(current instanceof PsiFile)) {
-    //  if (current instanceof JsonValue || current instanceof JsonProperty) {
-    //    return current;
-    //  }
-    //  current = current.getParent();
-    //}
-    //return null;
-  }
-
-  public static List<Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition) {
-    return getJsonLikeThing(element, walker -> walker.findPosition(element, isName, forceLastTransition));
-    //final List<Step> steps = new ArrayList<>();
-    //if (!isName) {
-    //  steps.add(new Step(StateType._value, null));
-    //}
-    //PsiElement current = element;
-    //while (! (current instanceof PsiFile)) {
-    //  final PsiElement position = current;
-    //  current = current.getParent();
-    //  if (current instanceof JsonArray) {
-    //    JsonArray array = (JsonArray)current;
-    //    final List<JsonValue> list = array.getValueList();
-    //    int idx = -1;
-    //    for (int i = 0; i < list.size(); i++) {
-    //      final JsonValue value = list.get(i);
-    //      if (value.equals(position)) {
-    //        idx = i;
-    //        break;
-    //      }
-    //    }
-    //    steps.add(new Step(StateType._array, new ArrayTransition(idx)));
-    //  } else if (current instanceof JsonProperty) {
-    //    final String propertyName = ((JsonProperty)current).getName();
-    //    current = current.getParent();
-    //    if (!(current instanceof JsonObject)) return null;//incorrect syntax?
-    //    // if either value or not first in the chain - needed for completion variant
-    //    if (position != element || forceLastTransition) {
-    //      steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
-    //    }
-    //  } else if (current instanceof JsonObject && position instanceof JsonProperty) {
-    //    // if either value or not first in the chain - needed for completion variant
-    //    if (position != element || forceLastTransition) {
-    //      final String propertyName = ((JsonProperty)position).getName();
-    //      steps.add(new Step(StateType._object, new PropertyTransition(propertyName)));
-    //    }
-    //  } else if (current instanceof PsiFile) {
-    //    break;
-    //  } else {
-    //    return null;//something went wrong
-    //  }
-    //}
-    //Collections.reverse(steps);
-    //return steps;
   }
 
   public static class Step {

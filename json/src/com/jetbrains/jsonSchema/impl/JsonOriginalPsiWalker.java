@@ -16,22 +16,45 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 2/16/2017.
  */
 public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
+  public static final JsonOriginalPsiWalker INSTANCE = new JsonOriginalPsiWalker();
+
   @Override
-  public boolean handles(PsiElement element) {
+  public boolean handles(@NotNull PsiElement element) {
     return element instanceof JsonElement || element instanceof LeafPsiElement && element.getParent() instanceof JsonElement;
+  }
+
+  @Override
+  public boolean isName(PsiElement checkable) {
+    final PsiElement parent = checkable.getParent();
+    if (parent instanceof JsonObject) {
+      return true;
+    } else if (parent instanceof JsonProperty) {
+      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), checkable, false);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isPropertyWithValue(@NotNull PsiElement element) {
+    return element instanceof JsonProperty && ((JsonProperty)element).getValue() != null;
   }
 
   @Override
@@ -90,5 +113,29 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     }
     Collections.reverse(steps);
     return steps;
+  }
+
+  @Override
+  public boolean isNameQuoted() {
+    return true;
+  }
+
+  @Override
+  public boolean hasPropertiesBehind(@NotNull PsiElement element) {
+    final int offset = element.getTextRange().getStartOffset();
+    final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
+    if (object != null) {
+      return ContainerUtil.or(object.getPropertyList(), prop -> prop.getTextRange().getStartOffset() >= offset);
+    }
+    return false;
+  }
+
+  @Override
+  public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element) {
+    final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
+    if (object != null) {
+      return object.getPropertyList().stream().map(p -> StringUtil.unquoteString(p.getName())).collect(Collectors.toSet());
+    }
+    return Collections.emptySet();
   }
 }
