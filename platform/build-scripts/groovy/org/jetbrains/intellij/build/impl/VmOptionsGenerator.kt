@@ -12,10 +12,13 @@ object VmOptionsGenerator {
                                                           "-XX:+UseG1GC",
                                                           "-XX:SoftRefLRUPolicyMSPerMB=50", "-XX:CICompilerCount=2", "-XX:+HeapDumpOnOutOfMemoryError",
                                                           "-XX:-OmitStackTraceInFastThrow",
+                                                          "-Djna.nosys=true",  // Android Studio: added by Change Ie7351d92
+                                                          "-Djna.boot.library.path=",  // Android Studio: added by Change Ie7351d92
+                                                          "-Didea.vendor.name=Google",  // Android Studio: added by Change Ie6d690b5
                                                           "-ea", "-Dsun.io.useCanonCaches=false", "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
                                                           "-Djdk.attach.allowAttachSelf=true",
                                                           "-Djdk.module.illegalAccess.silent=true", "-Dkotlinx.coroutines.debug=off")
-  private val MEMORY_OPTIONS: Map<String, String> = java.util.Map.of("-Xms", "128m", "-Xmx", "750m", "-XX:ReservedCodeCacheSize=", "512m")
+  private val MEMORY_OPTIONS: Map<String, String> = java.util.Map.of("-Xms", "256m", "-Xmx", "1280m", "-XX:ReservedCodeCacheSize=", "512m")  // Android Studio: modified by Change Ie7351d92
 
   @JvmStatic
   fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> {
