@@ -58,6 +58,7 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
+import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
@@ -74,6 +75,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
+
+import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
 /**
  * @author Denis Zhdanov
@@ -180,7 +183,7 @@ public class GradleManager
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
       }
 
-      configureExecutionWorkspace(projectLevelSettings, settings, result, project);
+      configureExecutionWorkspace(projectLevelSettings, settings, result, project, pair.second);
       return result;
     };
   }
@@ -191,12 +194,31 @@ public class GradleManager
   private static void configureExecutionWorkspace(@Nullable GradleProjectSettings compositeRootSettings,
                                                   GradleSettings settings,
                                                   GradleExecutionSettings result,
-                                                  Project project) {
-    if(compositeRootSettings == null) return;
+                                                  Project project,
+                                                  String projectPath) {
+    if (compositeRootSettings == null || compositeRootSettings.getCompositeBuild() == null) return;
+
+    GradleProjectSettings.CompositeBuild compositeBuild = compositeRootSettings.getCompositeBuild();
+    if (compositeBuild.getCompositeDefinitionSource() == CompositeDefinitionSource.SCRIPT) {
+      if (pathsEqual(compositeRootSettings.getExternalProjectPath(), projectPath)) return;
+
+      for (BuildParticipant buildParticipant : compositeBuild.getCompositeParticipants()) {
+        if (pathsEqual(buildParticipant.getRootPath(), projectPath)) continue;
+        if (buildParticipant.getProjects().stream().anyMatch(path -> pathsEqual(path, projectPath))) {
+          continue;
+        }
+        result.getExecutionWorkspace().addBuildParticipant(new GradleBuildParticipant(buildParticipant.getRootPath()));
+      }
+      return;
+    }
 
     for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       if (projectSettings == compositeRootSettings) continue;
-      if (!compositeRootSettings.getCompositeParticipants().contains(projectSettings.getExternalProjectPath())) continue;
+      if (compositeBuild.getCompositeParticipants()
+        .stream()
+        .noneMatch(participant -> pathsEqual(participant.getRootPath(), projectSettings.getExternalProjectPath()))) {
+        continue;
+      }
 
       GradleBuildParticipant buildParticipant = new GradleBuildParticipant(projectSettings.getExternalProjectPath());
       ExternalProjectInfo projectData = ProjectDataManager.getInstance()
@@ -284,6 +306,22 @@ public class GradleManager
   @NotNull
   @Override
   public String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath) {
+    return ExternalSystemApiUtil.getProjectRepresentationName(targetProjectPath, rootProjectPath);
+  }
+
+  @NotNull
+  @Override
+  public String getProjectRepresentationName(@NotNull Project project,
+                                             @NotNull String targetProjectPath,
+                                             @Nullable String rootProjectPath) {
+    GradleProjectSettings projectSettings = GradleSettings.getInstance(project).getLinkedProjectSettings(targetProjectPath);
+    if (projectSettings != null && projectSettings.getCompositeBuild() != null) {
+      for (BuildParticipant buildParticipant : projectSettings.getCompositeBuild().getCompositeParticipants()) {
+        if (buildParticipant.getProjects().contains(targetProjectPath)) {
+          return ExternalSystemApiUtil.getProjectRepresentationName(targetProjectPath, buildParticipant.getRootPath());
+        }
+      }
+    }
     return ExternalSystemApiUtil.getProjectRepresentationName(targetProjectPath, rootProjectPath);
   }
 
