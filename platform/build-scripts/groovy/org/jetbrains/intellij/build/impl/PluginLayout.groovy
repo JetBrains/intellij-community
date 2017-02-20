@@ -123,6 +123,15 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
+     * <strong>Do not use this for new plugins, this method is temporarily added to keep layout of old plugins</strong>.
+     * @param resourcePath path to resource file or directory relative to {@code moduleName} module content root
+     * @param relativeOutputFile target path relative to the plugin root directory
+     */
+    void withResourceArchiveFromModule(String moduleName, String resourcePath, String relativeOutputFile) {
+      layout.resourcePaths << new ModuleResourceData(moduleName, resourcePath, relativeOutputFile, true)
+    }
+
+    /**
      * Do not create 'resources_en.jar' and pack all resources into corresponding module JARs.
      * <strong>Do not use this for new plugins, this method is temporary added to keep layout of old plugins</strong>.
      */

@@ -160,7 +160,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
       withResourceFromModule("android","device-art-resources", "lib/device-art-resources")
-      withResourceFromModule("android","annotations", "lib/androidAnnotations.jar")
+      withResourceArchiveFromModule("android", "annotations", "lib/androidAnnotations.jar")
 
       // TODO: Are these still needed?
       withResourceFromModule("android","lib/gluegen-rt.jar", "lib")
@@ -191,9 +191,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
             include(name: "licenses/*")
             exclude(name: "** /fest-*.jar")
             exclude(name: "src/*.jar")
-          }
-          jar("androidAnnotations.jar") {
-            fileset(dir: "$androidHome/android/annotations")
           }
         }
       }
