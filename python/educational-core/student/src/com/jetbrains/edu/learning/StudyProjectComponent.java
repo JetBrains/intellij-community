@@ -130,7 +130,7 @@ public class StudyProjectComponent implements ProjectComponent {
   private void registerShortcuts() {
     StudyToolWindow window = StudyUtils.getStudyToolWindow(myProject);
     if (window != null) {
-      List<AnAction> actionsOnToolbar = window.getActions();
+      List<AnAction> actionsOnToolbar = window.getActions(true);
       if (actionsOnToolbar != null) {
         for (AnAction action : actionsOnToolbar) {
           if (action instanceof StudyActionWithShortcut) {
