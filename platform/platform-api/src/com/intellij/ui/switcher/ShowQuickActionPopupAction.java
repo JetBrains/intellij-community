@@ -17,11 +17,13 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -30,65 +32,51 @@ import static com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid.AL
 public class ShowQuickActionPopupAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    QuickActionProvider quickActionProvider = QuickActionProvider.KEY.getData(e.getDataContext());
+    QuickActionProvider quickActionProvider = e.getData(QuickActionProvider.KEY);
     if (quickActionProvider == null) {
       e.getPresentation().setEnabled(false);
+      return;
     }
-    else {
-      List<AnAction> actions = quickActionProvider.getActions(true);
-      e.getPresentation().setEnabled(!actions.isEmpty());
-    }
+
+    List<AnAction> actions = quickActionProvider.getActions(true);
+    e.getPresentation().setEnabled(!actions.isEmpty());
   }
+
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    DataContext context = e.getDataContext();
-    QuickActionProvider provider = QuickActionProvider.KEY.getData(context);
-    if (provider == null) return;
-
+    QuickActionProvider provider = e.getRequiredData(QuickActionProvider.KEY);
     List<AnAction> actions = provider.getActions(true);
-    if (actions.size() > 0) {
-      DefaultActionGroup group = new DefaultActionGroup();
-      for (AnAction each : actions) {
-        group.add(each);
-      }
 
-      boolean firstParent = true;
-      Component eachParent = provider.getComponent().getParent();
+    DefaultActionGroup group = new DefaultActionGroup(actions);
+    group.addSeparator();
+
+    JComponent component = provider.getComponent();
+    if (component != null && !provider.isCycleRoot()) {
+      Component eachParent = component.getParent();
       while (eachParent != null) {
-        if (eachParent instanceof QuickActionProvider) {
-          QuickActionProvider eachProvider = (QuickActionProvider)eachParent;
-          if (firstParent) {
-            group.addSeparator();
-            firstParent = false;
+        QuickActionProvider parentProvider = ObjectUtils.tryCast(eachParent, QuickActionProvider.class);
+        if (parentProvider != null) {
+          List<AnAction> parentActions = parentProvider.getActions(false);
+          if (!parentActions.isEmpty()) {
+            String name = StringUtil.notNullize(parentProvider.getName(), "");
+            DefaultActionGroup parentGroup = new DefaultActionGroup(name, parentActions);
+            if (!StringUtil.isEmpty(name)) {
+              parentGroup.setPopup(true);
+            }
+            else {
+              group.add(Separator.getInstance());
+            }
+            group.add(parentGroup);
           }
-          List<AnAction> eachActionList = eachProvider.getActions(false);
-          if (eachActionList.size() > 0) {
-            group.add(new Group(eachActionList, eachProvider.getName()));
-          }
-          if (eachProvider.isCycleRoot()) break;
+          if (parentProvider.isCycleRoot()) break;
         }
         eachParent = eachParent.getParent();
       }
-
-      JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, ALPHA_NUMBERING, true).showInBestPositionFor(context);
-    }
-  }
-
-  private static class Group extends DefaultActionGroup implements DumbAware {
-    private String myTitle;
-
-    private Group(List<AnAction> actions, String title) {
-      setPopup(true);
-      for (AnAction each : actions) {
-        add(each);
-      }
-      myTitle = title;
     }
 
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setText(myTitle);
-    }
+    JBPopupFactory.getInstance()
+      .createActionGroupPopup(null, group, e.getDataContext(), ALPHA_NUMBERING, true)
+      .showInBestPositionFor(e.getDataContext());
   }
 }
