@@ -17,6 +17,7 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -144,7 +145,8 @@ public class EditableSchemesCombo<T extends Scheme> {
   public void cancelEdit() {
     mySchemesPanel.clearInfo();
     myLayout.first(myRootPanel);
-    myRootPanel.requestFocus();
+    final IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+    focusManager.doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myRootPanel, true));
   }
 
   private void createCombo() {
@@ -186,7 +188,8 @@ public class EditableSchemesCombo<T extends Scheme> {
       showHint();
       myNameEditorField.setText(scheme.getName());
       myLayout.last(myRootPanel);
-      myNameEditorField.requestFocus();
+      final IdeFocusManager focusManager = IdeFocusManager.getGlobalInstance();
+      focusManager.doWhenFocusSettlesDown(() -> focusManager.requestFocus(myNameEditorField, true));
     }
   }
 

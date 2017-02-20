@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public class AnnotationTargetUtil {
   private static final TargetType[] FIELD_TARGETS = {TargetType.FIELD, TargetType.TYPE_USE};
   private static final TargetType[] PARAMETER_TARGETS = {TargetType.PARAMETER, TargetType.TYPE_USE};
   private static final TargetType[] LOCAL_VARIABLE_TARGETS = {TargetType.LOCAL_VARIABLE, TargetType.TYPE_USE};
+  private static final TargetType[] MODULE_TARGETS = {TargetType.MODULE};
 
   @NotNull
   public static TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
@@ -106,6 +107,9 @@ public class AnnotationTargetUtil {
       }
       if (element instanceof PsiReceiverParameter) {
         return TYPE_USE_TARGETS;
+      }
+      if (element instanceof PsiJavaModule) {
+        return MODULE_TARGETS;
       }
     }
 

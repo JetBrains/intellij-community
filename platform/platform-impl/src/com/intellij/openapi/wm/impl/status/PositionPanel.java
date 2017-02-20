@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.util.GotoLineNumberDialog;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -36,7 +33,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation, CaretListener, SelectionListener {
+public class PositionPanel extends EditorBasedWidget
+  implements StatusBarWidget.Multiframe, StatusBarWidget.TextPresentation, CaretListener, SelectionListener, DocumentListener {
   private static final int CHAR_COUNT_SYNC_LIMIT = 500_000;
   private static final String CHAR_COUNT_UNKNOWN = "...";
 
@@ -112,6 +110,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
     final EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addCaretListener(this, this);
     multicaster.addSelectionListener(this, this);
+    multicaster.addDocumentListener(this, this);
   }
 
   @Override
@@ -133,6 +132,22 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   @Override
   public void caretRemoved(CaretEvent e) {
     updatePosition(e.getEditor());
+  }
+
+  @Override
+  public void beforeDocumentChange(DocumentEvent event) {}
+
+  @Override
+  public void documentChanged(DocumentEvent event) {
+    Document document = event.getDocument();
+    Editor[] editors = EditorFactory.getInstance().getEditors(document);
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    for (Editor editor : editors) {
+      if (editor.getContentComponent() == focusOwner) {
+        updatePosition(editor);
+        break;
+      }
+    }
   }
 
   private void updatePosition(final Editor editor) {

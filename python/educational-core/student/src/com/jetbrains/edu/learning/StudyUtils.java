@@ -501,7 +501,7 @@ public class StudyUtils {
 
     if (text == null) return null;
     text = convertToHtml(text);
-    if (course.isAdaptive() && !task.isChoiceTask()) text = wrapAdaptiveCourseText(text);
+    if (course.isAdaptive() && !task.isChoiceTask() && !task.isTheoryTask()) text = wrapAdaptiveCourseText(text);
 
     return wrapTextToDisplayLatex(text);
   }
@@ -780,9 +780,9 @@ public class StudyUtils {
     return FileDocumentManager.getInstance().getDocument(taskFile);
   }
 
-  public static void showErrorPopupOnToolbar(@NotNull Project project) {
+  public static void showErrorPopupOnToolbar(@NotNull Project project, String content) {
     final Balloon balloon =
-      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Couldn't post your reaction", MessageType.ERROR, null).createBalloon();
+      JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(content, MessageType.ERROR, null).createBalloon();
     showCheckPopUp(project, balloon);
   }
 

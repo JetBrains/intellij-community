@@ -20,7 +20,6 @@ import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,8 +91,8 @@ public class ClosureDescriptor extends LightElement implements PsiElement {
 
     if (method instanceof ClsMethodImpl) method = ((ClsMethodImpl)method).getSourceMirrorMethod();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final PsiType[] typeArray = PsiType.createArray(parameters.length);
-    ContainerUtil.map(parameters, parameter -> parameter.getType(), typeArray);
+    final PsiType[] typeArray = 
+    ContainerUtil.map(parameters, parameter -> parameter.getType(), PsiType.createArray(parameters.length));
     return GrClosureSignatureUtil.isSignatureApplicable(closureSignature, typeArray, place);
   }
 

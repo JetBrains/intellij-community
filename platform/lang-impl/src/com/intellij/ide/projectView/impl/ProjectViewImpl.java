@@ -82,6 +82,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
@@ -106,7 +107,7 @@ import java.util.*;
 import java.util.List;
 
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, BusyObject  {
+public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private static final Key<String> ID_KEY = Key.create("pane-id");
   private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
@@ -253,14 +254,84 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void constructUi() {
     myViewContentPanel = new JPanel();
-    myPanel = new SimpleToolWindowPanel(true);
+    myPanel = new SimpleToolWindowPanel(true).setProvideQuickActions(false);
     myPanel.setContent(myViewContentPanel);
   }
 
   @NotNull
-  @Deprecated
+  @Override
+  public String getName() {
+    return "Project";
+  }
+
+  @NotNull
+  @Override
   public List<AnAction> getActions(boolean originalProvider) {
-    return Collections.emptyList();
+    List<AnAction> result = new ArrayList<>();
+
+    DefaultActionGroup views = new DefaultActionGroup("Change View", true);
+
+    ChangeViewAction lastHeader = null;
+    for (int i = 0; i < myContentManager.getContentCount(); i++) {
+      Content each = myContentManager.getContent(i);
+      if (each == null) continue;
+
+      String id = each.getUserData(ID_KEY);
+      String subId = each.getUserData(SUB_ID_KEY);
+      ChangeViewAction newHeader = new ChangeViewAction(id, subId);
+
+      if (lastHeader != null) {
+        boolean lastHasKids = lastHeader.mySubId != null;
+        boolean newHasKids = newHeader.mySubId != null;
+        if (lastHasKids != newHasKids ||
+            lastHasKids && lastHeader.myId != newHeader.myId) {
+          views.add(Separator.getInstance());
+        }
+      }
+
+      views.add(newHeader);
+      lastHeader = newHeader;
+    }
+    result.add(views);
+    result.add(Separator.getInstance());
+
+    if (myActionGroup != null) {
+      List<AnAction> secondary = new ArrayList<>();
+      for (AnAction each : myActionGroup.getChildren(null)) {
+        if (myActionGroup.isPrimary(each)) {
+          result.add(each);
+        }
+        else {
+          secondary.add(each);
+        }
+      }
+
+      result.add(Separator.getInstance());
+      result.addAll(secondary);
+    }
+
+    return result;
+  }
+
+  private class ChangeViewAction extends AnAction {
+    @NotNull private final String myId;
+    @Nullable private final String mySubId;
+
+    private ChangeViewAction(@NotNull String id, @Nullable String subId) {
+      myId = id;
+      mySubId = subId;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      AbstractProjectViewPane pane = getProjectViewPaneById(myId);
+      e.getPresentation().setText(pane.getTitle() + (mySubId != null ? (" - " + pane.getPresentableSubIdName(mySubId)) : ""));
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      changeView(myId, mySubId);
+    }
   }
 
   @Override
@@ -729,6 +800,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myConnection.disconnect();
   }
 
+  @Override
   public JComponent getComponent() {
     return myDataProvider;
   }
@@ -1058,6 +1130,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
         final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
         return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
+      }
+
+      if (QuickActionProvider.KEY.is(dataId)) {
+        return ProjectViewImpl.this;
       }
 
       return null;
