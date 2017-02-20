@@ -43,6 +43,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
       }
     }
     catch (Exception e) {
+      LOG.error(e);
       return data;
     }
     return data;
