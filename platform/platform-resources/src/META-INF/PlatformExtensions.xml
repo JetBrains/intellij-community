@@ -470,5 +470,13 @@
 
     <credentialStore implementation="com.intellij.credentialStore.MacOsCredentialStoreFactory" os="mac"/>
     <credentialStore implementation="com.intellij.credentialStore.LinuxSecretCredentialStoreFactory" os="linux"/>
+
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.ui.noria.ButtonComponentType"/>
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.ui.noria.LabelComponentType"/>
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.ui.noria.PanelComponentType"/>
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.ui.noria.CheckboxComponentType"/>
+
+    <applicationService serviceInterface="com.intellij.ui.noria.NoriaDialogs"
+                        serviceImplementation="com.intellij.ui.noria.SwingNoriaDialogs"/>
   </extensions>
 </idea-plugin>

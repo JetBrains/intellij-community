@@ -41,15 +41,12 @@ import com.intellij.psi.impl.file.PsiPackageBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -204,16 +201,18 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                           final PsiDirectory contextDirectory,
                           final T aPackage,
                           final PsiDirectory... dirsToRename) {
-    final RenameDialog dialog = new RenameDialog(project, contextDirectory, nameSuggestionContext, editor) {
-      @Override
-      protected void doAction() {
-        String newQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getQualifiedName(aPackage)), getNewName());
-        BaseRefactoringProcessor moveProcessor = createProcessor(newQName, project, dirsToRename, isSearchInComments(),
-                                                                 isSearchInNonJavaFiles());
-        invokeRefactoring(moveProcessor);
-      }
-    };
-    dialog.show();
+    RenameDialog2 d = RenameDialog2Kt.createRenameDialog2(contextDirectory, editor, nameSuggestionContext);
+    d.setPerformRename((newName, isPreview, cb) -> {
+      String newQName = StringUtil.getQualifiedName(StringUtil.getPackageName(getQualifiedName(aPackage)), newName);
+      BaseRefactoringProcessor moveProcessor = createProcessor(newQName,
+                                                               project,
+                                                               dirsToRename,
+                                                               d.getSearchInComments().getValue(),
+                                                               d.getSearchTextOccurrences().getValue());
+      RenameDialog2Kt.invokeRefactoring(moveProcessor, isPreview, cb);
+      return Unit.INSTANCE;
+    });
+    RenameDialog2Kt.show(d);
   }
 
   public static void buildMultipleDirectoriesInPackageMessage(StringBuffer message,

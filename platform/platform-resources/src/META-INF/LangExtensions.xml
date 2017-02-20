@@ -992,6 +992,8 @@
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveRelatedFilesHandler"
                              order="before moveFileOrDir"/>
+
+    <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.refactoring.ui.NameSuggesterComponentType"/>
   </extensions>
 </idea-plugin>
 
