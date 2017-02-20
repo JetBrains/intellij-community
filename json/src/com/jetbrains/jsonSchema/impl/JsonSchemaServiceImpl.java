@@ -5,15 +5,12 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.idea.RareLogger;
-import com.intellij.json.JsonLanguage;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -200,15 +197,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   @Nullable
   private CodeInsightProviders getWrapper(@Nullable VirtualFile file) {
     if (file == null) return null;
-    final FileType type = file.getFileType();
-    if (type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE)) {
-      final List<CodeInsightProviders> wrappers = getWrappers(file);
-      if (wrappers == null || wrappers.isEmpty()) {
-        return null;
-      }
-      return (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
+    final List<CodeInsightProviders> wrappers = getWrappers(file);
+    if (wrappers == null || wrappers.isEmpty()) {
+      return null;
     }
-    return null;
+    return (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
   }
 
   //! the only point for refreshing json schema caches

@@ -215,7 +215,7 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
     final JsonSchemaObject schemaObject = JsonSchemaReader.create(myProject, schemaFile.getVirtualFile()).read();
     Assert.assertNotNull(schemaObject);
 
-    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element,
+    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element, element,
                                                                                                             file.getVirtualFile());
     Collections.sort(foundVariants, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
     myItems = foundVariants.toArray(new LookupElement[foundVariants.size()]);

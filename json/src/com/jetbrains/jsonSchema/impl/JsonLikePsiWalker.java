@@ -20,13 +20,19 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Irina.Chernushina on 2/15/2017.
  */
 public interface JsonLikePsiWalker {
   ExtensionPointName<JsonLikePsiWalker> EXTENSION_POINT_NAME = ExtensionPointName.create("Json.Like.Psi.Walker");
-  boolean handles(PsiElement element);
+  boolean handles(@NotNull PsiElement element);
+  boolean isName(PsiElement checkable);
+  boolean isPropertyWithValue(@NotNull PsiElement element);
   PsiElement goUpToCheckable(@NotNull final PsiElement element);
   List<JsonSchemaWalker.Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition);
+  boolean isNameQuoted();
+  boolean hasPropertiesBehind(@NotNull PsiElement element);
+  Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element);
 }

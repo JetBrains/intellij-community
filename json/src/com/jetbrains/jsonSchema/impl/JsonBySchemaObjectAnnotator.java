@@ -65,7 +65,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
     if (checkIfAlreadyProcessed(holder, firstProp)) return;
 
     final List<BySchemaChecker> checkers = new ArrayList<>();
-    JsonSchemaWalker.findSchemasForAnnotation(firstProp, new JsonSchemaWalker.CompletionSchemesConsumer() {
+    JsonSchemaWalker.findSchemasForAnnotation(firstProp, JsonSchemaWalker.getWalker(element), new JsonSchemaWalker.CompletionSchemesConsumer() {
       @Override
       public void consume(boolean isName,
                           @NotNull JsonSchemaObject schema,
@@ -293,7 +293,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         if (schemaFile == null) return;
 
         final Processor<JsonSchemaObject> processor = schemaObject -> {
-          final List<JsonSchemaWalker.Step> steps = skipProperties(JsonSchemaWalker.findPosition(object, false, true));
+          final List<JsonSchemaWalker.Step> steps = skipProperties(JsonOriginalPsiWalker.INSTANCE.findPosition(object, false, true));
           JsonSchemaWalker.extractSchemaVariants(object.getProject(), (isName, schema, schemaFile1, steps1) -> {
                                                    if (schemaFile.equals(schemaFile1)) {
                                                      final Map<SmartPsiElementPointer<JsonObject>, String> invalidPatternProperties = schema.getInvalidPatternProperties();
