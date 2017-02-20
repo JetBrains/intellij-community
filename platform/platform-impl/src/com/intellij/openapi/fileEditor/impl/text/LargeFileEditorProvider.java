@@ -17,22 +17,20 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 
-/**
- * @author peter
- */
-public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
+public class LargeFileEditorProvider extends TextEditorProvider {
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
@@ -42,7 +40,9 @@ public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
-    return new LargeFileEditor(file);
+    return file.getFileType().isBinary() ?
+           new LargeBinaryFileEditor(file) :
+           new LargeTextFileEditor(project, file, this);
   }
 
   @Override
@@ -51,16 +51,19 @@ public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
     return "LargeFileEditor";
   }
 
-  @Override
-  @NotNull
-  public FileEditorPolicy getPolicy() {
-    return FileEditorPolicy.NONE;
+  public static class LargeTextFileEditor extends TextEditorImpl {
+    LargeTextFileEditor(@NotNull Project project,
+                        @NotNull VirtualFile file,
+                        @NotNull TextEditorProvider provider) {
+      super(project, file, provider);
+      ObjectUtils.consumeIfCast(getEditor(), EditorEx.class, editorEx -> editorEx.setViewer(true));
+    }
   }
 
-  private static class LargeFileEditor extends UserDataHolderBase implements FileEditor {
+  private static class LargeBinaryFileEditor extends UserDataHolderBase implements FileEditor {
     private final VirtualFile myFile;
 
-    public LargeFileEditor(VirtualFile file) {
+    LargeBinaryFileEditor(VirtualFile file) {
       myFile = file;
     }
 
@@ -68,7 +71,7 @@ public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
     @Override
     public JComponent getComponent() {
       JLabel label = new JLabel(
-        "File " + myFile.getPath() + " is too large (" + StringUtil.formatFileSize(myFile.getLength()) + ")");
+        "Binary file " + myFile.getPath() + " is too large (" + StringUtil.formatFileSize(myFile.getLength()) + ")");
       label.setHorizontalAlignment(SwingConstants.CENTER);
       return label;
     }
@@ -138,6 +141,5 @@ public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
     @Override
     public void dispose() {
     }
-
   }
 }

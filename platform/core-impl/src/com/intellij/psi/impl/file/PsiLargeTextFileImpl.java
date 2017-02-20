@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,16 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiLargeFile;
-import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.PsiLargeTextFile;
+import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 
-/**
- * @author peter
- */
-public class PsiLargeFileImpl extends PsiBinaryFileImpl implements PsiLargeFile {
-  public PsiLargeFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
-    super(manager, viewProvider);
+public class PsiLargeTextFileImpl extends PsiPlainTextFileImpl implements PsiLargeTextFile {
+  public PsiLargeTextFileImpl(FileViewProvider viewProvider) {
+    super(viewProvider);
+  }
+
+  @Override
+  public boolean isWritable() {
+    return false;
   }
 }

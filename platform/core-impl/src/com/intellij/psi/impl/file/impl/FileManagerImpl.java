@@ -622,7 +622,8 @@ public class FileManagerImpl implements FileManager {
     }
     else {
       FileViewProvider latestProvider = createFileViewProvider(vFile, false);
-      if (latestProvider.getPsi(latestProvider.getBaseLanguage()) instanceof PsiBinaryFile) {
+      PsiFile psi = latestProvider.getPsi(latestProvider.getBaseLanguage());
+      if (psi instanceof PsiLargeFile || psi instanceof PsiBinaryFile) {
         forceReload(vFile);
         return;
       }

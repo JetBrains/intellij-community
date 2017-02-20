@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.psi.impl.file;
 
-/**
- * @author peter
- */
-public interface PsiLargeFile extends PsiFile {
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiLargeBinaryFile;
+import com.intellij.psi.impl.PsiManagerImpl;
+
+public class PsiLargeBinaryFileImpl extends PsiBinaryFileImpl implements PsiLargeBinaryFile {
+  public PsiLargeBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
+    super(manager, viewProvider);
+  }
 }
