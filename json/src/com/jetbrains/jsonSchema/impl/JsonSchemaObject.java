@@ -77,6 +77,7 @@ public class JsonSchemaObject {
   private List<JsonSchemaObject> myAnyOf;
   private List<JsonSchemaObject> myOneOf;
   private JsonSchemaObject myNot;
+  private boolean myShouldValidateAgainstJSType;
 
   public JsonSchemaObject(@NotNull JsonObject object) {
     myProperties = new HashMap<>();
@@ -136,6 +137,7 @@ public class JsonSchemaObject {
     myNot = other.myNot;
     myDefinitionAddress = other.myDefinitionAddress;
     myPeerPointer = other.myPeerPointer;
+    myShouldValidateAgainstJSType = other.myShouldValidateAgainstJSType;
   }
 
   // peer pointer is not merged!
@@ -183,6 +185,15 @@ public class JsonSchemaObject {
     myAnyOf = copyList(myAnyOf, other.myAnyOf);
     myOneOf = copyList(myOneOf, other.myOneOf);
     if (other.myNot != null) myNot = other.myNot;
+    myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
+  }
+
+  public void shouldValidateAgainstJSType() {
+    myShouldValidateAgainstJSType = true;
+  }
+
+  public boolean isShouldValidateAgainstJSType() {
+    return myShouldValidateAgainstJSType;
   }
 
   private static <T> List<T> copyList(List<T> target, List<T> source) {

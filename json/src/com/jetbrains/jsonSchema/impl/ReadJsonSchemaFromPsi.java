@@ -117,6 +117,8 @@ public class ReadJsonSchemaFromPsi {
     myMap.put("anyOf", createContainer((object, members) -> object.setAnyOf(members)));
     myMap.put("oneOf", createContainer((object, members) -> object.setOneOf(members)));
     myMap.put("not", createNot());
+    myMap.put("instanceof", ((element, object) -> object.shouldValidateAgainstJSType()));
+    myMap.put("typeof", ((element, object) -> object.shouldValidateAgainstJSType()));
   }
 
   private PairConsumer<JsonElement, JsonSchemaObject> createNot() {
