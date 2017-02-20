@@ -108,14 +108,18 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       return EditorSettingsExternalizable.getInstance().isShowParameterNameHints();
     }
 
-    private static boolean isMatchedByAny(MethodInfo info, List<Matcher> matchers) {
-      return matchers.stream().anyMatch((e) -> e.isMatching(info.getFullyQualifiedName(), info.getParamNames()));
+    private static boolean isMatchedByAny(HintInfo info, List<Matcher> matchers) {
+      if (info instanceof HintInfo.MethodInfo) {
+        HintInfo.MethodInfo methodInfo = (HintInfo.MethodInfo)info;
+        return matchers.stream().anyMatch((e) -> e.isMatching(methodInfo.getFullyQualifiedName(), methodInfo.getParamNames()));
+      }
+      return false;
     }
 
     private void process(PsiElement element, InlayParameterHintsProvider provider, List<Matcher> blackListMatchers) {
       List<InlayInfo> hints = provider.getParameterHints(element);
       if (hints.isEmpty()) return;
-      MethodInfo info = provider.getMethodInfo(element);
+      HintInfo info = provider.getHintInfo(element);
       if (info == null || !isMatchedByAny(info, blackListMatchers)) {
         hints.forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
       }
