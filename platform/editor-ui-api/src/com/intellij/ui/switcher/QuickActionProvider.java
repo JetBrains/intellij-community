@@ -26,7 +26,7 @@ import java.util.List;
 public interface QuickActionProvider {
   DataKey<QuickActionProvider> KEY = DataKey.create("QuickActionProvider");
 
-  @Nullable
+  @NotNull
   List<AnAction> getActions(boolean originalProvider);
 
   default boolean isCycleRoot() { return false; }

@@ -1238,6 +1238,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     mySecondaryActions.getTemplatePresentation().setDescription(secondaryActionsTooltip);
   }
 
+  @NotNull
   @Override
   public List<AnAction> getActions(boolean originalProvider) {
     return getActions();

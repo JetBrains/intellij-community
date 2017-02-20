@@ -36,7 +36,7 @@ public class ShowQuickActionPopupAction extends AnAction {
     }
     else {
       List<AnAction> actions = quickActionProvider.getActions(true);
-      e.getPresentation().setEnabled(actions != null && !actions.isEmpty());
+      e.getPresentation().setEnabled(!actions.isEmpty());
     }
   }
 
@@ -47,7 +47,7 @@ public class ShowQuickActionPopupAction extends AnAction {
     if (provider == null) return;
 
     List<AnAction> actions = provider.getActions(true);
-    if (actions != null && actions.size() > 0) {
+    if (actions.size() > 0) {
       DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction each : actions) {
         group.add(each);

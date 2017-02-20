@@ -1395,6 +1395,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       return RunnerContentUi.this.getName();
     }
 
+    @NotNull
     @Override
     public List<AnAction> getActions(boolean originalProvider) {
       return RunnerContentUi.this.getActions(originalProvider);
@@ -1703,6 +1704,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return mySessionName;
   }
 
+  @NotNull
   @Override
   public List<AnAction> getActions(boolean originalProvider) {
     ArrayList<AnAction> result = new ArrayList<>();

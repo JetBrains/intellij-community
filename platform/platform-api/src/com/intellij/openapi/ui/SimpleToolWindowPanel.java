@@ -22,12 +22,14 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
+import java.util.Collections;
 import java.util.List;
 
 public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider, DataProvider {
@@ -105,10 +107,10 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     return this;
   }
 
+  @NotNull
   public List<AnAction> getActions(boolean originalProvider) {
     JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class);
-    if (toolbars.size() == 0)
-      return null;
+    if (toolbars.size() == 0) return Collections.emptyList();
     return toolbars.flatten(toolbar -> toolbar.getActions()).toList();
   }
 

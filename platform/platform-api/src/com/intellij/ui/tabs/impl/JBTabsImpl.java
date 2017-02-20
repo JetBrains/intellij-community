@@ -3123,6 +3123,7 @@ public class JBTabsImpl extends JComponent
     return NAVIGATION_ACTIONS_KEY.is(dataId) ? this : null;
   }
 
+  @NotNull
   @Override
   public List<AnAction> getActions(boolean originalProvider) {
     ArrayList<AnAction> result = new ArrayList<>();
