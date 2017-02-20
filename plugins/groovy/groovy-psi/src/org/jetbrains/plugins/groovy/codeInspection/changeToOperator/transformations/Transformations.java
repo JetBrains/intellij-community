@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.util.containers.ContainerUtil.ImmutableMapBuilder;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 import java.util.Map;
 
@@ -44,17 +45,17 @@ public interface Transformations {
     .put(OR, new SimpleBinaryTransformation(mBOR))
     .put(AND, new SimpleBinaryTransformation(mBAND))
     .put(XOR, new SimpleBinaryTransformation(mBXOR))
-    .put(LEFT_SHIFT, new SimpleBinaryTransformation("<<"))
-    .put(RIGHT_SHIFT, new SimpleBinaryTransformation(">>"))
-    .put(RIGHT_SHIFT_UNSIGNED, new SimpleBinaryTransformation(">>>"))
-    .put(AS_TYPE, new SimpleBinaryTransformation(kAS))
+    .put(LEFT_SHIFT, new SimpleBinaryTransformation(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN))
+    .put(RIGHT_SHIFT, new SimpleBinaryTransformation(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN))
+    .put(RIGHT_SHIFT_UNSIGNED, new SimpleBinaryTransformation(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN))
+    .put(AS_TYPE, new AsTypeTransformation())
     .put(IS_CASE, new IsCaseTransformation())
     .put(EQUALS, new EqualsTransformation())
     .put(COMPARE_TO, new CompareToTransformation())
 
     // custom
     .put(GET_AT, new GetAtTransformation())
-    .put(PUT_AT, new PutAtTransformation(new GetAtTransformation()))
+    .put(PUT_AT, new PutAtTransformation())
 
     .build();
 }

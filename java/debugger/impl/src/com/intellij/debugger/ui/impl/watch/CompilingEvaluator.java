@@ -27,12 +27,11 @@ import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkVersionUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ClassLoaderReference;
@@ -79,12 +78,16 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
   public Value evaluate(final EvaluationContext evaluationContext) throws EvaluateException {
     DebugProcess process = evaluationContext.getDebugProcess();
 
-    ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(evaluationContext, process);
+    EvaluationContextImpl autoLoadContext = ((EvaluationContextImpl)evaluationContext).createEvaluationContext(evaluationContext.getThisObject());
+    autoLoadContext.setAutoLoadClasses(true);
+
+    ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
+    autoLoadContext.setClassLoader(classLoader);
 
     String version = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version();
     Collection<ClassObject> classes = compile(JdkVersionUtil.getVersion(version));
 
-    defineClasses(classes, evaluationContext, process, classLoader);
+    defineClasses(classes, autoLoadContext, process, classLoader);
 
     try {
       // invoke base evaluator on call code
@@ -99,8 +102,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
             return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject), position);
           }
         });
-      ((EvaluationContextImpl)evaluationContext).setClassLoader(classLoader);
-      return evaluator.evaluate(evaluationContext);
+      return evaluator.evaluate(autoLoadContext);
     }
     catch (Exception e) {
       throw new EvaluateException("Error during generated code invocation " + e, e);
@@ -149,8 +151,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
 
 
   protected String getGenClassQName() {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<String>)() -> JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass()));
+    return ReadAction.compute(() -> JVMNameUtil.getNonAnonymousClassName(myData.getGeneratedInnerClass()));
   }
 
   ///////////////// Compiler stuff

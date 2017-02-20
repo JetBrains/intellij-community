@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -341,7 +341,7 @@ public class ExprProcessor implements CodeConstants {
         case opc_fload:
         case opc_dload:
         case opc_aload:
-          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor));
+          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offset));
           break;
         case opc_iaload:
         case opc_laload:
@@ -371,8 +371,8 @@ public class ExprProcessor implements CodeConstants {
         case opc_astore:
           Exprent top = stack.pop();
           int varindex = instr.getOperand(0);
-          AssignmentExprent assign =
-            new AssignmentExprent(new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor), top, bytecode_offsets);
+          AssignmentExprent assign = new AssignmentExprent(
+            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i)), top, bytecode_offsets);
           exprlist.add(assign);
           break;
         case opc_iastore:
@@ -622,6 +622,23 @@ public class ExprProcessor implements CodeConstants {
           stack.pop();
       }
     }
+  }
+
+  private static int nextMeaningfulOffset(BasicBlock block, int index) {
+    InstructionSequence seq = block.getSeq();
+    while (++index < seq.length()) {
+      switch (seq.getInstr(index).opcode) {
+        case opc_nop:
+        case opc_istore:
+        case opc_lstore:
+        case opc_fstore:
+        case opc_dstore:
+        case opc_astore:
+          continue;
+      }
+      return block.getOldOffset(index);
+    }
+    return -1;
   }
 
   private void pushEx(ExprentStack stack, List<Exprent> exprlist, Exprent exprent) {

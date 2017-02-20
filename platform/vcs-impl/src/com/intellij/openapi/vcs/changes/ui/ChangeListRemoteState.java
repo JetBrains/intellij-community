@@ -16,39 +16,25 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 public class ChangeListRemoteState {
-  // true -> ok
+  // true -> isUpToDate
   private final boolean[] myChangeStates;
 
-  public ChangeListRemoteState(final int size) {
+  public ChangeListRemoteState(int size) {
     myChangeStates = new boolean[size];
     for (int i = 0; i < myChangeStates.length; i++) {
       myChangeStates[i] = true;
     }
   }
 
-  public void report(final int idx, final boolean state) {
-    myChangeStates[idx] = state;
+  public void report(int idx, boolean isUpToDate) {
+    myChangeStates[idx] = isUpToDate;
   }
 
-  public boolean getState() {
+  public boolean allUpToDate() {
     boolean result = true;
     for (boolean state : myChangeStates) {
       result &= state;
     }
     return result;
-  }
-  
-  public static class Reporter {
-    private final int myIdx;
-    private final ChangeListRemoteState myState;
-
-    public Reporter(int idx, ChangeListRemoteState state) {
-      myIdx = idx;
-      myState = state;
-    }
-
-    public void report(final boolean state) {
-      myState.report(myIdx, state);
-    }
   }
 }

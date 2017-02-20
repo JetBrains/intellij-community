@@ -71,7 +71,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
 
   public TaskExecutionView(Project project) {
     myProject = project;
-    final ColumnInfo[] COLUMNS = new ColumnInfo[]{
+    final ColumnInfo[] COLUMNS = {
       new TreeColumnInfo("name"),
       new ColumnInfo("time elapsed") {
         @Nullable
@@ -144,7 +144,12 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
     timeColumn.setMinWidth(TIME_COLUMN_MIN_WIDTH);
 
     TreeTableTree tree = myTreeTable.getTree();
-    final SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRoot);
+    final SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRoot) {
+      @Override
+      public boolean isToBuildChildrenInBackground(Object element) {
+        return true;
+      }
+    };
 
     myBuilder = new SimpleTreeBuilder(tree, model, treeStructure, null);
     Disposer.register(this, myBuilder);
@@ -312,7 +317,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   }
 
   @Override
-  public void setHelpId(String helpId) {
+  public void setHelpId(@NotNull String helpId) {
 
   }
 

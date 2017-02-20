@@ -59,6 +59,14 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     setUpDataClasses();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myJavaPsiFacade = null;
+    myBytecodeAnalysisService = null;
+    myMessageDigest = null;
+    super.tearDown();
+  }
+
   public void testInference() throws IOException {
     checkAnnotations(Test01.class);
     checkAnnotations(Test02.class);

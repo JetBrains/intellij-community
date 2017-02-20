@@ -74,7 +74,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       public void run() {
         boolean ready = false;
         synchronized (LOCK) {
-          if (!myProject.isDisposed()) {
+          if (!myProject.isDisposed() && myProject.isOpen()) {
             myReady = ready = true;
           }
         }

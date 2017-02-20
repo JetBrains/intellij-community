@@ -81,7 +81,14 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   @Nullable
-  private static GrReferenceExpression getMethodExpression(GrMethodCall call) {
+  private GrReferenceExpression getMethodExpression() {
+    GrMethodCall methodCall = myMethodCall.getElement();
+    if (methodCall == null) return null;
+    return getMethodExpression(methodCall);
+  }
+
+  @Nullable
+  private static GrReferenceExpression getMethodExpression(@NotNull GrMethodCall call) {
     GrExpression result = call.getInvokedExpression();
     return result instanceof GrReferenceExpression ? (GrReferenceExpression)result : null;
   }
@@ -89,12 +96,13 @@ public class GroovyStaticImportMethodFix extends Intention {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     myCandidates = null;
-    return myMethodCall.getElement() != null &&
-           myMethodCall.getElement().isValid() &&
-           getMethodExpression(myMethodCall.getElement()) != null &&
-           getMethodExpression(myMethodCall.getElement()).getQualifierExpression() == null &&
-           file.getManager().isInProject(file) &&
-           !getCandidates().isEmpty();
+
+    if (!file.getManager().isInProject(file)) return false;
+
+    GrReferenceExpression invokedExpression = getMethodExpression();
+    if (invokedExpression == null || invokedExpression.getQualifierExpression() != null) return false;
+
+    return !getCandidates().isEmpty();
   }
 
   @NotNull
@@ -157,16 +165,15 @@ public class GroovyStaticImportMethodFix extends Intention {
   private void doImport(final PsiMethod toImport) {
     CommandProcessor.getInstance().executeCommand(toImport.getProject(), () -> WriteAction.run(() -> {
       try {
-        GrMethodCall element = myMethodCall.getElement();
-        if (element != null) {
-          getMethodExpression(element).bindToElementViaStaticImport(toImport);
+        GrReferenceExpression expression = getMethodExpression();
+        if (expression != null) {
+          expression.bindToElementViaStaticImport(toImport);
         }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
     }), getText(), this);
-
   }
 
   private void chooseAndImport(Editor editor) {
@@ -189,10 +196,13 @@ public class GroovyStaticImportMethodFix extends Intention {
     return true;
   }
 
+  @NotNull
   private List<PsiMethod> getCandidates() {
-    if (myCandidates == null) {
-      myCandidates = getMethodsToImport();
+    List<PsiMethod> result = myCandidates;
+    if (result == null) {
+      result = getMethodsToImport();
+      myCandidates = result;
     }
-    return myCandidates;
+    return result;
   }
 }

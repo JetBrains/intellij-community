@@ -148,17 +148,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
               return;
             }
           }
-          catch (IOException ex) {
-            LOG.warn(ex);
-            showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
-            return;
-          }
-          catch (TransformerException ex) {
-            LOG.warn(ex);
-            showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
-            return;
-          }
-          catch (SAXException ex) {
+          catch (IOException | SAXException | TransformerException ex) {
             LOG.warn(ex);
             showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
             return;

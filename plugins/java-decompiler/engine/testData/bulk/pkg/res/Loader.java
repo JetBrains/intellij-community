@@ -11,9 +11,9 @@ public class Loader {
          throw new RuntimeException("Resource missing");
       } else {
          try {
-            File e = new File(resource.toURI());
-            byte[] bytes = new byte[(int)e.length()];
-            FileInputStream stream = new FileInputStream(e);
+            File file = new File(resource.toURI());
+            byte[] bytes = new byte[(int)file.length()];
+            FileInputStream stream = new FileInputStream(file);
             stream.read(bytes);
             stream.close();
             return new String(bytes, "UTF-8");

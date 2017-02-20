@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,46 +23,13 @@ import com.intellij.spellchecker.dictionary.UserDictionary;
 import org.jetbrains.annotations.NotNull;
 
 public class AggregatedDictionaryState {
-  private ProjectDictionaryState projectDictionaryState;
-  private CachedDictionaryState cachedDictionaryState;
   private AggregatedDictionary dictionary;
-  private String currentUser;
-  private Project project;
 
-  public AggregatedDictionaryState() {
-  }
+  public AggregatedDictionaryState(@NotNull Project project) {
+    CachedDictionaryState cachedDictionaryState = ServiceManager.getService(CachedDictionaryState.class);
+    ProjectDictionaryState projectDictionaryState = ServiceManager.getService(project, ProjectDictionaryState.class);
+    String currentUser = System.getProperty("user.name");
 
-  public AggregatedDictionaryState(@NotNull AggregatedDictionary dictionary) {
-    setDictionary(dictionary);
-  }
-
-  public void setProject(Project project) {
-    this.project = project;
-  }
-
-  public void setCurrentUser(String currentUser) {
-    this.currentUser = currentUser;
-  }
-
-  public void setDictionary(AggregatedDictionary dictionary) {
-    this.dictionary = dictionary;
-    cachedDictionaryState.setDictionary(dictionary.getCachedDictionary());
-    projectDictionaryState.setProjectDictionary(dictionary.getProjectDictionary());
-  }
-
-  public AggregatedDictionary getDictionary() {
-    return dictionary;
-  }
-
-  public void loadState() {
-    assert project != null;
-    cachedDictionaryState = ServiceManager.getService(CachedDictionaryState.class);
-    projectDictionaryState = ServiceManager.getService(project, ProjectDictionaryState.class);
-    currentUser = System.getProperty("user.name");
-    retrieveDictionaries();
-  }
-
-  private void retrieveDictionaries() {
     ProjectDictionary projectDictionary = projectDictionaryState.getProjectDictionary();
     projectDictionary.setActiveName(currentUser);
 
@@ -70,7 +37,13 @@ public class AggregatedDictionaryState {
       cachedDictionaryState.setDictionary(new UserDictionary(CachedDictionaryState.DEFAULT_NAME));
     }
     dictionary = new AggregatedDictionary(projectDictionary, cachedDictionaryState.getDictionary());
-    setDictionary(dictionary);
+    cachedDictionaryState.setDictionary(dictionary.getCachedDictionary());
+    projectDictionaryState.setProjectDictionary(dictionary.getProjectDictionary());
+  }
+
+  @NotNull
+  public AggregatedDictionary getDictionary() {
+    return dictionary;
   }
 
   @Override

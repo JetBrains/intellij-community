@@ -22,11 +22,12 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +47,7 @@ public class ActionStepBuilder {
   private       boolean                         myPrependWithSeparator;
   private       String                          mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
-  private Icon myEmptyIcon;
+  private IconWrapper myEmptyIcon;
   private int myMaxIconWidth  = -1;
   private int myMaxIconHeight = -1;
   @NotNull private String myActionPlace;
@@ -81,7 +82,7 @@ public class ActionStepBuilder {
 
   public void buildGroup(@NotNull ActionGroup actionGroup) {
     calcMaxIconSize(actionGroup);
-    myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? EmptyIcon.create(myMaxIconWidth, myMaxIconHeight) : null;
+    myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? createWrapper(null) : null;
 
     appendActionsFromGroup(actionGroup);
 
@@ -177,26 +178,28 @@ public class ActionStepBuilder {
       }
 
       Icon icon = presentation.isEnabled() ? presentation.getIcon() : IconLoader.getDisabledIcon(presentation.getIcon());
+      IconWrapper iconWrapper;
       if (icon == null) {
         @NonNls final String actionId = ActionManager.getInstance().getId(action);
         if (actionId != null && actionId.startsWith("QuickList.")) {
-          icon = AllIcons.Actions.QuickList;
+          iconWrapper = createWrapper(AllIcons.Actions.QuickList);
         }
         else if (action instanceof Toggleable) {
           boolean toggled = Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY));
-          icon = toggled? new IconWrapper(PlatformIcons.CHECK_ICON) : myEmptyIcon;
+          iconWrapper = toggled ? createWrapper(PlatformIcons.CHECK_ICON) : myEmptyIcon;
         }
         else {
-          icon = myEmptyIcon;
+          iconWrapper = myEmptyIcon;
         }
       }
       else {
-        icon = new IconWrapper(icon);
+        icon = new IconWrapper(icon, presentation.getHoveredIcon(), myMaxIconWidth, myMaxIconHeight);
       }
       boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
       assert text != null : action + " has no presentation";
       myListModel.add(
-        new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY), presentation.isEnabled(), icon,
+        new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY), presentation.isEnabled(),
+                                        (PopupFactoryImpl.ActionStepBuilder.IconWrapper)icon,
                                         prependSeparator, mySeparatorText));
       myPrependWithSeparator = false;
       mySeparatorText = null;
@@ -206,28 +209,40 @@ public class ActionStepBuilder {
   /**
    * Adjusts icon size to maximum, so that icons with different sizes were aligned correctly.
    */
-  private class IconWrapper implements Icon {
+  public static class IconWrapper extends IconUtil.IconSizeWrapper {
 
-    private Icon myIcon;
+    @Nullable private Icon myIcon;
+    @Nullable private Icon myHoverIcon;
 
-    IconWrapper(Icon icon) {
-      myIcon = icon;
+    private boolean isHovered;
+
+    public IconWrapper(@Nullable Icon icon, @Nullable Icon hoverIcon, int width, int height) {
+      super(null, width, height);
+      setIcons(icon, hoverIcon);
     }
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      myIcon.paintIcon(c, g, x, y);
+      paintIcon(myHoverIcon != null && isHovered ? myHoverIcon : myIcon, c, g, x, y);
     }
 
-    @Override
-    public int getIconWidth() {
-      return myMaxIconWidth;
+    public boolean isHovered() {
+      return isHovered;
     }
 
-    @Override
-    public int getIconHeight() {
-      return myMaxIconHeight;
+    public void setHovered(boolean hovered) {
+      isHovered = hovered;
     }
+
+    public void setIcons(@Nullable Icon icon, @Nullable Icon hoveredIcon) {
+      myIcon = icon;
+      myHoverIcon = hoveredIcon;
+    }
+  }
+
+  @NotNull
+  public IconWrapper createWrapper(@Nullable Icon icon) {
+    return new IconWrapper(icon, null, myMaxIconWidth, myMaxIconHeight);
   }
 
   private Presentation getPresentation(@NotNull AnAction action) {

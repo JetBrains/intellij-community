@@ -126,8 +126,13 @@ public class GenericsHighlightUtil {
         if (errorMessage != null) {
           final PsiType expectedType = detectExpectedType(referenceParameterList);
           if (!(inferenceResult.failedToInfer() && expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) {
-            return HighlightInfo
+            HighlightInfo highlightInfo = HighlightInfo
               .newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(errorMessage).create();
+            if (inferenceResult == PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT && 
+                !PsiUtil.isLanguageLevel9OrHigher(referenceParameterList)) {
+              QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_9));
+            }
+            return highlightInfo;
           }
         }
       }
@@ -458,6 +463,7 @@ public class GenericsHighlightUtil {
 
       if (!hasConcrete && defaults != null) {
         final PsiMethod defaultMethod = defaults.get(0);
+        if (MethodSignatureUtil.findMethodBySuperMethod(aClass, defaultMethod, false) != null) continue;
         final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
         if (defaultMethodContainingClass == null) continue;
         final PsiMethod unrelatedMethod = abstracts != null ? abstracts.get(0) : defaults.get(1);
@@ -634,7 +640,7 @@ public class GenericsHighlightUtil {
     }
 
     if (superMethod.hasModifierProperty(PsiModifier.STATIC) && superContainingClass != null &&
-        superContainingClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(superContainingClass)) {
+        superContainingClass.isInterface() && !checkEqualsSuper && PsiUtil.isLanguageLevel8OrHigher(superContainingClass)) {
       return null;
     }
 

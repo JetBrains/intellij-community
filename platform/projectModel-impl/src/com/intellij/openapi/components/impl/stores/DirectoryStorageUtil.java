@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.StateSplitterEx;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +37,7 @@ public class DirectoryStorageUtil {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageUtil.class);
 
   @NotNull
-  public static Map<String, Element> loadFrom(@Nullable VirtualFile dir, @Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor) {
+  public static Map<String, Element> loadFrom(@Nullable VirtualFile dir, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
     if (dir == null || !dir.exists()) {
       return Collections.emptyMap();
     }
@@ -79,7 +80,9 @@ public class DirectoryStorageUtil {
         JDOMUtil.internElement(state, interner);
         if (pathMacroSubstitutor != null) {
           pathMacroSubstitutor.expandPaths(state);
-          pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(state));
+          if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
+            ((TrackingPathMacroSubstitutor)pathMacroSubstitutor).addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(state));
+          }
         }
 
         fileToState.put(file.getName(), state);

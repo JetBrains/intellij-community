@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.engine
 
+import com.intellij.formatting.Block
 import com.intellij.formatting.FormatterEx
 import com.intellij.formatting.engine.testModel.TestFormattingModel
 import com.intellij.formatting.engine.testModel.getRoot
@@ -29,7 +30,7 @@ class FormatterEngineTests : LightPlatformTestCase() {
 
   @Test
   fun `test simple alignment`() {
-    doTest(
+    doReformatTest(
       """
 [a0]fooooo [a1]foo
 [a0]go [a1]boo
@@ -42,7 +43,7 @@ go     boo
 
   @Test
   fun `test empty block alignment`() {
-    doTest(
+    doReformatTest(
       """
 [a0]fooooo [a1]
 [a0]go [a1]boo
@@ -56,23 +57,34 @@ go     boo
 
 }
 
-fun doTest(before: String, expectedText: String, settings: CodeStyleSettings = CodeStyleSettings()) {
-  var root = getRoot(before.trimStart())
-  var beforeText = root.text
+class TestData(val rootBlock: Block, val textToFormat: String, val markerPosition: Int?)
 
-  val rightMargin = beforeText.indexOf('|')
-  if (rightMargin > 0) {
+fun doReformatTest(before: String, expectedText: String, settings: CodeStyleSettings = CodeStyleSettings()) {
+  val data = extractFormattingTestData(before)
+
+  val rightMargin = data.markerPosition
+  if (rightMargin != null) {
     settings.setRightMargin(null, rightMargin)
-    root = getRoot(before.trimStart().replace("|", ""))
-    beforeText = root.text
   }
   
-  val rootFormattingBlock = root.toFormattingBlock(0)
-
-  val document = EditorFactory.getInstance().createDocument(beforeText)
-  val model = TestFormattingModel(rootFormattingBlock, document)
+  val document = EditorFactory.getInstance().createDocument(data.textToFormat)
+  val model = TestFormattingModel(data.rootBlock, document)
 
   FormatterEx.getInstanceEx().format(model, settings, settings.indentOptions, null)
 
   TestCase.assertEquals(expectedText.trimStart(), document.text)
+}
+
+fun extractFormattingTestData(before: String) : TestData {
+  var root = getRoot(before.trimStart())
+  var beforeText = root.text
+
+  val marker = beforeText.indexOf('|')
+  if (marker > 0) {
+    root = getRoot(before.trimStart().replace("|", ""))
+    beforeText = root.text
+  }
+
+  val rootBlock = root.toFormattingBlock(0)
+  return TestData(rootBlock, beforeText, if (marker > 0) marker else null)
 }

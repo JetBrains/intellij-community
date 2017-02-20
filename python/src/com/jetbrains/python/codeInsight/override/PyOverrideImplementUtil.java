@@ -204,14 +204,38 @@ public class PyOverrideImplementUtil {
         pyFunctionBuilder.decorate(PyNames.PROPERTY);
       }
     }
+    final LanguageLevel level = LanguageLevel.forElement(pyClass);
     PyAnnotation anno = baseFunction.getAnnotation();
-    if (anno != null) {
+    if (anno != null && level.isAtLeast(LanguageLevel.PYTHON30)) {
       pyFunctionBuilder.annotation(anno.getText());
     }
     final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
     final List<PyParameter> baseParams = PyUtil.getParameters(baseFunction, context);
     for (PyParameter parameter : baseParams) {
-      pyFunctionBuilder.parameter(parameter.getText());
+      final PyNamedParameter namedParameter = parameter.getAsNamed();
+      if (namedParameter != null) {
+        final StringBuilder parameterBuilder = new StringBuilder();
+        if (namedParameter.isPositionalContainer()) {
+          parameterBuilder.append("*");
+        }
+        else if (namedParameter.isKeywordContainer()) {
+          parameterBuilder.append("**");
+        }
+        parameterBuilder.append(namedParameter.getName());
+        final PyAnnotation annotation = namedParameter.getAnnotation();
+        if (annotation != null && level.isAtLeast(LanguageLevel.PYTHON30)) {
+          parameterBuilder.append(annotation.getText());
+        }
+        final PyExpression defaultValue = namedParameter.getDefaultValue();
+        if (defaultValue != null) {
+          parameterBuilder.append("=");
+          parameterBuilder.append(defaultValue.getText());
+        }
+        pyFunctionBuilder.parameter(parameterBuilder.toString());
+      }
+      else {
+        pyFunctionBuilder.parameter(parameter.getText());
+      }
     }
 
     PyClass baseClass = baseFunction.getContainingClass();
@@ -237,7 +261,7 @@ public class PyOverrideImplementUtil {
       }
     }
 
-    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName()) || raisesNotImplementedError(baseFunction) || implement) {
+    if (PyNames.TYPES_INSTANCE_TYPE.equals(baseClass.getQualifiedName()) || raisesNotImplementedError(baseFunction) || implement) {
       statementBody.append(PyNames.PASS);
     }
     else {

@@ -15,6 +15,7 @@
     <annotator language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxAnnotator"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="Groovy" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxRelatedItemLineMarkerProvider"/>
+    <colorProvider implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxColorProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlarger"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxRenameFxIdFieldProcessor" order="first"/>
 
@@ -78,6 +79,9 @@
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.javaFX.actions.CreateFxmlFileAction" id="NewFxmlFile">
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
   </actions>
 </idea-plugin>

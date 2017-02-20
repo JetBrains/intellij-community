@@ -25,7 +25,7 @@ public interface PsiFileSystemItemFilter {
 
   /**
    * @param item {@link PsiFile file} or {@link PsiDirectory directory}.
-   * @return <code>true</code> if item should be showed in project view, otherwise <code>false</code>.
+   * @return {@code true} if item should be showed in project view, otherwise {@code false}.
    * @see ProjectViewDirectoryHelper#getDirectoryChildren(PsiDirectory, ViewSettings, boolean, PsiFileSystemItemFilter)
    */
   boolean shouldShow(@NotNull PsiFileSystemItem item);

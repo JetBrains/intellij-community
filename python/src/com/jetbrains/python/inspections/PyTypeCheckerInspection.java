@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
@@ -37,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -109,8 +113,23 @@ public class PyTypeCheckerInspection extends PyInspection {
     private PyType getExpectedReturnType(@NotNull PyFunction function) {
       final PyType returnType = myTypeEvalContext.getReturnType(function);
 
-      if (returnType instanceof PyCollectionType && PyNames.FAKE_COROUTINE.equals(returnType.getName())) {
-        return ((PyCollectionType)returnType).getIteratedItemType();
+      final PyCollectionType genericType = as(returnType, PyCollectionType.class);
+      final PyClassType classType = as(returnType, PyClassType.class);
+
+      if (function.isAsync()) {
+        if (genericType != null && classType != null && PyTypingTypeProvider.COROUTINE.equals(classType.getClassQName())) {
+          return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
+        }
+        // Async generators are not allowed to return anything anyway
+        return null;
+      }
+      else if (function.isGenerator()) {
+        if (genericType != null && classType != null && PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
+          // Generator's type is parametrized as [YieldType, SendType, ReturnType]
+          return ContainerUtil.getOrElse(genericType.getElementTypes(myTypeEvalContext), 2, null);
+        }
+        // Assume that any other return type annotation for a generator cannot contain its return type
+        return null;
       }
 
       return returnType;
@@ -126,7 +145,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           ReturnVisitor visitor = new ReturnVisitor(node);
           statements.accept(visitor);
           if (!visitor.myHasReturns) {
-            final PyType expected = myTypeEvalContext.getReturnType(node);
+            final PyType expected = getExpectedReturnType(node);
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             if (expected != null && !(expected instanceof PyNoneType)) {
               registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
@@ -170,10 +189,8 @@ public class PyTypeCheckerInspection extends PyInspection {
         problemsSet.add(checkMapping(results.getReceiver(), results.getArguments()));
       }
       if (!problemsSet.isEmpty()) {
-        Map<PyExpression, Pair<String, ProblemHighlightType>> minProblems = Collections.min(
-          problemsSet,
-          (o1, o2) -> o1.size() - o2.size()
-        );
+        final Map<PyExpression, Pair<String, ProblemHighlightType>> minProblems = Collections.min(problemsSet,
+                                                                                                  Comparator.comparingInt(Map::size));
         for (Map.Entry<PyExpression, Pair<String, ProblemHighlightType>> entry : minProblems.entrySet()) {
           registerProblem(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());
         }
@@ -203,7 +220,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
         final PyNamedParameter param = entry.getValue();
         final PyExpression arg = entry.getKey();
-        final PyType expectedArgType = PyTypeChecker.getExpectedArgumentType(param, myTypeEvalContext);
+        final PyType expectedArgType = param.getArgumentType(myTypeEvalContext);
         if (expectedArgType == null) {
           continue;
         }

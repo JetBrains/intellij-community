@@ -534,6 +534,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-20682
+  public void testAwaitOnTheSameLineAsFor() {
+    doTest(LanguageLevel.PYTHON35);
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

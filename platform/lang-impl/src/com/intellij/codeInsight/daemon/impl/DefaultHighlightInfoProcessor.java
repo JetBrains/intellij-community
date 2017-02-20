@@ -125,7 +125,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
           }
           // seems that highlight info "existing" is going to disappear
           // remove it earlier
-          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighter(existing.highlighter);
+          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighterFor(existing);
         }
         return true;
       });
@@ -138,7 +138,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                               @NotNull TextRange restrictedRange,
                               int groupId) {
     HighlightingSessionImpl impl = (HighlightingSessionImpl)session;
-    impl.queueHighlightInfo(info, priorityRange, restrictedRange, groupId);
+    impl.queueHighlightInfo(info, restrictedRange, groupId);
   }
 
   @Override

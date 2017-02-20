@@ -22,11 +22,11 @@ import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.NAME_ATTR;
@@ -37,12 +37,9 @@ import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.NAME_
   storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED)
 )
 public class DefaultColorSchemesManager implements PersistentStateComponent<Element> {
-  private final List<DefaultColorsScheme> mySchemes;
-  @NonNls private static final String SCHEME_ELEMENT = "scheme";
+  private static final String SCHEME_ELEMENT = "scheme";
 
-  public DefaultColorSchemesManager() {
-    mySchemes = new ArrayList<>();
-  }
+  private volatile List<DefaultColorsScheme> mySchemes = Collections.emptyList();
 
   public static DefaultColorSchemesManager getInstance() {
     return ServiceManager.getService(DefaultColorSchemesManager.class);
@@ -56,6 +53,7 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
 
   @Override
   public void loadState(Element state) {
+    List<DefaultColorsScheme> schemes = new ArrayList<>();
     for (Element schemeElement : state.getChildren(SCHEME_ELEMENT)) {
       boolean isUpdated = false;
       Attribute nameAttr = schemeElement.getAttribute(NAME_ATTR);
@@ -63,6 +61,7 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
         for (DefaultColorsScheme oldScheme : mySchemes) {
           if (StringUtil.equals(nameAttr.getValue(), oldScheme.getName())) {
             oldScheme.readExternal(schemeElement);
+            schemes.add(oldScheme);
             isUpdated = true;
           }
         }
@@ -70,15 +69,24 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
       if (!isUpdated) {
         DefaultColorsScheme newScheme = new DefaultColorsScheme();
         newScheme.readExternal(schemeElement);
-        mySchemes.add(newScheme);
+        schemes.add(newScheme);
       }
     }
-    mySchemes.add(EmptyColorScheme.INSTANCE);
+    schemes.add(EmptyColorScheme.INSTANCE);
+    mySchemes = schemes;
   }
 
   @NotNull
-  public DefaultColorsScheme[] getAllSchemes() {
-    return mySchemes.toArray(new DefaultColorsScheme[mySchemes.size()]);
+  public List<DefaultColorsScheme> getAllSchemes() {
+    return Collections.unmodifiableList(mySchemes);
+  }
+
+  public String[] listNames() {
+    String[] names = new String[mySchemes.size()];
+    for (int i = 0; i < names.length; i ++) {
+      names[i] = mySchemes.get(i).getName();
+    }
+    return names;
   }
 
   @NotNull

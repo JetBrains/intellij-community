@@ -4,16 +4,15 @@ REGEXP_FILE
       RegExpClassImpl: <[{]>
         PsiElement(CLASS_BEGIN)('[')
         RegExpCharImpl: <{>
-          PsiElement(LBRACE)('{')
+          PsiElement(CHARACTER)('{')
         PsiElement(CLASS_END)(']')
       RegExpClosureImpl: <[\w\.]*>
         RegExpClassImpl: <[\w\.]>
           PsiElement(CLASS_BEGIN)('[')
-          RegExpUnionImpl: <\w\.>
-            RegExpSimpleClassImpl: <\w>
-              PsiElement(CHAR_CLASS)('\w')
-            RegExpCharImpl: <\.>
-              PsiElement(REDUNDANT_ESCAPE)('\.')
+          RegExpSimpleClassImpl: <\w>
+            PsiElement(CHAR_CLASS)('\w')
+          RegExpCharImpl: <\.>
+            PsiElement(REDUNDANT_ESCAPE)('\.')
           PsiElement(CLASS_END)(']')
         RegExpQuantifierImpl: <*>
           PsiElement(STAR)('*')

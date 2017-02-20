@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,7 +43,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public final class LocalFileSystemImpl extends LocalFileSystemBase implements ApplicationComponent {
+public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable {
   private static final String FS_ROOT = "/";
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
@@ -102,17 +102,8 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   }
 
   @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myWatcher.dispose();
-  }
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "LocalFileSystem";
   }
 
   private List<WatchRequestImpl> normalizeRootsForRefresh() {

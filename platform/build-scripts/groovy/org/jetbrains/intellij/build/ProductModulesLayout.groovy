@@ -76,7 +76,7 @@ class ProductModulesLayout {
   MultiValuesMap<String, String> additionalPlatformJars = new MultiValuesMap<>(true)
 
   /**
-   * Module name to entries which should be excluded from its output.
+   * Module name to list of Ant-like patterns describing entries which should be excluded from its output.
    * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
    * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
    */
@@ -108,6 +108,14 @@ class ProductModulesLayout {
    * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
    */
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+
+  /**
+   * Names of the main modules of plugins from {@link #pluginModulesToPublish} list where since-build/until-build range should be restricted.
+   * These plugins will be compatible with builds which number differ from the build which produces these plugins only in the last component,
+   * i.e. plugins produced in 163.1111.22 build will be compatible with 163.1111.* builds. The plugins not included into this list
+   * will be compatible with all builds from the same baseline, i.e. with 163.* builds.
+   */
+  List<String> pluginModulesWithRestrictedCompatibleBuildRange = []
 
   /**
    * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files

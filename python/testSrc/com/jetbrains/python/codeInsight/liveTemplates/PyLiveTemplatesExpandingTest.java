@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -42,15 +41,10 @@ public class PyLiveTemplatesExpandingTest extends PyTestCase {
     final Editor editor = myFixture.getEditor();
     final Project project = myFixture.getProject();
 
-    WriteCommandAction.runWriteCommandAction(
-      project,
-      () -> {
-        new ListTemplatesAction().actionPerformedImpl(project, editor);
-        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-        assertNotNull(lookup);
-        lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
-      }
-    );
+    new ListTemplatesAction().actionPerformedImpl(project, editor);
+    final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+    assertNotNull(lookup);
+    lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
 
     myFixture.checkResultByFile(getTestName(false) + "/a_after.py");
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,15 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
+import kotlin.Lazy;
+import kotlin.LazyKt;
+import kotlin.jvm.functions.Function0;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -122,26 +124,28 @@ public class TemplateContext {
     return getOwnValue(t) != null;
   }
 
+  @TestOnly
+  public Element writeTemplateContext(@Nullable TemplateContext defaultContext) {
+    return writeTemplateContext(defaultContext, getIdToType());
+  }
+
   @VisibleForTesting
   @Nullable
-  public Element writeTemplateContext(@Nullable TemplateContext defaultContext) {
+  public Element writeTemplateContext(@Nullable TemplateContext defaultContext, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     if (myContextStates.isEmpty()) {
       return null;
     }
 
-    Map<String, TemplateContextType> idToType = new THashMap<>();
-    for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
-      idToType.put(type.getContextId(), type);
-    }
-
     Element element = new Element(TemplateSettings.CONTEXT);
-    for (Map.Entry<String, Boolean> entry : myContextStates.entrySet()) {
+    List<Map.Entry<String, Boolean>> entries = new ArrayList<>(myContextStates.entrySet());
+    entries.sort(Comparator.comparing(Map.Entry::getKey));
+    for (Map.Entry<String, Boolean> entry : entries) {
       Boolean ownValue = entry.getValue();
       if (ownValue == null) {
         continue;
       }
 
-      TemplateContextType type = idToType.get(entry.getKey());
+      TemplateContextType type = idToType.getValue().get(entry.getKey());
       if (type == null) {
         // https://youtrack.jetbrains.com/issue/IDEA-155623#comment=27-1721029
         JdomKt.addOptionTag(element, entry.getKey(), ownValue.toString());
@@ -151,6 +155,20 @@ public class TemplateContext {
       }
     }
     return element;
+  }
+
+  @NotNull
+  public static Lazy<Map<String, TemplateContextType>> getIdToType() {
+    return LazyKt.lazy(new Function0<Map<String, TemplateContextType>>() {
+      @Override
+      public Map<String, TemplateContextType> invoke() {
+        Map<String, TemplateContextType> idToType = new THashMap<>();
+        for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+          idToType.put(type.getContextId(), type);
+        }
+        return idToType;
+      }
+    });
   }
 
   /**

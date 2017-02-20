@@ -60,6 +60,7 @@ class InstructionKey implements Comparable<InstructionKey> {
     return myOffset;
   }
 
+  @NotNull
   int[] getCallStack() {
     return myCallStack;
   }
@@ -70,18 +71,12 @@ class InstructionKey implements Comparable<InstructionKey> {
     if (o == null || getClass() != o.getClass()) return false;
 
     InstructionKey key = (InstructionKey)o;
-
-    if (myOffset != key.myOffset) return false;
-    if (!Arrays.equals(myCallStack, key.myCallStack)) return false;
-
-    return true;
+    return myOffset == key.myOffset && Arrays.equals(myCallStack, key.myCallStack);
   }
 
   @Override
   public int hashCode() {
-    int result = myOffset;
-    result = 31 * result + Arrays.hashCode(myCallStack);
-    return result;
+    return 31 * myOffset + Arrays.hashCode(myCallStack);
   }
 
   @Override
@@ -94,7 +89,7 @@ class InstructionKey implements Comparable<InstructionKey> {
       if (s.length() != 0) s.append(',');
       s.append(offset);
     }
-    return myOffset + "(" + s + ")";
+    return myOffset + "[" + s + "]";
   }
 
   @Override

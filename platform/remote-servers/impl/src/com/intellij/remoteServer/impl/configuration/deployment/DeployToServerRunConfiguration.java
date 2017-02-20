@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,24 +161,23 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     ConfigurationState state = XmlSerializer.deserialize(element, ConfigurationState.class);
     myServerName =  null;
     myDeploymentSource = null;
-    if (state != null) {
-      myServerName = state.myServerName;
-      final Element deploymentTag = state.myDeploymentTag;
-      if (deploymentTag != null) {
-        String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
-        final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
-        if (type != null) {
-          myDeploymentSource = new ReadAction<DeploymentSource>() {
-            protected void run(final @NotNull Result<DeploymentSource> result) {
-              result.setResult(type.load(deploymentTag, getProject()));
-            }
-          }.execute().getResultObject();
-          myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
-          ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
-        }
-        else {
-          LOG.warn("Cannot load deployment source for '" + getName() + "' run configuration: unknown deployment type '" + typeId + "'");
-        }
+    myServerName = state.myServerName;
+    final Element deploymentTag = state.myDeploymentTag;
+    if (deploymentTag != null) {
+      String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
+      final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
+      if (type != null) {
+        myDeploymentSource = new ReadAction<DeploymentSource>() {
+          @Override
+          protected void run(final @NotNull Result<DeploymentSource> result) {
+            result.setResult(type.load(deploymentTag, getProject()));
+          }
+        }.execute().getResultObject();
+        myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
+        ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
+      }
+      else {
+        LOG.warn("Cannot load deployment source for '" + getName() + "' run configuration: unknown deployment type '" + typeId + "'");
       }
     }
   }

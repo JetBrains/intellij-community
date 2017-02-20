@@ -50,9 +50,10 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private final boolean myInlineThisOnly;
   private final boolean mySearchInCommentsAndStrings;
   private final boolean mySearchForTextOccurrences;
+  private final boolean myDeleteDeclaration;
 
   public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
-    this(field, project, ref, isInlineThisOnly, false, false);
+    this(field, project, ref, isInlineThisOnly, false, false, true);
   }
 
   public InlineConstantFieldProcessor(PsiField field,
@@ -60,13 +61,15 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
                                       PsiReferenceExpression ref,
                                       boolean isInlineThisOnly,
                                       boolean searchInCommentsAndStrings,
-                                      boolean searchForTextOccurrences) {
+                                      boolean searchForTextOccurrences,
+                                      boolean isDeleteDeclaration) {
     super(project);
     myField = field;
     myRefExpr = ref;
     myInlineThisOnly = isInlineThisOnly;
     mySearchInCommentsAndStrings = searchInCommentsAndStrings;
     mySearchForTextOccurrences = searchForTextOccurrences;
+    myDeleteDeclaration = isDeleteDeclaration;
   }
 
   @Override
@@ -166,7 +169,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       assignment.delete();
     }
 
-    if (!myInlineThisOnly) {
+    if (!myInlineThisOnly && myDeleteDeclaration) {
       try {
         myField.delete();
       }
@@ -208,6 +211,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     if (expr instanceof PsiReferenceExpression) {
       PsiExpression qExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
       if (qExpression != null) {
+        initializer1 = (PsiExpression)initializer1.copy();
         PsiReferenceExpression referenceExpression = null;
         if (initializer1 instanceof PsiReferenceExpression) {
           referenceExpression = (PsiReferenceExpression)initializer1;

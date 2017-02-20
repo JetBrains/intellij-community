@@ -153,6 +153,7 @@ public class BuildManager implements Disposable {
     s -> !(StringUtil.endsWithIgnoreCase(s, IWS_EXTENSION) || StringUtil.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
 
   private final File mySystemDirectory;
+  private final List<String> myFallbackJdkParams = new SmartList<>();
   private final ProjectManager myProjectManager;
 
   private final Map<TaskFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<TaskFuture, Project>());
@@ -246,6 +247,12 @@ public class BuildManager implements Disposable {
     }
     mySystemDirectory = system;
 
+    final String fallbackSdkHome = getFallbackSdkHome();
+    if (fallbackSdkHome != null) {
+      myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + fallbackSdkHome);
+      myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
+    }
+
     projectManager.addProjectManagerListener(new ProjectWatcher());
 
     final MessageBusConnection conn = application.getMessageBus().connect();
@@ -320,6 +327,22 @@ public class BuildManager implements Disposable {
 
     ScheduledFuture<?> future = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
     Disposer.register(this, () -> future.cancel(false));
+  }
+
+  @Nullable
+  private static String getFallbackSdkHome() {
+    final String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
+    if (home == null) {
+      return null;
+    }
+    File javaHome = new File(home);
+    if (!JavaSdk.checkForJdk(javaHome)) {
+      final File parent = javaHome.getParentFile();
+      if (parent != null && JavaSdk.checkForJdk(parent)) {
+        javaHome = parent;
+      }
+    }
+    return FileUtil.toSystemIndependentName(javaHome.getAbsolutePath());
   }
 
   private List<Project> getOpenProjects() {
@@ -957,7 +980,7 @@ public class BuildManager implements Disposable {
     JavaSdkVersion version = javaSdkType.getVersion(vs);
     if (version == null) {
       // Unexpected version string: e.g. early access or experimental JDK build
-      // trying to find the 'known' sdk version that would best describe the passed version string  
+      // trying to find the 'known' sdk version that would best describe the passed version string
       final int parsed = JpsJavaSdkType.parseVersion(vs);
       if (parsed > 0) {
         version = javaSdkType.getVersion(parsed + ".0");
@@ -1151,28 +1174,22 @@ public class BuildManager implements Disposable {
     cmdLine.addParameter("-D" + PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath());
 
     cmdLine.addParameter("-D" + GlobalOptions.LOG_DIR_OPTION + "=" + FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
-    cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_HOME + "=" + FileUtil.toSystemIndependentName(SystemProperties.getJavaHome()));
-    cmdLine.addParameter("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
+    cmdLine.addParameters(myFallbackJdkParams);
+
+    cmdLine.addParameter("-Dio.netty.noUnsafe=true");
 
     final File workDirectory = getBuildSystemDirectory();
     //noinspection ResultOfMethodCallIgnored
     workDirectory.mkdirs();
-    cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
+
+    final File projectSystemRoot = getProjectSystemDirectory(project);
+    if (projectSystemRoot != null) {
+      cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(projectSystemRoot.getPath()) + "/" + TEMP_DIR_NAME);
+    }
 
     for (BuildProcessParametersProvider provider : project.getExtensions(BuildProcessParametersProvider.EP_NAME)) {
       final List<String> args = provider.getVMArguments();
       cmdLine.addParameters(args);
-    }
-
-    //TODO[Dmitry Batkovich] should be replaced with the proper solution
-    if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_9)) {
-      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED");
-      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED");
-      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED");
-      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED");
-      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED");
-      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED");
-      cmdLine.addParameters("--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED");
     }
 
     @SuppressWarnings("UnnecessaryFullyQualifiedName")
@@ -1185,7 +1202,7 @@ public class BuildManager implements Disposable {
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, shouldIncludeEclipseCompiler(projectConfig));
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
-                                   
+
     cmdLine.addParameter(launcherClass.getName());
 
     final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
@@ -1518,7 +1535,7 @@ public class BuildManager implements Disposable {
       if (ApplicationManager.getApplication().isUnitTestMode()) return;
       final MessageBusConnection conn = project.getMessageBus().connect();
       myConnections.put(project, conn);
-      conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      conn.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
         public void rootsChanged(final ModuleRootEvent event) {
           final Object source = event.getSource();
@@ -1529,10 +1546,24 @@ public class BuildManager implements Disposable {
       });
       conn.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
         @Override
-        public void processTerminated(@NotNull String executorId,
-                                      @NotNull ExecutionEnvironment env,
-                                      @NotNull ProcessHandler handler,
-                                      int exitCode) {
+        public void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
+          cancelAutoMakeTasks(env.getProject()); // make sure to cancel all automakes waiting in the build queue
+        }
+
+        @Override
+        public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
+          // make sure to cancel all automakes added to the build queue after processStaring and before this event
+          cancelAutoMakeTasks(env.getProject());
+        }
+
+        @Override
+        public void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
+          // augmenting reaction to processTerminated(): in case any automakes were canceled before process start
+          scheduleAutoMake();
+        }
+
+        @Override
+        public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
           scheduleAutoMake();
         }
       });

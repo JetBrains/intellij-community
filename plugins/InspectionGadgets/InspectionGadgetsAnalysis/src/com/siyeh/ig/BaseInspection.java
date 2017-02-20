@@ -122,7 +122,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     final PsiFile file = holder.getFile();
     assert file.isPhysical();
     if (!shouldInspect(file)) {
-      return new PsiElementVisitor() { };
+      return PsiElementVisitor.EMPTY_VISITOR;
     }
     final BaseInspectionVisitor visitor = buildVisitor();
     visitor.setProblemsHolder(holder);

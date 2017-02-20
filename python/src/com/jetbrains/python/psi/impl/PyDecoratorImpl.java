@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.FunctionParameter;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
@@ -34,6 +34,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author dcheryasov
@@ -103,86 +105,32 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
-  @Nullable
-  public PyArgumentList getArgumentList() {
-    return PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
-  }
-
   @NotNull
-  public PyExpression[] getArguments() {
-    final PyArgumentList argList = getArgumentList();
-    return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
-  }
-
   @Override
-  public <T extends PsiElement> T getArgument(int index, Class<T> argClass) {
-    PyExpression[] args = getArguments();
-    return args.length > index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
-  }
+  public List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    final Function<PyRatedMarkedCallee, PyRatedMarkedCallee> mapping = ratedMarkedCallee -> {
+      if (!hasArgumentList()) {
+        // NOTE: that +1 thing looks fishy
+        final PyMarkedCallee oldMarkedCallee = ratedMarkedCallee.getMarkedCallee();
+        final PyMarkedCallee newMarkedCallee = new PyMarkedCallee(oldMarkedCallee.getCallable(),
+                                                                  oldMarkedCallee.getModifier(),
+                                                                  oldMarkedCallee.getImplicitOffset() + 1,
+                                                                  oldMarkedCallee.isImplicitlyResolved());
 
-  @Override
-  public <T extends PsiElement> T getArgument(int index, String keyword, Class<T> argClass) {
-    final PyExpression argument = getKeywordArgument(keyword);
-    if (argument != null) {
-      return argClass.isInstance(argument) ? argClass.cast(argument) : null;
-    }
-    return getArgument(index, argClass);
-  }
+        return new PyRatedMarkedCallee(newMarkedCallee, ratedMarkedCallee.getRate());
+      }
 
-  @Nullable
-  @Override
-  public <T extends PsiElement> T getArgument(@NotNull final FunctionParameter parameter, @NotNull final Class<T> argClass) {
-    return PyCallExpressionHelper.getArgument(parameter, argClass, this);
-  }
+      return ratedMarkedCallee;
+    };
 
-  @Override
-  public PyExpression getKeywordArgument(String keyword) {
-    return PyCallExpressionHelper.getKeywordArgument(this, keyword);
-  }
-
-  public void addArgument(PyExpression expression) {
-    PyCallExpressionHelper.addArgument(this, expression);
-  }
-
-  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext) {
-    return resolveCallee(resolveContext, 0);
-  }
-  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int offset) {
-    PyMarkedCallee callee = PyCallExpressionHelper.resolveCallee(this, resolveContext);
-    if (callee == null) return null;
-    if (!hasArgumentList()) {
-      // NOTE: that +1 thing looks fishy
-      callee = new PyMarkedCallee(callee.getCallable(), callee.getModifier(), callee.getImplicitOffset() + 1, callee.isImplicitlyResolved());
-    }
-    return callee;
+    return ContainerUtil.map(PyCallExpressionHelper.multiResolveRatedCallee(this, resolveContext, implicitOffset), mapping);
   }
 
   @NotNull
   @Override
-  public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
-    return PyCallExpressionHelper.mapArguments(this, resolveContext, 0);
+  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return PyCallExpressionHelper.multiMapArguments(this, resolveContext, implicitOffset);
   }
-
-  @NotNull
-  @Override
-  public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return PyCallExpressionHelper.mapArguments(this, resolveContext, implicitOffset);
-  }
-
-  @Override
-  public PyCallable resolveCalleeFunction(PyResolveContext resolveContext) {
-    return PyCallExpressionHelper.resolveCalleeFunction(this, resolveContext);
-  }
-
-  public boolean isCalleeText(@NotNull String... nameCandidates) {
-    return PyCallExpressionHelper.isCalleeText(this, nameCandidates);
-  }
-
-  @Override
-  public boolean isCallee(@NotNull final FQNamesProvider... name) {
-    return PyCallExpressionHelper.isCallee(this, name);
-  }
-
 
   @Override
   public String toString() {

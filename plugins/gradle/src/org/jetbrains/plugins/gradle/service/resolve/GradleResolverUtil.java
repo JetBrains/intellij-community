@@ -18,7 +18,6 @@ package org.jetbrains.plugins.gradle.service.resolve;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -29,14 +28,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.Arrays;
 
@@ -63,34 +57,14 @@ public class GradleResolverUtil {
     return argsCount;
   }
 
-  public static void addImplicitVariable(@NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         @NotNull GrReferenceExpressionImpl expression,
-                                         @NotNull String type) {
-    if (expression.getQualifier() == null && expression.getReferenceName() != null) {
-      PsiVariable myPsi = new GrLightField(expression.getReferenceName(), type, expression);
-      processor.execute(myPsi, state);
-    }
-  }
-
-  public static void addImplicitVariable(@NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         @NotNull PsiElement element,
-                                         @NotNull String type) {
-    PsiVariable myPsi = new GrLightField(element.getText(), type, element);
-    processor.execute(myPsi, state);
-  }
-
-
   @Nullable
   public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name,
                                                              @Nullable String returnType,
                                                              @Nullable String closureTypeParameter,
-                                                             @NotNull PsiElement place,
-                                                             @NotNull GroovyPsiManager psiManager) {
+                                                             @NotNull PsiElement place) {
     PsiClassType closureType;
     PsiClass closureClass =
-      psiManager.findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
+      JavaPsiFacade.getInstance(place.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
     if (closureClass == null) return null;
 
     if (closureClass.getTypeParameters().length != 1) {
@@ -122,87 +96,19 @@ public class GradleResolverUtil {
     return methodWithClosure;
   }
 
-  public static void processMethod(@NotNull String methodName,
-                                   @NotNull PsiClass handlerClass,
-                                   @NotNull PsiScopeProcessor processor,
-                                   @NotNull ResolveState state,
-                                   @NotNull PsiElement place) {
-    processMethod(methodName, handlerClass, processor, state, place, null);
-  }
-
-  public static void processMethod(@NotNull String methodName,
-                                   @NotNull PsiClass handlerClass,
-                                   @NotNull PsiScopeProcessor processor,
-                                   @NotNull ResolveState state,
-                                   @NotNull PsiElement place,
-                                   @Nullable String defaultMethodName) {
-    GrLightMethodBuilder builder = new GrLightMethodBuilder(place.getManager(), methodName);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
-    PsiType type = new PsiArrayType(factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope()));
-    builder.addParameter(new GrLightParameter("param", type, builder));
-    PsiClassType retType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope());
-    builder.setReturnType(retType);
-    processor.execute(builder, state);
-
-    GrMethodCall call = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);
-    if (call == null) {
-      return;
-    }
-    GrArgumentList args = call.getArgumentList();
-
-    int argsCount = getGrMethodArumentsCount(args);
-    argsCount++; // Configuration name is delivered as an argument.
-
-    // handle setter's shortcut facilities
-    final String setter = GroovyPropertyUtils.getSetterName(methodName);
-    for (PsiMethod method : handlerClass.findMethodsByName(setter, false)) {
-      if (method.getParameterList().getParametersCount() == 1) {
-        builder.setNavigationElement(method);
-        return;
-      }
-    }
-
-    for (PsiMethod method : handlerClass.findMethodsByName(methodName, false)) {
-      if (method.getParameterList().getParametersCount() == argsCount) {
-        builder.setNavigationElement(method);
-        return;
-      }
-    }
-
-    if (defaultMethodName != null) {
-      for (PsiMethod method : handlerClass.findMethodsByName(defaultMethodName, false)) {
-        if (method.getParameterList().getParametersCount() == argsCount) {
-          builder.setNavigationElement(method);
-          return;
-        }
-      }
-    }
-  }
-
-  public static void processDeclarations(@NotNull GroovyPsiManager psiManager,
-                                         @NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         @NotNull PsiElement place,
-                                         @NotNull String... fqNames) {
-    processDeclarations(null, psiManager, processor, state, place, fqNames);
-  }
-
-  public static void processDeclarations(@Nullable String methodName,
-                                         @NotNull GroovyPsiManager psiManager,
-                                         @NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         @NotNull PsiElement place,
-                                         @NotNull String... fqNames) {
+  public static boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                            @NotNull ResolveState state,
+                                            @NotNull PsiElement place,
+                                            @NotNull String... fqNames) {
+    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(place.getProject());
     for (String fqName : fqNames) {
       if(fqName == null) continue;
-      PsiClass psiClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
+      PsiClass psiClass = javaPsiFacade.findClass(fqName, place.getResolveScope());
       if (psiClass != null) {
-        psiClass.processDeclarations(processor, state, null, place);
-        if (methodName != null) {
-          processMethod(methodName, psiClass, processor, state, place);
-        }
+        if (!UtilKt.processDeclarations(psiClass, processor, state, place)) return false;
       }
     }
+    return true;
   }
 
   @Nullable

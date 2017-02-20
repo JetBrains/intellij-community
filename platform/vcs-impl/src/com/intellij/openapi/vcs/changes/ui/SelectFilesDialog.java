@@ -103,7 +103,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
     }
 
     protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes, ChangeNodeDecorator changeNodeDecorator) {
-      return new TreeModelBuilder(myProject, isShowFlatten()).buildModelFromFiles(changes);
+      return TreeModelBuilder.buildFromVirtualFiles(myProject, isShowFlatten(), changes);
     }
 
     protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode node) {

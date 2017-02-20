@@ -124,7 +124,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
 
   private void onTestFailed(@NotNull String id, @NotNull String errorMessage, int durationMillis) {
     myEventsProcessor.onTestFailure(new TestFailedEvent(null, id, errorMessage, null, false, null,
-                                                        null, null, durationMillis));
+                                                        null, null, null, false, false, durationMillis));
   }
 
 }

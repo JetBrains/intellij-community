@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon
 
+import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import org.assertj.core.api.Assertions.assertThat
@@ -24,6 +26,23 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     super.setUp()
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
+  }
+
+  fun testPackageStatement() {
+    highlight("package pkg;")
+    highlight("""
+        <error descr="A module file should not have 'package' statement">package pkg;</error>
+        module M { }""".trimIndent())
+    fixes("<caret>package pkg;\nmodule M { }", "DeleteElementFix")
+  }
+
+  fun testSoftKeywords() {
+    addFile("pkg/module/C.java", "package pkg.module;\npublic class C { }")
+    myFixture.configureByText("module-info.java", "module M { exports pkg.module; }")
+    val keywords = myFixture.doHighlighting().filter { it.type == JavaHighlightInfoTypes.JAVA_KEYWORD }
+    assertEquals(2, keywords.size)
+    assertEquals(TextRange(0, 6), TextRange(keywords[0].startOffset, keywords[0].endOffset))
+    assertEquals(TextRange(11, 18), TextRange(keywords[1].startOffset, keywords[1].endOffset))
   }
 
   fun testWrongFileName() {
@@ -51,7 +70,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           uses pkg.main.C;
           <error descr="Duplicate uses: pkg.main.C">uses pkg. main . /*...*/ C;</error>
           provides pkg .main .C with pkg.main.Impl;
-          <error descr="Duplicate provides: pkg.main.C / pkg.main.Impl">provides pkg.main.C with pkg. main. Impl;</error>
+          <error descr="Duplicate provides: pkg.main.C">provides pkg.main.C with pkg. main. Impl;</error>
         }""".trimIndent())
   }
 
@@ -73,6 +92,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           requires <error descr="Cyclic dependence: M1, M2">M2</error>;
           requires <error descr="Module is not in dependencies: M3">M3</error>;
           requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
+          requires lib.multi.release;
         }""".trimIndent())
   }
 
@@ -82,15 +102,27 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
     highlight("""
         module M {
-          exports pkg.<error descr="Cannot resolve symbol 'missing'">missing</error>;
+          exports <error descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</error>;
           exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
-          exports pkg.main to <error descr="Module not found: M.missing">M.missing</error>, M2, <error descr="Duplicate export: M2">M2</error>;
-          exports pkg.other to <warning descr="Exports to itself">M</warning>;
+          exports pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate export: M2">M2</error>;
+        }""".trimIndent())
+  }
+
+  fun testOpens() {
+    addFile("pkg/empty/package-info.java", "package pkg.empty;")
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
+    highlight("""
+        module M {
+          opens <warning descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</warning>;
+          opens <warning descr="Package is empty: pkg.empty">pkg.empty</warning>;
+          opens pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate export: M2">M2</error>;
         }""".trimIndent())
   }
 
   fun testUses() {
-    addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
+    addFile("pkg/main/C.java", "package pkg.main;\nclass C { void m(); }")
+    addFile("pkg/main/O.java", "package pkg.main;\npublic class O {\n public class I { void m(); }\n}")
     addFile("pkg/main/E.java", "package pkg.main;\npublic enum E { }")
     highlight("""
         module M {
@@ -98,6 +130,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           uses pkg.main.<error descr="Cannot resolve symbol 'X'">X</error>;
           uses pkg.main.<error descr="'pkg.main.C' is not public in 'pkg.main'. Cannot be accessed from outside package">C</error>;
           uses pkg.main.<error descr="The service definition is an enum: E">E</error>;
+          uses pkg.main.O.I;
+          uses pkg.main.O.I.<error descr="Cannot resolve symbol 'm'">m</error>;
         }""".trimIndent())
   }
 
@@ -108,13 +142,20 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/main/Impl3.java", "package pkg.main;\npublic abstract class Impl3 implements C { }")
     addFile("pkg/main/Impl4.java", "package pkg.main;\npublic class Impl4 implements C {\n public Impl4(String s) { }\n}")
     addFile("pkg/main/Impl5.java", "package pkg.main;\npublic class Impl5 implements C {\n protected Impl5() { }\n}")
+    addFile("pkg/main/Impl6.java", "package pkg.main;\npublic class Impl6 implements C { }")
+    addFile("pkg/main/Impl7.java", "package pkg.main;\npublic class Impl7 {\n public static void provider();\n}")
+    addFile("pkg/main/Impl8.java", "package pkg.main;\npublic class Impl8 {\n public static C provider();\n}")
     highlight("""
         module M {
+          provides pkg.main.C with pkg.main.<error descr="Cannot resolve symbol 'NoImpl'">NoImpl</error>;
           provides pkg.main.C with pkg.main.<error descr="'pkg.main.Impl1' is not public in 'pkg.main'. Cannot be accessed from outside package">Impl1</error>;
-          provides pkg.main.C with pkg.main.<error descr="The service implementation type must be a subtype of the service interface type">Impl2</error>;
+          provides pkg.main.C with pkg.main.<error descr="The service implementation type must be a subtype of the service interface type, or have a public static no-args 'provider' method">Impl2</error>;
           provides pkg.main.C with pkg.main.<error descr="The service implementation is an abstract class: Impl3">Impl3</error>;
-          provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a default constructor: Impl4">Impl4</error>;
-          provides pkg.main.C with pkg.main.<error descr="The default constructor of the service implementation is not public: Impl5">Impl5</error>;
+          provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a public default constructor: Impl4">Impl4</error>;
+          provides pkg.main.C with pkg.main.<error descr="The service implementation does not have a public default constructor: Impl5">Impl5</error>;
+          provides pkg.main.C with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">pkg.main.Impl6</error>;
+          provides pkg.main.C with pkg.main.<error descr="The 'provider' method return type must be a subtype of the service interface type: Impl7">Impl7</error>;
+          provides pkg.main.C with pkg.main.Impl8;
         }""".trimIndent())
   }
 
@@ -142,7 +183,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
     addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
     addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
-    addFile("module-info.java", "module M6 { requires public M7; }", M6)
+    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
 
@@ -169,7 +210,6 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testLinearModuleGraphBug() {
-    addFile("module-info.java", "module M { requires M6; }")
     addFile("module-info.java", "module M6 { requires M7; }", M6)
     addFile("module-info.java", "module M7 { }", M7)
     highlight("module M { requires M6; }")

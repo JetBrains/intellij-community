@@ -131,10 +131,6 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   @Override
-  public void beforeRootsChange(ModuleRootEvent event) {
-  }
-
-  @Override
   public void rootsChanged(ModuleRootEvent event) {
     if (myPanel != null) {
       myPanel.rootsChanged();

@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.EnumSet;
 
 class IdeStarter extends ApplicationStarterEx {
   private Splash mySplash;
@@ -131,7 +132,8 @@ class IdeStarter extends ApplicationStarterEx {
               IdeaApplication.LOG.error("Wrong line number:" + args[2]);
             }
           }
-          PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
+          EnumSet<PlatformProjectOpenProcessor.Option > options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+          PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
         }
       }
       throw new IncorrectOperationException("Can't find file:" + file);

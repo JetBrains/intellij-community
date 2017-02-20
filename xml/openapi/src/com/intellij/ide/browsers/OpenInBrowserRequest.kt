@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.Url
 
-abstract class OpenInBrowserRequest() {
+abstract class OpenInBrowserRequest(open val file: PsiFile) {
   var result: Collection<Url>? = null
 
   var isAppendAccessToken = true
@@ -33,15 +33,12 @@ abstract class OpenInBrowserRequest() {
   val project: Project
     get() = file.project
 
-  abstract val file: PsiFile
   abstract val element: PsiElement
 }
 
 fun createOpenInBrowserRequest(element: PsiElement): OpenInBrowserRequest? {
   val psiFile = runReadAction { if (element.isValid) element.containingFile?.let { if (it.virtualFile == null) null else it } else null } ?: return null
-  return object : OpenInBrowserRequest() {
-    override val file = psiFile
-
+  return object : OpenInBrowserRequest(psiFile) {
     override val element = element
   }
 }

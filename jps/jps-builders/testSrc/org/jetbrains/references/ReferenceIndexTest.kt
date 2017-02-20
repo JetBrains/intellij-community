@@ -78,6 +78,10 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
     assertIndexOnRebuild("myPackage/package-info.java")
   }
 
+  fun testPackageInfo2() {
+    assertIndexOnRebuild("myPackage/package-info.java")
+  }
+
   fun testArrayRefs() {
     assertIndexOnRebuild("Array.java", "Foo.java", "Bar.java")
   }

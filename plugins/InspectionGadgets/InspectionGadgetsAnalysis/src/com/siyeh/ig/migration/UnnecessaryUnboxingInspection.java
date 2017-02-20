@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean onlyReportSuperfluouslyUnboxed = false;
 
-  @NonNls static final Map<String, String> s_unboxingMethods =
-    new HashMap<>(8);
+  @NonNls static final Map<String, String> s_unboxingMethods = new HashMap<>(8);
 
   static {
     s_unboxingMethods.put(CommonClassNames.JAVA_LANG_INTEGER, "intValue");
@@ -154,13 +153,13 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null || !canRemainBoxed(expression, qualifier)) {
+      if (qualifier == null || isUnboxingNecessary(expression, qualifier)) {
         return;
       }
       registerError(expression);
     }
 
-    private boolean canRemainBoxed(@NotNull PsiExpression expression, @NotNull PsiExpression unboxedExpression) {
+    private boolean isUnboxingNecessary(@NotNull PsiExpression expression, @NotNull PsiExpression unboxedExpression) {
       PsiElement parent = expression.getParent();
       while (parent instanceof PsiParenthesizedExpression) {
         expression = (PsiExpression)parent;
@@ -169,61 +168,54 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       if (parent instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         if (isPossibleObjectComparison(expression, polyadicExpression)) {
-          return false;
+          return true;
         }
       }
       if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
         final PsiTypeElement typeElement = typeCastExpression.getCastType();
         if (typeElement == null) {
-          return false;
+          return true;
         }
         final PsiType castType = typeElement.getType();
         final PsiType expressionType = expression.getType();
         if (expressionType == null || !castType.isAssignableFrom(expressionType)) {
-          return false;
+          return true;
         }
       }
       else if (parent instanceof PsiConditionalExpression) {
         final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
         final PsiExpression thenExpression = conditionalExpression.getThenExpression();
         if (thenExpression == null) {
-          return false;
+          return true;
         }
         final PsiExpression elseExpression = conditionalExpression.getElseExpression();
         if (elseExpression == null) {
-          return false;
+          return true;
         }
         if (PsiTreeUtil.isAncestor(thenExpression, expression, false)) {
           final PsiType type = elseExpression.getType();
           if (!(type instanceof PsiPrimitiveType)) {
-            return false;
+            return true;
           }
         }
         else if (PsiTreeUtil.isAncestor(elseExpression, expression, false)) {
           final PsiType type = thenExpression.getType();
           if (!(type instanceof PsiPrimitiveType)) {
-            return false;
+            return true;
           }
         }
       }
-      else if (parent instanceof PsiExpressionList) {
-        final PsiElement grandParent = parent.getParent();
-        if (!(grandParent instanceof PsiCallExpression)) {
-          return true;
-        }
-        final PsiCallExpression methodCallExpression = (PsiCallExpression)grandParent;
-        if (!isSameMethodCalledWithoutUnboxing(methodCallExpression, expression, unboxedExpression)) {
-          return false;
-        }
+      else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expression, unboxedExpression)) {
+        return true;
       }
       if (onlyReportSuperfluouslyUnboxed) {
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
         if (!(expectedType instanceof PsiClassType)) {
-          return false;
+          return true;
         }
       }
-      return true;
+      return false;
     }
 
     private boolean isPossibleObjectComparison(PsiExpression expression, PsiPolyadicExpression polyadicExpression) {
@@ -262,17 +254,6 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       final String methodName = methodExpression.getReferenceName();
       final String unboxingMethod = s_unboxingMethods.get(qualifierTypeName);
       return unboxingMethod.equals(methodName);
-    }
-
-    private boolean isSameMethodCalledWithoutUnboxing(@NotNull PsiCallExpression callExpression,
-                                                      @NotNull PsiExpression unboxingExpression,
-                                                      @NotNull PsiExpression unboxedExpression) {
-      final PsiMethod originalMethod = callExpression.resolveMethod();
-      if (originalMethod == null) {
-        return false;
-      }
-      final PsiMethod method = MethodCallUtils.findMethodWithReplacedArgument(callExpression, unboxingExpression, unboxedExpression);
-      return originalMethod == method;
     }
   }
 }

@@ -75,7 +75,7 @@ public class GroovyUnnecessaryReturnInspection extends BaseInspection {
   private static class UnnecessaryReturnFix extends GroovyFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Remove unnecessary return";
     }
 

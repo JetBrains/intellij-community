@@ -20,6 +20,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
@@ -34,12 +35,14 @@ import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -49,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.junit.Assert.*;
 
@@ -94,12 +98,17 @@ public class EditorTestUtil {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     AnAction action = actionManager.getAction(actionId);
     assertNotNull(action);
+    executeAction(editor, assertActionIsEnabled, action);
+  }
+
+  public static void executeAction(@NotNull Editor editor, boolean assertActionIsEnabled, @NotNull AnAction action) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
     action.beforeActionPerformedUpdate(event);
     if (!event.getPresentation().isEnabled()) {
-      assertFalse("Action " + actionId + " is disabled", assertActionIsEnabled);
+      assertFalse("Action " + action + " is disabled", assertActionIsEnabled);
       return;
     }
+    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
     action.actionPerformed(event);
     actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
@@ -226,7 +235,7 @@ public class EditorTestUtil {
     });
     model.setEditorTextRepresentationHelper(new DefaultEditorTextRepresentationHelper(editor) {
       @Override
-      public int charWidth(char c, int fontType) {
+      public int charWidth(int c, int fontType) {
         return charWidthInPixels;
       }
     });
@@ -464,6 +473,15 @@ public class EditorTestUtil {
       @Override
       public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {}
     });
+  }
+
+  public static void waitForLoading(Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (editor == null) return;
+    while (!AsyncEditorLoader.isEditorLoaded(editor)) {
+      LockSupport.parkNanos(100_000_000);
+      UIUtil.dispatchAllInvocationEvents();
+    }
   }
 
   public static class CaretAndSelectionState {

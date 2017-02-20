@@ -85,7 +85,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     final boolean contains = myUsedNames.contains(text);
     final boolean enabled = selectedURL != null && !StringUtil.isEmptyOrSpaces(text) && !contains;
     if (contains) {
-      setErrorText("Target File Already Exists");
+      setErrorText("Target File Already Exists", myFolderName);
     } else {
       setErrorText(null);
     }

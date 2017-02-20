@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -389,7 +390,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class LibraryTableInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable myDelegateTable;
-    @NonNls private final Set<String> myCheckedNames = new HashSet<>(Arrays.asList("removeLibrary" /*,"createLibrary"*/));
+    @NonNls private final Set<String> myCheckedNames = new THashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
 
     LibraryTableInvocationHandler(LibraryTable table) {
       myDelegateTable = table;

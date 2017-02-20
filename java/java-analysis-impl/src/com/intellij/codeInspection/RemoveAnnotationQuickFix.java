@@ -18,18 +18,16 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class RemoveAnnotationQuickFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.i18n.AnnotateNonNlsQuickfix");
   private final PsiAnnotation myAnnotation;
   private final PsiModifierListOwner myListOwner;
 
@@ -45,15 +43,15 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (myAnnotation.isPhysical()) {
-      try {
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(myAnnotation)) return;
-        myAnnotation.delete();
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(myAnnotation)) return;
+      WriteAction.run(() -> myAnnotation.delete());
     } else if (myListOwner != null) {
       ExternalAnnotationsManager.getInstance(project).deannotate(myListOwner, myAnnotation.getQualifiedName());
     }

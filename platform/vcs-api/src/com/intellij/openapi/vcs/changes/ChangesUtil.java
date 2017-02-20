@@ -17,12 +17,11 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -38,6 +37,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,9 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
-import static java.util.stream.Collectors.*;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author max
@@ -131,37 +133,27 @@ public class ChangesUtil {
 
   @NotNull
   public static Stream<FilePath> getAllPaths(@NotNull Stream<Change> changes) {
-    return changes
-      .flatMap(change -> Stream.of(getBeforePath(change), getAfterPath(change)))
+    return changes.flatMap(change ->
+                             Stream.of(getBeforePath(change), getAfterPath(change))
+                               .filter(Objects::nonNull)
+                               .distinct());
+  }
+
+  @NotNull
+  public static Stream<VirtualFile> getAllFiles(@NotNull Stream<Change> changes) {
+    return getAllPaths(changes)
+      .map(FilePath::getVirtualFile)
       .filter(Objects::nonNull);
   }
 
   /**
-   * @deprecated Use {@link ChangesUtil#getAfterRevisionsFiles(Stream)}.
+   * @deprecated Use {@link ChangesUtil#getAllFiles(Stream)}.
    */
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   @Deprecated
   @NotNull
   public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
-    return getAfterRevisionsFiles(changes.stream()).toArray(VirtualFile[]::new);
-  }
-
-  @NotNull
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes) {
-    return getAfterRevisionsFiles(changes, false);
-  }
-
-  @NotNull
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes, boolean refresh) {
-    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-
-    return changes
-      .map(Change::getAfterRevision)
-      .filter(Objects::nonNull)
-      .map(ContentRevision::getFile)
-      .map(path -> refresh ? fileSystem.refreshAndFindFileByPath(path.getPath()) : path.getVirtualFile())
-      .filter(Objects::nonNull)
-      .filter(VirtualFile::isValid);
+    return getAllFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
   @NotNull
@@ -201,13 +193,9 @@ public class ChangesUtil {
 
   public static FilePath getLocalPath(@NotNull Project project, FilePath filePath) {
     // check if the file has just been renamed (IDEADEV-15494)
-    Change change = ApplicationManager.getApplication().runReadAction(new Computable<Change>() {
-      @Override
-      @Nullable
-      public Change compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return ChangeListManager.getInstance(project).getChange(filePath);
-      }
+    Change change = ReadAction.compute(() -> {
+      if (project.isDisposed()) throw new ProcessCanceledException();
+      return ChangeListManager.getInstance(project).getChange(filePath);
     });
     if (change != null) {
       ContentRevision beforeRevision = change.getBeforeRevision();
@@ -242,20 +230,17 @@ public class ChangesUtil {
 
   @Nullable
   private static VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        VirtualFile result = null;
-        FilePath parent = filePath;
-        LocalFileSystem lfs = LocalFileSystem.getInstance();
+    return ReadAction.compute(() -> {
+      VirtualFile result = null;
+      FilePath parent = filePath;
+      LocalFileSystem lfs = LocalFileSystem.getInstance();
 
-        while (result == null && parent != null) {
-          result = lfs.findFileByPath(parent.getPath());
-          parent = parent.getParentPath();
-        }
-
-        return result;
+      while (result == null && parent != null) {
+        result = lfs.findFileByPath(parent.getPath());
+        parent = parent.getParentPath();
       }
+
+      return result;
     });
   }
 
@@ -296,20 +281,14 @@ public class ChangesUtil {
   public static <T> void processItemsByVcs(@NotNull Collection<T> items,
                                            @NotNull VcsSeparator<T> separator,
                                            @NotNull PerVcsProcessor<T> processor) {
-    Map<AbstractVcs, List<T>> changesByVcs = ApplicationManager.getApplication().runReadAction(
-      new NotNullComputable<Map<AbstractVcs, List<T>>>() {
-        @NotNull
-        @Override
-        public Map<AbstractVcs, List<T>> compute() {
-          return items.stream().collect(groupingBy(separator::getVcsFor));
-        }
-      });
+    Map<AbstractVcs, List<T>> changesByVcs = ReadAction.compute(
+      () -> StreamEx.of(items)
+        .mapToEntry(separator::getVcsFor, identity())
+        .nonNullKeys()
+        .grouping()
+    );
 
-    changesByVcs.forEach((vcs, vcsItems) -> {
-      if (vcs != null) {
-        processor.process(vcs, vcsItems);
-      }
-    });
+    changesByVcs.forEach(processor::process);
   }
 
   public static void processChangesByVcs(@NotNull Project project,

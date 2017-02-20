@@ -71,9 +71,14 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Override
   @Nullable
   public T getMapping(@Nullable VirtualFile file) {
-    FilePropertyPusher<T> pusher = getFilePropertyPusher();
-    T t = getMappingInner(file, myMappings, pusher == null? null : pusher.getFileDataKey());
+    T t = getConfiguredMapping(file);
     return t == null? getDefaultMapping(file) : t;
+  }
+
+  @Nullable
+  public T getConfiguredMapping(@Nullable VirtualFile file) {
+    FilePropertyPusher<T> pusher = getFilePropertyPusher();
+    return getMappingInner(file, myMappings, pusher == null ? null : pusher.getFileDataKey());
   }
 
   @Nullable
@@ -109,16 +114,6 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       if (t != null) return t;
     }
     return null;
-  }
-
-  @Override
-  public T chosenToStored(VirtualFile file, T value) {
-    return value;
-  }
-
-  @Override
-  public boolean isSelectable(T value) {
-    return true;
   }
 
   @Override
@@ -180,12 +175,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @Override
-  public Collection<T> getAvailableValues(VirtualFile file) {
-    return getAvailableValues();
-  }
-
-  protected abstract List<T> getAvailableValues();
+  public abstract List<T> getAvailableValues();
 
   @Nullable
   protected abstract String serialize(T t);

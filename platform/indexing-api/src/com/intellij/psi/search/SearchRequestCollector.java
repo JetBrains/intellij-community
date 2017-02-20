@@ -16,9 +16,8 @@
 package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -78,19 +77,22 @@ public class SearchRequestCollector {
     if (!makesSenseToSearch(word, searchScope)) return;
 
     Collection<PsiSearchRequest> requests = null;
-    if (searchTarget != null && (searchScope instanceof GlobalSearchScope) && ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
+    if (searchTarget != null &&
+        searchScope instanceof GlobalSearchScope &&
+        ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
       for (ScopeOptimizer optimizer : CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
         final GlobalSearchScope optimizedCodeUsageSearchScope = optimizer.getScopeToExclude(searchTarget);
         if (optimizedCodeUsageSearchScope != null) {
           short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
-                                          ? (UsageSearchContext.IN_COMMENTS |
-                                             UsageSearchContext.IN_STRINGS |
-                                             UsageSearchContext.IN_FOREIGN_LANGUAGES |
-                                             UsageSearchContext.IN_PLAIN_TEXT)
+                                          ? UsageSearchContext.IN_COMMENTS |
+                                            UsageSearchContext.IN_STRINGS |
+                                            UsageSearchContext.IN_FOREIGN_LANGUAGES |
+                                            UsageSearchContext.IN_PLAIN_TEXT
                                           : (short)(searchContext ^ UsageSearchContext.IN_CODE);
-          final GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
+          GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
           requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
                                         new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
+          break;
         }
       }
     }
@@ -112,12 +114,9 @@ public class SearchRequestCollector {
   }
 
   private static String getContainerName(@NotNull final PsiElement target) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        PsiElement container = getContainer(target);
-        return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
-      }
+    return ReadAction.compute(() -> {
+      PsiElement container = getContainer(target);
+      return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
     });
   }
 
@@ -126,10 +125,13 @@ public class SearchRequestCollector {
       final PsiElement container = provider.getContainer(refElement);
       if (container != null) return container;
     }
-    return refElement.getParent();
+    // it's assumed that in the general case of unknown language the .getParent() will lead to reparse,
+    // (all these Javascript stubbed methods under non-stubbed block statements under stubbed classes - meh)
+    // so just return null instead of refElement.getParent() here to avoid making things worse.
+    return null;
   }
 
-  /** use {@link #searchWord(java.lang.String, com.intellij.psi.search.SearchScope, short, boolean, com.intellij.psi.PsiElement)}
+  /** use {@link #searchWord(String, SearchScope, short, boolean, PsiElement)}
    * instead
    */
   @Deprecated
@@ -145,10 +147,7 @@ public class SearchRequestCollector {
     if (searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).getScope().length == 0) {
       return false;
     }
-    if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
-      return false;
-    }
-    return !StringUtil.isEmpty(word);
+    return searchScope != GlobalSearchScope.EMPTY_SCOPE && !StringUtil.isEmpty(word);
   }
 
   public void searchQuery(@NotNull QuerySearchRequest request) {

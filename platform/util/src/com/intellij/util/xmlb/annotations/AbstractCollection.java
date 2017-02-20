@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,11 @@ public @interface AbstractCollection {
    */
   boolean surroundWithTag() default true;
 
-  
+  /**
+   * Due to historical reasons even LinkedHashSet will be sorted according to the natural ordering of its elements.
+   */
+  boolean sortOrderedSet() default true;
+
   String elementTag() default Constants.OPTION;
   String elementValueAttribute() default Constants.VALUE;
 

@@ -1,5 +1,6 @@
 package com.intellij.remoteServer.impl.runtime.ui;
 
+import com.intellij.execution.dashboard.TreeContent;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -45,7 +46,7 @@ import java.util.Set;
 /**
  * @author michael.golubev
  */
-public class ServersToolWindowContent extends JPanel implements Disposable, ServersTreeNodeSelector {
+public class ServersToolWindowContent extends JPanel implements Disposable, ServersTreeNodeSelector, TreeContent {
   public static final DataKey<ServersToolWindowContent> KEY = DataKey.create("serversToolWindowContent");
   @NonNls private static final String PLACE_TOOLBAR = "ServersToolWindowContent#Toolbar";
   @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
@@ -289,6 +290,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   public void dispose() {
   }
 
+  @Override
+  @NotNull
   public TreeBuilderBase getBuilder() {
     return myBuilder;
   }

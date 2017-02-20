@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Function declaration in source (the <code>def</code> and everything within).
+ * Function declaration in source (the {@code def} and everything within).
  *
  * @author yole
  */
@@ -71,6 +71,11 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
    */
   @Nullable
   Modifier getModifier();
+
+  /**
+   * Checks whether the function contains a yield expression in its body.
+   */
+  boolean isGenerator();
 
   boolean isAsync();
 

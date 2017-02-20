@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
-import gnu.trove.*;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
@@ -49,7 +49,7 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
 
 
   @Override
-  public void fun(DefinitionMap m, Instruction instruction) {
+  public void fun(@NotNull DefinitionMap m, @NotNull Instruction instruction) {
     if (instruction instanceof ReadWriteVariableInstruction) {
       final ReadWriteVariableInstruction varInsn = (ReadWriteVariableInstruction) instruction;
       final String name = varInsn.getVariableName();
@@ -65,10 +65,5 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
   @NotNull
   public DefinitionMap initial() {
     return new DefinitionMap();
-  }
-
-  @Override
-  public boolean isForward() {
-    return true;
   }
 }

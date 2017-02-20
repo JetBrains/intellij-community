@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.function.Consumer;
 
 public abstract class ShowSettingsUtil {
   public static ShowSettingsUtil getInstance() {
@@ -37,6 +38,10 @@ public abstract class ShowSettingsUtil {
 
   public abstract void showSettingsDialog(@NotNull final Project project, final Configurable toSelect);
 
+  public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project,
+                                                                   @NotNull Class<T> configurableClass,
+                                                                   @Nullable Consumer<T> additionalConfiguration);
+  
   public abstract boolean editConfigurable(Project project, Configurable configurable);
 
   public abstract boolean editConfigurable(@Nullable Project project, Configurable configurable, @Nullable Runnable advancedInitialization);

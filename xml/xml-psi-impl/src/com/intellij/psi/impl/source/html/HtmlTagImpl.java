@@ -69,7 +69,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   }
 
   @Override
-  protected boolean isCaseSensitive() {
+  public boolean isCaseSensitive() {
     return false;
   }
 

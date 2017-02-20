@@ -397,7 +397,7 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   /**
-   * @return <code>true</code> if splitter has vertical orientation, <code>false</code> otherwise
+   * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
    */
   public boolean getOrientation() {
     return myVerticalSplit;
@@ -411,7 +411,7 @@ public class Splitter extends JPanel implements Splittable {
   }
 
   /**
-   * @param verticalSplit <code>true</code> means that splitter will have vertical split
+   * @param verticalSplit {@code true} means that splitter will have vertical split
    */
   public void setOrientation(boolean verticalSplit) {
     boolean changed = myVerticalSplit != verticalSplit;

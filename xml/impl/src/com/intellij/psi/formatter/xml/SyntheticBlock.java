@@ -202,7 +202,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
   }
 
   private boolean isEntityRef(final ASTNode node) {
-    return node.getElementType() == XmlElementType.XML_ENTITY_REF;
+    return node.getElementType() == XmlElementType.XML_ENTITY_REF || node.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
   private boolean shouldAddSpaceAroundTagName(final ASTNode node1, final ASTNode node2) {

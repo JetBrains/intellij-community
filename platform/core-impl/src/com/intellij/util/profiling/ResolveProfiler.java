@@ -33,12 +33,12 @@ public class ResolveProfiler {
   @NonNls private static final String PATH = "../../resolve_info/";
   private static final boolean DISABLED = true;
 
-  private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<ThreadInfo>();
+  private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<>();
   private static volatile int fileCount;
 
   private static class ThreadInfo {
     private final String myFileName;
-    private final Deque<Long> myTimeStack = new ArrayDeque<Long>();
+    private final Deque<Long> myTimeStack = new ArrayDeque<>();
 
     private String myPrefix = "";
 

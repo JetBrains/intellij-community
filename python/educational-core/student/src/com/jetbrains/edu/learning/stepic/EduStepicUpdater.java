@@ -29,7 +29,7 @@ public class EduStepicUpdater {
     if (!checkNeeded()) {
       return;
     }
-    application.getMessageBus().connect(application).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    application.getMessageBus().connect(application).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
 

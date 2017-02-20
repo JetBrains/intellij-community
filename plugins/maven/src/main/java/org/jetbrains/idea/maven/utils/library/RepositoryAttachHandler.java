@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,6 @@ import org.jetbrains.idea.maven.utils.library.remote.MavenDependenciesRemoteMana
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -193,9 +192,6 @@ public class RepositoryAttachHandler {
           }
           result.add(new OrderRoot(file, rootType));
         }
-      }
-      catch (MalformedURLException e) {
-        MavenLog.LOG.warn(e);
       }
       catch (IOException e) {
         MavenLog.LOG.warn(e);

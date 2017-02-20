@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * The alignment setting for a formatting model block. Blocks which return the same
- * alignment object instance from the <code>getAlignment</code> method
+ * alignment object instance from the {@code getAlignment} method
  * are aligned with each other.
  *
  * @see Block#getAlignment()
@@ -61,8 +61,8 @@ public abstract class Alignment {
    *          int finish = 2;
    *      </pre>
    *      <p/>
-   *      Here <code>'='</code> block of <code>'int start  = 1'</code> statement is shifted one symbol right in order to align
-   *      to the <code>'='</code> block of <code>'int finish  = 1'</code> statement.
+   *      Here {@code '='} block of {@code 'int start  = 1'} statement is shifted one symbol right in order to align
+   *      to the {@code '='} block of {@code 'int finish  = 1'} statement.
    *   </li>
    *   <li>
    *     <b>Anchor</b>
@@ -94,7 +94,7 @@ public abstract class Alignment {
    * @param allowBackwardShift    flag that specifies if former aligned block may be shifted to right in order to align to subsequent
    *                              aligned block
    * @param anchor                alignment anchor
-   * @return                      alignment object with the given <code>'allow backward shift'</code> setting
+   * @return                      alignment object with the given {@code 'allow backward shift'} setting
    */
   public static Alignment createAlignment(boolean allowBackwardShift, @NotNull Anchor anchor) {
     return myFactory.createAlignment(allowBackwardShift, anchor);
@@ -102,7 +102,7 @@ public abstract class Alignment {
   
   /**
    * Allows to create alignment with the following feature - aligned blocks are aligned to block with the current alignment if the one
-   * if found; block with the given <code>'base'</code> alignment is checked otherwise.
+   * if found; block with the given {@code 'base'} alignment is checked otherwise.
    * <p/>
    * Example:
    * <p/>
@@ -111,8 +111,8 @@ public abstract class Alignment {
    *               : y;
    * </pre>
    * <p/>
-   * Here <code>':'</code> is aligned to <code>'?'</code> and alignment of <code>'a'</code> is a <code>'base alignment'</code>
-   * of <code>'?'</code> alignment. I.e. the thing is that <code>':'</code> is not aligned to <code>'a'</code>.
+   * Here {@code ':'} is aligned to {@code '?'} and alignment of {@code 'a'} is a {@code 'base alignment'}
+   * of {@code '?'} alignment. I.e. the thing is that {@code ':'} is not aligned to {@code 'a'}.
    * <p/>
    * However, we can change example as follows:
    * <p/>
@@ -121,9 +121,9 @@ public abstract class Alignment {
    *             ? x : y;
    * </pre>
    * <p/>
-   * Here <code>'?'</code> is aligned to <code>'a'</code> because the later is set as a <code>'base alignment'</code> for <code>'?'</code>.
-   * Note that we can't just define the same {@link #createAlignment() simple alignment} for all blocks <code>'a'</code>,
-   * <code>'?'</code> and <code>':'</code> because it would produce formatting like the one below:
+   * Here {@code '?'} is aligned to {@code 'a'} because the later is set as a {@code 'base alignment'} for {@code '?'}.
+   * Note that we can't just define the same {@link #createAlignment() simple alignment} for all blocks {@code 'a'},
+   * {@code '?'} and {@code ':'} because it would produce formatting like the one below:
    * <p/>
    * <pre>
    *     int i = a ? x
@@ -131,7 +131,7 @@ public abstract class Alignment {
    * </pre>
    *
    * @param base    base alignment to use within returned alignment object
-   * @return        alignment object with the given alignment defined as a <code>'base alignment'</code>
+   * @return        alignment object with the given alignment defined as a {@code 'base alignment'}
    */
   public static Alignment createChildAlignment(final Alignment base) {
     return myFactory.createChildAlignment(base);

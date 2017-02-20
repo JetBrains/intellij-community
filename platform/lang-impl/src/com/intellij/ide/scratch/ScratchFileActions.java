@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,13 @@ package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -62,15 +60,31 @@ public class ScratchFileActions {
   public static class NewFileAction extends DumbAwareAction {
     private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
 
+    private static final String ACTION_ID = "NewScratchFile";
+
+    private static final String SMALLER_IDE_CONTAINER_GROUP = "PlatformOpenProjectGroup";
+
+    private final String myActionText;
+
+    public NewFileAction() {
+      final Presentation templatePresentation = getTemplatePresentation();
+      templatePresentation.setIcon(ICON);
+      // A hacky way for customizing text in IDEs without File->New-> submenu
+      myActionText = (isIdeWithoutNewSubmenu() ? "New " : "") + ActionsBundle.actionText(ACTION_ID);
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
+      getTemplatePresentation().setText(myActionText);
+
       String place = e.getPlace();
       boolean enabled = e.getProject() != null
                         && Registry.is("ide.scratch.enabled")
                         && (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(enabled);
-      presentation.setIcon(ICON);
+
+      updatePresentationTextAndIcon(e, presentation);
     }
 
     @Override
@@ -81,7 +95,11 @@ public class ScratchFileActions {
       PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
       Editor editor = e.getData(CommonDataKeys.EDITOR);
 
-      final String text = StringUtil.notNullize(getSelectionText(editor));
+      String eventText = getSelectionText(editor);
+      if (eventText == null) {
+        eventText = e.getData(PlatformDataKeys.PREDEFINED_TEXT);
+      }
+      final String text = StringUtil.notNullize(eventText);
       Language language = text.isEmpty() ? null : detectLanguageFromSelection(project, editor, file, text);
       Consumer<Language> consumer = language1 -> doCreateNewScratch(project, false, language1, text);
       if (language != null) {
@@ -90,6 +108,22 @@ public class ScratchFileActions {
       else {
         LRUPopupBuilder.forFileLanguages(project, null, consumer).showCenteredInCurrentWindow(project);
       }
+    }
+
+    private void updatePresentationTextAndIcon(@NotNull AnActionEvent e, @NotNull Presentation presentation) {
+      presentation.setText(myActionText);
+      presentation.setIcon(ICON);
+      if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
+        if (isIdeWithoutNewSubmenu()) {
+          presentation.setIcon(null);
+        }
+      }
+    }
+
+    private boolean isIdeWithoutNewSubmenu() {
+      final AnAction group = ActionManager.getInstance().getActionOrStub(SMALLER_IDE_CONTAINER_GROUP);
+      return group instanceof DefaultActionGroup && ContainerUtil.find(((DefaultActionGroup)group).getChildActionsOrStubs(), action ->
+        action == this || (action instanceof ActionStub && ((ActionStub)action).getId().equals(ACTION_ID))) != null;
     }
   }
 

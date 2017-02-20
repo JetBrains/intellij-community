@@ -52,7 +52,7 @@ public class ImageComponentUI extends ComponentUI {
             ImageDocument document = ic.getDocument();
             BufferedImage image = document.getValue();
             if (image != null) {
-                paintBorder(g, ic);
+                if (ic.isFileSizeVisible()) paintBorder(g, ic);
 
                 Dimension size = ic.getCanvasSize();
                 Graphics igc = g.create(2, 2, size.width, size.height);
@@ -87,7 +87,7 @@ public class ImageComponentUI extends ComponentUI {
         int patternSize = 2 * cellSize;
 
         if (pattern == null) {
-            pattern = UIUtil.createImage(patternSize, patternSize, BufferedImage.TYPE_INT_ARGB);
+            pattern = UIUtil.createImage(g, patternSize, patternSize, BufferedImage.TYPE_INT_ARGB);
             Graphics imageGraphics = pattern.getGraphics();
             imageGraphics.setColor(ic.getTransparencyChessboardWhiteColor());
             imageGraphics.fillRect(0, 0, patternSize, patternSize);

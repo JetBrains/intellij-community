@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.testing;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -26,10 +25,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.autotest.ToggleAutoTestAction;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.HelperPackage;
@@ -40,6 +39,7 @@ import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -47,14 +47,14 @@ import java.util.Map;
 /**
  * @author yole
  */
-public abstract class PythonTestCommandLineStateBase extends PythonCommandLineState {
-  protected final AbstractPythonRunConfiguration myConfiguration;
+public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRunConfiguration<?>> extends PythonCommandLineState {
+  protected final T myConfiguration;
 
-  public AbstractPythonRunConfiguration<?> getConfiguration() {
+  public T getConfiguration() {
     return myConfiguration;
   }
 
-  public PythonTestCommandLineStateBase(AbstractPythonRunConfiguration configuration, ExecutionEnvironment env) {
+  public PythonTestCommandLineStateBase(T configuration, ExecutionEnvironment env) {
     super(configuration, env);
     myConfiguration = configuration;
     setRunWithPty(false);
@@ -85,7 +85,16 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   protected PythonTRunnerConsoleProperties createConsoleProperties(Executor executor) {
-    return new PythonTRunnerConsoleProperties(myConfiguration, executor, false);
+    final PythonTRunnerConsoleProperties properties = new PythonTRunnerConsoleProperties(myConfiguration, executor, true, getTestLocator());
+    if (myConfiguration.isTestBased()) {
+      properties.makeIdTestBased();
+    }
+    return properties;
+  }
+
+  @Nullable
+  protected SMTestLocator getTestLocator() {
+    return null;  // by default, the IDE will use a "file://" protocol locator
   }
 
   @Override
@@ -111,15 +120,12 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   }
 
   @Override
-  public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    final ProcessHandler processHandler = startProcess(patchers);
+  public ExecutionResult execute(Executor executor, PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
+    final ProcessHandler processHandler = startProcess(processStarter, patchers);
     final ConsoleView console = createAndAttachConsole(myConfiguration.getProject(), processHandler, executor);
 
-    List<AnAction> actions = Lists
-      .newArrayList(createActions(console, processHandler));
-
     DefaultExecutionResult executionResult =
-      new DefaultExecutionResult(console, processHandler, actions.toArray(new AnAction[actions.size()]));
+      new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
 
     PyRerunFailedTestsAction rerunFailedTestsAction = new PyRerunFailedTestsAction(console);
     if (console instanceof SMTRunnerConsoleView) {

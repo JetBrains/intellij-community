@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,28 +78,33 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     private ValuableDfaVariableState(Set<DfaPsiType> instanceofValues,
                                      Set<DfaPsiType> notInstanceofValues,
                                      Nullness nullability, DfaValue value,
-                                     @NotNull FList<PsiExpression> concatenation) {
-      super(instanceofValues, notInstanceofValues, nullability);
+                                     @NotNull FList<PsiExpression> concatenation, ThreeState optionalPresence) {
+      super(instanceofValues, notInstanceofValues, nullability, optionalPresence);
       myValue = value;
       myConcatenation = concatenation;
     }
 
     @NotNull
     @Override
-    protected DfaVariableState createCopy(@NotNull Set<DfaPsiType> instanceofValues, @NotNull Set<DfaPsiType> notInstanceofValues, @NotNull Nullness nullability) {
-      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation);
+    protected DfaVariableState createCopy(@NotNull Set<DfaPsiType> instanceofValues,
+                                          @NotNull Set<DfaPsiType> notInstanceofValues,
+                                          @NotNull Nullness nullability,
+                                          ThreeState optionalPresence) {
+      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation, optionalPresence);
     }
 
     @NotNull
     @Override
     public DfaVariableState withValue(@Nullable final DfaValue value) {
       if (value == myValue) return this;
-      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myConcatenation);
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myConcatenation,
+                                          myOptionalPresence);
     }
 
     ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
       if (concatenation == myConcatenation) return this;
-      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, concatenation);
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, concatenation,
+                                          myOptionalPresence);
     }
 
     @Override

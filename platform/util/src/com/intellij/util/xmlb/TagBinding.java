@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -36,7 +35,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     Element serialized = new Element(myName);
     if (value == null) {
@@ -49,7 +48,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     else {
       Object node = myBinding.serialize(value, serialized, filter);
       if (node != null && node != serialized) {
-        JDOMUtil.addContent(serialized, node);
+        addContent(serialized, node);
       }
     }
     return serialized;
@@ -57,7 +56,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@NotNull Object context, @NotNull List<Element> elements) {
     List<Element> children;
     if (elements.size() == 1) {
       children = elements.get(0).getChildren();
@@ -68,7 +67,7 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
       for (Element element : elements) {
         assert element.getName().equals(name);
         //noinspection unchecked
-        children.addAll(((List)element.getChildren()));
+        children.addAll(element.getChildren());
       }
     }
     deserialize(context, children);
@@ -81,8 +80,8 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
   }
 
   @Override
-  @Nullable
-  public Object deserialize(Object context, @NotNull Element element) {
+  @NotNull
+  public Object deserialize(@NotNull Object context, @NotNull Element element) {
     if (myBinding == null) {
       String value = XmlSerializerImpl.getTextValue(element, myTextIfEmpty);
       XmlSerializerImpl.doSet(context, value, myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
@@ -93,13 +92,13 @@ class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding {
     return context;
   }
 
-  private void deserialize(Object o, @NotNull List<Element> children) {
+  private void deserialize(@NotNull Object context, @NotNull List<Element> children) {
     assert myBinding != null;
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
-      ((BeanBinding)myBinding).deserializeInto(o, children.get(0), null);
+      ((BeanBinding)myBinding).deserializeInto(context, children.get(0));
     }
     else {
-      myAccessor.set(o, Binding.deserializeList(myBinding, myAccessor.read(o), children));
+      myAccessor.set(context, Binding.deserializeList(myBinding, myAccessor.read(context), children));
     }
   }
 

@@ -37,7 +37,7 @@ import java.util.Set;
 
 /**
  * Common code style settings can be used by several programming languages. Each language may have its own
- * instance of <code>CommonCodeStyleSettings</code>.
+ * instance of {@code CommonCodeStyleSettings}.
  *
  * @author Rustam Vishnyakov
  */
@@ -344,11 +344,6 @@ public class CommonCodeStyleSettings {
    */
   public boolean USE_FLYING_GEESE_BRACES = false;
 
-  /**
-   * Defines number of white spaces between curly braces in case of {@link #USE_FLYING_GEESE_BRACES 'flying geese'} style usage.
-   */
-  public int FLYING_GEESE_BRACES_GAP = 1;
-
   public boolean DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
 
   /**
@@ -407,9 +402,9 @@ public class CommonCodeStyleSettings {
   /**
    * Indicates if long sequence of chained method calls should be aligned.
    * <p/>
-   * E.g. if statement like <code>'foo.bar().bar().bar();'</code> should be reformatted to the one below if,
-   * say, last <code>'bar()'</code> call exceeds right margin. The code looks as follows after reformatting
-   * if this property is <code>true</code>:
+   * E.g. if statement like {@code 'foo.bar().bar().bar();'} should be reformatted to the one below if,
+   * say, last {@code 'bar()'} call exceeds right margin. The code looks as follows after reformatting
+   * if this property is {@code true}:
    * <p/>
    * <pre>
    *     foo.bar().bar()
@@ -929,7 +924,6 @@ public class CommonCodeStyleSettings {
 
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
     private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
-    private boolean myInaccurate;
     private boolean myOverrideLanguageOptions;
 
     @Override
@@ -1037,7 +1031,7 @@ public class CommonCodeStyleSettings {
     }
 
     /**
-     * Make the indent options override options defined for a language block if the block implements <code>BlockEx.getLanguage()</code> 
+     * Make the indent options override options defined for a language block if the block implements {@code BlockEx.getLanguage()}
      * Useful when indent options provider must take a priority over any language settings for a formatter block.
      * 
      * @param overrideLanguageOptions True if language block options should be ignored.
@@ -1046,5 +1040,18 @@ public class CommonCodeStyleSettings {
     public void setOverrideLanguageOptions(boolean overrideLanguageOptions) {
       myOverrideLanguageOptions = overrideLanguageOptions;
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof CommonCodeStyleSettings) {
+      if (
+        ReflectionUtil.comparePublicNonFinalFields(this, obj) &&
+        myIndentOptions.equals(((CommonCodeStyleSettings)obj).getIndentOptions())
+        ) {
+        return true;
+      }
+    }
+    return false;
   }
 }

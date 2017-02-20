@@ -70,7 +70,7 @@ public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspecti
     private static class MakeReturnImplicitFix extends GroovyFix {
         @Override
         @NotNull
-        public String getName() {
+        public String getFamilyName() {
             return "Make return implicit";
         }
 

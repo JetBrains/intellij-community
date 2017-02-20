@@ -99,10 +99,10 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() == 0) {
+      final PsiParameter[] parameters = parameterList.getParameters();
+      if (parameters.length == 0) {
         return;
       }
-      final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter lastParameter = parameters[parameters.length - 1];
       if (NullableNotNullManager.isNullable(lastParameter)) {
         return;

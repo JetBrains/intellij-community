@@ -24,7 +24,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
-import com.intellij.openapi.components.impl.stores.StorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.JDOMUtil
@@ -42,6 +41,8 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.Parent
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -56,6 +57,8 @@ open class FileBasedStorage(file: Path,
   private @Volatile var cachedVirtualFile: VirtualFile? = null
   private var lineSeparator: LineSeparator? = null
   private var blockSavingTheContent = false
+
+  var resolveVirtualFileOnlyOnWrite = false
 
   @Volatile var file = file
     private set
@@ -113,37 +116,56 @@ open class FileBasedStorage(file: Path,
 
   override fun loadLocalData(): Element? {
     blockSavingTheContent = false
-
-    val attributes: BasicFileAttributes?
     try {
-      attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
-    }
-    catch (e: NoSuchFileException) {
-      return null
-    }
-    catch (e: IOException) {
-      processReadException(e)
-      return null
-    }
+      // use VFS to load module file because it is refreshed and loaded into VFS in any case
+      if (fileSpec != StoragePathMacros.MODULE_FILE) {
+        return loadLocalDataUsingIo()
+      }
 
-    try {
-      if (!attributes.isRegularFile) {
+      val file = if (resolveVirtualFileOnlyOnWrite) cachedVirtualFile else virtualFile
+      if (file == null || file.isDirectory || !file.isValid) {
         LOG.debug { "Document was not loaded for $fileSpec, not a file" }
       }
-      else if (attributes.size() == 0L) {
+      else if (file.length == 0L) {
         processReadException(null)
       }
       else {
-        val data = file.readChars()
-        lineSeparator = detectLineSeparators(data, if (isUseXmlProlog) null else LineSeparator.LF)
-        return loadElement(data)
+        val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray()))
+        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
+        @Suppress("DEPRECATION")
+        return loadElement(charBuffer)
       }
+      return null
     }
     catch (e: JDOMException) {
       processReadException(e)
     }
     catch (e: IOException) {
       processReadException(e)
+    }
+    return null
+  }
+
+  private fun loadLocalDataUsingIo(): Element? {
+    val attributes: BasicFileAttributes?
+    try {
+      attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
+    }
+    catch (e: NoSuchFileException) {
+      LOG.debug { "Document was not loaded for $fileSpec, doesn't exist" }
+      return null
+    }
+
+    if (!attributes.isRegularFile) {
+      LOG.debug { "Document was not loaded for $fileSpec, not a file" }
+    }
+    else if (attributes.size() == 0L) {
+      processReadException(null)
+    }
+    else {
+      val data = file.readChars()
+      lineSeparator = detectLineSeparators(data, if (isUseXmlProlog) null else LineSeparator.LF)
+      return loadElement(data)
     }
     return null
   }
@@ -168,7 +190,7 @@ open class FileBasedStorage(file: Path,
 
 fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: Element, lineSeparator: LineSeparator, prependXmlProlog: Boolean): VirtualFile {
   val result = if (file != null && (virtualFile == null || !virtualFile.isValid)) {
-    StorageUtil.getOrCreateVirtualFile(requestor, file)
+    getOrCreateVirtualFile(requestor, file)
   }
   else {
     virtualFile!!
@@ -179,8 +201,8 @@ fun writeFile(file: Path?, requestor: Any, virtualFile: VirtualFile?, element: E
     if (isEqualContent(result, lineSeparator, content, prependXmlProlog)) {
       throw IllegalStateException("Content equals, but it must be handled not on this level: ${result.name}")
     }
-    else if (StorageUtil.DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
-      StorageUtil.DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"
+    else if (DEBUG_LOG != null && ApplicationManager.getApplication().isUnitTestMode) {
+      DEBUG_LOG = "${result.path}:\n$content\nOld Content:\n${LoadTextUtil.loadText(result)}"
     }
   }
 
@@ -210,7 +232,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
 
   if (!file.isWritable) {
     // may be element is not long-lived, so, we must write it to byte array
-    val byteArray = if (content is Element) content.toBufferExposingByteArray(lineSeparator.separatorString) else (content as BufferExposingByteArrayOutputStream)
+    val byteArray = (content as? Element)?.toBufferExposingByteArray(lineSeparator.separatorString) ?: content as BufferExposingByteArrayOutputStream
     throw ReadOnlyModificationException(file, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
   }
 
@@ -221,7 +243,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
         out.write(lineSeparator.separatorBytes)
       }
       if (content is Element) {
-        JDOMUtil.writeParent(content, out, lineSeparator.separatorString)
+        JDOMUtil.write(content, out, lineSeparator.separatorString)
       }
       else {
         (content as BufferExposingByteArrayOutputStream).writeTo(out)
@@ -232,7 +254,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
 
 internal fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.writeParent(this, out, lineSeparator)
+  JDOMUtil.write(this, out, lineSeparator)
   return out
 }
 

@@ -21,6 +21,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -45,7 +46,6 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -157,6 +157,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
       return;
     }
+    DumbService.getInstance(myProject).completeJustSubmittedTasks();
     try {
       final List<PsiFile> movedFiles = new ArrayList<>();
       final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();

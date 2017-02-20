@@ -1,7 +1,6 @@
 package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -9,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -21,13 +19,14 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import static com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector.TOO_BORING_RECOMMENDATION_REACTION;
+import static com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector.TOO_HARD_RECOMMENDATION_REACTION;
+
 
 public class StepicAdaptiveReactionsPanel extends JPanel {
   private final ReactionButtonPanel myHardPanel;
   private final ReactionButtonPanel myBoringPanel;
   @NotNull private final Project myProject;
-  private static final int TOO_HARD_REACTION = 0;
-  private static final int TOO_BORING_REACTION = -1;
   private static final String HARD_REACTION = "Too Hard";
   private static final String BORING_REACTION = "Too Boring";
   private static final String SOLVED_TASK_TOOLTIP = "Reaction Disabled Due To Task Is Solved";
@@ -39,8 +38,8 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
     setLayout(new GridBagLayout());
     setBackground(UIUtil.getTextFieldBackground());
 
-    myHardPanel = new ReactionButtonPanel(HARD_REACTION, HARD_LABEL_TOOLTIP, TOO_HARD_REACTION);
-    myBoringPanel = new ReactionButtonPanel(BORING_REACTION, BORING_LABEL_TOOLTIP, TOO_BORING_REACTION);
+    myHardPanel = new ReactionButtonPanel(HARD_REACTION, HARD_LABEL_TOOLTIP, TOO_HARD_RECOMMENDATION_REACTION);
+    myBoringPanel = new ReactionButtonPanel(BORING_REACTION, BORING_LABEL_TOOLTIP, TOO_BORING_RECOMMENDATION_REACTION);
     addFileListener();
 
     final GridBagConstraints c = new GridBagConstraints();
@@ -75,15 +74,6 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
 
   private void addFileListener() {
     final FileEditorManagerListener editorManagerListener = new FileEditorManagerListener() {
-      @Override
-      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      }
-
-      @Override
-      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-
-      }
-
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);
@@ -158,7 +148,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
               public void run(@NotNull ProgressIndicator indicator) {
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(false);
                 ApplicationManager.getApplication().invokeLater(()->setBackground(UIUtil.getLabelBackground()));
-                EduAdaptiveStepicConnector.addNextRecommendedTask(StepicAdaptiveReactionsPanel.this.myProject, myReaction, indicator);
+                EduAdaptiveStepicConnector.addNextRecommendedTask(StepicAdaptiveReactionsPanel.this.myProject, indicator, myReaction);
                 StepicAdaptiveReactionsPanel.this.setEnabledRecursive(true);
               }
             });

@@ -388,7 +388,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       final String text = myPathTextField.getTextFieldText();
       final LookupFile file = myPathTextField.getFile();
       if (text == null || file == null || !file.exists()) {
-        setErrorText("Specified path cannot be found");
+        setErrorText("Specified path cannot be found", myPathTextField.getField());
         return;
       }
     }

@@ -39,6 +39,6 @@ public class AboutAction extends AnAction implements DumbAware {
   }
 
   public static void perform(@Nullable Project project) {
-    AboutPopup.show(WindowManager.getInstance().suggestParentWindow(project));
+    AboutPopup.show(WindowManager.getInstance().suggestParentWindow(project), false);
   }
 }

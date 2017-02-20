@@ -26,6 +26,7 @@
     </fileset>
     <fileset dir="${project.home}/build/kotlinc/lib" erroronmissingdir="false" if:true="${include.kotlin.jars.to.classpath}">
       <include name="kotlin-runtime.jar"/>
+      <include name="kotlin-reflect.jar"/>
     </fileset>
     <fileset dir="${project.home}/build/kotlinc/plugin/Kotlin/lib" erroronmissingdir="false" if:true="${include.kotlin.jars.to.classpath}">
       <include name="kotlin-plugin.jar"/>
@@ -47,6 +48,8 @@
        <include name="snappy-in-java-*.jar"/>
        <include name="cli-parser-*.jar"/>
        <include name="nanoxml-*.jar"/>
+       <include name="xml-apis.jar"/>
+       <include name="xml-apis-ext.jar"/>
        <include name="xercesImpl.jar"/>
     </fileset>
   </path>

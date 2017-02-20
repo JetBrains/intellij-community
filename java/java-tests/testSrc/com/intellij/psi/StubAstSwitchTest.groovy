@@ -16,10 +16,13 @@
 package com.intellij.psi
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
@@ -27,10 +30,13 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTree
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.GCUtil
+import com.intellij.util.ref.GCUtil
 
+import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
 /**
  * @author peter
  */
@@ -161,8 +167,8 @@ class B {
     assert file.treeElement
 
     GCUtil.tryGcSoftlyReachableObjects()
-    assert !file.stub
     assert !file.treeElement
+    assert file.stub
 
     assert psiClass.nameIdentifier
     assert !file.stub
@@ -190,8 +196,8 @@ class B {
     assert file.classes[0].nameIdentifier
     GCUtil.tryGcSoftlyReachableObjects()
 
-    assert !((PsiFileImpl)file).getTreeElement()
-    assert !((PsiFileImpl)file).getStub()
+    assert !((PsiFileImpl)file).treeElement
+    assertNoStubLoaded(file)
 
     assert file.classes[0].methods[0].modifierList.hasExplicitModifier(PsiModifier.STATIC)
     assert !((PsiFileImpl)file).getTreeElement()
@@ -204,11 +210,12 @@ class B {
     GCUtil.tryGcSoftlyReachableObjects()
 
     assert !file.treeElement
-    assert !file.greenStub
-
-    assert PsiAnchor.create(psiClass) instanceof PsiAnchor.StubIndexReference
+    assertNoStubLoaded(file)
     StubElement hardRefToStub = file.greenStub
     assert hardRefToStub
+    assert hardRefToStub == file.stub
+
+    assert file.node
 
     GCUtil.tryGcSoftlyReachableObjects()
     assert !file.treeElement
@@ -218,4 +225,96 @@ class B {
     assert !file.treeElement
   }
 
+  private static assertNoStubLoaded(PsiFile file) {
+    LeakHunter.checkLeak(file, StubTree) { candidate -> candidate.root.psi == file }
+  }
+
+  void "test node is not deeply parsed when loaded in green stub presence"() {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "class A<T>{}")
+    def stubTree = file.stubTree
+    PsiClass psiClass = ((PsiJavaFile)file).classes[0]
+    assert psiClass.nameIdentifier
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    assert stubTree.is(file.greenStubTree)
+    assert !file.node.parsed
+  }
+
+  void "test load stub from non-file PSI after AST is unloaded"() {
+    PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A<T>{}")
+    def cls = file.classes[0]
+    assert cls.nameIdentifier
+
+    GCUtil.tryGcSoftlyReachableObjects()
+    assert !file.treeElement
+
+    assert ((PsiClassImpl) cls).stub
+  }
+
+  void "test load PSI via stub when AST is gc-ed but PSI exists that has never known stub"() {
+    PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A{}")
+    def cls = file.lastChild
+    assert cls instanceof PsiClass
+
+    GCUtil.tryGcSoftlyReachableObjects()
+    assert !file.treeElement
+
+    assert cls == myFixture.findClass('A')
+  }
+
+  void "test load PSI via stub when AST is gc-ed and PSI remains that never knew stub"() {
+    PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A{}")
+    def cls = file.lastChild
+    assert cls instanceof PsiClass
+
+    GCUtil.tryGcSoftlyReachableObjects()
+    assert !file.treeElement
+
+    assert cls == myFixture.findClass('A')
+  }
+
+  void "test bind stubs to AST after AST has been loaded and gc-ed"() {
+    PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A{}")
+    file.node
+
+    GCUtil.tryGcSoftlyReachableObjects()
+    assert !file.treeElement
+
+    def cls1 = file.classes[0]
+    def cls2 = file.lastChild
+    assert cls1 == cls2
+  }
+
+  void "test concurrent stub and AST reloading"() {
+    def fileNumbers = 0..<10
+    List<PsiJavaFileImpl> files = fileNumbers.collect {
+      (PsiJavaFileImpl)myFixture.addFileToProject("a${it}.java", "import foo.bar; class A{}")
+    }
+    for (iteration in 0..10) {
+      GCUtil.tryGcSoftlyReachableObjects()
+      files.each { assert !it.treeElement }
+
+      List<Future<PsiImportList>> stubFutures = []
+      List<Future<PsiImportList>> astFutures = []
+
+      for (i in fileNumbers) {
+        def file = files[i]
+        stubFutures << ApplicationManager.application.executeOnPooledThread({ ReadAction.compute {
+          file.importList
+        } } as Callable)
+        astFutures << ApplicationManager.application.executeOnPooledThread({ ReadAction.compute {
+          PsiTreeUtil.findElementOfClassAtOffset(file, 0, PsiImportList, false)
+        } } as Callable)
+      }
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      for (i in fileNumbers) {
+        def stubImport = stubFutures[i].get()
+        def astImport = astFutures[i].get()
+        if (stubImport != astImport) {
+          fail("Different import psi in ${files[i].name}: stub=$stubImport, ast=$astImport")
+        }
+      }
+    }
+  }
 }

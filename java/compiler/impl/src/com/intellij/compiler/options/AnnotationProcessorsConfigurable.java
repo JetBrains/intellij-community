@@ -17,6 +17,7 @@ package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -85,9 +86,14 @@ public class AnnotationProcessorsConfigurable implements SearchableConfigurable,
   }
 
   public void apply() throws ConfigurationException {
-    final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-    config.setDefaultProcessorProfile(myMainPanel.getDefaultProfile());
-    config.setModuleProcessorProfiles(myMainPanel.getModuleProfiles());
+    try {
+      final CompilerConfigurationImpl config = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+      config.setDefaultProcessorProfile(myMainPanel.getDefaultProfile());
+      config.setModuleProcessorProfiles(myMainPanel.getModuleProfiles());
+    }
+    finally {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   public void reset() {

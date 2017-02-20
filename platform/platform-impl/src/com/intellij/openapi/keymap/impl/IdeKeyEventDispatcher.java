@@ -64,7 +64,6 @@ import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -652,7 +651,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     boolean hasSecondStroke = false;
 
     // here we try to find "local" shortcuts
-
     for (; component != null; component = component.getParent()) {
       if (!(component instanceof JComponent)) {
         continue;
@@ -661,11 +659,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (listOfActions.isEmpty()) {
         continue;
       }
-      for (Object listOfAction : listOfActions) {
-        if (!(listOfAction instanceof AnAction)) {
-          continue;
-        }
-        AnAction action = (AnAction)listOfAction;
+      for (AnAction action : listOfActions) {
         hasSecondStroke |= addAction(action, sc);
       }
       // once we've found a proper local shortcut(s), we continue with non-local shortcuts
@@ -676,10 +670,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // search in main keymap
-
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     String[] actionIds = keymap.getActionIds(sc);
-
     ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : actionIds) {
       AnAction action = actionManager.getAction(actionId);
@@ -700,10 +692,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
       final KeyStroke secondKeyStroke = keyboardShortcut.getSecondKeyStroke();
 
       if (secondKeyStroke != null && secondKeyStroke.getModifiers() != 0 && firstKeyStroke.getModifiers() != 0) {
-        final KeyboardShortcut altShortCut = new KeyboardShortcut(firstKeyStroke, KeyStroke
-          .getKeyStroke(secondKeyStroke.getKeyCode(), 0));
+        final KeyboardShortcut altShortCut = new KeyboardShortcut(firstKeyStroke, KeyStroke.getKeyStroke(secondKeyStroke.getKeyCode(), 0));
         final String[] additionalActions = keymap.getActionIds(altShortCut);
-
         for (final String actionId : additionalActions) {
           AnAction action = actionManager.getAction(actionId);
           if (action != null) {
@@ -714,7 +704,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
           }
         }
       }
-
     }
 
     myContext.setHasSecondStroke(hasSecondStroke);

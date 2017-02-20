@@ -163,14 +163,14 @@ public class PyMoveSymbolProcessor {
 
 
   /**
-   * <pre><code>
+   * <pre>{@code
    *   print(foo.bar)
-   * </code></pre>
+   * }</pre>
    * is transformed to
-   * <pre><code>
+   * <pre>{@code
    *   from new import bar
    *   print(bar)
-   * </code></pre>
+   * }</pre>
    */
   private static void insertImportFromAndReplaceReference(@NotNull PsiNamedElement targetElement,
                                                           @NotNull PyQualifiedExpression expression) {
@@ -181,14 +181,14 @@ public class PyMoveSymbolProcessor {
   }
 
   /**
-   * <pre><code>
+   * <pre>{@code
    *   print(foo.bar)
-   * </code></pre>
+   * }</pre>
    * is transformed to
-   * <pre><code>
+   * <pre>{@code
    *   import new
    *   print(new.bar)
-   * </code></pre>
+   * }</pre>
    */
   private static void insertQualifiedImportAndReplaceReference(@NotNull PsiNamedElement targetElement,
                                                                @NotNull PyQualifiedExpression expression) {

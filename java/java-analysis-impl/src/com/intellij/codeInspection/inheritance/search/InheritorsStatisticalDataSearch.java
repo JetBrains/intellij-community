@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
- */
 public class InheritorsStatisticalDataSearch {
 
   /**

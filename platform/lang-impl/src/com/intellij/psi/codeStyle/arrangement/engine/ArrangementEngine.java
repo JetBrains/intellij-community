@@ -929,8 +929,8 @@ public class ArrangementEngine {
     }
 
     /**
-     * @return position <code>x</code> for which <code>myDocument.getText().substring(x, startOffset)</code> contains
-     * <code>blankLinesNumber</code> line feeds and <code>myDocument.getText.charAt(x-1) == '\n'</code>
+     * @return position {@code x} for which {@code myDocument.getText().substring(x, startOffset)} contains
+     * {@code blankLinesNumber} line feeds and {@code myDocument.getText.charAt(x-1) == '\n'}
      */
     private int getBlankLineOffset(int blankLinesNumber, int startOffset) {
       int startLine = myDocument.getLineNumber(startOffset);

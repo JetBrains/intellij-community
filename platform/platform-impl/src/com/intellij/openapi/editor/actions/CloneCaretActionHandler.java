@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,9 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP_WITH_SELECTION,
-    IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION
+    IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_PREVIOUS_WORD_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_NEXT_WORD_WITH_SELECTION
   ));
 
   private final boolean myCloneAbove;

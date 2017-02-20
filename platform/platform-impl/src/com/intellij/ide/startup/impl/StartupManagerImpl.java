@@ -43,12 +43,12 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.project.ProjectKt;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -141,10 +141,16 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void runPostStartupActivitiesFromExtensions() {
-    for (final StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
+    StartupActivity[] extensions = Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY);
+    for (final StartupActivity extension : extensions) {
       final Runnable runnable = () -> {
         if (!myProject.isDisposed()) {
+          long start = System.currentTimeMillis();
           extension.runActivity(myProject);
+          long duration = System.currentTimeMillis() - start;
+          if (duration > 200) {
+            LOG.info(extension.getClass().getSimpleName() + " run in " + duration);
+          }
         }
       };
       if (extension instanceof DumbAware) {
@@ -202,14 +208,14 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void scheduleInitialVfsRefresh() {
-    UIUtil.invokeLaterIfNeeded(() -> {
+    GuiUtils.invokeLaterIfNeeded(() -> {
       if (myProject.isDisposed() || myInitialRefreshScheduled) return;
 
       myInitialRefreshScheduled = true;
       markContentRootsForRefresh();
 
       Application app = ApplicationManager.getApplication();
-      if (!app.isHeadlessEnvironment() || app.isOnAir()) {
+      if (!app.isCommandLine() || app.isOnAir()) {
         final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
         final MessageBusConnection connection = app.getMessageBus().connect();
         connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
@@ -225,7 +231,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       else {
         VirtualFileManager.getInstance().syncRefresh();
       }
-    });
+    }, ModalityState.defaultModalityState());
   }
 
   private void markContentRootsForRefresh() {

@@ -754,8 +754,9 @@ public class ExpectedTypesProvider {
     public void visitPrefixExpression(@NotNull PsiPrefixExpression expr) {
       IElementType i = expr.getOperationTokenType();
       final PsiType type = expr.getType();
-      final TailType tailType = expr.getParent() instanceof PsiAssignmentExpression && ((PsiAssignmentExpression) expr.getParent()).getRExpression() == expr ?
-                                getAssignmentRValueTailType((PsiAssignmentExpression) expr.getParent()) :
+      final PsiElement parent = expr.getParent();
+      final TailType tailType = parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getRExpression() == expr ?
+                                getAssignmentRValueTailType((PsiAssignmentExpression)parent) :
                                 TailType.NONE;
       if (i == JavaTokenType.PLUSPLUS || i == JavaTokenType.MINUSMINUS || i == JavaTokenType.TILDE) {
         ExpectedTypeInfoImpl info;
@@ -773,7 +774,13 @@ public class ExpectedTypesProvider {
         myResult.add(info);
       }
       else if (i == JavaTokenType.PLUS || i == JavaTokenType.MINUS) {
-        myResult.add(createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType));
+        if (parent instanceof PsiStatement) {
+          myResult.add(createInfoImpl(PsiType.DOUBLE, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT, tailType));
+        }
+        else {
+          myExpr = (PsiExpression)myExpr.getParent();
+          parent.accept(this);
+        }
       }
       else if (i == JavaTokenType.EXCL) {
         myResult.add(createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY, PsiType.BOOLEAN, tailType));
@@ -1049,7 +1056,7 @@ public class ExpectedTypesProvider {
                                                      @NotNull final Set<ExpectedTypeInfo> array) {
       LOG.assertTrue(substitutor.isValid());
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (!forCompletion && parameters.length != args.length) return;
+      if (!forCompletion && parameters.length != args.length && !method.isVarArgs()) return;
       if (parameters.length <= index && !method.isVarArgs()) return;
 
       for (int j = 0; j < index; j++) {

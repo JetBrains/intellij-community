@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,12 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +54,7 @@ import java.util.regex.Pattern;
  *   }
  * });
  * }</pre>
+ * @see URLUtil
  */
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
@@ -169,6 +172,7 @@ public final class HttpRequests {
     private String myUserAgent;
     private String myAccept;
     private ConnectionTuner myTuner;
+    private UntrustedCertificateStrategy myUntrustedCertificateStrategy = UntrustedCertificateStrategy.ASK_USER;
 
     private RequestBuilderImpl(@NotNull String url) {
       myUrl = url;
@@ -243,6 +247,12 @@ public final class HttpRequests {
     @Override
     public RequestBuilder tuner(@Nullable ConnectionTuner tuner) {
       myTuner = tuner;
+      return this;
+    }
+
+    @Override
+    public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
+      myUntrustedCertificateStrategy = strategy;
       return this;
     }
 
@@ -343,18 +353,12 @@ public final class HttpRequests {
       FileUtilRt.createParentDirs(file);
 
       boolean deleteFile = true;
-      try {
-        OutputStream out = new FileOutputStream(file);
-        try {
-          NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
-          deleteFile = false;
-        }
-        catch (IOException e) {
-          throw new IOException(createErrorMessage(e, this, false), e);
-        }
-        finally {
-          out.close();
-        }
+      try (OutputStream out = new FileOutputStream(file)) {
+        NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLength());
+        deleteFile = false;
+      }
+      catch (IOException e) {
+        throw new IOException(createErrorMessage(e, this, false), e);
       }
       finally {
         if (deleteFile) {
@@ -382,7 +386,7 @@ public final class HttpRequests {
                    "Network shouldn't be accessed in EDT or inside read action");
 
     ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
-    if (Patches.JDK_BUG_ID_8032832 && !UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
+    if (contextLoader != null && shouldOverrideContextClassLoader(contextLoader)) {
       // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
       try (URLClassLoader cl = new URLClassLoader(new URL[0], contextLoader)) {
         Thread.currentThread().setContextClassLoader(cl);
@@ -397,9 +401,25 @@ public final class HttpRequests {
     }
   }
 
+  private static boolean shouldOverrideContextClassLoader(ClassLoader contextLoader) {
+    if (!Patches.JDK_BUG_ID_8032832) {
+      return false;
+    }
+    if (!UrlClassLoader.isRegisteredAsParallelCapable(contextLoader)) {
+      return true;
+    }
+    return SystemProperties.getBooleanProperty("http.requests.override.context.classloader", true);
+  }
+
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
+    CertificateManager manager = ApplicationManager.getApplication() != null ? CertificateManager.getInstance() : null;
     try (RequestImpl request = new RequestImpl(builder)) {
-      return processor.process(request);
+      if (manager != null) {
+        return manager.runWithUntrustedCertificateStrategy(() -> processor.process(request), builder.myUntrustedCertificateStrategy);
+      }
+      else {
+        return processor.process(request);
+      }
     }
   }
 

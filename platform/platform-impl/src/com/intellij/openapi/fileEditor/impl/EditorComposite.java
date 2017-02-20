@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public abstract class EditorComposite implements Disposable {
     myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
 
-    myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
+    myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull final FileEditorManagerEvent event) {
         final VirtualFile oldFile = event.getOldFile();

@@ -27,6 +27,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
@@ -81,21 +82,24 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     addErrorLabelMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           mySettingsPanel.showLoginDialog(false, "Signing In");
         }
       }
 
       @Override
       public void mouseEntered(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final Object selectedItem = mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && ((CourseInfo)selectedItem).isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        if (((CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem()).isAdaptive() && !myGenerator.isLoggedIn()) {
+        final CourseInfo selectedItem = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
+        if (selectedItem != null && selectedItem.isAdaptive() && !myGenerator.isLoggedIn()) {
           e.getComponent().setCursor(Cursor.getDefaultCursor());
         }
       }
@@ -182,10 +186,11 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
       final CourseInfo course = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
       if (course == null) return true;
-      if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
+      if (course.getId() > 0 && !enrolledCoursesIds.contains(course.getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(), myGenerator.myUser));
+          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(),
+                                                                                   StepicUpdateSettings.getInstance().getUser()));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }

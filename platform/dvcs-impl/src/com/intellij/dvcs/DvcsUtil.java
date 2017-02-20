@@ -21,7 +21,6 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.ide.file.BatchFileChangeListener;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -36,7 +35,6 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,7 +51,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -82,19 +79,17 @@ public class DvcsUtil {
   /**
    * Comparator for virtual files by name
    */
-  public static final Comparator<VirtualFile> VIRTUAL_FILE_PRESENTATION_COMPARATOR = new Comparator<VirtualFile>() {
-    public int compare(final VirtualFile o1, final VirtualFile o2) {
-      if (o1 == null && o2 == null) {
-        return 0;
-      }
-      if (o1 == null) {
-        return -1;
-      }
-      if (o2 == null) {
-        return 1;
-      }
-      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+  public static final Comparator<VirtualFile> VIRTUAL_FILE_PRESENTATION_COMPARATOR = (o1, o2) -> {
+    if (o1 == null && o2 == null) {
+      return 0;
     }
+    if (o1 == null) {
+      return -1;
+    }
+    if (o2 == null) {
+      return 1;
+    }
+    return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
   };
 
   @NotNull
@@ -105,12 +100,7 @@ public class DvcsUtil {
   @NotNull
   public static List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<File> files) {
     RefreshVFsSynchronously.refreshFiles(files);
-    return ContainerUtil.mapNotNull(files, new Function<File, VirtualFile>() {
-      @Override
-      public VirtualFile fun(File file) {
-        return VfsUtil.findFileByIoFile(file, false);
-      }
-    });
+    return ContainerUtil.mapNotNull(files, file -> VfsUtil.findFileByIoFile(file, false));
   }
 
   /**
@@ -124,17 +114,12 @@ public class DvcsUtil {
 
   @NotNull
   public static String getShortRepositoryName(@NotNull Repository repository) {
-    return getShortRepositoryName(repository.getProject(), repository.getRoot());
+    return VcsImplUtil.getShortVcsRootName(repository.getProject(), repository.getRoot());
   }
 
   @NotNull
   public static String getShortNames(@NotNull Collection<? extends Repository> repositories) {
-    return StringUtil.join(repositories, new Function<Repository, String>() {
-      @Override
-      public String fun(Repository repository) {
-        return getShortRepositoryName(repository);
-      }
-    }, ", ");
+    return StringUtil.join(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository), ", ");
   }
 
   @NotNull
@@ -209,23 +194,15 @@ public class DvcsUtil {
     return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp()) + " ";
   }
 
-  @NotNull
-  public static AccessToken workingTreeChangeStarted(@NotNull Project project) {
+  public static void workingTreeChangeStarted(@NotNull Project project) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
-    return HeavyProcessLatch.INSTANCE.processStarted("Changing DVCS working tree");
   }
 
-  public static void workingTreeChangeFinished(@NotNull Project project, @NotNull AccessToken token) {
-    token.finish();
+  public static void workingTreeChangeFinished(@NotNull Project project) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
   }
 
-  public static final Comparator<Repository> REPOSITORY_COMPARATOR = new Comparator<Repository>() {
-    @Override
-    public int compare(Repository o1, Repository o2) {
-      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-    }
-  };
+  public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);
 
   public static void assertFileExists(File file, String message) throws IllegalStateException {
     if (!file.exists()) {
@@ -248,12 +225,7 @@ public class DvcsUtil {
 
   @NotNull
   public static String tryLoadFile(@NotNull final File file, @Nullable String encoding) throws RepoStateException {
-    return tryOrThrow(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        return StringUtil.convertLineSeparators(FileUtil.loadFile(file, encoding)).trim();
-      }
-    }, file);
+    return tryOrThrow(() -> StringUtil.convertLineSeparators(FileUtil.loadFile(file, encoding)).trim(), file);
   }
 
   @Nullable
@@ -406,12 +378,7 @@ public class DvcsUtil {
   }
 
   public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {
-    List<T> validRepositories = ContainerUtil.filter(repositories, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return t.getRoot().isValid();
-      }
-    });
+    List<T> validRepositories = ContainerUtil.filter(repositories, t -> t.getRoot().isValid());
     Collections.sort(validRepositories, REPOSITORY_COMPARATOR);
     return validRepositories;
   }
@@ -492,12 +459,8 @@ public class DvcsUtil {
 
   @Nullable
   public static PushSupport getPushSupport(@NotNull final AbstractVcs vcs) {
-    return ContainerUtil.find(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, vcs.getProject()), new Condition<PushSupport>() {
-      @Override
-      public boolean value(final PushSupport support) {
-        return support.getVcs().equals(vcs);
-      }
-    });
+    return ContainerUtil.find(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, vcs.getProject()),
+                              support -> support.getVcs().equals(vcs));
   }
 
   @NotNull
@@ -507,12 +470,7 @@ public class DvcsUtil {
 
   @NotNull
   public static String joinShortNames(@NotNull Collection<? extends Repository> repositories, int limit) {
-    return joinWithAnd(ContainerUtil.map(repositories, new Function<Repository, String>() {
-      @Override
-      public String fun(@NotNull Repository repository) {
-        return getShortRepositoryName(repository);
-      }
-    }), limit);
+    return joinWithAnd(ContainerUtil.map(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository)), limit);
   }
 
   @NotNull
@@ -523,7 +481,7 @@ public class DvcsUtil {
     if (size == 2) return strings.get(0) + " and " + strings.get(1);
 
     boolean isLimited = limit >= 2 && limit < size;
-    int listCount = isLimited ? limit - 1 : size - 1;
+    int listCount = (isLimited ? limit : size) - 1;
 
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < listCount; i++) {

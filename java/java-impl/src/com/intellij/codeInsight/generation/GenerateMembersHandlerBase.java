@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
@@ -27,12 +26,11 @@ import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.EnterAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -71,7 +69,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   @Override
   public final void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
       return;
     }
@@ -84,7 +82,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
       final ClassMember[] members = chooseOriginalMembers(aClass, project, editor);
       if (members == null) return;
 
-      WriteCommandAction.runWriteCommandAction(project, () -> {
+      CommandProcessor.getInstance().executeCommand(project, () -> {
         final int offset = editor.getCaretModel().getOffset();
         try {
           doGenerate(project, editor, aClass, members);
@@ -98,7 +96,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
             }
           }, project.getDisposed());
         }
-      });
+      }, null, null);
     }
     finally {
       cleanup();
@@ -121,7 +119,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     final PsiElement lBrace = aClass.getLBrace();
     if (textBeforeCaret.trim().length() > 0 && StringUtil.isEmptyOrSpaces(afterCaret) &&
         (lBrace == null || lBrace.getTextOffset() < offset) && !editor.getSelectionModel().hasSelection()) {
-      EnterAction.insertNewLineAtCaret(editor);
+      WriteAction.run(() -> EnterAction.insertNewLineAtCaret(editor));
       PsiDocumentManager.getInstance(project).commitDocument(document);
       offset = editor.getCaretModel().getOffset();
       col = editor.getCaretModel().getLogicalPosition().column;
@@ -130,15 +128,9 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(0, 0));
 
-    List<? extends GenerationInfo> newMembers;
-    try{
-      List<? extends GenerationInfo> prototypes = generateMemberPrototypes(aClass, members);
-      newMembers = GenerateMembersUtil.insertMembersAtOffset(aClass.getContainingFile(), offset, prototypes);
-    }
-    catch(IncorrectOperationException e){
-      LOG.error(e);
-      return;
-    }
+    int finalOffset = offset;
+    List<? extends GenerationInfo> newMembers = WriteAction.compute(
+      () -> GenerateMembersUtil.insertMembersAtOffset(aClass, finalOffset, generateMemberPrototypes(aClass, members)));
 
     editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(line, col));
 
@@ -170,7 +162,6 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     }
 
     if (!templates.isEmpty()){
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
       runTemplates(project, editor, templates, 0);
     }
     else if (!newMembers.isEmpty()){
@@ -188,7 +179,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
     final PsiElement element = info.getPsiMember();
     final TextRange range = element.getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    WriteAction.run(() -> editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset()));
     int offset = range.getStartOffset();
     editor.getCaretModel().moveToOffset(offset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);

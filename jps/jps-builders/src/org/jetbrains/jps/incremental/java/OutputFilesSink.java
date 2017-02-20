@@ -49,7 +49,7 @@ class OutputFilesSink implements OutputFileConsumer {
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
   private final String myChunkName;
-  private final Set<File> mySuccessfullyCompiled = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Set<File> mySuccessfullyCompiled = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
 
   public OutputFilesSink(CompileContext context,
                          ModuleLevelBuilder.OutputConsumer outputConsumer,

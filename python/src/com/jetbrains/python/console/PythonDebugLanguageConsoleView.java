@@ -89,12 +89,18 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     if (!primary && !isPrimaryConsoleEnabled()) {
       PythonConsoleView console = getPydevConsoleView();
       if (!myDebugConsoleInitialized && console.getExecuteActionHandler() != null) {
-        console.addConsoleFolding(true);
-        showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
+        if (!console.getExecuteActionHandler().getConsoleCommunication().isWaitingForInput()) {
+          console.addConsoleFolding(true);
+          showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
+        }
         myDebugConsoleInitialized = true;
       }
 
       IdeFocusManager.findInstance().requestFocus(console.getConsoleEditor().getContentComponent(), true);
     }
+  }
+
+  public void initialized() {
+    myDebugConsoleInitialized = true;
   }
 }

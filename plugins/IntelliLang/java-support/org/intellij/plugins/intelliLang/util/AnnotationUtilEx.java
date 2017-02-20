@@ -188,11 +188,11 @@ public class AnnotationUtilEx {
    * Utility method to obtain annotations of a specific type from the supplied PsiModifierListOwner.
    * For optimization reasons, this method only looks at elements of type java.lang.String.
    * <p/>
-   * The parameter <code>allowIndirect</code> determines if the method should look for indirect annotations, i.e.
+   * The parameter {@code allowIndirect} determines if the method should look for indirect annotations, i.e.
    * annotations which have themselves been annotated by the supplied annotation name. Currently, this only allows
    * one level of indirection and returns an array of [base-annotation, indirect annotation]
    * <p/>
-   * The <code>annotationName</code> parameter is a pair of the target annotation class' fully qualified name as a
+   * The {@code annotationName} parameter is a pair of the target annotation class' fully qualified name as a
    * String and as a Set. This is done for performance reasons because the Set is required by the
    * {@link com.intellij.codeInsight.AnnotationUtil} utility class and allows to avoid unnecessary object constructions.
    */
@@ -208,11 +208,11 @@ public class AnnotationUtilEx {
 
 
   /**
-   * The parameter <code>allowIndirect</code> determines if the method should look for indirect annotations, i.e.
+   * The parameter {@code allowIndirect} determines if the method should look for indirect annotations, i.e.
    * annotations which have themselves been annotated by the supplied annotation name. Currently, this only allows
    * one level of indirection and returns an array of [base-annotation, indirect annotation]
    * <p/>
-   * The <code>annotationName</code> parameter is a pair of the target annotation class' fully qualified name as a
+   * The {@code annotationName} parameter is a pair of the target annotation class' fully qualified name as a
    * String and as a Set. This is done for performance reasons because the Set is required by the
    * {@link com.intellij.codeInsight.AnnotationUtil} utility class and allows to avoid unnecessary object constructions.
    */
@@ -250,7 +250,7 @@ public class AnnotationUtilEx {
   }
 
   /**
-   * Calculates the value of the annotation's attribute referenced by the <code>attr</code> parameter by trying to
+   * Calculates the value of the annotation's attribute referenced by the {@code attr} parameter by trying to
    * find the attribute in the supplied list of annotations and calculating the constant value for the first attribute
    * it finds.
    */
@@ -274,7 +274,7 @@ public class AnnotationUtilEx {
   }
 
   /**
-   * Returns all annotations for <code>listOwner</code>, possibly walking up the method hierarchy.
+   * Returns all annotations for {@code listOwner}, possibly walking up the method hierarchy.
    *
    * @see com.intellij.codeInsight.AnnotationUtil#isAnnotated(com.intellij.psi.PsiModifierListOwner, java.lang.String, boolean)
    */

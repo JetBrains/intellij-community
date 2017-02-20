@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,9 @@ public interface GrSafeCastExpression extends GrExpression, PsiPolyVariantRefere
 
   @NotNull
   GrExpression getOperand();
+
+  @NotNull
+  PsiElement getOperationToken();
 
   @NotNull
   @Override

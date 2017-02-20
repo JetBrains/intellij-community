@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class ExternalMergeTool {
-  public static final Logger LOG = Logger.getInstance(ExternalMergeTool.class);
+  private static final Logger LOG = Logger.getInstance(ExternalMergeTool.class);
 
   public static boolean isDefault() {
     return ExternalDiffSettings.getInstance().isMergeEnabled();

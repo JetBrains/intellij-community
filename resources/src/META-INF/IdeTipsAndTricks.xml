@@ -171,6 +171,7 @@
     <tipAndTrick file="RichTextCopy.html"/>
     <tipAndTrick file="RemoveToolWindowButton.html"/>
     <tipAndTrick file="GoToFile.html"/>
+    <tipAndTrick file="DeleteLine.html" feature-id="editor.delete.line"/>
     <tipAndTrick file="HippieCompletion.html"/>
     <tipAndTrick file="ChangeSignatureAfterMovingParameters.html"/>
   </extensions>

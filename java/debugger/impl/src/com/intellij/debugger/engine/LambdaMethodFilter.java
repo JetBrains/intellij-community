@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.PsiStatement;
 import com.intellij.util.Range;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -81,24 +80,12 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter {
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
     final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
     final Method method = location.method();
-    return DebuggerUtilsEx.isLambdaName(method.name()) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
+    return DebuggerUtilsEx.isLambda(method) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
   }
 
   @Nullable
   @Override
   public Range<Integer> getCallingExpressionLines() {
     return myCallingExpressionLines;
-  }
-
-  public static int getLambdaOrdinal(@NotNull String name) {
-    int pos = name.lastIndexOf('$');
-    if (pos > -1) {
-      try {
-        return Integer.parseInt(name.substring(pos + 1));
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
-    return -1;
   }
 }

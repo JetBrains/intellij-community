@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,13 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.impl.text.AsyncHighlighterUpdater;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -74,10 +77,12 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.io.File;
@@ -104,7 +109,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
-  protected static final Collection<File> myFilesToDelete = new HashSet<>();
+  protected static final Collection<File> myFilesToDelete = new THashSet<>();
   protected boolean myAssertionsInTestDetected;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.PlatformTestCase");
   public static Thread ourTestThread;
@@ -137,7 +142,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private static final String[] PREFIX_CANDIDATES = {
-    "AppCode", "CLion", "CidrCommon",
+    "AppCode", "CLion", "CidrCommon", "Rider",
     "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea", "PlatformLangXml" };
 
   /**
@@ -245,12 +250,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static Project createProject(File projectFile, String creationPlace) {
+  public static Project createProject(File projectFile, @NotNull String creationPlace) {
     return createProject(projectFile.getPath(), creationPlace);
   }
 
   @NotNull
-  public static Project createProject(@NotNull String path, String creationPlace) {
+  public static Project createProject(@NotNull String path, @NotNull String creationPlace) {
     String fileName = PathUtilRt.getFileName(path);
 
     try {
@@ -291,6 +296,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
+  @TestOnly
   public static String getCreationPlace(@NotNull Project project) {
     String place = project.getUserData(CREATION_PLACE);
     Object base;
@@ -325,22 +331,31 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
+  @NotNull
   protected Module createMainModule() throws IOException {
     return createModule(myProject.getName());
   }
 
+  @NotNull
   protected Module createModule(@NonNls final String moduleName) {
     return doCreateRealModule(moduleName);
   }
 
+  @NotNull
   protected Module doCreateRealModule(final String moduleName) {
     return doCreateRealModuleIn(moduleName, myProject, getModuleType());
   }
 
+  @NotNull
   protected static Module doCreateRealModuleIn(String moduleName, final Project project, final ModuleType moduleType) {
     final VirtualFile baseDir = project.getBaseDir();
     assertNotNull(baseDir);
-    final File moduleFile = new File(FileUtil.toSystemDependentName(baseDir.getPath()), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    return createModuleAt(moduleName, project, moduleType, baseDir.getPath());
+  }
+
+  @NotNull
+  protected static Module createModuleAt(String moduleName, Project project, ModuleType moduleType, String path) {
+    File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     FileUtil.createIfDoesntExist(moduleFile);
     myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
@@ -366,6 +381,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         globalInstance.dropHistoryInTests();
       }
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+      ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
 
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
@@ -377,6 +393,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
+
+    AsyncHighlighterUpdater.completeAsyncTasks();
 
     ((FileBasedIndexImpl) FileBasedIndex.getInstance()).cleanupForNextTest();
 
@@ -433,14 +451,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected void tearDown() throws Exception {
     Project project = myProject;
 
+    runTearDownActions(project);
+  }
+
+  private void runTearDownActions(Project project) {
     new RunAll()
+      .append(this::disposeRootDisposable)
       .append(() -> {
         if (project != null) {
           LightPlatformTestCase.doTearDown(project, ourApplication, false);
         }
       })
-      .append(() -> disposeProject())
-      .append(() -> checkForSettingsDamage())
+      .append(this::disposeProject)
+      .append(this::checkForSettingsDamage)
       .append(() -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
@@ -470,7 +493,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           myThreadTracker.checkLeak();
         }
       })
-      .append(() -> LightPlatformTestCase.checkEditorsReleased())
+      .append(LightPlatformTestCase::checkEditorsReleased)
       .append(() -> {
         myProjectManager = null;
         myProject = null;
@@ -866,7 +889,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }.execute().throwException();
   }
 
-  public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) throws IOException {
+  public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) {
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {

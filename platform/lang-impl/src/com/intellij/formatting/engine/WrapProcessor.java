@@ -109,8 +109,8 @@ public class WrapProcessor {
    * Allows to answer if wrap of the {@link #myWrapCandidate} object (if any) may be replaced by the given wrap.
    *
    * @param wrap wrap candidate to check
-   * @return <code>true</code> if wrap of the {@link #myWrapCandidate} object (if any) may be replaced by the given wrap;
-   * <code>false</code> otherwise
+   * @return {@code true} if wrap of the {@link #myWrapCandidate} object (if any) may be replaced by the given wrap;
+   * {@code false} otherwise
    */
   private boolean canReplaceWrapCandidate(WrapImpl wrap, LeafBlockWrapper currentBlock) {
     if (myWrapCandidate == null) return true;

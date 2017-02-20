@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -393,7 +393,7 @@ public class NestedClassProcessor {
       mergeListSignatures(interPairMask, interMask, true);
 
       for (VarFieldPair pair : interPairMask) {
-        if (pair != null && pair.fieldKey.length() > 0) {
+        if (pair != null && !pair.fieldKey.isEmpty()) {
           nestedNode.mapFieldsToVars.put(pair.fieldKey, pair.varPair);
         }
       }
@@ -405,8 +405,10 @@ public class NestedClassProcessor {
         MethodWrapper method = nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entry.getKey());
         method.signatureFields = new ArrayList<>();
 
+        boolean firstSignField = nestedNode.type != ClassNode.CLASS_ANONYMOUS;
         for (VarFieldPair pair : entry.getValue()) {
-          method.signatureFields.add(pair == null ? null : pair.varPair);
+          method.signatureFields.add(pair == null || (!firstSignField && pair.fieldKey.isEmpty()) ? null : pair.varPair);
+          firstSignField = false;
         }
       }
     }
@@ -605,7 +607,7 @@ public class NestedClassProcessor {
         DirectGraph graph = method.getOrBuildGraph();
 
         if (graph != null) { // something gone wrong, should not be null
-          List<VarFieldPair> fields = new ArrayList<>();
+          List<VarFieldPair> fields = new ArrayList<>(md.params.length);
 
           int varIndex = 1;
           for (int i = 0; i < md.params.length; i++) {  // no static methods allowed

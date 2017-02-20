@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ abstract class AbstractAuthenticator {
   }
 
   protected boolean tryAuthenticate() {
-    final SvnAuthenticationManager passive = myVcs.getSvnConfiguration().getPassiveAuthenticationManager(myVcs.getProject());
+    final SvnAuthenticationManager passive = myVcs.getSvnConfiguration().getPassiveAuthenticationManager(myVcs);
     final SvnAuthenticationManager active = myVcs.getSvnConfiguration().getAuthenticationManager(myVcs);
 
     try {
@@ -65,12 +65,7 @@ abstract class AbstractAuthenticator {
       manager.setArtificialSaving(true);
       return acknowledge(manager);
     }
-    catch (IOException e) {
-      LOG.info(e);
-      VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), e.getMessage(), MessageType.ERROR);
-      return false;
-    }
-    catch (SVNException e) {
+    catch (IOException | SVNException e) {
       LOG.info(e);
       VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), e.getMessage(), MessageType.ERROR);
       return false;
@@ -80,8 +75,8 @@ abstract class AbstractAuthenticator {
   @NotNull
   protected SvnAuthenticationManager createTmpManager() throws IOException {
     if (myTmpDirManager == null) {
-      myAuthenticationService.initTmpDir(myVcs.getSvnConfiguration());
-      myTmpDirManager = new SvnAuthenticationManager(myVcs.getProject(), myAuthenticationService.getTempDirectory());
+      myAuthenticationService.initTmpDir();
+      myTmpDirManager = new SvnAuthenticationManager(myVcs, myAuthenticationService.getTempDirectory());
       myTmpDirManager.setRuntimeStorage(SvnConfiguration.RUNTIME_AUTH_CACHE);
       myTmpDirManager.setAuthenticationProvider(new SvnInteractiveAuthenticationProvider(myVcs, myTmpDirManager));
     }

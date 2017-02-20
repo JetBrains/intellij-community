@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -335,7 +335,7 @@ public class JavaDocInfoGenerator {
 
   /**
    * Takes a pair of strings representing a relative path and a package name, and returns corresponding pair, where path is stripped of
-   * leading ../ elements, and package name adjusted correspondingly. Returns <code>null</code> if there are more ../ elements than package
+   * leading ../ elements, and package name adjusted correspondingly. Returns {@code null} if there are more ../ elements than package
    * components.
    */
   @Nullable
@@ -729,7 +729,7 @@ public class JavaDocInfoGenerator {
   private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologueAndEpilogue) {
     if (generatePrologueAndEpilogue) generatePrologue(buffer);
 
-    buffer.append("<pre>module <b>").append(module.getModuleName()).append("</b></pre>");
+    buffer.append("<pre>module <b>").append(module.getName()).append("</b></pre>");
 
     PsiDocComment comment = module.getDocComment();
     if (comment != null) {
@@ -785,8 +785,7 @@ public class JavaDocInfoGenerator {
         htmlText = subTag.getValue();
       }
     }
-    catch (JDOMException ignore) {}
-    catch (IOException ignore) {}
+    catch (JDOMException | IOException ignore) {}
 
     htmlText = StringUtil.replace(htmlText, "*/", "&#42;&#47;");
 
@@ -1143,9 +1142,7 @@ public class JavaDocInfoGenerator {
       }
       if (i < parms.length - 1) {
         buffer.append(",\n ");
-        for (int j = 0; j < indent; j++) {
-          buffer.append(" ");
-        }
+        buffer.append(StringUtil.repeat(" ", indent));
       }
     }
     buffer.append(")");
@@ -1463,7 +1460,10 @@ public class JavaDocInfoGenerator {
     }
 
     if (value != null) {
-      buffer.append(value);
+      String valueText = StringUtil.escapeXml(value.toString());
+      if (value instanceof String) valueText = '"' + valueText + '"';
+      if (valueField.equals(myElement)) buffer.append(valueText); // don't generate link to itself
+      else generateLink(buffer, valueField, valueText, true);
     }
     else {
       buffer.append(element.getText());

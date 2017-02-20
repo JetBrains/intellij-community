@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -50,6 +47,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
+import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -60,6 +58,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -113,6 +112,7 @@ public class IdeEventQueue extends EventQueue {
   private boolean myIsInInputEvent;
   private AWTEvent myCurrentEvent;
   private long myLastActiveTime;
+  private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -121,6 +121,8 @@ public class IdeEventQueue extends EventQueue {
   private boolean myDispatchingFocusEvent;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
+  private final com.intellij.util.EventDispatcher<PostEventHook>
+    myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -235,14 +237,15 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-
-  public void addIdleListener(@NotNull final Runnable runnable, final int timeout) {
-    LOG.assertTrue(timeout > 0);
+  public void addIdleListener(@NotNull final Runnable runnable, final int timeoutMillis) {
+    if(timeoutMillis <= 0 || TimeUnit.MILLISECONDS.toHours(timeoutMillis) >= 24) {
+      throw new IllegalArgumentException("This timeout value is unsupported: " + timeoutMillis);
+    }
     synchronized (myLock) {
       myIdleListeners.add(runnable);
-      final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeout);
+      final MyFireIdleRequest request = new MyFireIdleRequest(runnable, timeoutMillis);
       myListener2Request.put(runnable, request);
-      UIUtil.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeout));
+      UIUtil.invokeLaterIfNeeded(() -> myIdleRequestsAlarm.addRequest(request, timeoutMillis));
     }
   }
 
@@ -334,6 +337,7 @@ public class IdeEventQueue extends EventQueue {
 
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
+    checkForTimeJump();
     if (!appIsLoaded()) {
       try {
         super.dispatchEvent(e);
@@ -353,14 +357,10 @@ public class IdeEventQueue extends EventQueue {
 
     boolean wasInputEvent = myIsInInputEvent;
     myIsInInputEvent = isInputEvent(e);
-    if (myIsInInputEvent) {
-      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-    } else {
-      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
-    }
     AWTEvent oldEvent = myCurrentEvent;
     myCurrentEvent = e;
 
+    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
     try (AccessToken ignored = startActivity(e)) {
       _dispatchEvent(e, false);
     }
@@ -368,6 +368,7 @@ public class IdeEventQueue extends EventQueue {
       processException(t);
     }
     finally {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
       myIsInInputEvent = wasInputEvent;
       myCurrentEvent = oldEvent;
 
@@ -379,6 +380,15 @@ public class IdeEventQueue extends EventQueue {
         maybeReady();
       }
     }
+  }
+
+  //As we rely on system time monotonicity in many places let's log anomalies at least.
+  private void checkForTimeJump() {
+    long now = System.currentTimeMillis();
+    if (myLastEventTime > now + 1000) {
+      LOG.warn("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
+    }
+    myLastEventTime = now;
   }
 
   private static boolean isInputEvent(@NotNull AWTEvent e) {
@@ -550,6 +560,7 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (!typeAheadFlushing && typeAheadDispatchToFocusManager(e)) {
+      LOG.debug("Typeahead dispatch for event ", e);
       return;
     }
 
@@ -597,6 +608,7 @@ public class IdeEventQueue extends EventQueue {
         }
       }
     }
+
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
       if (myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         myKeyEventDispatcher.setState(KeyState.STATE_INIT);
@@ -605,20 +617,18 @@ public class IdeEventQueue extends EventQueue {
       return;
     }
 
-    for (EventDispatcher eachDispatcher : myDispatchers) {
-      if (eachDispatcher.dispatch(e)) {
-        return;
-      }
-    }
+    if (dispatchByCustomDispatchers(e)) return;
 
     if (e instanceof InputMethodEvent) {
       if (SystemInfo.isMac && myKeyEventDispatcher.isWaitingForSecondKeyStroke()) {
         return;
       }
     }
+
     if (e instanceof ComponentEvent && myWindowManager != null) {
       myWindowManager.dispatchComponentEvent((ComponentEvent)e);
     }
+
     if (e instanceof KeyEvent) {
       if (mySuspendMode || !myKeyEventDispatcher.dispatchKeyEvent((KeyEvent)e)) {
         defaultDispatchEvent(e);
@@ -644,6 +654,15 @@ public class IdeEventQueue extends EventQueue {
     else {
       defaultDispatchEvent(e);
     }
+  }
+
+  private boolean dispatchByCustomDispatchers(@NotNull AWTEvent e) {
+    for (EventDispatcher eachDispatcher : myDispatchers) {
+      if (eachDispatcher.dispatch(e)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void fixStickyWindow(@NotNull KeyboardFocusManager mgr, Window wnd, @NotNull String resetMethod) {
@@ -1045,11 +1064,11 @@ public class IdeEventQueue extends EventQueue {
           myWaitingForAltRelease = false;
         }
         else {
-          if (ApplicationManager.getApplication() == null ||
-              UISettings.getInstance() == null ||
+          UISettings uiSettings = UISettings.getInstanceOrNull();
+          if (uiSettings == null ||
               !SystemInfo.isWindows ||
               !Registry.is("actionSystem.win.suppressAlt") ||
-              !(UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE)) {
+              !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
             return false;
           }
 
@@ -1122,11 +1141,21 @@ public class IdeEventQueue extends EventQueue {
   private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1009, 100);
   @Override
   public void postEvent(@NotNull AWTEvent event) {
+    doPostEvent(event);
+  }
+
+  // return true if posted, false if consumed immediately
+  boolean doPostEvent(@NotNull AWTEvent event) {
+    for (PostEventHook listener : myPostEventListeners.getListeners()) {
+      if (listener.consumePostedEvent(event)) return false;
+    }
+
     myFrequentEventDetector.eventHappened(event);
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
     }
     super.postEvent(event);
+    return true;
   }
 
   private static boolean isKeyboardEvent(@NotNull AWTEvent event) {
@@ -1163,5 +1192,46 @@ public class IdeEventQueue extends EventQueue {
    */
   public enum BlockMode {
     COMPLETE, ACTIONS
+  }
+
+  /**
+   * An absolutely guru API, please avoid using it at all cost.
+   */
+  @FunctionalInterface
+  public interface PostEventHook extends EventListener {
+    /**
+     * @return true if event is handled by the listener and should't be added to event queue at all
+     */
+    boolean consumePostedEvent(@NotNull AWTEvent event);
+  }
+
+  public void addPostEventListener(@NotNull PostEventHook listener, @NotNull Disposable parentDisposable) {
+    myPostEventListeners.addListener(listener, parentDisposable);
+  }
+
+  private static Ref<Method> unsafeNonBlockingExecuteRef;
+
+  /**
+   * Must be called on the Event Dispatching thread.
+   * Executes the runnable so that it can perform a non-blocking invocation on the toolkit thread.
+   * Not for general-purpose usage.
+   *
+   * @param r the runnable to execute
+   */
+  public static void unsafeNonblockingExecute(Runnable r) {
+    assert EventQueue.isDispatchThread();
+    if (unsafeNonBlockingExecuteRef == null) {
+      // The method is available in JBSDK.
+      unsafeNonBlockingExecuteRef = Ref.create(ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class));
+    }
+    if (unsafeNonBlockingExecuteRef.get() != null) {
+      try {
+        unsafeNonBlockingExecuteRef.get().invoke(Toolkit.getDefaultToolkit(), r);
+        return;
+      }
+      catch (Exception ignore) {
+      }
+    }
+    r.run();
   }
 }

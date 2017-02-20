@@ -312,7 +312,7 @@ public final class PythonSdkType extends SdkType {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
-  public static boolean isCondaVirtualEnv(Sdk sdk) {
+  public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
     final String path = sdk.getHomePath();
     return path != null && PyCondaPackageManagerImpl.isCondaVEnv(sdk);
   }
@@ -693,6 +693,11 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
+  public static Sdk findPythonSdk(@NotNull final PsiElement element) {
+    return findPythonSdk(ModuleUtilCore.findModuleForPsiElement(element));
+  }
+
+  @Nullable
   public static Sdk findSdkByPath(@Nullable String path) {
     if (path != null) {
       return findSdkByPath(getAllSdks(), path);
@@ -901,13 +906,10 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
+  @Deprecated
   @Nullable
   public static Sdk getSdk(@NotNull final PsiElement element) {
-    Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    if (module == null) {
-      return null;
-    }
-    return ModuleRootManager.getInstance(module).getSdk();
+    return findPythonSdk(element);
   }
 
   @NotNull

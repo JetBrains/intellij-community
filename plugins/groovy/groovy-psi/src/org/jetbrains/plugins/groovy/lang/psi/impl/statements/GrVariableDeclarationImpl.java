@@ -49,9 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableDeclarationStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author: Dmitry.Krasilschikov
  */
@@ -180,11 +177,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
 
   @Override
   public GrMember[] getMembers() {
-    List<GrMember> result = new ArrayList<>();
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrMember) result.add((GrMember)cur);
-    }
-    return result.toArray(new GrMember[result.size()]);
+    return findChildrenByClass(GrMember.class);
   }
 
   @Override

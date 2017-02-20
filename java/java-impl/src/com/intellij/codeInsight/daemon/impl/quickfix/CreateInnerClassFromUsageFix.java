@@ -19,13 +19,13 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
@@ -47,6 +47,11 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   @Override
   public String getText(String varName) {
     return QuickFixBundle.message("create.inner.class.from.usage.text", myKind.getDescription(), varName);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override
@@ -104,7 +109,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     final Project project = classes[0].getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
+    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
@@ -113,15 +118,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     Runnable runnable = () -> {
       int index = list.getSelectedIndex();
       if (index < 0) return;
-      final PsiClass aClass = (PsiClass)list.getSelectedValue();
-      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          doInvoke(aClass, superClassName);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }), getText(), null);
+      doInvoke((PsiClass)list.getSelectedValue(), superClassName);
     };
 
     builder.
@@ -143,12 +140,12 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
                       : myKind == CreateClassKind.CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
-    if (aClass.isInterface()) {
+    if (aClass.isInterface() || PsiUtil.isLocalOrAnonymousClass(aClass)) {
       modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     } else {
       modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
     }
-    if (RefactoringUtil.isInStaticContext(ref, aClass)) {
+    if (RefactoringUtil.isInStaticContext(ref, aClass) && !aClass.isInterface()) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     if (superClassName != null) {
@@ -156,7 +153,8 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     }
     CreateFromUsageBaseFix.setupGenericParameters(created, ref);
 
-    created = (PsiClass)aClass.add(created);
-    ref.bindToElement(created);
+    WriteCommandAction.runWriteCommandAction(aClass.getProject(), getText(), null,
+                                             () -> ref.bindToElement(aClass.add(created)),
+                                             aClass.getContainingFile());
   }
 }

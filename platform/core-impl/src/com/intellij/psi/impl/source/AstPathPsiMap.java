@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -85,9 +87,22 @@ class AstPathPsiMap {
   @NotNull
   StubBasedPsiElementBase<?> cachePsi(@NotNull AstPath key, @NotNull StubBasedPsiElementBase psi) {
     myQueue.cleanupStaleReferences();
-    myMap.put(key, new MyReference(psi, key, myQueue));
+    // ensure PSI will use AST path before making it available to other threads
+    // otherwise another thread could invoke StubRef.getNode and fail since file's AST isn't set yet
     psi.setSubstrateRef(key);
+    myMap.put(key, new MyReference(psi, key, myQueue));
     return psi;
+  }
+
+  List<StubBasedPsiElementBase<?>> getAllCachedPsi() {
+    myQueue.cleanupStaleReferences();
+    if (myMap.isEmpty()) return Collections.emptyList();
+
+    List<StubBasedPsiElementBase<?>> result = ContainerUtil.newArrayList();
+    for (MyReference reference : myMap.values()) {
+      ContainerUtil.addIfNotNull(result, reference.get());
+    }
+    return result;
   }
 
   private static class MyReference extends WeakReference<StubBasedPsiElementBase<?>> {
@@ -101,12 +116,7 @@ class AstPathPsiMap {
 
   private static class MyReferenceQueue extends ReferenceQueue<StubBasedPsiElementBase<?>> {
     MyReferenceQueue(Project project) {
-      LowMemoryWatcher.register(new Runnable() {
-        @Override
-        public void run() {
-          cleanupStaleReferences();
-        }
-      },project);
+      LowMemoryWatcher.register(() -> cleanupStaleReferences(), project);
     }
 
     void cleanupStaleReferences() {

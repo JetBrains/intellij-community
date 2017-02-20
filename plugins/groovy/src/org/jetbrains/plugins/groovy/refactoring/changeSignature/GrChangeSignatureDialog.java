@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,9 +158,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
         returnType = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
       }
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException ignored) {
-    }
-    catch (PsiTypeCodeFragment.NoTypeException ignored) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException ignored) {
     }
 
     return returnType == null ? null : CanonicalTypes.createTypeWrapper(returnType);

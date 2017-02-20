@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -46,8 +47,8 @@ public class StudyEditorFactoryListener implements EditorFactoryListener {
       if (answerPlaceholder == null || answerPlaceholder.getSelected()) {
         return;
       }
-      int startOffset = answerPlaceholder.getOffset();
-      editor.getSelectionModel().setSelection(startOffset, startOffset + answerPlaceholder.getRealLength());
+      final Pair<Integer, Integer> offsets = StudyUtils.getPlaceholderOffsets(answerPlaceholder, editor.getDocument());
+      editor.getSelectionModel().setSelection(offsets.getFirst(), offsets.getSecond());
       answerPlaceholder.setSelected(true);
     }
   }

@@ -212,7 +212,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       }
     });
 
-    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerAdapter() {
+    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerListener() {
       private void changed() {
         scheduleStructureRequest(() -> {
           assert myStructure != null;

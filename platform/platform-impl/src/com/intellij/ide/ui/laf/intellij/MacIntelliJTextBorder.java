@@ -16,12 +16,15 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.IntelliJLaf;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 /**
@@ -46,7 +49,19 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     Graphics2D g = (Graphics2D)g2d;
     //todo[kb]: make a better solution
     if (c.getParent() instanceof JComboBox) return;
-    if (c.hasFocus()) {
+    Object eop = ((JTextComponent)c).getClientProperty("JComponent.error.outline");
+    if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        g2.translate(x, y);
+        DarculaUIUtil.paintErrorRing(g2, width, height, c.hasFocus());
+      } finally {
+        g2.dispose();
+      }
+      if (Registry.is("ide.inplace.errors.balloon")) {
+        DarculaUIUtil.showErrorTip((JComponent)c);
+      }
+    } else if (c.hasFocus()) {
       MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
     }
     if (!IntelliJLaf.isGraphite() || !c.hasFocus()) {

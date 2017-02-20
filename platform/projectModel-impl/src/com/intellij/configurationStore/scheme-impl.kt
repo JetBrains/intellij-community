@@ -38,10 +38,6 @@ interface SchemeDataHolder<in T : Scheme> {
   fun updateDigest(data: Element)
 }
 
-interface SerializableScheme {
-  fun writeScheme(): Element
-}
-
 /**
  * A scheme processor can implement this interface to provide a file extension different from default .xml.
  * @see SchemeProcessor
@@ -70,7 +66,10 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
 
   open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
 
-  open fun reloaded() {
+  /**
+   * May be called from any thread - EDT is not guaranteed.
+   */
+  open fun reloaded(schemeManager: SchemeManager<SCHEME>) {
   }
 }
 
@@ -99,8 +98,7 @@ abstract class SchemeWrapper<out T : Scheme>(name: String) : ExternalizableSchem
   val scheme: T
     get() = lazyScheme.value
 
-  val schemeState: SchemeState
-    get() = if (lazyScheme.isInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
+  override fun getSchemeState() = if (lazyScheme.isInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
 
   init {
     this.name = name
@@ -112,6 +110,7 @@ abstract class LazySchemeWrapper<T : Scheme>(name: String, dataHolder: SchemeDat
 
   override final fun writeScheme(): Element {
     val dataHolder = dataHolder.get()
+    @Suppress("IfThenToElvis")
     return if (dataHolder == null) writer(scheme) else dataHolder.read()
   }
 }

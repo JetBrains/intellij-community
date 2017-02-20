@@ -49,7 +49,7 @@ public class FrozenDocument implements DocumentEx {
     myText = text;
     myLineSet = lineSet;
     myStamp = stamp;
-    myTextString = textString == null ? null : new SoftReference<String>(textString);
+    myTextString = textString == null ? null : new SoftReference<>(textString);
   }
 
   @NotNull
@@ -106,11 +106,6 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public int getListenersCount() {
-    return 0;
-  }
-
-  @Override
   public void suppressGuardedExceptions() {
     throw new UnsupportedOperationException();
   }
@@ -162,12 +157,12 @@ public class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public boolean processRangeMarkers(@NotNull Processor<RangeMarker> processor) {
+  public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
     return true;
   }
 
   @Override
-  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<RangeMarker> processor) {
+  public boolean processRangeMarkersOverlappingWith(int start, int end, @NotNull Processor<? super RangeMarker> processor) {
     return true;
   }
 
@@ -176,7 +171,7 @@ public class FrozenDocument implements DocumentEx {
   public String getText() {
     String s = SoftReference.dereference(myTextString);
     if (s == null) {
-      myTextString = new SoftReference<String>(s = myText.toString());
+      myTextString = new SoftReference<>(s = myText.toString());
     }
     return s;
   }

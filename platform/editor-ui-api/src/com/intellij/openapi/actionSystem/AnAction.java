@@ -80,14 +80,14 @@ public abstract class AnAction implements PossiblyDumbAware {
 
 
   /**
-   * Creates a new action with its text, description and icon set to <code>null</code>.
+   * Creates a new action with its text, description and icon set to {@code null}.
    */
   public AnAction(){
     this(null, null, null);
   }
 
   /**
-   * Creates a new action with <code>icon</code> provided. Its text, description set to <code>null</code>.
+   * Creates a new action with {@code icon} provided. Its text, description set to {@code null}.
    *
    * @param icon Default icon to appear in toolbars and menus (Note some platform don't have icons in menu).
    */
@@ -97,7 +97,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   /**
    * Creates a new action with the specified text. Description and icon are
-   * set to <code>null</code>.
+   * set to {@code null}.
    *
    * @param text Serves as a tooltip when the presentation is a button and the name of the
    *  menu item when the presentation is a menu item.
@@ -167,12 +167,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
 
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          unregisterCustomShortcutSet(component);
-        }
-      });
+      Disposer.register(parentDisposable, () -> unregisterCustomShortcutSet(component));
     }
   }
 
@@ -184,16 +179,14 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
-   * Copies template presentation and shortcuts set from <code>sourceAction</code>.
+   * Copies template presentation and shortcuts set from {@code sourceAction}.
    *
-   * @param sourceAction cannot be <code>null</code>
+   * @param sourceAction cannot be {@code null}
    */
   public final void copyFrom(@NotNull AnAction sourceAction){
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
-    presentation.setIcon(sourcePresentation.getIcon());
-    presentation.setText(sourcePresentation.getTextWithMnemonic(), sourcePresentation.getDisplayedMnemonicIndex() >= 0);
-    presentation.setDescription(sourcePresentation.getDescription());
+    presentation.copyFrom(sourcePresentation);
     copyShortcutFrom(sourceAction);
   }
 

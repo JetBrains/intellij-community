@@ -69,7 +69,7 @@ public class GroovyNonShortCircuitBooleanInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Replace with short-circuit expression";
     }
 

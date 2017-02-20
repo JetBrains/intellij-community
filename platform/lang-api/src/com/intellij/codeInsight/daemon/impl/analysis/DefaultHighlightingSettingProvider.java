@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Implementation can provide default level of highlighting (one of "none", "syntax checks", "inspections") for a file.
  * This level can be overridden by user for a file via Hector-the-inspector component.
- * If implementation returns <code>null</code>, next one is checked. If nobody returns anything, "Inspections" level will be used
+ * If implementation returns {@code null}, next one is checked. If nobody returns anything, "Inspections" level will be used
  * Implement {@link com.intellij.openapi.project.DumbAware} interface to allow implementation to be called in dumb mode
  */
 public abstract class DefaultHighlightingSettingProvider {

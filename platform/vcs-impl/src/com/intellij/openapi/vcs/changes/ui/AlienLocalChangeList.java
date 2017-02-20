@@ -29,7 +29,7 @@ public class AlienLocalChangeList extends LocalChangeList {
   private String myName;
   private String myComment;
 
-  public AlienLocalChangeList(final List<Change> changes, final String name) {
+  public AlienLocalChangeList(@NotNull List<Change> changes, @NotNull String name) {
     myChanges = changes;
     myName = name;
     myComment = "";

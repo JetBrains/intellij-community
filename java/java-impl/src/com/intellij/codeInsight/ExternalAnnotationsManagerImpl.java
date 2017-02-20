@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -101,7 +100,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     super(psiManager);
     myBus = project.getMessageBus();
     final MessageBusConnection connection = myBus.connect(project);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         dropCache();
@@ -127,8 +126,11 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public void annotateExternally(@NotNull final PsiModifierListOwner listOwner,
                                  @NotNull final String annotationFQName,
                                  @NotNull final PsiFile fromFile,
-                                 @Nullable final PsiNameValuePair[] value) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+                                 @Nullable final PsiNameValuePair[] value) throws CanceledConfigurationException {
+    Application application = ApplicationManager.getApplication();
+    application.assertIsDispatchThread();
+    LOG.assertTrue(!application.isWriteAccessAllowed());
+
     final Project project = myPsiManager.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
@@ -152,13 +154,19 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         chooseRootAndAnnotateExternally(listOwner, annotationFQName, fromFile, project, packageName, roots, value);
       }
       else {
-        Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode() || (application.isHeadlessEnvironment() && !application.isOnAir())) {
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
           return;
         }
-        application.invokeLater(() -> DumbService.getInstance(project).withAlternativeResolveEnabled(
-          () -> setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value)), project.getDisposed());
+        DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+        try {
+          if (!setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value)) {
+            throw CanceledConfigurationException.INSTANCE;
+          }
+        }
+        finally {
+          DumbService.getInstance(project).setAlternativeResolveEnabled(false);
+        }
       }
       break;
     }
@@ -179,20 +187,20 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     return xmlFiles;
   }
 
-  private void setupRootAndAnnotateExternally(@NotNull final OrderEntry entry,
-                                              @NotNull final Project project,
-                                              @NotNull final PsiModifierListOwner listOwner,
-                                              @NotNull final String annotationFQName,
-                                              @NotNull final PsiFile fromFile,
-                                              @NotNull final String packageName,
-                                              @Nullable final PsiNameValuePair[] value) {
+  private boolean setupRootAndAnnotateExternally(@NotNull final OrderEntry entry,
+                                                 @NotNull final Project project,
+                                                 @NotNull final PsiModifierListOwner listOwner,
+                                                 @NotNull final String annotationFQName,
+                                                 @NotNull final PsiFile fromFile,
+                                                 @NotNull final String packageName,
+                                                 @Nullable final PsiNameValuePair[] value) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
     descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
     final VirtualFile newRoot = FileChooser.chooseFile(descriptor, project, null);
     if (newRoot == null) {
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-      return;
+      return false;
     }
     new WriteCommandAction(project) {
       @Override
@@ -216,6 +224,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         }
       }
     }.execute();
+    return true;
   }
 
   @Nullable
@@ -401,7 +410,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           continue;
         }
 
-        CommandProcessor.getInstance().executeCommand(myPsiManager.getProject(), () -> {
+        WriteCommandAction.runWriteCommandAction(myPsiManager.getProject(), ExternalAnnotationsManagerImpl.class.getName(), null, () -> {
           PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
           try {
             for (XmlTag annotationTag : tagsToProcess) {
@@ -412,7 +421,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
           catch (IncorrectOperationException e) {
             LOG.error(e);
           }
-        }, ExternalAnnotationsManagerImpl.class.getName(), null);
+        });
       }
       notifyAfterAnnotationChanging(listOwner, annotationFQN, processedAnything);
       return processedAnything;

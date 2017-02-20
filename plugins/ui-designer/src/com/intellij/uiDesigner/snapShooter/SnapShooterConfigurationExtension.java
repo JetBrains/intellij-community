@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.Navigatable;
@@ -96,10 +95,12 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     }
   }
 
+  @Override
   protected boolean isApplicableFor(@NotNull RunConfigurationBase configuration) {
     return configuration instanceof ApplicationConfiguration;
   }
 
+  @Override
   public void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull final ProcessHandler handler, RunnerSettings runnerSettings) {
     SnapShooterConfigurationSettings settings = configuration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings != null) {
@@ -107,22 +108,13 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
       if (runnable != null) {
         settings.setNotifyRunnable(null);
         handler.addProcessListener(new ProcessAdapter() {
+          @Override
           public void startNotified(final ProcessEvent event) {
             runnable.run();
           }
         });
       }
     }
-  }
-
-  @Override
-  public SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
-    return null;
-  }
-
-  @Override
-  public String getEditorTitle() {
-    return null;
   }
 
   @NotNull

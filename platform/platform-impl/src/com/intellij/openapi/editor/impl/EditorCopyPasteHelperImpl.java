@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.codeInsight.editorActions.TextBlockTransferable;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.TextRange;
@@ -34,8 +33,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
-  private static final Logger LOG = Logger.getInstance(EditorCopyPasteHelperImpl.class);
-
   @Override
   public void copySelectionToClipboard(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -98,13 +95,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
         caretCount = editor.getCaretModel().getCaretCount();
       }
       else {
-        try {
-          caretData = content.isDataFlavorSupported(CaretStateTransferableData.FLAVOR)
-                      ? (CaretStateTransferableData)content.getTransferData(CaretStateTransferableData.FLAVOR) : null;
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+        caretData = CaretStateTransferableData.getFrom(content);
       }
       final TextRange[] ranges = new TextRange[caretCount];
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretData, caretCount).iterator();

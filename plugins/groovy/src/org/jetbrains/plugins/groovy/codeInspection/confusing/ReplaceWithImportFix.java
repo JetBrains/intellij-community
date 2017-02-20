@@ -39,7 +39,7 @@ public class ReplaceWithImportFix extends GroovyFix {
 
   @NotNull
   @Override
-  public String getName() {
+  public String getFamilyName() {
     return GroovyInspectionBundle.message("replace.qualified.name.with.import");
   }
 }

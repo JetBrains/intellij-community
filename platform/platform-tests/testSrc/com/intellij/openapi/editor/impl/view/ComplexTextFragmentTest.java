@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.testFramework.AbstractMockGlyphVector;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.util.ArrayUtil;
@@ -100,8 +101,9 @@ public class ComplexTextFragmentTest {
     try {
       int length = gv.getNumChars();
       char[] text = new char[length];
+      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0, 
-                                                             new Font(null), new FontRenderContext(null, false, false));
+                                                             fontInfo);
       int[] charPositions = new int[length];
       for (int i = 0; i < length; i++) {
         charPositions[i] = (int)fragment.visualColumnToX(0, i + 1);

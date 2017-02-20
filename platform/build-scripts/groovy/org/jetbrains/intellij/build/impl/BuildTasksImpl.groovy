@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,6 +240,15 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
+  void compileModulesFromProduct() {
+    checkProductProperties()
+    def patchedApplicationInfo = patchApplicationInfo()
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
+    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+      buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
+  }
+
+  @Override
   void buildDistributions() {
     checkProductProperties()
 
@@ -248,39 +257,48 @@ idea.fatal.error.notification=disabled
     compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
                    buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
     buildContext.messages.block("Build platform and plugin JARs") {
-      distributionJARsBuilder.buildJARs()
-      distributionJARsBuilder.buildAdditionalArtifacts()
-    }
-    if (buildContext.productProperties.scrambleMainJar) {
-      scramble()
-    }
-
-    layoutShared()
-
-    def propertiesFile = patchIdeaPropertiesFile()
-    List<BuildTaskRunnable<String>> tasks = [
-      createDistributionForOsTask("win", { BuildContext context ->
-        context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
-      }),
-      createDistributionForOsTask("linux", { BuildContext context ->
-        context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
-      }),
-      createDistributionForOsTask("mac", { BuildContext context ->
-        context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
-      })
-    ]
-
-    List<String> paths = runInParallel(tasks).findAll { it != null }
-
-    if (buildContext.productProperties.buildCrossPlatformDistribution) {
-      if (paths.size() == 3) {
-        buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
-          def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-          crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
-        }
+      if (buildContext.shouldBuildDistributions()) {
+        distributionJARsBuilder.buildJARs()
+        distributionJARsBuilder.buildAdditionalArtifacts()
       }
       else {
-        buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
+        buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
+        distributionJARsBuilder.buildNonBundledPlugins()
+      }
+    }
+
+    if (buildContext.shouldBuildDistributions()) {
+      if (buildContext.productProperties.scrambleMainJar) {
+        scramble()
+      }
+
+      layoutShared()
+
+      def propertiesFile = patchIdeaPropertiesFile()
+      List<BuildTaskRunnable<String>> tasks = [
+        createDistributionForOsTask("win", { BuildContext context ->
+          context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
+        }),
+        createDistributionForOsTask("linux", { BuildContext context ->
+          context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
+        }),
+        createDistributionForOsTask("mac", { BuildContext context ->
+          context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
+        })
+      ]
+
+      List<String> paths = runInParallel(tasks).findAll { it != null }
+
+      if (buildContext.productProperties.buildCrossPlatformDistribution) {
+        if (paths.size() == 3) {
+          buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
+            def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
+            crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
+          }
+        }
+        else {
+          buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
+        }
       }
     }
   }
@@ -327,6 +345,10 @@ idea.fatal.error.notification=disabled
 
   private void checkProductLayout() {
     ProductModulesLayout layout = buildContext.productProperties.productLayout
+    if (layout.mainJarName == null) {
+      buildContext.messages.error("productProperties.productLayout.mainJarName is not specified")
+    }
+
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
     def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
     checkPaths(layout.licenseFilesToBuildSearchableOptions, "productProperties.productLayout.licenseFilesToBuildSearchableOptions")
@@ -336,7 +358,10 @@ idea.fatal.error.notification=disabled
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
+    checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
+    checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
+    checkModules(layout.pluginModulesWithRestrictedCompatibleBuildRange, "productProperties.productLayout.pluginModulesWithRestrictedCompatibleBuildRange")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
@@ -397,20 +422,25 @@ idea.fatal.error.notification=disabled
     ensureKotlinCompilerAddedToClassPath()
 
     buildContext.projectBuilder.cleanOutput()
-    if (moduleNames == null) {
-      buildContext.projectBuilder.buildProduction()
-    }
-    else {
-      List<String> modulesToBuild = ((moduleNames as Set<String>) +
-        buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
-      List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
-      if (!invalidModules.empty) {
-        buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
+    try {
+      if (moduleNames == null) {
+        buildContext.projectBuilder.buildProduction()
       }
-      buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
+      else {
+        List<String> modulesToBuild = ((moduleNames as Set<String>) +
+                                       buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
+        List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
+        if (!invalidModules.empty) {
+          buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
+        }
+        buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
+      }
+      for (String moduleName : includingTestsInModules) {
+        buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
+      }
     }
-    for (String moduleName : includingTestsInModules) {
-      buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
+    catch (Throwable e) {
+      buildContext.messages.error("Compilation failed with exception: $e", e)
     }
   }
 
@@ -423,7 +453,7 @@ idea.fatal.error.notification=disabled
 
     def kotlinPluginLibPath = "$buildContext.paths.communityHome/build/kotlinc/plugin/Kotlin/lib"
     if (new File(kotlinPluginLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar"].each {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", buildContext.ant)
       }
     }

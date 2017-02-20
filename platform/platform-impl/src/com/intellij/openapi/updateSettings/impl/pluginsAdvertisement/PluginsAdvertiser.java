@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,7 +178,7 @@ public class PluginsAdvertiser implements StartupActivity {
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
     }
-    JDOMUtil.writeDocument(new Document(XmlSerializer.serialize(new KnownExtensions(extensions))), plugins, "\n");
+    JDOMUtil.write(XmlSerializer.serialize(new KnownExtensions(extensions)), plugins);
   }
 
   public static void openDownloadPage() {
@@ -387,9 +386,8 @@ public class PluginsAdvertiser implements StartupActivity {
                                                                                entry -> entry.getKey() + "[" + StringUtil.join(entry.getValue(), ", ") + "]", ", ");
         final int addressedFeaturesNumber = addressedFeatures.keySet().size();
         final int pluginsNumber = ids.size();
-        return "Unknown feature" + (addressedFeaturesNumber == 1 ? "" : "s") +
-                         " (" + addressedFeaturesPresentation + ") covered by " + (myPlugins.isEmpty() ? "disabled" : "non-bundled") + " plugin" + (pluginsNumber == 1 ? "" : "s") +
-                         " detected.<br>";
+        return StringUtil.pluralize("Plugin", pluginsNumber) + " supporting " + StringUtil.pluralize("feature", addressedFeaturesNumber) +
+               " (" + addressedFeaturesPresentation + ") " + (pluginsNumber == 1 ? "is" : "are") + " currently " + (myPlugins.isEmpty() ? "disabled" : "not installed") + ".<br>";
       }
     }));
   }

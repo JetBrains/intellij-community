@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.util.ui.JBInsets;
+
 import javax.swing.SwingConstants;
 import java.awt.Component;
 import java.awt.Container;
@@ -247,9 +249,7 @@ public final class HorizontalLayout implements LayoutManager2 {
         int rightWidth = right == null ? 0 : right.width;
         result.width += Math.abs(leftWidth - rightWidth);
       }
-      Insets insets = container.getInsets();
-      result.width += insets.left + insets.right;
-      result.height += insets.top + insets.bottom;
+      JBInsets.addTo(result, container.getInsets());
       return result;
     }
   }

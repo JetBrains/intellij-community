@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
 import java.util.HashSet;
@@ -47,7 +48,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    final HashSet<InferenceVariable> dependencies = new HashSet<>();
     final boolean reduceResult = doReduce(session, dependencies, constraints);
     if (!reduceResult) {
       session.registerIncompatibleErrorMessage(dependencies, session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
@@ -134,6 +135,15 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
           final PsiType upperBound = ((PsiCapturedWildcardType)myS).getUpperBound();
           if (upperBound instanceof PsiClassType) {
             sType = (PsiClassType)upperBound;
+          }
+          else if (upperBound instanceof PsiIntersectionType) {
+            for (PsiType type : ((PsiIntersectionType)upperBound).getConjuncts()) {
+              PsiClass sCandidate = PsiUtil.resolveClassInClassTypeOnly(type);
+              if (sCandidate != null && InheritanceUtil.isInheritorOrSelf(sCandidate, CClass, true)) {
+                sType = (PsiClassType)type;
+                break;
+              }
+            }
           }
         }
 

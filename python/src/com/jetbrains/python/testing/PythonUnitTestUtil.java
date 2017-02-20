@@ -118,8 +118,10 @@ public class PythonUnitTestUtil {
 
   public static boolean isTestCaseFunction(PyFunction function, boolean checkAssert) {
     final String name = function.getName();
-    if (name == null || !TEST_MATCH_PATTERN.matcher(name).find()) {
-      return false;
+    if (name != null && TEST_MATCH_PATTERN.matcher(name).find()) {
+      // Since there are a lot of ways to launch assert in modern frameworks,
+      // we assume any function with "test" word in name is test
+      return true;
     }
     if (function.getContainingClass() != null) {
       if (isTestCaseClass(function.getContainingClass(), null)) return true;

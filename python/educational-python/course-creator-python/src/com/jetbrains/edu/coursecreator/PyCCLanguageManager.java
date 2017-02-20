@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
 
 public class PyCCLanguageManager implements CCLanguageManager {
   private static final Logger LOG = Logger.getInstance(PyCCLanguageManager.class);
@@ -78,9 +77,6 @@ public class PyCCLanguageManager implements CCLanguageManager {
           return;
         }
         FileTemplateUtil.createFromTemplate(testsTemplate, nextSubtaskTestsFileName, null, taskPsiDir);
-      }
-      catch (IOException e) {
-        LOG.error(e);
       }
       catch (Exception e) {
         LOG.error(e);

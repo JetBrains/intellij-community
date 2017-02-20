@@ -125,7 +125,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     final Project project = firstClass.getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
+    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
@@ -423,17 +423,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
                                       @NotNull final Project project,
                                       final TemplateEditingListener listener,
                                       final String commandName) {
-    Runnable runnable = () -> {
-      if (project.isDisposed() || editor.isDisposed()) return;
-      CommandProcessor.getInstance().executeCommand(project,
-                                                    () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener), commandName, commandName);
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isOnAir()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
+    Runnable runnable = () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener);
+    CommandProcessor.getInstance().executeCommand(project, runnable, commandName, commandName);
   }
 
   @Override

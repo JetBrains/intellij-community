@@ -15,16 +15,13 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaReader.LOG;
 
@@ -33,108 +30,60 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaReader.LOG;
  */
 public class JsonSchemaExportedDefinitions {
   private final Object myLock;
-  private boolean myInitialized;
-  private boolean myDirty;
   private final BidirectionalMap<String, VirtualFile> myId2Key;
-  private final MultiMap<VirtualFile, VirtualFile> myCrossDependencies;
-  private final Map<String, Map<String, JsonSchemaObject>> myMap;
-  @NotNull private final Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>> mySchemasIterator;
+  private Set<VirtualFile> myFilesToRefresh;
 
-  public JsonSchemaExportedDefinitions(@NotNull Consumer<PairConsumer<VirtualFile, NullableLazyValue<JsonSchemaObject>>> schemasIterator) {
-    mySchemasIterator = schemasIterator;
+  public JsonSchemaExportedDefinitions() {
     myLock = new Object();
-    myMap = new HashMap<>();
     myId2Key = new BidirectionalMap<>();
-    myCrossDependencies = new MultiMap<>();
+    myFilesToRefresh = new HashSet<>();
   }
 
-  public void register(@NotNull VirtualFile key, @NotNull final String url, @NotNull final Map<String, JsonSchemaObject> map) {
+  public void register(@NotNull VirtualFile key, @NotNull final String url) {
     synchronized (myLock) {
-      myMap.put(url, map);
-      myId2Key.put(url, key);
-      if (myMap.size() > 10000) {
+      myFilesToRefresh.remove(key);
+      myId2Key.put(normalizeId(url), key);
+      if (myId2Key.size() > 10000) {
         LOG.info("Too many schema definitions registered. Something could go wrong.");
       }
     }
   }
 
-  public JsonSchemaObject findDefinition(@NotNull VirtualFile requestingSchemaKey, @NotNull final String url,
-                                         @NotNull final String relativePart) {
-    synchronized (myLock) {
-      ensureInitialized();
-      final VirtualFile key = myId2Key.get(url);
-      if (key != null) myCrossDependencies.putValue(key, requestingSchemaKey);
-      final Map<String, JsonSchemaObject> map = myMap.get(url);
-      if (map != null) {
-        final JsonSchemaObject found = map.get(relativePart);
-        if (found != null) return found;
-      }
-    }
-    return null;
-  }
-
-  private void ensureInitialized() {
-    synchronized (myLock) {
-      if (myInitialized && !myDirty) return;
-      mySchemasIterator.consume((key, value) -> {
-        if (!myInitialized || !myId2Key.containsValue(key)) {
-          final JsonSchemaObject object = value.getValue();
-          if (object != null) {
-            JsonSchemaReader.registerObjectsExportedDefinitions(key, this, object);
-          }
-        }
-      });
-      myDirty = false;
-      myInitialized = true;
-    }
-  }
-
   public void reset() {
     synchronized (myLock) {
-      myInitialized = false;
-      myDirty = false;
-      myMap.clear();
-      myCrossDependencies.clear();
+      myFilesToRefresh.addAll(myId2Key.values());
       myId2Key.clear();
     }
   }
 
-  public Set<VirtualFile> dropKey(@NotNull VirtualFile key) {
-    final Set<VirtualFile> dirtyKeys = new HashSet<>();
+  public void dropKey(@NotNull VirtualFile key) {
     synchronized (myLock) {
-      myDirty = true;
-      final ArrayDeque<VirtualFile> queue = new ArrayDeque<>();
-      queue.add(key);
-      while (!queue.isEmpty()) {
-        final VirtualFile current = queue.remove();
-        dirtyKeys.add(current);
-        final List<String> keys = myId2Key.getKeysByValue(current);
-        myId2Key.removeValue(current);
-        if (keys != null && !keys.isEmpty()) {
-          assert keys.size() == 1;
-          myMap.remove(keys.get(0));
-          final Collection<VirtualFile> dependencies = myCrossDependencies.remove(current);
-          if (dependencies != null) {
-            queue.addAll(dependencies);
-          }
-        }
-      }
-    }
-    return dirtyKeys;
-  }
-
-  public boolean checkFileForId(@NotNull final String id, @NotNull final VirtualFile file) {
-    synchronized (myLock) {
-      ensureInitialized();
-      return file.equals(myId2Key.get(id));
+      myFilesToRefresh.add(key);
+      myId2Key.removeValue(key);
     }
   }
 
   @Nullable
-  public VirtualFile getSchemaFileById(@NotNull final String id) {
+  public VirtualFile getSchemaFileById(@NotNull final String id, JsonSchemaServiceEx jsonSchemaService) {
+    for (int i = 0; i < 100; i++) {
+      final Set<VirtualFile> toRefresh = new HashSet<>();
+      synchronized (myLock) {
+        toRefresh.addAll(myFilesToRefresh);
+      }
+      if (!toRefresh.isEmpty()) jsonSchemaService.refreshSchemaIds(toRefresh);
+      synchronized (myLock) {
+        if (myFilesToRefresh.isEmpty()) break;
+      }
+    }
+
     synchronized (myLock) {
-      ensureInitialized();
       return myId2Key.get(id);
     }
+  }
+
+  @NotNull
+  public static String normalizeId(@NotNull String id) {
+    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+    return id.startsWith("#") ? id.substring(1) : id;
   }
 }

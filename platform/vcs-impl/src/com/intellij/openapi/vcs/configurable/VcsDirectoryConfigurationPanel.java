@@ -23,7 +23,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
@@ -56,9 +55,11 @@ import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.VcsConfiguration.getInstance;
 import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
@@ -305,7 +306,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myDirectoryMappingTable = new TableView<>();
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
 
-    myBaseRevisionTexts = new JCheckBox("Store on shelf base revision texts for files under DVCS");
+    myBaseRevisionTexts = new JCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
     myLimitHistory = new VcsLimitHistoryConfigurable(myProject);
     myScopeFilterConfig = new VcsUpdateInfoScopeFilterConfigurable(myProject, myVcsConfiguration);
 
@@ -531,10 +532,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
     panel.add(createUseCommitMessageRightMargin(), gb.nextLine().next().fillCellHorizontally());
-    createShowUnversionedFilesOption();
-    if (Registry.is("vcs.unversioned.files.in.commit")) {
-      panel.add(myShowUnversionedFiles, gb.nextLine().next());
-    }
+    panel.add(createShowUnversionedFilesOption(), gb.nextLine().next());
     panel.add(createCheckCommitMessageSpelling(), gb.nextLine().next());
     return panel;
   }
@@ -630,7 +628,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private JComponent createStoreBaseRevisionOption() {
-    final JBLabel noteLabel = new JBLabel("File texts bigger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K are not stored");
+    final JBLabel noteLabel =
+      new JBLabel("The base content of files larger than " + ourMaximumFileForBaseRevisionSize / 1000 + "K will not be stored");
     noteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     noteLabel.setFontColor(UIUtil.FontColor.BRIGHTER);
     noteLabel.setBorder(JBUI.Borders.empty(2, 25, 5, 0));
@@ -678,6 +677,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @Override
   public void apply() throws ConfigurationException {
+    adjustIgnoredRootsSettings();
     myVcsManager.setDirectoryMappings(getModelMappings());
     myRecentlyChangedConfigurable.apply();
     myLimitHistory.apply();
@@ -688,6 +688,16 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = myShowUnversionedFiles.isSelected();
     myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING = myCheckCommitMessageSpelling.isSelected();
     initializeModel();
+  }
+
+  private void adjustIgnoredRootsSettings() {
+    List<VcsDirectoryMapping> newMappings = getModelMappings();
+    List<VcsDirectoryMapping> previousMappings = myVcsManager.getDirectoryMappings();
+    myVcsConfiguration.addIgnoredUnregisteredRoots(previousMappings.stream()
+        .filter(mapping -> !newMappings.contains(mapping))
+        .map(VcsDirectoryMapping::getDirectory)
+        .collect(Collectors.toList()));
+    myVcsConfiguration.removeFromIgnoredUnregisteredRoots(map(newMappings, VcsDirectoryMapping::getDirectory));
   }
 
   @Override

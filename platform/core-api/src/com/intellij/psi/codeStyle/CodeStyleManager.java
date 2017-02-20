@@ -181,18 +181,9 @@ public abstract class CodeStyleManager  {
    *
    * @param document   the document to reformat.
    * @param offset the offset the line at which should be reformatted.
-   * @param mode   the current formatting mode to be used when adjusting line indent.
    * @throws IncorrectOperationException if the file is read-only.
-   * @see FormattingMode
    */
-  public abstract int adjustLineIndent(@NotNull Document document, int offset, FormattingMode mode);
-
-  /**
-   * The same as {@link #adjustLineIndent(Document, int, FormattingMode)} but uses {@link FormattingMode#ADJUST_INDENT} as formatting mode.
-   */
-  public final int adjustLineIndent(@NotNull Document document, int offset) {
-    return adjustLineIndent(document, offset, FormattingMode.ADJUST_INDENT);
-  }
+  public abstract int adjustLineIndent(@NotNull Document document, int offset);
 
   /**
    * @deprecated this method is not intended to be used by plugins.
@@ -258,7 +249,7 @@ public abstract class CodeStyleManager  {
    * It's possible to configure that (implementation details are insignificant here) and current method serves as a read-only
    * facade for obtaining information if 'sequential' processing is allowed at the moment.
    *
-   * @return      <code>true</code> if 'sequential' formatting is allowed now; <code>false</code> otherwise
+   * @return      {@code true} if 'sequential' formatting is allowed now; {@code false} otherwise
    */
   public abstract boolean isSequentialProcessingAllowed();
 
@@ -277,5 +268,20 @@ public abstract class CodeStyleManager  {
 
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
 
-  public abstract FormattingMode getCurrentFormattingMode();
+  /**
+   * Retrieves the current formatting mode.
+   * 
+   * @param project The current project used to obtain {@code CodeStyleManager} instance.
+   * @return The current formatting mode.
+   * @see FormattingMode
+   */
+  public static FormattingMode getCurrentFormattingMode(@NotNull Project project) {
+    if (!project.isDisposed()) {
+      CodeStyleManager instance = getInstance(project);
+      if (instance instanceof FormattingModeAwareIndentAdjuster) {
+        return ((FormattingModeAwareIndentAdjuster)instance).getCurrentFormattingMode();
+      }
+    }
+    return FormattingMode.REFORMAT;
+  }
 }

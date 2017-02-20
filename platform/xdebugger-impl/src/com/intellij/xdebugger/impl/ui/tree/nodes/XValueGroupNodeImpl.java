@@ -15,7 +15,9 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XValueGroup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -37,7 +39,7 @@ public class XValueGroupNodeImpl extends XValueContainerNode<XValueGroup> implem
       myText.append(comment, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
 
-    if (group.isAutoExpand()) {
+    if (isExpand(group)) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!isObsolete()) {
           myTree.expandPath(getPath());
@@ -45,6 +47,26 @@ public class XValueGroupNodeImpl extends XValueContainerNode<XValueGroup> implem
       });
     }
     myTree.nodeLoaded(this, group.getName());
+  }
+
+  private boolean isExpand(@NotNull XValueGroup group) {
+    if (group.isRestoreExpansion()) {
+      final String name = group.getName();
+      if (StringUtil.isNotEmpty(name) && PropertiesComponent.getInstance(getTree().getProject()).isValueSet(group.getName())) {
+        return PropertiesComponent.getInstance(getTree().getProject()).getBoolean(name);
+      }
+    }
+    return group.isAutoExpand();
+  }
+
+  public void onExpansion(boolean expanded) {
+    final XValueGroup group = getValueContainer();
+    if (group.isRestoreExpansion()) {
+      final String name = group.getName();
+      if (StringUtil.isNotEmpty(name)) {
+        PropertiesComponent.getInstance(getTree().getProject()).setValue(group.getName(), String.valueOf(expanded), null);
+      }
+    }
   }
 
   @Override

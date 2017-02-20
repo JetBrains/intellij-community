@@ -19,6 +19,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.util.indexing.impl.IndexStorage;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PausesStat;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ActionUtil {
@@ -227,7 +227,7 @@ public class ActionUtil {
 
   @NotNull
   public static List<AnAction> getActions(@NotNull JComponent component) {
-    return ObjectUtils.notNull(UIUtil.getClientProperty(component, AnAction.ACTIONS_KEY), Collections.emptyList());
+    return ContainerUtil.notNullize(UIUtil.getClientProperty(component, AnAction.ACTIONS_KEY));
   }
 
   public static void clearActions(@NotNull JComponent component) {

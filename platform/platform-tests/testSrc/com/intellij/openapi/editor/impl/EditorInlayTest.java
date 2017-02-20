@@ -19,6 +19,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
@@ -141,6 +143,16 @@ public class EditorInlayTest extends AbstractEditorTest {
       }
     }.execute();
     assertFalse(inlay.isValid());
+  }
+
+  public void testInlayDoesntGetInsideSurrogatePair() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> myEditor.getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+    Inlay inlay = addInlay(2);
+    assertNotNull(inlay);
+    assertTrue(inlay.isValid());
+    runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(2, 3, 1));
+    assertFalse(inlay.isValid() && DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), inlay.getOffset()));
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

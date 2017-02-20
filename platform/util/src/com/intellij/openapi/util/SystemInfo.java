@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,14 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
@@ -56,52 +52,45 @@ public class SystemInfo extends SystemInfoRt {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
   }
 
-  // version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx
+  /* version numbers from http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832.aspx */
   public static final boolean isWin2kOrNewer = isWindows && isOsVersionAtLeast("5.0");
   public static final boolean isWinXpOrNewer = isWindows && isOsVersionAtLeast("5.1");
   public static final boolean isWinVistaOrNewer = isWindows && isOsVersionAtLeast("6.0");
   public static final boolean isWin7OrNewer = isWindows && isOsVersionAtLeast("6.1");
   public static final boolean isWin8OrNewer = isWindows && isOsVersionAtLeast("6.2");
+  public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
 
-  public static final boolean isXWindow = isUnix && !isMac;
-  // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
-  public static final boolean isKDE = !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
-
-  // http://www.freedesktop.org/software/systemd/man/os-release.html
-  private static final NotNullLazyValue<Map<String, String>> ourOsReleaseInfo = new AtomicNotNullLazyValue<Map<String, String>>() {
-    @NotNull
+  /* https://msdn.microsoft.com/en-us/commandline/wsl/about */
+  private static final AtomicNullableLazyValue<File> ourWSLBashFile = new AtomicNullableLazyValue<File>() {
+    @Nullable
     @Override
-    protected Map<String, String> compute() {
-      if (isUnix && !isMac) {
-        try {
-          List<String> lines = FileUtil.loadLines("/etc/os-release");
-          Map<String, String> info = ContainerUtil.newHashMap();
-          for (String line : lines) {
-            int p = line.indexOf('=');
-            if (p > 0) {
-              String name = line.substring(0, p);
-              String value = StringUtil.unquoteString(line.substring(p + 1));
-              if (!StringUtil.isEmptyOrSpaces(name) && !StringUtil.isEmptyOrSpaces(value)) {
-                info.put(name, value);
-              }
-            }
+    protected File compute() {
+      if (isWin10OrNewer) {
+        String windir = System.getenv().get("windir");
+        if (!StringUtil.isEmpty(windir)) {
+          File bashFile = new File(windir + "\\System32\\bash.exe");
+          if (bashFile.exists()) {
+            return bashFile;
           }
-          return info;
         }
-        catch (IOException ignored) { }
       }
 
-      return Collections.emptyMap();
+      return null;
     }
   };
+
   @Nullable
-  public static String getUnixReleaseName() {
-    return ourOsReleaseInfo.getValue().get("NAME");
+  public static File getWSLBashFile() {
+    return ourWSLBashFile.getValue();
   }
-  @Nullable
-  public static String getUnixReleaseVersion() {
-    return ourOsReleaseInfo.getValue().get("VERSION");
+
+  public static boolean hasWSL() {
+    return getWSLBashFile() != null;
   }
+
+  public static final boolean isXWindow = isUnix && !isMac;
+  /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
+  public static final boolean isKDE = !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
   public static final boolean isMacSystemMenu = isMac && "true".equals(System.getProperty("apple.laf.useScreenMenuBar"));
 
@@ -112,24 +101,12 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean is64Bit = !is32Bit;
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/xdg-open").canExecute();
-    }
-  };
+  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
   public static boolean hasXdgOpen() {
     return isXWindow && ourHasXdgOpen.getValue();
   }
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgMime = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/xdg-mime").canExecute();
-    }
-  };
+  private static final NotNullLazyValue<Boolean> ourHasXdgMime = new PathExecLazyValue("xdg-mime");
   public static boolean hasXdgMime() {
     return isXWindow && ourHasXdgMime.getValue();
   }
@@ -195,6 +172,10 @@ public class SystemInfo extends SystemInfoRt {
     return new int[]{toInt(parts.get(0)), toInt(parts.get(1)), toInt(parts.get(2))};
   }
 
+  public static String getOsNameAndVersion() {
+    return System.getProperty("os.name") + " " + System.getProperty("os.version");
+  }
+
   private static int normalize(int number) {
     return number > 9 ? 9 : number;
   }
@@ -237,9 +218,21 @@ public class SystemInfo extends SystemInfoRt {
     return vendor != null && StringUtil.containsIgnoreCase(vendor, "JetBrains");
   }
 
-  /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 17) */
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
   public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
 
-  /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
+
+  /** @deprecated not for generic use (to be removed in IDEA 2018) */
+  public static String getUnixReleaseName() {
+    return null;
+  }
+
+  /** @deprecated not for generic use (to be removed in IDEA 2018) */
+  public static String getUnixReleaseVersion() {
+    return null;
+  }
+  //</editor-fold>
 }

@@ -122,10 +122,10 @@ public class ColorUtil {
 
   /**
    * Return Color object from string. The following formats are allowed:
-   * <code>#abc123</code>,
-   * <code>ABC123</code>,
-   * <code>ab5</code>,
-   * <code>#FFF</code>.
+   * {@code #abc123},
+   * {@code ABC123},
+   * {@code ab5},
+   * {@code #FFF}.
    *
    * @param str hex string
    * @return Color object

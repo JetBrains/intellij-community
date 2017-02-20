@@ -23,7 +23,7 @@ public class ProgressDialogFactoryImpl implements ProgressDialogFactory {
       dialog = new ProgressDialogImpl(progressWindow, window, shouldShowBackground, project, cancelText);
     }
     else {
-      dialog = new ProgressDialogImpl(progressWindow, window, shouldShowBackground, parent, cancelText);
+      dialog = new ProgressDialogImpl(progressWindow, shouldShowBackground, parent, cancelText);
     }
 
     Disposer.register(progressWindow, dialog);

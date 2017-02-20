@@ -30,6 +30,6 @@ public class ChangesBrowserUnversionedFilesNode extends ChangesBrowserSpecificFi
 
   @Override
   public int getSortWeight() {
-    return 8;
+    return UNVERSIONED_SORT_WEIGHT;
   }
 }

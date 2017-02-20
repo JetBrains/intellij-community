@@ -534,7 +534,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   /**
-   * Initializes {@link #myResult} property with {@link Spacing} which <code>'min line feeds'</code> property is defined
+   * Initializes {@link #myResult} property with {@link Spacing} which {@code 'min line feeds'} property is defined
    * from {@link CodeStyleSettings#BLANK_LINES_AROUND_CLASS} value.
    */
   private void setAroundClassSpacing() {
@@ -576,11 +576,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   /**
-   * Allows to calculate <code>'min line feed'</code> setting of the {@link Spacing} to be used between two closing braces
+   * Allows to calculate {@code 'min line feed'} setting of the {@link Spacing} to be used between two closing braces
    * (assuming that left AST node that ends with closing brace is given to this method).
    *
    * @param leftNode    left AST node that ends with closing brace
-   * @return            <code>'min line feed'</code> setting of {@link Spacing} object to use for the given AST node and
+   * @return            {@code 'min line feed'} setting of {@link Spacing} object to use for the given AST node and
    *                    closing brace
    */
   private static int getMinLineFeedsBetweenRBraces(ASTNode leftNode) {
@@ -1062,12 +1062,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (myRole1 == ChildRole.INITIALIZER_EQ || myRole2 == ChildRole.INITIALIZER_EQ) {
       createSpaceInCode(mySettings.SPACE_AROUND_ASSIGNMENT_OPERATORS);
     }
+    else if (isFinalKeywordBefore(myChild2) && myType2 == JavaElementType.TYPE) {
+      myResult = Spacing.createSpacing(1, 1, 0, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
     else if (myRole1 == ChildRole.MODIFIER_LIST
              || myRole2 == ChildRole.TYPE_REFERENCE
              || myRole1 == ChildRole.TYPE_REFERENCE
              || myRole2 == ChildRole.TYPE
-             || myRole1 == ChildRole.TYPE)
-    {
+             || myRole1 == ChildRole.TYPE) {
       createSpaceInCode(true);
     }
     else if (myChild2.getElementType() == JavaTokenType.SEMICOLON) {
@@ -1082,6 +1084,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
       createSpaceProperty(false, false, 0);
     }
+  }
+
+  private static boolean isFinalKeywordBefore(ASTNode node) {
+    ASTNode prevLeaf = TreeUtil.prevLeaf(node);
+    if (prevLeaf != null && prevLeaf.getElementType() == TokenType.WHITE_SPACE) {
+      prevLeaf = TreeUtil.prevLeaf(prevLeaf);
+    }
+    return prevLeaf != null && prevLeaf.getElementType() == JavaTokenType.FINAL_KEYWORD;
   }
 
   @Override
@@ -1138,7 +1148,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitModifierList(PsiModifierList list) {
-    if (myType1 == JavaTokenType.END_OF_LINE_COMMENT) {
+    if (myType1 == JavaElementType.ANNOTATION && myType2 == JavaTokenType.FINAL_KEYWORD) {
+      myResult = Spacing.createSpacing(1, Integer.MAX_VALUE, 0, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+    }
+    else if (myType1 == JavaTokenType.END_OF_LINE_COMMENT) {
       myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {

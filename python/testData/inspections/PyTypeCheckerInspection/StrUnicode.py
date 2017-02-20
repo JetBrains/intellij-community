@@ -39,7 +39,7 @@ def test():
     b1.encode(ENC)
     s1.decode(ENC)
     str_to_none(s1.encode(ENC))
-    unicode_to_none(<warning descr="Expected type 'unicode', got 'str' instead">s1.encode(ENC)</warning>)
+    unicode_to_none(s1.encode(ENC))  # mypy: str is compatible to unicode for PY2
     string_to_none(s1.encode(ENC))
     str_or_unicode_to_none(s1.encode(ENC))
     b2.decode(ENC)

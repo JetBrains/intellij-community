@@ -71,7 +71,7 @@ public abstract class RefManager {
    * Creates (if necessary) and returns the reference graph node for the specified module.
    *
    * @param module the module for which the reference graph node is requested.
-   * @return the node for the module, or null if <code>module</code> is null.
+   * @return the node for the module, or null if {@code module} is null.
    */
   @Nullable
   public abstract RefModule getRefModule(Module module);

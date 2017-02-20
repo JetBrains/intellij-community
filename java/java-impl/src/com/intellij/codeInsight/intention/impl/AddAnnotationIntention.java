@@ -30,7 +30,9 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,6 +72,11 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
   private static boolean isAnnotatedSkipInferred(PsiModifierListOwner owner, String... annoFqns) {
     PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, false, annoFqns);
     return annotation != null && !AnnotationUtil.isInferredAnnotation(annotation);
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override

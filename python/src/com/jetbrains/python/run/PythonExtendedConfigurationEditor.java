@@ -42,7 +42,7 @@ public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfig
   }
 
   @Override
-  protected void resetEditorFrom(T s) {
+  protected void resetEditorFrom(@NotNull T s) {
     myMainSettingsEditor.resetFrom(s);
     updateCurrentEditor(s);
     if (myCurrentSettingsEditor != null) {
@@ -51,7 +51,7 @@ public class PythonExtendedConfigurationEditor<T extends AbstractPythonRunConfig
   }
 
   @Override
-  protected void applyEditorTo(T s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull T s) throws ConfigurationException {
     myMainSettingsEditor.applyTo(s);
     boolean updated = updateCurrentEditor(s);
     if (myCurrentSettingsEditor != null) {

@@ -23,17 +23,16 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
-import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.LabelIcon;
-import com.intellij.vcs.log.ui.render.RectanglePainter;
-import com.intellij.vcs.log.ui.render.RectangleReferencePainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackground;
@@ -73,37 +72,28 @@ public class ReferencesPanel extends JPanel {
     int height = getIconHeight();
     JBLabel firstLabel = null;
 
-    if (GraphCommitCellRenderer.isRedesignedLabels()) {
-      for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
-        VcsRefType type = typeAndRefs.getKey();
-        Collection<VcsRef> refs = typeAndRefs.getValue();
-        int refIndex = 0;
-        for (VcsRef reference : refs) {
-          Icon icon = createIcon(type, refs, refIndex, height);
-          String ending = (refIndex != refs.size() - 1) ? "," : "";
-          String text = reference.getName() + ending;
-          JBLabel label = createLabel(text, icon);
-          if (firstLabel == null) {
-            firstLabel = label;
-            add(label);
-          }
-          else {
-            addWrapped(label, firstLabel);
-          }
-          refIndex++;
+    for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
+      VcsRefType type = typeAndRefs.getKey();
+      Collection<VcsRef> refs = typeAndRefs.getValue();
+      int refIndex = 0;
+      for (VcsRef reference : refs) {
+        Icon icon = createIcon(type, refs, refIndex, height);
+        String ending = (refIndex != refs.size() - 1) ? "," : "";
+        String text = reference.getName() + ending;
+        JBLabel label = createLabel(text, icon);
+        if (firstLabel == null) {
+          firstLabel = label;
+          add(label);
         }
-      }
-      if (getHiddenReferencesSize() > 0) {
-        JBLabel label = createRestLabel(getHiddenReferencesSize());
-        addWrapped(label, ObjectUtils.assertNotNull(firstLabel));
+        else {
+          addWrapped(label, firstLabel);
+        }
+        refIndex++;
       }
     }
-    else {
-      for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
-        for (VcsRef reference : typeAndRefs.getValue()) {
-          add(new ReferencePanel(reference));
-        }
-      }
+    if (getHiddenReferencesSize() > 0) {
+      JBLabel label = createRestLabel(getHiddenReferencesSize());
+      addWrapped(label, ObjectUtils.assertNotNull(firstLabel));
     }
     setVisible(!myGroupedVisibleReferences.isEmpty());
     revalidate();
@@ -163,33 +153,5 @@ public class ReferencesPanel extends JPanel {
   @Override
   public Color getBackground() {
     return getCommitDetailsBackground();
-  }
-
-  private static class ReferencePanel extends JPanel {
-    @NotNull private final RectanglePainter myLabelPainter;
-    @NotNull private final VcsRef myReference;
-
-    private ReferencePanel(@NotNull VcsRef reference) {
-      myReference = reference;
-      myLabelPainter = new RectanglePainter(false);
-      setOpaque(false);
-    }
-
-    @Override
-    public void paint(Graphics g) {
-      myLabelPainter.paint((Graphics2D)g, myReference.getName(), 0, 0,
-                           RectangleReferencePainter.getLabelColor(myReference.getType().getBackgroundColor()));
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension dimension = myLabelPainter.calculateSize(myReference.getName(), getFontMetrics(RectanglePainter.getFont()));
-      return new Dimension(dimension.width, dimension.height + JBUI.scale(PADDING));
-    }
-
-    @Override
-    public Color getBackground() {
-      return getCommitDetailsBackground();
-    }
   }
 }

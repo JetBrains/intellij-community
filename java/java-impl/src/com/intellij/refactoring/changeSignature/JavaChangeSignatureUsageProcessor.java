@@ -280,7 +280,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       boolean toInsertDefaultValue = needDefaultValue(changeInfo, caller);
       if (toInsertDefaultValue && ref instanceof PsiReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiReferenceExpression)ref).getQualifierExpression();
-        if (qualifierExpression instanceof PsiSuperExpression && callerSignatureIsAboutToChangeToo(caller, usages)) {
+        if (qualifierExpression instanceof PsiSuperExpression && caller != null && callerSignatureIsAboutToChangeToo(caller, usages)) {
           toInsertDefaultValue = false;
         }
       }
@@ -300,7 +300,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
   }
 
-  private static boolean callerSignatureIsAboutToChangeToo(final PsiMethod caller, final UsageInfo[] usages) {
+  private static boolean callerSignatureIsAboutToChangeToo(@NotNull final PsiMethod caller, final UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof MethodCallUsageInfo &&
           MethodSignatureUtil.isSuperMethod(((MethodCallUsageInfo)usage).getReferencedMethod(), caller)) {
@@ -764,7 +764,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
       if (newName != null && !newName.equals(method.getName())) {
         final PsiIdentifier nameId = method.getNameIdentifier();
-        assert nameId != null;
+        assert nameId != null : method;
         nameId.replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createIdentifier(newName));
       }
     }
@@ -950,7 +950,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     for (PsiSubstitutor psiSubstitutor : substitutor) {
       type = psiSubstitutor.substitute(type);
     }
-    return factory.createParameter(newParm.getName(), type);
+    return factory.createParameter(newParm.getName(), type, list);
   }
 
   private static void resolveParameterVsFieldsConflicts(final PsiParameter[] newParms,
@@ -1027,7 +1027,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           final PsiMethod baseMethod = ((OverriderUsageInfo)usageInfo).getBaseMethod();
           final int delta = baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount();
           if (delta > 0) {
-            if (toRemove[toRemove.length - 1]) { //todo check if implicit parameter is not the last one
+            if (toRemove.length > 0 && toRemove[toRemove.length - 1]) { //todo check if implicit parameter is not the last one
               conflictDescriptions.putValue(baseMethod, "Implicit last parameter should not be deleted");
             }
           }
@@ -1149,7 +1149,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             parameterType =
               JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, method);
           }
-          PsiParameter param = factory.createParameter(info.getName(), parameterType);
+          PsiParameter param = factory.createParameter(info.getName(), parameterType, method);
           prototype.getParameterList().add(param);
         }
 

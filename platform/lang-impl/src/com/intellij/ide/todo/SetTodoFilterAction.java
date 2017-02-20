@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.todo;
 
+import com.intellij.ConfigurableFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.todo.configurable.TodoConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -85,7 +85,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
         @Override
         public void actionPerformed(AnActionEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          util.editConfigurable(project, new TodoConfigurable());
+          util.editConfigurable(project, ConfigurableFactory.Companion.getInstance().getTodoConfigurable(project));
         }
       }
     );
@@ -100,7 +100,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     /**
      * @param text        action's text.
      * @param description action's description.
-     * @param filter      filter to be applied. <code>null</code> value means "empty" filter.
+     * @param filter      filter to be applied. {@code null} value means "empty" filter.
      * @param settings
      * @param todoFilterConsumer
      */

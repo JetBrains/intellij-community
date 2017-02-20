@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
         .filter((e) -> e != null)
         .collect(Collectors.toList());
-
+      
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
     }
 
@@ -116,7 +116,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       List<InlayInfo> hints = provider.getParameterHints(element);
       if (hints.isEmpty()) return;
       MethodInfo info = provider.getMethodInfo(element);
-      if (info != null && !isMatchedByAny(info, blackListMatchers)) {
+      if (info == null || !isMatchedByAny(info, blackListMatchers)) {
         hints.forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
       }
     }
@@ -135,9 +135,11 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength())) {
         if (!presentationManager.isParameterHint(inlay)) continue;
         int offset = inlay.getOffset();
+        
         String newText = myAnnotations.remove(offset);
-        if (delayRemoval(inlay, caretMap)) continue;
         String oldText = presentationManager.getHintText(inlay);
+        
+        if (delayRemoval(inlay, caretMap)) continue;
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);
@@ -161,7 +163,9 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       int offset = inlay.getOffset();
       Caret caret = caretMap.get(offset);
       if (caret == null) return false;
-      char afterCaret = myEditor.getDocument().getImmutableCharSequence().charAt(offset);
+      CharSequence text = myEditor.getDocument().getImmutableCharSequence();
+      if (offset >= text.length()) return false;
+      char afterCaret = text.charAt(offset);
       if (afterCaret != ',' && afterCaret != ')') return false;
       VisualPosition afterInlayPosition = myEditor.offsetToVisualPosition(offset, true, false);
       // check whether caret is to the right of inlay

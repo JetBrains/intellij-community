@@ -148,7 +148,7 @@ public class ParameterListElement extends CompositeElement implements Constants 
   }
 
   /**
-   * @return last node before closing right parenthesis if possible; <code>null</code> otherwise
+   * @return last node before closing right parenthesis if possible; {@code null} otherwise
    */
   @Nullable
   private TreeElement getLastNodeInsideParens() {
@@ -157,7 +157,7 @@ public class ParameterListElement extends CompositeElement implements Constants 
   }
 
   /**
-   * @return first node after opening left parenthesis if possible; <code>null</code> otherwise
+   * @return first node after opening left parenthesis if possible; {@code null} otherwise
    */
   @Nullable
   private TreeElement getFirstNodeInsideParens() {

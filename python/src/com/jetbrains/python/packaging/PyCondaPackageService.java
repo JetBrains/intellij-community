@@ -17,10 +17,7 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-@State(name = "PyCondaPackageService", storages = @Storage("conda_packages.xml"))
+@State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   private static final Logger LOG = Logger.getInstance(PyCondaManagementService.class);
   public Map<String, String> CONDA_PACKAGES = ContainerUtil.newConcurrentMap();

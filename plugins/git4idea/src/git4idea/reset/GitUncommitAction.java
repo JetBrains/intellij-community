@@ -34,11 +34,15 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.ContainingBranchesGetter;
+import com.intellij.vcs.log.data.DataPack;
+import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.visible.VisiblePack;
 import git4idea.GitRemoteBranch;
+import git4idea.GitUtil;
 import git4idea.config.GitSharedSettings;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +57,6 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.GitUtil.getRepositoryManager;
 import static git4idea.reset.GitResetMode.SOFT;
-import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 public class GitUncommitAction extends DumbAwareAction {
@@ -83,7 +86,7 @@ public class GitUncommitAction extends DumbAwareAction {
     VcsShortCommitDetails commit = log.getSelectedShortDetails().get(0);
     Hash hash = commit.getId();
     VirtualFile root = commit.getRoot();
-    GitRepository repository = getRepositoryManager(project).getRepositoryForRoot(commit.getRoot());
+    GitRepository repository = getRepositoryManager(project).getRepositoryForRootQuick(commit.getRoot());
     if (repository == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
@@ -173,11 +176,11 @@ public class GitUncommitAction extends DumbAwareAction {
     GitSharedSettings settings = GitSharedSettings.getInstance(repository.getProject());
     // protected branches hold patterns for branch names without remote names
     return repository.getBranches().getRemoteBranches().stream().
-             filter(it -> settings.isBranchProtected(it.getNameForRemoteOperations())).
-             map(GitRemoteBranch::getNameForLocalOperations).
-             filter(branches::contains).
-             findAny().
-             orElse(null);
+      filter(it -> settings.isBranchProtected(it.getNameForRemoteOperations())).
+      map(GitRemoteBranch::getNameForLocalOperations).
+      filter(branches::contains).
+      findAny().
+      orElse(null);
   }
 
   private static void resetInBackground(@NotNull VcsLogData data,
@@ -205,7 +208,7 @@ public class GitUncommitAction extends DumbAwareAction {
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
         changeListManager.invokeAfterUpdate(() -> {
-          Collection<Change> changes = findLocalChangesFromCommit(changeListManager, changesInCommit);
+          Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
           changeListManager.moveChangesTo(changeList, ArrayUtil.toObjectArray(changes, Change.class));
         }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Refreshing Changes...", ModalityState.defaultModalityState());
       }
@@ -219,7 +222,7 @@ public class GitUncommitAction extends DumbAwareAction {
     VirtualFile root = commit.getRoot();
     VcsFullCommitDetails details = getChangesFromCache(data, hash, root);
     if (details == null) {
-      details = data.getLogProvider(root).readFullDetails(root, singletonList(hash.asString())).get(0);
+      details = VcsLogUtil.getDetails(data, root, hash);
     }
     return details.getChanges();
   }
@@ -232,12 +235,5 @@ public class GitUncommitAction extends DumbAwareAction {
     });
     if (details.isNull() || details.get() instanceof LoadingDetails) return null;
     return details.get();
-  }
-
-  @NotNull
-  private static Collection<Change> findLocalChangesFromCommit(@NotNull ChangeListManager changeListManager,
-                                                               @NotNull Collection<Change> changesInCommit) {
-    OpenTHashSet<Change> allChanges = new OpenTHashSet<>(changeListManager.getAllChanges());
-    return ContainerUtil.map(changesInCommit, allChanges::get);
   }
 }

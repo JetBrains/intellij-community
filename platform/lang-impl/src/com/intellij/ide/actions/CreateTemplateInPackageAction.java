@@ -89,14 +89,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
       String[] names = className.split("\\.");
 
       for (int i = 0; i < names.length - 1; i++) {
-        String name = names[i];
-        PsiDirectory subDir = dir.findSubdirectory(name);
-
-        if (subDir == null) {
-          subDir = dir.createSubdirectory(name);
-        }
-
-        dir = subDir;
+        dir = CreateFileAction.findOrCreateSubdirectory(dir, names[i]);
       }
 
       className = names[names.length - 1];

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,6 @@ import java.util.StringTokenizer;
 
 public class KeymapUtil {
 
-  @NonNls private static final String APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
-  @NonNls private static final String GET_KEY_MODIFIERS_TEXT_METHOD = "getKeyModifiersText";
   @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";
   @NonNls private static final String BREAK_KEY_TEXT = "Break";
   @NonNls private static final String SHIFT = "shift";
@@ -208,7 +206,12 @@ public class KeymapUtil {
 
   @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull AnAction action) {
-    Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
+    return getFirstKeyboardShortcutText(action.getShortcutSet());
+  }
+
+  @NotNull
+  public static String getFirstKeyboardShortcutText(@NotNull ShortcutSet set) {
+    Shortcut[] shortcuts = set.getShortcuts();
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut == null ? "" : getShortcutText(shortcut);
   }
@@ -243,7 +246,6 @@ public class KeymapUtil {
    * @throws InvalidDataException if <code>keystrokeString</code> doesn't represent valid <code>MouseShortcut</code>.
    */
   public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
-
     if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
       return new PressureShortcut(2);
     }
@@ -295,7 +297,7 @@ public class KeymapUtil {
           buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
       }
       if ((modifiers & InputEvent.ALT_MASK) != 0) {
-          buf.append("\2325");
+          buf.append("\u2325");
       }
       if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
           buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
@@ -414,38 +416,21 @@ public class KeymapUtil {
   }
 
   /**
-   * Checks whether mouse event's button and modifiers match a shortcut configured in active keymap for given action id.
-   * Only shortcuts having click count of 1 can be matched, mouse event's click count is ignored.
+   * Creates shortcut corresponding to a single-click event
    */
-  public static boolean isMouseActionEvent(@NotNull MouseEvent e, @NotNull String actionId) {
-    KeymapManager keymapManager = KeymapManager.getInstance();
-    if (keymapManager == null) {
-      return false;
-    }
-    Keymap keymap = keymapManager.getActiveKeymap();
-    if (keymap == null) {
-      return false;
-    }
+  public static MouseShortcut createMouseShortcut(@NotNull MouseEvent e) {
     int button = MouseShortcut.getButton(e);
     int modifiers = e.getModifiersEx();
     if (button == MouseEvent.NOBUTTON && e.getID() == MouseEvent.MOUSE_DRAGGED) {
       // mouse drag events don't have button field set due to some reason
       if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
         button = MouseEvent.BUTTON1;
-      } else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0) {
+      }
+      else if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0) {
         button = MouseEvent.BUTTON2;
       }
     }
-    String[] actionIds = keymap.getActionIds(new MouseShortcut(button, modifiers, 1));
-    if (actionIds == null) {
-      return false;
-    }
-    for (String id : actionIds) {
-      if (actionId.equals(id)) {
-        return true;
-      }
-    }
-    return false;
+    return new MouseShortcut(button, modifiers, 1);
   }
 
   /**
@@ -515,5 +500,5 @@ public class KeymapUtil {
         }
       }
     }
-  };
+  }
 }

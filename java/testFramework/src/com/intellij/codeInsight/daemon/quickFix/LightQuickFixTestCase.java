@@ -32,8 +32,10 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,12 +73,12 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
           quickFixTestCase.afterActionCompleted(testName, contents);
         }
       }
-      catch (FileComparisonFailure e){
+      catch (ComparisonFailure e) {
         throw e;
       }
       catch (Throwable e) {
         e.printStackTrace();
-        fail(testName);
+        Assert.fail(testName + " failed");
       }
     }, "", "");
   }
@@ -106,6 +108,11 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       }
       String expectedFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + AFTER_PREFIX + testName;
       quickFix.checkResultByFile("In file :" + expectedFilePath, expectedFilePath, false);
+
+      String familyName = action.getFamilyName();
+      if (StringUtil.isEmptyOrSpaces(familyName)) {
+        fail("Action '" + text + "' provides empty family name which means that user would see action with empty presentable text in Inspection Results");
+      }
     }
   }
 

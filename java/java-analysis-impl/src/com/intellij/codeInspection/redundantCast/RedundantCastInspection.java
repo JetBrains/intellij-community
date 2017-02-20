@@ -89,10 +89,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     PsiExpression operand = cast.getOperand();
     PsiTypeElement castType = cast.getCastType();
     if (operand == null || castType == null) return null;
-    PsiElement parent = cast.getParent();
-    while (parent instanceof PsiParenthesizedExpression){
-      parent = parent.getParent();
-    }
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(cast.getParent());
     if (parent instanceof PsiReferenceExpression) {
       if (IGNORE_ANNOTATED_METHODS) {
         final PsiElement gParent = parent.getParent();

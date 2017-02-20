@@ -28,7 +28,7 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.ThreesideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -166,7 +166,7 @@ public abstract class ThreesideTextDiffViewer extends ThreesideDiffViewer<TextEd
   //
 
   @NotNull
-  public TextDiffSettingsHolder.TextDiffSettings getTextSettings() {
+  public TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 

@@ -62,7 +62,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   }
 
   /**
-   * Creates new <code>WideSelectionTreeUI</code> object.
+   * Creates new {@code WideSelectionTreeUI} object.
    * 
    * @param wideSelection           flag that determines if wide selection should be used
    * @param wideSelectionCondition  strategy that determine if wide selection should be used for a target row (it's zero-based index

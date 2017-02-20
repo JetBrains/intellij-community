@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.intentions
+
 import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.intentions.declaration.GrCreateFieldForParameterIntention
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -55,12 +55,7 @@ class CreateFieldFromParameterTest extends LightCodeInsightFixtureTestCase {
     for (intention in intentions) {
       if (intention instanceof IntentionActionWrapper) intention = intention.delegate
       if (intention instanceof GrCreateFieldForParameterIntention) {
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          void run() {
-            intention.invoke(myFixture.project, myFixture.editor, myFixture.file)
-            doPostponedFormatting(myFixture.project)
-          }
-        })
+        myFixture.launchAction(intention)
         break
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -293,7 +292,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       accept.replace(method);
     }
     else {
-      GenerateMembersUtil.insertMembersAtOffset(implementor.getContainingFile(), implementor.getLastChild().getTextOffset(), Collections.<GenerationInfo>singletonList(
+      GenerateMembersUtil.insertMembersAtOffset(implementor, implementor.getLastChild().getTextOffset(), Collections.<GenerationInfo>singletonList(
         new PsiGenerationInfo<>(method)));
     }
   }

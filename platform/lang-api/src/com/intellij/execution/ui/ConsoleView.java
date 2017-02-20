@@ -20,6 +20,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ConsoleView extends ExecutionConsole {
   void print(@NotNull String text, @NotNull ConsoleViewContentType contentType);
@@ -38,11 +39,11 @@ public interface ConsoleView extends ExecutionConsole {
 
   void performWhenNoDeferredOutput(@NotNull Runnable runnable);
 
-  void setHelpId(String helpId);
+  void setHelpId(@NotNull String helpId);
 
   void addMessageFilter(@NotNull Filter filter);
 
-  void printHyperlink(@NotNull String hyperlinkText, HyperlinkInfo info);
+  void printHyperlink(@NotNull String hyperlinkText, @Nullable HyperlinkInfo info);
 
   int getContentSize();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,33 +54,33 @@ public class PatchProjectUtil {
   }
 
   /**
-   * Excludes folders specified in patterns in the <code>idea.exclude.patterns</code> system property from the project.
+   * Excludes folders specified in patterns in the {@code idea.exclude.patterns} system property from the project.
    *
    * <p>Pattern syntax:
    * <br>
    *
    * <ul>
-   *   <li><code>patterns := pattern(';'pattern)*</code>
-   *   <li><code>pattern := ('['moduleRegEx']')? directoryAntPattern</code>
+   *   <li>{@code patterns := pattern(';'pattern)*}
+   *   <li>{@code pattern := ('['moduleRegEx']')? directoryAntPattern}
    * </ul>
    *
    * Where
    * <ul>
-   *   <li> <code>moduleRegex</code> - regular expression to match module name.
-   *   <li> <code>directoryAntPattern</code> - ant-style pattern to match folder in a module.
-   *        <code>directoryAntPattern</code> considers paths <b>relative</b> to a content root of a module.
+   *   <li> {@code moduleRegex} - regular expression to match module name.
+   *   <li> {@code directoryAntPattern} - ant-style pattern to match folder in a module.
+   *        {@code directoryAntPattern} considers paths <b>relative</b> to a content root of a module.
    * </ul>
    *
    *
    * <p>
    * Example:<br>
-   * <code>
+   * {@code
    *   -Didea.exclude.patterns=testData/**;.reports/**;[sql]/test/*.sql;[graph]/**;[graph-openapi]/**
-   * </code>
+   * }
    * <br>
    *
-   * In this example the <code>testData/**</code> pattern is applied to all modules
-   * and the pattern <code>/test/*.sql</code> to applied to the module <code>sql</code> only.
+   * In this example the {@code testData/**} pattern is applied to all modules
+   * and the pattern {@code /test/*.sql} to applied to the module {@code sql} only.
    *
    * @param project project to patch
    * @see <a href="http://ant.apache.org/manual/dirtasks.html">http://ant.apache.org/manual/dirtasks.html</a>
@@ -102,35 +102,32 @@ public class PatchProjectUtil {
         final VirtualFile contentRoot = contentEntry.getFile();
         if (contentRoot == null) continue;
         final Set<VirtualFile> included = new HashSet<>();
-        iterate(contentRoot, new ContentIterator() {
-          @Override
-          public boolean processFile(final VirtualFile fileOrDir) {
-            String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
-            for (Pattern module : excludePatterns.keySet()) {
-              if (module == null || module.matcher(modules[idx].getName()).matches()) {
-                final Set<Pattern> dirPatterns = excludePatterns.get(module);
-                for (Pattern pattern : dirPatterns) {
-                  if (pattern.matcher(relativeName).matches()) {
-                    contentEntry.addExcludeFolder(fileOrDir);
-                    return false;
-                  }
+        iterate(contentRoot, fileOrDir -> {
+          String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
+          for (Pattern module : excludePatterns.keySet()) {
+            if (module == null || module.matcher(modules[idx].getName()).matches()) {
+              final Set<Pattern> dirPatterns = excludePatterns.get(module);
+              for (Pattern pattern : dirPatterns) {
+                if (pattern.matcher(relativeName).matches()) {
+                  contentEntry.addExcludeFolder(fileOrDir);
+                  return false;
                 }
               }
             }
-            if (includePatterns.isEmpty()) return true;
-            for (Pattern module : includePatterns.keySet()) {
-              if (module == null || module.matcher(modules[idx].getName()).matches()) {
-                final Set<Pattern> dirPatterns = includePatterns.get(module);
-                for (Pattern pattern : dirPatterns) {
-                  if (pattern.matcher(relativeName).matches()) {
-                    included.add(fileOrDir);
-                    return true;
-                  }
-                }
-              }
-            }
-            return true;
           }
+          if (includePatterns.isEmpty()) return true;
+          for (Pattern module : includePatterns.keySet()) {
+            if (module == null || module.matcher(modules[idx].getName()).matches()) {
+              final Set<Pattern> dirPatterns = includePatterns.get(module);
+              for (Pattern pattern : dirPatterns) {
+                if (pattern.matcher(relativeName).matches()) {
+                  included.add(fileOrDir);
+                  return true;
+                }
+              }
+            }
+          }
+          return true;
         }, index);
         processIncluded(contentEntry, included);
       }
@@ -177,7 +174,7 @@ public class PatchProjectUtil {
    * Parses patterns for exclude items.
    *
    * @param propertyKey system property key for pattern
-   * @return A map in the form <code>ModulePattern -> DirectoryPattern*</code>.
+   * @return A map in the form {@code ModulePattern -> DirectoryPattern*}.
    *         ModulePattern may be null (meaning that a directory pattern is applied to all modules).
    */
   public static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {

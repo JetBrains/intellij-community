@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,25 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import sun.font.FontDesignMetrics;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.lang.reflect.Method;
 
 /**
  * Encapsulates logic related to font metrics. Mock instance can be used in tests to make them independent on font properties on particular
  * platform.
  */
 public abstract class FontLayoutService {
+  private static final Logger LOG = Logger.getInstance(FontLayoutService.class);
+
   private static final FontLayoutService DEFAULT_INSTANCE = new DefaultFontLayoutService();
   private static FontLayoutService INSTANCE = DEFAULT_INSTANCE;
   
@@ -37,13 +43,17 @@ public abstract class FontLayoutService {
   
   @NotNull
   public abstract GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, 
-                                                @NotNull char[] chars, int start, int end, boolean isRtl); 
-  
+                                                @NotNull char[] chars, int start, int end, boolean isRtl);
+
   public abstract int charWidth(@NotNull FontMetrics fontMetrics, char c);
-  
+
+  public abstract int charWidth(@NotNull FontMetrics fontMetrics, int codePoint);
+
+  public abstract float charWidth2D(@NotNull FontMetrics fontMetrics, int codePoint);
+
   public abstract int getHeight(@NotNull FontMetrics fontMetrics);
   
-  public abstract int getAscent(@NotNull FontMetrics fontMetrics);
+  public abstract int getDescent(@NotNull FontMetrics fontMetrics);
   
   @TestOnly
   public static void setInstance(@Nullable FontLayoutService fontLayoutService) {
@@ -53,6 +63,15 @@ public abstract class FontLayoutService {
   private static class DefaultFontLayoutService extends FontLayoutService {
     // this flag is supported by JetBrains Runtime
     private static final int LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT = 8;
+
+    private final Method myHandleCharWidthMethod;
+
+    private DefaultFontLayoutService() {
+      myHandleCharWidthMethod = ReflectionUtil.getDeclaredMethod(FontDesignMetrics.class, "handleCharWidth", int.class);
+      if (myHandleCharWidthMethod == null) {
+        LOG.warn("Couldn't access FontDesignMetrics.handleCharWidth method");
+      }
+    }
 
     @NotNull
     @Override
@@ -68,13 +87,31 @@ public abstract class FontLayoutService {
     }
 
     @Override
+    public int charWidth(@NotNull FontMetrics fontMetrics, int codePoint) {
+      return fontMetrics.charWidth(codePoint);
+    }
+
+    @Override
+    public float charWidth2D(@NotNull FontMetrics fontMetrics, int codePoint) {
+      if (myHandleCharWidthMethod != null && fontMetrics instanceof FontDesignMetrics) {
+        try {
+          return (float)myHandleCharWidthMethod.invoke(fontMetrics, codePoint);
+        }
+        catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+      return charWidth(fontMetrics, codePoint);
+    }
+
+    @Override
     public int getHeight(@NotNull FontMetrics fontMetrics) {
       return fontMetrics.getHeight();
     }
 
     @Override
-    public int getAscent(@NotNull FontMetrics fontMetrics) {
-      return fontMetrics.getAscent();
+    public int getDescent(@NotNull FontMetrics fontMetrics) {
+      return fontMetrics.getDescent();
     }
   }
 }

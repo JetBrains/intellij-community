@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.find.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
-import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
@@ -62,9 +62,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
@@ -75,10 +72,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,8 +93,10 @@ import java.util.regex.PatternSyntaxException;
 
 import static com.intellij.find.impl.FindDialog.createCheckbox;
 
-public class FindPopupPanel extends JBPanel {
+public class FindPopupPanel extends JBPanel implements FindUI {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
+
+  private static final boolean PREVIEW_IS_EDITABLE = true;//todo move it to registry at least
   // unify with CommonShortcuts.CTRL_ENTER
   private static final KeyStroke OK_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
 
@@ -115,20 +111,19 @@ public class FindPopupPanel extends JBPanel {
   private static final KeyStroke MOVE_CARET_UP_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke NEW_LINE_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
   protected static final String SIZE_KEY = "find.popup";
+  private final FindUIHelper myHelper;
 
   private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
   private SearchTextArea myReplaceTextArea;
   private ActionListener myOkActionListener;
+  private AtomicBoolean myCanClose = new AtomicBoolean();
 
   enum Scope {
     PROJECT, MODULE, DIRECTORY, SCOPE
   }
 
   @NotNull private final Project myProject;
-  @NotNull private final FindModel myModel;
-  private FindModel myPreviousModel;
-  @NotNull private final DataContext myDataContext;
   @NotNull private final Disposable myDisposable;
 
   private Alarm mySearchRescheduleOnCancellationsAlarm;
@@ -156,60 +151,73 @@ public class FindPopupPanel extends JBPanel {
   private ComboBox myModuleComboBox;
   private ComboBox myDirectoryComboBox;
   private FixedSizeButton mySelectDirectoryButton;
-  private JToggleButton myRecursiveDirectoryButton;
   private ScopeChooserCombo myScopeCombo;
 
   private JBTable myResultsPreviewTable;
   private UsagePreviewPanel myUsagePreviewPanel;
-  private JBPopup myFindBalloon;
-  private AbstractPopup myResultsPopup;
+  private JBPopup myBalloon;
 
-  static void showBalloon(@NotNull Project project, @NotNull FindModel model, @NotNull DataContext dataContext) {
-    FindPopupPanel panel = new FindPopupPanel(project, model, dataContext);
-    panel.doShowBalloon();
-  }
-
-  private void doShowBalloon() {
-    if (myFindBalloon != null && myFindBalloon.isVisible()) {
+  public void showUI() {
+    if (myBalloon != null && myBalloon.isVisible()) {
       return;
     }
-    if (myFindBalloon != null && !myFindBalloon.isDisposed()) {
-      myFindBalloon.cancel();
+    if (myBalloon != null && !myBalloon.isDisposed()) {
+      myBalloon.cancel();
     }
-    if (myFindBalloon == null || myFindBalloon.isDisposed()) {
+    if (myBalloon == null || myBalloon.isDisposed()) {
       final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this, getPreferredFocusedComponent());
-      myFindBalloon = builder
-        .setProject(myProject)
+      myBalloon = builder
+        .setProject(myHelper.getProject())
+        .setResizable(true)
         .setMayBeParent(true)
         .setModalContext(false)
         .setRequestFocus(true)
+        .setCancelCallback(() -> {
+          DimensionService.getInstance().setSize(SIZE_KEY, myBalloon.getSize(), myHelper.getProject() );
+          DimensionService.getInstance().setLocation(SIZE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
+          return Boolean.TRUE;
+        })
         .createPopup();
-      Disposer.register(myFindBalloon, myDisposable);
-      registerCloseAction(myFindBalloon);
-      myFindBalloon.getContent().setBorder(JBUI.Borders.empty());
+      Disposer.register(myBalloon, myDisposable);
+      registerCloseAction(myBalloon);
       final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
       Component parent = UIUtil.findUltimateParent(window);
-      final RelativePoint showPoint;
-      if (parent != null) {
-        int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 135 : 115;
+      RelativePoint showPoint = null;
+      Point screenPoint = DimensionService.getInstance().getLocation(SIZE_KEY);
+      if (screenPoint != null) {
+        showPoint = new RelativePoint(screenPoint);
+      }
+      if (parent != null && showPoint == null) {
+        int height = UISettings.getInstance().getShowNavigationBar() ? 135 : 115;
         if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
           height -= 20;
         }
         showPoint = new RelativePoint(parent, new Point((parent.getSize().width - getPreferredSize().width) / 2, height));
       }
-      else {
-        showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(myDataContext);
-      }
       mySearchComponent.selectAll();
-      myFindBalloon.show(showPoint);
-      myFindBalloon.pack(true, true);
+      if (showPoint != null) {
+        myBalloon.show(showPoint);
+      } else {
+        myBalloon.showCenteredInCurrentWindow(myProject);
+      }
+      WindowMoveListener windowListener = new WindowMoveListener(this);
+      myTitleLabel.addMouseListener(windowListener);
+      myTitleLabel.addMouseMotionListener(windowListener);
+      myBalloon.pack(true, true);
+      Dimension panelSize = getPreferredSize();
+      Dimension prev = DimensionService.getInstance().getSize(SIZE_KEY);
+      if (!myCbPreserveCase.isVisible()) {
+        panelSize.width += myCbPreserveCase.getPreferredSize().width + 4;
+      }
+      myBalloon.setMinimumSize(panelSize);
+      int width = prev != null && prev.width > panelSize.width ? prev.width : panelSize.width;
+      myBalloon.setSize(new Dimension(width, panelSize.height));
     }
   }
 
-  private FindPopupPanel(@NotNull Project project, @NotNull FindModel model, @NotNull DataContext dataContext) {
-    myProject = project;
-    myModel = model;
-    myDataContext = dataContext;
+  FindPopupPanel(FindUIHelper helper) {
+    myHelper = helper;
+    myProject = myHelper.getProject();
     myDisposable = Disposer.newDisposable();
     Disposer.register(myDisposable, new Disposable() {
       @Override
@@ -223,9 +231,14 @@ public class FindPopupPanel extends JBPanel {
 
     initComponents();
     initByModel();
-    updateReplaceVisibility();
 
     ApplicationManager.getApplication().invokeLater(() -> this.scheduleResultsUpdate(), ModalityState.any());
+  }
+
+  @NotNull
+  @Override
+  public Disposable getDisposable() {
+    return myDisposable;
   }
 
   private void initComponents() {
@@ -241,13 +254,15 @@ public class FindPopupPanel extends JBPanel {
     myCbCaseSensitive.addItemListener(liveResultsPreviewUpdateListener);
     myCbPreserveCase = createCheckbox(FindBundle.message("find.options.replace.preserve.case"));
     myCbPreserveCase.addItemListener(liveResultsPreviewUpdateListener);
-    myCbPreserveCase.setVisible(myModel.isReplaceState());
+    myCbPreserveCase.setVisible(myHelper.getModel().isReplaceState());
     myCbWholeWordsOnly = createCheckbox(FindBundle.message("find.popup.whole.words"));
     myCbWholeWordsOnly.addItemListener(liveResultsPreviewUpdateListener);
     myCbRegularExpressions = createCheckbox(FindBundle.message("find.popup.regex"));
     myCbRegularExpressions.addItemListener(liveResultsPreviewUpdateListener);
     myCbFileFilter = createCheckbox("");
-    myCbFileFilter.setMargin(new Insets(0, 0, 0, 0));
+    myCbFileFilter.setMnemonic('a');
+    myCbFileFilter.setToolTipText("<html>Use file m<u>a</u>sk(s)");
+    myCbFileFilter.setMargin(JBUI.emptyInsets());
     myCbFileFilter.setBorder(null);
     myCbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
     myFileMaskField =
@@ -303,7 +318,13 @@ public class FindPopupPanel extends JBPanel {
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        FindSettings.getInstance().setSkipResultsWithOneUsage(state);
+        myHelper.setSkipResultsWithOneUsage(state);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setVisible(!myHelper.isReplaceState());
       }
     });
     tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.open.in.new.tab.checkbox")) {
@@ -314,7 +335,7 @@ public class FindPopupPanel extends JBPanel {
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        FindSettings.getInstance().setShowResultsInSeparateView(state);
+        myHelper.setUseSeparateView(state);
       }
     });
     tabResultsContextGroup.setPopup(true);
@@ -326,9 +347,27 @@ public class FindPopupPanel extends JBPanel {
     myOkActionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        findSettingsChanged();
-        FindInProjectManager.getInstance(myProject).startFindInProject(myModel);
-        Disposer.dispose(myFindBalloon);
+        FindModel validateModel = myHelper.getModel().clone();
+        applyTo(validateModel, false);
+
+        ValidationInfo validationInfo = getValidationInfo(validateModel);
+
+        if (validationInfo == null) {
+          myHelper.getModel().copyFrom(validateModel);
+          myHelper.updateFindSettings();
+          myHelper.doOKAction();
+        }
+        else {
+          String message = validationInfo.message;
+          Messages.showMessageDialog(
+            FindPopupPanel.this,
+            message,
+            CommonBundle.getErrorTitle(),
+            Messages.getErrorIcon()
+          );
+          return;
+        }
+        Disposer.dispose(myBalloon);
       }
     };
     myOKButton.addActionListener(myOkActionListener);
@@ -351,16 +390,10 @@ public class FindPopupPanel extends JBPanel {
         int replaceRows2 = Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1));
         myReplaceComponent.setRows(replaceRows2);
 
-        if (myFindBalloon == null) return;
+        if (myBalloon == null) return;
 
         if (searchRows1 != searchRows2 || replaceRows1 != replaceRows2) {
-          Point resultsLocation = myResultsPopup != null && myResultsPopup.isVisible() ? myResultsPopup.getLocationOnScreen() : null;
-          Dimension findSize = myFindBalloon.getSize();
-          myFindBalloon.pack(false, true);
-          if (resultsLocation != null) {
-            int hDiff = myFindBalloon.getSize().height - findSize.height;
-            myResultsPopup.setLocation(new Point(resultsLocation.x, resultsLocation.y + hDiff));
-          }
+          adjustPopup();
         }
         scheduleResultsUpdate();
       }
@@ -369,15 +402,11 @@ public class FindPopupPanel extends JBPanel {
     myReplaceComponent.getDocument().addDocumentListener(documentAdapter);
 
 
-    DefaultActionGroup scopeActionGroup = new DefaultActionGroup();
-    scopeActionGroup.add(new MySelectScopeToggleAction(Scope.PROJECT));
-    scopeActionGroup.add(new MySelectScopeToggleAction(Scope.MODULE));
-    scopeActionGroup.add(new MySelectScopeToggleAction(Scope.DIRECTORY));
-    scopeActionGroup.add(new MySelectScopeToggleAction(Scope.SCOPE));
-    myScopeSelectionToolbar =
-      (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, scopeActionGroup, true);
-    myScopeSelectionToolbar.setForceMinimumSize(true);
-    myScopeSelectionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    myScopeSelectionToolbar = createToolbar(
+      new MySelectScopeToggleAction(Scope.PROJECT),
+      new MySelectScopeToggleAction(Scope.MODULE),
+      new MySelectScopeToggleAction(Scope.DIRECTORY),
+      new MySelectScopeToggleAction(Scope.SCOPE));
 
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     String[] names = new String[modules.length];
@@ -387,12 +416,8 @@ public class FindPopupPanel extends JBPanel {
 
     Arrays.sort(names, String.CASE_INSENSITIVE_ORDER);
     myModuleComboBox = new ComboBox(names);
-    myModuleComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        scheduleResultsUpdate();
-      }
-    });
+    ActionListener restartSearchListener = e -> scheduleResultsUpdate();
+    myModuleComboBox.addActionListener(restartSearchListener);
     myDirectoryComboBox = new ComboBox(200);
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
@@ -400,40 +425,39 @@ public class FindPopupPanel extends JBPanel {
       field.setColumns(40);
     }
     initCombobox(myDirectoryComboBox);
-    myDirectoryComboBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        scheduleResultsUpdate();
-      }
-    });
+    myDirectoryComboBox.addActionListener(restartSearchListener);
     mySelectDirectoryButton = new FixedSizeButton(myDirectoryComboBox);
     TextFieldWithBrowseButton.MyDoClickAction.addTo(mySelectDirectoryButton, myDirectoryComboBox);
-    mySelectDirectoryButton.setMargin(new Insets(0, 0, 0, 0));
+    mySelectDirectoryButton.setMargin(JBUI.emptyInsets());
     mySelectDirectoryButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        FileChooser.chooseFiles(descriptor, myProject, FindPopupPanel.this, null,
-                                files -> myDirectoryComboBox.setSelectedItem(files.get(0).getPresentableUrl()));
+        FindModel tmp = myHelper.getModel().clone();
+        FileChooser.chooseFiles(descriptor, myProject, FindPopupPanel.this, null, new FileChooser.FileChooserConsumer() {
+          @Override
+          public void consume(List<VirtualFile> files) {
+            tmp.setDirectoryName(files.get(0).getPresentableUrl());
+            FindManager.getInstance(myProject).showFindDialog(tmp, myHelper.getOkHandler());
+          }
+
+          @Override
+          public void cancelled() {
+            FindManager.getInstance(myProject).showFindDialog(tmp, myHelper.getOkHandler());
+          }
+        });
       }
     });
 
-    myRecursiveDirectoryButton = new JToggleButton(AllIcons.General.Recursive, myModel.isWithSubdirectories());
-    myRecursiveDirectoryButton.setIcon(AllIcons.General.Recursive);
-    myRecursiveDirectoryButton.setMargin(new Insets(0, 0, 0, 0));
-    myRecursiveDirectoryButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        scheduleResultsUpdate();
-      }
-    });
-    //DefaultActionGroup recursiveActionGroup = new DefaultActionGroup();
-    //ActionToolbar recursiveDirectoryToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, recursiveActionGroup, true);
+    MyRecursiveDirectoryAction recursiveDirectoryAction = new MyRecursiveDirectoryAction();
+    int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+    recursiveDirectoryAction
+      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), this);
     JPanel directoryPanel = new JPanel(new BorderLayout());
     directoryPanel.add(myDirectoryComboBox, BorderLayout.CENTER);
     JPanel buttonsPanel = new JPanel(new GridLayout(1, 2));
     buttonsPanel.add(mySelectDirectoryButton);
-    buttonsPanel.add(myRecursiveDirectoryButton);
+    buttonsPanel.add(createToolbar(recursiveDirectoryAction).getComponent());//check if toolbar updates the button with no delays
     directoryPanel.add(buttonsPanel, BorderLayout.EAST);
 
     myScopeCombo = new ScopeChooserCombo();
@@ -453,12 +477,29 @@ public class FindPopupPanel extends JBPanel {
         return !projectFilesScopeName.equals(display) && !display.startsWith(moduleFilesScopeName);
       }
     });
-    myScopeCombo.getComboBox().addActionListener(new ActionListener() {
+    myScopeCombo.setBrowseListener(new ScopeChooserCombo.BrowseListener() {
+
+      private FindModel myModelSnapshot;
+
       @Override
-      public void actionPerformed(ActionEvent e) {
-        scheduleResultsUpdate();
+      public void onBeforeBrowseStarted() {
+        myModelSnapshot = myHelper.getModel().clone();
+        myCanClose.set(true);
+        Disposer.dispose(myBalloon);
+      }
+
+      @Override
+      public void onAfterBrowseFinished() {
+        if (myModelSnapshot != null) {
+          SearchScope scope = myScopeCombo.getSelectedScope();
+          if (scope != null) {
+            myModelSnapshot.setCustomScope(scope);
+          }
+          FindManager.getInstance(myProject).showFindDialog(myModelSnapshot, myHelper.getOkHandler());
+        }
       }
     });
+    myScopeCombo.getComboBox().addActionListener(restartSearchListener);
     Disposer.register(myDisposable, myScopeCombo);
 
 
@@ -467,25 +508,6 @@ public class FindPopupPanel extends JBPanel {
     myScopeDetailsPanel.add(Scope.MODULE.name(), myModuleComboBox);
     myScopeDetailsPanel.add(Scope.DIRECTORY.name(), directoryPanel);
     myScopeDetailsPanel.add(Scope.SCOPE.name(), myScopeCombo);
-
-
-    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 3, gap 0"));
-    add(myTitleLabel, "pushx, gapleft 4");
-    add(Box.createHorizontalStrut(JBUI.scale(50)));
-    add(myCbCaseSensitive);
-    add(myCbPreserveCase);
-    add(myCbWholeWordsOnly);
-    add(myCbRegularExpressions);
-    LinkLabel helpLink = RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG);
-    add(helpLink, "gapright 8");
-    add(myCbFileFilter);
-    add(myFileMaskField);
-    add(myFilterContextButton, "wrap");
-    add(mySearchTextArea, "pushx, growx, sx 9, wrap");
-    add(myReplaceTextArea, "pushx, growx, sx 9, wrap");
-    add(myScopeSelectionToolbar.getComponent(), "gaptop 4");
-    add(myScopeDetailsPanel, "sx 8, pushx, growx");
-    MnemonicHelper.init(this);
 
     myResultsPreviewTable = new JBTable() {
       @Override
@@ -507,12 +529,10 @@ public class FindPopupPanel extends JBPanel {
     UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, MOVE_CARET_UP, MOVE_CARET_DOWN, NEW_LINE);
 
 
-    myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation()) {
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), PREVIEW_IS_EDITABLE) {
       @Override
       public Dimension getPreferredSize() {
-        Dimension size = super.getPreferredSize();
-        size.height = Math.min(size.height, getLineHeight() * 20);
-        return size;
+        return new Dimension(myResultsPreviewTable.getWidth(), Math.max(getHeight(), getLineHeight() * 15));
       }
     };
     Disposer.register(myDisposable, myUsagePreviewPanel);
@@ -525,7 +545,7 @@ public class FindPopupPanel extends JBPanel {
           UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
           myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
           VirtualFile file = usageInfo.getVirtualFile();
-          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? file.getPath() : "", false));
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? "  "+file.getPath() : "", false, new JBInsets(0, 0, 0, 0)));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
@@ -535,6 +555,62 @@ public class FindPopupPanel extends JBPanel {
     });
     mySearchRescheduleOnCancellationsAlarm = new Alarm();
     myUpdateResultsPopupBoundsAlarm = new Alarm();
+
+    Splitter splitter = new JBSplitter(true, .33F);
+    splitter.setDividerWidth(1);
+    splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+    JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension size = super.getMinimumSize();
+        size.height = Math.max(size.height, myResultsPreviewTable.getPreferredScrollableViewportSize().height);
+        return size;
+      }
+    };
+    scrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
+    splitter.setFirstComponent(scrollPane);
+    JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 0 4, fillx, hidemode 3, gap 0"));
+    bottomPanel.add(myTabResultsButton);
+    bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
+    JBLabel label = new JBLabel(KeymapUtil.getShortcutsText(new Shortcut[]{new KeyboardShortcut(OK_KEYSTROKE, null)}));
+    label.setEnabled(false);
+    bottomPanel.add(label, "gapright 10");
+    bottomPanel.add(myOKButton);
+
+    myCodePreviewComponent = myUsagePreviewPanel.createComponent();
+    splitter.setSecondComponent(myCodePreviewComponent);
+
+    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gap 0"));
+    add(myTitleLabel, "gapleft 4, sx 2, growx, pushx, growy");
+    add(myCbCaseSensitive);
+    add(myCbPreserveCase);
+    add(myCbWholeWordsOnly);
+    add(myCbRegularExpressions);
+    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 8");
+    add(myCbFileFilter);
+    add(myFileMaskField);
+    add(myFilterContextButton, "wrap");
+    add(mySearchTextArea, "pushx, growx, sx 10, wrap");
+    add(myReplaceTextArea, "pushx, growx, sx 10, wrap");
+    add(myScopeSelectionToolbar.getComponent(), "gaptop 4");
+    add(myScopeDetailsPanel, "sx 9, pushx, growx, wrap");
+    add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad 0 -4 0 4");
+    add(bottomPanel, "pushx, growx, dock south, sx 10, pad 0 -4 0 4");
+    
+    MnemonicHelper.init(this);
+  }
+
+  private static ActionToolbarImpl createToolbar(AnAction... actions) {
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true);
+    toolbar.setForceMinimumSize(true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    return toolbar;
+  }
+
+  private void adjustPopup() {
+    if (myBalloon == null || !myBalloon.isVisible()) return;
+    myBalloon.pack(false, true);
   }
 
   private void registerCloseAction(JBPopup popup) {
@@ -542,11 +618,8 @@ public class FindPopupPanel extends JBPanel {
     DumbAwareAction closeAction = new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        if (myFindBalloon != null && myFindBalloon.isVisible()) {
-          myFindBalloon.cancel();
-        }
-        if (myResultsPopup != null && myResultsPopup.isVisible()) {
-          myResultsPopup.cancel();
+        if (myBalloon != null && myBalloon.isVisible()) {
+          myBalloon.cancel();
         }
       }
     };
@@ -556,7 +629,7 @@ public class FindPopupPanel extends JBPanel {
   @Override
   public void addNotify() {
     super.addNotify();
-    showResultsPopupIfNeed();
+    ApplicationManager.getApplication().invokeLater(() -> ScrollingUtil.ensureSelectionExists(myResultsPreviewTable), ModalityState.any());
     myScopeSelectionToolbar.updateActionsImmediately();
   }
 
@@ -565,52 +638,12 @@ public class FindPopupPanel extends JBPanel {
     boolean later = myUpdateResultsPopupBoundsAlarm.getActiveRequestCount() > 0;
 
     myUpdateResultsPopupBoundsAlarm.cancelAllRequests();
-    myUpdateResultsPopupBoundsAlarm.addRequest(() -> updateResultsPopupBounds(), later ? 50 : 0);
+    myUpdateResultsPopupBoundsAlarm.addRequest(() -> adjustPopup(), later ? 50 : 0);
   }
 
-  private void updateResultsPopupBounds() {
-    if (myResultsPopup == null || !myResultsPopup.isVisible()) {
-      return;
-    }
-    myResultsPopup.setSize(myResultsPopup.getComponent().getPreferredSize());
-  }
-
-  private void adjustPopup() {
-    if (!isShowing()) return;
-    final Dimension d = PopupPositionManager.PositionAdjuster.getPopupSize(myResultsPopup);
-    Point myRelativeOnScreen = getLocationOnScreen();
-    Rectangle screen = ScreenUtil.getScreenRectangle(myRelativeOnScreen);
-    Rectangle popupRect = null;
-    Rectangle r = new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + getHeight(), d.width, d.height);
-
-    if (screen.contains(r)) {
-      popupRect = r;
-    }
-
-    if (popupRect != null) {
-      Point location = new Point(r.x, r.y);
-      if (!location.equals(myResultsPopup.getLocationOnScreen())) {
-        myResultsPopup.setLocation(location);
-      }
-    }
-    else {
-      if (r.y + d.height > screen.y + screen.height) {
-        r.height = screen.y + screen.height - r.y - 2;
-      }
-      if (r.width > screen.width) {
-        r.width = screen.width - 50;
-      }
-      if (r.x + r.width > screen.x + screen.width) {
-        r.x = screen.x + screen.width - r.width - 2;
-      }
-      myResultsPopup.setSize(r.getSize());
-      myResultsPopup.setLocation(r.getLocation());
-    }
-  }
 
   private void initByModel() {
-    myTitleLabel
-      .setText(FindBundle.message(myModel.isReplaceState() ? "find.replace.in.project.dialog.title" : "find.in.path.dialog.title"));
+    FindModel myModel = myHelper.getModel();
     myCbCaseSensitive.setSelected(myModel.isCaseSensitive());
     myCbWholeWordsOnly.setSelected(myModel.isWholeWordsOnly());
     myCbRegularExpressions.setSelected(myModel.isRegularExpressions());
@@ -644,7 +677,6 @@ public class FindPopupPanel extends JBPanel {
       myFileMaskField.setText(variants.get(0));
     }
     myFileMaskField.setEnabled(isThereFileFilter);
-    updateScopeDetailsPanel();
     String toSearch = myModel.getStringToFind();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
 
@@ -701,6 +733,7 @@ public class FindPopupPanel extends JBPanel {
   }
 
   private void updateControls() {
+    FindModel myModel = myHelper.getModel();
     if (myCbRegularExpressions.isSelected()) {
       myCbWholeWordsOnly.makeUnselectable(false);
     }
@@ -724,12 +757,14 @@ public class FindPopupPanel extends JBPanel {
         myCbCaseSensitive.makeSelectable();
       }
     }
-    myRecursiveDirectoryButton.setSelected(myModel.isWithSubdirectories());
   }
 
-  private void updateReplaceVisibility() {
-    myReplaceTextArea.setVisible(myModel.isReplaceState());
-    myCbPreserveCase.setVisible(myModel.isReplaceState());
+  public void updateReplaceVisibility() {
+    boolean isReplaceState = myHelper.isReplaceState();
+    myTitleLabel.setText(myHelper.getTitle());
+    myReplaceTextArea.setVisible(isReplaceState);
+    myCbPreserveCase.setVisible(isReplaceState);
+    adjustPopup();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -749,8 +784,9 @@ public class FindPopupPanel extends JBPanel {
   }
 
   private void scheduleResultsUpdate() {
-    if (myFindBalloon == null || !myFindBalloon.isVisible()) return;
+    if (myBalloon == null || !myBalloon.isVisible()) return;
     if (mySearchRescheduleOnCancellationsAlarm == null || mySearchRescheduleOnCancellationsAlarm.isDisposed()) return;
+    updateControls();
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
     mySearchRescheduleOnCancellationsAlarm.addRequest(() -> findSettingsChanged(), 100);
   }
@@ -764,19 +800,24 @@ public class FindPopupPanel extends JBPanel {
 
   private void findSettingsChanged() {
     if (isShowing()) {
-      showResultsPopupIfNeed();
+      ScrollingUtil.ensureSelectionExists(myResultsPreviewTable);
     }
     final ModalityState state = ModalityState.current();
     finishPreviousPreviewSearch();
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
-    applyTo(myModel, false);
-    FindManager.getInstance(myProject).getFindInProjectModel().copyFrom(myModel);
-    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
+    applyTo(myHelper.getModel(), false);
+    myHelper.updateFindSettings();
+    FindModel findInProjectModel = FindManager.getInstance(myProject).getFindInProjectModel();
+    FindModel copy = new FindModel();
+    copy.copyFrom(findInProjectModel);
+
+    findInProjectModel.copyFrom(myHelper.getModel());
+    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myHelper.getModel());//todo check if we really need to do it now
     FindSettings findSettings = FindSettings.getInstance();
     findSettings.setDefaultScopeName(myScopeCombo.getSelectedScopeName());
-    findSettings.setFileMask(myModel.getFileFilter());
+    findSettings.setFileMask(myHelper.getModel().getFileFilter());
 
-    ValidationInfo result = getValidationInfo(myModel);
+    ValidationInfo result = getValidationInfo(myHelper.getModel());
 
     final ProgressIndicatorBase progressIndicatorWhenSearchStarted = new ProgressIndicatorBase();
     myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
@@ -792,7 +833,7 @@ public class FindPopupPanel extends JBPanel {
     // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
     final LinkedHashSet<VirtualFile> filesToScanInitially = new LinkedHashSet<>();
 
-    if (myPreviousModel != null && myPreviousModel.getStringToFind().length() < myModel.getStringToFind().length()) {
+    if (myHelper.myPreviousModel != null && myHelper.myPreviousModel.getStringToFind().length() < myHelper.getModel().getStringToFind().length()) {
       final DefaultTableModel previousModel = (DefaultTableModel)myResultsPreviewTable.getModel();
       for (int i = 0, len = previousModel.getRowCount(); i < len; ++i) {
         final UsageInfo2UsageAdapter usage = (UsageInfo2UsageAdapter)previousModel.getValueAt(i, 0);
@@ -801,19 +842,21 @@ public class FindPopupPanel extends JBPanel {
       }
     }
 
-    myPreviousModel = myModel.clone();
+    myHelper.myPreviousModel = myHelper.getModel().clone();
 
     myCodePreviewComponent.setVisible(false);
 
     myResultsPreviewTable.setModel(model);
 
     if (result != null) {
-      myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+      myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow") + " ("+result.message+")");
+      adjustPopup();
       return;
     }
 
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false));
     myResultsPreviewTable.getEmptyText().setText("Searching...");
+    adjustPopup();//It wouldn't be called later if there are no usages at all, so let's call it now.
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
@@ -822,14 +865,14 @@ public class FindPopupPanel extends JBPanel {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
         final UsageViewPresentation presentation =
-          FindInProjectUtil.setupViewPresentation(findSettings.isShowResultsInSeparateView(), /*findModel*/myModel.clone());
+          FindInProjectUtil.setupViewPresentation(findSettings.isShowResultsInSeparateView(), /*findModel*/myHelper.getModel().clone());
         final boolean showPanelIfOnlyOneUsage = !findSettings.isSkipResultsWithOneUsage();
 
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
         Ref<VirtualFile> lastUsageFileRef = new Ref<>();
 
-        FindInProjectUtil.findUsages(myModel.clone(), myProject, info -> {
+        FindInProjectUtil.findUsages(myHelper.getModel().clone(), myProject, info -> {
           final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
           usage.getPresentation().getIcon(); // cache icon
 
@@ -848,6 +891,7 @@ public class FindPopupPanel extends JBPanel {
             }
             scheduleUpdateResultsPopupBounds();
           }, state);
+          if (resultsCount.get() < 10) ApplicationManager.getApplication().invokeLater(() -> {adjustPopup();});
           return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
         }, processPresentation, filesToScanInitially);
 
@@ -875,7 +919,6 @@ public class FindPopupPanel extends JBPanel {
                 info.append(UIBundle.message("message.files", filesWithOccurrences));
               }
               mySearchTextArea.setInfoText(info.toString());
-              scheduleUpdateResultsPopupBounds();
             }
           }, state);
         }
@@ -890,96 +933,8 @@ public class FindPopupPanel extends JBPanel {
     });
   }
 
-  private void showResultsPopupIfNeed() {
-    if ((myResultsPopup == null || !myResultsPopup.isVisible()) && isShowing()) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          JPanel popupContent = new JPanel(new BorderLayout());
-          popupContent.setName("PopupContent!!!");
-          Splitter splitter = new JBSplitter(true, .33F);
-          splitter.setDividerWidth(1);
-          splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
-          JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
-            @Override
-            public Dimension getMinimumSize() {
-              Dimension size = super.getMinimumSize();
-              size.height = Math.max(size.height, myResultsPreviewTable.getPreferredScrollableViewportSize().height);
-              return size;
-            }
-          };
-          scrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
-          splitter.setFirstComponent(scrollPane);
-          popupContent.add(splitter, BorderLayout.CENTER);
-          JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4, fillx, hidemode 3, gap 0"));
-          bottomPanel.add(myTabResultsButton);
-          bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
-          JBLabel label = new JBLabel(KeymapUtil.getShortcutsText(new Shortcut[]{new KeyboardShortcut(OK_KEYSTROKE, null)}));
-          label.setEnabled(false);
-          bottomPanel.add(label, "gapright 10");
-          bottomPanel.add(myOKButton);
-          popupContent.add(bottomPanel, BorderLayout.SOUTH);
-
-          popupContent.registerKeyboardAction(myOkActionListener, OK_KEYSTROKE, WHEN_IN_FOCUSED_WINDOW);
-
-          myCodePreviewComponent = myUsagePreviewPanel.createComponent();
-          myCodePreviewComponent.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
-          splitter.setSecondComponent(myCodePreviewComponent);
-
-          AtomicBoolean canClose = new AtomicBoolean();
-          final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
-            .createComponentPopupBuilder(popupContent, null);
-          myResultsPopup = (AbstractPopup)builder
-            .setShowShadow(false)
-            .setShowBorder(false)
-            .setResizable(true)
-            .setCancelCallback(() -> {
-              DimensionService.getInstance().setSize(SIZE_KEY, myResultsPopup.getSize());
-              if (canClose.get()) return Boolean.TRUE;
-              Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-              Window balloonWindow = SwingUtilities.windowForComponent(myFindBalloon.getContent());
-              if (activeWindow == balloonWindow || (activeWindow != null && activeWindow.getParent() == balloonWindow)) {
-                return Boolean.FALSE;
-              }
-              ApplicationManager.getApplication().invokeLater(() -> {
-                if (myFindBalloon != null) {
-                  Disposer.dispose(myFindBalloon);
-                  myFindBalloon = null;
-                }
-              });
-              return Boolean.TRUE;
-            })
-            .setKeyEventHandler(event -> {
-              if (AbstractPopup.isCloseRequest(event)) {
-                canClose.set(true);
-                myResultsPopup.cancel(event);
-                if (myFindBalloon != null && myFindBalloon.isVisible()) {
-                  myFindBalloon.cancel();
-                }
-                return true;
-              }
-              return false;
-            })
-            .createPopup();
-          RelativePoint point = new RelativePoint(FindPopupPanel.this, new Point(0, FindPopupPanel.this.getHeight()));
-          myResultsPopup.pack(true, true);
-          myResultsPopup.show(point);
-          Dimension panelSize = getPreferredSize();
-          Rectangle rectangle = ScreenUtil.getScreenRectangle(FindPopupPanel.this);
-          Dimension prev = DimensionService.getInstance().getSize(SIZE_KEY);
-          int width = prev != null && prev.width > panelSize.width ? prev.width : panelSize.width;
-          myResultsPopup.getComponent().setPreferredSize(new Dimension(width, (int)(rectangle.getHeight() * .6)));
-          Disposer.register(myDisposable, myResultsPopup);
-          registerCloseAction(myResultsPopup);
-          updateResultsPopupBounds();
-          ScrollingUtil.ensureSelectionExists(myResultsPreviewTable);
-        }
-      });
-    }
-  }
-
   @Nullable
-  private String getFileTypeMask() {
+  public String getFileTypeMask() {
     String mask = null;
     if (myCbFileFilter != null && myCbFileFilter.isSelected()) {
       mask = myFileMaskField.getText();
@@ -996,7 +951,7 @@ public class FindPopupPanel extends JBPanel {
       }
     }
 
-    if (!canSearchThisString()) {
+    if (!myHelper.canSearchThisString()) {
       return new ValidationInfo("String to find is empty", mySearchComponent);
     }
 
@@ -1039,12 +994,8 @@ public class FindPopupPanel extends JBPanel {
     return null;
   }
 
-  private boolean canSearchThisString() {
-    return !StringUtil.isEmpty(getStringToFind()) || !myModel.isReplaceState() && !myModel.isFindAllEnabled() && getFileTypeMask() != null;
-  }
-
   @NotNull
-  private String getStringToFind() {
+  public String getStringToFind() {
     return mySearchComponent.getText();
   }
 
@@ -1094,7 +1045,6 @@ public class FindPopupPanel extends JBPanel {
     if (mySelectedScope == Scope.DIRECTORY) {
       String directory = getDirectory();
       model.setDirectoryName(directory == null ? "" : directory);
-      model.setWithSubdirectories(myRecursiveDirectoryButton.isSelected());
     }
     else if (mySelectedScope == Scope.MODULE) {
       model.setModuleName((String)myModuleComboBox.getSelectedItem());
@@ -1103,7 +1053,7 @@ public class FindPopupPanel extends JBPanel {
       SearchScope selectedScope = myScopeCombo.getSelectedScope();
       String customScopeName = selectedScope == null ? null : selectedScope.getDisplayName();
       model.setCustomScopeName(customScopeName);
-      model.setCustomScope(selectedScope == null ? null : selectedScope);
+      model.setCustomScope(selectedScope);
       model.setCustomScope(true);
     }
 
@@ -1180,6 +1130,23 @@ public class FindPopupPanel extends JBPanel {
     }
   }
 
+  private class MyRecursiveDirectoryAction extends ToggleAction {
+    public MyRecursiveDirectoryAction() {
+      super(FindBundle.message("find.scope.directory.recursive.checkbox"), null, AllIcons.General.Recursive);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myHelper.getModel().isWithSubdirectories();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myHelper.getModel().setWithSubdirectories(state);
+      scheduleResultsUpdate();
+    }
+  }
+
   private class NavigateToSourceListener extends DoubleClickListener {
 
     @Override
@@ -1231,7 +1198,7 @@ public class FindPopupPanel extends JBPanel {
 
     if (navigations != null) {
       applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
-      myFindBalloon.cancel();
+      myBalloon.cancel();
 
       navigations.get(0).navigate(true);
       for (int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();

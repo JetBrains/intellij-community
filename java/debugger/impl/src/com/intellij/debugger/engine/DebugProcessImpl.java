@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
-  private final Disposable myDisposable = Disposer.newDisposable();
+  protected final Disposable myDisposable = Disposer.newDisposable();
   private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
@@ -494,10 +494,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             try {
               connector.stopListening(myArguments);
             }
-            catch (IllegalArgumentException ignored) {
-              // ignored
-            }
-            catch (IllegalConnectorArgumentsException ignored) {
+            catch (IllegalArgumentException | IllegalConnectorArgumentsException ignored) {
               // ignored
             }
           }
@@ -753,8 +750,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       setRunToCursorBreakpoint(null);
       getRequestsManager().deleteRequest(runToCursorBreakpoint);
       if (runToCursorBreakpoint.isRestoreBreakpoints()) {
-        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
-        breakpointManager.enableBreakpoints(this);
+        DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().enableBreakpoints(this);
       }
     }
   }
@@ -984,22 +980,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
         return invokeMethodAndFork(suspendContext);
       }
-      catch (InvocationException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (IncompatibleThreadStateException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (InvalidTypeException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (ObjectCollectedException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (UnsupportedOperationException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (InternalException e) {
+      catch (InvocationException | InternalException | UnsupportedOperationException | ObjectCollectedException |
+        InvalidTypeException | IncompatibleThreadStateException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       finally {
@@ -1331,16 +1313,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       return result;
     }
-    catch (InvocationException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
-    catch (ClassNotLoadedException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
-    catch (IncompatibleThreadStateException e) {
-      throw EvaluateExceptionUtil.createEvaluateException(e);
-    }
-    catch (InvalidTypeException e) {
+    catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
       throw EvaluateExceptionUtil.createEvaluateException(e);
     }
   }
@@ -1442,7 +1415,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @Override
   public void stop(boolean forceTerminate) {
     stopConnecting(); // does this first place in case debugger manager hanged accepting debugger connection (forever)
-    getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
+    getManagerThread().terminateAndInvoke(createStopCommand(forceTerminate), ApplicationManager.getApplication().isUnitTestMode() ? 0 : DebuggerManagerThreadImpl.COMMAND_TIMEOUT);
   }
 
   @NotNull
@@ -1625,8 +1598,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private RunToCursorCommand(SuspendContextImpl suspendContext, @NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
       super(suspendContext);
       myIgnoreBreakpoints = ignoreBreakpoints;
-      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-      myRunToCursorBreakpoint = breakpointManager.addRunToCursorBreakpoint(position, ignoreBreakpoints);
+      myRunToCursorBreakpoint =
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addRunToCursorBreakpoint(position, ignoreBreakpoints);
     }
 
     @Override
@@ -1637,8 +1610,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return;
       }
       if (myIgnoreBreakpoints) {
-        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
-        breakpointManager.disableBreakpoints(DebugProcessImpl.this);
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().disableBreakpoints(DebugProcessImpl.this);
       }
       applyThreadFilter(getContextThread());
       final SuspendContextImpl context = getSuspendContext();

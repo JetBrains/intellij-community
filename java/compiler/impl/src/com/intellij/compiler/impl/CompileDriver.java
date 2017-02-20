@@ -16,10 +16,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
-import com.intellij.compiler.ModuleCompilerUtil;
-import com.intellij.compiler.ModuleSourceSet;
-import com.intellij.compiler.ProblemsView;
+import com.intellij.compiler.*;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.progress.CompilerTaskBase;
 import com.intellij.compiler.progress.CompilerTaskFactory;
@@ -108,7 +105,7 @@ public class CompileDriver {
   }
 
   public void rebuild(CompileStatusNotification callback) {
-    doRebuild(callback, null, new ProjectCompileScope(myProject));
+    doRebuild(callback, new ProjectCompileScope(myProject));
   }
 
   public void make(CompileScope scope, CompileStatusNotification callback) {
@@ -174,9 +171,9 @@ public class CompileDriver {
     }
   }
 
-  private void doRebuild(CompileStatusNotification callback, CompilerMessage message, final CompileScope compileScope) {
+  private void doRebuild(CompileStatusNotification callback, final CompileScope compileScope) {
     if (validateCompilerConfiguration(compileScope)) {
-      startup(compileScope, true, false, callback, message);
+      startup(compileScope, true, false, callback, null);
     }
     else {
       callback.finished(true, 0, 0, DummyCompileContext.getInstance());
@@ -226,7 +223,7 @@ public class CompileDriver {
   }
 
   @Nullable
-  private TaskFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
+  private TaskFuture compileInExternalProcess(@NotNull final CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
     throws Exception {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
@@ -257,11 +254,6 @@ public class CompileDriver {
     final BuildManager buildManager = BuildManager.getInstance();
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
-
-      @Override
-      public void buildStarted(UUID sessionId) {
-      }
-
       @Override
       public void sessionTerminated(final UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
@@ -305,6 +297,14 @@ public class CompileDriver {
           final long column = message.hasColumn() ? message.getColumn() : -1;
           final String srcUrl = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, sourceFilePath) : null;
           compileContext.addMessage(category, messageText, srcUrl, (int)line, (int)column);
+          if (compileContext.shouldUpdateProblemsView() && kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
+            // treat JPS_INFO messages in a special way: add them as info messages to the problems view
+            final Project project = compileContext.getProject();
+            ProblemsView.SERVICE.getInstance(project).addMessage(
+              new CompilerMessageImpl(project, category, messageText),
+              compileContext.getSessionId()
+            );
+          }
         }
       }
 
@@ -407,6 +407,7 @@ public class CompileDriver {
         }
         return;
       }
+      CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       try {
         LOG.info("COMPILATION STARTED (BUILD PROCESS)");
         if (message != null) {
@@ -414,7 +415,8 @@ public class CompileDriver {
         }
         if (isRebuild) {
           CompilerUtil.runInContext(compileContext, "Clearing build system data...",
-                                    (ThrowableRunnable<Throwable>)() -> CompilerCacheManager.getInstance(myProject).clearCaches(compileContext));
+                                    (ThrowableRunnable<Throwable>)() -> compilerCacheManager
+                                      .clearCaches(compileContext));
         }
         final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
 
@@ -446,7 +448,7 @@ public class CompileDriver {
         LOG.error(e); // todo
       }
       finally {
-        CompilerCacheManager.getInstance(myProject).flushCaches();
+        compilerCacheManager.flushCaches();
 
         final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
         CompilerUtil.logDuration(
@@ -790,7 +792,7 @@ public class CompileDriver {
     private final WeakReference<Project> myProjectRef;
     private final Object myContentId;
 
-    public MessagesActivationListener(CompileContextImpl compileContext) {
+    MessagesActivationListener(CompileContextImpl compileContext) {
       myProjectRef = new WeakReference<>(compileContext.getProject());
       myContentId = compileContext.getBuildSession().getContentId();
     }

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
@@ -25,7 +26,7 @@ public abstract class CustomFileDropHandler {
   public static final ExtensionPointName<CustomFileDropHandler> CUSTOM_DROP_HANDLER_EP =
     ExtensionPointName.create("com.intellij.customFileDropHandler");
 
-  public abstract boolean canHandle(@NotNull Transferable t, Editor editor);
+  public abstract boolean canHandle(@NotNull Transferable t, @Nullable Editor editor);
 
-  public abstract boolean handleDrop(@NotNull Transferable t, Editor editor, final Project project);
+  public abstract boolean handleDrop(@NotNull Transferable t, @Nullable Editor editor, final Project project);
 }

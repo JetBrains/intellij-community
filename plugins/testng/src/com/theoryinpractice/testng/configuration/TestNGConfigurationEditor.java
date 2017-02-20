@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.execution.ui.DefaultJreSelector;
-import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.execution.ui.DefaultJreSelector;
+import com.intellij.execution.ui.JrePathEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -73,7 +73,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 
 public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends SettingsEditor<T> implements PanelWithAnchor {
@@ -292,7 +291,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   }
 
   @Override
-  protected void resetEditorFrom(TestNGConfiguration config) {
+  protected void resetEditorFrom(@NotNull TestNGConfiguration config) {
     this.config = config;
     model.reset(config);
     commonJavaParameters.reset(config);
@@ -319,7 +318,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   }
 
   @Override
-  public void applyEditorTo(TestNGConfiguration config) {
+  public void applyEditorTo(@NotNull TestNGConfiguration config) {
     model.apply(getModuleSelector().getModule(), config);
     getModuleSelector().applyTo(config);
     TestData data = config.getPersistantData();

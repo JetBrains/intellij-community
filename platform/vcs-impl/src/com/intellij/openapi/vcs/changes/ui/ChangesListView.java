@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -51,7 +50,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
 import static com.intellij.util.containers.UtilKt.stream;
@@ -63,31 +62,29 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
 
-  @NonNls public static final String HELP_ID_KEY = "helpId";
-  @NonNls public static final String ourHelpId = "ideaInterface.changes";
+  @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
   @NonNls public static final DataKey<Stream<VirtualFile>> IGNORED_FILES_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
-  @NonNls public static final DataKey<String> HELP_ID_DATA_KEY = DataKey.create(HELP_ID_KEY);
-
-  private ActionGroup myMenuGroup;
 
   public ChangesListView(@NotNull Project project) {
     myProject = project;
 
-    getModel().setRoot(create(myProject, TreeModelBuilder.ROOT_NODE_VALUE));
+    setModel(TreeModelBuilder.buildEmpty(project));
 
     setShowsRootHandles(true);
     setRootVisible(false);
     setDragEnabled(true);
 
+    myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+
+    ChangesBrowserNodeRenderer renderer = new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true);
+    setCellRenderer(renderer);
+
     new TreeSpeedSearch(this, TO_TEXT_CONVERTER);
     SmartExpander.installOn(this);
-    myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
-    new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, BooleanGetter.FALSE, false)).installOn(this);
-
-    setCellRenderer(new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true));
+    new TreeLinkMouseListener(renderer).installOn(this);
   }
 
   @Override
@@ -103,19 +100,19 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     myShowFlatten = showFlatten;
   }
 
-  public void updateModel(@NotNull DefaultTreeModel model) {
+  public void updateModel(@NotNull DefaultTreeModel newModel) {
     TreeState state = TreeState.createOn(this, getRoot());
     state.setScrollToSelection(false);
     DefaultTreeModel oldModel = getModel();
-    setModel(model);
-    ChangesBrowserNode root = (ChangesBrowserNode)model.getRoot();
-    expandPath(new TreePath(root.getPath()));
-    state.applyTo(this, getRoot());
-    expandDefaultChangeList(oldModel, root);
+    setModel(newModel);
+    ChangesBrowserNode newRoot = getRoot();
+    expandPath(new TreePath(newRoot.getPath()));
+    state.applyTo(this, newRoot);
+    expandDefaultChangeList(oldModel, newRoot);
   }
 
   private void expandDefaultChangeList(DefaultTreeModel oldModel, ChangesBrowserNode root) {
-    if (((ChangesBrowserNode)oldModel.getRoot()).getCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 1) {
+    if (((ChangesBrowserNode)oldModel.getRoot()).getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 1) {
       TreeNode toExpand = null;
       for (int i = 0; i < root.getChildCount(); i++) {
         TreeNode node = root.getChildAt(i);
@@ -178,18 +175,24 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     }
     else if (key == VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY) {
       sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().collect(toList()));
-    } else if (key == LOCALLY_DELETED_CHANGES) {
+    }
+    else if (key == LOCALLY_DELETED_CHANGES) {
       sink.put(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges().collect(toList()));
-    } else if (key == MISSING_FILES_DATA_KEY) {
+    }
+    else if (key == MISSING_FILES_DATA_KEY) {
       sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles().collect(toList()));
-    } else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
+    }
+    else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
       sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, getSelectedMissingFiles().findAny().isPresent());
-    } else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
+    }
+    else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
       sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, getSelectedModifiedWithoutEditing().findAny().isPresent());
-    } else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
+    }
+    else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
       sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
-    } else if (key == HELP_ID_DATA_KEY) {
-      sink.put(HELP_ID_DATA_KEY, ourHelpId);
+    }
+    else if (key == PlatformDataKeys.HELP_ID) {
+      sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
     }
     else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
       final TreePath selectionPath = getSelectionPath();
@@ -278,20 +281,17 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   @Nullable
   private static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
-    Change result = null;
     VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
-
     if (before != null) {
       ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
-      result = new Change(before, afterRevision, FileStatus.HIJACKED);
+      return new Change(before, afterRevision, FileStatus.HIJACKED);
     }
-
-    return result;
+    return null;
   }
 
   @NotNull
   private Stream<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
-    return getSelectionNodesStream(TreeModelBuilder.LOCALLY_DELETED_NODE)
+    return getSelectionNodesStream(LOCALLY_DELETED_NODE_TAG)
       .flatMap(node -> node.getObjectsUnderStream(LocallyDeletedChange.class))
       .distinct();
   }
@@ -304,7 +304,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @NotNull
   protected Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
-      getAfterRevisionsFiles(getSelectedChanges()),
+      getAllFiles(getSelectedChanges()),
       getSelectedVirtualFiles(null)
     ).distinct();
   }
@@ -348,18 +348,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   public void setMenuActions(final ActionGroup menuGroup) {
-    myMenuGroup = menuGroup;
-    updateMenu();
+    PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
     editSourceRegistration();
   }
 
   protected void editSourceRegistration() {
     EditSourceOnDoubleClickHandler.install(this);
     EditSourceOnEnterKeyHandler.install(this);
-  }
-
-  private void updateMenu() {
-    PopupHandler.installPopupHandler(this, myMenuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
   }
 
   @Override

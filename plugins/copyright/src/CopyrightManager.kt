@@ -94,8 +94,6 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
       return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
 
-    override fun getState(scheme: SchemeWrapper<CopyrightProfile>) = scheme.schemeState
-
     override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
   }, isUseOldFileNameSanitize = true, streamProvider = schemeManagerIprProvider)
 

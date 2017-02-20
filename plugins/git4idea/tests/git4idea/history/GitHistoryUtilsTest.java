@@ -41,8 +41,8 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
-import static com.intellij.openapi.vcs.Executor.overwrite;
-import static com.intellij.openapi.vcs.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.USER_EMAIL;
 import static git4idea.test.GitTestUtil.USER_NAME;
@@ -399,7 +399,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     touch("file.txt", "content");
     addCommit(message);
 
-    GitHistoryUtils.loadAllDetails(myProject, myRepo.getRoot(), details::add);
+    GitHistoryUtils.loadDetails(myProject, myRepo.getRoot(), details::add);
 
     VcsFullCommitDetails lastCommit = ContainerUtil.getFirstItem(details);
     assertNotNull(lastCommit);
@@ -415,7 +415,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
     int commitCount = 100;
     for (int i = 0; i < commitCount; i++) {
-      touch("file.txt", "content number " + i);
+      echo("file.txt", "content number " + i);
       add();
       git("commit --allow-empty-message -F " + messageFile);
       expected.add(last());
@@ -423,7 +423,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     expected = ContainerUtil.reverse(expected);
 
     List<String> actualMessages =
-      GitHistoryUtils.loadDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
+      GitHistoryUtils.collectDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
 
     assertEquals(expected, actualMessages);
   }

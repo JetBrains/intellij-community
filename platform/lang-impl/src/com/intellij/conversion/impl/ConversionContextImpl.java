@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -168,7 +169,7 @@ public class ConversionContextImpl implements ConversionContext {
     final ExpandMacroToPathMap map = createExpandMacroMap();
     if (moduleSettings != null) {
       final String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getModuleFile().getParentFile().getAbsolutePath());
-      map.addMacroExpand(PathMacrosImpl.MODULE_DIR_MACRO_NAME, modulePath);
+      map.addMacroExpand(PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath);
     }
     return map;
   }
@@ -183,12 +184,12 @@ public class ConversionContextImpl implements ConversionContext {
   @Override
   @NotNull
   public String collapsePath(@NotNull String path) {
-    ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.PROJECT_DIR_MACRO_NAME, myProjectBaseDir);
+    ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.PROJECT_DIR_MACRO_NAME, myProjectBaseDir);
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
   public static String collapsePath(@NotNull String path, @NotNull ModuleSettingsImpl moduleSettings) {
-    final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParentFile());
+    final ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.getModuleFile().getParentFile());
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
@@ -322,7 +323,7 @@ public class ConversionContextImpl implements ConversionContext {
   private ExpandMacroToPathMap createExpandMacroMap() {
     final ExpandMacroToPathMap macros = new ExpandMacroToPathMap();
     final String projectDir = FileUtil.toSystemIndependentName(myProjectBaseDir.getAbsolutePath());
-    macros.addMacroExpand(PathMacrosImpl.PROJECT_DIR_MACRO_NAME, projectDir);
+    macros.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectDir);
     PathMacrosImpl.getInstanceEx().addMacroExpands(macros);
     return macros;
   }
@@ -445,9 +446,7 @@ public class ConversionContextImpl implements ConversionContext {
       if (componentElement != null) {
         Set<String> performedConversionIds = new HashSet<>();
         final ProjectFileVersionState state = XmlSerializer.deserialize(componentElement, ProjectFileVersionState.class);
-        if (state != null) {
-          performedConversionIds.addAll(state.getPerformedConversionIds());
-        }
+        performedConversionIds.addAll(state.getPerformedConversionIds());
         return performedConversionIds;
       }
     }

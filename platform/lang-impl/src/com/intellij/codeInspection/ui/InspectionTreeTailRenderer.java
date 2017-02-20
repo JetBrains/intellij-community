@@ -79,7 +79,7 @@ public abstract class InspectionTreeTailRenderer {
       node.visitProblemSeverities(myItemCounter);
       if (myItemCounter.size() > MAX_LEVEL_TYPES) {
         appendText(InspectionsBundle.message("inspection.problem.descriptor.count",
-                                             myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
+                                             myItemCounter.values().stream().mapToInt(Integer::intValue).sum()) + " ",
                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       else {

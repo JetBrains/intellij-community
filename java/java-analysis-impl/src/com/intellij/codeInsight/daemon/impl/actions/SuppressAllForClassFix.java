@@ -19,6 +19,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -78,9 +79,9 @@ public class SuppressAllForClassFix extends SuppressFix {
       if (modifierList != null) {
         final PsiAnnotation annotation = modifierList.findAnnotation(JavaSuppressionUtil.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         if (annotation != null) {
-          annotation.replace(JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" +
-                                                                                                             JavaSuppressionUtil.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" +
-                                                                                                             SuppressionUtil.ALL + "\")", container));
+          String annoText = "@" + JavaSuppressionUtil.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" + SuppressionUtil.ALL + "\")";
+          Runnable runnable = () -> annotation.replace(JavaPsiFacade.getElementFactory(project).createAnnotationFromText(annoText, container));
+          WriteCommandAction.runWriteCommandAction(project, null, null, runnable, annotation.getContainingFile());
           return;
         }
       }
@@ -91,7 +92,8 @@ public class SuppressAllForClassFix extends SuppressFix {
         PsiDocTag noInspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (noInspectionTag != null) {
           String tagText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + SuppressionUtil.ALL;
-          noInspectionTag.replace(JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText(tagText));
+          Runnable runnable = () -> noInspectionTag.replace(JavaPsiFacade.getElementFactory(project).createDocTagFromText(tagText));
+          WriteCommandAction.runWriteCommandAction(project, null, null, runnable, noInspectionTag.getContainingFile());
           // todo suppress
           //DaemonCodeAnalyzer.getInstance(project).restart();
           return;

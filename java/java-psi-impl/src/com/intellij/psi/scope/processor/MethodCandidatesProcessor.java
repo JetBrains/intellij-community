@@ -40,7 +40,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   public MethodCandidatesProcessor(@NotNull PsiElement place, PsiFile placeFile) {
-    super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<CandidateInfo>(), place, placeFile);
+    super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<>(), place, placeFile);
   }
 
   @Override

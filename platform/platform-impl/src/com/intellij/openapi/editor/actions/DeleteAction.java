@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.DocumentUtil;
 
 public class DeleteAction extends EditorAction {
   public DeleteAction() {
@@ -46,7 +46,7 @@ public class DeleteAction extends EditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       EditorUIUtil.hideCursorInEditor(editor);
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
@@ -104,7 +104,7 @@ public class DeleteAction extends EditorAction {
         editor.getCaretModel().moveToOffset(region.getStartOffset());
       }
       else {
-        document.deleteString(offset, offset + 1);
+        document.deleteString(offset, DocumentUtil.getNextCodePointOffset(document, offset));
       }
       return;
     }

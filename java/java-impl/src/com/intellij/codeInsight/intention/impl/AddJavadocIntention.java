@@ -16,18 +16,21 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
+import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
-public class AddJavadocIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
+public class AddJavadocIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     final PsiDocCommentOwner docCommentOwner = (PsiDocCommentOwner)element.getParent();

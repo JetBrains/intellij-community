@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ThreeState;
 import com.sun.jdi.*;
@@ -66,7 +67,8 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
     InvalidStackFrameException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        boolean isObsolete = (getVirtualMachine().canRedefineClasses() && location().method().isObsolete());
+        Method method = DebuggerUtilsEx.getMethod(location());
+        boolean isObsolete = (getVirtualMachine().canRedefineClasses() && (method == null || method.isObsolete()));
         myIsObsolete = ThreeState.fromBoolean(isObsolete);
         return isObsolete;
       }
@@ -243,7 +245,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
   @NotNull
   public List<LocalVariableProxyImpl> visibleVariables() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    InvalidStackFrameException error = null;
+    RuntimeException error = null;
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         final List<LocalVariable> list = getStackFrame().visibleVariables();
@@ -254,7 +256,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         }
         return locals;
       }
-      catch (InvalidStackFrameException e) {
+      catch (InvalidStackFrameException | IllegalArgumentException e) {
         error = e;
         clearCaches();
       }
@@ -291,10 +293,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
           clearCaches();
         }
       }
-      catch (InvalidStackFrameException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (AbsentInformationException e) {
+      catch (InvalidStackFrameException | AbsentInformationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
     }

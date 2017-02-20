@@ -85,9 +85,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
           g.fillRect(0, 0, w, h);
         }
         g.setColor(comboBox.isEnabled() ? new JBColor(Gray._255, getForeground()) : new JBColor(Gray._255, getBorderColor()));
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-        g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+        config.setupRoundedBorderAntialiasing();
         final int tW = JBUI.scale(8);
         final int tH = JBUI.scale(6);
         final int xU = (w - tW) / 2;
@@ -368,7 +366,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
 
     if (hasFocus) {
       g.setClip(clip);
-      DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4));
+      DarculaUIUtil.paintFocusRing(g, new Rectangle(JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4)));
     }
     else {
       g.setColor(borderColor);

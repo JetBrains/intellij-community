@@ -57,6 +57,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -589,10 +590,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  @NotNull
-  private static List<PsiElement> getElementsFrom(@NotNull PsiFile file) {
+  private static void getElementsAndDialectsFrom(@NotNull PsiFile file,
+                                                 @NotNull List<PsiElement> outElements,
+                                                 @NotNull Set<String> outDialects) {
     final FileViewProvider viewProvider = file.getViewProvider();
     final Set<PsiElement> result = new LinkedHashSet<>();
+    Set<Language> processedLanguages = new SmartHashSet<>();
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       @Override public void visitElement(PsiElement element) {
         ProgressManager.checkCanceled();
@@ -605,7 +608,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           while (child != null) {
             child.accept(this);
             result.add(child);
-
+            appendDialects(child, processedLanguages, outDialects);
             child = child.getNextSibling();
           }
         }
@@ -618,10 +621,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
       psiRoot.accept(visitor);
       result.add(psiRoot);
+      appendDialects(psiRoot, processedLanguages, outDialects);
     }
-    return new ArrayList<>(result);
+    outElements.addAll(result);
   }
 
+  static void appendDialects(PsiElement element, Set<Language> outProcessedLanguages, Set<String> outDialectIds) {
+    Language language = element.getLanguage();
+    outDialectIds.add(language.getID());
+    if (outProcessedLanguages.add(language)) {
+      for (Language dialect : language.getDialects()) {
+        outDialectIds.add(dialect.getID());
+      }
+    }
+  }
 
   @NotNull
   List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
@@ -662,13 +675,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                     @NotNull List<LocalInspectionToolWrapper> wrappers) {
     final PsiElement host = InjectedLanguageManager.getInstance(injectedPsi.getProject()).getInjectionHost(injectedPsi);
 
-    final List<PsiElement> elements = getElementsFrom(injectedPsi);
+    List<PsiElement> elements = new ArrayList<>();
+    Set<String> elementDialectIds = new SmartHashSet<>();
+    getElementsAndDialectsFrom(injectedPsi, elements, elementDialectIds);
     if (elements.isEmpty()) {
       return;
     }
-    Set<String> elementDialectIds = InspectionEngine.calcElementDialectIds(elements);
     Map<LocalInspectionToolWrapper, Set<String>> toolToSpecifiedLanguageIds = InspectionEngine.getToolsToSpecifiedLanguages(wrappers);
-    for (final Map.Entry<LocalInspectionToolWrapper, Set<String>> pair : toolToSpecifiedLanguageIds.entrySet()) {
+    for (Map.Entry<LocalInspectionToolWrapper, Set<String>> pair : toolToSpecifiedLanguageIds.entrySet()) {
       indicator.checkCanceled();
       final LocalInspectionToolWrapper wrapper = pair.getKey();
       final LocalInspectionTool tool = wrapper.getTool();

@@ -32,7 +32,7 @@ import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
 import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
-import static com.intellij.testFramework.Assertions.assertThat;
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static java.util.Collections.singletonList;
 
 @SuppressWarnings("Duplicates")
@@ -244,7 +244,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     TextAttributes classFallbackAttrs = scheme.getAttributes(DefaultLanguageHighlighterColors.CLASS_NAME.getFallbackAttributeKey());
     assertSame(classFallbackAttrs, classAttrs);
   }
-  
+
   public void testPreventCyclicTextAttributeDependency() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
@@ -271,7 +271,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       TextAttributesKey.removeTextAttributesKey("D");
     }
   }
-  
+
   public void testIdea152156() throws Exception {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();

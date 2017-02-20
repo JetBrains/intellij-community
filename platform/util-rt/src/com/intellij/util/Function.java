@@ -24,6 +24,8 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  *
  * @see Functions for some common implementations
+ *
+ * Consider to use java.util.function.Function
  */
 @SuppressWarnings({"unchecked"})
 public interface Function<Param, Result> {

@@ -40,8 +40,6 @@
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.application.TransactionGuard"
-                        serviceImplementation="com.intellij.openapi.application.TransactionGuardImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
@@ -196,6 +194,8 @@
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorPaletteFactory"
+                        serviceImplementation="com.intellij.openapi.options.colors.EditorColorPaletteFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.FileAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
@@ -354,7 +354,8 @@
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher"
                         serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
+    <applicationService serviceInterface="com.intellij.ide.RemoteDesktopService"
+                        serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
@@ -382,8 +383,16 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UiInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.FontSizeInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.BuildNumberUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ScaleInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$ConfigImport"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SkipSteps"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SelectedLAF"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SelectedKeymap"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$DisabledPlugins"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
+    <statistics.usagesCollector implementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesUsagesCollector"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable"
                              id="usage.statistics"
@@ -461,6 +470,7 @@
 
     <intentionAction>
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
+      <category>Other</category>
     </intentionAction>
 
     <daemon.intentionActionFilter implementation="com.intellij.psi.IntentionFilterOwnerActionFilter"/>
@@ -475,6 +485,8 @@
 
     <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.options.newEditor.SettingsDialogFactory"/>
 
     <postStartupActivity implementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager$ProjectInspectionProfileStartUpActivity"/>
 

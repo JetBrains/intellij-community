@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     boolean cellHasFocus) {
     removeAll();
 
-    final boolean hasRightRenderer = UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION;
+    final boolean hasRightRenderer = UISettings.getInstance().getShowIconInQuickNavigation();
     final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
 
     final ColoredListCellRenderer left = createColoredListCellRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));

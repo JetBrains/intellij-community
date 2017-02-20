@@ -15,11 +15,10 @@
  */
 package org.jetbrains.plugins.javaFX.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -98,34 +97,28 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
       }
 
       final String[] className = new String[]{null};
-      
-      class StopException extends RuntimeException {}
+      NanoXmlUtil.parse(new StringReader(content), new NanoXmlUtil.IXMLBuilderAdapter() {
+        private boolean myFxRootUsed = false;
 
-      try {
-        NanoXmlUtil.parse(new StringReader(content), new NanoXmlUtil.IXMLBuilderAdapter() {
-          private boolean myFxRootUsed = false;
-
-          @Override
-          public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
-            if (value != null &&
-                (FxmlConstants.FX_CONTROLLER.equals(nsPrefix + ":" + key) || FxmlConstants.TYPE.equals(key) && myFxRootUsed)) {
-              className[0] = value;
-            }
+        @Override
+        public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+          if (value != null &&
+              (FxmlConstants.FX_CONTROLLER.equals(nsPrefix + ":" + key) || FxmlConstants.TYPE.equals(key) && myFxRootUsed)) {
+            className[0] = value;
           }
+        }
 
-          @Override
-          public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
-            throw new StopException();
-          }
+        @Override
+        public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
+          throw NanoXmlUtil.ParserStoppedXmlException.INSTANCE;
+        }
 
-          @Override
-          public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr)
-            throws Exception {
-            myFxRootUsed = FxmlConstants.FX_ROOT.equals(nsPrefix + ":" + name);
-          }
-        });
-      }
-      catch (StopException ignore){}
+        @Override
+        public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr)
+          throws Exception {
+          myFxRootUsed = FxmlConstants.FX_ROOT.equals(nsPrefix + ":" + name);
+        }
+      });
       return className[0];
     }
   }
@@ -170,7 +163,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
                                @NotNull String className,
                                Function<VirtualFile, T> f,
                                GlobalSearchScope scope) {
-    return ApplicationManager.getApplication().runReadAction((Computable<List<T>>)() -> {
+    return ReadAction.compute(() -> {
       final Collection<VirtualFile> files;
       try {
         files = FileBasedIndex.getInstance().getContainingFiles(id, className,

@@ -91,7 +91,7 @@ public class JavaBuilderUtil {
   public static void registerFilterToSkipMarkingAffectedFileDirty(@NotNull CompileContext context, @NotNull FileFilter filter) {
     List<FileFilter> filters = SKIP_MARKING_DIRTY_FILTERS_KEY.get(context);
     if (filters == null) {
-      SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, filters = new ArrayList<FileFilter>());
+      SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, filters = new ArrayList<>());
     }
     filters.add(filter);
   }
@@ -127,7 +127,7 @@ public class JavaBuilderUtil {
     SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
     FileFilter filter = createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context));
     SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, null);
-    return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, filter);
+    return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, CompilationRound.NEXT, filter);
   }
 
   /**
@@ -142,21 +142,31 @@ public class JavaBuilderUtil {
                                        ModuleChunk chunk,
                                        Collection<File> filesToCompile,
                                        Collection<File> successfullyCompiled) throws IOException {
-    return updateMappings(context, delta, dirtyFilesHolder, chunk, filesToCompile, successfullyCompiled, null);
+    return updateMappings(context, delta, dirtyFilesHolder, chunk, filesToCompile, successfullyCompiled, CompilationRound.NEXT, null);
+  }
+
+  public static void markDirtyDependenciesForInitialRound(CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dfh, ModuleChunk chunk) throws IOException {
+    if (hasRemovedPaths(chunk, dfh)) {
+      final Mappings delta = context.getProjectDescriptor().dataManager.getMappings().createDelta();
+      final Set<File> empty = Collections.emptySet();
+      updateMappings(context, delta, dfh, chunk, empty, empty, CompilationRound.CURRENT, null);
+    }
   }
 
   /**
-   * @param filesToCompile       files compiled in this round
+   * @param filesToCompile   files compiled in this round
+   * @param markDirtyRound   compilation round at which dirty files should be visible to builders
    * @return true if additional compilation pass is required, false otherwise
    * @throws Exception
    */
   private static boolean updateMappings(CompileContext context,
-                                       final Mappings delta,
-                                       DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                                       ModuleChunk chunk,
-                                       Collection<File> filesToCompile,
-                                       Collection<File> successfullyCompiled,
-                                       @Nullable FileFilter skipMarkingDirtyFilter) throws IOException {
+                                        final Mappings delta,
+                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                        ModuleChunk chunk,
+                                        Collection<File> filesToCompile,
+                                        Collection<File> successfullyCompiled,
+                                        final CompilationRound markDirtyRound,
+                                        @Nullable FileFilter skipMarkingDirtyFilter) throws IOException {
     try {
       boolean performIntegrate = true;
       boolean additionalPassRequired = false;
@@ -179,7 +189,7 @@ public class JavaBuilderUtil {
           // unmark as affected all successfully compiled
           allAffectedFiles.removeAll(successfullyCompiled);
 
-          final Set<File> affectedBeforeDif = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+          final Set<File> affectedBeforeDif = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
           affectedBeforeDif.addAll(allAffectedFiles);
 
           final Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
@@ -205,7 +215,7 @@ public class JavaBuilderUtil {
           }
 
           if (incremental) {
-            final Set<File> newlyAffectedFiles = new HashSet<File>(allAffectedFiles);
+            final Set<File> newlyAffectedFiles = new HashSet<>(allAffectedFiles);
             newlyAffectedFiles.removeAll(affectedBeforeDif);
 
             final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
@@ -232,7 +242,7 @@ public class JavaBuilderUtil {
               }
 
               for (File file : newlyAffectedFiles) {
-                FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, file);
+                FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
               }
               additionalPassRequired = isCompileJavaIncrementally(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
@@ -255,7 +265,7 @@ public class JavaBuilderUtil {
             }
 
             FileFilter toBeMarkedFilter = skipMarkingDirtyFilter == null ? null : new NegationFileFilter(skipMarkingDirtyFilter);
-            FSOperations.markDirtyRecursively(context, CompilationRound.NEXT, chunk, toBeMarkedFilter);
+            FSOperations.markDirtyRecursively(context, markDirtyRound, chunk, toBeMarkedFilter);
           }
         }
         else {
@@ -295,16 +305,13 @@ public class JavaBuilderUtil {
 
   private static FileFilter createOrFilter(final List<FileFilter> filters) {
     if (filters == null || filters.isEmpty()) return null;
-    return new FileFilter() {
-      @Override
-      public boolean accept(File pathname) {
-        for (FileFilter filter : filters) {
-          if (filter.accept(pathname)) {
-            return true;
-          }
+    return pathname -> {
+      for (FileFilter filter : filters) {
+        if (filter.accept(pathname)) {
+          return true;
         }
-        return false;
       }
+      return false;
     };
   }
 
@@ -337,7 +344,7 @@ public class JavaBuilderUtil {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
-    final List<Pair<File, JpsModule>> result = new ArrayList<Pair<File, JpsModule>>();
+    final List<Pair<File, JpsModule>> result = new ArrayList<>();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
         final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
@@ -367,7 +374,7 @@ public class JavaBuilderUtil {
   private static Set<File> getFilesContainer(CompileContext context, final Key<Set<File>> dataKey) {
     Set<File> files = dataKey.get(context);
     if (files == null) {
-      files = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      files = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
       dataKey.set(context, files);
     }
     return files;
@@ -377,11 +384,22 @@ public class JavaBuilderUtil {
     if (!dirtyFilesHolder.hasRemovedFiles()) {
       return Collections.emptySet();
     }
-    final Set<String> removed = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> removed = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     for (ModuleBuildTarget target : chunk.getTargets()) {
       removed.addAll(dirtyFilesHolder.getRemovedFiles(target));
     }
     return removed;
+  }
+
+  private static boolean hasRemovedPaths(ModuleChunk chunk, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder) {
+    if (dirtyFilesHolder.hasRemovedFiles()) {
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        if (!dirtyFilesHolder.getRemovedFiles(target).isEmpty()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static void cleanupChunkResources(CompileContext context) {
@@ -420,7 +438,7 @@ public class JavaBuilderUtil {
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
     private final Set<? extends BuildTarget<?>> myChunkTargets;
-    private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache = new HashMap<BuildTarget<?>, Set<BuildTarget<?>>>();
+    private final Map<BuildTarget<?>, Set<BuildTarget<?>>> myCache = new HashMap<>();
     private final BuildRootIndex myBuildRootIndex;
     private final BuildTargetIndex myBuildTargetIndex;
 

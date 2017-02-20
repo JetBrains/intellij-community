@@ -78,11 +78,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
-  // PY-16303
-  public void testTypingTupleInDocstring() {
-    doTest();
-  }
-
   // PY-16898
   public void testAsyncForIterable() {
     doTest();
@@ -166,6 +161,26 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   // PY-21048
   public void testAsyncFunctionReturnType() {
+    doTest();
+  }
+
+  // PY-20967
+  public void testAsyncFunctionAnnotatedToReturnNone() {
+    doTest();
+  }
+
+  // PY-20709
+  public void testGeneratorReturnType() {
+    doTest();
+  }
+
+  // PY-20657, PY-21916
+  public void testGeneratorAnnotatedToReturnIterable() {
+    doTest();
+  }
+
+  // PY-20657, PY-21916
+  public void testAsyncGeneratorAnnotatedToReturnAsyncIterable() {
     doTest();
   }
 

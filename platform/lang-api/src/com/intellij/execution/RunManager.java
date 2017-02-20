@@ -246,7 +246,7 @@ public abstract class RunManager {
    * Sets unique name if existing one is not 'unique'
    * If settings type is not null (for example settings may be provided by plugin that is unavailable after IDE restart, so type would be suddenly null)
    * name will be chosen unique for certain type otherwise name will be unique among all configurations
-   * @return <code>true</code> if name was changed
+   * @return {@code true} if name was changed
    */
   public boolean setUniqueNameIfNeed(@NotNull RunnerAndConfigurationSettings settings) {
     String oldName = settings.getName();
@@ -256,7 +256,7 @@ public abstract class RunManager {
 
   /**
    * Sets unique name if existing one is not 'unique' for corresponding configuration type
-   * @return <code>true</code> if name was changed
+   * @return {@code true} if name was changed
    */
   public boolean setUniqueNameIfNeed(@NotNull RunConfiguration configuration) {
     String oldName = configuration.getName();

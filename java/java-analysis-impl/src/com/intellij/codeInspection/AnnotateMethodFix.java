@@ -28,7 +28,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -51,6 +50,11 @@ public class AnnotateMethodFix implements LocalQuickFix {
   @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.annotate.method.quickfix.name", ClassUtil.extractClassName(myAnnotation));
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override
@@ -104,12 +108,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   }
 
   private void annotateMethod(@NotNull PsiMethod method) {
-    try {
-      AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, PsiNameValuePair.EMPTY_ARRAY, myAnnotationsToRemove);
-      fix.invoke(method.getProject(), method.getContainingFile(), method, method);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, PsiNameValuePair.EMPTY_ARRAY, myAnnotationsToRemove);
+    fix.invoke(method.getProject(), method.getContainingFile(), method, method);
   }
 }

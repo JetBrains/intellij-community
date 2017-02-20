@@ -120,6 +120,7 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
         delete(file);
       }
       myProjectFixture.tearDown();
+      clearFields(this);
     }
     finally {
       super.tearDown();

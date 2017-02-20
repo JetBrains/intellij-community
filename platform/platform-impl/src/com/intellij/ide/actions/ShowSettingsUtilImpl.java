@@ -23,7 +23,8 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
-import com.intellij.openapi.options.newEditor.SettingsDialog;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.openapi.options.newEditor.SettingsDialogFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author max
@@ -53,7 +55,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   public static DialogWrapper getDialog(@Nullable Project project, @NotNull ConfigurableGroup[] groups, @Nullable Configurable toSelect) {
     project = getProject(project);
     final ConfigurableGroup[] filteredGroups = filterEmptyGroups(groups);
-    return new SettingsDialog(project, filteredGroups, toSelect, null);
+    return SettingsDialogFactory.getInstance().create(project, filteredGroups, toSelect, null);
   }
 
   @NotNull
@@ -98,13 +100,26 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   @Override
   public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
+    //noinspection unchecked
+    showSettingsDialog(project, configurableClass, null);
+  }
+
+  public <T extends Configurable> void showSettingsDialog(@Nullable Project project,
+                                                          @NotNull Class<T> configurableClass,
+                                                          @Nullable Consumer<T> additionalConfiguration) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
 
     ConfigurableGroup[] groups = getConfigurableGroups(project, true);
 
     Configurable config = new ConfigurableVisitor.ByType(configurableClass).find(groups);
-
+    
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
+
+    if (additionalConfiguration != null) {
+      T toConfigure = ConfigurableWrapper.cast(configurableClass, config);
+      assert toConfigure != null : "Wrong configurable found: " + config.getClass();
+      additionalConfiguration.accept(toConfigure);
+    }
 
     getDialog(project, groups, config).show();
   }
@@ -133,7 +148,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = id2Select == null ? null : new ConfigurableVisitor.ByID(id2Select).find(group);
 
-    new SettingsDialog(getProject(project), group, configurable2Select, filter).show();
+    SettingsDialogFactory.getInstance().create(getProject(project), group, configurable2Select, filter).show();
   }
 
   @Override
@@ -207,10 +222,10 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
                                           boolean showApplyButton) {
     final DialogWrapper editor;
     if (parent == null) {
-      editor = new SettingsDialog(project, dimensionKey, configurable, showApplyButton, false);
+      editor = SettingsDialogFactory.getInstance().create(project, dimensionKey, configurable, showApplyButton, false);
     }
     else {
-      editor = new SettingsDialog(parent, dimensionKey, configurable, showApplyButton, false);
+      editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false);
     }
     if (advancedInitialization != null) {
       new UiNotifyConnector.Once(editor.getContentPane(), new Activatable.Adapter() {

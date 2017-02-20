@@ -79,7 +79,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
     if (isUseProxy()) {
       HttpConfigurable proxy = HttpConfigurable.getInstance();
       client.getHostConfiguration().setProxy(proxy.PROXY_HOST, proxy.PROXY_PORT);
-      if (proxy.PROXY_AUTHENTICATION) {
+      if (proxy.PROXY_AUTHENTICATION && proxy.getProxyLogin() != null) {
         AuthScope authScope = new AuthScope(proxy.PROXY_HOST, proxy.PROXY_PORT);
         Credentials credentials = getCredentials(proxy.getProxyLogin(), proxy.getPlainProxyPassword(), proxy.PROXY_HOST);
         client.getState().setProxyCredentials(authScope, credentials);
@@ -97,7 +97,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   @Nullable
-  private static Credentials getCredentials(String login, String password, String host) {
+  private static Credentials getCredentials(@NotNull String login, String password, String host) {
     int domainIndex = login.indexOf("\\");
     if (domainIndex > 0) {
       // if the username is in the form "user\domain"

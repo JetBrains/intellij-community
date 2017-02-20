@@ -69,14 +69,5 @@ public class SchemeImportUtil {
     virtualFiles[0].refresh(false, false);
     return virtualFiles[0];
   }
-
-  public static void showStatus(final JComponent component, final String message, MessageType messageType) {
-    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
-                                    messageType.getPopupBackground(), null);
-    balloonBuilder.setFadeoutTime(5000);
-    final Balloon balloon = balloonBuilder.createBalloon();
-    balloon.showInCenterOf(component);
-    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
-  }
+  
 }

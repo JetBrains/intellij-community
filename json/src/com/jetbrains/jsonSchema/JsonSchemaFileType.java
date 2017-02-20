@@ -57,7 +57,7 @@ public class JsonSchemaFileType extends LanguageFileType implements FileTypeIden
   @Nullable
   @Override
   public Icon getIcon() {//todo change icon
-    return AllIcons.FileTypes.Json;
+    return AllIcons.FileTypes.JsonSchema;
   }
 
   @Override

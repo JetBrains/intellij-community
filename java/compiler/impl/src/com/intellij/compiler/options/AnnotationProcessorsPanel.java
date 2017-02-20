@@ -202,19 +202,6 @@ public class AnnotationProcessorsPanel extends JPanel {
     return myModuleProfiles;
   }
 
-  private static void expand(JTree tree) {
-    int oldRowCount = 0;
-    do {
-      int rowCount = tree.getRowCount();
-      if (rowCount == oldRowCount) break;
-      oldRowCount = rowCount;
-      for (int i = 0; i < rowCount; i++) {
-        tree.expandRow(i);
-      }
-    }
-    while (true);
-  }
-
   private class MyTreeModel extends DefaultTreeModel implements EditableTreeModel{
     public MyTreeModel() {
       super(new RootNode());
@@ -317,7 +304,7 @@ public class AnnotationProcessorsPanel extends JPanel {
       }
       children = newKids;
       ((DefaultTreeModel)myTree.getModel()).reload();
-      expand(myTree);
+      TreeUtil.expandAll(myTree);
       return this;
     }
   }

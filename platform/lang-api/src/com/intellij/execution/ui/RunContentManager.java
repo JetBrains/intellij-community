@@ -16,6 +16,7 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -64,6 +65,7 @@ public interface RunContentManager {
    * @return the content descriptor, or null if there is no selected run configuration in the specified toolwindow.
    */
   @Nullable
+  @Deprecated
   RunContentDescriptor getSelectedContent(Executor executor);
 
   /**
@@ -96,4 +98,15 @@ public interface RunContentManager {
 
   @Nullable
   ToolWindow getToolWindowByDescriptor(@NotNull RunContentDescriptor descriptor);
+
+  void selectRunContent(@NotNull RunContentDescriptor descriptor);
+
+  /**
+   * @return Tool window id where content should be shown. Null if content tool window is determined by executor.
+   */
+  @Nullable
+  String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings);
+
+  @NotNull
+  String getToolWindowIdByEnvironment(@NotNull ExecutionEnvironment executionEnvironment);
 }

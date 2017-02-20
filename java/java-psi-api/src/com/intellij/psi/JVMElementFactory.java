@@ -35,7 +35,7 @@ public interface JVMElementFactory {
    * @param name the name of the class to create.
    * @return the created class instance.
    * @throws IncorrectOperationException
-   *          if <code>name</code> is not a valid Java identifier.
+   *          if {@code name} is not a valid Java identifier.
    */
   @NotNull
   PsiClass createClass(@NonNls @NotNull String name) throws IncorrectOperationException;
@@ -45,7 +45,7 @@ public interface JVMElementFactory {
    *
    * @param name the name of the interface to create.
    * @return the created interface instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.
    */
   @NotNull
   PsiClass createInterface(@NonNls @NotNull String name) throws IncorrectOperationException;
@@ -55,7 +55,7 @@ public interface JVMElementFactory {
    *
    * @param name the name of the enum to create.
    * @return the created enum instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.
    */
   @NotNull
   PsiClass createEnum(@NotNull @NonNls String name) throws IncorrectOperationException;
@@ -66,8 +66,8 @@ public interface JVMElementFactory {
    * @param name the name of the field to create.
    * @param type the type of the field to create.
    * @return the created field instance.
-   * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   *                                     or <code>type</code> represents an invalid type.
+   * @throws IncorrectOperationException {@code name} is not a valid Java identifier
+   *                                     or {@code type} represents an invalid type.
    */
   @NotNull
   PsiField createField(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException;
@@ -78,8 +78,8 @@ public interface JVMElementFactory {
    * @param name       the name of the method to create.
    * @param returnType the return type of the method to create.
    * @return the created method instance.
-   * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   *                                     or <code>type</code> represents an invalid type.
+   * @throws IncorrectOperationException {@code name} is not a valid Java identifier
+   *                                     or {@code type} represents an invalid type.
    */
   @NotNull
   PsiMethod createMethod(@NotNull @NonNls String name, PsiType returnType) throws IncorrectOperationException;
@@ -110,8 +110,8 @@ public interface JVMElementFactory {
    * @param name the name of the parameter to create.
    * @param type the type of the parameter to create.
    * @return the created parameter instance.
-   * @throws IncorrectOperationException <code>name</code> is not a valid Java identifier
-   *                                     or <code>type</code> represents an invalid type.
+   * @throws IncorrectOperationException {@code name} is not a valid Java identifier
+   *                                     or {@code type} represents an invalid type.
    */
   @NotNull
   PsiParameter createParameter(@NotNull @NonNls String name, PsiType type) throws IncorrectOperationException;
@@ -175,7 +175,7 @@ public interface JVMElementFactory {
    *
    * @param name the name of the annotation type to create.
    * @return the created annotation type instance.
-   * @throws IncorrectOperationException if <code>name</code> is not a valid Java identifier.
+   * @throws IncorrectOperationException if {@code name} is not a valid Java identifier.
    */
   @NotNull
   PsiClass createAnnotationType(@NotNull @NonNls String name) throws IncorrectOperationException;
@@ -247,8 +247,8 @@ public interface JVMElementFactory {
   /**
    * Returns the primitive type instance for the specified type name.
    *
-   * @param text the name of a Java primitive type (for example, <code>int</code>)
-   * @return the primitive type instance, or null if <code>name</code> is not a valid
+   * @param text the name of a Java primitive type (for example, {@code int})
+   * @return the primitive type instance, or null if {@code name} is not a valid
    *         primitive type name.
    */
   @Nullable

@@ -1,16 +1,19 @@
 package com.jetbrains.env.python.testing;
 
+import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.pytest.PyTestConfigurationProducer;
-import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalPyTestFactory;
+import com.jetbrains.python.testing.universalTests.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -30,7 +33,91 @@ public class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask(PyTestConfigurationProducer.class, PythonTestConfigurationsModel.PY_TEST_NAME));
+      new CreateConfigurationTestTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class));
+  }
+
+  /**
+   * Checks tests are resolved when launched from subfolder
+   */
+  @Test
+  public void testTestsInSubFolderResolvable() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+  /**
+   * Ensures test output works
+   */
+  @Test
+  public void testOutput() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs") {
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+  @Test(expected = RuntimeConfigurationWarning.class)
+  public void testValidation() throws Exception {
+
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalPyTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalPyTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyUniversalPyTestFactory createFactory() {
+          return PyUniversalPyTestFactory.INSTANCE;
+        }
+      };
+    runPythonTest(task);
+    task.checkEmptyTarget();
+  }
+
+  @Test
+  public void testConfigurationProducerOnDirectory() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                                                 PyUniversalPyTestConfiguration.class));
+  }
+
+  @Test
+  public void testRenameClass() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask.CreateConfigurationTestAndRenameClassTask(
+        PythonTestConfigurationsModel.PY_TEST_NAME,
+        PyUniversalPyTestConfiguration.class));
+  }
+
+  /**
+   * Ensure dots in test names do not break anything (PY-13833)
+   */
+  @Test
+  public void testEscape() throws Exception {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner("test_escape_me.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        final String resultTree = runner.getFormattedTestTree().trim();
+        final String expectedTree = myFixture.configureByFile("test_escape_me.tree.txt").getText().trim();
+        Assert.assertEquals("Test result wrong tree", expectedTree, resultTree);
+      }
+    });
   }
 
   // Import error should lead to test failure
@@ -66,12 +153,13 @@ public class PythonPyTestingTest extends PyEnvTestCase {
       protected PyTestTestProcessRunner createProcessRunner() throws Exception {
         return new PyTestTestProcessRunner("", 0) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull final PyTestRunConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalPyTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setWorkingDirectory(null);
             final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
             assert fullFilePath != null : String.format("No dir_test.py in %s", myFixture.getTempDirFixture().getTempDirPath());
-            configuration.setTestToRun(fullFilePath.getPath());
+            configuration.getTarget().setTarget(fullFilePath.getPath());
+            configuration.getTarget().setTargetType(TestTargetType.PATH);
           }
         };
       }
@@ -81,8 +169,9 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        Assert.assertThat("No directory found in output", stdout,
-                          Matchers.containsString(String.format("Directory %s", myFixture.getTempDirPath())));
+        final String projectDir = myFixture.getProject().getBaseDir().getPath();
+        Assert.assertThat("No directory found in output", runner.getConsole().getText(),
+                          Matchers.containsString(String.format("Directory %s", PathUtil.toSystemDependentName(projectDir))));
       }
     });
   }
@@ -129,25 +218,25 @@ public class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         if (runner.getCurrentRerunStep() > 0) {
-          /**
-           * We can't rerun one subtest (yield), so we rerun whole "test_even"
-           */
-          assertEquals(stderr, 7, runner.getAllTestsCount());
-          assertEquals(stderr, 3, runner.getPassedTestsCount());
-          assertEquals(stderr, 4, runner.getFailedTestsCount());
+          // We rerun all tests, since running parametrized tests is broken until
+          // https://github.com/JetBrains/teamcity-messages/issues/121
+          assertEquals(runner.getFormattedTestTree(), 7, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 3, runner.getPassedTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
           return;
         }
-        assertEquals(stderr, 9, runner.getAllTestsCount());
-        assertEquals(stderr, 5, runner.getPassedTestsCount());
-        assertEquals(stderr, 4, runner.getFailedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 9, runner.getAllTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 5, runner.getPassedTestsCount());
+        assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
+        // Py.test may report F before failed test, so we check string contains, not starts with
         Assert
           .assertThat("No test stdout", MockPrinter.fillPrinter(runner.findTestByName("testOne")).getStdOut(),
-                      Matchers.startsWith("I am test1"));
+                      Matchers.containsString("I am test1"));
 
         // Ensure test has stdout even it fails
         final AbstractTestProxy testFail = runner.findTestByName("testFail");
         Assert.assertThat("No stdout for fail", MockPrinter.fillPrinter(testFail).getStdOut(),
-                          Matchers.startsWith("I will fail"));
+                          Matchers.containsString("I will fail"));
 
         // This test has "sleep(1)", so duration should be >=1000
         Assert.assertThat("Wrong duration", testFail.getDuration(), Matchers.greaterThanOrEqualTo(1000L));

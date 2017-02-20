@@ -48,7 +48,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
 
   @Override
   public int getSortWeight() {
-    return 3;
+    return MODULE_SORT_WEIGHT;
   }
 
   @Override

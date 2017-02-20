@@ -17,6 +17,7 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,22 +25,29 @@ import java.awt.*;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
+import java.awt.image.BufferedImage;
 
 public class LabelIcon implements Icon {
   private final int mySize;
   @NotNull private final Color[] myColors;
   @NotNull private final Color myBgColor;
+  @NotNull private final BufferedImage myImage;
 
   public LabelIcon(int size, @NotNull Color bgColor, @NotNull Color... colors) {
     mySize = size;
     myBgColor = bgColor;
     myColors = colors;
+
+    myImage = UIUtil.createImage(getIconWidth(), getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+    paintIcon(myImage.createGraphics());
   }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {
-    Graphics2D g2 = (Graphics2D)g;
+    UIUtil.drawImage(g, myImage, x, y, null);
+  }
 
+  private void paintIcon(@NotNull Graphics2D g2) {
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
 
     float scale = mySize / 8.0f;
@@ -47,16 +55,16 @@ public class LabelIcon implements Icon {
     for (int i = myColors.length - 1; i >= 0; i--) {
       if (i != myColors.length - 1) {
         g2.setColor(myBgColor);
-        paintTag(g2, scale, x + Math.round(scale * 2) * i + 1, y);
+        paintTag(g2, scale, scale * 2 * i + 1, 0);
       }
       g2.setColor(myColors[i]);
-      paintTag(g2, scale, x + Math.round(scale * 2) * i, y);
+      paintTag(g2, scale, scale * 2 * i, 0);
     }
 
     config.restore();
   }
 
-  public void paintTag(Graphics2D g2, float scale, int x, int y) {
+  public void paintTag(Graphics2D g2, float scale, float x, float y) {
     Path2D.Float path = new Path2D.Float();
     path.moveTo(x + 1 * scale, y + 2 * scale);
     path.lineTo(x + 3 * scale, y + 2 * scale);
@@ -81,7 +89,8 @@ public class LabelIcon implements Icon {
   }
 
   public static int getWidth(int height, int labelsCount) {
-    return height + (height * (labelsCount - 1) / 4);
+    float scale = height / 8.0f;
+    return Math.round((7 + 2 * (labelsCount - 1)) * scale);
   }
 
   @Override

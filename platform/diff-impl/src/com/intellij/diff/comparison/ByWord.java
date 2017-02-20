@@ -37,7 +37,7 @@ import static com.intellij.diff.comparison.ComparisonManagerImpl.convertIntoMerg
 import static com.intellij.diff.comparison.TrimUtil.*;
 import static com.intellij.diff.comparison.TrimUtil.trim;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.trim;
+import static com.intellij.diff.comparison.iterables.DiffIterableUtil.subiterable;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
 public class ByWord {
@@ -137,7 +137,7 @@ public class ByWord {
       List<InlineChunk> subwords1 = words1.subList(words.start1, words.end1);
       List<InlineChunk> subwords2 = words2.subList(words.start2, words.end2);
 
-      FairDiffIterable subiterable = fair(trim(wordChanges, words.start1, words.end1, words.start2, words.end2));
+      FairDiffIterable subiterable = fair(subiterable(wordChanges, words.start1, words.end1, words.start2, words.end2));
 
       FairDiffIterable delimitersIterable = matchAdjustmentDelimiters(subtext1, subtext2, subwords1, subwords2, subiterable,
                                                                       offsets.start1, offsets.start2, indicator);
@@ -513,8 +513,12 @@ public class ByWord {
     @NotNull
     public DiffIterable build() {
       for (Range range : myIterable.iterateChanges()) {
-        int endCut = expandBackwardW(myText1, myText2, range.start1, range.start2, range.end1, range.end2);
-        int startCut = expandForwardW(myText1, myText2, range.start1, range.start2, range.end1 - endCut, range.end2 - endCut);
+        int endCut = expandWhitespacesBackward(myText1, myText2,
+                                               range.start1, range.start2,
+                                               range.end1, range.end2);
+        int startCut = expandWhitespacesForward(myText1, myText2,
+                                                range.start1, range.start2,
+                                                range.end1 - endCut, range.end2 - endCut);
 
         Range expand = new Range(range.start1 + startCut, range.end1 - endCut, range.start2 + startCut, range.end2 - endCut);
 
@@ -553,12 +557,12 @@ public class ByWord {
     @NotNull
     public List<MergeRange> build() {
       for (MergeRange range : myIterable) {
-        int endCut = expandBackwardW(myText1, myText2, myText3,
-                                     range.start1, range.start2, range.start3,
-                                     range.end1, range.end2, range.end3);
-        int startCut = expandForwardW(myText1, myText2, myText3,
-                                      range.start1, range.start2, range.start3,
-                                      range.end1 - endCut, range.end2 - endCut, range.end3 - endCut);
+        int endCut = expandWhitespacesBackward(myText1, myText2, myText3,
+                                               range.start1, range.start2, range.start3,
+                                               range.end1, range.end2, range.end3);
+        int startCut = expandWhitespacesForward(myText1, myText2, myText3,
+                                                range.start1, range.start2, range.start3,
+                                                range.end1 - endCut, range.end2 - endCut, range.end3 - endCut);
 
         MergeRange expand = new MergeRange(range.start1 + startCut, range.end1 - endCut,
                                            range.start2 + startCut, range.end2 - endCut,
@@ -597,11 +601,11 @@ public class ByWord {
     public DiffIterable build() {
       for (Range range : myIterable.iterateChanges()) {
         // match spaces if we can, ignore them if we can't
-        Range expanded = expandW(myText1, myText2, range);
+        Range expanded = expandWhitespaces(myText1, myText2, range);
         Range trimmed = trim(myText1, myText2, expanded);
 
         if (!trimmed.isEmpty() &&
-            !isEqualsIW(myText1, myText2, trimmed)) {
+            !isEqualsIgnoreWhitespaces(myText1, myText2, trimmed)) {
           myChanges.add(trimmed);
         }
       }
@@ -636,11 +640,11 @@ public class ByWord {
     @NotNull
     public List<MergeRange> build() {
       for (MergeRange range : myIterable) {
-        MergeRange expanded = expandW(myText1, myText2, myText3, range);
+        MergeRange expanded = expandWhitespaces(myText1, myText2, myText3, range);
         MergeRange trimmed = trim(myText1, myText2, myText3, expanded);
 
         if (!trimmed.isEmpty() &&
-            !isEqualsIW(myText1, myText2, myText3, trimmed)) {
+            !isEqualsIgnoreWhitespaces(myText1, myText2, myText3, trimmed)) {
           myChanges.add(trimmed);
         }
       }

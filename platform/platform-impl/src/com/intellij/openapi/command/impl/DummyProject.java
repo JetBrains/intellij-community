@@ -16,7 +16,6 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -24,7 +23,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -33,7 +31,6 @@ import org.picocontainer.PicoContainer;
  * @author max
  */
 public class DummyProject extends UserDataHolderBase implements Project {
-
   private static class DummyProjectHolder {
     private static final DummyProject ourInstance = new DummyProject();
   }
@@ -43,8 +40,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return DummyProjectHolder.ourInstance;
   }
 
-  private DummyProject() {
-  }
+  private DummyProject() { }
 
   @Override
   public VirtualFile getProjectFile() {
@@ -59,14 +55,12 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   @Override
   @Nullable
-  @NonNls
   public String getPresentableUrl() {
     return null;
   }
 
   @Override
   @NotNull
-  @NonNls
   public String getLocationHash() {
     return "dummy";
   }
@@ -95,8 +89,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public void save() {
-  }
+  public void save() { }
 
   @Override
   public BaseComponent getComponent(@NotNull String name) {
@@ -117,7 +110,8 @@ public class DummyProject extends UserDataHolderBase implements Project {
   @Override
   @NotNull
   public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    return (T[]) ArrayUtil.EMPTY_OBJECT_ARRAY;
+    @SuppressWarnings("unchecked") T[] components = (T[])ArrayUtil.EMPTY_OBJECT_ARRAY;
+    return components;
   }
 
   @Override
@@ -142,16 +136,6 @@ public class DummyProject extends UserDataHolderBase implements Project {
     return o -> isDisposed();
   }
 
-  @NotNull
-  public ComponentConfig[] getComponentConfigurations() {
-    return ComponentConfig.EMPTY_ARRAY;
-  }
-
-  @Nullable
-  public Object getComponent(final ComponentConfig componentConfig) {
-    return null;
-  }
-
   @Override
   public boolean isOpen() {
     return false;
@@ -174,16 +158,11 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public void dispose() {
-  }
+  public void dispose() { }
 
   @NotNull
   @Override
   public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     throw new UnsupportedOperationException("getExtensions()");
-  }
-
-  public ComponentConfig getConfig(Class componentImplementation) {
-    throw new UnsupportedOperationException("Method getConfig not implemented in " + getClass());
   }
 }

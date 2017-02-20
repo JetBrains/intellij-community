@@ -146,7 +146,7 @@ public interface ASTNode extends UserDataHolder {
    * Adds the specified child node at the specified position in the child list.
    *
    * @param child        the child node to add.
-   * @param anchorBefore the node before which the child node is inserted (<code>null</code> to add a child as a last node).
+   * @param anchorBefore the node before which the child node is inserted ({@code null} to add a child as a last node).
    */
   void addChild(@NotNull ASTNode child, @Nullable ASTNode anchorBefore);
 
@@ -167,8 +167,8 @@ public interface ASTNode extends UserDataHolder {
   void removeChild(@NotNull ASTNode child);
 
   /**
-   * Removes a range of nodes from the list of children, starting with <code>firstNodeToRemove</code>,
-   * up to and not including <code>firstNodeToKeep</code>.
+   * Removes a range of nodes from the list of children, starting with {@code firstNodeToRemove},
+   * up to and not including {@code firstNodeToKeep}.
    *
    * @param firstNodeToRemove the first child node to remove from the tree.
    * @param firstNodeToKeep   the first child node to keep in the tree.
@@ -192,7 +192,7 @@ public interface ASTNode extends UserDataHolder {
 
   /**
    * Adds a range of nodes belonging to the same parent to the list of children of this node,
-   * starting with <code>firstChild</code>, up to and not including <code>firstChildToNotAdd</code>.
+   * starting with {@code firstChild}, up to and not including {@code firstChildToNotAdd}.
    *
    * @param firstChild         the first node to add.
    * @param firstChildToNotAdd the first child node following firstChild which will not be added to the tree.

@@ -18,7 +18,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
@@ -29,6 +29,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -62,6 +64,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +77,18 @@ public class CodeCompletionHandlerBase {
   final boolean invokedExplicitly;
   final boolean synchronous;
   final boolean autopopup;
+  private static int ourAutoInsertItemTimeout = 2000;
+
+  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
+    return createHandler(completionType, true, false, true);
+  }
+
+  public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
+    AnAction codeCompletionAction = ActionManager.getInstance().getAction("CodeCompletion");
+    assert (codeCompletionAction instanceof BaseCodeCompletionAction);
+    BaseCodeCompletionAction baseCodeCompletionAction = (BaseCodeCompletionAction) codeCompletionAction;
+    return baseCodeCompletionAction.createHandler(completionType, invokedExplicitly, autopopup, synchronous);
+  }
 
   public CodeCompletionHandlerBase(@NotNull CompletionType completionType) {
     this(completionType, true, false, true);
@@ -115,7 +130,7 @@ public class CodeCompletionHandlerBase {
     markCaretAsProcessed(caret);
 
     if (invokedExplicitly) {
-      CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+      StatisticsUpdate.applyLastCompletionStatisticsUpdate();
     }
 
     checkNoWriteAccess();
@@ -125,7 +140,7 @@ public class CodeCompletionHandlerBase {
     int offset = editor.getCaretModel().getOffset();
     if (editor.isViewer() || editor.getDocument().getRangeGuard(offset, offset) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();
-      CodeInsightUtilBase.showReadOnlyViewWarning(editor);
+      EditorModificationUtil.checkModificationAllowed(editor);
       return;
     }
 
@@ -305,7 +320,7 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
-    if (freezeSemaphore.waitFor(2000)) {
+    if (freezeSemaphore.waitFor(ourAutoInsertItemTimeout)) {
       if (!indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
         try {
           indicator.getLookup().refreshUi(true, false);
@@ -549,10 +564,9 @@ public class CodeCompletionHandlerBase {
 
     CompletionAssertions.WatchingInsertionContext context = null;
     try {
-      Lookup lookup = indicator.getLookup();
-      CompletionLookupArranger.StatisticsUpdate update = CompletionLookupArranger.collectStatisticChanges(item, lookup);
+      StatisticsUpdate update = StatisticsUpdate.collectStatisticChanges(item);
       context = insertItemHonorBlockSelection(indicator, item, completionChar, items, update);
-      CompletionLookupArranger.trackStatistics(context, update);
+      update.trackStatistics(context);
     }
     finally {
       afterItemInsertion(indicator, context == null ? null : context.getLaterRunnable());
@@ -564,7 +578,7 @@ public class CodeCompletionHandlerBase {
                                                                         final LookupElement item,
                                                                         final char completionChar,
                                                                         final List<LookupElement> items,
-                                                                        final CompletionLookupArranger.StatisticsUpdate update) {
+                                                                        final StatisticsUpdate update) {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = indicator.getCaret().getOffset();
@@ -617,19 +631,20 @@ public class CodeCompletionHandlerBase {
     return context;
   }
 
-  private static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
+  public static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
     if (laterRunnable != null) {
-      final Runnable runnable1 = () -> {
-        if (!indicator.getProject().isDisposed()) {
+      ActionTracker tracker = new ActionTracker(indicator.getEditor(), indicator);
+      Runnable wrapper = () -> {
+        if (!indicator.getProject().isDisposed() && !tracker.hasAnythingHappened()) {
           laterRunnable.run();
         }
         indicator.disposeIndicator();
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        runnable1.run();
+        wrapper.run();
       }
       else {
-        TransactionGuard.getInstance().submitTransactionLater(indicator.getProject(), runnable1);
+        TransactionGuard.getInstance().submitTransactionLater(indicator, wrapper);
       }
     }
     else {
@@ -641,7 +656,7 @@ public class CodeCompletionHandlerBase {
                                                                           final LookupElement item,
                                                                           final char completionChar,
                                                                           List<LookupElement> items,
-                                                                          final CompletionLookupArranger.StatisticsUpdate update,
+                                                                          final StatisticsUpdate update,
                                                                           final Editor editor,
                                                                           final PsiFile psiFile,
                                                                           final int caretOffset,
@@ -678,7 +693,7 @@ public class CodeCompletionHandlerBase {
       }
       EditorModificationUtil.scrollToCaret(editor);
     });
-    update.addSparedChars(indicator, item, context, completionChar);
+    update.addSparedChars(indicator, item, context);
     return context;
   }
 
@@ -798,5 +813,10 @@ public class CodeCompletionHandlerBase {
       }
     }
     return null;
+  }
+
+  @TestOnly
+  public static void setAutoInsertTimeout(int timeout) {
+    ourAutoInsertItemTimeout = timeout;
   }
 }

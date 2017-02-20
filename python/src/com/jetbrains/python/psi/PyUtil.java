@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -86,6 +85,7 @@ import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.sdk.PythonSdkType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -149,7 +149,7 @@ public class PyUtil {
   /**
    * Flattens the representation of every element in targets, and puts all results together.
    * Elements of every tuple nested in target item are brought to the top level: (a, (b, (c, d))) -> (a, b, c, d)
-   * Typical usage: <code>flattenedParensAndTuples(some_tuple.getExpressions())</code>.
+   * Typical usage: {@code flattenedParensAndTuples(some_tuple.getExpressions())}.
    *
    * @param targets target elements.
    * @return the list of flattened expressions.
@@ -298,7 +298,7 @@ public class PyUtil {
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
     List<PyClass> superClasses = new ArrayList<>();
     for (PyClass ancestor : pyClass.getAncestorClasses(null)) {
-      if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
+      if (!PyNames.TYPES_INSTANCE_TYPE.equals(ancestor.getQualifiedName())) {
         superClasses.add(ancestor);
       }
     }
@@ -638,7 +638,7 @@ public class PyUtil {
     }
     else {
       final PsiReference reference = element.getReference();
-      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.<PsiElement>emptyList();
+      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.emptyList();
     }
   }
 
@@ -649,34 +649,35 @@ public class PyUtil {
 
   @NotNull
   public static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
-    if (resolveResults.length == 0) {
-      return Collections.emptyList();
-    }
-    final List<PsiElement> filtered = new ArrayList<>();
-    final int maxRate = getMaxRate(resolveResults);
-    for (ResolveResult resolveResult : resolveResults) {
-      final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
-      if (rate >= maxRate) {
-        final PsiElement element = resolveResult.getElement();
-        if (element != null) {
-          filtered.add(element);
-        }
-      }
-    }
-    return filtered;
+    if (resolveResults.length == 0) return Collections.emptyList();
+
+    final int maxRate = getMaxRate(Arrays.asList(resolveResults));
+    return StreamEx
+      .of(resolveResults)
+      .filter(resolveResult -> getRate(resolveResult) >= maxRate)
+      .map(ResolveResult::getElement)
+      .nonNull()
+      .toList();
   }
 
-  private static int getMaxRate(@NotNull ResolveResult[] resolveResults) {
-    int maxRate = Integer.MIN_VALUE;
-    for (ResolveResult resolveResult : resolveResults) {
-      if (resolveResult instanceof RatedResolveResult) {
-        final int rate = ((RatedResolveResult)resolveResult).getRate();
-        if (rate > maxRate) {
-          maxRate = rate;
-        }
-      }
-    }
-    return maxRate;
+  @NotNull
+  public static <E extends ResolveResult> List<E> filterTopPriorityResults(@NotNull List<E> resolveResults) {
+    if (resolveResults.isEmpty()) return Collections.emptyList();
+
+    final int maxRate = getMaxRate(resolveResults);
+    return ContainerUtil.filter(resolveResults, resolveResult -> getRate(resolveResult) >= maxRate);
+  }
+
+  private static int getMaxRate(@NotNull List<? extends ResolveResult> resolveResults) {
+    return resolveResults
+      .stream()
+      .mapToInt(PyUtil::getRate)
+      .max()
+      .orElse(Integer.MIN_VALUE);
+  }
+
+  private static int getRate(@NotNull ResolveResult resolveResult) {
+    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
   }
 
   /**
@@ -929,9 +930,13 @@ public class PyUtil {
   public static PsiElement turnDirIntoInit(@Nullable PsiElement target) {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
-      final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
-      if (file != null) {
-        return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
+      final PsiFile initStub = dir.findFile(PyNames.INIT_DOT_PYI);
+      if (initStub != null) {
+        return initStub;
+      }
+      final PsiFile initFile = dir.findFile(PyNames.INIT_DOT_PY);
+      if (initFile != null) {
+        return initFile; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
       }
       else {
         return null;
@@ -1000,6 +1005,11 @@ public class PyUtil {
    * @see PyNames#isIdentifier(String)
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
+    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
+      if (customPackageIdentifier.isPackage(directory)) {
+        return true;
+      }
+    }
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
@@ -1013,6 +1023,11 @@ public class PyUtil {
   }
 
   public static boolean isPackage(@NotNull PsiFile file) {
+    for (PyCustomPackageIdentifier customPackageIdentifier : PyCustomPackageIdentifier.EP_NAME.getExtensions()) {
+      if (customPackageIdentifier.isPackageFile(file)) {
+        return true;
+      }
+    }
     return PyNames.INIT_DOT_PY.equals(file.getName());
   }
 
@@ -1347,45 +1362,6 @@ public class PyUtil {
     return (PyFile)psi;
   }
 
-  /**
-   * counts elements in iterable
-   *
-   * @param expression to count containing elements (iterable)
-   * @return element count
-   */
-  public static int getElementsCount(PyExpression expression, TypeEvalContext evalContext) {
-    int valuesLength = -1;
-    PyType type = evalContext.getType(expression);
-    if (type instanceof PyTupleType) {
-      valuesLength = ((PyTupleType)type).getElementCount();
-    }
-    else if (type instanceof PyNamedTupleType) {
-      valuesLength = ((PyNamedTupleType)type).getElementCount();
-    }
-    else if (expression instanceof PySequenceExpression) {
-      valuesLength = ((PySequenceExpression)expression).getElements().length;
-    }
-    else if (expression instanceof PyStringLiteralExpression) {
-      valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
-    }
-    else if (expression instanceof PyNumericLiteralExpression) {
-      valuesLength = 1;
-    }
-    else if (expression instanceof PyCallExpression) {
-      PyCallExpression call = (PyCallExpression)expression;
-      if (call.isCalleeText("dict")) {
-        valuesLength = call.getArguments().length;
-      }
-      else if (call.isCalleeText("tuple")) {
-        PyExpression[] arguments = call.getArguments();
-        if (arguments.length > 0 && arguments[0] instanceof PySequenceExpression) {
-          valuesLength = ((PySequenceExpression)arguments[0]).getElements().length;
-        }
-      }
-    }
-    return valuesLength;
-  }
-
   @Nullable
   public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, Class... toSkip) {
     PsiElement element;
@@ -1613,9 +1589,11 @@ public class PyUtil {
 
   @NotNull
   public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(callable, context);
-    assert !parametersSet.isEmpty();
-    return parametersSet.get(0);
+    return Optional
+      .ofNullable(as(context.getType(callable), PyCallableType.class))
+      .map(callableType -> callableType.getParameters(context))
+      .map(callableParameters -> ContainerUtil.map(callableParameters, PyCallableParameter::getParameter))
+      .orElse(Arrays.asList(callable.getParameterList().getParameters()));
   }
 
   public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,
@@ -1738,8 +1716,8 @@ public class PyUtil {
 
   /**
    * Sometimes you do not know real FQN of some class, but you know class name and its package.
-   * I.e. <code>django.apps.conf.AppConfig</code> is not documented, but you know
-   * <code>AppConfig</code> and <code>django</code> package.
+   * I.e. {@code django.apps.conf.AppConfig} is not documented, but you know
+   * {@code AppConfig} and {@code django} package.
    *
    * @param symbol element to check (class or function)
    * @param expectedPackage package like "django"
@@ -1762,17 +1740,9 @@ public class PyUtil {
     return expectedName.equals(symbolName);
   }
 
-  /**
-   * Checks that given class is the root of class hierarchy, i.e. it's either {@code object} or
-   * special {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
-   *
-   * @param cls    Python class to check
-   * @see PyBuiltinCache
-   * @see PyNames#FAKE_OLD_BASE
-   */
   public static boolean isObjectClass(@NotNull PyClass cls) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
-    return cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE);
+    final String name = cls.getQualifiedName();
+    return PyNames.OBJECT.equals(name) || PyNames.TYPES_INSTANCE_TYPE.equals(name);
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {

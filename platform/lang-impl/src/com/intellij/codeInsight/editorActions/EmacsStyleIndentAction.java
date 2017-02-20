@@ -22,7 +22,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler;
 import com.intellij.codeInsight.editorActions.emacs.LanguageEmacsExtension;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -33,12 +33,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class EmacsStyleIndentAction extends BaseCodeInsightAction implements DumbAware {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.actions.EmacsStyleIndentAction");
 
   @NotNull
   @Override
@@ -57,13 +54,6 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
 
     @Override
     public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-      if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-        return;
-      }
-
       EmacsProcessingHandler emacsProcessingHandler = LanguageEmacsExtension.INSTANCE.forLanguage(file.getLanguage());
       if (emacsProcessingHandler != null) {
         EmacsProcessingHandler.Result result = emacsProcessingHandler.changeIndent(project, editor, file);
@@ -75,26 +65,16 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
       final Document document = editor.getDocument();
       int startLine = document.getLineNumber(editor.getSelectionModel().getSelectionStart());
       int endLine = document.getLineNumber(editor.getSelectionModel().getSelectionEnd());
-      try{
-        for (int line = startLine; line <= endLine; line++) {
-          final int lineStart = document.getLineStartOffset(line);
-          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-          final int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
-          if (startLine == endLine && editor.getCaretModel().getOffset() < newPos) {
-            editor.getCaretModel().moveToOffset(newPos);
-            editor.getSelectionModel().removeSelection();
-            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
+      for (int line = startLine; line <= endLine; line++) {
+        final int lineStart = document.getLineStartOffset(line);
+        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+        final int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
+        if (startLine == endLine && editor.getCaretModel().getOffset() < newPos) {
+          editor.getCaretModel().moveToOffset(newPos);
+          editor.getSelectionModel().removeSelection();
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         }
       }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-      }
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
     }
   }
 }

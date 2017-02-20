@@ -47,7 +47,7 @@ public class EditorOptions implements SearchableConfigurable {
   @Override
   public JComponent createComponent() {
     myEditorOptionsPanel = new EditorOptionsPanel();
-    return myEditorOptionsPanel.getComponent();
+    return myEditorOptionsPanel.createComponent();
   }
 
   @Override

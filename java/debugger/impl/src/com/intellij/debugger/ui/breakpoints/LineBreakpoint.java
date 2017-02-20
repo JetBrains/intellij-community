@@ -32,6 +32,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -133,7 +134,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
           if (!acceptLocation(debugProcess, classType, loc)) {
             continue;
           }
-          createLocationBreakpointRequest(loc, debugProcess);
+          createLocationBreakpointRequest(this, loc, debugProcess);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + loc.codeIndex());
           }
@@ -191,7 +192,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
     if (position == null) return false;
 
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+    return ReadAction.compute(() -> {
       JavaLineBreakpointType type = getXBreakpointType();
       if (type == null) return true;
       return type.matchesPosition(this, position);
@@ -398,7 +399,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       return null;
     }
     if (file instanceof PsiClassOwner) {
-      return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      return ReadAction.compute(() -> {
         PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
         return method != null? method.getName() : null;
       });

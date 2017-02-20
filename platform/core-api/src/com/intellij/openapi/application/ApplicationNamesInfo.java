@@ -62,7 +62,7 @@ public class ApplicationNamesInfo {
   }
 
   private void readInfo(final Element rootElement) {
-    final Element names = rootElement.getChild(ELEMENT_NAMES);
+    final Element names = rootElement.getChild(ELEMENT_NAMES, rootElement.getNamespace());
     myProductName = names.getAttributeValue(ATTRIBUTE_PRODUCT);
     myFullProductName = names.getAttributeValue(ATTRIBUTE_FULL_NAME);
     myLowercaseProductName = StringUtil.capitalize(myProductName.toLowerCase(Locale.US));

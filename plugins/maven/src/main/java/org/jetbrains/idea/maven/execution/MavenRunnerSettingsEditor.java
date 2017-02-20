@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
   }
 
   @Override
-  protected void resetEditorFrom(MavenRunConfiguration runConfiguration) {
+  protected void resetEditorFrom(@NotNull MavenRunConfiguration runConfiguration) {
     myUseProjectSettings.setSelected(runConfiguration.getRunnerSettings() == null);
 
     if (runConfiguration.getRunnerSettings() == null) {
@@ -51,7 +51,7 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
   }
 
   @Override
-  protected void applyEditorTo(MavenRunConfiguration runConfiguration) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull MavenRunConfiguration runConfiguration) throws ConfigurationException {
     if (myUseProjectSettings.isSelected()) {
       runConfiguration.setRunnerSettings(null);
     }

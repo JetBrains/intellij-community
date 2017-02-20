@@ -49,11 +49,11 @@ public interface WhitespacesAndCommentsBinder {
    * Value returned by right edge processor will be used as a pointer to a token next of element's last token.
    * <p/>
    * <p>Example 1: if a processor for left edge wants to leave all whitespaces and comments out of element's scope
-   * (before it's start) it should return value of <code>tokens.size()</code> placing element's start pointer to a first
+   * (before it's start) it should return value of {@code tokens.size()} placing element's start pointer to a first
    * token after series of whitespaces/comments.
    * <p/>
    * <p>Example 2: if a processor for right edge wants to leave all whitespaces and comments out of element's scope
-   * (after it's end) it should return value of <code>0</code> placing element's end pointer to a first
+   * (after it's end) it should return value of {@code 0} placing element's end pointer to a first
    * whitespace or comment after element's end.
    *
    * @param tokens sequence of whitespace and comment tokens at the element's edge.

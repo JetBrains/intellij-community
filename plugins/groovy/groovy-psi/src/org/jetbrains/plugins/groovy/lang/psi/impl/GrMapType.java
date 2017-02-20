@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +110,12 @@ public abstract class GrMapType extends GrLiteralClassType {
       if (otherEntries.isEmpty()) return "[:]";
       String name = getJavaClassName();
       final PsiType[] params = getParameters();
-      return name + "<" + getInternalText(params[0]) + ", " + getInternalText(params[1]) + ">";
+      if (params.length == 2) {
+        return name + "<" + getInternalText(params[0]) + ", " + getInternalText(params[1]) + ">";
+      }
+      else {
+        return name;
+      }
     }
 
     List<String> components = new ArrayList<>();

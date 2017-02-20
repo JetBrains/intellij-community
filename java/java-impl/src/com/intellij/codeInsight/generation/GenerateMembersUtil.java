@@ -34,11 +34,10 @@ import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
@@ -59,12 +58,29 @@ public class GenerateMembersUtil {
   }
 
   @NotNull
-  public static <T extends GenerationInfo> List<T> insertMembersAtOffset(PsiFile file, int offset, @NotNull List<T> memberPrototypes) throws IncorrectOperationException {
+  public static <T extends GenerationInfo> List<T> insertMembersAtOffset(PsiFile file,
+                                                                         int offset,
+                                                                         @NotNull List<T> memberPrototypes) throws IncorrectOperationException {
+    return insertMembersAtOffset(file, offset, memberPrototypes, leaf -> findClassAtOffset(file, leaf));
+  }
+
+  @NotNull
+  public static <T extends GenerationInfo> List<T> insertMembersAtOffset(@NotNull PsiClass psiClass,
+                                                                         int offset,
+                                                                         @NotNull List<T> memberPrototypes) throws IncorrectOperationException {
+    return insertMembersAtOffset(psiClass.getContainingFile(), offset, memberPrototypes, leaf -> psiClass);
+  }
+
+  @NotNull
+  private static <T extends GenerationInfo> List<T> insertMembersAtOffset(PsiFile file,
+                                                                          int offset,
+                                                                          @NotNull List<T> memberPrototypes,
+                                                                          final Function<PsiElement, PsiClass> aClassFunction) throws IncorrectOperationException {
     if (memberPrototypes.isEmpty()) return memberPrototypes;
     final PsiElement leaf = file.findElementAt(offset);
     if (leaf == null) return Collections.emptyList();
 
-    PsiClass aClass = findClassAtOffset(file, leaf);
+    PsiClass aClass = aClassFunction.fun(leaf);
     if (aClass == null) return Collections.emptyList();
     PsiElement anchor = memberPrototypes.get(0).findInsertionAnchor(aClass, leaf);
 
@@ -279,7 +295,7 @@ public class GenerateMembersUtil {
       if (target instanceof PsiClass) {
         final PsiMethod[] methods = ((PsiClass)target).findMethodsBySignature(sourceMethod, true);
         for (PsiMethod psiMethod : methods) {
-          if (psiMethod != null && psiMethod != sourceMethod) {
+          if (psiMethod != null && psiMethod != sourceMethod && !MethodSignatureUtil.isSuperMethod(psiMethod, sourceMethod)) {
             PsiClass aSuper = psiMethod.getContainingClass();
             if (aSuper != null && aSuper != target) {
               PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY);
@@ -577,6 +593,16 @@ public class GenerateMembersUtil {
       }
 
       OverrideImplementsAnnotationsHandler.repeatAnnotationsFromSource(sourceParam, targetClass, targetParam);
+    }
+  }
+
+  public static void copyAnnotations(@NotNull PsiModifierList source, @NotNull PsiModifierList target, String... skipAnnotations) {
+    for (PsiAnnotation annotation : source.getAnnotations()) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (qualifiedName == null || ArrayUtil.contains(qualifiedName, skipAnnotations) || target.findAnnotation(qualifiedName) != null) {
+        continue;
+      }
+      target.add(annotation);
     }
   }
 

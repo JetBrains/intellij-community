@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -39,6 +38,7 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -67,11 +67,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private final VisibleAreaListener myVisibleAreaListener;
   private final CaretListener myCaretMoveListener;
 
-  private LightweightHint myQuestionHint = null;
-  private QuestionAction myQuestionAction = null;
+  private LightweightHint myQuestionHint;
+  private QuestionAction myQuestionAction;
 
   private final List<HintInfo> myHintsStack = new ArrayList<>();
-  private Editor myLastEditor = null;
+  private Editor myLastEditor;
   private final Alarm myHideAlarm = new Alarm();
 
   private static int getPriority(QuestionAction action) {
@@ -128,15 +128,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     };
 
-    myVisibleAreaListener = new VisibleAreaListener() {
-      @Override
-      public void visibleAreaChanged(VisibleAreaEvent e) {
-        updateScrollableHints(e);
-        if (e.getOldRectangle() == null ||
-            e.getOldRectangle().x != e.getNewRectangle().x ||
-            e.getOldRectangle().y != e.getNewRectangle().y) {
-          hideHints(HIDE_BY_SCROLLING, false, false);
-        }
+    myVisibleAreaListener = e -> {
+      updateScrollableHints(e);
+      if (e.getOldRectangle() == null ||
+          e.getOldRectangle().x != e.getNewRectangle().x ||
+          e.getOldRectangle().y != e.getNewRectangle().y) {
+        hideHints(HIDE_BY_SCROLLING, false, false);
       }
     };
 
@@ -193,6 +190,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     };
   }
 
+  @Override
   public boolean isHint(Window component) {
     return myHintsStack.contains(component);
   }
@@ -297,7 +295,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   /**
    * @param p                    point in layered pane coordinate system.
-   * @param reviveOnEditorChange
    */
   public void showEditorHint(@NotNull final LightweightHint hint,
                              @NotNull Editor editor,
@@ -376,12 +373,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     myHintsStack.add(new HintInfo(hint, flags, reviveOnEditorChange));
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Hint timeout", timeout, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-          hint.hide();
-        }
-      });
+      Timer timer = UIUtil.createNamedTimer("Hint timeout", timeout, event -> hint.hide());
       timer.setRepeats(false);
       timer.start();
     }
@@ -420,12 +412,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }, flags, false);
     myHintsStack.add(info);
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Popup timeout",timeout, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-          popup.dispose();
-        }
-      });
+      Timer timer = UIUtil.createNamedTimer("Popup timeout", timeout, event -> Disposer.dispose(popup));
       timer.setRepeats(false);
       timer.start();
     }
@@ -543,9 +530,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         JComponent c = info.hint.getComponent();
         rectangle = SwingUtilities.convertRectangle(c.getParent(), rectangle, lp);
 
-        if (rectangle != null) {
-          return getHintPositionRelativeTo(hint, editor, constraint, rectangle, pos);
-        }
+        return getHintPositionRelativeTo(hint, editor, constraint, rectangle, pos);
       }
     }
 
@@ -581,7 +566,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         return new Point(lookupBounds.x - hintSize.width, y);
       }
 
-      case RIGHT: {
+      case RIGHT:
         int y = lookupBounds.y;
         if (y < 0) {
           y = 0;
@@ -590,7 +575,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
           y = layeredPaneHeight - hintSize.height;
         }
         return new Point(lookupBounds.x + lookupBounds.width, y);
-      }
 
       case ABOVE:
         Point posAboveCaret = getHintPosition(hint, editor, pos, ABOVE);
@@ -601,7 +585,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         return new Point(lookupBounds.x, Math.max(posUnderCaret.y, lookupBounds.y + lookupBounds.height));
 
       default:
-        LOG.assertTrue(false);
+        LOG.error("");
         return null;
     }
   }
@@ -820,7 +804,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myQuestionHint = hint;
   }
 
-  public void hideQuestionHint() {
+  private void hideQuestionHint() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myQuestionHint != null) {
       myQuestionHint.hide();
@@ -910,15 +894,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
       hideHints(HIDE_BY_ANY_KEY, false, false);
     }
-
-
-    @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
-    }
-
-    @Override
-    public void beforeEditorTyping(char c, DataContext dataContext) {
-    }
   }
 
   /**
@@ -926,7 +901,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * selected editor by mouse. These clicks are not AnActions so they are not
    * fired by ActionManager.
    */
-  private final class MyEditorManagerListener extends FileEditorManagerAdapter {
+  private final class MyEditorManagerListener implements FileEditorManagerListener {
     @Override
     public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       hideHints(0, false, true);
@@ -946,8 +921,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     @Override
     public void projectClosed(Project project) {
       ApplicationManager.getApplication().assertIsDispatchThread();
+
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
       TooltipController.getInstance().cancelTooltips();
+      ApplicationManager.getApplication().invokeLater(() -> hideHints(0, false, false));
 
       myQuestionAction = null;
       myQuestionHint = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -665,11 +665,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       try {
         findNextSuitableRange();
       }
-      catch (RuntimeException e) {
-        myIterator.dispose();
-        throw e;
-      }
-      catch (Error e) {
+      catch (RuntimeException | Error e) {
         myIterator.dispose();
         throw e;
       }
@@ -861,7 +857,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       for (; myCurrentOffset < myEndOffset; myCurrentOffset++) {
         FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(myCharSequence.charAt(myCurrentOffset),
                                                                             myFontStyle,
-                                                                            myFontPreferences);
+                                                                            myFontPreferences, null);
         String fontFamilyName = fontInfo.getFont().getFamily();
 
         if (myCurrentFontFamilyName == null) {

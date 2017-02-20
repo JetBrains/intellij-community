@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,13 +104,14 @@ public class PresentationModeProgressPanel {
       @Override
       public boolean isVisible() {
         UISettings ui = UISettings.getInstance();
-        return ui.PRESENTATION_MODE || !ui.SHOW_STATUS_BAR && Registry.is("ide.show.progress.without.status.bar");
+        return ui.getPresentationMode() || !ui.getShowStatusBar() && Registry.is("ide.show.progress.without.status.bar");
       }
     };
     IconButton iconButton = new IconButton(myProgress.getInfo().getCancelTooltipText(),
                                                  AllIcons.Process.Stop,
                                                  AllIcons.Process.StopHovered);
     myCancelButton = new InplaceButton(iconButton, new ActionListener() {
+      @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         myProgress.cancelRequest();
       }

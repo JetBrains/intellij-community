@@ -31,14 +31,12 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
-import com.intellij.diff.impl.DiffSettingsHolder;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.diff.tools.simple.MergeInnerDifferences;
-import com.intellij.diff.tools.util.base.HighlightPolicy;
-import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
+import com.intellij.diff.tools.util.text.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -94,6 +92,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -598,31 +597,33 @@ public class DiffUtil {
   //
 
   @NotNull
-  public static List<LineFragment> compare(@NotNull DiffRequest request,
-                                           @NotNull CharSequence text1,
-                                           @NotNull CharSequence text2,
-                                           @NotNull DiffConfig config,
-                                           @NotNull ProgressIndicator indicator) {
-    indicator.checkCanceled();
-
+  public static TwosideTextDiffProvider createTextDiffProvider(@Nullable Project project,
+                                                               @NotNull ContentDiffRequest request,
+                                                               @NotNull TextDiffSettings settings,
+                                                               @NotNull Runnable rediff,
+                                                               @NotNull Disposable disposable) {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
+    if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, disposable, diffComputer);
 
-    List<LineFragment> fragments;
-    if (diffComputer != null) {
-      fragments = diffComputer.compute(text1, text2, config.policy, config.innerFragments, indicator);
-    }
-    else {
-      if (config.innerFragments) {
-        fragments = ComparisonManager.getInstance().compareLinesInner(text1, text2, config.policy, indicator);
-      }
-      else {
-        fragments = ComparisonManager.getInstance().compareLines(text1, text2, config.policy, indicator);
-      }
-    }
+    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff, disposable);
+    if (smartProvider != null) return smartProvider;
 
-    indicator.checkCanceled();
-    return ComparisonManager.getInstance().processBlocks(fragments, text1, text2,
-                                                         config.policy, config.squashFragments, config.trimFragments);
+    return new SimpleTextDiffProvider(settings, rediff, disposable);
+  }
+
+  @NotNull
+  public static TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@Nullable Project project,
+                                                                                @NotNull ContentDiffRequest request,
+                                                                                @NotNull TextDiffSettings settings,
+                                                                                @NotNull Runnable rediff,
+                                                                                @NotNull Disposable disposable) {
+    DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
+    if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable, diffComputer);
+
+    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff, disposable);
+    if (smartProvider != null) return smartProvider;
+
+    return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable);
   }
 
   @Nullable
@@ -833,8 +834,13 @@ public class DiffUtil {
 
   @NotNull
   public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2) {
-    TextRange otherRange = getLinesRange(document, line1, line2);
-    return document.getImmutableCharSequence().subSequence(otherRange.getStartOffset(), otherRange.getEndOffset());
+    return getLinesRange(document, line1, line2).subSequence(document.getImmutableCharSequence());
+  }
+
+  @NotNull
+  public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2) {
+    assert sequence.length() == lineOffsets.getTextLength();
+    return getLinesRange(lineOffsets, line1, line2, false).subSequence(sequence);
   }
 
   /**
@@ -860,6 +866,21 @@ public class DiffUtil {
       return new TextRange(startOffset, endOffset);
     }
   }
+
+  @NotNull
+  public static TextRange getLinesRange(@NotNull LineOffsets lineOffsets, int line1, int line2, boolean includeNewline) {
+    if (line1 == line2) {
+      int lineStartOffset = line1 < lineOffsets.getLineCount() ? lineOffsets.getLineStart(line1) : lineOffsets.getTextLength();
+      return new TextRange(lineStartOffset, lineStartOffset);
+    }
+    else {
+      int startOffset = lineOffsets.getLineStart(line1);
+      int endOffset = lineOffsets.getLineEnd(line2 - 1);
+      if (includeNewline && endOffset < lineOffsets.getTextLength()) endOffset++;
+      return new TextRange(startOffset, endOffset);
+    }
+  }
+
 
   public static int getOffset(@NotNull Document document, int line, int column) {
     if (line < 0) return 0;
@@ -893,6 +914,11 @@ public class DiffUtil {
       result.add(document.getText(new TextRange(start, end)));
     }
     return result;
+  }
+
+  public static int bound(int value, int lowerBound, int upperBound) {
+    assert lowerBound <= upperBound : String.format("%s - [%s, %s]", value, lowerBound, upperBound);
+    return Math.max(Math.min(value, upperBound), lowerBound);
   }
 
   //
@@ -1033,14 +1059,16 @@ public class DiffUtil {
 
   @NotNull
   public static MergeConflictType getLineMergeType(@NotNull MergeLineFragment fragment,
-                                                   @NotNull List<? extends Document> documents,
+                                                   @NotNull List<? extends CharSequence> sequences,
+                                                   @NotNull List<LineOffsets> lineOffsets,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
-                        (side1, side2) -> compareLineMergeContents(fragment, documents, policy, side1, side2));
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2));
   }
 
   private static boolean compareLineMergeContents(@NotNull MergeLineFragment fragment,
-                                                  @NotNull List<? extends Document> documents,
+                                                  @NotNull List<? extends CharSequence> sequences,
+                                                  @NotNull List<LineOffsets> lineOffsets,
                                                   @NotNull ComparisonPolicy policy,
                                                   @NotNull ThreeSide side1,
                                                   @NotNull ThreeSide side2) {
@@ -1051,15 +1079,17 @@ public class DiffUtil {
 
     if (end2 - start2 != end1 - start1) return false;
 
-    Document document1 = side1.select(documents);
-    Document document2 = side2.select(documents);
+    CharSequence sequence1 = side1.select(sequences);
+    CharSequence sequence2 = side2.select(sequences);
+    LineOffsets offsets1 = side1.select(lineOffsets);
+    LineOffsets offsets2 = side2.select(lineOffsets);
 
     for (int i = 0; i < end1 - start1; i++) {
       int line1 = start1 + i;
       int line2 = start2 + i;
 
-      CharSequence content1 = getLinesContent(document1, line1, line1 + 1);
-      CharSequence content2 = getLinesContent(document2, line2, line2 + 1);
+      CharSequence content1 = getLinesContent(sequence1, offsets1, line1, line1 + 1);
+      CharSequence content2 = getLinesContent(sequence2, offsets2, line2, line2 + 1);
       if (!ComparisonManager.getInstance().isEquals(content1, content2, policy)) return false;
     }
 
@@ -1105,17 +1135,17 @@ public class DiffUtil {
   //
 
   @CalledInAwt
-  public static void executeWriteCommand(@Nullable Project project,
-                                         @NotNull Document document,
-                                         @Nullable String commandName,
-                                         @Nullable String commandGroupId,
-                                         @NotNull UndoConfirmationPolicy confirmationPolicy,
-                                         boolean underBulkUpdate,
-                                         @NotNull Runnable task) {
+  public static boolean executeWriteCommand(@Nullable Project project,
+                                            @NotNull Document document,
+                                            @Nullable String commandName,
+                                            @Nullable String commandGroupId,
+                                            @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                            boolean underBulkUpdate,
+                                            @NotNull Runnable task) {
     if (!makeWritable(project, document)) {
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       LOG.warn("Document is read-only" + (file != null ? ": " + file.getPresentableName() : ""));
-      return;
+      return false;
     }
 
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -1128,14 +1158,15 @@ public class DiffUtil {
         }
       }, commandName, commandGroupId, confirmationPolicy, document);
     });
+    return true;
   }
 
   @CalledInAwt
-  public static void executeWriteCommand(@NotNull final Document document,
-                                         @Nullable final Project project,
-                                         @Nullable final String commandName,
-                                         @NotNull final Runnable task) {
-    executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
+  public static boolean executeWriteCommand(@NotNull final Document document,
+                                            @Nullable final Project project,
+                                            @Nullable final String commandName,
+                                            @NotNull final Runnable task) {
+    return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
   }
 
   public static boolean isEditable(@NotNull Editor editor) {
@@ -1319,12 +1350,23 @@ public class DiffUtil {
 
   @NotNull
   public static DiffSettings getDiffSettings(@NotNull DiffContext context) {
-    DiffSettings settings = context.getUserData(DiffSettingsHolder.KEY);
+    DiffSettings settings = context.getUserData(DiffSettings.KEY);
     if (settings == null) {
       settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
-      context.putUserData(DiffSettingsHolder.KEY, settings);
+      context.putUserData(DiffSettings.KEY, settings);
     }
     return settings;
+  }
+
+  @NotNull
+  public static <K, V> TreeMap<K, V> trimDefaultValues(@NotNull TreeMap<K, V> map, @NotNull Convertor<K, V> defaultValue) {
+    TreeMap<K, V> result = new TreeMap<>();
+    for (Map.Entry<K, V> it : map.entrySet()) {
+      K key = it.getKey();
+      V value = it.getValue();
+      if (!value.equals(defaultValue.convert(key))) result.put(key, value);
+    }
+    return result;
   }
 
   //
@@ -1355,24 +1397,6 @@ public class DiffUtil {
   // Helpers
   //
 
-  public static class DiffConfig {
-    @NotNull public final ComparisonPolicy policy;
-    public final boolean innerFragments;
-    public final boolean squashFragments;
-    public final boolean trimFragments;
-
-    public DiffConfig(@NotNull ComparisonPolicy policy, boolean innerFragments, boolean squashFragments, boolean trimFragments) {
-      this.policy = policy;
-      this.innerFragments = innerFragments;
-      this.squashFragments = squashFragments;
-      this.trimFragments = trimFragments;
-    }
-
-    public DiffConfig(@NotNull IgnorePolicy ignorePolicy, @NotNull HighlightPolicy highlightPolicy) {
-      this(ignorePolicy.getComparisonPolicy(), highlightPolicy.isFineFragments(), highlightPolicy.isShouldSquash(),
-           ignorePolicy.isShouldTrimChunks());
-    }
-  }
 
   private static class SyncHeightComponent extends JPanel {
     @NotNull private final List<JComponent> myComponents;

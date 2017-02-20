@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import gnu.trove.TObjectLongHashMap;
@@ -42,20 +41,20 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private static final String CANCELED_MESSAGE = "The build has been canceled";
   private final CompileScope myScope;
   private final MessageHandler myDelegateMessageHandler;
-  private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
+  private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<>();
 
-  private final TObjectLongHashMap<BuildTarget<?>> myCompilationStartStamp = new TObjectLongHashMap<BuildTarget<?>>();
+  private final TObjectLongHashMap<BuildTarget<?>> myCompilationStartStamp = new TObjectLongHashMap<>();
   private final ProjectDescriptor myProjectDescriptor;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
   private volatile float myDone = -1.0f;
-  private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
+  private final EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
 
-  public CompileContextImpl(CompileScope scope,
-                            ProjectDescriptor pd,
-                            MessageHandler delegateMessageHandler,
-                            Map<String, String> builderParams,
-                            CanceledStatus cancelStatus) throws ProjectBuildException {
+  CompileContextImpl(CompileScope scope,
+                     ProjectDescriptor pd,
+                     MessageHandler delegateMessageHandler,
+                     Map<String, String> builderParams,
+                     CanceledStatus cancelStatus) {
     myProjectDescriptor = pd;
     myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
@@ -70,6 +69,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
   }
 
+  @Override
   public void setCompilationStartStamp(Collection<BuildTarget<?>> targets, long stamp) {
     synchronized (myCompilationStartStamp) {
       for (BuildTarget<?> target : targets) {
@@ -152,6 +152,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myScope;
   }
 
+  @Override
   public void processMessage(BuildMessage msg) {
     if (msg.getKind() == BuildMessage.Kind.ERROR) {
       Utils.ERRORS_DETECTED_KEY.set(this, Boolean.TRUE);
@@ -161,14 +162,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     }
     myDelegateMessageHandler.processMessage(msg);
     if (msg instanceof FileGeneratedEvent) {
-      final Collection<Pair<String, String>> paths = ((FileGeneratedEvent)msg).getPaths();
-      if (!paths.isEmpty()) {
-        myListeners.getMulticaster().filesGenerated(paths);
-      }
+      myListeners.getMulticaster().filesGenerated((FileGeneratedEvent)msg);
     }
     else if (msg instanceof FileDeletedEvent) {
-      Collection<String> paths = ((FileDeletedEvent)msg).getFilePaths();
-      myListeners.getMulticaster().filesDeleted(paths);
+      myListeners.getMulticaster().filesDeleted((FileDeletedEvent)msg);
     }
   }
 

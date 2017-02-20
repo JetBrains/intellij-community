@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.util.NotNullFunction;
 import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
@@ -41,19 +40,15 @@ class PrintElementManagerImpl implements PrintElementManager {
   @Nullable private PrintElementWithGraphElement mySelectedPrintElement = null;
 
   @SuppressWarnings("unchecked")
-  PrintElementManagerImpl(@NotNull final LinearGraph linearGraph,
-                          @NotNull final PermanentGraphInfo myPermanentGraph,
+  PrintElementManagerImpl(@NotNull LinearGraph linearGraph,
+                          @NotNull PermanentGraphInfo myPermanentGraph,
                           @NotNull GraphColorManager colorManager) {
     myLinearGraph = linearGraph;
     myColorGetter = new ColorGetterByLayoutIndex(linearGraph, myPermanentGraph, colorManager);
-    myGraphElementComparator = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
-      @NotNull
-      @Override
-      public Integer fun(Integer nodeIndex) {
-        int nodeId = linearGraph.getNodeId(nodeIndex);
-        if (nodeId < 0) return nodeId;
-        return myPermanentGraph.getPermanentGraphLayout().getLayoutIndex(nodeId);
-      }
+    myGraphElementComparator = new GraphElementComparatorByLayoutIndex(nodeIndex -> {
+      int nodeId = linearGraph.getNodeId(nodeIndex);
+      if (nodeId < 0) return nodeId;
+      return myPermanentGraph.getPermanentGraphLayout().getLayoutIndex(nodeId);
     });
   }
 

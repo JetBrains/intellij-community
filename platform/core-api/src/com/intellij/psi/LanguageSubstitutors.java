@@ -26,7 +26,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author peter
@@ -34,8 +40,9 @@ import org.jetbrains.annotations.NotNull;
 public final class LanguageSubstitutors extends LanguageExtension<LanguageSubstitutor> {
   public static final LanguageSubstitutors INSTANCE = new LanguageSubstitutors();
   private static final Logger LOG = Logger.getInstance(LanguageSubstitutors.class);
-  private static final Key<Language> SUBSTITUTED_LANG_KEY = Key.create("SUBSTITUTED_LANG_KEY");
-  private static final Key<Boolean> REPARSING_SCHEDULED = Key.create("REPARSING_SCHEDULED");
+  private static final Key<Key<Language>> PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY = Key.create("PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY");
+  private static final AtomicBoolean REQUESTS_DRAIN_NEEDED = new AtomicBoolean(true);
+  private static final ConcurrentMap<VirtualFile, SubstitutionInfo> ourReparsingRequests = ContainerUtil.newConcurrentMap();
 
   private LanguageSubstitutors() {
     super("com.intellij.lang.substitutor");
@@ -46,48 +53,89 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     for (LanguageSubstitutor substitutor : forKey(lang)) {
       Language language = substitutor.getLanguage(file, project);
       if (language != null) {
-        processLanguageSubstitution(file, lang, language);
+        processLanguageSubstitution(file, lang, language, project);
         return language;
       }
     }
     return lang;
   }
 
-
   private static void processLanguageSubstitution(@NotNull final VirtualFile file,
                                                   @NotNull Language originalLang,
-                                                  @NotNull final Language substitutedLang) {
+                                                  @NotNull final Language substitutedLang,
+                                                  @NotNull Project project) {
     if (file instanceof VirtualFileWindow) {
       // Injected files are created with substituted language, no need to reparse:
       //   com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl#doneInjecting
       return;
     }
-    Language prevSubstitutedLang = SUBSTITUTED_LANG_KEY.get(file);
+    Key<Language> projectKey = getOrCreateProjectKey(project);
+    Language prevSubstitutedLang = projectKey.get(file);
     final Language prevLang = ObjectUtils.notNull(prevSubstitutedLang, originalLang);
     if (!prevLang.is(substitutedLang)) {
-      if (file.replace(SUBSTITUTED_LANG_KEY, prevSubstitutedLang, substitutedLang)) {
+      if (file.replace(projectKey, prevSubstitutedLang, substitutedLang)) {
         if (prevSubstitutedLang == null) {
           return; // no need to reparse for the first language substitution
         }
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           return;
         }
-        file.putUserData(REPARSING_SCHEDULED, true);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (file.replace(REPARSING_SCHEDULED, true, null)) {
-              LOG.info("Reparsing " + file.getPath() + " because of language substitution " +
-                       prevLang.getID() + "->" + substitutedLang.getID());
-              FileContentUtilCore.reparseFiles(file);
-            }
-          }
-        }, ModalityState.defaultModalityState());
+        requestReparsing(file, prevLang, substitutedLang);
       }
     }
   }
 
+  @NotNull
+  private static Key<Language> getOrCreateProjectKey(@NotNull Project project) {
+    Key<Language> key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);
+    if (key == null) {
+      synchronized (PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY) {
+        key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);
+        if (key == null) {
+          key = new Key<>("Substituted lang key for " + project.getName());
+          PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.set(project, key);
+        }
+      }
+    }
+    return key;
+  }
+
+  private static void requestReparsing(@NotNull VirtualFile file, @NotNull Language prevLang, @NotNull Language substitutedLang) {
+    ourReparsingRequests.put(file, new SubstitutionInfo(prevLang, substitutedLang));
+    if (REQUESTS_DRAIN_NEEDED.compareAndSet(true, false)) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        REQUESTS_DRAIN_NEEDED.set(true);
+        List<Map.Entry<VirtualFile, SubstitutionInfo>> set = ContainerUtil.newArrayList(ourReparsingRequests.entrySet());
+        List<VirtualFile> files = ContainerUtil.newArrayListWithCapacity(set.size());
+        int id = 1;
+        for (Map.Entry<VirtualFile, SubstitutionInfo> entry : set) {
+          VirtualFile f = entry.getKey();
+          SubstitutionInfo info = entry.getValue();
+          ourReparsingRequests.remove(f);
+          if (f.isValid()) {
+            LOG.info("Reparsing " + f.getPath() + " because of language substitution " +
+                     info.myPrevLang.getID() + "->" + info.mySubstitutedLang.getID() + ", #" + (id++));
+            files.add(f);
+          }
+        }
+        if (files.size() > 0) {
+          FileContentUtilCore.reparseFiles(files);
+        }
+      }, ModalityState.defaultModalityState());
+    }
+  }
+
   public static void cancelReparsing(@NotNull VirtualFile file) {
-    REPARSING_SCHEDULED.set(file, null);
+    ourReparsingRequests.remove(file);
+  }
+
+  private static class SubstitutionInfo {
+    private final Language myPrevLang;
+    private final Language mySubstitutedLang;
+
+    public SubstitutionInfo(@NotNull Language prevLang, @NotNull Language substitutedLang) {
+      myPrevLang = prevLang;
+      mySubstitutedLang = substitutedLang;
+    }
   }
 }

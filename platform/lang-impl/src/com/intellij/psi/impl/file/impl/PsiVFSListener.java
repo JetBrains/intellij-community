@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
@@ -39,6 +40,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -718,6 +720,10 @@ public class PsiVFSListener extends VirtualFileAdapter {
   }
 
   private boolean isInRootModel(@NotNull VirtualFile file) {
+    if (ProjectKt.getStateStore(myProject).isProjectFile(file)) {
+      return false;
+    }
+
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(myProject);
     return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file);
   }

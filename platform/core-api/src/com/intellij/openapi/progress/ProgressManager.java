@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -37,13 +36,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public static ProgressManager getInstance() {
     ProgressManager result = ourInstance;
     if (result == null) {
-      result = ServiceManager.getService(ProgressManager.class);
-      if (result == null) {
-        throw new AssertionError("ProgressManager is null; " + ApplicationManager.getApplication());
-      }
-      else {
-        ourInstance = result;
-      }
+      ourInstance = result = ServiceManager.getService(ProgressManager.class);
     }
     return result;
   }
@@ -90,6 +83,10 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
 
+  /**
+   * to be removed in 2017.2
+   */
+  @Deprecated
   public abstract void setCancelButtonText(String cancelButtonText);
 
   /**
@@ -215,7 +212,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public static void assertNotCircular(@NotNull ProgressIndicator original) {
     Set<ProgressIndicator> wrappedParents = null;
     for (ProgressIndicator i = original; i instanceof WrappedProgressIndicator; i = ((WrappedProgressIndicator)i).getOriginalProgressIndicator()) {
-      if (wrappedParents == null) wrappedParents = new THashSet<ProgressIndicator>();
+      if (wrappedParents == null) wrappedParents = new THashSet<>();
       if (!wrappedParents.add(i)) {
         throw new IllegalArgumentException(i + " wraps itself");
       }

@@ -21,95 +21,95 @@ import com.intellij.testFramework.UsefulTestCase
 class LineNumberConvertorCorrectorTest : UsefulTestCase() {
   fun testUnmodified() {
     doTest(
-        {
-          equal(0, 0, 10, Side.LEFT)
-          equal(0, 0, 12, Side.RIGHT)
-        },
-        {
-          checkStrictSymmetrical()
-          ensureMatchedCount(10, 12)
-        }
+      {
+        equal(0, 0, 10, Side.LEFT)
+        equal(0, 0, 12, Side.RIGHT)
+      },
+      {
+        checkStrictSymmetrical()
+        ensureMatchedCount(10, 12)
+      }
     )
   }
 
   fun testEqual1() {
     doTest(
-        {
-          equal(0, 0, 10, Side.LEFT)
-          equal(0, 0, 10, Side.RIGHT)
-        },
-        {
-          change(4, 3, 5, Side.LEFT)
+      {
+        equal(0, 0, 10, Side.LEFT)
+        equal(0, 0, 10, Side.RIGHT)
+      },
+      {
+        change(4, 3, 5, Side.LEFT)
 
-          checkStrictSymmetrical()
-          ensureMatchedCount(12, 7)
-        }
+        checkStrictSymmetrical()
+        ensureMatchedCount(12, 7)
+      }
     )
   }
 
   fun testEqual2() {
     doTest(
-        {
-          equal(0, 0, 10, Side.LEFT)
-          equal(0, 0, 10, Side.RIGHT)
-        },
-        {
-          change(4, 5, 3, Side.RIGHT)
+      {
+        equal(0, 0, 10, Side.LEFT)
+        equal(0, 0, 10, Side.RIGHT)
+      },
+      {
+        change(4, 5, 3, Side.RIGHT)
 
-          checkStrictSymmetrical()
-          ensureMatchedCount(5, 8)
-        }
+        checkStrictSymmetrical()
+        ensureMatchedCount(5, 8)
+      }
     )
   }
 
   fun testEqual3() {
     doTest(
-        {
-          equal(0, 0, 10, Side.LEFT)
-          equal(0, 0, 10, Side.RIGHT)
-        },
-        {
-          change(4, 3, 3, Side.LEFT)
+      {
+        equal(0, 0, 10, Side.LEFT)
+        equal(0, 0, 10, Side.RIGHT)
+      },
+      {
+        change(4, 3, 3, Side.LEFT)
 
-          checkStrictSymmetrical()
-          ensureMatchedCount(10, 7)
-        }
+        checkStrictSymmetrical()
+        ensureMatchedCount(10, 7)
+      }
     )
   }
 
   fun testEqual4() {
     doTest(
-        {
-          equal(0, 0, 15, Side.LEFT)
-          equal(0, 0, 15, Side.RIGHT)
-        },
-        {
-          change(4, 3, 5, Side.LEFT)
-          checkStrictSymmetrical()
-          change(1, 2, 1, Side.RIGHT)
-          checkStrictSymmetrical()
-          change(12, 3, 1, Side.LEFT)
-          checkStrictSymmetrical()
+      {
+        equal(0, 0, 15, Side.LEFT)
+        equal(0, 0, 15, Side.RIGHT)
+      },
+      {
+        change(4, 3, 5, Side.LEFT)
+        checkStrictSymmetrical()
+        change(1, 2, 1, Side.RIGHT)
+        checkStrictSymmetrical()
+        change(12, 3, 1, Side.LEFT)
+        checkStrictSymmetrical()
 
-          ensureMatchedCount(13, 8)
-        }
+        ensureMatchedCount(13, 8)
+      }
     )
   }
 
   fun testInsideModifiedRange() {
     doTest(
-        {
-          equal(0, 0, 15, Side.LEFT)
-          equal(0, 0, 15, Side.RIGHT)
-        },
-        {
-          change(0, 10, 15, Side.LEFT)
-          checkStrictSymmetrical()
-          change(0, 8, 6, Side.LEFT)
-          checkStrictSymmetrical()
-          change(2, 4, 2, Side.LEFT)
-          checkStrictSymmetrical()
-        }
+      {
+        equal(0, 0, 15, Side.LEFT)
+        equal(0, 0, 15, Side.RIGHT)
+      },
+      {
+        change(0, 10, 15, Side.LEFT)
+        checkStrictSymmetrical()
+        change(0, 8, 6, Side.LEFT)
+        checkStrictSymmetrical()
+        change(2, 4, 2, Side.LEFT)
+        checkStrictSymmetrical()
+      }
     )
   }
 
@@ -125,42 +125,44 @@ class LineNumberConvertorCorrectorTest : UsefulTestCase() {
   }
 
   private class TestBuilder {
-    private val builder = LineNumberConvertor.Builder()
+    private val builder1 = LineNumberConvertor.Builder()
+    private val builder2 = LineNumberConvertor.Builder()
     private var maxLength = 0 // search for strict matchings in this boundaries (*2 - just in case)
 
     fun equal(onesideStart: Int, twosideStart: Int, length: Int, side: Side) {
       if (side.isLeft) {
-        builder.put1(onesideStart, twosideStart, length)
+        builder1.put(onesideStart, twosideStart, length)
       }
       else {
-        builder.put2(onesideStart, twosideStart, length)
+        builder2.put(onesideStart, twosideStart, length)
       }
       maxLength = Math.max(maxLength, onesideStart + length)
       maxLength = Math.max(maxLength, twosideStart + length)
     }
 
-    fun finish(): Test = Test(builder.build(), maxLength)
+    fun finish(): Test = Test(builder1.build(), builder2.build(), maxLength)
   }
 
-  private class Test(val convertor: LineNumberConvertor, var length: Int) {
+  private class Test(val convertor1: LineNumberConvertor, val convertor2: LineNumberConvertor, var length: Int) {
     fun change(onesideLine: Int, oldLength: Int, newLength: Int, side: Side) {
-      convertor.handleOnesideChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side)
+      convertor1.handleMasterChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side == Side.LEFT)
+      convertor2.handleMasterChange(onesideLine, onesideLine + oldLength, newLength - oldLength, side == Side.RIGHT)
       length = Math.max(length, length + newLength - oldLength)
     }
 
     fun checkStrictSymmetrical() {
       for (i in 0..length * 2) {
-        val value1 = convertor.convertInv1(i)
-        if (value1 != -1) assertEquals(i, convertor.convert1(value1))
+        val value1 = convertor1.convertInv(i)
+        if (value1 != -1) assertEquals(i, convertor1.convert(value1))
 
-        val value2 = convertor.convertInv2(i)
-        if (value2 != -1) assertEquals(i, convertor.convert2(value2))
+        val value2 = convertor2.convertInv(i)
+        if (value2 != -1) assertEquals(i, convertor2.convert(value2))
 
-        val value3 = convertor.convert1(i)
-        if (value3 != -1) assertEquals(i, convertor.convertInv1(value3))
+        val value3 = convertor1.convert(i)
+        if (value3 != -1) assertEquals(i, convertor1.convertInv(value3))
 
-        val value4 = convertor.convert2(i)
-        if (value4 != -1) assertEquals(i, convertor.convertInv2(value4))
+        val value4 = convertor2.convert(i)
+        if (value4 != -1) assertEquals(i, convertor2.convertInv(value4))
       }
     }
 
@@ -168,8 +170,8 @@ class LineNumberConvertorCorrectorTest : UsefulTestCase() {
       var counter1 = 0
       var counter2 = 0
       for (i in 0..length * 2) {
-        if (convertor.convert1(i) != -1) counter1++
-        if (convertor.convert2(i) != -1) counter2++
+        if (convertor1.convert(i) != -1) counter1++
+        if (convertor2.convert(i) != -1) counter2++
       }
       assertEquals(minimumMatched1, counter1)
       assertEquals(minimumMatched2, counter2)
@@ -178,12 +180,12 @@ class LineNumberConvertorCorrectorTest : UsefulTestCase() {
     @Suppress("unused")
     fun printMatchings() {
       for (i in 0..length * 2 - 1) {
-        val value = convertor.convert1(i)
+        val value = convertor1.convert(i)
         if (value != -1) println("L: $i - $value")
       }
 
       for (i in 0..length * 2 - 1) {
-        val value = convertor.convert2(i)
+        val value = convertor2.convert(i)
         if (value != -1) println("R: $i - $value")
       }
     }

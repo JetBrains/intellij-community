@@ -22,50 +22,41 @@ import java.io.File;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class PatchFileCreatorNotBinaryTest extends PatchFileCreatorTest {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-  }
-
   @Test
   public void failOnEmptyTargetJar() throws Exception {
-    final File sourceJar = new File(myOlderDir, "lib/empty.jar");
+    File sourceJar = new File(myOlderDir, "lib/empty.jar");
     FileUtil.copy(new File(myOlderDir, "lib/annotations.jar"), sourceJar);
 
     try {
-      final File targetJar = new File(myNewerDir, "lib/empty.jar");
-      if (targetJar.exists()) targetJar.delete();
-      assertTrue(targetJar.createNewFile());
+      File targetJar = new File(myNewerDir, "lib/empty.jar");
+      FileUtil.writeToFile(targetJar, "x");
 
       try {
         createPatch();
         fail("Should have failed to create a patch against empty .jar");
       }
       catch (IOException e) {
-        final String reason = e.getMessage();
-        assertEquals("Corrupted target file: " + targetJar, reason);
+        assertEquals("Corrupted file: " + targetJar, e.getMessage());
       }
       finally {
-        targetJar.delete();
+        FileUtil.delete(targetJar);
       }
     }
     finally {
-      sourceJar.delete();
+      FileUtil.delete(sourceJar);
     }
   }
 
   @Test
   public void failOnEmptySourceJar() throws Exception {
-    final File sourceJar = new File(myOlderDir, "lib/empty.jar");
-    if (sourceJar.exists()) sourceJar.delete();
-    assertTrue(sourceJar.createNewFile());
+    File sourceJar = new File(myOlderDir, "lib/empty.jar");
+    FileUtil.writeToFile(sourceJar, "x");
 
     try {
-      final File targetJar = new File(myNewerDir, "lib/empty.jar");
+      File targetJar = new File(myNewerDir, "lib/empty.jar");
       FileUtil.copy(new File(myNewerDir, "lib/annotations.jar"), targetJar);
 
       try {
@@ -73,15 +64,14 @@ public class PatchFileCreatorNotBinaryTest extends PatchFileCreatorTest {
         fail("Should have failed to create a patch from empty .jar");
       }
       catch (IOException e) {
-        final String reason = e.getMessage();
-        assertEquals("Corrupted source file: " + sourceJar, reason);
+        assertEquals("Corrupted file: " + sourceJar, e.getMessage());
       }
       finally {
-        targetJar.delete();
+        FileUtil.delete(targetJar);
       }
     }
     finally {
-      sourceJar.delete();
+      FileUtil.delete(sourceJar);
     }
   }
 }

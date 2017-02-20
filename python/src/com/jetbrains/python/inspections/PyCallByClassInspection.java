@@ -34,7 +34,7 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 
 /**
- * Checks for for calls like <code>X.method(y,...)</code>, where y is not an instance of X.
+ * Checks for for calls like {@code X.method(y,...)}, where y is not an instance of X.
  * <br/>
  * Not marked are cases of inheritance calls in old-style classes, like:<pre>
  * class B(A):

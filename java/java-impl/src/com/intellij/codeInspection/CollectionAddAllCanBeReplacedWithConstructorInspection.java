@@ -247,14 +247,12 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression methodCallExpression = myMethodCallExpression.getElement();
-
-      LOG.assertTrue(methodCallExpression != null);
-
+      if (methodCallExpression == null) return;
       final PsiElement parameter = methodCallExpression.getArgumentList().getExpressions()[0].copy();
       final PsiNewExpression element = myAssignmentExpression.getElement();
-      LOG.assertTrue(element != null);
+      if (element == null) return;
       final PsiExpressionList constructorArguments = element.getArgumentList();
-      LOG.assertTrue(constructorArguments != null);
+      if (constructorArguments == null) return;
       constructorArguments.add(parameter);
       methodCallExpression.delete();
     }

@@ -428,7 +428,7 @@ public abstract class MvcFramework {
   }
 
   public static GeneralCommandLine createCommandLine(@NotNull JavaParameters params) throws CantRunException {
-    return CommandLineBuilder.createFromJavaParameters(params);
+    return params.toCommandLine();
   }
 
   private void extractPlugins(Project project, @Nullable VirtualFile pluginRoot, boolean refreshPluginRoot, Map<String, VirtualFile> res) {

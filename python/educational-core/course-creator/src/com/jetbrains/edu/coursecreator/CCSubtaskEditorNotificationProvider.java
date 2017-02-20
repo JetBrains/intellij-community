@@ -1,9 +1,9 @@
 package com.jetbrains.edu.coursecreator;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
@@ -21,6 +21,7 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.jetbrains.edu.coursecreator.actions.CCNewSubtaskAction;
 import com.jetbrains.edu.learning.StudySubtaskUtils;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -32,10 +33,9 @@ import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
+import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 
 public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("edu.coursecreator.subtask");
@@ -68,13 +68,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     if (task == null || !task.hasSubtasks()) {
       return null;
     }
-    EditorNotificationPanel panel = new EditorNotificationPanel() {
-      @Override
-      public Color getBackground() {
-        Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
-        return color == null ? super.getBackground() : color;
-      }
-    };
+    EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
     String header = (isTestFile ? "test" : "task") + " file";
     int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
     int subtaskSize = task.getLastSubtaskIndex() + 1;
@@ -113,11 +107,12 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
         return CCNewSubtaskAction.NEW_SUBTASK;
       }
       int subtaskNum = value + 1;
-      String text = EduNames.SUBTASK + " " + subtaskNum;
-      if (value == myTask.getActiveSubtaskIndex()) {
-        text += " (selected)";
-      }
-      return text;
+      return " " + EduNames.SUBTASK + " " + subtaskNum;
+    }
+
+    @Override
+    public Icon getIconFor(Integer value) {
+      return value == myTask.getActiveSubtaskIndex() ? AllIcons.Actions.Checked : EmptyIcon.create(AllIcons.Actions.Checked);
     }
 
     @Override
@@ -205,7 +200,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
           if (activeSubtaskIndex > mySubtaskIndex) {
             myTask.setActiveSubtaskIndex(activeSubtaskIndex - 1);
           }
-          StudySubtaskUtils.updateUI(myProject, myTask, taskDir);
+          StudySubtaskUtils.updateUI(myProject, myTask, taskDir, true);
           for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
             EditorNotifications.getInstance(myProject).updateNotifications(file);
           }

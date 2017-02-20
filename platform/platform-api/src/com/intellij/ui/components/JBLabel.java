@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.ColorUtil;
@@ -203,16 +204,15 @@ public class JBLabel extends JLabel implements AnchorableComponent {
       setCopyable(false);
       setCopyable(true);
     }
+
+    UISettings.setupComponentAntialiasing(this);
   }
 
   /**
-   *
    * In 'copyable' mode JBLabel has the same appearance but user can select text with mouse and copy it to clipboard with standard shortcut.
+   * By default JBLabel is NOT copyable
    * @return 'this' (the same instance)
    */
-  //
-  // By default JBLabel is NOT copyable
-  // This method re
   public JBLabel setCopyable(boolean copyable) {
     if (copyable ^ myEditorPane != null) {
       if (myEditorPane == null) {

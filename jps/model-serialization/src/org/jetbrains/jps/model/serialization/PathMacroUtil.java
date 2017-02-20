@@ -18,16 +18,16 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Map;
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
 
 /**
  * @author nik
@@ -48,19 +48,20 @@ public class PathMacroUtil {
     .put(USER_HOME_NAME, StringUtil.trimEnd(toSystemIndependentName(SystemProperties.getUserHome()), "/")).build();
 
   @Nullable
-  public static String getModuleDir(String moduleFilePath) {
-    File moduleDirFile = new File(moduleFilePath).getParentFile();
-    if (moduleDirFile == null) return null;
+  public static String getModuleDir(@NotNull String moduleFilePath) {
+    String moduleDir = PathUtilRt.getParentPath(moduleFilePath);
+    if (StringUtil.isEmpty(moduleDir)) {
+      return null;
+    }
 
     // hack so that, if a module is stored inside the .idea directory, the base directory
     // rather than the .idea directory itself is considered the module root
     // (so that a Ruby IDE project doesn't break if its directory is moved together with the .idea directory)
-    File moduleDirParent = moduleDirFile.getParentFile();
-    if (moduleDirParent != null && moduleDirFile.getName().equals(DIRECTORY_STORE_NAME)) {
-      moduleDirFile = moduleDirParent;
+    String moduleDirParent = PathUtilRt.getParentPath(moduleDir);
+    if (!StringUtil.isEmpty(moduleDirParent) && PathUtilRt.getFileName(moduleDir).equals(DIRECTORY_STORE_NAME)) {
+      moduleDir = moduleDirParent;
     }
-    String moduleDir = moduleDirFile.getPath();
-    moduleDir = moduleDir.replace(File.separatorChar, '/');
+    moduleDir = toSystemIndependentName(moduleDir);
     if (moduleDir.endsWith(":/")) {
       moduleDir = moduleDir.substring(0, moduleDir.length() - 1);
     }

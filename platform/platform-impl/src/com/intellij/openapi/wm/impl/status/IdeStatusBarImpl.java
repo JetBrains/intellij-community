@@ -156,7 +156,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     return this;
   }
 
-  IdeStatusBarImpl(@Nullable IdeStatusBarImpl master) {
+  private IdeStatusBarImpl(@Nullable IdeStatusBarImpl master) {
     setLayout(new BorderLayout());
     setBorder(JBUI.Borders.empty());
 
@@ -691,6 +691,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   public StatusBarWidget getWidget(String id) {
     WidgetBean bean = myWidgetMap.get(id);
     return bean == null ? null : bean.widget;
+  }
+
+  @Nullable
+  public JComponent getWidgetComponent(@NotNull String id) {
+    WidgetBean bean = myWidgetMap.get(id);
+    return bean == null ? null : bean.component;
   }
 
   private interface StatusBarWrapper {

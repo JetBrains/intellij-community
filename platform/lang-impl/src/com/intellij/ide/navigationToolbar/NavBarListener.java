@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -306,7 +305,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
     return action instanceof PopupAction
            || action instanceof CopyAction
            || action instanceof CutAction
-           || action instanceof ScrollingUtil.ListScrollAction;
+           || action instanceof ScrollingUtil.ScrollingAction;
   }
 
   @Override
@@ -378,9 +377,6 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   public void beforeEditorTyping(char c, DataContext dataContext) {}
 
   @Override
-  public void beforeRootsChange(ModuleRootEvent event) {}
-
-  @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {}
 
   @Override
@@ -400,10 +396,4 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
 
   @Override
   public void childRemoved(@NotNull PsiTreeChangeEvent event) {}
-
-  @Override
-  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {}
-
-  @Override
-  public void selectionChanged(@NotNull FileEditorManagerEvent event) {}
 }

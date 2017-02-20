@@ -299,3 +299,22 @@ class DefiniteAssignmentInFinally {
     }
   }
 }
+class StaticInitializerUsedInAnotherInstanceField {
+  private final int myEnumerationCacheConstant = ENUMERATION_CACHE_SIZE;
+  private static final int ourEnumerationCacheConstant = <error descr="Variable 'ENUMERATION_CACHE_SIZE' might not have been initialized">ENUMERATION_CACHE_SIZE</error>;
+
+  private static final int ENUMERATION_CACHE_SIZE;
+
+  static {
+    ENUMERATION_CACHE_SIZE = 0;
+  }
+}
+
+class StaticInitializedUsedInAnotherStaticField {
+  private static final String STRINGS1;
+  private static final String STRINGS2 = <error descr="Variable 'STRINGS1' might not have been initialized">STRINGS1</error>;
+
+  static {
+    STRINGS1 = "";
+  }
+}

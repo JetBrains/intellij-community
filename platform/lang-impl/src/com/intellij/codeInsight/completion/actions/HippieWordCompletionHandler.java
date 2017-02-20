@@ -17,8 +17,6 @@
 package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -35,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,12 +52,10 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
     int caretOffset = editor.getCaretModel().getOffset();
     if (editor.isViewer() || editor.getDocument().getRangeGuard(caretOffset, caretOffset) != null) {
       editor.getDocument().fireReadOnlyModificationAttempt();
-      CodeInsightUtilBase.showReadOnlyViewWarning(editor);
+      EditorModificationUtil.checkModificationAllowed(editor);
       return;
     }
 
@@ -417,11 +412,6 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       data.startOffset = offset;
     }
     return data;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 
   private static CompletionState getCompletionState(Editor editor) {

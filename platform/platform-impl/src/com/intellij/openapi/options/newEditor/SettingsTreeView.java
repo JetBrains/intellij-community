@@ -73,7 +73,7 @@ import java.util.List;
 /**
  * @author Sergey.Malenkov
  */
-final class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
+public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final int ICON_GAP = 5;
   private static final String NODE_ICON = "settings.tree.view.icon";
   private static final Color WRONG_CONTENT = JBColor.RED;
@@ -95,7 +95,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
   private Configurable myQueuedConfigurable;
   private boolean myPaintInternalInfo;
 
-  SettingsTreeView(SettingsFilter filter, ConfigurableGroup... groups) {
+  public SettingsTreeView(SettingsFilter filter, ConfigurableGroup[] groups) {
     myFilter = filter;
     myRoot = new MyRoot(groups);
     myTree = new MyTree();
@@ -267,34 +267,49 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
 
   @Nullable
   Project findConfigurableProject(@Nullable Configurable configurable) {
-    if (configurable instanceof ConfigurableWrapper) {
-      return getProjectFromWrapper((ConfigurableWrapper)configurable);
-    }
-    return findConfigurableProject(findNode(configurable));
+    MyNode node = findNode(configurable);
+    return node == null ? null : findConfigurableProject(node, true);
   }
 
   @Nullable
-  private static Project findConfigurableProject(@Nullable MyNode node) {
-    if (node != null) {
-      Configurable configurable = node.myConfigurable;
-      if (configurable instanceof ConfigurableWrapper) {
-        return getProjectFromWrapper((ConfigurableWrapper)configurable);
-      }
-      SimpleNode parent = node.getParent();
-      if (parent instanceof MyNode) {
-        return findConfigurableProject((MyNode)parent);
-      }
+  private static Project findConfigurableProject(@NotNull MyNode node, boolean checkProjectLevel) {
+    Configurable configurable = node.myConfigurable;
+    Project project = node.getProject();
+    if (checkProjectLevel) {
+      Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, configurable);
+      if (wrapped != null) return wrapped.isProjectLevel() ? project : null;
     }
-    return null;
+    if (configurable instanceof ConfigurableWrapper) return project;
+    if (configurable instanceof SortedConfigurableGroup) return project;
+
+    SimpleNode parent = node.getParent();
+    return parent instanceof MyNode
+           ? findConfigurableProject((MyNode)parent, checkProjectLevel)
+           : null;
   }
-  
+
   @Nullable
-  private static Project getProjectFromWrapper(@NotNull ConfigurableWrapper wrapper) {
-    Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, wrapper);
-    if (wrapped != null && !wrapped.isProjectLevel()) {
-      return null;
+  private static Project prepareProject(CachingSimpleNode parent, Configurable configurable) {
+    if (configurable instanceof ConfigurableWrapper) {
+      ConfigurableWrapper wrapper = (ConfigurableWrapper)configurable;
+      return wrapper.getExtensionPoint().getProject();
     }
-    return wrapper.getExtensionPoint().getProject();
+    if (configurable instanceof SortedConfigurableGroup) {
+      SortedConfigurableGroup group = (SortedConfigurableGroup)configurable;
+      Configurable[] configurables = group.getConfigurables();
+      if (configurables != null && configurables.length != 0) {
+        Project project = prepareProject(parent, configurables[0]);
+        if (project != null) {
+          for (int i = 1; i < configurables.length; i++) {
+            if (project != prepareProject(parent, configurables[i])) {
+              return null;
+            }
+          }
+        }
+        return project;
+      }
+    }
+    return parent == null ? null : parent.getProject();
   }
 
   private static int getLeftMargin(int level) {
@@ -453,7 +468,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
     private final int myLevel;
 
     private MyNode(CachingSimpleNode parent, Configurable configurable, int level) {
-      super(parent);
+      super(prepareProject(parent, configurable), parent);
       myComposite = configurable instanceof Configurable.Composite ? (Configurable.Composite)configurable : null;
       myConfigurable = configurable;
       String name = configurable.getDisplayName();
@@ -558,36 +573,12 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
       // configure project icon
       Project project = null;
       if (node != null) {
-        SimpleNode parent = node.getParent();
-        if (parent instanceof MyNode) {
-          if (myRoot == parent.getParent()) {
-            project = findConfigurableProject(node); // show icon for top-level nodes
-            if (node.myConfigurable instanceof SortedConfigurableGroup) { // special case for custom subgroups (build.tools)
-              Configurable[] configurables = ((SortedConfigurableGroup)node.myConfigurable).getConfigurables();
-              if (configurables != null) { // assume that all configurables have the same project
-                project = findConfigurableProject(configurables[0]);
-              }
-            }
-          }
-          else if (((MyNode)parent).myConfigurable instanceof SortedConfigurableGroup) {
-            if (((MyNode)node.getParent()).myConfigurable instanceof SortedConfigurableGroup) {
-              project = findConfigurableProject(node); // special case for custom subgroups
-            }
-          }
-        }
+        project = findConfigurableProject(node, false);
       }
-      if (project != null) {
-        myProjectIcon.setIcon(selected
-                              ? AllIcons.General.ProjectConfigurableSelected
-                              : AllIcons.General.ProjectConfigurable);
-        myProjectIcon.setToolTipText(OptionsBundle.message(project.isDefault()
-                                                           ? "configurable.default.project.tooltip"
-                                                           : "configurable.current.project.tooltip"));
-        myProjectIcon.setVisible(true);
-      }
-      else {
-        myProjectIcon.setVisible(false);
-      }
+      Configurable configurable = null;
+      if(node != null)
+        configurable = node.myConfigurable;
+      setProjectIcon(myProjectIcon, configurable, project, selected);
       // configure node icon
       Icon nodeIcon = null;
       if (value instanceof DefaultMutableTreeNode) {
@@ -608,7 +599,7 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
                     node.myConfigurable.getClass().getSimpleName();
         PluginDescriptor plugin = node.myConfigurable instanceof ConfigurableWrapper ? ((ConfigurableWrapper)node.myConfigurable).getExtensionPoint().getPluginDescriptor() : null;
         String pluginId = plugin == null ? null : plugin.getPluginId().getIdString();
-        String pluginName = pluginId == null || PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId)? null :
+        String pluginName = pluginId == null || PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) ? null :
                             plugin instanceof IdeaPluginDescriptor ? ((IdeaPluginDescriptor)plugin).getName() : pluginId;
         myTextLabel.append("   ", SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
         myTextLabel.append(pluginName == null ? id : id + " (" + pluginName + ")", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES, false);
@@ -634,10 +625,25 @@ final class SettingsTreeView extends JComponent implements Accessible, Disposabl
           view.repaint();
         }
       }
+
       return this;
     }
   }
 
+  protected void setProjectIcon(JLabel projectIcon, Configurable configurable, @Nullable Project project, boolean selected) {
+    if (project != null) {
+      projectIcon.setIcon(selected
+        ? AllIcons.General.ProjectConfigurableSelected
+        : AllIcons.General.ProjectConfigurable);
+      projectIcon.setToolTipText(OptionsBundle.message(project.isDefault()
+        ? "configurable.default.project.tooltip"
+        : "configurable.current.project.tooltip"));
+      projectIcon.setVisible(true);
+    }
+    else {
+      projectIcon.setVisible(false);
+    }
+  }
   private final class MyTree extends SimpleTree {
     @Override
     public String getToolTipText(MouseEvent event) {

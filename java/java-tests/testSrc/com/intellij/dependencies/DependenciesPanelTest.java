@@ -17,20 +17,25 @@ package com.intellij.dependencies;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
 import com.intellij.packageDependencies.ui.PackagePatternProvider;
+import com.intellij.packageDependencies.ui.ProjectPatternProvider;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
+import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 
 public class DependenciesPanelTest extends TestSourceBasedTestCase {
-  public void testDependencies() {
+  public void testFiles() {
     PsiDirectory psiDirectory = getPackageDirectory("com/package1");
     assertNotNull(psiDirectory);
     PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
@@ -39,28 +44,54 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
     sortClassesByName(classes);
     PsiFile file = classes[0].getContainingFile();
 
-    AnalysisScope scope = new AnalysisScope(file);
+    DependencyUISettings.getInstance().SCOPE_TYPE = PackagePatternProvider.PACKAGES;
+    doTestDependenciesTrees(new AnalysisScope(file), "-Root\n" +
+                                                     " Library Classes\n" +
+                                                     " -Production Classes\n" +
+                                                     "  -com.package1\n" +
+                                                     "   [Class1.java]\n" +
+                                                     " Test Classes\n",
+                            "-Root\n" +
+                            " Library Classes\n" +
+                            " -Production Classes\n" +
+                            "  -com.package1\n" +
+                            "   Class2.java\n" +
+                            " Test Classes\n");
+  }
+
+  public void testModuleGroups() throws Exception {
+    ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
+    model.setModuleGroupPath(myModule, new String[] {"a", "b"});
+    model.renameModule(myModule, "module");
+    WriteAction.run(model::commit);
+    createModule("util"); // groups aren't shown for single-module projects so we need to add an empty second module
+    DependencyUISettings settings = DependencyUISettings.getInstance();
+    settings.UI_GROUP_BY_SCOPE_TYPE = false;
+    settings.UI_SHOW_FILES = false;
+    settings.SCOPE_TYPE = ProjectPatternProvider.FILE;
+    doTestDependenciesTrees(new AnalysisScope(myModule), "-Root\n" +
+                                                         " -[a]\n" +
+                                                         "  -b\n" +
+                                                         "   -module\n" +
+                                                         "    -dependencies\n" +
+                                                         "     -src\n" +
+                                                         "      com/package1\n",
+                            "Root\n");
+  }
+
+  private void doTestDependenciesTrees(AnalysisScope scope, String expectedLeftTree, String expectedRightTree) {
     DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, scope);
     builder.analyze();
 
-    DependencyUISettings.getInstance().SCOPE_TYPE = PackagePatternProvider.PACKAGES;
     DependenciesPanel dependenciesPanel = new DependenciesPanel(myProject, builder);
     try {
       JTree leftTree = dependenciesPanel.getLeftTree();
-      PlatformTestUtil.assertTreeEqual(leftTree, "-Root\n" +
-                                                 " Library Classes\n" +
-                                                 " -Production Classes\n" +
-                                                 "  -com.package1\n" +
-                                                 "   [Class1.java]\n" +
-                                                 " Test Classes\n", true);
+      TreeUtil.expandAll(leftTree);
+      PlatformTestUtil.assertTreeEqual(leftTree, expectedLeftTree, true);
 
       JTree rightTree = dependenciesPanel.getRightTree();
-      PlatformTestUtil.assertTreeEqual(rightTree, "-Root\n" +
-                                                  " Library Classes\n" +
-                                                  " -Production Classes\n" +
-                                                  "  -com.package1\n" +
-                                                  "   Class2.java\n" +
-                                                  " Test Classes\n", true);
+      TreeUtil.expandAll(rightTree);
+      PlatformTestUtil.assertTreeEqual(rightTree, expectedRightTree, true);
     }
     finally {
       Disposer.dispose(dependenciesPanel);
@@ -69,6 +100,11 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
 
   @Override
   protected String getTestPath() {
+    return "dependencies";
+  }
+
+  @Override
+  protected String getTestDirectoryName() {
     return "dependencies";
   }
 

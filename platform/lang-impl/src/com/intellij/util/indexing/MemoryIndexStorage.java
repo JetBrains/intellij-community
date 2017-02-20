@@ -18,8 +18,11 @@ package com.intellij.util.indexing;
 
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.impl.ChangeTrackingValueContainer;
+import com.intellij.util.indexing.impl.DebugAssertions;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.UpdatableValueContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,7 +34,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 10, 2007
  */
-public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
+public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
   @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
@@ -91,16 +94,21 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     }
   }
 
-  void clearCaches() {
-    if (myMap.size() == 0) return;
+  @Override
+  public void clearCaches() {
+    try {
+      if (myMap.size() == 0) return;
 
-    if (DebugAssertions.DEBUG) {
-      String message = "Dropping caches for " + (myIndexId != null ? myIndexId:this) + ", number of items:" + myMap.size();
-      FileBasedIndexImpl.LOG.info(message);
-    }
+      if (DebugAssertions.DEBUG) {
+        String message = "Dropping caches for " + (myIndexId != null ? myIndexId : this) + ", number of items:" + myMap.size();
+        FileBasedIndexImpl.LOG.info(message);
+      }
 
-    for(ChangeTrackingValueContainer<Value> v:myMap.values()) {
-      v.dropMergedData();
+      for (ChangeTrackingValueContainer<Value> v : myMap.values()) {
+        v.dropMergedData();
+      }
+    } finally {
+      myBackendStorage.clearCaches();
     }
   }
 
@@ -118,14 +126,6 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
   @Override
   public void flush() throws IOException {
     myBackendStorage.flush();
-  }
-
-  @NotNull
-  @Override
-  public Collection<Key> getKeys() throws StorageException {
-    final Set<Key> keys = new HashSet<>();
-    processKeys(Processors.cancelableCollectProcessor(keys), null, null);
-    return keys;
   }
 
   @Override
@@ -148,7 +148,7 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
       }
       stopList.add(key);
     }
-    return myBackendStorage.processKeys(stopList.isEmpty() && myMap.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
+    return ((VfsAwareIndexStorage<Key, Value>) myBackendStorage).processKeys(stopList.isEmpty() && myMap.isEmpty() ? processor : decoratingProcessor, scope, idFilter);
   }
 
   @Override

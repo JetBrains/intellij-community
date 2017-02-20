@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -24,16 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ModifiableModel extends InspectionProfile {
-  void enableTool(@NotNull String inspectionTool, NamedScope namedScope, Project project);
+  void enableTool(@NotNull String toolShortName, NamedScope namedScope, Project project);
 
-  void setErrorLevel(HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project);
+  void disableTool(@NotNull String toolShortName, @NotNull PsiElement element);
 
-  /**
-   * @see InspectionProfile#getSingleTool()
-   */
-  void setSingleTool(@NotNull String toolShortName);
-
-  void disableTool(@NotNull String toolId, @NotNull PsiElement element);
-
-  void disableTool(@NotNull String inspectionTool, @Nullable Project project);
+  void disableTool(@NotNull String toolShortName, @Nullable Project project);
 }

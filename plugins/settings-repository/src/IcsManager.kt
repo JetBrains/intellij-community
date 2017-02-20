@@ -15,8 +15,10 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.configurationStore.StreamProvider
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -25,6 +27,7 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
@@ -44,17 +47,18 @@ internal const val PLUGIN_NAME = "Settings Repository"
 
 internal val LOG = logger<IcsManager>()
 
-val icsManager by lazy(LazyThreadSafetyMode.NONE) {
+internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
   ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
 }
 
-class IcsManager(dir: Path) {
+class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {
   val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 
   val settings: IcsSettings
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
+  val readOnlySourcesManager = ReadOnlySourceManager(this, dir)
 
   init {
     settings = try {
@@ -66,17 +70,12 @@ class IcsManager(dir: Path) {
     }
   }
 
-  val readOnlySourcesManager = ReadOnlySourcesManager(settings, dir)
-
   val repositoryService: RepositoryService = GitRepositoryService()
 
   private val commitAlarm = SingleAlarm(Runnable {
     runBackgroundableTask(icsMessage("task.commit.title")) { indicator ->
-      try {
+      LOG.catchAndLog {
         repositoryManager.commit(indicator, fixStateIfCannotCommit = false)
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
       }
     }
   }, settings.commitDelay)
@@ -85,8 +84,11 @@ class IcsManager(dir: Path) {
 
   @Volatile var repositoryActive = false
 
+  val active: Boolean
+    get() = repositoryActive || readOnlySourcesManager.repositories.isNotEmpty()
+
   internal val autoSyncManager = AutoSyncManager(this)
-  private val syncManager = SyncManager(this, autoSyncManager)
+  internal val syncManager = SyncManager(this, autoSyncManager)
 
   private fun scheduleCommit() {
     if (autoCommitEnabled && !ApplicationManager.getApplication()!!.isUnitTestMode) {
@@ -95,7 +97,11 @@ class IcsManager(dir: Path) {
   }
 
   inner class ApplicationLevelProvider : IcsStreamProvider(null) {
-    override fun delete(fileSpec: String, roamingType: RoamingType) {
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
+      if (!repositoryActive) {
+        return false
+      }
+
       if (syncManager.writeAndDeleteProhibited) {
         throw IllegalStateException("Delete is prohibited now")
       }
@@ -103,6 +109,8 @@ class IcsManager(dir: Path) {
       if (repositoryManager.delete(toRepositoryPath(fileSpec, roamingType))) {
         scheduleCommit()
       }
+
+      return true
     }
   }
 
@@ -151,15 +159,18 @@ class IcsManager(dir: Path) {
       storage.streamProvider = ApplicationLevelProvider()
     }
 
-    autoSyncManager.registerListeners(application)
-
-    application.messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
+    val messageBusConnection = application.messageBus.connect()
+    messageBusConnection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appWillBeClosed(isRestart: Boolean) {
+        autoSyncManager.autoSync(true)
+      }
+    })
+    messageBusConnection.subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
       override fun beforeProjectLoaded(project: Project) {
         if (project.isDefault) {
           return
         }
 
-        //registerProjectLevelProviders(project)
         autoSyncManager.registerListeners(project)
       }
 
@@ -171,11 +182,11 @@ class IcsManager(dir: Path) {
 
   open inner class IcsStreamProvider(protected val projectId: String?) : StreamProvider {
     override val enabled: Boolean
-      get() = repositoryActive
+      get() = this@IcsManager.active
 
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = enabled
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = repositoryActive
 
-    override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
+    override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
       val fullPath = toRepositoryPath(path, roamingType, null)
 
       // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
@@ -183,7 +194,12 @@ class IcsManager(dir: Path) {
         repository.processChildren(fullPath, filter) { name, input -> processor(name, input, true) }
       }
 
+      if (!repositoryActive) {
+        return false
+      }
+
       repositoryManager.processChildren(fullPath, filter) { name, input -> processor(name, input, false) }
+      return true
     }
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
@@ -200,9 +216,17 @@ class IcsManager(dir: Path) {
 
     protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = true
 
-    override fun read(fileSpec: String, roamingType: RoamingType) = repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId))
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+      if (!repositoryActive) {
+        return false
+      }
 
-    override fun delete(fileSpec: String, roamingType: RoamingType) {
+      repositoryManager.read(toRepositoryPath(fileSpec, roamingType, projectId), consumer)
+      return true
+    }
+
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
+      return false
     }
   }
 }
@@ -212,6 +236,10 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     private set
 
   override fun beforeApplicationLoaded(application: Application, configPath: String) {
+    if (application.isUnitTestMode) {
+      return
+    }
+
     val customPath = System.getProperty("ics.settingsRepository")
     val pluginSystemDir = if (customPath == null) Paths.get(configPath, "settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
     icsManager = IcsManager(pluginSystemDir)

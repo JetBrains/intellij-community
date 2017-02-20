@@ -19,13 +19,17 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrVariableStub;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import javax.swing.*;
 
 /**
  * @author Dmitry.Krasilschikov
@@ -60,5 +64,11 @@ public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implement
   public SearchScope getUseScope() {
     GrScriptField field = ResolveUtil.findScriptField(this);
     return field != null ? field.getUseScope() : super.getUseScope();
+  }
+
+  @Nullable
+  @Override
+  protected Icon getElementIcon(int flags) {
+    return JetgroovyIcons.Groovy.Variable;
   }
 }

@@ -32,6 +32,8 @@ import java.io.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
+
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TestLoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
@@ -56,13 +58,18 @@ public class TestLoggerFactory implements Logger.Factory {
   }
 
   private void init() {
+    if (!reconfigure()) return;
+    myInitialized = true;
+  }
+
+  public static boolean reconfigure() {
     try {
       File logXmlFile = new File(PathManager.getHomePath(), "test-log.xml");
       if (!logXmlFile.exists()) {
         logXmlFile = new File(PathManager.getBinPath(), "log.xml");
       }
       if (!logXmlFile.exists()) {
-        return;
+        return false;
       }
 
       final String logDir = getTestLogDir();
@@ -92,14 +99,17 @@ public class TestLoggerFactory implements Logger.Factory {
         FileUtil.writeToFile(ideaLog, "");
       }
 
-      myInitialized = true;
+      return true;
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       e.printStackTrace();
+      return false;
     }
   }
 
   public static String getTestLogDir() {
+    if (System.getProperty(PROPERTY_LOG_PATH) != null) return System.getProperty(PROPERTY_LOG_PATH);
+
     return PathManager.getSystemPath() + "/" + LOG_DIR;
   }
 
@@ -156,7 +166,7 @@ public class TestLoggerFactory implements Logger.Factory {
       //return;
     }
     LoggingEvent event = new LoggingEvent(CFQN, logger, level, message, t);
-    APPENDER.append(event);
+    APPENDER.doAppend(event);
 
     if (BUFFER.length() > MAX_BUFFER_LENGTH) {
       synchronized (BUFFER) {

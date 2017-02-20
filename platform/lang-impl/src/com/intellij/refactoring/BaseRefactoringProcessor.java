@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -40,6 +43,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -61,6 +65,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -74,6 +79,7 @@ import java.util.*;
 
 public abstract class BaseRefactoringProcessor implements Runnable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
+  private static boolean PREVIEW_IN_TESTS = true;
 
   @NotNull
   protected final Project myProject;
@@ -147,6 +153,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    */
   protected abstract void performRefactoring(@NotNull UsageInfo[] usages);
 
+  @NotNull
   protected abstract String getCommandName();
 
   protected void doRun() {
@@ -226,8 +233,21 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
+  @TestOnly
+  public static <T extends Throwable> void runWithDisabledPreview(ThrowableRunnable<T> runnable) throws T {
+    PREVIEW_IN_TESTS = false;
+    try {
+      runnable.run();
+    }
+    finally {
+      PREVIEW_IN_TESTS = true;
+    }
+  }
+
   protected void previewRefactoring(@NotNull UsageInfo[] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, info -> info.toString(), ", "));
+      ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
     }
@@ -394,15 +414,14 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected void customizeUsagesView(@NotNull final UsageViewDescriptor viewDescriptor, @NotNull final UsageView usageView) {
-    final Runnable refactoringRunnable = new Runnable() {
-      @Override
-      public void run() {
-        Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
-        final UsageInfo[] infos = usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]);
+    Runnable refactoringRunnable = () -> {
+      Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
+      final UsageInfo[] infos = usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]);
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         if (ensureElementsWritable(infos, viewDescriptor)) {
           execute(infos);
         }
-      }
+      });
     };
 
     String canNotMakeString = RefactoringBundle.message("usageView.need.reRun");
@@ -449,34 +468,38 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(prepareHelpersRunnable, "Prepare ...", false, myProject);
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final String refactoringId = getRefactoringId();
+      Runnable performRefactoringRunnable = () -> {
+        final String refactoringId = getRefactoringId();
+        if (refactoringId != null) {
+          RefactoringEventData data = getBeforeData();
+          if (data != null) {
+            data.addUsages(usageInfoSet);
+          }
+          myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
+        }
+
+        try {
           if (refactoringId != null) {
-            RefactoringEventData data = getBeforeData();
-            if (data != null) {
-              data.addUsages(usageInfoSet);
-            }
-            myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
+            UndoableAction action1 = new UndoRefactoringAction(myProject, refactoringId);
+            UndoManager.getInstance(myProject).undoableActionPerformed(action1);
           }
 
-          try {
-            if (refactoringId != null) {
-              UndoableAction action = new UndoRefactoringAction(myProject, refactoringId);
-              UndoManager.getInstance(myProject).undoableActionPerformed(action);
-            }
-
-            performRefactoring(writableUsageInfos);
-          }
-          finally {
-            if (refactoringId != null) {
-              myProject.getMessageBus()
-                .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
-            }
+          performRefactoring(writableUsageInfos);
+        }
+        finally {
+          if (refactoringId != null) {
+            myProject.getMessageBus()
+              .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
           }
         }
-      });
+      };
+      ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
+      if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithProgressInDispatchThread(getCommandName(), myProject, null, null, indicator -> performRefactoringRunnable.run());
+      }
+      else {
+        app.runWriteAction(performRefactoringRunnable);
+      }
 
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
 
@@ -485,12 +508,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          performPsiSpoilingRefactoring();
-        }
-      });
+      app.runWriteAction(() -> performPsiSpoilingRefactoring());
     }
     finally {
       action.finish();
@@ -526,10 +544,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       try {
         GuiUtils.runOrInvokeAndWait(myPrepareSuccessfulSwingThreadCallback);
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
+      catch (InterruptedException | InvocationTargetException e) {
         LOG.error(e);
       }
     }

@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -34,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Segment;
@@ -53,6 +53,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.ui.RangeBlinker;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -209,12 +210,7 @@ class SearchForUsagesRunnable implements Runnable {
 
   @NotNull
   private static String getPresentablePath(@NotNull final VirtualFile virtualFile) {
-    return "'" + ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return virtualFile.getPresentableUrl();
-      }
-    }) + "'";
+    return "'" + ReadAction.compute(virtualFile::getPresentableUrl) + "'";
   }
 
   @NotNull
@@ -246,12 +242,7 @@ class SearchForUsagesRunnable implements Runnable {
   private static PsiElement getPsiElement(@NotNull UsageTarget[] searchFor) {
     final UsageTarget target = searchFor[0];
     if (!(target instanceof PsiElementUsageTarget)) return null;
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      @Override
-      public PsiElement compute() {
-        return ((PsiElementUsageTarget)target).getElement();
-      }
-    });
+    return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);
   }
 
   private static void flashUsageScriptaculously(@NotNull final Usage usage) {
@@ -288,7 +279,9 @@ class SearchForUsagesRunnable implements Runnable {
         }
       }
       else {
-        Disposer.dispose(usageView);
+        UsageView finalUsageView = usageView;
+        // later because dispose does some sort of swing magic e.g. AnAction.unregisterCustomShortcutSet()
+        UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(finalUsageView));
       }
       return myUsageViewRef.get();
     }

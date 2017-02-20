@@ -22,11 +22,15 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiTreeChangeEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED;
+import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED;
 
 /**
  * @author mike
@@ -43,12 +47,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
     myPublisher = bus.syncPublisher(TOPIC);
     bus.connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       private void doIncCounter() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            incCounter();
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> incCounter());
       }
 
       @Override
@@ -83,13 +82,26 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   @Override
   public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
-    myModificationCount.getAndIncrement();
-    if (event.getParent() instanceof PsiDirectory 
-        || event.getOldParent() instanceof PsiDirectory /* move events */) {
-      myOutOfCodeBlockModificationCount.getAndIncrement();
+    if (!canAffectPsi(event)) {
+      return;
     }
 
+    PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
+    boolean outOfCodeBlock =
+      code == PROPERTY_CHANGED ? event.getPropertyName() == PsiTreeChangeEvent.PROP_UNLOADED_PSI :
+      code == CHILD_MOVED ? event.getOldParent() instanceof PsiDirectory || event.getNewParent() instanceof PsiDirectory :
+      event.getParent() instanceof PsiDirectory;
+
+    myModificationCount.getAndIncrement();
+    if (outOfCodeBlock) {
+      myJavaStructureModificationCount.getAndIncrement();
+      myOutOfCodeBlockModificationCount.getAndIncrement();
+    }
     fireEvent();
+  }
+
+  public static boolean canAffectPsi(@NotNull PsiTreeChangeEventImpl event) {
+    return !PsiTreeChangeEvent.PROP_WRITABLE.equals(event.getPropertyName());
   }
 
   @Override

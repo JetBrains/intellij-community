@@ -104,7 +104,7 @@ public class FSOperations {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.registerDeleted(rd.target, file, pd.timestamps.getStorage());
+      pd.fsState.registerDeleted(context, rd.target, file, pd.timestamps.getStorage());
     }
   }
 
@@ -136,7 +136,7 @@ public class FSOperations {
   public static void markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
     Set<JpsModule> modules = chunk.getModules();
     Set<ModuleBuildTarget> targets = chunk.getTargets();
-    final Set<ModuleBuildTarget> dirtyTargets = new HashSet<ModuleBuildTarget>(targets);
+    final Set<ModuleBuildTarget> dirtyTargets = new HashSet<>(targets);
 
     // now mark all modules that depend on dirty modules
     final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(chunk.containsTests());
@@ -263,7 +263,7 @@ public class FSOperations {
 
     Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {
-      doNotDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+      doNotDelete = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
       for (BuildTarget<?> target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets()) {
         doNotDelete.addAll(target.getOutputRoots(context));
       }
@@ -280,7 +280,7 @@ public class FSOperations {
           final File parentFile = file.getParentFile();
           if (parentFile != null) {
             if (additionalDirs == null) {
-              additionalDirs = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+              additionalDirs = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
             }
             additionalDirs.add(parentFile);
           }
@@ -309,7 +309,7 @@ public class FSOperations {
     synchronized (TARGETS_COMPLETELY_MARKED_DIRTY) {
       Set<BuildTarget<?>> marked = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
       if (marked == null) {
-        marked = new HashSet<BuildTarget<?>>();
+        marked = new HashSet<>();
         TARGETS_COMPLETELY_MARKED_DIRTY.set(context, marked);
       }
       marked.add(target);

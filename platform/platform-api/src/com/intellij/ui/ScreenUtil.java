@@ -17,14 +17,19 @@ package com.intellij.ui;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.Map;
 
 /**

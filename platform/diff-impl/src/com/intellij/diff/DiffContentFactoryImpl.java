@@ -26,10 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -56,7 +53,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactoryEx {
-  public static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
+  private static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
 
   @NotNull
   @Override
@@ -250,7 +247,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull byte[] content,
                                      @NotNull FilePath filePath) throws IOException {
-    if (filePath.getFileType().isBinary()) {
+    if (isBinaryContent(content, filePath.getFileType())) {
       return createBinaryImpl(project, content, filePath.getFileType(), filePath.getName(), filePath.getVirtualFile());
     }
 
@@ -262,8 +259,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull byte[] content,
                                      @NotNull VirtualFile highlightFile) throws IOException {
-    // TODO: check if FileType.UNKNOWN is actually a text ?
-    if (highlightFile.getFileType().isBinary()) {
+    if (isBinaryContent(content, highlightFile.getFileType())) {
       return createBinaryImpl(project, content, highlightFile.getFileType(), highlightFile.getName(), highlightFile);
     }
 
@@ -294,11 +290,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
   @NotNull
-  private DiffContent createBinaryImpl(@Nullable Project project,
-                                       @NotNull byte[] content,
-                                       @NotNull FileType type,
-                                       @NotNull String fileName,
-                                       @Nullable VirtualFile highlightFile) throws IOException {
+  private static DiffContent createBinaryImpl(@Nullable Project project,
+                                              @NotNull byte[] content,
+                                              @NotNull FileType type,
+                                              @NotNull String fileName,
+                                              @Nullable VirtualFile highlightFile) throws IOException {
     // workaround - our JarFileSystem and decompilers can't process non-local files
     boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.INSTANCE.forFileType(type) != null;
 
@@ -356,6 +352,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                                      @NotNull String fileName,
                                                      @Nullable VirtualFile highlightFile,
                                                      @NotNull Charset charset) {
+    if (fileType.isBinary()) {
+      fileType = PlainTextFileType.INSTANCE;
+
+      Charset guessedCharset = guessCharsetFromContent(content);
+      if (guessedCharset != null) charset = guessedCharset;
+    }
+
     Charset bomCharset = CharsetToolkit.guessFromBOM(content);
     boolean isBOM = bomCharset != null;
     if (isBOM) charset = bomCharset;
@@ -370,10 +373,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       malformedContent = true;
     }
 
-    LineSeparator separator = StringUtil.detectSeparators(text);
-    String correctedContent = StringUtil.convertLineSeparators(text);
-
-    DocumentContent documentContent = createImpl(project, correctedContent, fileType, fileName, highlightFile, charset, isBOM, true, true);
+    DocumentContent documentContent = createImpl(project, text, fileType, fileName, highlightFile, charset, isBOM, true, true);
 
     if (malformedContent) {
       String notificationText = "Content was decoded with errors (using " + "'" + charset.name() + "' charset)";
@@ -444,5 +444,31 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
       return document;
     });
+  }
+
+  private static boolean isBinaryContent(@NotNull byte[] content, @NotNull FileType fileType) {
+    if (UnknownFileType.INSTANCE.equals(fileType)) {
+      return guessCharsetFromContent(content) == null;
+    }
+    return fileType.isBinary();
+  }
+
+  @Nullable
+  private static Charset guessCharsetFromContent(@NotNull byte[] content) {
+    // can't use CharsetToolkit.guessEncoding here because of false-positive INVALID_UTF8
+    CharsetToolkit toolkit = new CharsetToolkit(content);
+
+    Charset fromBOM = toolkit.guessFromBOM();
+    if (fromBOM != null) return fromBOM;
+
+    CharsetToolkit.GuessedEncoding guessedEncoding = toolkit.guessFromContent(content.length);
+    switch (guessedEncoding) {
+      case SEVEN_BIT:
+        return Charset.forName("US-ASCII");
+      case VALID_UTF8:
+        return CharsetToolkit.UTF8_CHARSET;
+      default:
+        return null;
+    }
   }
 }

@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.messages;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author nik
@@ -25,7 +26,7 @@ public class FileDeletedEvent extends BuildMessage {
 
   public FileDeletedEvent(Collection<String> filePaths) {
     super("", Kind.INFO);
-    myFilePaths = filePaths;
+    myFilePaths = Collections.unmodifiableCollection(filePaths);
   }
 
   public Collection<String> getFilePaths() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,13 @@ import com.intellij.psi.PsiNewExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspectionBase extends BaseInspection {
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -62,7 +65,7 @@ public class ZeroLengthArrayInitializationInspectionBase extends BaseInspection 
     public void visitNewExpression(
       @NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      if (!ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
+      if (!ConstructionUtils.isEmptyArrayInitializer(expression)) {
         return;
       }
       if (ExpressionUtils.isDeclaredConstant(expression)) {

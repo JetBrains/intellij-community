@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -215,12 +214,8 @@ public class ConvertVariadicParamIntention extends PyBaseIntentionAction {
   }
 
   private static boolean isKeywordContainerSubscription(@Nullable PsiElement element, @NotNull String keywordContainerName) {
-    return Optional
-      .ofNullable(PyUtil.as(element, PySubscriptionExpression.class))
-      .map(PySubscriptionExpression::getOperand)
-      .map(PyExpression::getText)
-      .filter(text -> text.equals(keywordContainerName))
-      .isPresent();
+    return element instanceof PySubscriptionExpression &&
+           keywordContainerName.equals(((PySubscriptionExpression)element).getOperand().getText());
   }
 
   private static boolean isKeywordContainerCall(@Nullable PsiElement element, @NotNull String keywordContainerName) {

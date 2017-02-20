@@ -49,16 +49,6 @@ public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder, ChangesViewRe
   }
 
   @Override
-  public int getDirNum() {
-    return 0;
-  }
-
-  @Override
-  public int getFilesNum() {
-    return myVcsIgnoredHolderMap.values().stream().mapToInt(HgLocalIgnoredHolder::getSize).sum();
-  }
-
-  @Override
   public boolean containsFile(VirtualFile file) {
     HgRepository repositoryForFile = HgUtil.getRepositoryForFile(myProject, file);
     if (repositoryForFile == null) return false;

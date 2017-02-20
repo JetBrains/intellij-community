@@ -25,13 +25,14 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.Producer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -91,6 +92,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     }
   }
 
+  @NotNull
   @Override
   protected TextEditorState getStateImpl(final Project project, @NotNull final Editor editor, @NotNull final FileEditorStateLevel level) {
     final TextEditorState state = super.getStateImpl(project, editor, level);
@@ -149,7 +151,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
     @Override
     public boolean isValid() {
-      return !Registry.is("editor.new.rendering") || !getEditor().isDisposed();
+      return !getEditor().isDisposed();
     }
   }
 }

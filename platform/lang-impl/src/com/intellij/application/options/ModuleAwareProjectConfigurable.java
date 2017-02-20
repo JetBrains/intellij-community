@@ -98,17 +98,14 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     final Splitter splitter = new Splitter(false, 0.25f);
     CollectionListModel<Module> listDataModel = new CollectionListModel<>(modules);
     final JBList moduleList = new JBList(listDataModel);
-    new ListSpeedSearch(moduleList, new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o == null) {
-          return getProjectConfigurableItemName();
-        }
-        else if (o instanceof Module) {
-          return ((Module)o).getName();
-        }
-        return null;
+    new ListSpeedSearch(moduleList, (Function<Object, String>)o -> {
+      if (o == null) {
+        return getProjectConfigurableItemName();
       }
+      else if (o instanceof Module) {
+        return ((Module)o).getName();
+      }
+      return null;
     });
     moduleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     moduleList.setCellRenderer(new ModuleListCellRenderer() {

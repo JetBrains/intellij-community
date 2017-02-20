@@ -19,12 +19,12 @@ import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchUtil
-import git4idea.test.GitExecutor.git
-import git4idea.test.GitExecutor.last
 import git4idea.test.GitScenarios.commit
 import git4idea.test.GitScenarios.conflict
 import git4idea.test.GitSingleRepoTest
-import git4idea.test.GitTestUtil.makeCommit
+import git4idea.test.makeCommit
+import git4idea.test.git
+import git4idea.test.last
 import org.junit.Assume.assumeTrue
 import kotlin.test.assertNotEquals
 

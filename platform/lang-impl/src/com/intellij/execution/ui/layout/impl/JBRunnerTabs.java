@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,12 @@ import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Map;
 
@@ -107,7 +107,7 @@ public class JBRunnerTabs extends JBEditorTabs {
 
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
-      setBorder(new EmptyBorder(5, 5, 7, 5));
+      setBorder(JBUI.Borders.empty(5, 5, 7, 5));
     }
 
     @Override

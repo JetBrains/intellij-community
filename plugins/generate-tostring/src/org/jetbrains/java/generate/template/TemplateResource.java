@@ -87,7 +87,7 @@ public class TemplateResource implements Serializable {
             return null;
         }
 
-        int i = s.indexOf(token);
+        int i = s.lastIndexOf(token);
         if (i == -1) {
             return s;
         }
@@ -156,7 +156,7 @@ public class TemplateResource implements Serializable {
   /**
    * Gets the method signature
    * <p/>
-   * <code>public String toString()</code>
+   * {@code public String toString()}
    */
   public String getMethodSignature() {
     return getMethodSignature(template);

@@ -108,7 +108,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   private static class PointlessArithmeticFix extends GroovyFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Simplify";
     }
 

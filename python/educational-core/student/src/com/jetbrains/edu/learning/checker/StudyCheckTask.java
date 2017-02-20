@@ -23,6 +23,8 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +62,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   @Override
   public void onSuccess() {
     StudyUtils.updateToolWindows(myProject);
-    StudyCheckUtils.drawAllPlaceholders(myProject, myTask, myTaskDir);
+    StudyCheckUtils.drawAllPlaceholders(myProject, myTask);
     ProjectView.getInstance(myProject).refresh();
     clearState();
   }
@@ -104,7 +106,9 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       runAfterTaskCheckedActions();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
-        EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), myProject);
+        if (StepicUpdateSettings.getInstance().getUser().getAccessToken() != null) {
+          EduStepicConnector.postSolution(myTask, testsOutput.isSuccess(), myProject);
+        }
       }
     }
   }
@@ -140,40 +144,67 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     return null;
   }
 
-  private void checkForAdaptiveCourse(ProgressIndicator indicator) {
-    final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
-    if (testOutput != null) {
-      // As tests in adaptive courses are created from
-      // samples and stored in task, to disable it we should ignore local testing results
-      if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
-        onTaskFailed(testOutput.getMessage());
+  private void checkForAdaptiveCourse(@NotNull ProgressIndicator indicator) {
+    if (myTask.isChoiceTask()) {
+      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask);
+      processStepicCheckOutput(indicator, result);
+    }
+    else if (myTask.isTheoryTask()) {
+      final int lessonId = myTask.getLesson().getId();
+      final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+      final boolean reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
+                                                                              String.valueOf(user.getId()),
+                                                                              EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+      if (reactionPosted) {
+        if (myStatusBeforeCheck != StudyStatus.Solved) {
+          myTask.setStatus(StudyStatus.Solved);
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+        }
       }
       else {
-        final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkTask(myProject, myTask);
-        if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
-          if (pair.getFirst()) {
-            onTaskSolved("Congratulations! Remote tests passed.");
-            if (myStatusBeforeCheck != StudyStatus.Solved) {
-              EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, 2, indicator);
-            }
-          }
-          else {
-            final String checkMessage = pair.getSecond();
-            onTaskFailed(checkMessage);
-          }
-          runAfterTaskCheckedActions();
+        ApplicationManager.getApplication().invokeLater(() -> 
+                                                          StudyUtils.showErrorPopupOnToolbar(myProject, "Unable to get next recommendation"));
+      }
+    }
+    else {
+      final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
+      if (testOutput != null) {
+        // As tests in adaptive courses are created from
+        // samples and stored in task, to disable it we should ignore local testing results
+        if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
+          onTaskFailed(testOutput.getMessage());
         }
         else {
-          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
-                                                                                                    MessageType.WARNING
-                                                                                                      .getPopupBackground(),
-                                                                                                    myProject));
+          final Pair<Boolean, String> pair = EduAdaptiveStepicConnector.checkCodeTask(myProject, myTask);
+          processStepicCheckOutput(indicator, pair);
         }
       }
     }
   }
 
-  protected void onTaskFailed(String message) {
+  private void processStepicCheckOutput(@NotNull ProgressIndicator indicator, @Nullable Pair<Boolean, String> pair) {
+    if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
+      if (pair.getFirst()) {
+        onTaskSolved("Congratulations! Remote tests passed.");
+        if (myStatusBeforeCheck != StudyStatus.Solved) {
+          EduAdaptiveStepicConnector.addNextRecommendedTask(myProject, indicator, EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+        }
+      }
+      else {
+        final String checkMessage = pair.getSecond();
+        onTaskFailed(checkMessage);
+      }
+      runAfterTaskCheckedActions();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
+                                                                                                MessageType.WARNING
+                                                                                                  .getPopupBackground(),
+                                                                                                myProject));
+    }
+  }
+
+  protected void onTaskFailed(@NotNull String message) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     myTask.setStatus(StudyStatus.Failed);
     if (course != null) {
@@ -191,15 +222,20 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     }
   }
 
-  protected void onTaskSolved(String message) {
+  protected void onTaskSolved(@NotNull String message) {
     final Course course = StudyTaskManager.getInstance(myProject).getCourse();
     myTask.setStatus(StudyStatus.Solved);
     if (course != null) {
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(
           () -> {
-            StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
-            StudyCheckUtils.showTestResultsToolWindow(myProject, message, true);
+            if (myTask.isChoiceTask()) {
+              StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
+            }
+            else {
+              StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
+              StudyCheckUtils.showTestResultsToolWindow(myProject, message, true);
+            }
           });
       }
       else {

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.containers.mapSmart
 import gnu.trove.THashMap
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -34,13 +35,13 @@ fun configureInspections(tools: Array<InspectionProfileEntry>,
                          project: Project,
                          parentDisposable: Disposable): InspectionProfileImpl {
   runInInitMode {
-    val profile = InspectionProfileImpl.createSimple(UUID.randomUUID().toString(), project, tools.map { InspectionToolRegistrar.wrapTool(it) })
+    val profile = createSimple(UUID.randomUUID().toString(), project, tools.mapSmart { InspectionToolRegistrar.wrapTool(it) })
     val profileManager = ProjectInspectionProfileManager.getInstance(project)
     // we don't restore old project profile because in tests it must be in any case null - app default profile
     Disposer.register(parentDisposable, Disposable {
       profileManager.deleteProfile(profile)
       profileManager.setCurrentProfile(null)
-      clearAllToolsIn(InspectionProfileImpl.getBaseProfile())
+      clearAllToolsIn(BASE_PROFILE)
     })
 
     profileManager.addProfile(profile)
@@ -56,7 +57,7 @@ fun createGlobalContextForTool(scope: AnalysisScope,
                                project: Project,
                                toolWrappers: List<InspectionToolWrapper<*, *>> = emptyList()): GlobalInspectionContextForTests {
   runInInitMode {
-    val profile = InspectionProfileImpl.createSimple("test", project, toolWrappers)
+    val profile = createSimple("test", project, toolWrappers)
     val context = object : GlobalInspectionContextForTests(project, (InspectionManagerEx.getInstance(project) as InspectionManagerEx).contentManager) {
       override fun getUsedTools(): List<Tools> {
         for (tool in toolWrappers) {

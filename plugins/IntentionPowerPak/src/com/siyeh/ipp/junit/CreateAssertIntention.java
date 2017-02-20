@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ipp.base.Intention;
@@ -42,18 +43,10 @@ public class CreateAssertIntention extends Intention {
     if (BoolUtils.isNegation(expression)) {
       newStatement = buildNewStatement("assertFalse", element, BoolUtils.getNegatedExpressionText(expression));
     }
-    else if (isNullComparison(expression)) {
+    else if (ComparisonUtils.isNullComparison(expression)) {
       final PsiBinaryExpression binaryExpression =
         (PsiBinaryExpression)expression;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      final PsiExpression comparedExpression;
-      if (ExpressionUtils.isNullLiteral(lhs)) {
-        comparedExpression = rhs;
-      }
-      else {
-        comparedExpression = lhs;
-      }
+      final PsiExpression comparedExpression = ExpressionUtils.getValueComparedWithNull(binaryExpression);
       assert comparedExpression != null;
       if (JavaTokenType.EQEQ.equals(binaryExpression.getOperationTokenType())) {
         newStatement = buildNewStatement("assertNull", element, comparedExpression.getText());
@@ -192,22 +185,5 @@ public class CreateAssertIntention extends Intention {
       (PsiBinaryExpression)expression;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     return JavaTokenType.EQEQ.equals(tokenType);
-  }
-
-  private static boolean isNullComparison(PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-    final IElementType tokenType = binaryExpression.getOperationTokenType();
-    if (!JavaTokenType.EQEQ.equals(tokenType) && !JavaTokenType.NE.equals(tokenType)) {
-      return false;
-    }
-    final PsiExpression lhs = binaryExpression.getLOperand();
-    if (ExpressionUtils.isNullLiteral(lhs)) {
-      return true;
-    }
-    final PsiExpression rhs = binaryExpression.getROperand();
-    return ExpressionUtils.isNullLiteral(rhs);
   }
 }

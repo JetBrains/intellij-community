@@ -26,7 +26,9 @@ import java.io.IOException;
 
 import static org.jetbrains.jps.backwardRefs.LightRef.*;
 
-final class LightRefDescriptor implements KeyDescriptor<LightRef>, DifferentSerializableBytesImplyNonEqualityPolicy {
+public final class LightRefDescriptor implements KeyDescriptor<LightRef>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  public static final LightRefDescriptor INSTANCE = new LightRefDescriptor();
+
   @Override
   public int getHashCode(LightRef value) {
     return value.hashCode();

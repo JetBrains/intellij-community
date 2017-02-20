@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>synchronized</code> statement.
+ * Represents a Java {@code synchronized} statement.
  */
 public interface PsiSynchronizedStatement extends PsiStatement {
   /**

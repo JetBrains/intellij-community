@@ -19,7 +19,6 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +35,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -98,7 +98,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     LOG.info("Cherry-picking commits: " + toString(commitsInRoots));
     List<GitCommitWrapper> successfulCommits = ContainerUtil.newArrayList();
     List<GitCommitWrapper> alreadyPicked = ContainerUtil.newArrayList();
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       for (Map.Entry<GitRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
         GitRepository repository = entry.getKey();
@@ -111,7 +111,7 @@ public class GitCherryPicker extends VcsCherryPicker {
       notifyResult(successfulCommits, alreadyPicked);
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
   }
 
@@ -192,7 +192,6 @@ public class GitCherryPicker extends VcsCherryPicker {
       }
       else if (isNothingToCommitMessage(result)) {
         alreadyPicked.add(commitWrapper);
-        return true;
       }
       else {
         notifyError(result.getErrorOutputAsHtmlString(), commitWrapper, successfulCommits);
@@ -203,9 +202,6 @@ public class GitCherryPicker extends VcsCherryPicker {
   }
 
   private static boolean isNothingToCommitMessage(@NotNull GitCommandResult result) {
-    if (!result.getErrorOutputAsJoinedString().isEmpty()) {
-      return false;
-    }
     String stdout = result.getOutputAsJoinedString();
     return stdout.contains("nothing to commit") || stdout.contains("previous cherry-pick is now empty");
   }
@@ -460,7 +456,8 @@ public class GitCherryPicker extends VcsCherryPicker {
       return null;
     }
 
-    String changeListName = createNameForChangeList(commitMessage, 0).replace('\n', ' ');
+    String adjustedMessage = commitMessage.replace('\n', ' ').replaceAll("[ ]{2,}", " ");
+    String changeListName = createNameForChangeList(adjustedMessage, 0);
     LocalChangeList createdChangeList = ((ChangeListManagerEx)myChangeListManager).addChangeList(changeListName, commitMessage, commit);
     LocalChangeList actualChangeList = moveChanges(originalChanges, createdChangeList);
     if (actualChangeList != null && !actualChangeList.getChanges().isEmpty()) {
@@ -484,6 +481,8 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Nullable
   private LocalChangeList moveChanges(@NotNull Collection<Change> originalChanges, @NotNull final LocalChangeList targetChangeList) {
+    Collection<Change> localChanges = GitUtil.findCorrespondentLocalChanges(myChangeListManager, originalChanges);
+
     // 1. We have to listen to CLM changes, because moveChangesTo is asynchronous
     // 2. We have to collect the real target change list, because the original target list (passed to moveChangesTo) is not updated in time.
     final CountDownLatch moveChangesWaiter = new CountDownLatch(1);
@@ -499,7 +498,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     };
     try {
       myChangeListManager.addChangeListListener(listener);
-      myChangeListManager.moveChangesTo(targetChangeList, originalChanges.toArray(new Change[originalChanges.size()]));
+      myChangeListManager.moveChangesTo(targetChangeList, ArrayUtil.toObjectArray(localChanges, Change.class));
       boolean success = moveChangesWaiter.await(100, TimeUnit.SECONDS);
       if (!success) {
         LOG.error("Couldn't await for changes move.");

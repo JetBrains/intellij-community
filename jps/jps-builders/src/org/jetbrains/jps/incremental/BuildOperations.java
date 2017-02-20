@@ -71,7 +71,7 @@ public class BuildOperations {
   private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
-    final THashSet<File> currentFiles = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final THashSet<File> currentFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, timestamps, forceMarkDirty, currentFiles, null);
 
     // handle deleted paths
@@ -83,7 +83,7 @@ public class BuildOperations {
       // can check if the file exists
       final File file = new File(path);
       if (!currentFiles.contains(file)) {
-        fsState.registerDeleted(target, file, timestamps);
+        fsState.registerDeleted(context, target, file, timestamps);
       }
     }
     pd.fsState.markInitialScanPerformed(target);
@@ -135,14 +135,14 @@ public class BuildOperations {
   Map<T, Set<File>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
-      final Map<T, Set<File>> cleanedSources = new HashMap<T, Set<File>>();
+      final Map<T, Set<File>> cleanedSources = new HashMap<>();
 
-      final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
-      final Collection<String> deletedPaths = new ArrayList<String>();
+      final THashSet<File> dirsToDelete = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      final Collection<String> deletedPaths = new ArrayList<>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
-        private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
-        private final TObjectIntHashMap<T> idsCache = new TObjectIntHashMap<T>();
+        private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<>(); // cache the mapping locally
+        private final TObjectIntHashMap<T> idsCache = new TObjectIntHashMap<>();
 
         @Override
         public boolean apply(T target, File file, R sourceRoot) throws IOException {
@@ -163,7 +163,7 @@ public class BuildOperations {
           final Collection<String> outputs = srcToOut.getOutputs(srcPath);
           if (outputs != null) {
             final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
-            final List<String> deletedForThisSource = new ArrayList<String>(outputs.size());
+            final List<String> deletedForThisSource = new ArrayList<>(outputs.size());
             for (String output : outputs) {
               deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
             }
@@ -171,7 +171,7 @@ public class BuildOperations {
             dataManager.getOutputToTargetRegistry().removeMapping(deletedForThisSource, targetId);
             Set<File> cleaned = cleanedSources.get(target);
             if (cleaned == null) {
-              cleaned = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+              cleaned = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
               cleanedSources.put(target, cleaned);
             }
             cleaned.add(file);

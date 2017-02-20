@@ -38,7 +38,10 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
     )
   }
 
-  override fun getParameterHints(element: PsiElement) = (element as? GrCall)?.doGetParameterHints() ?: emptyList()
+  override fun getParameterHints(element: PsiElement): List<InlayInfo> {
+    if (element.containingFile?.virtualFile?.extension == "gradle") return emptyList()
+    return (element as? GrCall)?.doGetParameterHints() ?: emptyList()
+  }
 
   private fun GrCall.doGetParameterHints(): List<InlayInfo>? {
     val signature = GrClosureSignatureUtil.createSignature(this) ?: return null

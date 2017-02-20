@@ -216,6 +216,10 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
           isComboboxInitialized = true;
           initCoursesCombobox();
         }
+        CourseInfo selectedCourse = (CourseInfo)myCoursesComboBox.getSelectedItem();
+        if (selectedCourse == null || selectedCourse.equals(CourseInfo.INVALID_COURSE)) {
+          setError(CONNECTION_ERROR);
+        }
       }
     });
   }
@@ -349,7 +353,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
         if (stepicUser != null && stepicUser.getAccessToken() != null) {
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
-          myGenerator.myUser = stepicUser;
+          StepicUpdateSettings.getInstance().setUser(stepicUser);
           myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser));
           final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null && myRefreshCourseList) {

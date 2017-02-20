@@ -31,6 +31,7 @@ import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -69,6 +70,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaExceptionBreakpointProperties;
+import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
@@ -114,12 +116,8 @@ public class BreakpointManager {
   }
 
   private static boolean checkAndNotifyPossiblySlowBreakpoint(XBreakpoint breakpoint) {
-    if (breakpoint.isEnabled() &&
-        (breakpoint.getType() instanceof JavaMethodBreakpointType || breakpoint.getType() instanceof JavaWildcardMethodBreakpointType)) {
-      Breakpoint bpt = getJavaBreakpoint(breakpoint);
-      if (bpt instanceof MethodBreakpoint && ((MethodBreakpoint)bpt).isEmulated()) {
-        return false;
-      }
+    XBreakpointProperties properties = breakpoint.getProperties();
+    if (breakpoint.isEnabled() && properties instanceof JavaMethodBreakpointProperties && !((JavaMethodBreakpointProperties)properties).EMULATED) {
       XDebugSessionImpl.NOTIFICATION_GROUP
         .createNotification(DebuggerBundle.message("method.breakpoints.slowness.warning"), MessageType.WARNING)
         .notify(((XBreakpointBase)breakpoint).getProject());
@@ -496,7 +494,7 @@ public class BreakpointManager {
 
   @NotNull
   public List<Breakpoint> getBreakpoints() {
-    return ApplicationManager.getApplication().runReadAction((Computable<List<Breakpoint>>)() ->
+    return ReadAction.compute(() ->
       ContainerUtil.mapNotNull(getXBreakpointManager().getAllBreakpoints(), BreakpointManager::getJavaBreakpoint));
   }
 

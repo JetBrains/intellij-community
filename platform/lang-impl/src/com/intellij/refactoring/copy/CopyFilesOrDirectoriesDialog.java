@@ -277,7 +277,8 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
         return;
       }
 
-      if (myFileCopy && myTargetDirectory != null) {
+      if (myFileCopy && myTargetDirectory != null &&
+          myOpenFilesInEditor.isVisible() && myOpenFilesInEditor.isSelected()) {
         if (FileTypeChooser.getKnownFileTypeOrAssociate(myTargetDirectory.getVirtualFile(), newName, myProject) == null) {
           myUnknownFileType = true;
         }

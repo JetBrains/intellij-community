@@ -156,12 +156,14 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      commandLineArgs.add("--info");
+      if(!commandLineArgs.contains("--quiet")) {
+        commandLineArgs.add("--info");
+      }
       commandLineArgs.add("--recompile-scripts");
     }
 
     if (!commandLineArgs.isEmpty()) {
-      LOG.info("Passing command-line args to Gradle Tooling API: " + commandLineArgs);
+      LOG.info("Passing command-line args to Gradle Tooling API: " + StringUtil.join(commandLineArgs, " "));
       // filter nulls and empty strings
       List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, s -> StringUtil.isEmpty(s) ? null : s);
 

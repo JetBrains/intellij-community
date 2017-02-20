@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -28,34 +31,31 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-
-public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
+public class ModuleRootManagerImpl extends ModuleRootManager implements Disposable {
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.ModuleRootManagerImpl");
 
   private final Module myModule;
   private final ProjectRootManagerImpl myProjectRootManager;
   private final VirtualFilePointerManager myFilePointerManager;
-  private RootModelImpl myRootModel;
+  protected RootModelImpl myRootModel;
   private boolean myIsDisposed = false;
   private boolean myLoaded = false;
-  private boolean isModuleAdded = false;
   private final OrderRootsCache myOrderRootsCache;
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
+  protected volatile long myModificationCount;
 
   public ModuleRootManagerImpl(Module module,
                                ProjectRootManagerImpl projectRootManager,
@@ -81,33 +81,25 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "NewModuleRootManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myRootModel.dispose();
     myIsDisposed = true;
 
     if (Disposer.isDebugMode()) {
-      final Set<Map.Entry<RootModelImpl, Throwable>> entries = myModelCreations.entrySet();
-      for (final Map.Entry<RootModelImpl, Throwable> entry : new ArrayList<>(entries)) {
-        System.err.println("***********************************************************************************************");
-        System.err.println("***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***");
-        System.err.println("***********************************************************************************************");
-        System.err.println("Created at:");
-        entry.getValue().printStackTrace(System.err);
+      List<Map.Entry<RootModelImpl, Throwable>> entries;
+      synchronized (myModelCreations) {
+        entries = new ArrayList<>(myModelCreations.entrySet());
+      }
+      for (final Map.Entry<RootModelImpl, Throwable> entry : entries) {
+        LOG.warn("\n" +
+                 "***********************************************************************************************\n" +
+                 "***                        R O O T   M O D E L   N O T   D I S P O S E D                    ***\n" +
+                 "***********************************************************************************************\n" +
+                 "Created at:", entry.getValue());
         entry.getKey().dispose();
       }
     }
   }
-
 
   @Override
   @NotNull
@@ -122,17 +114,24 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       @Override
       public void dispose() {
         super.dispose();
+        Throwable created = null;
         if (Disposer.isDebugMode()) {
-          myModelCreations.remove(this);
+          synchronized (myModelCreations) {
+            created = myModelCreations.remove(this);
+          }
         }
 
         for (OrderEntry entry : ModuleRootManagerImpl.this.getOrderEntries()) {
-          assert !((RootModelComponentBase)entry).isDisposed() : String.format("%s is not disposed!", entry.getPresentableName());
+          assert !((RootModelComponentBase)entry).isDisposed() :
+            entry + "(" + entry.getClass() + ") in " + myRootModel + " is already disposed."
+            + (created == null ? "" : "\nThis modifiable model was created at:\n" + ExceptionUtil.getThrowableText(created));
         }
       }
     };
     if (Disposer.isDebugMode()) {
-      myModelCreations.put(model, new Throwable());
+      synchronized (myModelCreations) {
+        myModelCreations.put(model, new Throwable());
+      }
     }
     return model;
   }
@@ -140,7 +139,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   void makeRootsChange(@NotNull Runnable runnable) {
     ProjectRootManagerEx projectRootManagerEx = (ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject());
     // IMPORTANT: should be the first listener!
-    projectRootManagerEx.makeRootsChange(runnable, false, isModuleAdded);
+    projectRootManagerEx.makeRootsChange(runnable, false, myModule.isLoaded());
   }
 
   public RootModelImpl getRootModel() {
@@ -173,16 +172,28 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LOG.assertTrue(rootModel.myModuleRootManager == this);
 
+    boolean changed = rootModel.isChanged();
+
     final Project project = myModule.getProject();
     final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-    ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModel}, moduleModel);
+    ModifiableModelCommitter.multiCommit(Collections.singletonList(rootModel), moduleModel);
+
+    if (changed) {
+      stateChanged();
+    }
   }
 
   static void doCommit(RootModelImpl rootModel) {
     rootModel.docommit();
     rootModel.dispose();
-  }
 
+    try {
+      ((ModuleRootManagerImpl)getInstance(rootModel.getModule())).stateChanged();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
 
   @Override
   @NotNull
@@ -318,30 +329,19 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getSourceRoots(rootTypes);
   }
 
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void moduleAdded() {
-    isModuleAdded = true;
-  }
-
-
   public void dropCaches() {
     myOrderRootsCache.clearCache();
   }
 
   public ModuleRootManagerState getState() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("getState, module " + myModule.getName());
+    }
     return new ModuleRootManagerState(myRootModel);
   }
 
   public void loadState(ModuleRootManagerState object) {
-    loadState(object, myLoaded || isModuleAdded);
+    loadState(object, myLoaded || myModule.isLoaded());
     myLoaded = true;
   }
 
@@ -368,6 +368,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     }
   }
 
+  void stateChanged() {
+    if (Registry.is("store.track.module.root.manager.changes", false)) {
+      LOG.error("ModelRootManager state changed");
+    }
+    myModificationCount++;
+  }
+
   public static class ModuleRootManagerState implements JDOMExternalizable {
     private RootModelImpl myRootModel;
     private Element myRootModelElement;
@@ -385,7 +392,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     }
 
     @Override
-    public void writeExternal(Element element) throws WriteExternalException {
+    public void writeExternal(Element element) {
       myRootModel.writeExternal(element);
     }
 

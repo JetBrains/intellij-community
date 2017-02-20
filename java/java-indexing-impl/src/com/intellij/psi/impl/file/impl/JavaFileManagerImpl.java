@@ -56,7 +56,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   public JavaFileManagerImpl(Project project) {
     myManager = PsiManagerEx.getInstanceEx(project);
     myPackageIndex = PackageIndex.getInstance(myManager.getProject());
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(final ModuleRootEvent event) {
         myNontrivialPackagePrefixes = null;

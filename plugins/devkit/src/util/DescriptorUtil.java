@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
@@ -67,9 +69,11 @@ public class DescriptorUtil {
       throw new IncorrectOperationException(DevKitBundle.message("error.plugin.xml.readonly"));
     }
 
-    for (XmlFile pluginXml : pluginXmls) {
-      patcher.patchPluginXml(pluginXml, klass);
-    }
+    WriteAction.run((ThrowableRunnable<IncorrectOperationException>)() -> {
+      for (XmlFile pluginXml : pluginXmls) {
+        patcher.patchPluginXml(pluginXml, klass);
+      }
+    });
   }
 
   @Nullable

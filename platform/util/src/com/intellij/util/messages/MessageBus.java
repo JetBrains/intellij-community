@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * </ul>
  * </pre>
  * <p/>
- * Use <code>'com.intellij.openapi.components.ComponentManager#getMessageBus()'</code> to obtain one.
+ * Use {@code 'com.intellij.openapi.components.ComponentManager#getMessageBus()'} to obtain one.
  * <p/>
  * Please see <a href="Wiki">http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Messaging+infrastructure</a>.
  */
@@ -116,7 +116,7 @@ public interface MessageBus {
    * All subscribers are notified sequentially from the calling thread.
    * <p/>
    * <b>Memory management.</b>
-   * Returned objects are very light-weight and stateless, so, they are cached by the message bus in <code>'per-topic'</code> manner.
+   * Returned objects are very light-weight and stateless, so, they are cached by the message bus in {@code 'per-topic'} manner.
    * That means that caller of this method is not obliged to keep returned reference along with the reference to the message for
    * further publishing. It's enough to keep reference to the message bus only and publish
    * like {@code 'messageBus.syncPublisher(targetTopic).targetMethod()'}.

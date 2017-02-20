@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -37,8 +38,9 @@ public class JavaLexer extends LexerBase {
     RETURN, SHORT, STATIC, STRICTFP, SUPER, SWITCH, SYNCHRONIZED, THIS, THROW, THROWS, TRANSIENT, TRY, VOID, VOLATILE, WHILE,
     TRUE, FALSE, NULL);
 
-  private static final Set<String> JAVA9_KEYWORDS = ContainerUtil.newTroveSet(
-    MODULE, REQUIRES, EXPORTS, USES, PROVIDES, TO, WITH);
+  private static final Set<CharSequence> JAVA9_KEYWORDS = ContainerUtil.newTroveSet(
+    CharSequenceHashingStrategy.CASE_SENSITIVE,
+    OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH);
 
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||
@@ -46,8 +48,8 @@ public class JavaLexer extends LexerBase {
            level.isAtLeast(LanguageLevel.JDK_1_5) && ENUM.equals(id);
   }
 
-  public static boolean isSoftKeyword(String id, @NotNull LanguageLevel level) {
-    return level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id);
+  public static boolean isSoftKeyword(CharSequence id, @NotNull LanguageLevel level) {
+    return id != null && level.isAtLeast(LanguageLevel.JDK_1_9) && JAVA9_KEYWORDS.contains(id);
   }
 
   private final _JavaLexer myFlexLexer;

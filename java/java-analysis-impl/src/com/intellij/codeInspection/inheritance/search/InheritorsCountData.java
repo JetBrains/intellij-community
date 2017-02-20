@@ -3,9 +3,6 @@ package com.intellij.codeInspection.inheritance.search;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
- */
 class InheritorsCountData implements Comparable<InheritorsCountData> {
   @NotNull
   private final PsiClass myPsiClass;

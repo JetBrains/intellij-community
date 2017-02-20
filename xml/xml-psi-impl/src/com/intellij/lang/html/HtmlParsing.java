@@ -23,7 +23,7 @@ import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.tree.CustomParsingType;
+import com.intellij.psi.tree.ICustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.xml.XmlElementType;
@@ -205,11 +205,7 @@ public class HtmlParsing {
         xmlText = terminateText(xmlText);
         parseProcessingInstruction();
       }
-      else if (tt == XmlTokenType.XML_ENTITY_REF_TOKEN) {
-        xmlText = terminateText(xmlText);
-        parseReference();
-      }
-      else if (tt == XmlTokenType.XML_CHAR_ENTITY_REF) {
+      else if (tt == XmlTokenType.XML_ENTITY_REF_TOKEN || tt == XmlTokenType.XML_CHAR_ENTITY_REF) {
         xmlText = startText(xmlText);
         parseReference();
       }
@@ -227,7 +223,7 @@ public class HtmlParsing {
         advance();
         error.error(XmlErrorMessages.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
-      else if (tt instanceof CustomParsingType || tt instanceof ILazyParseableElementType) {
+      else if (tt instanceof ICustomParsingType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
         advance();
       }

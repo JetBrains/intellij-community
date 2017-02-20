@@ -53,7 +53,7 @@ public interface ArrangementUiComponent {
    * We use 'enabled by user' property name here in order to avoid clash
    * with {@link Component#isEnabled() standard awt 'enabled' property}. 
    *
-   * @return    <code>true</code> if current ui token is enabled; <code>false</code> otherwise
+   * @return    {@code true} if current ui token is enabled; {@code false} otherwise
    */
   boolean isEnabled();
 
@@ -86,7 +86,7 @@ public interface ArrangementUiComponent {
    * to the containers hierarchy, hence, doesn't receive mouse events.
    *
    * @param event  target mouse move event
-   * @return       bounds to be repainted (in screen coordinates) if any; <code>null</code> otherwise
+   * @return       bounds to be repainted (in screen coordinates) if any; {@code null} otherwise
    */
   @Nullable
   Rectangle onMouseMove(@NotNull MouseEvent event);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TempFiles;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -28,7 +28,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,9 +44,14 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
     myTempFiles = new TempFiles(myFilesToDelete);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myBreakpointManager = null;
+    super.tearDown();
+  }
+
   protected void load(final Element element) {
-    XBreakpointManagerImpl.BreakpointManagerState managerState = XmlSerializer.deserialize(element, XBreakpointManagerImpl.BreakpointManagerState.class);
-    myBreakpointManager.loadState(managerState);
+    myBreakpointManager.loadState(XmlSerializer.deserialize(element, XBreakpointManagerImpl.BreakpointManagerState.class));
   }
 
   protected Element save() {
@@ -55,11 +59,8 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   }
 
   protected List<XBreakpoint<?>> getAllBreakpoints() {
-    final XBreakpointBase<?,?,?>[] breakpoints = ApplicationManager.getApplication().runReadAction(new Computable<XBreakpointBase<?,?,?>[]>() {
-            public XBreakpointBase<?,?,?>[] compute() {
-              return myBreakpointManager.getAllBreakpoints();
-            }
-          });
+    final XBreakpointBase<?,?,?>[] breakpoints = ApplicationManager.getApplication().runReadAction(
+      (Computable<XBreakpointBase<?, ?, ?>[]>)() -> myBreakpointManager.getAllBreakpoints());
     final List<XBreakpoint<?>> result = new ArrayList<>();
     for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
       final XBreakpointType type = breakpoint.getType();

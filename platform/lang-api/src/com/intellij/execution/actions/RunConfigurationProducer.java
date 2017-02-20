@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @return true if the other configuration should be discarded, false otherwise.
    * @see #isPreferredConfiguration(ConfigurationFromContext, ConfigurationFromContext)
    */
-  public boolean shouldReplace(ConfigurationFromContext self, ConfigurationFromContext other) {
+  public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
     return false;
   }
 
@@ -157,7 +157,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @param context       the context
    * @param startRunnable the runnable that needs to be called after additional customization is complete.
    */
-  public void onFirstRun(ConfigurationFromContext configuration, ConfigurationContext context, Runnable startRunnable) {
+  public void onFirstRun(@NotNull ConfigurationFromContext configuration, @NotNull ConfigurationContext context, @NotNull Runnable startRunnable) {
     startRunnable.run();
   }
 
@@ -176,19 +176,20 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     }
 
     ConfigurationFromContext fromContext = createConfigurationFromContext(context);
-    if (fromContext != null) {
-      final PsiElement psiElement = fromContext.getSourceElement();
-      final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location.getModule());
-      if (_location != null) {
-        // replace with existing configuration if any
-        final RunManager runManager = RunManager.getInstance(context.getProject());
-        final ConfigurationType type = fromContext.getConfigurationType();
-        final RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
-        if (settings != null) {
-          fromContext.setConfigurationSettings(settings);
-        } else {
-          runManager.setUniqueNameIfNeed(fromContext.getConfiguration());
-        }
+    if (fromContext == null) {
+      return null;
+    }
+
+    final PsiElement psiElement = fromContext.getSourceElement();
+    final Location<PsiElement> _location = PsiLocation.fromPsiElement(psiElement, location.getModule());
+    if (_location != null) {
+      // replace with existing configuration if any
+      RunnerAndConfigurationSettings settings = findExistingConfiguration(context);
+      if (settings == null) {
+        RunManager.getInstance(context.getProject()).setUniqueNameIfNeed(fromContext.getConfiguration());
+      }
+      else {
+        fromContext.setConfigurationSettings(settings);
       }
     }
 
@@ -204,7 +205,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
     final RunManager runManager = RunManager.getInstance(context.getProject());
-    final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(myConfigurationFactory.getType());
+    final List<RunnerAndConfigurationSettings> configurations = getConfigurationSettingsList(runManager);
     for (RunnerAndConfigurationSettings configurationSettings : configurations) {
       if (isConfigurationFromContext((T) configurationSettings.getConfiguration(), context)) {
         return configurationSettings;
@@ -213,12 +214,26 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     return null;
   }
 
+  /**
+   * @return list of configurations that may match this producer
+   */
+  @NotNull
+  protected List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull RunManager runManager) {
+    return runManager.getConfigurationSettingsList(myConfigurationFactory.getType());
+  }
+
   protected RunnerAndConfigurationSettings cloneTemplateConfiguration(@NotNull final ConfigurationContext context) {
-    final RunConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
+    return cloneTemplateConfigurationStatic(context, myConfigurationFactory);
+  }
+
+  @NotNull
+  protected static RunnerAndConfigurationSettings cloneTemplateConfigurationStatic(@NotNull final ConfigurationContext context,
+                                                                                   @NotNull final ConfigurationFactory configurationFactory) {
+    final RunConfiguration original = context.getOriginalConfiguration(configurationFactory.getType());
     if (original != null) {
-      return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), myConfigurationFactory);
+      return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), configurationFactory);
     }
-    return RunManager.getInstance(context.getProject()).createRunConfiguration("", myConfigurationFactory);
+    return RunManager.getInstance(context.getProject()).createRunConfiguration("", configurationFactory);
   }
 
   @NotNull

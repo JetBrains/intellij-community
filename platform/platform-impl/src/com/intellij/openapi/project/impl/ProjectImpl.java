@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -134,7 +133,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
       myName = projectName;
-      RecentProjectsManager.getInstance().clearNameCache();
       
       StartupManager.getInstance(this).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
         if (isDisposed()) return;
@@ -315,9 +313,13 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null) return;
 
+    ModuleManager moduleManager = ModuleManager.getInstance(this);
+    if (!(moduleManager instanceof ModuleManagerImpl)) {
+      return;
+    }
+
     double toDistribute = 1 - indicator.getFraction();
-    ModuleManagerImpl moduleManager = (ModuleManagerImpl)ModuleManager.getInstance(this);
-    int modulesCount = moduleManager.getModulePathsCount();
+    int modulesCount = ((ModuleManagerImpl)moduleManager).getModulePathsCount();
     EditorsSplitters splitters = ((FileEditorManagerImpl)FileEditorManager.getInstance(this)).getMainSplitters();
     int editors = splitters.getEditorsCount();
 
@@ -325,7 +327,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (modulesCount != 0) {
 
       double step = modulesPart / modulesCount;
-      moduleManager.setProgressStep(step);
+      ((ModuleManagerImpl)moduleManager).setProgressStep(step);
     }
 
     if (editors != 0) {
@@ -421,14 +423,16 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     @Override
     public void projectOpened(Project project) {
-      LOG.assertTrue(project == ProjectImpl.this);
-      ProjectImpl.this.projectOpened();
+      if (project == ProjectImpl.this) {
+        ProjectImpl.this.projectOpened();
+      }
     }
 
     @Override
     public void projectClosed(Project project) {
-      LOG.assertTrue(project == ProjectImpl.this);
-      ProjectImpl.this.projectClosed();
+      if (project == ProjectImpl.this) {
+        ProjectImpl.this.projectClosed();
+      }
     }
   }
 

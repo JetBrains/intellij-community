@@ -28,11 +28,11 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() throws Exception {
@@ -223,7 +223,7 @@ public class EditorImplTest extends AbstractEditorTest {
     final FoldRegion innerRegion = addCollapsedFoldRegion(0, 4, "...");
     final FoldRegion outerRegion = addCollapsedFoldRegion(0, 9, "...");
 
-    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+    runFoldingOperation(() -> {
       myEditor.getFoldingModel().removeFoldRegion(outerRegion);
       myEditor.getFoldingModel().removeFoldRegion(innerRegion);
     });
@@ -353,7 +353,7 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testChangingHighlightersAfterClearingFoldingsDuringFoldingBatchUpdate() throws Exception {
     initText("abc\n\ndef");
     addCollapsedFoldRegion(2, 6, "...");
-    myEditor.getFoldingModel().runBatchFoldingOperation(() -> {
+    runFoldingOperation(() -> {
       ((FoldingModelEx)myEditor.getFoldingModel()).clearFoldRegions();
       myEditor.getMarkupModel().addRangeHighlighter(7, 8, 0, new TextAttributes(null, null, null, null, Font.BOLD),
                                                     HighlighterTargetArea.EXACT_RANGE);
@@ -415,5 +415,58 @@ public class EditorImplTest extends AbstractEditorTest {
   public void testLineLengthMatchingLogicalPositionCacheFrequency() throws Exception {
     initText("\t" + StringUtil.repeat(" ", 1023));
     assertEquals(new LogicalPosition(0, 1027), myEditor.offsetToLogicalPosition(1024));
+  }
+
+  public void testSpecialCaseOfCaretPositionUpdateOnFolding() throws Exception {
+    initText("abc\ndef\ngh<caret>i");
+    FoldRegion region = addCollapsedFoldRegion(1, 11, "...");
+    runWriteCommand(()-> myEditor.getDocument().deleteString(7, 8));
+    runFoldingOperation(()-> region.setExpanded(true));
+    runFoldingOperation(()-> region.setExpanded(false));
+    assertFalse(region.isExpanded());
+  }
+
+  public void testEditingNearInlayInBulkMode() throws Exception {
+    initText("a<caret>bc");
+    addInlay(1);
+    runWriteCommand(()-> DocumentUtil.executeInBulk(myEditor.getDocument(), true,
+                                                    ()-> myEditor.getDocument().insertString(1, " ")));
+    checkResultByText("a<caret> bc");
+    assertTrue(myEditor.getInlayModel().hasInlineElementAt(1));
+  }
+
+  public void testCoordinateConversionsAroundSurrogatePair() throws Exception {
+    initText("a" + SURROGATE_PAIR + "b");
+    assertEquals(new LogicalPosition(0, 2), myEditor.offsetToLogicalPosition(3));
+    assertEquals(3, myEditor.logicalPositionToOffset(new LogicalPosition(0, 2)));
+    assertEquals(new VisualPosition(0, 2), myEditor.logicalToVisualPosition(new LogicalPosition(0, 2)));
+    assertEquals(new LogicalPosition(0, 2), myEditor.visualToLogicalPosition(new VisualPosition(0, 2)));
+  }
+
+  public void testCreationOfSurrogatePairByMergingDividedParts() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> {
+      myEditor.getDocument().setText(HIGH_SURROGATE + " " + LOW_SURROGATE);
+      myEditor.getDocument().deleteString(1, 2);
+    });
+    checkResultByText(SURROGATE_PAIR);
+    assertEquals(new LogicalPosition(0, 1), myEditor.offsetToLogicalPosition(2));
+  }
+
+  public void testCaretDoesntGetInsideSurrogatePair() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> myEditor.getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+    myEditor.getCaretModel().moveToOffset(2);
+    runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(2, 3, 1));
+    assertFalse(DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), myEditor.getCaretModel().getOffset()));
+  }
+
+  public void testFoldingBoundaryDoesntGetInsideSurrogatePair() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> myEditor.getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+    addFoldRegion(2, 3, "...");
+    runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(2, 3, 1));
+    FoldRegion[] foldRegions = myEditor.getFoldingModel().getAllFoldRegions();
+    assertFalse(foldRegions.length > 0 && DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), foldRegions[0].getStartOffset()));
   }
 }

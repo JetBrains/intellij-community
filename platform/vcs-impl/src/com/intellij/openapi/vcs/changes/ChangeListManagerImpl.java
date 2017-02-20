@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -438,10 +439,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    catch (AssertionError ex) {
+    catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }
     for (VirtualFile file : refreshFiles) {
@@ -514,7 +512,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             myModifier.setWorker(myWorker);
             if (LOG.isDebugEnabled()) {
               LOG.debug("refresh procedure finished, unversioned size: " +
-                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getSize() + "\nchanges: " + myWorker);
+                        dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() + "\nchanges: " + myWorker);
             }
             final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
             myComposite = dataHolder.getComposite();
@@ -539,16 +537,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       myChangesViewManager.scheduleRefresh();
     }
-    catch (DisposedException e) {
+    catch (DisposedException | ProcessCanceledException e) {
       // OK, we're finishing all the stuff now.
     }
-    catch (ProcessCanceledException e) {
-      // OK, we're finishing all the stuff now.
-    }
-    catch (Exception ex) {
-      LOG.error(ex);
-    }
-    catch (AssertionError ex) {
+    catch (Exception | AssertionError ex) {
       LOG.error(ex);
     }
     finally {
@@ -786,14 +778,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  @NotNull
-  public Couple<Integer> getUnversionedFilesSize() {
-    synchronized (myDataLock) {
-      final VirtualFileHolder holder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      return Couple.of(holder.getSize(), holder.getNumDirs());
-    }
-  }
-
   @Override
   public List<VirtualFile> getModifiedWithoutEditing() {
     synchronized (myDataLock) {
@@ -808,14 +792,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public List<VirtualFile> getIgnoredFiles() {
     synchronized (myDataLock) {
       return new ArrayList<>(myComposite.getIgnoredFileHolder().values());
-    }
-  }
-
-  @NotNull
-  public Couple<Integer> getIgnoredFilesSize() {
-    synchronized (myDataLock) {
-      IgnoredFilesCompositeHolder ignoredFileHolder = myComposite.getIgnoredFileHolder();
-      return Couple.of(ignoredFileHolder.getFilesNum(), ignoredFileHolder.getDirNum());
     }
   }
 
@@ -908,7 +884,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final Object data) {
-    return ApplicationManager.getApplication().runReadAction((Computable<LocalChangeList>)() -> {
+    return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
         myChangesViewManager.scheduleRefresh();
@@ -1524,7 +1500,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean setReadOnly(final String name, final boolean value) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+    return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final boolean result = myModifier.setReadOnly(name, value);
         myChangesViewManager.scheduleRefresh();
@@ -1535,7 +1511,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+    return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final boolean result = myModifier.editName(fromName, toName);
         myChangesViewManager.scheduleRefresh();
@@ -1546,7 +1522,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public String editComment(@NotNull final String fromName, final String newComment) {
-    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+    return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final String oldComment = myModifier.editComment(fromName, newComment);
         myChangesViewManager.scheduleRefresh();
@@ -1593,10 +1569,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         future.get(10, TimeUnit.MILLISECONDS);
         break;
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException e) {
         LOG.error(e);
       }
       catch (TimeoutException ignore) {

@@ -27,7 +27,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -47,8 +46,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
-  public static final Logger LOG = Logger.getInstance(ThreesideTextDiffViewerEx.class);
-
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable1;
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable2;
 
@@ -449,7 +446,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       assert editors.length == 3;
     }
 
-    public void install(@Nullable List<MergeLineFragment> fragments,
+    public void install(@Nullable List<? extends MergeLineFragment> fragments,
                         @NotNull UserDataHolder context,
                         @NotNull FoldingModelSupport.Settings settings) {
       Iterator<int[]> it = map(fragments, fragment -> new int[]{

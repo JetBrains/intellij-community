@@ -57,6 +57,11 @@ public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector 
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
         usages.add(StatisticsUtilKt.getCountingUsage("data.commit.count", permanentGraph.getAllCommits().size(),
                                                      asList(0, 1, 100, 1000, 10 * 1000, 100 * 1000, 500 * 1000, 1000 * 1000)));
+        usages.add(StatisticsUtilKt.getCountingUsage("data.branches.count", dataPack.getRefsModel().getBranches().size(),
+                                                     asList(0, 1, 10, 50, 100, 500, 1000, 5 * 1000, 10 * 1000, 20 * 1000, 50 * 1000)));
+        usages.add(StatisticsUtilKt.getCountingUsage("data.users.count", logData.getAllUsers().size(),
+                                                     asList(0, 1, 10, 50, 100, 500, 1000, 5 * 1000, 10 * 1000, 20 * 1000, 50 * 1000)));
+
         for (VcsKey vcs : groupedRoots.keySet()) {
           usages.add(StatisticsUtilKt.getCountingUsage("data." + vcs.getName().toLowerCase() + ".root.count", groupedRoots.get(vcs).size(),
                                                        asList(0, 1, 2, 5, 8, 15, 30, 50, 100, 300, 500)));

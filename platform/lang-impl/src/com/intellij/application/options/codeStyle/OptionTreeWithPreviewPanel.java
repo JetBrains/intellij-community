@@ -54,7 +54,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   private boolean myShowAllStandardOptions = false;
   private Set<String> myAllowedOptions = new HashSet<>();
-  private MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
+  protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
   private final Map<String, String> myRenamedFields = new THashMap<>();
   private final Map<String, String> myRemappedGroups = new THashMap<>();
@@ -302,10 +302,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       childNode.setSelected(key.getValue(settings));
       childNode.setEnabled(key.isEnabled());
     }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (IllegalArgumentException | IllegalAccessException e) {
       LOG.error(e);
     }
   }
@@ -363,10 +360,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       BooleanOptionKey key = (BooleanOptionKey)childNode.getKey();
       return childNode.isSelected() != key.getValue(settings);
     }
-    catch (IllegalArgumentException e) {
-      LOG.error(e);
-    }
-    catch (IllegalAccessException e) {
+    catch (IllegalArgumentException | IllegalAccessException e) {
       LOG.error(e);
     }
     return false;
@@ -389,10 +383,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                                   getRenamedTitle(fieldName, title), field);
       myKeys.add(key);
     }
-    catch (NoSuchFieldException e) {
-      LOG.error(e);
-    }
-    catch (SecurityException e) {
+    catch (NoSuchFieldException | SecurityException e) {
       LOG.error(e);
     }
   }
@@ -407,10 +398,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
                                               option.anchor, option.anchorFieldName,
                                               option.settingClass, field));
       }
-      catch (NoSuchFieldException e) {
-        LOG.error(e);
-      }
-      catch (SecurityException e) {
+      catch (NoSuchFieldException | SecurityException e) {
         LOG.error(e);
       }
     }

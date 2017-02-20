@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -36,7 +37,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,7 +75,6 @@ import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -151,7 +154,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (project.isDefault()) {
       // default project is disposed in write action, so treat it differently
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void appClosing() {
           Disposer.dispose(myInitialization);
@@ -283,7 +286,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Nullable
   public AbstractVcs getVcsFor(final FilePath file) {
     final VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    return ApplicationManager.getApplication().runReadAction((Computable<AbstractVcs>)() -> {
+    return ReadAction.compute(() -> {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
       if (myProject.isDisposed()) throw new ProcessCanceledException();
       if (vFile != null) {
@@ -296,6 +299,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   @Nullable
   public VirtualFile getVcsRootFor(@Nullable final VirtualFile file) {
+    if (file == null) return null;
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
     if (mapping == null) {
       return null;
@@ -833,7 +837,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public boolean isFileInContent(@Nullable final VirtualFile vf) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() ->
+    return ReadAction.compute(() ->
       vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
                      hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)
                      || !Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf))

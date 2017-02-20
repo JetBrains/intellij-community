@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -28,6 +27,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -81,7 +81,7 @@ public class HighlightInfo implements Segment {
 
   final int navigationShift;
 
-  volatile RangeHighlighterEx highlighter; // modified in EDT only
+  private volatile RangeHighlighterEx highlighter;// modified in EDT only
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
@@ -159,6 +159,17 @@ public class HighlightInfo implements Segment {
   @NotNull
   public HighlightSeverity getSeverity() {
     return severity;
+  }
+
+  public RangeHighlighterEx getHighlighter() {
+    return highlighter;
+  }
+
+  /**
+   * modified in EDT only
+   */
+  public void setHighlighter(@Nullable RangeHighlighterEx highlighter) {
+    this.highlighter = highlighter;
   }
 
   public boolean isAfterEndOfLine() {
@@ -246,14 +257,15 @@ public class HighlightInfo implements Segment {
     return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
   }
 
-  @NotNull
-  private static final HighlightInfoFilter[] FILTERS = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
+  private static class Holder {
+    private static final HighlightInfoFilter[] FILTERS = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
+  }
 
   boolean needUpdateOnTyping() {
     return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
   }
 
-  HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
+  protected HighlightInfo(@Nullable TextAttributes forcedTextAttributes,
                 @Nullable TextAttributesKey forcedTextAttributesKey,
                 @NotNull HighlightInfoType type,
                 int startOffset,
@@ -314,7 +326,7 @@ public class HighlightInfo implements Segment {
            Comparing.strEqual(info.getDescription(), getDescription());
   }
 
-  boolean equalsByActualOffset(@NotNull HighlightInfo info) {
+  protected boolean equalsByActualOffset(@NotNull HighlightInfo info) {
     if (info == this) return true;
 
     return info.getSeverity() == getSeverity() &&
@@ -400,7 +412,7 @@ public class HighlightInfo implements Segment {
 
   private static boolean isAcceptedByFilters(@NotNull HighlightInfo info, @Nullable PsiElement psiElement) {
     PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
-    for (HighlightInfoFilter filter : FILTERS) {
+    for (HighlightInfoFilter filter : Holder.FILTERS) {
       if (!filter.accept(info, file)) {
         return false;
       }
@@ -745,7 +757,7 @@ public class HighlightInfo implements Segment {
     boolean isError() {
       return mySeverity == null || mySeverity.compareTo(HighlightSeverity.ERROR) >= 0;
     }
-    
+
     boolean canCleanup(@NotNull PsiElement element) {
       if (myCanCleanup == null) {
         InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();

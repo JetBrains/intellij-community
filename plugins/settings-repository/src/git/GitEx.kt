@@ -17,6 +17,7 @@ package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.text.nullize
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.dircache.DirCacheCheckout
@@ -64,6 +65,7 @@ fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: Credential
     val transport = Transport.open(this, remoteConfig)
     try {
       transport.credentialsProvider = credentialsProvider
+      transport.isRemoveDeletedRefs = true
       return transport.fetch(progressMonitor ?: NullProgressMonitor.INSTANCE, null)
     }
     finally {
@@ -128,13 +130,16 @@ fun Config.getRemoteBranchFullName(): String {
   return name!!
 }
 
+val Repository.upstream: String?
+    get() = config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL).nullize()
+
 fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER): StoredConfig {
   // our local branch named 'master' in any case
   val localBranchName = Constants.MASTER
 
   val config = config
   val remoteName = Constants.DEFAULT_REMOTE_NAME
-  if (StringUtil.isEmptyOrSpaces(url)) {
+  if (url.isNullOrEmpty()) {
     LOG.debug("Unset remote")
     config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName)
     config.unsetSection(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName)
@@ -213,7 +218,7 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
 }
 
 fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
-  val lastCommitId = resolve(Constants.HEAD) ?: return
+  val lastCommitId = resolve(Constants.FETCH_HEAD) ?: return
   val reader = newObjectReader()
   reader.use {
     val treeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree) ?: return

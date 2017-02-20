@@ -6,7 +6,7 @@ import java.util.Set;
 
 public class Main {
   private static long test() {
-      long count = 0;
+      long count = 0L;
       Set<Integer> uniqueValues = new HashSet<>();
       long toSkip = 1;
       for (Integer integer : new Integer[]{1, 2, 3, 2, 3}) {

@@ -1,10 +1,12 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +19,7 @@ import java.util.Set;
  * Provides the information needed to build the VCS log, such as the list of most recent commits with their parents.
  */
 public interface VcsLogProvider {
+  ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
 
   /**
    * Reads the most recent commits from the log together with all repository references.<br/>
@@ -48,6 +51,14 @@ public interface VcsLogProvider {
   void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException;
 
   /**
+   * Reads full details for specified commits in the repository.
+   * <p/>
+   * Reports commits to the consumer to avoid creation & even temporary storage of a too large commits collection.
+   */
+  void readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+    throws VcsException;
+
+  /**
    * Reads those details of the given commits, which are necessary to be shown in the log table.
    */
   @NotNull
@@ -55,9 +66,19 @@ public interface VcsLogProvider {
 
   /**
    * Read full details of the given commits from the VCS.
+   * <p>
+   * Replaced with readFullDetails(VirtualFile root, List<String>, Consumer<VcsFullCommitDetails>) method.
+   * <p>
+   * To be removed after 2017.1 release.
    */
   @NotNull
-  List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  @Deprecated
+  default List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
+    throws VcsException {
+    List<VcsFullCommitDetails> result = ContainerUtil.newArrayList();
+    readFullDetails(root, hashes, result::add);
+    return result;
+  }
 
   /**
    * <p>Returns the VCS which is supported by this provider.</p>

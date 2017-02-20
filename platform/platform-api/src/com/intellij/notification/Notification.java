@@ -102,10 +102,9 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
-    LOG.assertTrue(isTitle() || isContent(),
+    LOG.assertTrue(hasTitle() || hasContent(),
                    "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
-
-    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(this));
+    id = calcId(this);
   }
 
   public Notification(@NotNull String groupDisplayId, @NotNull String title, @NotNull String content, @NotNull NotificationType type) {
@@ -132,8 +131,8 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
-    LOG.assertTrue(isContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
-    id = String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(hashCode());
+    LOG.assertTrue(hasContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
+    id = calcId(this);
   }
 
   /**
@@ -159,7 +158,7 @@ public class Notification {
     return myGroupId;
   }
 
-  public boolean isTitle() {
+  public boolean hasTitle() {
     return !StringUtil.isEmptyOrSpaces(myTitle) || !StringUtil.isEmptyOrSpaces(mySubtitle);
   }
 
@@ -190,7 +189,7 @@ public class Notification {
     return this;
   }
 
-  public boolean isContent() {
+  public boolean hasContent() {
     return !StringUtil.isEmptyOrSpaces(myContent);
   }
 
@@ -346,5 +345,10 @@ public class Notification {
     }
 
     return getListener() != null || !ContainerUtil.isEmpty(myActions);
+  }
+
+  @NotNull
+  private static String calcId(@NotNull Notification notification) {
+    return String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(notification));
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -48,6 +49,13 @@ public class RenameFix extends GroovyFix implements RefactoringQuickFix {
     } else {
       return "Rename to " + targetName;
     }
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Rename";
   }
 
   @Override

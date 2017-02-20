@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Provides gradle tasks monitoring and management facilities.
+ * Provides external system tasks monitoring and management facilities.
  * <p/>
  * Thread-safe.
  * 

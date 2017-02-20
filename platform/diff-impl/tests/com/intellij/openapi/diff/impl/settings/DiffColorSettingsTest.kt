@@ -38,7 +38,7 @@ class DiffColorSettingsTest : DiffTestCase() {
   }
 
   fun testChanges() {
-    var panel : DiffPreviewPanel? = null
+    var panel: DiffPreviewPanel? = null
     try {
       panel = DiffPreviewPanel()
       val viewer = panel.testGetViewer()

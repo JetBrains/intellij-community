@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,10 +27,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP;
 
 public class GrLightModifierList extends LightElement implements GrModifierList {
 
@@ -50,8 +51,13 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     return myParent;
   }
 
+  @Override
+  public PsiFile getContainingFile() {
+    return getParent().getContainingFile();
+  }
+
   public void addModifier(String modifier) {
-    int code = GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
+    int code = NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
     assert code != 0;
     myModifiers |= code;
   }
@@ -76,22 +82,23 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
     }
   }
 
-  public int getModifiersAsInt() {
+  @Override
+  public int getModifierFlags() {
     return myModifiers;
   }
-  
+
   @Override
-  public boolean hasModifierProperty(@NotNull String name){
-    return GrModifierListImpl.checkModifierProperty(this, name);
+  public boolean hasModifierProperty(@NotNull String name) {
+    return GrModifierListUtil.hasModifierProperty(this, name);
   }
 
   @Override
   public boolean hasExplicitModifier(@NotNull String name) {
-    return (myModifiers & GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(name)) != 0;
+    return GrModifierListUtil.hasExplicitModifier(this, name);
   }
 
   @Override
-  public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
+  public void setModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -102,7 +109,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   }
 
   @Override
-  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException{
+  public void checkSetModifierProperty(@NotNull String name, boolean value) throws IncorrectOperationException {
     throw new IncorrectOperationException();
   }
 
@@ -180,7 +187,7 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
 
   @Override
   public boolean hasExplicitVisibilityModifiers() {
-    return (myModifiers & (GrModifierFlags.PUBLIC_MASK | GrModifierFlags.PRIVATE_MASK | GrModifierFlags.PROTECTED_MASK)) != 0;
+    return GrModifierListUtil.hasExplicitVisibilityModifiers(this);
   }
 
   @Override
@@ -192,26 +199,23 @@ public class GrLightModifierList extends LightElement implements GrModifierList 
   public void acceptChildren(GroovyElementVisitor visitor) {
 
   }
-  
+
   public void copyModifiers(@NotNull PsiModifierListOwner modifierOwner) {
     int mod = 0;
 
     PsiModifierList modifierList = modifierOwner.getModifierList();
-    if (modifierList != null) {
-      if (modifierList instanceof GrLightModifierList) {
-        mod = ((GrLightModifierList)modifierList).getModifiersAsInt();
-      }
-      else {
-        for (Object o : ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.keys()) {
-          String modifier = (String)o;
-          if (modifierList.hasExplicitModifier(modifier)) {
-            mod |= GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
-          }
+
+    if (modifierList instanceof GrModifierList) {
+      mod = ((GrModifierList)modifierList).getModifierFlags();
+    }
+    else if (modifierList != null) {
+      for (String modifier : PsiModifier.MODIFIERS) {
+        if (modifierList.hasExplicitModifier(modifier)) {
+          mod |= NAME_TO_MODIFIER_FLAG_MAP.get(modifier);
         }
       }
     }
 
     setModifiers(mod);
   }
-  
 }

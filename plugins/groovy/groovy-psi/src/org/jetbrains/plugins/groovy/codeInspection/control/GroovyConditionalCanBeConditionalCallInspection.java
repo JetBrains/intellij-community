@@ -62,7 +62,7 @@ public class GroovyConditionalCanBeConditionalCallInspection extends BaseInspect
   private static class CollapseConditionalFix extends GroovyFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Replace with conditional call";
     }
 

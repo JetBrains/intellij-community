@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 package com.intellij.project
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -44,7 +49,8 @@ fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
   return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null
 }
 
-fun isValidProjectPath(path: String): Boolean {
+@JvmOverloads
+fun isValidProjectPath(path: String, anyRegularFileIsValid: Boolean = false): Boolean {
   val file = try {
     Paths.get(path)
   }
@@ -53,7 +59,12 @@ fun isValidProjectPath(path: String): Boolean {
   }
 
   val attributes = file.basicAttributesIfExists() ?: return false
-  return if (attributes.isDirectory) file.resolve(Project.DIRECTORY_STORE_FOLDER).exists() else path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)
+  return if (attributes.isDirectory) {
+    file.resolve(Project.DIRECTORY_STORE_FOLDER).exists()
+  }
+  else {
+    anyRegularFileIsValid || path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)
+  }
 }
 
 fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
@@ -72,4 +83,41 @@ fun isEqualToProjectFileStorePath(project: Project, filePath: String, storePath:
 
   val store = project.stateStore as IProjectStore
   return filePath.equals(store.stateStorageManager.expandMacros(storePath), !SystemInfo.isFileSystemCaseSensitive)
+}
+
+inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
+  val model = ModuleManager.getInstance(this).modifiableModel
+  val result = model.task()
+  runWriteAction {
+    model.commit()
+  }
+  return result
+}
+
+val Module.rootManager: ModuleRootManager
+  get() = ModuleRootManager.getInstance(this)
+
+/**
+ *  Tries to guess the "main project directory" of the project.
+ *
+ *  There is no strict definition of what is a project directory, since a project can contain multiple modules located in different places,
+ *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
+ *  directory"). This method should be preferred, although it can't provide perfect accuracy either.
+ *
+ *  @throws IllegalStateException if called on the default project, since there is no sense in "project dir" in that case.
+ */
+fun Project.guessProjectDir() : VirtualFile {
+  if (isDefault) {
+    throw IllegalStateException("Not applicable for default project")
+  }
+
+  val modules = ModuleManager.getInstance(this).modules
+  val module = if (modules.size == 1) modules.first() else modules.find { it.name == this.name }
+  if (module != null) {
+    val roots = ModuleRootManager.getInstance(module).contentRoots
+    roots.firstOrNull()?.let {
+      return it
+    }
+  }
+  return this.baseDir!!
 }

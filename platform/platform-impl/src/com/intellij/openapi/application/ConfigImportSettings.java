@@ -68,10 +68,6 @@ public class ConfigImportSettings {
     return ApplicationBundle.message("error.please.select.previous.installation.home", productWithVendor);
   }
 
-  protected String getHomeLabel(String productName) {
-    return ApplicationBundle.message("editbox.installation.home", productName);
-  }
-
   protected String getAutoImportLabel(File guessedOldConfig) {
     String path = FileUtil.getLocationRelativeToUserHome(guessedOldConfig.getAbsolutePath());
     return ApplicationBundle.message("radio.import.auto", path);

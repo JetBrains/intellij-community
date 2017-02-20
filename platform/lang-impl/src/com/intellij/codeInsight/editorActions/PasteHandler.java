@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -79,8 +78,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   public void execute(final Editor editor, final DataContext dataContext, @Nullable final Producer<Transferable> producer) {
     final Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(producer);
     if (transferable == null) return;
-    
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
 
     final Document document = editor.getDocument();
     if (!EditorModificationUtil.requestWriting(editor)) {
@@ -517,7 +516,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   /**
-   * Inserts specified string at the beginning of lines from <code>startLine</code> to <code>endLine</code> inclusive.
+   * Inserts specified string at the beginning of lines from {@code startLine} to {@code endLine} inclusive.
    */
   private static void indentLines(final @NotNull Document document, 
                                   final int startLine, final int endLine, final @NotNull CharSequence indentString) {

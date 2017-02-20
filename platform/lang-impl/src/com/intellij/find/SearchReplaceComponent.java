@@ -143,6 +143,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     };
 
     myLeftPanel = new NonOpaquePanel(new BorderLayout());
+    myLeftPanel.setBorder(JBUI.Borders.emptyLeft(6));
     myLeftPanel.add(mySearchFieldWrapper, BorderLayout.NORTH);
     myLeftPanel.add(myReplaceFieldWrapper, BorderLayout.SOUTH);
 
@@ -307,8 +308,11 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   private void updateSearchComponent(@NotNull String textToSet) {
     if (!updateTextComponent(true)) {
-      if (!mySearchTextComponent.getText().equals(textToSet)) {
+      String existingText = mySearchTextComponent.getText();
+      if (!existingText.equals(textToSet)) {
         mySearchTextComponent.setText(textToSet);
+        // textToSet should be selected even if we have no selection before (if we have the selection then setText will remain it)
+        if (existingText.length() == 0) mySearchTextComponent.selectAll();
       }
       return;
     }
@@ -339,8 +343,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   private void updateReplaceComponent(@NotNull String textToSet) {
     if (!updateTextComponent(false)) {
-      if (!myReplaceTextComponent.getText().equals(textToSet)) {
+      String existingText = myReplaceTextComponent.getText();
+      if (!existingText.equals(textToSet)) {
         myReplaceTextComponent.setText(textToSet);
+        if (existingText.length() == 0) myReplaceTextComponent.selectAll();
       }
       return;
     }

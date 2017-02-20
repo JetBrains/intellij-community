@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,23 +33,32 @@ public class Task implements StudyItem {
 
   @SerializedName("stepic_id")
   @Expose private int myStepId;
-  
+
   @SerializedName("task_files")
   @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
   private String text;
   private Map<String, String> testsText = new HashMap<>();
+  private Map<String, String> taskTexts = new HashMap<>();
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
+  @Expose @SerializedName("choice_parameters") private AdaptiveTaskParameters myAdaptiveTaskParameters;
   private int myActiveSubtaskIndex = 0;
+  @SerializedName("last_subtask_index")
   @Expose private int myLastSubtaskIndex = 0;
 
   public Task() {}
 
   public Task(@NotNull final String name) {
     this.name = name;
+  }
+  
+  public static Task createChoiceTask(@NotNull String name) {
+    final Task task = new Task(name);
+    task.setAdaptiveTaskParameters(new AdaptiveTaskParameters());
+    return task;
   }
 
   /**
@@ -64,10 +74,12 @@ public class Task implements StudyItem {
     }
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public void setName(String name) {
     this.name = name;
   }
@@ -80,10 +92,12 @@ public class Task implements StudyItem {
     this.text = text;
   }
 
+  @Override
   public int getIndex() {
     return myIndex;
   }
 
+  @Override
   public void setIndex(int index) {
     myIndex = index;
   }
@@ -92,8 +106,16 @@ public class Task implements StudyItem {
     return testsText;
   }
 
+  public Map<String, String> getTaskTexts() {
+    return taskTexts;
+  }
+
   public void addTestsTexts(String name, String text) {
     testsText.put(name, text);
+  }
+
+  public void addTaskText(String name, String text) {
+    taskTexts.put(name, text);
   }
 
   public Map<String, TaskFile> getTaskFiles() {
@@ -223,7 +245,7 @@ public class Task implements StudyItem {
   public StudyStatus getStatus() {
     return myStatus;
   }
-  
+
   public void setStatus(StudyStatus status) {
     for (TaskFile taskFile : taskFiles.values()) {
       for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
@@ -231,6 +253,9 @@ public class Task implements StudyItem {
       }
     }
     if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getLastSubtaskIndex()) {
+      if (myStatus == StudyStatus.Failed) {
+        myStatus = StudyStatus.Unchecked;
+      }
       return;
     }
     myStatus = status;
@@ -239,9 +264,6 @@ public class Task implements StudyItem {
   public Task copy() {
     Element element = XmlSerializer.serialize(this);
     Task copy = XmlSerializer.deserialize(element, Task.class);
-    if (copy == null) {
-      return null;
-    }
     copy.initTask(null, true);
     return copy;
   }
@@ -280,5 +302,84 @@ public class Task implements StudyItem {
 
   public boolean hasSubtasks() {
     return myLastSubtaskIndex > 0;
+  }
+
+  @Transient
+  @NotNull
+  public List<String> getChoiceVariants() {
+    return myAdaptiveTaskParameters.getChoiceVariants();
+  }
+
+  @Transient
+  public void setChoiceVariants(List<String> choiceVariants) {
+    myAdaptiveTaskParameters.setChoiceVariants(choiceVariants);
+  }
+
+  @Transient
+  public boolean isMultipleChoice() {
+    return myAdaptiveTaskParameters.isMultipleChoice();
+  }
+
+  @Transient
+  public void setMultipleChoice(boolean multipleChoice) {
+    myAdaptiveTaskParameters.setMultipleChoice(multipleChoice);
+  }
+
+  @Transient
+  public List<Integer> getSelectedVariants() {
+    return myAdaptiveTaskParameters.getSelectedVariants();
+  }
+
+  @Transient
+  public void setSelectedVariants(List<Integer> selectedVariants) {
+    myAdaptiveTaskParameters.setSelectedVariants(selectedVariants);
+  }
+  
+  public boolean isChoiceTask() {
+    return myAdaptiveTaskParameters != null && !myAdaptiveTaskParameters.getChoiceVariants().isEmpty();
+  }
+  
+  public boolean isTheoryTask() {
+    return myAdaptiveTaskParameters != null && myAdaptiveTaskParameters.isTheoryTask();
+  }
+  
+  public void setTheoryTask(boolean isTheoryTask) {
+    if (myAdaptiveTaskParameters == null) {
+      myAdaptiveTaskParameters = new AdaptiveTaskParameters();
+    }
+    myAdaptiveTaskParameters.setTheoryTask(isTheoryTask);
+  }
+
+  // used for serialization
+  @SuppressWarnings("unused")
+  public AdaptiveTaskParameters getAdaptiveTaskParameters() {
+    return myAdaptiveTaskParameters;
+  }
+
+  // used for serialization
+  @SuppressWarnings("unused")
+  public void setAdaptiveTaskParameters(AdaptiveTaskParameters adaptiveTaskParameters) {
+    myAdaptiveTaskParameters = adaptiveTaskParameters;
+  }
+
+  public void copyParametersOf(@NotNull Task task) {
+    setName(task.getName());
+    setStepId(task.getStepId());
+    setText(task.getText());
+    getTestsText().clear();
+    setStatus(StudyStatus.Unchecked);
+    setTheoryTask(task.isTheoryTask());
+    if (task.isChoiceTask() || task.isTheoryTask()) {
+      setChoiceVariants(task.getChoiceVariants());
+      setMultipleChoice(task.isMultipleChoice());
+      setTheoryTask(task.isTheoryTask());
+    }
+    else {
+      setAdaptiveTaskParameters(null);
+    }
+    final Map<String, String> testsText = task.getTestsText();
+    for (String testName : testsText.keySet()) {
+      addTestsTexts(testName, testsText.get(testName));
+    }
   }
 }

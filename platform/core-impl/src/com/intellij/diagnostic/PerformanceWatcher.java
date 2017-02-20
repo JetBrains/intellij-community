@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -55,14 +56,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author yole
  */
-public class PerformanceWatcher implements ApplicationComponent {
+public class PerformanceWatcher extends ApplicationComponent.Adapter implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.PerformanceWatcher");
   private static final int TOLERABLE_LATENCY = 100;
+  private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
   private final ScheduledFuture<?> myThread;
   private final ThreadMXBean myThreadMXBean;
   private final DateFormat myDateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
-  private final File mySessionLogDir;
-  private File myCurHangLogDir;
+  private final File myLogDir = new File(PathManager.getLogPath());
   private List<StackTraceElement> myStacktraceCommonPart;
   private final IdePerformanceListener myPublisher;
 
@@ -79,28 +80,16 @@ public class PerformanceWatcher implements ApplicationComponent {
   private int UNRESPONSIVE_THRESHOLD_SECONDS = 5;
   private int UNRESPONSIVE_INTERVAL_SECONDS = 5;
   private static final int SAMPLING_INTERVAL_MS = 1000;
+  private static final long ourIdeStart = System.currentTimeMillis();
 
   public static PerformanceWatcher getInstance() {
     return ApplicationManager.getApplication().getComponent(PerformanceWatcher.class);
   }
 
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "PerformanceWatcher";
-  }
-
   public PerformanceWatcher() {
-    myCurHangLogDir = mySessionLogDir = new File(PathManager.getLogPath() + "/threadDumps-" + myDateFormat.format(new Date())
-                               + "-" + ApplicationInfo.getInstance().getBuild().asString());
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
     myThreadMXBean = ManagementFactory.getThreadMXBean();
-    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        samplePerformance();
-      }
-    }, SAMPLING_INTERVAL_MS, SAMPLING_INTERVAL_MS, TimeUnit.MILLISECONDS);
+    myThread = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> samplePerformance(), SAMPLING_INTERVAL_MS, SAMPLING_INTERVAL_MS, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -123,12 +112,7 @@ public class PerformanceWatcher implements ApplicationComponent {
         }
       });
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          deleteOldThreadDumps();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> cleanOldFiles(myLogDir, 0));
 
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if ("Code Cache".equals(bean.getName())) {
@@ -162,26 +146,27 @@ public class PerformanceWatcher implements ApplicationComponent {
     }, null, null);
   }
 
-  private static void deleteOldThreadDumps() {
-    File allLogsDir = new File(PathManager.getLogPath());
-    if (allLogsDir.isDirectory()) {
-      final String[] dirs = allLogsDir.list(new FilenameFilter() {
-        @Override
-        public boolean accept(@NotNull final File dir, @NotNull final String name) {
-          return name.startsWith("threadDumps-");
-        }
-      });
-      if (dirs != null) {
-        Arrays.sort(dirs);
-        for (int i = 0; i < dirs.length - 11; i++) {
-          FileUtil.delete(new File(allLogsDir, dirs [i]));
-        }
+  private static void cleanOldFiles(File dir, final int level) {
+    File[] children = dir.listFiles((dir1, name) -> level > 0 || name.startsWith(THREAD_DUMPS_PREFIX));
+    if (children == null) return;
+
+    Arrays.sort(children);
+    for (int i = 0; i < children.length; i++) {
+      File child = children[i];
+      if (i < children.length - 100 || ageInDays(child) > 10) {
+        FileUtil.delete(child);
+      } else if (level < 3) {
+        cleanOldFiles(child, level + 1);
       }
     }
   }
 
+  private static long ageInDays(File file) {
+    return TimeUnit.DAYS.convert(System.currentTimeMillis() - file.lastModified(), TimeUnit.MILLISECONDS);
+  }
+
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     if (myThread != null) {
       myThread.cancel(true);
     }
@@ -223,45 +208,60 @@ public class PerformanceWatcher implements ApplicationComponent {
         myFreezeStart = myLastAliveEdt;
         myPublisher.uiFreezeStarted();
       }
-      if (myCurHangLogDir == mySessionLogDir) {
-        //System.out.println("EDT is not responding at " + myPrintDateFormat.format(new Date()));
-        myCurHangLogDir = new File(mySessionLogDir, myDateFormat.format(new Date()));
-      }
-      dumpThreads("", false);
+      dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
     }
+  }
+
+  @NotNull
+  private String getFreezeFolderName(long freezeStartMs) {
+    return THREAD_DUMPS_PREFIX + "freeze-" + formatTime(freezeStartMs) + "-" + buildName();
+  }
+
+  private static String buildName() {
+    return ApplicationInfo.getInstance().getBuild().asString();
+  }
+
+  private String formatTime(long timeMs) {
+    return myDateFormat.format(new Date(timeMs));
   }
 
   private void edtResponds(long currentMillis) {
     if (myFreezeStart != 0) {
-      if (myCurHangLogDir != mySessionLogDir && myCurHangLogDir.exists()) {
-        int unresponsiveDuration = (int)(currentMillis - myFreezeStart) / 1000;
+      int unresponsiveDuration = (int)(currentMillis - myFreezeStart) / 1000;
+      File dir = new File(myLogDir, getFreezeFolderName(myFreezeStart));
+      if (dir.exists()) {
         //noinspection ResultOfMethodCallIgnored
-        myCurHangLogDir.renameTo(new File(mySessionLogDir, getLogDirForHang(unresponsiveDuration)));
-        myPublisher.uiFreezeFinished(unresponsiveDuration);
+        dir.renameTo(new File(myLogDir, dir.getName() + "-" + unresponsiveDuration + "sec" + getFreezePlaceSuffix()));
       }
+      myPublisher.uiFreezeFinished(unresponsiveDuration);
       myFreezeStart = 0;
-      myCurHangLogDir = mySessionLogDir;
 
       myStacktraceCommonPart = null;
     }
   }
 
-  private String getLogDirForHang(int unresponsiveDuration) {
-    StringBuilder name = new StringBuilder("freeze-" + myCurHangLogDir.getName());
-    name.append("-").append(unresponsiveDuration);
+  private String getFreezePlaceSuffix() {
     if (myStacktraceCommonPart != null && !myStacktraceCommonPart.isEmpty()) {
       final StackTraceElement element = myStacktraceCommonPart.get(0);
-      name.append("-").append(StringUtil.getShortName(element.getClassName())).append(".").append(element.getMethodName());
+      return "-" + StringUtil.getShortName(element.getClassName()) + "." + element.getMethodName();
     }
-    return name.toString();
+    return "";
   }
 
   @Nullable
   public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
     if (!shouldWatch()) return null;
 
-    String suffix = millis ? "-" + System.currentTimeMillis() : "";
-    File file = new File(myCurHangLogDir, pathPrefix + "threadDump-" + myDateFormat.format(new Date()) + suffix + ".txt");
+    if (!pathPrefix.contains("/")) {
+      pathPrefix = THREAD_DUMPS_PREFIX + "-" + pathPrefix + "-" + formatTime(ourIdeStart) + "-" + buildName() + "/";
+    }
+    else if (!pathPrefix.startsWith(THREAD_DUMPS_PREFIX)) {
+      pathPrefix = THREAD_DUMPS_PREFIX + pathPrefix;
+    }
+
+    long now = System.currentTimeMillis();
+    String suffix = millis ? "-" + now : "";
+    File file = new File(myLogDir, pathPrefix + "threadDump-" + formatTime(now) + suffix + ".txt");
 
     File dir = file.getParentFile();
     if (!(dir.isDirectory() || dir.mkdirs())) {

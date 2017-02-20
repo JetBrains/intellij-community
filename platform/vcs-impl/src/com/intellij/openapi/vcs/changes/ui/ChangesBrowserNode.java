@@ -39,46 +39,33 @@ import java.util.stream.StreamSupport;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
+  public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
+  public static final Object LOCKED_FOLDERS_TAG = new Tag("changes.nodetitle.locked.folders");
+  public static final Object LOGICALLY_LOCKED_TAG = new Tag("changes.nodetitle.logicallt.locked.folders");
+  public static final Object UNVERSIONED_FILES_TAG = new Tag("changes.nodetitle.unversioned.files");
+  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Tag("changes.nodetitle.modified.without.editing");
+  public static final Object SWITCHED_FILES_TAG = new Tag("changes.nodetitle.switched.files");
+  public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
+  public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
+
+  protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
+  protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
+  protected static final int MODULE_SORT_WEIGHT = 3;
+  protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
+  protected static final int FILE_PATH_SORT_WEIGHT = 5;
+  protected static final int CHANGE_SORT_WEIGHT = 6;
+  protected static final int VIRTUAL_FILE_SORT_WEIGHT = 7;
+  protected static final int UNVERSIONED_SORT_WEIGHT = 8;
+  protected static final int DEFAULT_SORT_WEIGHT = 9;
+  protected static final int IGNORED_SORT_WEIGHT = 10;
 
   public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
     path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
 
   private SimpleTextAttributes myAttributes;
 
-  protected int myCount = -1;
-  protected int myDirectoryCount = -1;
-  public static final Object IGNORED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.ignored.files");
-    }
-  };
-  public static final Object LOCKED_FOLDERS_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.locked.folders");
-    }
-  };
-  public static final Object LOGICALLY_LOCKED_TAG = VcsBundle.message("changes.nodetitle.logicallt.locked.folders");
-
-  public static final Object UNVERSIONED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.unversioned.files");
-    }
-  };
-  public static final Object MODIFIED_WITHOUT_EDITING_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.modified.without.editing");
-    }
-  };
-  public static final Object SWITCHED_FILES_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.switched.files");
-    }
-  };
-  public static final Object SWITCHED_ROOTS_TAG = new Object() {
-    public String toString() {
-      return VcsBundle.message("changes.nodetitle.switched.roots");
-    }
-  };
+  private int myFileCount = -1;
+  private int myDirectoryCount = -1;
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -113,15 +100,28 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   @Override
   public void insert(MutableTreeNode newChild, int childIndex) {
     super.insert(newChild, childIndex);
-    myCount = -1;
-    myDirectoryCount = -1;
+    resetFileCounters();
   }
 
-  public int getCount() {
-    if (myCount == -1) {
-      myCount = toStream(children()).mapToInt(ChangesBrowserNode::getCount).sum();
+  @Override
+  public void remove(int childIndex) {
+    super.remove(childIndex);
+    resetFileCounters();
+  }
+
+  protected boolean isFile() {
+    return false;
+  }
+
+  protected boolean isDirectory() {
+    return false;
+  }
+
+  public int getFileCount() {
+    if (myFileCount == -1) {
+      myFileCount = (isFile() ? 1 : 0) + toStream(children()).mapToInt(ChangesBrowserNode::getFileCount).sum();
     }
-    return myCount;
+    return myFileCount;
   }
 
   public int getDirectoryCount() {
@@ -131,8 +131,9 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return myDirectoryCount;
   }
 
-  protected boolean isDirectory() {
-    return false;
+  private void resetFileCounters() {
+    myFileCount = -1;
+    myDirectoryCount = -1;
   }
 
   @NotNull
@@ -197,7 +198,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   @NotNull
   protected String getCountText() {
-    int count = getCount();
+    int count = getFileCount();
     int dirCount = getDirectoryCount();
     String result = "";
 
@@ -238,8 +239,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
   }
 
+  /**
+   * Nodes with the same sort weight should share {@link #compareUserObjects} implementation
+   */
   public int getSortWeight() {
-    return 9;
+    return DEFAULT_SORT_WEIGHT;
   }
 
   public int compareUserObjects(final Object o2) {
@@ -253,5 +257,23 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {
     renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
                     SimpleTextAttributes.GRAYED_ATTRIBUTES);
+  }
+
+  @Deprecated
+  public final int getCount() {
+    return getFileCount();
+  }
+
+  private static class Tag {
+    @NotNull private final String myKey;
+
+    public Tag(@NotNull String key) {
+      myKey = key;
+    }
+
+    @Override
+    public String toString() {
+      return VcsBundle.message(myKey);
+    }
   }
 }

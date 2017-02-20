@@ -159,7 +159,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
    * Allows to answer if it's possible to use {@link #TOP_LEVEL_CHILD_MARKER} for the given element.
    * 
    * @param element  element to check
-   * @return         <code>true</code> if {@link #TOP_LEVEL_CHILD_MARKER} can be used for the given element; <code>false</code> otherwise
+   * @return         {@code true} if {@link #TOP_LEVEL_CHILD_MARKER} can be used for the given element; {@code false} otherwise
    */
   private static boolean canResolveTopLevelChild(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
@@ -183,7 +183,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
    * @param element  target element
    * @param buffer   buffer to store the signature in
    * @return         buffer that contains signature of the given element if it was produced;
-   *                 <code>null</code> as an indication that signature for the given element was not produced
+   *                 {@code null} as an indication that signature for the given element was not produced
    */
   @SuppressWarnings("unchecked")
   @Nullable

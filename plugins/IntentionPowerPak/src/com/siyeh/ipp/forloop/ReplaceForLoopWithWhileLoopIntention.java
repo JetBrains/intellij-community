@@ -16,6 +16,7 @@
 package com.siyeh.ipp.forloop;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.BlockUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -88,21 +89,7 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
     }
     initialization = (PsiStatement)initialization.copy();
     PsiElement newElement = forStatement.replace(whileStatement);
-    PsiElement parent = newElement.getParent();
-    while (parent instanceof PsiLabeledStatement) {
-      newElement = parent;
-      parent = newElement.getParent();
-    }
-    if (parent instanceof PsiCodeBlock) {
-      parent.addBefore(initialization, newElement);
-    }
-    else {
-      final PsiStatement newBlockStatement = factory.createStatementFromText("{}", newElement);
-      final PsiElement codeBlock = newBlockStatement.getFirstChild();
-      codeBlock.add(initialization);
-      codeBlock.add(newElement);
-      newElement.replace(newBlockStatement);
-    }
+    BlockUtils.addBefore((PsiStatement)newElement, initialization);
   }
 
   private static class UpdateInserter extends JavaRecursiveElementWalkingVisitor {

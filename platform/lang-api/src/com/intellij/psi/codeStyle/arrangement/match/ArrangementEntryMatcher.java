@@ -45,7 +45,7 @@ public interface ArrangementEntryMatcher {
    * Example: entry like 'public final field' should be matched by a 'final fields' rule but not matched by a 'private fields' rule.
    *
    * @param entry  entry to check
-   * @return       <code>true</code> if given entry is matched by the current rule; <code>false</code> otherwise
+   * @return       {@code true} if given entry is matched by the current rule; {@code false} otherwise
    */
   boolean isMatched(@NotNull ArrangementEntry entry);
 }

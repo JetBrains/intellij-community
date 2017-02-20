@@ -148,7 +148,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager</implementation-class>
-      <headless-implementation-class></headless-implementation-class>
       <skipForDefaultProject/>
     </component>
     <component>

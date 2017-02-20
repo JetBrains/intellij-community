@@ -32,6 +32,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.memory.InnerClassReferenceVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,13 +199,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
   }
 
   private static boolean isEmptyConstructor(@NotNull PsiMethod method) {
-    if (method.isConstructor()) {
-      PsiCodeBlock body = method.getBody();
-      if (body != null && body.getStatements().length == 0 && method.getDocComment() == null) {
-        return true;
-      }
-    }
-    return false;
+    return method.isConstructor() && MethodUtils.isTrivial(method, false);
   }
 
   private class ClassMayBeInterfaceVisitor extends BaseInspectionVisitor {

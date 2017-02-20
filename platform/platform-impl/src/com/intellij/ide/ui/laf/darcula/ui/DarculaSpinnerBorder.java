@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -71,7 +72,7 @@ public class DarculaSpinnerBorder implements Border, UIResource {
     }
 
     if (focused) {
-      DarculaUIUtil.paintFocusRing(g, x1 + 2, y1, width1 - 3, height1);
+      DarculaUIUtil.paintFocusRing(g, new Rectangle(x1 + 2, y1, width1 - 3, height1));
     } else {
       g.setColor(new JBColor(Gray._149,Gray._100));
       g.drawRoundRect(x1, y1, width1, height1, 5, 5);

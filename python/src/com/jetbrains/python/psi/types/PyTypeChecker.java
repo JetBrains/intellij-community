@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
@@ -23,6 +24,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import one.util.streamex.StreamEx;
@@ -30,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -187,16 +191,19 @@ public class PyTypeChecker {
 
         return true;
       }
-      else if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
+      else if (expected instanceof PyCollectionType) {
         if (!matchClasses(superClass, subClass, context)) {
           return false;
         }
         // TODO: Match generic parameters based on the correspondence between the generic parameters of subClass and its base classes
         final List<PyType> superElementTypes = ((PyCollectionType)expected).getElementTypes(context);
-        final List<PyType> subElementTypes = ((PyCollectionType)actual).getElementTypes(context);
-        for (int i = 0; i < subElementTypes.size(); i++) {
-          final PyType superElementType = i < superElementTypes.size() ? superElementTypes.get(i) : null;
-          if (!match(superElementType, subElementTypes.get(i), context, substitutions, recursive)) {
+        final PyCollectionType actualCollectionType = as(actual, PyCollectionType.class);
+        final List<PyType> subElementTypes = actualCollectionType != null ?
+                                             actualCollectionType.getElementTypes(context) :
+                                             Collections.emptyList();
+        for (int i = 0; i < superElementTypes.size(); i++) {
+          final PyType subElementType = i < subElementTypes.size() ? subElementTypes.get(i) : null;
+          if (!match(superElementTypes.get(i), subElementType, context, substitutions, recursive)) {
             return false;
           }
         }
@@ -409,7 +416,14 @@ public class PyTypeChecker {
                                   @NotNull TypeEvalContext context) {
     if (hasGenerics(type, context)) {
       if (type instanceof PyGenericType) {
-        return substitutions.get((PyGenericType)type);
+        final PyType substitution = substitutions.get((PyGenericType)type);
+        if (substitution instanceof PyGenericType && substitution != type) {
+          final PyType recursive = substitute(substitution, substitutions, context);
+          if (recursive != null) {
+            return recursive;
+          }
+        }
+        return substitution;
       }
       else if (type instanceof PyUnionType) {
         final PyUnionType union = (PyUnionType)type;
@@ -487,18 +501,18 @@ public class PyTypeChecker {
         if (keywordParameter == null) keywordParameter = parameter;
         keywordTypes.add(actualArgType);
       }
-      else if (!match(getExpectedArgumentType(parameter, context), actualArgType, context, substitutions)) {
+      else if (!match(parameter.getArgumentType(context), actualArgType, context, substitutions)) {
         return null;
       }
     }
 
     if (positionalParameter != null &&
-        !match(getExpectedArgumentType(positionalParameter, context), PyUnionType.union(positionalTypes), context, substitutions)) {
+        !match(positionalParameter.getArgumentType(context), PyUnionType.union(positionalTypes), context, substitutions)) {
       return null;
     }
 
     if (keywordParameter != null &&
-        !match(getExpectedArgumentType(keywordParameter, context), PyUnionType.union(keywordTypes), context, substitutions)) {
+        !match(keywordParameter.getArgumentType(context), PyUnionType.union(keywordTypes), context, substitutions)) {
       return null;
     }
 
@@ -515,20 +529,18 @@ public class PyTypeChecker {
     for (PyGenericType t : generics) {
       substitutions.put(t, t);
     }
-    // Unify generics in constructor
     if (qualifierType != null) {
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      // TODO: Resolve to __new__ as well
-      final List<? extends RatedResolveResult> results = qualifierType.resolveMember(PyNames.INIT, null, AccessDirection.READ,
-                                                                                     resolveContext);
-      if (results != null && !results.isEmpty()) {
-        final PsiElement init = results.get(0).getElement();
-        if (init instanceof PyTypedElement) {
-          final PyType initType = context.getType((PyTypedElement)init);
-          if (initType instanceof PyCallableType) {
-            final PyType initReturnType = ((PyCallableType)initType).getReturnType(context);
-            if (initReturnType != null) {
-              match(initReturnType, qualifierType, context, substitutions);
+      for (PyClassType type : toPossibleClassTypes(qualifierType)) {
+        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType genericType = provider.getGenericType(type.getPyClass(), context);
+          if (genericType != null) {
+            match(genericType, qualifierType, context, substitutions);
+          }
+          for (Map.Entry<PyType, PyType> entry : provider.getGenericSubstitutions(type.getPyClass(), context).entrySet()) {
+            final PyGenericType genericKey = as(entry.getKey(), PyGenericType.class);
+            final PyType value = entry.getValue();
+            if (genericKey != null && value != null && !substitutions.containsKey(genericKey)) {
+              substitutions.put(genericKey, value);
             }
           }
         }
@@ -537,11 +549,25 @@ public class PyTypeChecker {
     return substitutions;
   }
 
+  @NotNull
+  private static List<PyClassType> toPossibleClassTypes(@NotNull PyType type) {
+    final PyClassType classType = as(type, PyClassType.class);
+    if (classType != null) {
+      return Collections.singletonList(classType);
+    }
+    final PyUnionType unionType = as(type, PyUnionType.class);
+    if (unionType != null) {
+      return StreamEx.of(unionType.getMembers()).nonNull().flatMap(t -> toPossibleClassTypes(t).stream()).toList();
+    }
+    return Collections.emptyList();
+  }
+
   private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass, @NotNull TypeEvalContext context) {
     if (superClass == null ||
         subClass == null ||
         subClass.isSubclass(superClass, context) ||
         PyABCUtil.isSubclass(subClass, superClass, context) ||
+        isStrUnicodeMatch(subClass, superClass) ||
         PyUtil.hasUnresolvedAncestors(subClass, context)) {
       return true;
     }
@@ -549,6 +575,11 @@ public class PyTypeChecker {
       final String superName = superClass.getName();
       return superName != null && superName.equals(subClass.getName());
     }
+  }
+
+  private static boolean isStrUnicodeMatch(@NotNull PyClass subClass, @NotNull PyClass superClass) {
+    // TODO: Check for subclasses as well
+    return PyNames.TYPE_STR.equals(subClass.getName()) && PyNames.TYPE_UNICODE.equals(superClass.getName());
   }
 
   @NotNull
@@ -755,24 +786,6 @@ public class PyTypeChecker {
     else {
       return null;
     }
-  }
-
-  @Nullable
-  public static PyType getExpectedArgumentType(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
-    final PyType parameterType = context.getType(parameter);
-
-    if (parameterType instanceof PyCollectionType) {
-      final PyCollectionType paramCollectionType = (PyCollectionType)parameterType;
-
-      if (parameter.isPositionalContainer()) {
-        return paramCollectionType.getIteratedItemType();
-      }
-      else if (parameter.isKeywordContainer()) {
-        return ContainerUtil.getOrElse(paramCollectionType.getElementTypes(context), 1, null);
-      }
-    }
-
-    return parameterType;
   }
 
   public static class AnalyzeCallResults {

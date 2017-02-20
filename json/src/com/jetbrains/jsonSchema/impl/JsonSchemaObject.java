@@ -1,25 +1,34 @@
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonObject;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 8/28/2015.
  */
 public class JsonSchemaObject {
+  private SmartPsiElementPointer<JsonObject> myPeerPointer;
   private String myDefinitionAddress;
   private Map<String, JsonSchemaObject> myDefinitions;
+  private SmartPsiElementPointer<JsonObject> myDefinitionsPointer;
   private Map<String, JsonSchemaObject> myProperties;
   private Map<String, JsonSchemaObject> myPatternProperties;
   private final PatternCalculator myPatternCalculator = new PatternCalculator();
+  private final PatternCalculator myValuesPatternCalculator = new PatternCalculator();
 
   private String myId;
   private String mySchema;
@@ -69,8 +78,15 @@ public class JsonSchemaObject {
   private List<JsonSchemaObject> myOneOf;
   private JsonSchemaObject myNot;
 
-  public JsonSchemaObject() {
+  public JsonSchemaObject(@NotNull JsonObject object) {
     myProperties = new HashMap<>();
+    myPeerPointer = SmartPointerManager.getInstance(object.getProject()).createSmartPsiElementPointer(object);
+  }
+
+  // only for definitions
+  public JsonSchemaObject(@Nullable SmartPsiElementPointer<JsonObject> peerPointer) {
+    myProperties = new HashMap<>();
+    myPeerPointer = peerPointer;
   }
 
   // full copy. allows to first apply properties for ref, then from definition itself, "in place"
@@ -84,6 +100,7 @@ public class JsonSchemaObject {
     myDefinitions = other.myDefinitions;
     myPatternProperties = other.myPatternProperties;
     myPatternCalculator.clear();
+    myValuesPatternCalculator.clear();
 
     myType = other.myType;
     myDefault = other.myDefault;
@@ -118,8 +135,10 @@ public class JsonSchemaObject {
     myOneOf = other.myOneOf;
     myNot = other.myNot;
     myDefinitionAddress = other.myDefinitionAddress;
+    myPeerPointer = other.myPeerPointer;
   }
 
+  // peer pointer is not merged!
   public void mergeValues(JsonSchemaObject other) {
     // we do not copy id, schema, title and description
 
@@ -127,6 +146,7 @@ public class JsonSchemaObject {
     myDefinitions = copyMap(myDefinitions, other.myDefinitions);
     myPatternProperties = copyMap(myPatternProperties, other.myPatternProperties);
     myPatternCalculator.clear();
+    myValuesPatternCalculator.clear();
     if (!StringUtil.isEmptyOrSpaces(other.myDescription)) {
       myDescription = other.myDescription;
     }
@@ -177,6 +197,22 @@ public class JsonSchemaObject {
     if (target == null) target = new HashMap<>();
     target.putAll(source);
     return target;
+  }
+
+  public SmartPsiElementPointer<JsonObject> getPeerPointer() {
+    return myPeerPointer;
+  }
+
+  public void setPeerPointer(SmartPsiElementPointer<JsonObject> peerPointer) {
+    myPeerPointer = peerPointer;
+  }
+
+  public SmartPsiElementPointer<JsonObject> getDefinitionsPointer() {
+    return myDefinitionsPointer;
+  }
+
+  public void setDefinitionsPointer(SmartPsiElementPointer<JsonObject> definitionsPointer) {
+    myDefinitionsPointer = definitionsPointer;
   }
 
   public Map<String, JsonSchemaObject> getDefinitions() {
@@ -274,6 +310,7 @@ public class JsonSchemaObject {
 
   public void setPattern(String pattern) {
     myPattern = pattern;
+    myValuesPatternCalculator.clear();
   }
 
   public Boolean getAdditionalPropertiesAllowed() {
@@ -445,6 +482,7 @@ public class JsonSchemaObject {
   }
 
   public Object getDefault() {
+    if (JsonSchemaType._integer.equals(myType)) return myDefault instanceof Number ? ((Number)myDefault).intValue() : myDefault;
     return myDefault;
   }
 
@@ -506,93 +544,189 @@ public class JsonSchemaObject {
 
   @Nullable
   public JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
-    return myPatternCalculator.getMatchingPatternPropertySchema(myPatternProperties, name);
+    if (myPatternProperties == null) return null;
+    final String pattern = myPatternCalculator.selectMatchingPattern(myPatternProperties.keySet(), name);
+    return pattern == null ? null : myPatternProperties.get(pattern);
   }
 
-  @NotNull
-  private static String adaptSchemaPattern(String pattern) {
-    pattern = pattern.startsWith("^") || pattern.startsWith("*") || pattern.startsWith(".") ? pattern : (".*" + pattern);
-    pattern = pattern.endsWith("+") || pattern.endsWith("*") ? pattern : (pattern + ".*");
-    return pattern;
+  public boolean checkByPattern(@NotNull String value) {
+    if (getPattern() == null) return true;
+    return getPattern().equals(myValuesPatternCalculator.selectMatchingPattern(Collections.singletonList(getPattern()), value));
+  }
+
+  public String getPatternError() {
+    if (getPattern() != null) {
+      myValuesPatternCalculator.ensureInit(Collections.singletonList(getPattern()));
+      final Map<String, String> patterns = myValuesPatternCalculator.getInvalidPatterns();
+      if (patterns != null) {
+        final String error = patterns.get(getPattern());
+        assert error != null;
+        return error;
+      }
+    }
+    return null;
+  }
+
+  public Map<SmartPsiElementPointer<JsonObject>, String> getInvalidPatternProperties() {
+    if (myPatternProperties != null) {
+      myPatternCalculator.ensureInit(myPatternProperties.keySet());
+      final Map<String, String> patterns = myPatternCalculator.getInvalidPatterns();
+      if (patterns == null) return null;
+
+      return patterns.entrySet().stream().map(entry -> {
+        final JsonSchemaObject object = myPatternProperties.get(entry.getKey());
+        assert object != null;
+        final SmartPsiElementPointer<JsonObject> pointer = object.getPeerPointer();
+        if (pointer != null) return Pair.create(pointer, entry.getValue());
+        return null;
+      }).filter(o -> o != null).collect(Collectors.toMap(o -> o.getFirst(), o -> o.getSecond()));
+    }
+    return null;
+  }
+
+  public static void iterateAllInnerSchemas(@NotNull final JsonSchemaObject object, @NotNull final SchemaConsumer schemaConsumer) {
+    int control = 100000;
+    final ArrayDeque<Pair<JsonSchemaObject, Map<String, String>>> queue = new ArrayDeque<>();
+    queue.add(Pair.create(object, new HashMap<>()));
+    while(!queue.isEmpty()) {
+      if (--control == 0) {
+        throw new RuntimeException("cyclic json schema search");
+      }
+      final Pair<JsonSchemaObject, Map<String, String>> pair = queue.removeFirst();
+      final JsonSchemaObject current = pair.getFirst();
+      final Map<String, String> context = pair.getSecond();
+
+      final Ref<JsonSchemaObject> previous = new Ref<>();
+      final Ref<Map<String, String>> childContextRef = new Ref<>(context);
+      schemaConsumer.process(current, item -> previous.set(item), context, childContext -> childContextRef.set(childContext));
+
+      if (!previous.isNull()) {
+        queue.addFirst(Pair.create(current, context));
+        queue.addFirst(Pair.create(previous.get(), context));
+        continue;
+      }
+
+      final List<JsonSchemaObject> list = new ArrayList<>();
+      if (current.getDefinitions() != null) list.addAll(current.getDefinitions().values());
+      if (current.getProperties() != null) list.addAll(current.getProperties().values());
+      if (current.getPatternProperties() != null) list.addAll(current.getPatternProperties().values());
+      if (current.getAdditionalPropertiesSchema() != null) list.add(current.getAdditionalPropertiesSchema());
+      if (current.getAdditionalItemsSchema() != null) list.add(current.getAdditionalItemsSchema());
+      if (current.getItemsSchema() != null) list.add(current.getItemsSchema());
+      if (current.getItemsSchemaList() != null) list.addAll(current.getItemsSchemaList());
+      if (current.getSchemaDependencies() != null) list.addAll(current.getSchemaDependencies().values());
+
+      if (current.getAllOf() != null) list.addAll(current.getAllOf());
+      if (current.getAnyOf() != null) list.addAll(current.getAnyOf());
+      if (current.getOneOf() != null) list.addAll(current.getOneOf());
+      if (current.getNot() != null) list.add(current.getNot());
+
+      for (JsonSchemaObject schemaObject : list) {
+        queue.addLast(Pair.create(schemaObject, childContextRef.get()));
+      }
+    }
+  }
+
+  public interface SchemaConsumer {
+    void process(@NotNull JsonSchemaObject object, Consumer<JsonSchemaObject> queueInserter,
+                       @NotNull Map<String, String> context,
+                       @NotNull Consumer<Map<String, String>> contextChanger);
   }
 
   private static class PatternCalculator {
-    private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
+    private final Object myLock = new Object();
     private Map<String, Pattern> myCachedPatterns;
     private SLRUMap<String, String> myCachedPatternProperties;
+    private Map<String, String> myInvalidPatterns;
 
     @Nullable
-    public JsonSchemaObject getMatchingPatternPropertySchema(@Nullable final Map<String, JsonSchemaObject> patternProperties,
-                                                             @NotNull final String name) {
-      if (patternProperties == null || patternProperties.isEmpty()) return null;
-      myLock.readLock().lock();
-      try {
-        if (myCachedPatterns == null) {
-          initPatternCache(patternProperties);
-        }
-        assert myCachedPatternProperties != null;
+    public String selectMatchingPattern(@Nullable final Collection<String> patterns, @NotNull final String name) {
+      if (patterns == null || patterns.isEmpty()) return null;
+      final Map<String, Pattern> cachedPatterns;
+      final Map<String, String> invalidPatterns;
+      synchronized (myLock) {
+        initPatternCache(patterns);
         final String s = myCachedPatternProperties.get(name);
-        if (s != null) return patternProperties.get(s);
-        return matchPatternsToString(name, patternProperties);
-      } finally {
-        myLock.readLock().unlock();
+        if (s != null) return s;
+        cachedPatterns = new HashMap<>(myCachedPatterns);
+        invalidPatterns = myInvalidPatterns == null ? Collections.emptyMap() : new HashMap<>(myInvalidPatterns);
       }
+
+      return matchPatternsToString(name, patterns, cachedPatterns, invalidPatterns);
+    }
+
+    public void ensureInit(@Nullable final Collection<String> patterns) {
+      if (patterns == null || patterns.isEmpty()) return;
+      synchronized (myLock) {
+        initPatternCache(patterns);
+      }
+    }
+
+    @Nullable
+    public Map<String, String> getInvalidPatterns() {
+      return myInvalidPatterns;
     }
 
     public void clear() {
-      myLock.writeLock().lock();
-      try {
+      synchronized (myLock){
         myCachedPatterns = null;
         myCachedPatternProperties = null;
-      } finally {
-        myLock.writeLock().unlock();
       }
     }
 
-    private JsonSchemaObject matchPatternsToString(@NotNull final String name, @NotNull final Map<String, JsonSchemaObject> patternProperties) {
-      final List<String> strings = new ArrayList<>(patternProperties.keySet());
+    private String matchPatternsToString(@NotNull final String name,
+                                         @NotNull final Collection<String> patterns,
+                                         @NotNull Map<String, Pattern> cachedPatterns,
+                                         @Nullable Map<String, String> invalidPatterns) {
+      final List<String> strings = new ArrayList<>(patterns);
       Collections.sort(strings);
 
-      return underWrite(() -> {
-        for (final String pattern : strings) {
-          try {
-            final Pattern compiledPattern = myCachedPatterns.get(pattern);
-            assert compiledPattern != null;
-            final boolean matches = compiledPattern.matcher(StringUtil.newBombedCharSequence(name, 300)).matches();
-            if (matches) {
-              myCachedPatternProperties.put(name, pattern);
-              return patternProperties.get(pattern);
+      for (final String pattern : strings) {
+        if (invalidPatterns != null && invalidPatterns.containsKey(pattern)) continue;
+        final Pattern compiledPattern = cachedPatterns.get(pattern);
+        assert compiledPattern != null;
+        try {
+          final boolean matches = compiledPattern.matcher(StringUtil.newBombedCharSequence(name, 300)).matches();
+          if (matches) {
+            synchronized (myLock) {
+              if (myCachedPatterns.containsKey(pattern)) myCachedPatternProperties.put(name, pattern);
             }
-          } catch (ProcessCanceledException e) {
-            //ignored
+            return pattern;
           }
+        } catch (ProcessCanceledException e) {
+          //ignored
         }
-        myCachedPatternProperties.put(name, "");
-        return null;
-      });
+      }
+      synchronized (myLock) {
+        if (myCachedPatterns.equals(cachedPatterns)) myCachedPatternProperties.put(name, "");
+      }
+      return null;
     }
 
-    private <T> T underWrite(@NotNull final Computable<T> computable) {
-      myLock.readLock().unlock();
-      myLock.writeLock().lock();
-      try {
-        final T t = computable.compute();
-        myLock.readLock().lock();
-        return t;
-      } finally {
-        myLock.writeLock().unlock();
+    private void initPatternCache(@NotNull final Collection<String> patterns) {
+      if (myCachedPatterns == null) {
+        myCachedPatterns = new HashMap<>(patterns.size());
+        myCachedPatternProperties = new SLRUMap<>(100, 100);
+      }
+      for (String pattern : patterns) {
+        if (!myCachedPatterns.containsKey(pattern)) {
+          try {
+            final Pattern compiled = Pattern.compile(adaptSchemaPattern(pattern));
+            myCachedPatterns.put(pattern, compiled);
+          } catch (PatternSyntaxException e) {
+            if (myInvalidPatterns == null) myInvalidPatterns = new HashMap<>();
+            myInvalidPatterns.put(pattern, e.getMessage());
+          }
+        }
       }
     }
 
-    private void initPatternCache(@NotNull final Map<String, JsonSchemaObject> patternProperties) {
-      underWrite(() -> {
-        myCachedPatterns = new HashMap<>(patternProperties.size(), 1.0f);
-        myCachedPatternProperties = new SLRUMap<>(100, 100);
-        for (String pattern : patternProperties.keySet()) {
-          myCachedPatterns.put(pattern, Pattern.compile(adaptSchemaPattern(pattern)));
-        }
-        return true;
-      });
+    @NotNull
+    private static String adaptSchemaPattern(String pattern) {
+      pattern = pattern.startsWith("^") || pattern.startsWith("*") || pattern.startsWith(".") ? pattern : (".*" + pattern);
+      pattern = pattern.endsWith("+") || pattern.endsWith("*") || pattern.endsWith("$") ? pattern : (pattern + ".*");
+      pattern = pattern.replace("\\\\", "\\");
+      return pattern;
     }
   }
 }

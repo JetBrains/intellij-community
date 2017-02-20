@@ -234,10 +234,10 @@ public class SvnDiffViewer implements DiffViewer {
 
   @NotNull
   private static SvnDiffSettings initSettings(@NotNull DiffContext context) {
-    SvnDiffSettings settings = context.getUserData(SvnDiffSettingsHolder.KEY);
+    SvnDiffSettings settings = context.getUserData(SvnDiffSettings.KEY);
     if (settings == null) {
       settings = SvnDiffSettings.getSettings();
-      context.putUserData(SvnDiffSettingsHolder.KEY, settings);
+      context.putUserData(SvnDiffSettings.KEY, settings);
     }
     return settings;
   }

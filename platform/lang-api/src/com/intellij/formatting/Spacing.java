@@ -41,7 +41,7 @@ public abstract class Spacing {
    *                       to which the spacing setting instance is related. Spaces are inserted
    *                       if there are less than this amount of spaces in the document.
    * @param maxSpaces      The maximum number of spaces that should be present between the blocks
-   *                       to which the spacing setting instance is related, or <code>Integer.MAX_VALUE</code>
+   *                       to which the spacing setting instance is related, or {@code Integer.MAX_VALUE}
    *                       if the number of spaces is not limited. Spaces are deleted if there are
    *                       more than this amount of spaces in the document.
    * @param minLineFeeds   The minimum number of line breaks that should be present between the blocks
@@ -65,7 +65,7 @@ public abstract class Spacing {
    *                       to which the spacing setting instance is related. Spaces are inserted
    *                       if there are less than this amount of spaces in the document.
    * @param maxSpaces      The maximum number of spaces that should be present between the blocks
-   *                       to which the spacing setting instance is related, or <code>Integer.MAX_VALUE</code>
+   *                       to which the spacing setting instance is related, or {@code Integer.MAX_VALUE}
    *                       if the number of spaces is not limited. Spaces are deleted if there are
    *                       more than this amount of spaces in the document.
    * @param minLineFeeds   The minimum number of line breaks that should be present between the blocks
@@ -100,7 +100,7 @@ public abstract class Spacing {
    *                       to which the spacing setting instance is related. Spaces are inserted
    *                       if there are less than this amount of spaces in the document.
    * @param maxSpaces      The maximum number of spaces that should be present between the blocks
-   *                       to which the spacing setting instance is related, or <code>Integer.MAX_VALUE</code>
+   *                       to which the spacing setting instance is related, or {@code Integer.MAX_VALUE}
    *                       if the number of spaces is not limited. Spaces are deleted if there are
    *                       more than this amount of spaces in the document.
    * @param dependency     The text range checked for the presence of line breaks.
@@ -145,7 +145,7 @@ public abstract class Spacing {
    *                         to which the spacing setting instance is related. Spaces are inserted
    *                         if there are less than this amount of spaces in the document.
    * @param maxSpaces        The maximum number of spaces that should be present between the blocks
-   *                         to which the spacing setting instance is related, or <code>Integer.MAX_VALUE</code>
+   *                         to which the spacing setting instance is related, or {@code Integer.MAX_VALUE}
    *                         if the number of spaces is not limited. Spaces are deleted if there are
    *                         more than this amount of spaces in the document.
    * @param dependencyRange  The text range checked for the presence of line breaks.
@@ -188,7 +188,7 @@ public abstract class Spacing {
    *                       to which the spacing setting instance is related. Spaces are inserted
    *                       if there are less than this amount of spaces in the document.
    * @param maxSpaces      The maximum number of spaces that should be present between the blocks
-   *                       to which the spacing setting instance is related, or <code>Integer.MAX_VALUE</code>
+   *                       to which the spacing setting instance is related, or {@code Integer.MAX_VALUE}
    *                       if the number of spaces is not limited. Spaces are deleted if there are
    *                       more than this amount of spaces in the document.
    * @param keepLineBreaks Whether the existing line breaks between the blocks should be preserved.

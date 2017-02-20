@@ -88,7 +88,7 @@ public class MethodSignatureUtil {
     PsiSubstitutor substitutor = signature.getSubstitutor();
     PsiType[] erasedTypes = PsiType.createArray(parameterTypes.length);
     for (int i = 0; i < parameterTypes.length; i++) {
-      erasedTypes[i] = TypeConversionUtil.erasure(substitutor.substitute(parameterTypes[i]), substitutor);
+      erasedTypes[i] = TypeConversionUtil.erasure(parameterTypes[i], substitutor);
     }
     return erasedTypes;
   }
@@ -329,12 +329,12 @@ public class MethodSignatureUtil {
     for (int i = 0; i < methodTypeParameters.length; i++) {
       PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
       PsiTypeParameter superTypeParameter = superTypeParameters[i];
-      final Set<PsiType> methodSupers = new HashSet<PsiType>();
+      final Set<PsiType> methodSupers = new HashSet<>();
       for (PsiClassType methodSuper : methodTypeParameter.getSuperTypes()) {
         methodSupers.add(methodSubstitutor.substitute(methodSuper));
       }
 
-      final Set<PsiType> superSupers = new HashSet<PsiType>();
+      final Set<PsiType> superSupers = new HashSet<>();
       for (PsiClassType superSuper : superTypeParameter.getSuperTypes()) {
         superSupers.add(methodSubstitutor.substitute(result.substitute(superSuper)));
       }
@@ -411,7 +411,7 @@ public class MethodSignatureUtil {
     if (r1 instanceof PsiClassType && r2 != null) {
 
       //R1, adapted to the type parameters of d2 (§8.4.4), is a subtype of R2.
-      final PsiSubstitutor adaptingSubstitutor = getSuperMethodSignatureSubstitutor(d1, d2);
+      final PsiSubstitutor adaptingSubstitutor = getSuperMethodSignatureSubstitutor(d2, d1);
       if (adaptingSubstitutor != null && r2.isAssignableFrom(adaptingSubstitutor.substitute(r1))) {
         return true;
       }

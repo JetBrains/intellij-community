@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import org.jetbrains.annotations.NotNull;
@@ -98,6 +99,17 @@ public class FormatTextRanges implements FormattingRangesInfo {
       .getRanges()
       .stream()
       .map(FormatTextRange::getTextRange)
+      .collect(Collectors.toList());
+  }
+  
+  public List<TextRange> getExtendedFormattingRanges() {
+    return myStorage
+      .getRanges()
+      .stream()
+      .map((range) -> {
+        TextRange textRange = range.getTextRange();
+        return new UnfairTextRange(textRange.getStartOffset() - 500, textRange.getEndOffset() + 500);
+      })
       .collect(Collectors.toList());
   }
   

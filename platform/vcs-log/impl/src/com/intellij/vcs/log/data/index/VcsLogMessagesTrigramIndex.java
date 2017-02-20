@@ -19,11 +19,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import gnu.trove.THashMap;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +43,7 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   }
 
   @Nullable
-  public ValueContainer.IntIterator getCommitsForSubstring(@NotNull String string) throws StorageException {
+  public TIntHashSet getCommitsForSubstring(@NotNull String string) throws StorageException {
     MyTrigramProcessor trigramProcessor = new MyTrigramProcessor();
     TrigramBuilder.processTrigrams(string, trigramProcessor);
 

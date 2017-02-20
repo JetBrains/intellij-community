@@ -144,7 +144,6 @@ class CanonicalPathMap {
           String rootParent = new File(root).getParent();
           if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
             changedPaths.add(root);
-            continue ext;
           }
         }
       }
@@ -158,7 +157,6 @@ class CanonicalPathMap {
           String rootParent = new File(root).getParent();
           if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
             changedPaths.add(root);
-            continue ext;
           }
         }
       }

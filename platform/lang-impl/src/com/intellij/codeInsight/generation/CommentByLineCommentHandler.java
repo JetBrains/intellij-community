@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -31,7 +30,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
@@ -67,7 +65,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   // first pass - adjacent carets are grouped into blocks
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
     myProject = project;
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     file = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
@@ -82,10 +79,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     }
 
     Document document = editor.getDocument();
-    if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
-      return;
-    }
-
     boolean hasSelection = caret.hasSelection();
     int startOffset = caret.getSelectionStart();
     int endOffset = caret.getSelectionEnd();

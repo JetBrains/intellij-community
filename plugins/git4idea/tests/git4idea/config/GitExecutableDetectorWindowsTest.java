@@ -3,8 +3,6 @@ package git4idea.config;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -204,12 +202,7 @@ public class GitExecutableDetectorWindowsTest {
 
       @Override
       protected String getPath() {
-        return StringUtil.join(ContainerUtil.map(PATH.split(":"), new Function<String, String>() {
-          @Override
-          public String fun(String s) {
-            return convertPath(s);
-          }
-        }), ";");
+        return StringUtil.join(PATH.split(";"), s -> convertPath(s), ";");
       }
     }.detect();
   }

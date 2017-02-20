@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testAsyncDefReturnType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("__coroutine[int]",
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("Coroutine[Any, Any, int]",
            "async def foo(x):\n" +
            "    await x\n" +
            "    return 0\n" +
@@ -263,7 +263,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGenerator() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("__asyncgenerator[int, Any]",
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncGenerator[int, Any]",
                                                               "async def asyncgen():\n" +
                                                               "    yield 42\n" +
                                                               "expr = asyncgen()"));
@@ -271,7 +271,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAiter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncIterator[int]",
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncGenerator[int, Any]",
                                                               "async def asyncgen():\n" +
                                                               "    yield 42\n" +
                                                               "expr = asyncgen().__aiter__()"));
@@ -463,6 +463,60 @@ public class Py3TypeTest extends PyTestCase {
   public void testBuiltinInput() {
     doTest("str",
            "expr = input()");
+  }
+
+  public void testMinResult() {
+    doTest("int",
+           "expr = min(1, 2, 3)");
+  }
+
+  public void testMaxResult() {
+    doTest("int",
+           "expr = max(1, 2, 3)");
+  }
+
+  // PY-21692
+  public void testSumResult() {
+    doTest("int",
+           "expr = sum([1, 2, 3])");
+  }
+
+  public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    doTest("Union[D2, D1]",
+           "class D1(object):\n" +
+           "    pass\n" +
+           "class D2(object):\n" +
+           "    pass\n" +
+           "expr = D1() / D2()");
+  }
+
+  // PY-22181
+  public void testIterationOverIterableWithSeparateIterator() {
+    doTest("int",
+           "class AIter(object):\n" +
+           "    def __next__(self):\n" +
+           "        return 5\n" +
+           "class A(object):\n" +
+           "    def __iter__(self):\n" +
+           "        return AIter()\n" +
+           "a = A()\n" +
+           "for expr in a:\n" +
+           "    print(expr)");
+  }
+
+  // PY-22181
+  public void testAsyncIterationOverIterableWithSeparateIterator() {
+    doTest("int",
+           "class AIter(object):\n" +
+           "    def __anext__(self):\n" +
+           "        return 5\n" +
+           "class A(object):\n" +
+           "    def __aiter__(self):\n" +
+           "        return AIter()\n" +
+           "a = A()\n" +
+           "async for expr in a:\n" +
+           "    print(expr)");
   }
 
   private void doTest(final String expectedType, final String text) {

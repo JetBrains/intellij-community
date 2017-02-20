@@ -86,6 +86,10 @@ public class RootIndex {
     };
   }
 
+  public void onLowMemory() {
+    myPackageDirectoryCache.onLowMemory();
+  }
+
   @NotNull
   private RootInfo buildRootInfo(@NotNull Project project) {
     final RootInfo info = new RootInfo();
@@ -168,10 +172,13 @@ public class RootIndex {
     }
 
     for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
-      Collection<VirtualFile> roots = ContainerUtil.filter(provider.getAdditionalProjectLibrarySourceRoots(project),
-                                                           file -> ensureValid(file, provider));
-      info.libraryOrSdkSources.addAll(roots);
-      info.classAndSourceRoots.addAll(roots);
+      Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
+      for (SyntheticLibrary descriptor : libraries) {
+        Collection<VirtualFile> roots = ContainerUtil.filter(descriptor.getSourceRoots(),
+                                                             file -> ensureValid(file, project));
+        info.libraryOrSdkSources.addAll(roots);
+        info.classAndSourceRoots.addAll(roots);
+      }
     }
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
       info.excludedFromProject.addAll(ContainerUtil.filter(policy.getExcludeRootsForProject(), file -> ensureValid(file, policy)));

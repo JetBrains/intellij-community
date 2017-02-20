@@ -158,7 +158,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
         }
       };
     } else if (methodName.equals("filter")) {
-      descriptorBase = FluentIterableConversionUtil.getFilterDescriptor(method);
+      descriptorBase = FluentIterableConversionUtil.getFilterDescriptor(method, context);
     } else if (methodName.equals("isEmpty")) {
       descriptorBase = new TypeConversionDescriptor("$q$.isEmpty()", null) {
         @Override

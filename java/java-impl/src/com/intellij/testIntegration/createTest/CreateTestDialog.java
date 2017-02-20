@@ -25,7 +25,6 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -399,13 +398,12 @@ public class CreateTestDialog extends DialogWrapper {
 
     myFixLibraryButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          if (mySelectedFramework instanceof JavaTestFramework) {
-            ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
-          } else {
-            OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
-          }
-        });
+        if (mySelectedFramework instanceof JavaTestFramework) {
+          ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
+        }
+        else {
+          OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
+        }
         myFixLibraryPanel.setVisible(false);
       }
     });

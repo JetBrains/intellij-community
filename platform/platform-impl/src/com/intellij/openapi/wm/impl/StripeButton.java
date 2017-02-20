@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
       if (myDragPane == null) return;
       int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
       int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
-      BufferedImage image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_RGB);
+      BufferedImage image = UIUtil.createImage(e.getComponent(), width, height, BufferedImage.TYPE_INT_RGB);
       Graphics graphics = image.getGraphics();
       graphics.setColor(UIUtil.getBgFillColor(getParent()));
       graphics.fillRect(0, 0, width, height);
@@ -310,6 +310,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
     updateState();
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -341,7 +342,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   private void updateText() {
     String text = myDecorator.getToolWindow().getStripeTitle();
-    if (UISettings.getInstance().SHOW_TOOL_WINDOW_NUMBERS) {
+    if (UISettings.getInstance().getShowToolWindowsNumbers()) {
       String toolWindowId = myDecorator.getToolWindow().getId();
       int mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindowId);
       if (mnemonic != -1) {
@@ -358,7 +359,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private void updateState() {
     ToolWindowImpl window = myDecorator.getToolWindow();
     boolean toShow = window.isAvailable() || window.isPlaceholderMode();
-    if (UISettings.getInstance().ALWAYS_SHOW_WINDOW_BUTTONS) {
+    if (UISettings.getInstance().getAlwaysShowWindowsButton()) {
       setVisible(window.isShowStripeButton() || isSelected());
     }
     else {

@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import org.jdom.Element;
@@ -48,7 +49,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
+public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable, ImportsLayoutSettings {
   public static final int MAX_RIGHT_MARGIN = 1000;
   
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
@@ -60,6 +61,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @NonNls private static final String FILETYPE = "fileType";
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
+
+  private static CodeStyleSettings myDefaults;
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
@@ -275,8 +278,78 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+  
+  @Override
+  public boolean isLayoutStaticImportsSeparately() {
+    return LAYOUT_STATIC_IMPORTS_SEPARATELY;
+  }
 
-// endregion
+  @Override
+  public void setLayoutStaticImportsSeparately(boolean value) {
+    LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
+  }
+  
+  @Override
+  public int getNamesCountToUseImportOnDemand() {
+    return NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
+  }
+  
+  @Override
+  public void setNamesCountToUseImportOnDemand(int value) {
+    NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = value;
+  }
+
+  @Override
+  public int getClassCountToUseImportOnDemand() {
+    return CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
+  }
+
+  @Override
+  public void setClassCountToUseImportOnDemand(int value) {
+    CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = value;
+  }
+
+  @Override
+  public boolean isInsertInnerClassImports() {
+    return INSERT_INNER_CLASS_IMPORTS;
+  }
+
+  @Override
+  public void setInsertInnerClassImports(boolean value) {
+    INSERT_INNER_CLASS_IMPORTS = value;
+  }
+
+  @Override
+  public boolean isUseSingleClassImports() {
+    return USE_SINGLE_CLASS_IMPORTS;
+  }
+
+  @Override
+  public void setUseSingleClassImports(boolean value) {
+    USE_SINGLE_CLASS_IMPORTS = value;
+  }
+  
+  @Override
+  public boolean isUseFqClassNames() {
+    return USE_FQ_CLASS_NAMES;
+  }
+
+  @Override
+  public void setUseFqClassNames(boolean value) {
+    USE_FQ_CLASS_NAMES = value;
+  }
+
+  @Override
+  public PackageEntryTable getImportLayoutTable() {
+    return IMPORT_LAYOUT_TABLE;
+  }
+  
+  @Override
+  public PackageEntryTable getPackagesToUseImportOnDemand() {
+    return PACKAGES_TO_USE_IMPORT_ON_DEMAND;
+  }
+
+  // endregion
 
 // region ORDER OF MEMBERS
 
@@ -537,19 +610,17 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     unknownElementCollector.addKnownName(ADDITIONAL_INDENT_OPTIONS);
     List<Element> list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
-    if (list != null) {
-      for (Element additionalIndentElement : list) {
-        String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
-        if (!StringUtil.isEmpty(fileTypeId)) {
-          FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-          if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
-            target = new TempFileType(fileTypeId);
-          }
-
-          IndentOptions options = getDefaultIndentOptions(target);
-          options.readExternal(additionalIndentElement);
-          registerAdditionalIndentOptions(target, options);
+    for (Element additionalIndentElement : list) {
+      String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
+      if (!StringUtil.isEmpty(fileTypeId)) {
+        FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
+        if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
+          target = new TempFileType(fileTypeId);
         }
+
+        IndentOptions options = getDefaultIndentOptions(target);
+        options.readExternal(additionalIndentElement);
+        registerAdditionalIndentOptions(target, options);
       }
     }
 
@@ -578,7 +649,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     if (!myAdditionalIndentOptions.isEmpty()) {
       FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
-      Arrays.sort(fileTypes, (o1, o2) -> o1.getDefaultExtension().compareTo(o2.getDefaultExtension()));
+      Arrays.sort(fileTypes, Comparator.comparing(FileType::getDefaultExtension));
       for (FileType fileType : fileTypes) {
         Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
         myAdditionalIndentOptions.get(fileType).serialize(additionalIndentOptions, getDefaultIndentOptions(fileType));
@@ -617,9 +688,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   /**
    * If the file type has an associated language and language indent options are defined, returns these options. Otherwise attempts to find
-   * indent options from <code>FileTypeIndentOptionsProvider</code>. If none are found, other indent options are returned.
+   * indent options from {@code FileTypeIndentOptionsProvider}. If none are found, other indent options are returned.
    * @param fileType The file type to search indent options for.
-   * @return File type indent options or <code>OTHER_INDENT_OPTIONS</code>.
+   * @return File type indent options or {@code OTHER_INDENT_OPTIONS}.
    *
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider
@@ -645,7 +716,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    *
    * @param project  The project in which PsiFile should be searched.
    * @param document The document to search indent options for.
-   * @return Indent options from the indent options providers or file type indent options or <code>OTHER_INDENT_OPTIONS</code>.
+   * @return Indent options from the indent options providers or file type indent options or {@code OTHER_INDENT_OPTIONS}.
    * @see FileIndentOptionsProvider
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider
@@ -768,14 +839,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return getIndentOptions(fileType).CONTINUATION_INDENT_SIZE;
   }
 
-  public int getLabelIndentSize(FileType fileType) {
-    return getIndentOptions(fileType).LABEL_INDENT_SIZE;
-  }
-
-  public boolean getLabelIndentAbsolute(FileType fileType) {
-    return getIndentOptions(fileType).LABEL_INDENT_ABSOLUTE;
-  }
-
   public int getTabSize(FileType fileType) {
     return getIndentOptions(fileType).TAB_SIZE;
   }
@@ -894,13 +957,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     if (!exist) {
       myAdditionalIndentOptions.put(fileType, options);
     }
-  }
-
-  public IndentOptions getAdditionalIndentOptions(FileType fileType) {
-    if (!myLoadedAdditionalIndentOptions) {
-      loadAdditionalIndentOptions();
-    }
-    return myAdditionalIndentOptions.get(fileType);
   }
 
   private void loadAdditionalIndentOptions() {
@@ -1065,5 +1121,23 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     QuoteStyle(String quote) {
       this.quote = quote;
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof CodeStyleSettings)) return false;
+    if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
+    if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
+    for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
+      if (!customSettings.equals(((CodeStyleSettings)obj).getCustomSettings(customSettings.getClass()))) return false;
+    }
+    return true;
+  }
+
+  public static CodeStyleSettings getDefaults() {
+    if (myDefaults == null) {
+      myDefaults = new CodeStyleSettings();
+    }
+    return myDefaults;
   }
 }

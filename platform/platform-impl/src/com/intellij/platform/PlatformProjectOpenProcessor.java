@@ -16,6 +16,7 @@
 package com.intellij.platform;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -52,12 +53,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.EnumSet;
 
 /**
  * @author max
  */
 public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.platform.PlatformProjectOpenProcessor");
+
+  public enum Option {
+    FORCE_NEW_FRAME, REOPEN, TEMP_PROJECT
+  }
 
   public static PlatformProjectOpenProcessor getInstance() {
     PlatformProjectOpenProcessor projectOpenProcessor = getInstanceIfItExists();
@@ -91,31 +97,50 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Nullable
-  public Project doOpenProject(@NotNull final VirtualFile virtualFile, @Nullable final Project projectToClose, final boolean forceOpenInNewFrame) {
-    return doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame, -1, null, false);
+  public Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
+    EnumSet<Option> options = EnumSet.noneOf(Option.class);
+    if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
+    return doOpenProject(virtualFile, projectToClose, -1, null, options);
+  }
+
+  /** @deprecated use {@link #doOpenProject(VirtualFile, Project, int, ProjectOpenedCallback, EnumSet)} (to be removed in IDEA 2019) */
+  public static Project doOpenProject(@NotNull VirtualFile virtualFile,
+                                      Project projectToClose,
+                                      boolean forceOpenInNewFrame,
+                                      int line,
+                                      @Nullable ProjectOpenedCallback callback,
+                                      boolean isReopen) {
+    EnumSet<Option> options = EnumSet.noneOf(Option.class);
+    if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
+    if (isReopen) options.add(Option.REOPEN);
+    return doOpenProject(virtualFile, projectToClose, line, callback, options);
   }
 
   @Nullable
-  public static Project doOpenProject(@NotNull final VirtualFile virtualFile,
-                                      Project projectToClose,
-                                      final boolean forceOpenInNewFrame,
-                                      final int line,
+  public static Project doOpenProject(@NotNull VirtualFile virtualFile,
+                                      @Nullable Project projectToClose,
+                                      int line,
                                       @Nullable ProjectOpenedCallback callback,
-                                      final boolean isReopen) {
+                                      @NotNull EnumSet<Option> options) {
     VirtualFile baseDir = virtualFile;
     boolean dummyProject = false;
     String dummyProjectName = null;
+    boolean forceOpenInNewFrame = options.contains(Option.FORCE_NEW_FRAME);
+    boolean isReopen = options.contains(Option.REOPEN);
+    boolean tempProject = options.contains(Option.TEMP_PROJECT);
 
     if (!baseDir.isDirectory()) {
-      baseDir = virtualFile.getParent();
-      while (baseDir != null) {
-        if (ProjectKt.isProjectDirectoryExistsUsingIo(baseDir)) {
-          break;
+      if (tempProject) {
+        baseDir = null;
+      }
+      else {
+        baseDir = virtualFile.getParent();
+        while (baseDir != null && !ProjectKt.isProjectDirectoryExistsUsingIo(baseDir)) {
+          baseDir = baseDir.getParent();
         }
-        baseDir = baseDir.getParent();
       }
       if (baseDir == null) { // no reasonable directory -> create new temp one or use parent
-        if (Registry.is("ide.open.file.in.temp.project.dir")) {
+        if (tempProject || Registry.is("ide.open.file.in.temp.project.dir")) {
           try {
             dummyProjectName = virtualFile.getName();
             File directory = FileUtil.createTempDirectory(dummyProjectName, null, true);
@@ -142,7 +167,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
       if (ApplicationManager.getApplication().isOnAir()) {
         if (!ProjectUtil.closeAndDispose(projectToClose)) return null;
-      } else {if (ProjectAttachProcessor.canAttachToProject()) {
+      } else {if (ProjectAttachProcessor.canAttachToProject() && GeneralSettings.getInstance().getConfirmOpenNewProject() == GeneralSettings.OPEN_PROJECT_ASK) {
         final OpenOrAttachDialog dialog = new OpenOrAttachDialog(projectToClose, isReopen, isReopen ? "Reopen Project" : "Open Project");
 
         if (!dialog.showAndGet()) {
@@ -154,6 +179,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
         }else if (dialog.isAttach()) {
           if (attachToProject(projectToClose, Paths.get(FileUtil.toSystemDependentName(baseDir.getPath())), callback)) {return null;
         }
+        // process all pending events that can interrupt focus flow
+        // todo this can be removed after taming the focus beast
+        IdeEventQueue.getInstance().flushQueue();
       }
       }else {
         int exitCode = ProjectUtil.confirmOpenNewProject(false);
@@ -246,7 +274,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return moduleRef.get();
   }
 
-  private static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
+  public static boolean attachToProject(Project project, @NotNull Path projectDir, ProjectOpenedCallback callback) {
     for (ProjectAttachProcessor processor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
       if (processor.attachToProject(project, projectDir, callback)) {
         return true;

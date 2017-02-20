@@ -49,7 +49,7 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
   /**
    * Returns the text shown in the preview pane. If some elements need to be highlighted in
    * the preview text which are not highlighted by the syntax highlighter, they need to be
-   * surrounded by XML-like tags, for example: <code>&lt;class&gt;MyClass&lt;/class&gt;</code>.
+   * surrounded by XML-like tags, for example: {@code <class>MyClass</class>}.
    * The mapping between the names of the tags and the text attribute keys used for highlighting
    * is defined by the {@link #getAdditionalHighlightingTagToDescriptorMap()} method.
    *

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
 
     addFile("module-info.java", "module M2 { exports org.example.m2; }", ModuleDescriptor.M2)
     addFile("module-info.java", "module M4 { exports org.example.m4; }", ModuleDescriptor.M4)
-    addFile("module-info.java", "module M6 { exports org.example.m6; requires public M7; }", ModuleDescriptor.M6)
+    addFile("module-info.java", "module M6 { exports org.example.m6; requires transitive M7; }", ModuleDescriptor.M6)
     addFile("module-info.java", "module M7 { exports org.example.m7; }", ModuleDescriptor.M7)
 
     add("org.example.m2", "C2", ModuleDescriptor.M2, "public static void foo() {}")
@@ -50,52 +50,54 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
   }
 
   fun testNoImportsInSources() {
-    mainClass("")
+    mainClass()
     mainModule("module MAIN { requires M2; }")
   }
 
   fun testPackageImported() {
-    mainClass("C2.foo();", "org.example.m2.*")
+    mainClass("org.example.m2.*")
     mainModule("module MAIN { requires M2; }")
   }
 
   fun testClassImported() {
-    mainClass("C2.foo();", "org.example.m2.C2")
+    mainClass("org.example.m2.C2")
     mainModule("module MAIN { requires M2; }")
   }
 
   fun testClassMembersImported() {
-    mainClass("foo();", staticImports = listOf("org.example.m2.C2.*"))
+    mainClass(staticImports = listOf("org.example.m2.C2.*"))
     mainModule("module MAIN { requires M2; }")
   }
 
   fun testMethodImported() {
-    mainClass("foo();", staticImports = listOf("org.example.m2.C2.foo"))
+    mainClass(staticImports = listOf("org.example.m2.C2.foo"))
     mainModule("module MAIN { requires M2; }")
   }
 
 
   fun testRequiresManyModulesAllPackagesImported() {
-    mainClass("C2.foo(); new C4().bar(); C7 v = new C6().getC7();",
-              "org.example.m2.*", "org.example.m4.*", "org.example.m6.*", "org.example.m7.*")
+    mainClass("org.example.m2.*", "org.example.m4.*", "org.example.m6.*", "org.example.m7.*")
     mainModule("module MAIN { requires M2; requires M4; requires M6; requires M7; }")
   }
 
   fun testRequiresManyModulesFewPackagesImported() {
-    mainClass("C2.foo(); new C6().getC7();",
-              "org.example.m2.*", "org.example.m6.*")
+    mainClass("org.example.m2.*", "org.example.m6.*")
     mainModule("module MAIN { requires M2; requires M4; requires M6; requires M7; }")
   }
 
   fun testReexportedPackageImported() {
-    mainClass("C7 v = new C7();", "org.example.m7.*")
+    mainClass("org.example.m7.*")
     mainModule("module MAIN { requires M6; }")
   }
 
-  fun _testNonexistentMethodImported() { // causes ClassCastException in PsiImportStaticStatementImpl
-    mainClass("nonexistent();",
-              staticImports = listOf("org.example.m2.C2.<error descr=\"Cannot resolve symbol 'nonexistent'\">nonexistent</error>"))
+  fun testNonexistentMethodImported() {
+    mainClass(staticImports = listOf("org.example.m2.C2.<error descr=\"Cannot resolve symbol 'nonexistent'\">nonexistent</error>"))
     mainModule("module MAIN { requires M2; }")
+  }
+
+  fun testRequiresJavaBase() {
+    mainClass("java.util.List")
+    mainModule("module MAIN { requires java.base; }")
   }
 
   private fun mainModule(@Language("JAVA") @NonNls text: String) {
@@ -128,8 +130,7 @@ public class ${className}
 
   private var myMainClassFile: VirtualFile? = null
 
-  private fun mainClass(@NonNls body: String,
-                        vararg @NonNls imports: String,
+  private fun mainClass(vararg @NonNls imports: String,
                         @NonNls staticImports: List<String> = emptyList()) {
     val importsText = imports.map { "import ${it};" }.joinToString("\n")
     val staticImportsText = staticImports.map { "import static ${it};" }.joinToString("\n")
@@ -138,9 +139,7 @@ package org.example.main;
 ${importsText}
 ${staticImportsText}
 public class Main {
-  void main() {
-    ${body}
-  }
+  void main() {}
 }
 """, module = ModuleDescriptor.MAIN)
   }

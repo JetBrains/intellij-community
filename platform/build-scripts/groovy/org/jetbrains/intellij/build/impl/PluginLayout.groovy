@@ -27,6 +27,7 @@ class PluginLayout extends BaseLayout {
   String directoryName
   final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
+  String version
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -48,6 +49,7 @@ class PluginLayout extends BaseLayout {
     body.delegate = spec
     body()
     layout.directoryName = spec.directoryName
+    layout.version = spec.version
     spec.withModule(mainModuleName, spec.mainJarName)
     if (layout.doNotCreateSeparateJarForLocalizableResources) {
       layout.modulesWithLocalizableResourcesInCommonJar.clear()
@@ -55,6 +57,9 @@ class PluginLayout extends BaseLayout {
     return layout
   }
 
+  /**
+   * @return map from a JAR name to list of modules
+   */
   MultiValuesMap<String, String> getActualModules(Set<String> enabledPluginModules) {
     def result = new MultiValuesMap<String, String>(true)
     for (Map.Entry<String, Collection<String>> entry : moduleJars.entrySet()) {
@@ -77,6 +82,10 @@ class PluginLayout extends BaseLayout {
      * Name of the main plugin JAR file
      */
     String mainJarName
+    /**
+     * Version of the plugin if it differs from the global build number
+     */
+    String version
 
     PluginLayoutSpec(PluginLayout layout) {
       super(layout)

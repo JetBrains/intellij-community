@@ -127,7 +127,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         command = customizer.customizeCommandAndEnvironment(myProject, command, envs);
 
         if (directory == null) {
-          directory = customizer.getDefaultFolder();
+          directory = customizer.getDefaultFolder(myProject);
         }
       }
       catch (Exception e) {
@@ -201,6 +201,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           else if (shellName.equals("zsh")) {
             String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
             if (StringUtil.isNotEmpty(zdotdir)) {
+              envs.put("_OLD_ZDOTDIR", zdotdir);
               File zshRc = new File(FileUtil.expandUserHome(zdotdir), ".zshrc");
               if (zshRc.exists()) {
                 envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
@@ -215,6 +216,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
               if (fishConfig.exists()) {
                 envs.put(JEDITERM_USER_RCFILE, fishConfig.getAbsolutePath());
               }
+              envs.put("OLD_" + XDG_CONFIG_HOME, xdgConfig);
             }
 
             envs.put(XDG_CONFIG_HOME, new File(rcFilePath).getParentFile().getParent());

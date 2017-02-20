@@ -26,8 +26,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -65,11 +67,11 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final FontMetrics myBoldMetrics;
 
   public static final Color BACKGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? new Color(235, 244, 254) : JBColor.background()));
-  private static final Color FOREGROUND_COLOR = JBColor.foreground();
+  public static final Color FOREGROUND_COLOR = JBColor.foreground();
   private static final Color GRAYED_FOREGROUND_COLOR = new JBColor(Gray._160, Gray._110);
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
-  private static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(0x6e8ea2, 0x55585a);
-  private static final Color SELECTED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE : JBColor.foreground()));
+  public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(0x6e8ea2, 0x55585a);
+  public static final Color SELECTED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE : JBColor.foreground()));
   private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE: JBColor.foreground()));
 
   static final Color PREFIX_FOREGROUND_COLOR = new JBColor(0xb000b0, 0xd17ad6);
@@ -151,10 +153,7 @@ public class LookupCellRenderer implements ListCellRenderer {
           presentation.setItemTextForeground(JBColor.RED);
           presentation.setItemText("Error occurred, see the log in Help | Show Log");
         }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        catch (Error e) {
+        catch (Exception | Error e) {
           LOG.error(e);
         }
       } else {
@@ -267,7 +266,8 @@ public class LookupCellRenderer implements ListCellRenderer {
       }
 
       String trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics);
-      myTailComponent.append(trimmed, new SimpleTextAttributes(style, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
+      int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
+      myTailComponent.append(trimmed, new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
       allowedWidth -= RealLookupElementPresentation.getStringWidth(trimmed, fontMetrics);
     }
   }
@@ -457,8 +457,9 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     // assume a single font can display all lookup item chars
     Set<Font> fonts = ContainerUtil.newHashSet();
+    FontPreferences fontPreferences = myLookup.getFontPreferences();
     for (int i = 0; i < sampleString.length(); i++) {
-      fonts.add(EditorUtil.fontForChar(sampleString.charAt(i), Font.PLAIN, myLookup.getTopLevelEditor()).getFont());
+      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(sampleString.charAt(i), Font.PLAIN, fontPreferences, null).getFont());
     }
 
     eachFont: for (Font font : fonts) {

@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * Action showing the history of recently used commit messages. Source code of this class is provided
  * as a sample of using the {@link CheckinProjectPanel} API. Actions to be shown in the commit dialog
- * should be added to the <code>Vcs.MessageActionGroup</code> action group.
+ * should be added to the {@code Vcs.MessageActionGroup} action group.
  *
  * @author lesya
  * @since 5.1

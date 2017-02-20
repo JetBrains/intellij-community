@@ -39,7 +39,7 @@ public class PausesStat {
     myEdtThread = Thread.currentThread();
   }
 
-  private int register(int duration) {
+  private void register(int duration) {
     if (durations.size() == N_MAX) {
       durations.set(indexToOverwrite, duration);
       indexToOverwrite = (indexToOverwrite + 1) % N_MAX;
@@ -47,7 +47,6 @@ public class PausesStat {
     else {
       durations.add(duration);
     }
-    return duration;
   }
 
   public void started() {
@@ -58,7 +57,7 @@ public class PausesStat {
   }
 
   private void assertEdt() {
-    assert Thread.currentThread() == myEdtThread : Thread.currentThread();
+    if (Thread.currentThread() != myEdtThread) throw new IllegalStateException("wrong thread: "+Thread.currentThread());
   }
 
   public void finished(@NotNull String description) {

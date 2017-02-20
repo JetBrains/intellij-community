@@ -16,7 +16,6 @@
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbModeTask;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class ToggleDumbModeAction extends DumbAwareAction {
   private volatile boolean myDumb = false;
 
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(AnActionEvent e) {
     if (myDumb) {
       myDumb = false;
     }
@@ -53,15 +52,16 @@ public class ToggleDumbModeAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    final Project project = e.getProject();
-    presentation.setEnabled(project != null && myDumb == DumbServiceImpl.getInstance(project).isDumb());
-    if (myDumb) {
-      presentation.setText("Exit Dumb Mode");
+  public void update(AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) {
+      e.getPresentation().setEnabled(false);
+      return;
     }
-    else {
-      presentation.setText("Enter Dumb Mode");
-    }
+    boolean dumb = DumbServiceImpl.getInstance(project).isDumb();
+    boolean enabled = !dumb || myDumb;
+    if (enabled && myDumb != dumb) myDumb = dumb;
+    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setText(dumb ? "Exit Dumb Mode" : "Enter Dumb Mode");
   }
 }

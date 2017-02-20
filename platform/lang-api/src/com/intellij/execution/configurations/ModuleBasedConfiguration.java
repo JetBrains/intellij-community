@@ -16,12 +16,11 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.annotations.Property;
@@ -101,11 +100,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
       configuration.readExternal(element);
       return (ModuleBasedConfiguration)configuration;
     }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-      return null;
-    }
-    catch (WriteExternalException e) {
+    catch (InvalidDataException | WriteExternalException e) {
       LOG.error(e);
       return null;
     }
@@ -114,7 +109,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   @Override
   @NotNull
   public Module[] getModules() {
-    Module module = ApplicationManager.getApplication().runReadAction((Computable<Module>)() -> getConfigurationModule().getModule());
+    Module module = ReadAction.compute(() -> getConfigurationModule().getModule());
     return module == null ? Module.EMPTY_ARRAY : new Module[] {module};
   }
 

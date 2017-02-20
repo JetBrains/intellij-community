@@ -24,6 +24,7 @@
     <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
             text="Com_pare with Specified Revision..." popup="true"/>
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
+    <action id="Vcs.GetVersion" class="com.intellij.openapi.vcs.history.GetVersionAction"/>
 
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
 

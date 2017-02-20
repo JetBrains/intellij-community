@@ -584,6 +584,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       public void linkInheritors(final PsiMethod[] methods) {
         for (final PsiMethod superMethod : methods) {
           final PsiTypeElement superType = superMethod.getReturnTypeElement();
+          if (superType == null) continue;
           addLink(superType, returnType);
           addLink(returnType, superType);
         }

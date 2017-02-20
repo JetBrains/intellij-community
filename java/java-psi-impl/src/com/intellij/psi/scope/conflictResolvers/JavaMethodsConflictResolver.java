@@ -78,20 +78,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                 myArgumentsList.getText() + "; " +
                 "file=" + (method == null ? "<unknown>" : method.getContainingFile()));
     }
-    return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, false, new Computable<CandidateInfo>() {
-      @Override
-      public CandidateInfo compute() {
-        return guardedOverloadResolution(conflicts);
-      }
-    });
+    return MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(myArgumentsList, false, () -> guardedOverloadResolution(conflicts));
   }
 
   @Nullable
   protected CandidateInfo guardedOverloadResolution(@NotNull List<CandidateInfo> conflicts) {
     if (conflicts.isEmpty()) return null;
-    if (conflicts.size() == 1) return conflicts.get(0);
-
-    boolean atLeastOneMatch = checkParametersNumber(conflicts, getActualParametersLength(), true);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     final FactoryMap<MethodCandidateInfo, PsiSubstitutor> map = new FactoryMap<MethodCandidateInfo, PsiSubstitutor>() {
@@ -101,6 +93,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         return key.getSubstitutor(false);
       }
     };
+    boolean atLeastOneMatch = checkParametersNumber(conflicts, getActualParametersLength(), map, true);
+    if (conflicts.size() == 1) return conflicts.get(0);
 
     checkSameSignatures(conflicts, map);
     if (conflicts.size() == 1) return conflicts.get(0);
@@ -108,7 +102,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkAccessStaticLevels(conflicts, true);
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    checkParametersNumber(conflicts, getActualParametersLength(), false);
+    checkParametersNumber(conflicts, getActualParametersLength(), map, false);
     if (conflicts.size() == 1) return conflicts.get(0);
     
     checkStaticMethodsOfInterfaces(conflicts);
@@ -132,13 +126,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkPrimitiveVarargs(conflicts, getActualParametersLength());
     if (conflicts.size() == 1) return conflicts.get(0);
 
-    Set<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
+    Set<CandidateInfo> uniques = new THashSet<>(conflicts);
     if (uniques.size() == 1) return uniques.iterator().next();
     return null;
   }
 
   private static void checkPotentiallyCompatibleMethods(@NotNull List<CandidateInfo> conflicts) {
-    List<CandidateInfo> partiallyApplicable = new ArrayList<CandidateInfo>();
+    List<CandidateInfo> partiallyApplicable = new ArrayList<>();
     for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
       CandidateInfo conflict = iterator.next();
       if (conflict instanceof MethodCandidateInfo) {
@@ -228,8 +222,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   protected void checkSameSignatures(@NotNull List<CandidateInfo> conflicts, FactoryMap<MethodCandidateInfo, PsiSubstitutor> map) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
-    Map<MethodSignature, CandidateInfo> signatures = new THashMap<MethodSignature, CandidateInfo>(conflicts.size());
-    Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
+    Map<MethodSignature, CandidateInfo> signatures = new THashMap<>(conflicts.size());
+    Set<PsiMethod> superMethods = new HashSet<>();
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       final PsiClass containingClass = method.getContainingClass();
@@ -434,6 +428,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
   public boolean checkParametersNumber(@NotNull List<CandidateInfo> conflicts,
                                        final int argumentsCount,
+                                       FactoryMap<MethodCandidateInfo, PsiSubstitutor> map,
                                        boolean ignoreIfStaticsProblem) {
     boolean atLeastOneMatch = false;
     TIntArrayList unmatchedIndices = null;
@@ -444,12 +439,25 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (!(info instanceof MethodCandidateInfo)) continue;
       PsiMethod method = ((MethodCandidateInfo)info).getElement();
       final int parametersCount = method.getParameterList().getParametersCount();
-      if (((myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? ((MethodCandidateInfo)info).isVarargs() : method.isVarArgs()) && parametersCount - 1 <= argumentsCount) || 
-          parametersCount == argumentsCount) {
+      boolean isVarargs = (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? ((MethodCandidateInfo)info).isVarargs() : method.isVarArgs()) &&
+                          parametersCount - 1 <= argumentsCount;
+      if (isVarargs || parametersCount == argumentsCount) {
         // remove all unmatched before
         if (unmatchedIndices != null) {
           for (int u=unmatchedIndices.size()-1; u>=0; u--) {
             int index = unmatchedIndices.get(u);
+            //ensure super method with varargs won't win over non-vararg override
+            if (ignoreIfStaticsProblem && isVarargs) {
+              MethodCandidateInfo candidateInfo = (MethodCandidateInfo)conflicts.get(index);
+              PsiMethod candidateToRemove = candidateInfo.getElement();
+              if (candidateToRemove != method) {
+                PsiSubstitutor candidateToRemoveSubst = map.get(candidateInfo);
+                PsiSubstitutor substitutor = map.get(info);
+                if (MethodSignatureUtil.isSubsignature(candidateToRemove.getSignature(candidateToRemoveSubst), method.getSignature(substitutor))) {
+                  continue;
+                }
+              }
+            }
             conflicts.remove(index);
             i--;
           }

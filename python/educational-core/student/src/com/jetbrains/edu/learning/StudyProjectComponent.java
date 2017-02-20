@@ -10,6 +10,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -28,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.edu.learning.actions.StudyActionWithShortcut;
 import com.jetbrains.edu.learning.actions.StudyNextWindowAction;
 import com.jetbrains.edu.learning.actions.StudyPrevWindowAction;
@@ -60,6 +64,8 @@ public class StudyProjectComponent implements ProjectComponent {
   private final Project myProject;
   private FileCreatedByUserListener myListener;
   private Map<Keymap, List<Pair<String, String>>> myDeletedShortcuts = new HashMap<>();
+  private MessageBusConnection myBusConnection;
+
   private StudyProjectComponent(@NotNull final Project project) {
     myProject = project;
   }
@@ -101,15 +107,24 @@ public class StudyProjectComponent implements ProjectComponent {
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
         Course course1 = StudyTaskManager.getInstance(myProject).getCourse();
         if (course1 != null) {
-          final UISettings instance = UISettings.getInstance();
-          if (instance != null) {
-            instance.HIDE_TOOL_STRIPES = false;
-            instance.fireUISettingsChanged();
-          }
+          UISettings instance = UISettings.getInstance();
+          instance.setHideToolStripes(false);
+          instance.fireUISettingsChanged();
           registerShortcuts();
           EduUsagesCollector.projectTypeOpened(course1.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
         }
       })));
+
+    myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    myBusConnection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+      @Override
+      public void globalSchemeChange(EditorColorsScheme scheme) {
+        final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(myProject);
+        if (toolWindow != null) {
+          toolWindow.updateFonts(myProject);
+        }
+      }
+    });
   }
 
   private void registerShortcuts() {
@@ -148,7 +163,7 @@ public class StudyProjectComponent implements ProjectComponent {
     final Course course = EduStepicConnector.getCourse(myProject, info);
 
     if (course == null) return;
-    flushCourse(myProject, course);
+    flushCourse(course);
     course.initCourse(false);
 
     StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
@@ -308,6 +323,7 @@ public class StudyProjectComponent implements ProjectComponent {
 
   @Override
   public void disposeComponent() {
+    myBusConnection.disconnect();
   }
 
   @NotNull

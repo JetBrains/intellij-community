@@ -18,7 +18,7 @@ package com.intellij.compiler.backwardRefs;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.LightRef;
 
 import java.util.Collection;
@@ -39,8 +39,8 @@ enum CompilerHierarchySearchType {
     }
 
     @Override
-    Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator) {
-      return lightRef.stream().map(r -> byteArrayEnumerator.getName(((LightRef.LightClassHierarchyElementDef)r).getName())).toArray(String[]::new);
+    Object[] convertToIds(Collection<LightRef> lightRef, NameEnumerator nameEnumerator) {
+      return lightRef.stream().map(r -> nameEnumerator.getName(((LightRef.LightClassHierarchyElementDef)r).getName())).toArray(String[]::new);
     }
   },
   FUNCTIONAL_EXPRESSION {
@@ -58,7 +58,7 @@ enum CompilerHierarchySearchType {
     }
 
     @Override
-    Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator) {
+    Object[] convertToIds(Collection<LightRef> lightRef, NameEnumerator nameEnumerator) {
       return lightRef.stream().map(r -> ((LightRef.LightFunExprDef) r).getId()).toArray(Integer[]::new);
     }
   };
@@ -70,5 +70,5 @@ enum CompilerHierarchySearchType {
 
   abstract Class<? extends LightRef> getRequiredClass(LanguageLightRefAdapter adapter);
 
-  abstract Object[] convertToIds(Collection<LightRef> lightRef, ByteArrayEnumerator byteArrayEnumerator);
+  abstract Object[] convertToIds(Collection<LightRef> lightRef, NameEnumerator nameEnumerator);
 }

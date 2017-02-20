@@ -18,7 +18,6 @@ package git4idea.reset;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -69,14 +68,14 @@ public class GitResetOperation {
     myCommits = targetCommits;
     myMode = mode;
     myIndicator = indicator;
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myNotifier = VcsNotifier.getInstance(project);
     myUiHandler = new GitBranchUiHandlerImpl(myProject, myGit, indicator);
   }
 
   public void execute() {
     saveAllDocuments();
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     Map<GitRepository, GitCommandResult> results = ContainerUtil.newHashMap();
     try {
       for (Map.Entry<GitRepository, Hash> entry : myCommits.entrySet()) {
@@ -99,7 +98,7 @@ public class GitResetOperation {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
     notifyResult(results);
   }

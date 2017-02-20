@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.AbstractBundle;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -36,6 +37,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import kotlin.Lazy;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -199,6 +201,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       @NotNull
       @Override
       public SchemeState getState(@NotNull TemplateGroup template) {
+        if (template.isModified()) {
+          return SchemeState.POSSIBLY_CHANGED;
+        }
+
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
             return SchemeState.POSSIBLY_CHANGED;
@@ -211,15 +217,26 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       @Override
       public Element writeScheme(@NotNull TemplateGroup template) {
         Element templateSetElement = new Element(TEMPLATE_SET);
-        templateSetElement.setAttribute(GROUP, template.getName());
 
-        for (TemplateImpl t : template.getElements()) {
-          TemplateImpl defaultTemplate = getDefaultTemplate(t);
-          if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
-            templateSetElement.addContent(serializeTemplate(t, defaultTemplate));
+        List<TemplateImpl> elements = template.getElements();
+        if (!elements.isEmpty()) {
+          boolean isGroupAttributeAdded = false;
+          Lazy<Map<String, TemplateContextType>> idToType = TemplateContext.getIdToType();
+          for (TemplateImpl t : elements) {
+            TemplateImpl defaultTemplate = getDefaultTemplate(t);
+            if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
+              if (!isGroupAttributeAdded) {
+                isGroupAttributeAdded = true;
+                // add attribute only if not empty to avoid empty file (due to group attribute element will be not considered as empty)
+                templateSetElement.setAttribute(GROUP, template.getName());
+              }
+
+              templateSetElement.addContent(serializeTemplate(t, defaultTemplate, idToType));
+            }
           }
         }
 
+        template.setModified(false);
         return templateSetElement;
       }
 
@@ -583,7 +600,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate) {
+  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {
@@ -622,7 +639,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       element.addContent(variableElement);
     }
 
-    Element contextElement = template.getTemplateContext().writeTemplateContext(defaultTemplate == null ? null : defaultTemplate.getTemplateContext());
+    Element contextElement = template.getTemplateContext().writeTemplateContext(defaultTemplate == null ? null : defaultTemplate.getTemplateContext(), idToType);
     if (contextElement != null) {
       element.addContent(contextElement);
     }

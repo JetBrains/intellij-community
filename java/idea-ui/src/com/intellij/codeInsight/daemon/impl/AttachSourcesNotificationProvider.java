@@ -63,7 +63,10 @@ import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -78,7 +81,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
   public AttachSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
-    myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         notifications.updateAllNotifications();

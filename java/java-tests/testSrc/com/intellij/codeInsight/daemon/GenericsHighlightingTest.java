@@ -595,6 +595,10 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
 
+  public void testArrayContainsInTypeParameterWithSerializableBound() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, true);
+  }
+
   public void testIntersectTypeParameterBounds() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
   }
@@ -609,5 +613,21 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testErasureOfMethodCallExpressionTypeIfItDoesntDependOnGenericsParameter() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
+
+  public void testUncheckedConversionInReturnType() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false);
+  }
+
+  public void testNotErasedReturnValueUnderJdk7() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, false);
+  }
+
+  public void testAvoidDblSubstitutionDuringErasureOfParameterTypesOfMethodSignature() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, false);
+  }
+
+  public void testUncheckedWarningWhenCastingFromCapturedWildcard() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, true);
   }
 }

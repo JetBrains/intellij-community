@@ -416,6 +416,10 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return ArrayUtil.toObjectArray(results);
   }
 
+  /**
+   * Returns expressions accessible from scope of "anchor" with names that start with  provided "qualifierQName".
+   * Can be used for completion.
+   */
   @NotNull
   public static Collection<PyExpression> collectAssignedAttributes(@NotNull final QualifiedName qualifierQName,
                                                                    @NotNull final PsiElement anchor) {

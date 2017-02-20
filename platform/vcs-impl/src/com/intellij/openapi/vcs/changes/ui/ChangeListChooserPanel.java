@@ -233,7 +233,6 @@ public class ChangeListChooserPanel extends JPanel {
 
     public MyEditorComboBox() {
       super(PREF_WIDTH);
-      myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
       JBColor fg = new JBColor(0x00b53d, 0x24953c);
       TextIcon icon = new TextIcon("New", fg, ColorUtil.toAlpha(fg, 40), JBUI.scale(2));
       icon.setFont(RelativeFont.TINY.derive(getFont()));
@@ -241,18 +240,24 @@ public class ChangeListChooserPanel extends JPanel {
       JLabel label = new JLabel(icon);
       JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(true);
-      panel.setBackground(myEditorTextField.getBackground());
       panel.setBorder(JBUI.Borders.empty(1, 1, 1, 4));
       panel.add(label, BorderLayout.CENTER);
+      myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
       myEditorTextField.addDocumentListener(new DocumentAdapter() {
         @Override
         public void documentChanged(DocumentEvent e) {
           String changeListName = e.getDocument().getText();
-          label.setVisible(!StringUtil.isEmptyOrSpaces(changeListName) && getExistingChangelistByName(changeListName) == null);
+          panel.setVisible(!StringUtil.isEmptyOrSpaces(changeListName) && getExistingChangelistByName(changeListName) == null);
         }
       });
       ObjectUtils.assertNotNull(myEditorTextField.getDocument()).putUserData(ChangeListCompletionContributor.COMBO_BOX_KEY, this);
-      setEditor(new ComboBoxCompositeEditor<>(myEditorTextField, panel));
+      ComboBoxCompositeEditor<Object, LanguageTextField> compositeEditor = new ComboBoxCompositeEditor<>(myEditorTextField, panel);
+      myEditorTextField.addSettingsProvider((editor) -> {
+        Color editorBackgroundColor = editor.getBackgroundColor();
+        panel.setBackground(editorBackgroundColor);
+        compositeEditor.setBackground(editorBackgroundColor);
+      });
+      setEditor(compositeEditor);
     }
 
     @NotNull

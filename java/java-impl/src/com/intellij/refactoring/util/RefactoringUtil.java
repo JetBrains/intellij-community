@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -421,25 +420,8 @@ public class RefactoringUtil {
     return type;
   }
 
-  public static boolean isAssignmentLHS(PsiElement element) {
-    PsiElement parent = element.getParent();
-
-    return parent instanceof PsiAssignmentExpression && element.equals(((PsiAssignmentExpression)parent).getLExpression()) ||
-           isPlusPlusOrMinusMinus(parent);
-  }
-
-  public static boolean isPlusPlusOrMinusMinus(PsiElement element) {
-    if (element instanceof PsiPrefixExpression) {
-      return ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.PLUSPLUS ||
-             ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.MINUSMINUS;
-    }
-    else if (element instanceof PsiPostfixExpression) {
-      IElementType operandTokenType = ((PsiPostfixExpression)element).getOperationTokenType();
-      return operandTokenType == JavaTokenType.PLUSPLUS || operandTokenType == JavaTokenType.MINUSMINUS;
-    }
-    else {
-      return false;
-    }
+  public static boolean isAssignmentLHS(@NotNull PsiElement element) {
+    return element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element);
   }
 
   private static void removeFinalParameters(PsiMethod method) throws IncorrectOperationException {
@@ -646,7 +628,7 @@ public class RefactoringUtil {
       return EXPR_COPY_PROHIBITED;
     }
 
-    if (isPlusPlusOrMinusMinus(element)) {
+    if (PsiUtil.isIncrementDecrementOperation(element)) {
       return EXPR_COPY_PROHIBITED;
     }
 
@@ -1000,6 +982,43 @@ public class RefactoringUtil {
     return CodeStyleManager.getInstance(element.getProject()).reformat(lambdaExpression.replace(expressionFromText));
   }
 
+  /**
+   * Ensures that given call is surrounded by {@link PsiCodeBlock} (that is, it has a parent statement
+   * which is located inside the code block). If not, tries to create a code block.
+   *
+   * <p>
+   * Note that the expression is not necessarily a child of {@link PsiExpressionStatement}; it could be a subexpression,
+   * {@link PsiIfStatement}, etc.
+   * </p>
+   *
+   * @param expression an expression which should be located inside the code block
+   * @return a passed expression if it's already surrounded by code block and no changes are necessary;
+   *         a replacement expression (which is equivalent to the passed expression) if a new code block was created;
+   *         {@code null} if the expression cannot be surrounded with code block.
+   */
+  @Nullable
+  public static <T extends PsiExpression> T ensureCodeBlock(@NotNull T expression) {
+    PsiElement parent = getParentStatement(expression, false);
+    if (parent == null) return null;
+    if (parent instanceof PsiStatement && parent.getParent() instanceof PsiCodeBlock) return expression;
+    Object marker = new Object();
+    PsiTreeUtil.mark(expression, marker);
+    PsiElement copy = parent.copy();
+    PsiElement newParent;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+    if (parent instanceof PsiExpression) {
+      PsiLambdaExpression lambda = (PsiLambdaExpression)parent.getParent();
+      String replacement = PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambda)) ? "{a;}" : "{return a;}";
+      PsiElement block = parent.replace(factory.createCodeBlockFromText(replacement, lambda));
+      newParent = LambdaUtil.extractSingleExpressionFromBody(block).replace(copy);
+    } else {
+      PsiBlockStatement blockStatement = (PsiBlockStatement)parent.replace(factory.createStatementFromText("{}", parent));
+      newParent = blockStatement.getCodeBlock().add(copy);
+    }
+    //noinspection unchecked
+    return (T)PsiTreeUtil.releaseMark(newParent, marker);
+  }
+
   public interface ImplicitConstructorUsageVisitor {
     void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor);
 
@@ -1013,10 +1032,10 @@ public class RefactoringUtil {
   }
 
   /**
-   * Returns subset of <code>graph.getVertices()</code> that is a tranistive closure (by <code>graph.getTargets()<code>)
-   * of the following property: initialRelation.value() of vertex or <code>graph.getTargets(vertex)</code> is true.
+   * Returns subset of {@code graph.getVertices()} that is a tranistive closure (by <code>graph.getTargets()<code>)
+   * of the following property: initialRelation.value() of vertex or {@code graph.getTargets(vertex)} is true.
    * <p/>
-   * Note that <code>graph.getTargets()</code> is not neccesrily a subset of <code>graph.getVertex()</code>
+   * Note that {@code graph.getTargets()} is not neccesrily a subset of {@code graph.getVertex()}
    *
    * @param graph
    * @param initialRelation

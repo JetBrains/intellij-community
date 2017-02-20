@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
@@ -28,15 +29,14 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -102,25 +102,6 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setConfig(boolean config) {
     myConfig = config;
-  }
-
-  /** @deprecated use {@link #setLocator(SMTestLocator)} (to be removed in IDEA 16) */
-  @SuppressWarnings("deprecation")
-  public void setLocator(@NotNull final TestLocationProvider locator) {
-    class Adapter implements SMTestLocator, PossiblyDumbAware {
-      @NotNull
-      @Override
-      public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-        return locator.getLocation(protocol, path, project);
-      }
-
-      @Override
-      public boolean isDumbAware() {
-        return DumbService.isDumbAware(locator);
-      }
-    }
-
-    myLocator = new Adapter();
   }
 
   public void setPreferredPrinter(@NotNull Printer preferredPrinter) {
@@ -261,8 +242,7 @@ public class SMTestProxy extends AbstractTestProxy {
   @Nullable
   public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     //determines location of test proxy
-    final String locationUrl = myLocationUrl;
-    return getLocation(project, searchScope, locationUrl);
+    return getLocation(project, searchScope, myLocationUrl);
   }
 
   protected Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope, String locationUrl) {
@@ -316,7 +296,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public List<? extends SMTestProxy> getChildren() {
-    return myChildren != null ? myChildren : Collections.<SMTestProxy>emptyList();
+    return myChildren != null ? myChildren : Collections.emptyList();
   }
 
   public List<SMTestProxy> getAllTests() {
@@ -468,23 +448,26 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText) {
-    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null);
+    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null, null);
   }
 
   public void setTestComparisonFailed(@NotNull final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
-                                      @Nullable final String filePath) {
-    setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, filePath, null);
+                                      @NotNull final TestFailedEvent event) {
+    TestComparisionFailedState comparisionFailedState =
+      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath());
+    comparisionFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
+    comparisionFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
-  
-  public void setTestComparisonFailed(@NotNull final String localizedMessage,
-                                      @Nullable final String stackTrace,
-                                      @NotNull final String actualText,
-                                      @NotNull final String expectedText,
-                                      @Nullable final String expectedFilePath,
-                                      @Nullable final String actualFilePath) {
+
+  public TestComparisionFailedState setTestComparisonFailed(@NotNull final String localizedMessage,
+                                                            @Nullable final String stackTrace,
+                                                            @NotNull final String actualText,
+                                                            @NotNull final String expectedText,
+                                                            @Nullable final String expectedFilePath,
+                                                            @Nullable final String actualFilePath) {
     setStacktraceIfNotSet(stackTrace);
     final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
     if (myState instanceof CompoundTestFailedState) {
@@ -500,6 +483,16 @@ public class SMTestProxy extends AbstractTestProxy {
       myState = comparisionFailedState;
     }
     fireOnNewPrintable(comparisionFailedState);
+    return comparisionFailedState;
+  }
+
+  @Override
+  public void dispose() {
+    if (myState instanceof TestFailedState) {
+      Disposer.dispose((TestFailedState)myState);
+    }
+
+    super.dispose();
   }
 
   public void setTestIgnored(@Nullable String ignoreComment, @Nullable String stackTrace) {
@@ -570,7 +563,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
 
     if ((selectedChildren.isEmpty())) {
-      return Collections.<SMTestProxy>emptyList();
+      return Collections.emptyList();
     }
 
     return selectedChildren;
@@ -593,7 +586,12 @@ public class SMTestProxy extends AbstractTestProxy {
 
   @Override
   public void printOwnPrintablesOn(Printer printer) {
-    super.printOwnPrintablesOn(printer);
+    if (isLeaf()) {
+      super.printOn(printer);
+    }
+    else {
+      super.printOwnPrintablesOn(printer);
+    }
     printState(myState, printer);
   }
 
@@ -620,18 +618,6 @@ public class SMTestProxy extends AbstractTestProxy {
     });
   }
 
-  /**
-   * This method was left for backward compatibility.
-   *
-   * @param output
-   * @param stackTrace
-   * @deprecated use SMTestProxy.addError(String output, String stackTrace, boolean isCritical)
-   */
-  @Deprecated
-  public void addError(String output, @Nullable String stackTrace) {
-    addError(output, stackTrace, true);
-  }
-
   public void addError(final String output, @Nullable final String stackTrace, boolean isCritical) {
     myHasCriticalErrors = isCritical;
     if (isCritical) {
@@ -642,8 +628,9 @@ public class SMTestProxy extends AbstractTestProxy {
     addAfterLastPassed(new Printable() {
       public void printOn(final Printer printer) {
         String errorText = TestFailedState.buildErrorPresentationText(output, stackTrace);
-        LOG.assertTrue(errorText != null);
-        TestFailedState.printError(printer, Collections.singletonList(errorText));
+        if (errorText != null) {
+          TestFailedState.printError(printer, Collections.singletonList(errorText));
+        }
       }
     });
   }
@@ -878,7 +865,7 @@ public class SMTestProxy extends AbstractTestProxy {
       containerSuite.invalidateCachedDurationForContainerSuites(duration);
     }
   }
-  
+
   public SMRootTestProxy getRoot() {
     SMTestProxy parent = getParent();
     while (parent != null && !(parent instanceof SMRootTestProxy)) {
@@ -950,7 +937,7 @@ public class SMTestProxy extends AbstractTestProxy {
     @Nullable
     @Override
     public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-      return myRootLocationUrl != null ? super.getLocation(project, searchScope, myRootLocationUrl) 
+      return myRootLocationUrl != null ? super.getLocation(project, searchScope, myRootLocationUrl)
                                        : super.getLocation(project, searchScope);
     }
 

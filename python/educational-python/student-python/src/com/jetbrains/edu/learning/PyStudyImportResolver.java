@@ -5,12 +5,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PyImportResolver;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolveContext;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import org.jetbrains.annotations.Nullable;
 
 public class PyStudyImportResolver implements PyImportResolver {
   @Nullable
-  public PsiElement resolveImportReference(QualifiedName name, QualifiedNameResolveContext context, boolean withRoots) {
+  public PsiElement resolveImportReference(QualifiedName name, PyQualifiedNameResolveContext context, boolean withRoots) {
     if (StudyTaskManager.getInstance(context.getProject()).getCourse() == null) {
       return null;
     }

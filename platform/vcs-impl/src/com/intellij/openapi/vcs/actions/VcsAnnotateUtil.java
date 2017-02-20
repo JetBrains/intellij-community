@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class VcsAnnotateUtil {
+public class VcsAnnotateUtil {
   @NotNull
   public static List<Editor> getEditors(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(file);

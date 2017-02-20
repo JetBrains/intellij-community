@@ -418,15 +418,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     }
   }
 
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
   @Override
   public void moduleAdded() {
     if (myModuleAdded) return;

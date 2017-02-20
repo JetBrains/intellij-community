@@ -58,7 +58,7 @@ public abstract class CodeStyleSettingsProvider {
 
   /**
    * Specifies a language this provider applies to. If the language is not null, its display name will
-   * be used as a configurable name by default if <code>getConfigurableDisplayName()</code> is not
+   * be used as a configurable name by default if {@code getConfigurableDisplayName()} is not
    * overridden.
    * 
    * @return null by default.

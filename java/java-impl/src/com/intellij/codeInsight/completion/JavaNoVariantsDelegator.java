@@ -65,8 +65,8 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     result.runRemainingContributors(parameters, tracker);
     final boolean empty = tracker.containsOnlyPackages || suggestAllAnnotations(parameters);
 
-    if (!empty && parameters.getInvocationCount() == 0) {
-      result.restartCompletionWhenNothingMatches();
+    if (JavaCompletionContributor.isClassNamePossible(parameters) && !JavaCompletionContributor.mayStartClassName(result)) {
+      result.restartCompletionOnAnyPrefixChange();
     }
 
     if (empty) {
@@ -76,10 +76,15 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
           parameters.getInvocationCount() <= 1 &&
           JavaCompletionContributor.mayStartClassName(result) &&
           JavaCompletionContributor.isClassNamePossible(parameters) &&
-          !JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition())) {
+          !areNonImportedInheritorsAlreadySuggested(parameters)) {
         suggestNonImportedClasses(parameters, JavaCompletionSorting.addJavaSorting(parameters, result.withPrefixMatcher(tracker.betterMatcher)), session);
       }
     }
+  }
+
+  private static boolean areNonImportedInheritorsAlreadySuggested(@NotNull CompletionParameters parameters) {
+    return JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getPosition()) &&
+           JavaSmartCompletionContributor.getExpectedTypes(parameters).length > 0;
   }
 
   private static boolean suggestAllAnnotations(CompletionParameters parameters) {
@@ -202,7 +207,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
 
     public ResultTracker(CompletionResultSet result) {
       myResult = result;
-      betterMatcher = new BetterPrefixMatcher(result);
+      betterMatcher = new BetterPrefixMatcher.AutoRestarting(result);
     }
 
     @Override

@@ -98,16 +98,22 @@ public class StringUtilTest {
 
   @Test
   public void testUnPluralize() {
-    assertEquals("plurals", StringUtil.unpluralize("pluralss"));
+    // synthetic
+    assertEquals("plurals", StringUtil.unpluralize("pluralses"));
+    assertEquals("Inherits", StringUtil.unpluralize("Inheritses"));
+    assertEquals("s", StringUtil.unpluralize("ss"));
     assertEquals("I", StringUtil.unpluralize("Is"));
     assertEquals(null, StringUtil.unpluralize("s"));
     assertEquals("z", StringUtil.unpluralize("zs"));
+    // normal
+    assertEquals("case", StringUtil.unpluralize("cases"));
     assertEquals("Index", StringUtil.unpluralize("Indices"));
     assertEquals("fix", StringUtil.unpluralize("fixes"));
     assertEquals("man", StringUtil.unpluralize("men"));
     assertEquals("leaf", StringUtil.unpluralize("leaves"));
     assertEquals("cookie", StringUtil.unpluralize("cookies"));
     assertEquals("search", StringUtil.unpluralize("searches"));
+    assertEquals("process", StringUtil.unpluralize("process"));
   }
 
   @Test

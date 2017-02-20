@@ -1,7 +1,10 @@
 package com.intellij.json;
 
-import com.intellij.lexer.*;
+import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
+
+import static com.intellij.psi.TokenType.BAD_CHARACTER;
+import static com.intellij.psi.TokenType.WHITE_SPACE;
 import static com.intellij.json.JsonElementTypes.*;
 
 %%
@@ -20,7 +23,6 @@ import static com.intellij.json.JsonElementTypes.*;
 %unicode
 
 EOL=\R
-// Edited manually, GrammarKit generates plain "\s" (no iteration)
 WHITE_SPACE=\s+
 
 LINE_COMMENT="//".*
@@ -28,11 +30,11 @@ BLOCK_COMMENT="/"\*([^*]|\*+[^*/])*(\*+"/")?
 DOUBLE_QUOTED_STRING=\"([^\\\"\r\n]|\\[^\r\n])*\"?
 SINGLE_QUOTED_STRING='([^\\'\r\n]|\\[^\r\n])*'?
 NUMBER=-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]*)?
-IDENTIFIER=[:jletter:] [:jletterdigit:]*
+IDENTIFIER=[[:jletterdigit:]~!()*\-."/"@]+
 
 %%
 <YYINITIAL> {
-  {WHITE_SPACE}               { return com.intellij.psi.TokenType.WHITE_SPACE; }
+  {WHITE_SPACE}               { return WHITE_SPACE; }
 
   "{"                         { return L_CURLY; }
   "}"                         { return R_CURLY; }
@@ -53,4 +55,4 @@ IDENTIFIER=[:jletter:] [:jletterdigit:]*
 
 }
 
-[^] { return com.intellij.psi.TokenType.BAD_CHARACTER; }
+[^] { return BAD_CHARACTER; }

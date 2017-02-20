@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package com.intellij.codeInsight.daemon
 
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.rename.RenameProcessor
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
-import org.junit.Test
 
 class ModuleRenameTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -30,13 +27,10 @@ class ModuleRenameTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M2 { }", M2)
   }
 
-  @Test fun testRename() {
+  fun testRename() {
     myFixture.configureByText("module-info.java", "module M { requires M2; }")
     val module = JavaFileManager.SERVICE.getInstance(project).findModules("M2", GlobalSearchScope.allScope(project)).first()
-    runWriteAction {
-      RenameProcessor(project, module, "M2.bis", false, false).run()
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-    }
+    RenameProcessor(project, module, "M2.bis", false, false).run()
     myFixture.checkResult("module M { requires M2.bis; }")
   }
 }

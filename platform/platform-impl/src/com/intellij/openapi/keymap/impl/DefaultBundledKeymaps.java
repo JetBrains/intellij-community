@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,27 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 import java.util.List;
 
 public class DefaultBundledKeymaps implements BundledKeymapProvider {
+  @NotNull
+  @Override
   public List<String> getKeymapFileNames() {
     return Arrays.asList(
-      "Keymap_Default.xml",
-      "Keymap_Mac.xml",
-      "Keymap_MacClassic.xml",
-      "Keymap_Emacs.xml",
-      "Keymap_VisualStudio.xml",
-      "Keymap_XWin.xml",
-      "Keymap_GNOME.xml",
-      "Keymap_KDE.xml",
-      "Keymap_Eclipse.xml",
-      "Keymap_EclipseMac.xml",
-      "Keymap_Netbeans.xml"
+      "$default.xml",
+      "Mac OS X 10.5+.xml",
+      "Mac OS X.xml",
+      "Emacs.xml",
+      "Visual Studio.xml",
+      "Default for XWin.xml",
+      "Default for GNOME.xml",
+      "Default for KDE.xml",
+      "Eclipse.xml",
+      "Eclipse (Mac OS X).xml",
+      "NetBeans 6.5.xml"
     );
   }
 }

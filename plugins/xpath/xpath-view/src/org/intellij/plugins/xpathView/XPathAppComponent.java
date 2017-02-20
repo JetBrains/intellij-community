@@ -21,7 +21,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -56,7 +56,7 @@ import java.util.List;
     @Storage(value = "other.xml", deprecated = true)
   }
 )
-public class XPathAppComponent implements ApplicationComponent, PersistentStateComponent<Config>, DefaultLiveTemplatesProvider {
+public class XPathAppComponent implements ApplicationComponentAdapter, PersistentStateComponent<Config>, DefaultLiveTemplatesProvider {
   private static final String ACTION_FIND_NEXT = "FindNext";
   private static final String ACTION_FIND_PREVIOUS = "FindPrevious";
 
@@ -64,12 +64,6 @@ public class XPathAppComponent implements ApplicationComponent, PersistentStateC
   private AnAction prevAction;
 
   private Config configuration = new Config();
-
-  @Override
-  @NotNull
-  public String getComponentName() {
-    return "XPathView.XPathViewPlugin";
-  }
 
   @Override
   public void initComponent() {
@@ -85,15 +79,15 @@ public class XPathAppComponent implements ApplicationComponent, PersistentStateC
     }
   }
 
-  @Override
-  public void disposeComponent() {
+  //@Override
+  //public void dispose() {
     // IDEA-97697
     //    final ActionManager actionManager = ActionManager.getInstance();
     //    actionManager.unregisterAction(ACTION_FIND_NEXT);
     //    actionManager.unregisterAction(ACTION_FIND_PREVIOUS);
     //    actionManager.registerAction(ACTION_FIND_NEXT, nextAction);
     //    actionManager.registerAction(ACTION_FIND_PREVIOUS, prevAction);
-  }
+  //}
 
   @Nullable
   @Override
@@ -218,7 +212,7 @@ public class XPathAppComponent implements ApplicationComponent, PersistentStateC
       BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, Gray._128),
       BorderFactory.createEmptyBorder(3, 5, 3, 5)));
     label.setForeground(JBColor.foreground());
-    label.setBackground(HintUtil.INFORMATION_COLOR);
+    label.setBackground(HintUtil.getInformationColor());
     label.setOpaque(true);
     label.setFont(label.getFont().deriveFont(Font.BOLD));
 

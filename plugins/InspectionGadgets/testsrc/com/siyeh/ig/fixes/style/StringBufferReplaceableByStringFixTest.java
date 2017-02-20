@@ -22,10 +22,12 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
   public void testPrecedence() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testPrecedence2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testPrecedence3() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
+  public void testPrecedence4() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testNonString1() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testNonString2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testMarathon() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testArray() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
+  public void testArray2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testConstructorArgument() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testConstructorArgument2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
   public void testNoConstructorArgument() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }

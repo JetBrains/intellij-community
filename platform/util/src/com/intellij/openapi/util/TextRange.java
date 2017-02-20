@@ -33,7 +33,7 @@ public class TextRange implements Segment, Serializable {
   }
 
   /**
-   * @param checkForProperTextRange <code>true</code> if offsets should be checked by {@link #assertProperRange(int, int, Object)}
+   * @param checkForProperTextRange {@code true} if offsets should be checked by {@link #assertProperRange(int, int, Object)}
    * @see UnfairTextRange
    */
   protected TextRange(int startOffset, int endOffset, boolean checkForProperTextRange) {

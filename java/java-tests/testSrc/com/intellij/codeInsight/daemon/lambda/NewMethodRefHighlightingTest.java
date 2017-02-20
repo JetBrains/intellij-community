@@ -517,6 +517,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testApplicabilityErrorVisibleWhenConstraintsFromFunctionalExpressionsProvideValidSubstitutor() {
+    doTest();
+  }
+
   public void testMethodReferenceSecondSearchDontInfluenceTopSiteSubstitutor() throws Exception {
     doTest();
   }
@@ -526,6 +530,18 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testEnsureResolveToClassInConstructorRefs() throws Exception {
+    doTest();
+  }
+
+  public void testReturnTypeCompatibilityConstraintForSecondSearchCase() throws Exception {
+    doTest();
+  }
+
+  public void testNonExactMethodReferenceOnRawClassType() throws Exception {
+    doTest();
+  }
+
+  public void testMethodREfToContainingMethodWithGenericParam() throws Exception {
     doTest();
   }
 

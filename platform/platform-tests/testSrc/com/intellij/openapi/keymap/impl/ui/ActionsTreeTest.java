@@ -19,6 +19,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
@@ -38,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
+  private static final Logger LOG = Logger.getInstance(ActionsTreeTest.class);
   private static final String ACTION_WITHOUT_TEXT_AND_DESCRIPTION = "DummyWithoutTextAndDescription";
   private static final String ACTION_WITH_TEXT_ONLY = "DummyWithTextOnly";
   private static final String ACTION_WITH_TEXT_AND_DESCRIPTION = "DummyWithTextAndDescription";
@@ -67,6 +69,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
 
   private ActionShortcutRestrictions mySavedRestrictions;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     // create dummy actions
@@ -219,14 +222,14 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
             checkPresentationProperty("description", message, before.getDescription(), after.getDescription());
           }
           if (action instanceof ActionGroup) {
-            System.out.println("ignored action group: " + message);
+            LOG.debug("ignored action group: " + message);
           }
           else if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
             failures.add("no text: " + message);
           }
         }
         catch (PluginException exception) {
-          System.out.println(id + " ignored because " + exception.getMessage());
+          LOG.debug(id + " ignored because " + exception.getMessage());
         }
       }
     }
@@ -236,7 +239,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
 
   private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {
     if (!(expected == null ? actual == null : expected.equals(actual))) {
-      System.out.println(name + " updated: "+ message + "; old:" + expected + "; new:" + actual);
+      LOG.debug(name + " updated: "+ message + "; old:" + expected + "; new:" + actual);
     }
   }
 

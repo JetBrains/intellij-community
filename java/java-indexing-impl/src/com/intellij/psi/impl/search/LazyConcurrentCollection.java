@@ -15,9 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -124,7 +123,7 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
       ProgressManager.checkCanceled();
 
       Pair.NonNull<T,V> pair =
-        ApplicationManager.getApplication().runReadAction((Computable<Pair.NonNull<T,V>>)() -> {
+        ReadAction.compute(() -> {
           synchronized (lock) {
             // Find the classes in subClasses collection to operate on
             // (without advancing the candidatesToFindSubclassesIterator iterator - it will be moved after the class successfully handled - to protect against PCE, INRE, etc)

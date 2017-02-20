@@ -44,13 +44,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    */
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
 
-  ArrayFactory<PsiElement> ARRAY_FACTORY = new ArrayFactory<PsiElement>() {
-    @NotNull
-    @Override
-    public PsiElement[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiElement[count];
-    }
-  };
+  ArrayFactory<PsiElement> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiElement[count];
 
   /**
    * Returns the project to which the PSI element belongs.
@@ -217,7 +211,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Returns the PSI element which should be used as a navigation target
    * when navigation to this PSI element is requested. The method can either
-   * return <code>this</code> or substitute a different element if this element
+   * return {@code this} or substitute a different element if this element
    * does not have an associated file and offset. (For example, if the source code
    * of a library is attached to a project, the navigation element for a compiled
    * library class is its source class.)
@@ -230,7 +224,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   /**
    * Returns the PSI element which corresponds to this element and belongs to
    * either the project source path or class path. The method can either return
-   * <code>this</code> or substitute a different element if this element does
+   * {@code this} or substitute a different element if this element does
    * not belong to the source path or class path. (For example, the original
    * element for a library source file is the corresponding compiled class file.)
    *
@@ -295,7 +289,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Adds a child to this PSI element.
    *
    * @param element the child element to add.
-   * @return the element which was actually added (either <code>element</code> or its copy).
+   * @return the element which was actually added (either {@code element} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException;
@@ -305,7 +299,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param element the child element to add.
    * @param anchor  the anchor before which the child element is inserted (must be a child of this PSI element)
-   * @return the element which was actually added (either <code>element</code> or its copy).
+   * @return the element which was actually added (either {@code element} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addBefore(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException;
@@ -315,7 +309,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param element the child element to add.
    * @param anchor  the anchor after which the child element is inserted (must be a child of this PSI element)
-   * @return the element which was actually added (either <code>element</code> or its copy).
+   * @return the element which was actually added (either {@code element} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addAfter(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException;
@@ -334,8 +328,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Adds a range of elements as children to this PSI element.
    *
    * @param first the first child element to add.
-   * @param last  the last child element to add (must have the same parent as <code>first</code>)
-   * @return the first child element which was actually added (either <code>first</code> or its copy).
+   * @param last  the last child element to add (must have the same parent as {@code first})
+   * @return the first child element which was actually added (either {@code first} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException;
@@ -344,9 +338,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Adds a range of elements as children to this PSI element, before the specified anchor element.
    *
    * @param first  the first child element to add.
-   * @param last   the last child element to add (must have the same parent as <code>first</code>)
+   * @param last   the last child element to add (must have the same parent as {@code first})
    * @param anchor the anchor before which the child element is inserted (must be a child of this PSI element)
-   * @return the first child element which was actually added (either <code>first</code> or its copy).
+   * @return the first child element which was actually added (either {@code first} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) throws IncorrectOperationException;
@@ -355,9 +349,9 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Adds a range of elements as children to this PSI element, after the specified anchor element.
    *
    * @param first  the first child element to add.
-   * @param last   the last child element to add (must have the same parent as <code>first</code>)
+   * @param last   the last child element to add (must have the same parent as {@code first})
    * @param anchor the anchor after which the child element is inserted (must be a child of this PSI element)
-   * @return the first child element which was actually added (either <code>first</code> or its copy).
+   * @return the first child element which was actually added (either {@code first} or its copy).
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) throws IncorrectOperationException;
@@ -393,7 +387,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * (along with the children).
    *
    * @param newElement the element to replace this element with.
-   * @return the element which was actually inserted in the tree (either <code>newElement</code> or its copy)
+   * @return the element which was actually inserted in the tree (either {@code newElement} or its copy)
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    */
   PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException;
@@ -402,10 +396,10 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Checks if this PSI element is valid. Valid elements and their hierarchy members
    * can be accessed for reading and writing. Valid elements can still correspond to
    * underlying documents whose text is different, when those documents have been changed
-   * and not yet committed ({@link com.intellij.psi.PsiDocumentManager#commitDocument(com.intellij.openapi.editor.Document)}).
+   * and not yet committed ({@link PsiDocumentManager#commitDocument(com.intellij.openapi.editor.Document)}).
    * (In this case an attempt to change PSI will result in an exception).
    *
-   * Any access to invalid elements results in {@link com.intellij.psi.PsiInvalidElementAccessException}.
+   * Any access to invalid elements results in {@link PsiInvalidElementAccessException}.
    *
    * Once invalid, elements can't become valid again.
    *
@@ -452,12 +446,12 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * multiple possible targets, {@link PsiPolyVariantReference} should be used instead
    * of returning multiple references.
    * <p/>
-   * Actually, it's preferable to call {@link com.intellij.psi.PsiReferenceService#getReferences} instead
-   * as it allows adding references by plugins when the element implements {@link com.intellij.psi.ContributedReferenceHost}.
+   * Actually, it's preferable to call {@link PsiReferenceService#getReferences} instead
+   * as it allows adding references by plugins when the element implements {@link ContributedReferenceHost}.
    *
    * @return the array of references, or an empty array if the element has no associated
    *         references.
-   * @see com.intellij.psi.PsiReferenceService#getReferences
+   * @see PsiReferenceService#getReferences
    * @see com.intellij.psi.search.searches.ReferencesSearch
    */
   @NotNull
@@ -469,7 +463,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param key the key for accessing the user data object.
    * @return the user data object, or null if no such object is found in the current element.
-   * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
+   * @see #putCopyableUserData(Key, Object)
    */
   @Nullable
   @Contract(pure=true)
@@ -481,7 +475,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @param key   the key for accessing the user data object.
    * @param value the user data object to attach.
-   * @see #getCopyableUserData(com.intellij.openapi.util.Key)
+   * @see #getCopyableUserData(Key)
    */
   <T> void putCopyableUserData(Key<T> key, @Nullable T value);
 
@@ -503,7 +497,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
 
   /**
    * Returns the element which should be used as the parent of this element in a tree up
-   * walk during a resolve operation. For most elements, this returns <code>getParent()</code>,
+   * walk during a resolve operation. For most elements, this returns {@code getParent()},
    * but the context can be overridden for some elements like code fragments (see
    * {@link PsiElementFactory#createCodeBlockCodeFragment(String, PsiElement, boolean)}).
    *
@@ -559,6 +553,13 @@ public interface PsiElement extends UserDataHolder, Iconable {
   @Contract(pure=true)
   String toString();
 
+  /**
+   * This method shouldn't be called by clients directly, because there are no guarantees of it being symmetric.
+   * It's called by {@link PsiManager#areElementsEquivalent(PsiElement, PsiElement)} internally, which clients should invoke instead.<p/>
+   *
+   * Implementations of this method should return {@code true} if the parameter is resolve-equivalent to {@code this}, i.e. it represents
+   * the same entity from the language perspective. See also {@link PsiManager#areElementsEquivalent(PsiElement, PsiElement)} documentation.
+   */
   @Contract(pure=true)
   boolean isEquivalentTo(PsiElement another);
 }

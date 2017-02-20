@@ -332,6 +332,7 @@ public class SyncScrollSupport {
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (((FoldingModelImpl)getSlave().getFoldingModel()).isInBatchFoldingOperation()) return;
+      if (getMaster().isDisposed() || getSlave().isDisposed()) return;
 
       Rectangle newRectangle = e.getNewRectangle();
       Rectangle oldRectangle = e.getOldRectangle();

@@ -161,7 +161,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setTestResultsViewer(this);
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
+    myTreeBuilder.setTestsComparator(myProperties);
     Disposer.register(this, myTreeBuilder);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
@@ -269,7 +269,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRunning = false;
       final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
       if (sortByDuration) {
-        myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
+        myTreeBuilder.setTestsComparator(myProperties);
       }
     };
     if (myLastSelected == null) {
@@ -294,7 +294,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, 
                        Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount), 
-                       myTotalTestCount - myFinishedTestCount, 
+                       myTotalTestCount - (myFinishedTestCount - myIgnoredTestCount),
                        myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
     addToHistory(testsRoot, myProperties, this);

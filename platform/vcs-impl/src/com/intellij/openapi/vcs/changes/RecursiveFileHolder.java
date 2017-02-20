@@ -54,16 +54,6 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     }
   }
 
-  @Override
-  public int getDirNum() {
-    return myDirMap.size();
-  }
-
-  @Override
-  public int getFilesNum() {
-    return myMap.size();
-  }
-
   public void removeFile(@NotNull final VirtualFile file) {
     myMap.remove(file);
     if (file.isDirectory()) {

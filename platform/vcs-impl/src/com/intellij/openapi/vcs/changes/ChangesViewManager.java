@@ -213,7 +213,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
     visualActionsGroup.add(new ToggleDetailsAction());
-    visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
+    visualActionsGroup.add(new ContextHelpAction(ChangesListView.HELP_ID));
     toolbarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, visualActionsGroup, false).getComponent(), BorderLayout.CENTER);
 
@@ -336,14 +336,16 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
     TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.isShowFlatten())
-      .set(changeListManager.getChangeListsCopy(), changeListManager.getDeletedFiles(), changeListManager.getModifiedWithoutEditing(),
-           changeListManager.getSwitchedFilesMap(), changeListManager.getSwitchedRoots(),
-           changeListManager.getLockedFolders(),
-           changeListManager.getLogicallyLockedFolders())
-      .setUnversioned(changeListManager.getUnversionedFiles(), changeListManager.getUnversionedFilesSize());
+      .setChangeLists(changeListManager.getChangeListsCopy())
+      .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
+      .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
+      .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
+      .setSwitchedRoots(changeListManager.getSwitchedRoots())
+      .setLockedFolders(changeListManager.getLockedFolders())
+      .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
+      .setUnversioned(changeListManager.getUnversionedFiles());
     if (myState.myShowIgnored) {
-      treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.getIgnoredFilesSize(),
-                                  changeListManager.isIgnoredInUpdateMode());
+      treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
     }
     myView.updateModel(
       treeModelBuilder.build()

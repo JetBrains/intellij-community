@@ -57,7 +57,7 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
                                   @NotNull Disposable parentDisposable,
                                   @Nullable VirtualFilePointerListener listener) {
     //noinspection HardCodedStringLiteral
-    super(TRACE_CREATION && !ApplicationInfoImpl.isInPerformanceTest());
+    super(TRACE_CREATION && !ApplicationInfoImpl.isInStressTest());
     myVirtualFilePointerManager = manager;
     myParent = parentDisposable;
     myListener = listener;
@@ -185,9 +185,9 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
       result = EMPTY;
     }
     else {
-      List<VirtualFile> cachedFiles = new ArrayList<VirtualFile>(myList.size());
-      List<String> cachedUrls = new ArrayList<String>(myList.size());
-      List<VirtualFile> cachedDirectories = new ArrayList<VirtualFile>(myList.size() / 3);
+      List<VirtualFile> cachedFiles = new ArrayList<>(myList.size());
+      List<String> cachedUrls = new ArrayList<>(myList.size());
+      List<VirtualFile> cachedDirectories = new ArrayList<>(myList.size() / 3);
       boolean allFilesAreDirs = true;
       for (VirtualFilePointer v : myList) {
         VirtualFile file = v.getFile();

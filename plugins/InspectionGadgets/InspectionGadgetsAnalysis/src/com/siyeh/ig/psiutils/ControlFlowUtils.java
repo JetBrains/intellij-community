@@ -16,11 +16,23 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+
+import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.*;
 
 public class ControlFlowUtils {
 
@@ -598,6 +610,237 @@ public class ControlFlowUtils {
       }
     }
     return false;
+  }
+
+  private static StreamEx<PsiExpression> conditions(PsiElement element) {
+    return StreamEx.iterate(element, e -> e != null &&
+                                          !(e instanceof PsiLambdaExpression) && !(e instanceof PsiMethod), PsiElement::getParent)
+      .pairMap((child, parent) -> parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getThenBranch() == child ? parent : null)
+      .select(PsiIfStatement.class)
+      .map(PsiIfStatement::getCondition)
+      .flatMap(cond -> cond instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)cond).getOperationTokenType().equals(
+        JavaTokenType.ANDAND) ? StreamEx.of(((PsiPolyadicExpression)cond).getOperands()) : StreamEx.of(cond));
+  }
+
+  /**
+   * @param statement statement to check
+   * @param loop      surrounding loop
+   * @return true if it could be statically determined that given statement is executed at most once
+   */
+  public static boolean isExecutedOnceInLoop(PsiStatement statement, PsiLoopStatement loop) {
+    if (flowBreaksLoop(statement, loop)) return true;
+    if (loop instanceof PsiForStatement) {
+      // Check that we're inside counted loop which increments some loop variable and
+      // the code is executed under condition like if(var == something)
+      PsiDeclarationStatement initialization =
+        ObjectUtils.tryCast(((PsiForStatement)loop).getInitialization(), PsiDeclarationStatement.class);
+      PsiStatement update = ((PsiForStatement)loop).getUpdate();
+      if (initialization != null && update != null) {
+        PsiLocalVariable variable = StreamEx.of(initialization.getDeclaredElements()).select(PsiLocalVariable.class)
+          .findFirst(var -> VariableAccessUtils.variableIsIncremented(var, update) ||
+                            VariableAccessUtils.variableIsDecremented(var, update)).orElse(null);
+        if (variable != null) {
+          boolean hasLoopVarCheck = conditions(statement).select(PsiBinaryExpression.class)
+            .filter(binOp -> binOp.getOperationTokenType().equals(JavaTokenType.EQEQ))
+            .anyMatch(binOp -> ExpressionUtils.getOtherOperand(binOp, variable) != null);
+          if (hasLoopVarCheck) {
+            boolean notWritten = ReferencesSearch.search(variable).forEach(ref -> {
+              PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
+              return expression == null || PsiTreeUtil.isAncestor(update, expression, false) || !PsiUtil.isAccessedForWriting(expression);
+            });
+            if (notWritten) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns true if the variable is definitely reassigned to fresh value after executing given statement
+   * without intermediate usages (ignoring possible exceptions in-between)
+   *
+   * @param statement statement to start checking from
+   * @param variable variable to check
+   * @return true if variable is reassigned
+   */
+  public static boolean isVariableReassigned(PsiStatement statement, PsiVariable variable) {
+    for (PsiStatement sibling = nextExecutedStatement(statement); sibling != null; sibling = nextExecutedStatement(sibling)) {
+      PsiExpression rValue = ExpressionUtils.getAssignmentTo(sibling, variable);
+      if (rValue != null && !VariableAccessUtils.variableIsUsed(variable, rValue)) return true;
+      if (VariableAccessUtils.variableIsUsed(variable, sibling)) return false;
+    }
+    return false;
+  }
+
+  /**
+   * Checks whether control flow after executing given statement will definitely not go into the next iteration of given loop.
+   *
+   * @param statement executed statement. It's not checked whether this statement itself breaks the loop.
+   * @param loop a surrounding loop. Must be parent of statement
+   * @return true if it can be statically defined that next loop iteration will not be executed.
+   */
+  @Contract("null, _ -> false")
+  public static boolean flowBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
+    if(statement == null || statement == loop) return false;
+    for (PsiStatement sibling = statement; sibling != null; sibling = nextExecutedStatement(sibling)) {
+      if(sibling instanceof PsiContinueStatement) return false;
+      if(sibling instanceof PsiThrowStatement || sibling instanceof PsiReturnStatement) return true;
+      if(sibling instanceof PsiBreakStatement) {
+        PsiBreakStatement breakStatement = (PsiBreakStatement)sibling;
+        PsiStatement exitedStatement = breakStatement.findExitedStatement();
+        if(exitedStatement == loop) return true;
+        return flowBreaksLoop(nextExecutedStatement(exitedStatement), loop);
+      }
+      if (sibling instanceof PsiIfStatement || sibling instanceof PsiSwitchStatement) {
+        if (!PsiTreeUtil.collectElementsOfType(sibling, PsiContinueStatement.class).isEmpty()) return false;
+      }
+      if (sibling instanceof PsiLoopStatement) {
+        if (PsiTreeUtil.collectElements(sibling, e -> e instanceof PsiContinueStatement &&
+                                                      ((PsiContinueStatement)e).getLabelIdentifier() != null).length > 0) {
+          return false;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static PsiStatement firstStatement(@Nullable PsiStatement statement) {
+    while (statement instanceof PsiBlockStatement) {
+      PsiStatement[] statements = ((PsiBlockStatement)statement).getCodeBlock().getStatements();
+      if (statements.length == 0) break;
+      statement = statements[0];
+    }
+    return statement;
+  }
+
+  @Nullable
+  private static PsiStatement nextExecutedStatement(PsiStatement statement) {
+    PsiStatement next = firstStatement(PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class));
+    if (next == null) {
+      PsiElement parent = statement.getParent();
+      if (parent instanceof PsiCodeBlock) {
+        PsiElement gParent = parent.getParent();
+        if (gParent instanceof PsiBlockStatement || gParent instanceof PsiSwitchStatement) {
+          return nextExecutedStatement((PsiStatement)gParent);
+        }
+      }
+      else if (parent instanceof PsiLabeledStatement || parent instanceof PsiIfStatement || parent instanceof PsiSwitchLabelStatement
+               || parent instanceof PsiSwitchStatement) {
+        return nextExecutedStatement((PsiStatement)parent);
+      }
+    }
+    return next;
+  }
+
+  /**
+   * Checks whether variable can be referenced between start and loop entry. Back-edges are also considered, so the actual place
+   * where it referenced might be outside of (start, loop entry) interval.
+   *
+   * @param flow ControlFlow to analyze
+   * @param start start point
+   * @param loop loop to check
+   * @param variable variable to analyze
+   * @return true if variable can be referenced between start and stop points
+   */
+  private static boolean isVariableReferencedBeforeLoopEntry(final ControlFlow flow,
+                                                             final int start,
+                                                             final PsiLoopStatement loop,
+                                                             final PsiVariable variable) {
+    final int loopStart = flow.getStartOffset(loop);
+    final int loopEnd = flow.getEndOffset(loop);
+    if(start == loopStart) return false;
+
+    List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, start);
+    // DFS visits instructions mainly in backward direction while here visiting in forward direction
+    // greatly reduces number of iterations.
+    Collections.reverse(edges);
+
+    BitSet referenced = new BitSet();
+    boolean changed = true;
+    while(changed) {
+      changed = false;
+      for(ControlFlowUtil.ControlFlowEdge edge: edges) {
+        int from = edge.myFrom;
+        int to = edge.myTo;
+        if(referenced.get(from)) {
+          // jump to the loop start from within the loop is not considered as loop entry
+          if(to == loopStart && (from < loopStart || from >= loopEnd)) {
+            return true;
+          }
+          if(!referenced.get(to)) {
+            referenced.set(to);
+            changed = true;
+          }
+          continue;
+        }
+        if(ControlFlowUtil.isVariableAccess(flow, from, variable)) {
+          referenced.set(from);
+          referenced.set(to);
+          if(to == loopStart) return true;
+          changed = true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns an {@link InitializerUsageStatus} for given variable with respect to given loop
+   * @param var a variable to determine an initializer usage status for
+   * @param loop a loop where variable is used
+   * @return initializer usage status for variable
+   */
+  @NotNull
+  public static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiLoopStatement loop) {
+    if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
+    if(isDeclarationJustBefore(var, loop)) return DECLARED_JUST_BEFORE;
+    // Check that variable is declared in the same method or the same lambda expression
+    if(PsiTreeUtil.getParentOfType(var, PsiLambdaExpression.class, PsiMethod.class) !=
+       PsiTreeUtil.getParentOfType(loop, PsiLambdaExpression.class, PsiMethod.class)) return UNKNOWN;
+    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
+    if(block == null) return UNKNOWN;
+    final ControlFlow controlFlow;
+    try {
+      controlFlow = ControlFlowFactory.getInstance(loop.getProject())
+        .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    }
+    catch (AnalysisCanceledException ignored) {
+      return UNKNOWN;
+    }
+    int start = controlFlow.getEndOffset(var.getInitializer())+1;
+    int stop = controlFlow.getStartOffset(loop);
+    if(isVariableReferencedBeforeLoopEntry(controlFlow, start, loop, var)) return UNKNOWN;
+    if (!ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var)) return AT_WANTED_PLACE_ONLY;
+    return var.hasModifierProperty(PsiModifier.FINAL) ? UNKNOWN : AT_WANTED_PLACE;
+  }
+
+  static boolean isDeclarationJustBefore(PsiVariable var, PsiStatement nextStatement) {
+    PsiElement declaration = var.getParent();
+    PsiElement nextStatementParent = nextStatement.getParent();
+    if(nextStatementParent instanceof PsiLabeledStatement) {
+      nextStatement = (PsiStatement)nextStatementParent;
+    }
+    if(declaration instanceof PsiDeclarationStatement) {
+      PsiElement[] elements = ((PsiDeclarationStatement)declaration).getDeclaredElements();
+      if (ArrayUtil.getLastElement(elements) == var && nextStatement.equals(
+        PsiTreeUtil.skipSiblingsForward(declaration, PsiWhiteSpace.class, PsiComment.class))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public enum InitializerUsageStatus {
+    // Variable is declared just before the wanted place
+    DECLARED_JUST_BEFORE,
+    // All initial value usages go through wanted place and at wanted place the variable value is guaranteed to be the initial value
+    AT_WANTED_PLACE_ONLY,
+    // At wanted place the variable value is guaranteed to have the initial value, but this initial value might be used somewhere else
+    AT_WANTED_PLACE,
+    // It's not guaranteed that the variable value at wanted place is initial value
+    UNKNOWN
   }
 
   private static class NakedBreakFinder extends JavaRecursiveElementWalkingVisitor {

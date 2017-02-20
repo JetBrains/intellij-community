@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
   public static boolean isEquals(@NotNull Change change1, @NotNull Change change2) {
     if (!Comparing.equal(ChangesUtil.getBeforePath(change1), ChangesUtil.getBeforePath(change2)) ||
         !Comparing.equal(ChangesUtil.getAfterPath(change1), ChangesUtil.getAfterPath(change2))) {
-      // we use Change.hashCode(), so removing this check might violate comparison contract
+      // we use file paths for hashCode, so removing this check might violate comparison contract
       return false;
     }
 
@@ -121,6 +121,14 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
       return Comparing.equal(vFile1, vFile2);
     }
     return false;
+  }
+
+  public static int hashCode(@NotNull Change change) {
+    return hashCode(change.getBeforeRevision()) + 31 * hashCode(change.getAfterRevision());
+  }
+
+  private static int hashCode(@Nullable ContentRevision revision) {
+    return revision != null ? revision.getFile().hashCode() : 0;
   }
 
   @Nullable
@@ -161,10 +169,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     try {
       return loadCurrentContents(context, indicator);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (DiffRequestProducerException e) {
+    catch (ProcessCanceledException | DiffRequestProducerException e) {
       throw e;
     }
     catch (Exception e) {
@@ -297,11 +302,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
         return request;
       }
-      catch (VcsException e) {
-        LOG.info(e);
-        throw new DiffRequestProducerException(e);
-      }
-      catch (IOException e) {
+      catch (VcsException | IOException e) {
         LOG.info(e);
         throw new DiffRequestProducerException(e);
       }
@@ -408,11 +409,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         return contentFactory.create(project, revisionContent, filePath);
       }
     }
-    catch (IOException e) {
-      LOG.info(e);
-      throw new DiffRequestProducerException(e);
-    }
-    catch (VcsException e) {
+    catch (IOException | VcsException e) {
       LOG.info(e);
       throw new DiffRequestProducerException(e);
     }

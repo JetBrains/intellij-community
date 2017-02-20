@@ -174,10 +174,7 @@ public final class HgErrorUtil {
     try {
       HgUtil.markDirectoryDirty(project, repository);
     }
-    catch (InvocationTargetException e) {
-      handleException(project, e);
-    }
-    catch (InterruptedException e) {
+    catch (InvocationTargetException | InterruptedException e) {
       handleException(project, e);
     }
   }

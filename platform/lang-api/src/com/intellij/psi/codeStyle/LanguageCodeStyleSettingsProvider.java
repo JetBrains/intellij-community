@@ -85,10 +85,10 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   /**
-   * Creates an instance of <code>CommonCodeStyleSettings</code> and sets initial default values for those
+   * Creates an instance of {@code CommonCodeStyleSettings} and sets initial default values for those
    * settings which differ from the original.
    *
-   * @return Created instance of <code>CommonCodeStyleSettings</code> or null if associated language doesn't
+   * @return Created instance of {@code CommonCodeStyleSettings} or null if associated language doesn't
    *         use its own language-specific common settings (the settings are shared with other languages).
    */
   @Nullable

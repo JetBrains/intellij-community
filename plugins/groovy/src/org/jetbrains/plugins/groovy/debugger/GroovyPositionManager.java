@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.CompoundPositionManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -240,13 +241,7 @@ public class GroovyPositionManager implements PositionManager {
   private int calcLineIndex(Location location) {
     LOG.assertTrue(myDebugProcess != null);
     if (location == null) return -1;
-
-    try {
-      return location.lineNumber() - 1;
-    }
-    catch (InternalError e) {
-      return -1;
-    }
+    return DebuggerUtilsEx.getLineNumber(location, true);
   }
 
   @Nullable
@@ -279,10 +274,7 @@ public class GroovyPositionManager implements PositionManager {
       PsiClass clazz = classes.get(0);
       if (clazz != null) return clazz.getContainingFile();
     }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-    catch (IndexNotReadyException e) {
+    catch (ProcessCanceledException | IndexNotReadyException e) {
       return null;
     }
 

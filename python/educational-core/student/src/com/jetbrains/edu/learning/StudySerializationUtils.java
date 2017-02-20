@@ -20,6 +20,7 @@ import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -208,6 +209,7 @@ public class StudySerializationUtils {
       return state;
     }
 
+    @NotNull
     public static Element convertToForthVersion(Element state) throws StudyUnrecognizedFormatException {
       Element taskManagerElement = state.getChild(MAIN_ELEMENT);
       Element courseElement = getChildWithName(taskManagerElement, COURSE).getChild(COURSE_TITLED);
@@ -219,17 +221,19 @@ public class StudySerializationUtils {
             for (Element placeholder : getChildList(taskFileElement, ANSWER_PLACEHOLDERS)) {
               Element valueElement = new Element(SUBTASK_INFO);
               addChildMap(placeholder, SUBTASK_INFOS, Collections.singletonMap(String.valueOf(0), valueElement));
-              for (String childName : ContainerUtil.list(HINT, ADDITIONAL_HINTS, POSSIBLE_ANSWER, SELECTED, STATUS, TASK_TEXT)) {
-                Element child = getChildWithName(placeholder, childName);
+              for (String childName : ContainerUtil.list(HINT, POSSIBLE_ANSWER, SELECTED, STATUS, TASK_TEXT)) {
+                Element child = getChildWithName(placeholder, childName, true);
+                if (child == null) {
+                  continue;
+                }
                 valueElement.addContent(child.clone());
               }
               renameElement(getChildWithName(valueElement, TASK_TEXT), PLACEHOLDER_TEXT);
-              List<Element> additionalHints = ContainerUtil.map(getChildList(valueElement, ADDITIONAL_HINTS), Element::clone);
               Element hint = getChildWithName(valueElement, HINT);
               Element firstHint = new Element(OPTION).setAttribute(VALUE, hint.getAttributeValue(VALUE));
               List<Element> newHints = new ArrayList<>();
               newHints.add(firstHint);
-              newHints.addAll(additionalHints);
+              newHints.addAll(ContainerUtil.map(getChildList(placeholder, ADDITIONAL_HINTS, true), Element::clone));
               addChildList(valueElement, "hints", newHints);
             }
           }
@@ -430,6 +434,7 @@ public class StudySerializationUtils {
                 convertToAbsoluteOffset(document, placeholder);
                 if (placeholder.getAsJsonObject().getAsJsonObject(SUBTASK_INFOS) == null) {
                   convertToSubtaskInfo(placeholder.getAsJsonObject());
+                  removeIndexFromSubtaskInfos(placeholder.getAsJsonObject());
                 }
               }
             }
@@ -476,23 +481,14 @@ public class StudySerializationUtils {
       }
 
       private static JsonObject convertSubtaskInfosToMap(JsonObject stepOptionsJson) {
-        for (JsonElement taskFileElement : stepOptionsJson.getAsJsonArray(FILES)) {
-          JsonObject taskFileObject = taskFileElement.getAsJsonObject();
-          JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
-          for (JsonElement placeholder : placeholders) {
-            JsonObject placeholderObject = placeholder.getAsJsonObject();
-            JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
-            Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
-            for (JsonElement info : infos) {
-              JsonObject object = info.getAsJsonObject();
-              int index = object.getAsJsonPrimitive(INDEX).getAsInt();
-              objectsToInsert.put(index, object);
-            }
-            placeholderObject.remove(SUBTASK_INFOS);
-            JsonObject newInfos = new JsonObject();
-            placeholderObject.add(SUBTASK_INFOS, newInfos);
-            for (Map.Entry<Integer, JsonObject> entry : objectsToInsert.entrySet()) {
-              newInfos.add(entry.getKey().toString(), entry.getValue());
+        final JsonArray files = stepOptionsJson.getAsJsonArray(FILES);
+        if (files != null) {
+          for (JsonElement taskFileElement : files) {
+            JsonObject taskFileObject = taskFileElement.getAsJsonObject();
+            JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
+            for (JsonElement placeholder : placeholders) {
+              JsonObject placeholderObject = placeholder.getAsJsonObject();
+              removeIndexFromSubtaskInfos(placeholderObject);
             }
           }
         }
@@ -501,14 +497,17 @@ public class StudySerializationUtils {
 
       private static JsonObject convertToSecondVersion(JsonObject stepOptionsJson) {
         Gson gson = new GsonBuilder().setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-        for (JsonElement taskFileElement : stepOptionsJson.getAsJsonArray(FILES)) {
-          JsonObject taskFileObject = taskFileElement.getAsJsonObject();
-          JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
-          for (JsonElement placeholder : placeholders) {
-            JsonObject placeholderObject = placeholder.getAsJsonObject();
-            convertToAbsoluteOffset(taskFileObject, placeholderObject);
-            convertMultipleHints(gson, placeholderObject);
-            convertToSubtaskInfo(placeholderObject);
+        final JsonArray files = stepOptionsJson.getAsJsonArray(FILES);
+        if (files != null) {
+          for (JsonElement taskFileElement : files) {
+            JsonObject taskFileObject = taskFileElement.getAsJsonObject();
+            JsonArray placeholders = taskFileObject.getAsJsonArray(PLACEHOLDERS);
+            for (JsonElement placeholder : placeholders) {
+              JsonObject placeholderObject = placeholder.getAsJsonObject();
+              convertToAbsoluteOffset(taskFileObject, placeholderObject);
+              convertMultipleHints(gson, placeholderObject);
+              convertToSubtaskInfo(placeholderObject);
+            }
           }
         }
         return stepOptionsJson;
@@ -551,6 +550,22 @@ public class StudySerializationUtils {
           Document document = EditorFactory.getInstance().createDocument(taskFileObject.getAsJsonPrimitive(TEXT).getAsString());
           placeholderObject.addProperty(OFFSET, document.getLineStartOffset(line) + start);
         }
+      }
+    }
+
+    private static void removeIndexFromSubtaskInfos(JsonObject placeholderObject) {
+      JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
+      Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
+      for (JsonElement info : infos) {
+        JsonObject object = info.getAsJsonObject();
+        int index = object.getAsJsonPrimitive(INDEX).getAsInt();
+        objectsToInsert.put(index, object);
+      }
+      placeholderObject.remove(SUBTASK_INFOS);
+      JsonObject newInfos = new JsonObject();
+      placeholderObject.add(SUBTASK_INFOS, newInfos);
+      for (Map.Entry<Integer, JsonObject> entry : objectsToInsert.entrySet()) {
+        newInfos.add(entry.getKey().toString(), entry.getValue());
       }
     }
 

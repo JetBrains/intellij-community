@@ -18,7 +18,7 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>assert</code> statement.
+ * Represents a Java {@code assert} statement.
  */
 public interface PsiAssertStatement extends PsiStatement{
   /**

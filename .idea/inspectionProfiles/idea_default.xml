@@ -324,6 +324,7 @@
     <inspection_tool class="Java8CollectionRemoveIf" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="Java8CollectionsApi" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="Java8ListSort" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="Java8MapApi" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="Java8ReplaceMapGet" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="JavaDoc" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Tests" level="WARNING" enabled="false">

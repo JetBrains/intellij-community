@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a Java <code>import</code> or <code>import static</code> statement.
+ * Represents a Java {@code import} or {@code import static} statement.
  *
  * @author dsl
  */
@@ -30,13 +30,7 @@ public interface PsiImportStatementBase extends PsiElement {
    */
   PsiImportStatementBase[] EMPTY_ARRAY = new PsiImportStatementBase[0];
 
-  ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementBase>() {
-    @NotNull
-    @Override
-    public PsiImportStatementBase[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
-    }
-  };
+  ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];
 
   /**
    * Checks if the statement represents a single element or on-demand import.

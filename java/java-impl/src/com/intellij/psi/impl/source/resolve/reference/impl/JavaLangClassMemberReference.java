@@ -19,29 +19,34 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
+  private static final String FIELD = "getField";
+  private static final String DECLARED_FIELD = "getDeclaredField";
+  private static final String METHOD = "getMethod";
+  private static final String DECLARED_METHOD = "getDeclaredMethod";
+
   private final PsiExpression myContext;
 
-  public JavaLangClassMemberReference(PsiLiteralExpression literal, PsiExpression context) {
+  public JavaLangClassMemberReference(@NotNull PsiLiteralExpression literal, @NotNull PsiExpression context) {
     super(literal);
     myContext = context;
   }
@@ -53,96 +58,118 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
   @Override
   public PsiElement resolve() {
-    final String name =  (String)getElement().getValue();
-    final Type type = getType();
+    Object value = myElement.getValue();
+    if (value instanceof String) {
+      final String name = (String)value;
+      final String type = getMemberType();
 
-    if (type != null) {
-      final PsiClass psiClass = getPsiClass();
-      if (psiClass != null) {
-        PsiMember member;
-        if (type == Type.FIELD || type == Type.DECLARED_FIELD) {
-          member = psiClass.findFieldByName(name, false);
-        } else {
-          final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
-          member = methods.length == 0 ? null : methods[0];
+      if (type != null) {
+        final PsiClass psiClass = getPsiClass();
+        if (psiClass != null) {
+          switch (type) {
+
+            case FIELD: {
+              return psiClass.findFieldByName(name, true);
+            }
+
+            case DECLARED_FIELD: {
+              PsiField field = psiClass.findFieldByName(name, false);
+              return isPotentiallyAccessible(field, psiClass) ? field : null;
+            }
+
+            case METHOD: {
+              final PsiMethod[] methods = psiClass.findMethodsByName(name, true);
+              final PsiMethod publicMethod = ContainerUtil.find(methods, method -> isRegularMethod(method) && isPublic(method));
+              if (publicMethod != null) {
+                return publicMethod;
+              }
+              return ContainerUtil.find(methods, method -> isRegularMethod(method));
+            }
+
+            case DECLARED_METHOD: {
+              final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
+              return ContainerUtil.find(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
+            }
+          }
         }
-
-        return member;
       }
     }
-
     return null;
   }
 
   @Nullable
   private PsiClass getPsiClass() {
-    if (myContext instanceof PsiClassObjectAccessExpression) {
-      return PsiTypesUtil.getPsiClass(((PsiClassObjectAccessExpression)myContext).getOperand().getType());
-    } else if (myContext instanceof PsiMethodCallExpression) {
-      final PsiMethod method = ((PsiMethodCallExpression)myContext).resolveMethod();
-      if (method != null && "forName".equals(method.getName()) && isClass(method.getContainingClass())) {
-        final PsiExpression[] expressions = ((PsiMethodCallExpression)myContext).getArgumentList().getExpressions();
-        if (expressions.length == 1 && expressions[0] instanceof PsiLiteralExpression) {
-          final Object value = ((PsiLiteralExpression)expressions[0]).getValue();
-          if (value instanceof String) {
-            final Project project = myContext.getProject();
-            return JavaPsiFacade.getInstance(project).findClass(String.valueOf(value), GlobalSearchScope.allScope(project));
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static boolean isClass(PsiClass aClass) {
-    return aClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(aClass.getQualifiedName());
+    return getReflectiveClass(myContext);
   }
 
   @Nullable
-  private Type getType() {
-    boolean selfFound = false;
-    for (PsiElement child : myContext.getParent().getChildren()) {
-      if (!selfFound) {
-        if (child == myContext) {
-          selfFound = true;
-        }
-        continue;
-      }
-
-      if (child instanceof PsiIdentifier) {
-        return Type.fromString(child.getText());
-      }
-    }
-    return null;
+  private String getMemberType() {
+    final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
+    return methodCall != null ? methodCall.getMethodExpression().getReferenceName() : null;
   }
 
   @NotNull
   @Override
   public Object[] getVariants() {
-    final Type type = getType();
-    final PsiClass psiClass = getPsiClass();
-    if (psiClass != null && type != null) {
-      if (type == Type.DECLARED_FIELD) {
-        return psiClass.getFields();
-      } else if (type == Type.FIELD) {
-        final List<PsiField> fields = new ArrayList<>();
-        for (PsiField field : psiClass.getFields()) {
-          if (isPublic(field)) {
-            fields.add(field);
+    final String type = getMemberType();
+    if (type != null) {
+      final PsiClass psiClass = getPsiClass();
+      if (psiClass != null) {
+        switch (type) {
+
+          case DECLARED_FIELD:
+            return Arrays.stream(psiClass.getFields())
+              .sorted(Comparator.comparing(PsiField::getName))
+              .map(field -> lookupField(field))
+              .toArray();
+
+          case FIELD:
+            return Arrays.stream(psiClass.getAllFields())
+              .filter(field -> isPotentiallyAccessible(field, psiClass))
+              .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
+              .map(field -> withPriority(lookupField(field), isPublic(field)))
+              .toArray();
+
+          case DECLARED_METHOD:
+            return Arrays.stream(psiClass.getMethods())
+              .filter(method -> isRegularMethod(method))
+              .sorted(Comparator.comparing(PsiMethod::getName))
+              .map(method -> lookupMethod(method))
+              .toArray();
+
+          case METHOD: {
+            final List<PsiMethod> methods = ContainerUtil.filter(
+              psiClass.getAllMethods(), method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
+
+            final Set<PsiMethod> superMethods = new THashSet<>();
+            for (PsiMethod method : methods) {
+              ContainerUtil.addAll(superMethods, method.findSuperMethods());
+            }
+
+            return methods.stream()
+              .filter(method -> !superMethods.contains(method))
+              .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
+              .map(method -> withPriority(lookupMethod(method), -getMethodSortOrder(method)))
+              .toArray();
           }
         }
-        return fields.toArray();
-      } else if (type == Type.DECLARED_METHOD || type == Type.METHOD) {
-        final List<LookupElementBuilder> elements = new ArrayList<>();
-        for (PsiMethod method : psiClass.getMethods()) {
-          if (type == Type.DECLARED_METHOD || isPublic(method)) {
-            elements.add(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this));
-          }
-        }
-        return elements.toArray();
       }
     }
     return EMPTY_ARRAY;
+  }
+
+  private static int getMethodSortOrder(PsiMethod method) {
+    return isJavaLangObject(method.getContainingClass()) ? 1 : isPublic(method) ? -1 : 0;
+  }
+
+  @NotNull
+  private static LookupElement lookupField(PsiField field) {
+    return JavaLookupElementBuilder.forField(field);
+  }
+
+  @NotNull
+  private LookupElement lookupMethod(PsiMethod method) {
+    return JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this);
   }
 
   @Override
@@ -153,44 +180,11 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
       final int start = newElement.getTextRange().getEndOffset();
       final PsiElement params = newElement.getParent().getParent();
       final int end = params.getTextRange().getEndOffset() - 1;
-      final String types = getMethodTypes((PsiMethod)object);
+      String types = getParameterTypesText((PsiMethod)object);
+      if (!types.isEmpty()) types = ", " + types;
       context.getDocument().replaceString(start, end, types);
       context.commitDocument();
-      final PsiElement firstParam = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
-      final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(firstParam, PsiMethodCallExpression.class);
-      if (methodCall != null) {
-        JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(methodCall);
-      }
-    }
-  }
-
-  private static boolean isPublic(final PsiMember psiField) {
-    return psiField.hasModifierProperty(PsiModifier.PUBLIC);
-  }
-
-  private static String getMethodTypes(PsiMethod method) {
-    final StringBuilder buf = new StringBuilder();
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      PsiType type = TypeConversionUtil.erasure(parameter.getType());
-      if (type instanceof PsiEllipsisType) {
-        type = new PsiArrayType(((PsiEllipsisType)type).getComponentType());
-      }
-      buf.append(", ").append(type.getPresentableText()).append(".class");
-    }
-    return buf.toString();
-  }
-
-
-  enum Type {
-    FIELD, DECLARED_FIELD, METHOD, DECLARED_METHOD;
-
-    @Nullable
-    static Type fromString(String s) {
-      if ("getField".equals(s)) return FIELD;
-      if ("getDeclaredField".equals(s)) return DECLARED_FIELD;
-      if ("getMethod".equals(s)) return METHOD;
-      if ("getDeclaredMethod".equals(s)) return DECLARED_METHOD;
-      return null;
+      shortenArgumentsClassReferences(context);
     }
   }
 }

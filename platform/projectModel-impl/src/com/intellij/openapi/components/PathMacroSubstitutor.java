@@ -16,7 +16,9 @@
 package com.intellij.openapi.components;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides methods to convert paths from absolute to portable form and vice versa.
@@ -27,10 +29,11 @@ public interface PathMacroSubstitutor {
   /**
    * Convert path to absolute by replacing all names of path variables by its values
    */
-  String expandPath(String path);
+  @Contract("null -> null; !null -> !null")
+  String expandPath(@Nullable String text);
 
-  @NotNull
-  default String collapsePath(@NotNull String text) {
+  @Contract("null -> null; !null -> !null")
+  default String collapsePath(@Nullable String text) {
     return collapsePath(text, false);
   }
 
@@ -39,7 +42,8 @@ public interface PathMacroSubstitutor {
    * @param recursively if {@code true} all occurrences of paths inside {@code text} will be processed, otherwise {@code text} will be converted
    *                    only if its entire content is a path (or URL)
    */
-  String collapsePath(@NotNull String text, boolean recursively);
+  @Contract("null, _ -> null; !null, _ -> !null")
+  String collapsePath(@Nullable String text, boolean recursively);
 
   /**
    * Process sub tags of {@code element} recursively and convert paths to absolute forms in all tag texts and attribute values.
@@ -61,7 +65,8 @@ public interface PathMacroSubstitutor {
    */
   void collapsePaths(@NotNull Element element, boolean recursively);
 
-  default String collapsePathsRecursively(@NotNull String string) {
-    return collapsePath(string, true);
+  @Contract("null -> null; !null -> !null")
+  default String collapsePathsRecursively(@Nullable String text) {
+    return collapsePath(text, true);
   }
 }

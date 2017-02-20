@@ -1,10 +1,8 @@
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -23,12 +21,12 @@ import java.util.*;
 public class LocalChangeListImpl extends LocalChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
 
-  private final Project myProject;
-  private Set<Change> myChanges = ContainerUtil.newHashSet();
+  @NotNull private final Project myProject;
+  @NotNull private final Set<Change> myChanges;
   private Set<Change> myReadChangesCache = null;
-  private String myId;
+  @NotNull private String myId;
   @NotNull private String myName;
-  private String myComment = "";
+  @NotNull private String myComment = "";
   @Nullable private Object myData;
 
   private boolean myIsDefault = false;
@@ -36,23 +34,41 @@ public class LocalChangeListImpl extends LocalChangeList {
   private OpenTHashSet<Change> myChangesBeforeUpdate;
 
   @NotNull
-  public static LocalChangeListImpl createEmptyChangeListImpl(Project project, String name) {
+  public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project, @NotNull String name) {
     return new LocalChangeListImpl(project, name);
   }
 
-  private LocalChangeListImpl(Project project, final String name) {
+  private LocalChangeListImpl(@NotNull Project project, @NotNull String name) {
     myProject = project;
     myId = UUID.randomUUID().toString();
-    setNameImpl(name);
+    myName = validateName(name);
+
+    myChanges = ContainerUtil.newHashSet();
   }
 
-  private LocalChangeListImpl(LocalChangeListImpl origin) {
+  private LocalChangeListImpl(@NotNull LocalChangeListImpl origin) {
     myId = origin.getId();
     myProject = origin.myProject;
-    setNameImpl(origin.myName);
+    myName = origin.myName;
+
+    myComment = origin.myComment;
+    myIsDefault = origin.myIsDefault;
+    myIsReadOnly = origin.myIsReadOnly;
+    myData = origin.myData;
+
+    myChanges = ContainerUtil.newHashSet(origin.myChanges);
+
+    if (myChangesBeforeUpdate != null) {
+      myChangesBeforeUpdate = new OpenTHashSet<>((Collection<Change>)origin.myChangesBeforeUpdate);
+    }
+
+    if (myReadChangesCache != null) {
+      myReadChangesCache = ContainerUtil.newHashSet(origin.myReadChangesCache);
+    }
   }
 
   @NotNull
+  @Override
   public Set<Change> getChanges() {
     createReadChangesCache();
     return myReadChangesCache;
@@ -71,38 +87,36 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   @NotNull
+  @Override
   public String getName() {
     return myName;
   }
 
-  public void setName(@NotNull final String name) {
-    if (! myName.equals(name)) {
-      setNameImpl(name);
-    }
+  @Override
+  public void setName(@NotNull String name) {
+    myName = validateName(name);
   }
 
+  @NotNull
+  private static String validateName(@NotNull String name) {
+    if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
+      LOG.info("Creating a changelist with empty name");
+    }
+    return name;
+  }
+
+  @NotNull
+  @Override
   public String getComment() {
     return myComment;
   }
 
-  // same as for setName()
-  public void setComment(final String comment) {
-    if (! Comparing.equal(comment, myComment)) {
-      myComment = comment != null ? comment : "";
-    }
+  @Override
+  public void setComment(@Nullable String comment) {
+    myComment = comment != null ? comment : "";
   }
 
-  void setNameImpl(@NotNull final String name) {
-    if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
-      LOG.info("Creating a changelist with empty name");
-    }
-    myName = name;
-  }
-
-  void setCommentImpl(final String comment) {
-    myComment = comment;
-  }
-
+  @Override
   public boolean isDefault() {
     return myIsDefault;
   }
@@ -111,10 +125,12 @@ public class LocalChangeListImpl extends LocalChangeList {
     myIsDefault = isDefault;
   }
 
+  @Override
   public boolean isReadOnly() {
     return myIsReadOnly;
   }
 
+  @Override
   public void setReadOnly(final boolean isReadOnly) {
     myIsReadOnly = isReadOnly;
   }
@@ -170,15 +186,12 @@ public class LocalChangeListImpl extends LocalChangeList {
   }
 
   private static boolean isIgnoredRevision(final @NotNull ContentRevision revision, final @NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (project.isDisposed()) {
-          return false;
-        }
-        VirtualFile vFile = revision.getFile().getVirtualFile();
-        return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) {
+        return false;
       }
+      VirtualFile vFile = revision.getFile().getVirtualFile();
+      return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
     });
   }
 
@@ -259,34 +272,12 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myName.trim();
   }
 
+  @Override
   public LocalChangeList copy() {
-    final LocalChangeListImpl copy = new LocalChangeListImpl(this);
-    copy.myComment = myComment;
-    copy.myIsDefault = myIsDefault;
-    copy.myIsReadOnly = myIsReadOnly;
-    copy.myData = myData;
-
-    if (myChanges != null) {
-      copy.myChanges = ContainerUtil.newHashSet(myChanges);
-    }
-
-    if (myChangesBeforeUpdate != null) {
-      copy.myChangesBeforeUpdate = new OpenTHashSet<>((Collection<Change>)myChangesBeforeUpdate);
-    }
-
-    if (myReadChangesCache != null) {
-      copy.myReadChangesCache = ContainerUtil.newHashSet(myReadChangesCache);
-    }
-
-    return copy;
+    return new LocalChangeListImpl(this);
   }
 
-  @Nullable
-  public ChangeListEditHandler getEditHandler() {
-    return null;
-  }
-
-  public void setId(String id) {
+  public void setId(@NotNull String id) {
     myId = id;
   }
 }

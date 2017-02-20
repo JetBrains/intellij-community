@@ -157,7 +157,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
     descriptorsMap.put("isPresent", identity);
     descriptorsMap.put("orNull", new TypeConversionDescriptor("$val$.orNull()", "$val$.orElse(null)"));
     descriptorsMap.put("asSet", new TypeConversionDescriptor("$val$.asSet()",
-                                                             "$val$.isPresent() ? java.util.Collections.singleton($val$.get()) : java.util.Collections.emptySet()"));
+                                                             "$val$.map(java.util.Collections::singleton).orElse(java.util.Collections.emptySet())"));
   }
 
   @NotNull

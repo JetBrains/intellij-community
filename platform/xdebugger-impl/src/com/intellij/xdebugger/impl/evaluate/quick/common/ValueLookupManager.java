@@ -32,9 +32,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 
@@ -150,29 +152,31 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     if (editor.isDisposed() || !handler.canShowHint(myProject)) {
       return;
     }
-
-    final AbstractValueHint request = handler.createValueHint(myProject, editor, point, type);
-    if (request != null) {
-      if (myRequest != null && myRequest.equals(request)) {
-        return;
-      }
-
-      if (!request.canShowHint()) {
-        return;
-      }
-      if (myRequest != null && myRequest.isInsideHint(editor, point)) {
-        return;
-      }
-
-      hideHint();
-
-      myRequest = request;
-      myRequest.invokeHint(() -> {
-        if (myRequest != null && myRequest == request) {
-          myRequest = null;
-        }
-      });
+    if (myRequest != null && myRequest.isInsideHint(editor, point)) {
+      return;
     }
+    Promise<AbstractValueHint> hintPromise = handler.createValueHintAsync(myProject, editor, point, type);
+    hintPromise.done(hint -> {
+      if (hint == null)
+        return;
+      if (myRequest != null && myRequest.equals(hint)) {
+        return;
+      }
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!hint.canShowHint()) {
+          return;
+        }
+
+        hideHint();
+
+        myRequest = hint;
+        myRequest.invokeHint(() -> {
+          if (myRequest != null && myRequest == hint) {
+            myRequest = null;
+          }
+        });
+     });
+    });
   }
 
   public static ValueLookupManager getInstance(Project project) {

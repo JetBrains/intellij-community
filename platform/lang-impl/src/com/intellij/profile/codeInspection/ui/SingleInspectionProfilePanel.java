@@ -53,6 +53,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,12 +76,12 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
 import java.util.List;
-
-import com.intellij.util.containers.Queue;
 
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
@@ -127,6 +128,16 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public Map<HighlightDisplayKey, ToolDescriptors> getInitialToolDescriptors() {
     return myInitialToolDescriptors;
+  }
+
+  public boolean differsFromDefault() {
+    return myRoot.isProperSetting();
+  }
+
+  public void performProfileReset() {
+    getProfile().resetToBase(myProjectProfileManager.getProject());
+    loadDescriptorsConfigs(true);
+    postProcessModification();
   }
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
@@ -239,7 +250,6 @@ public class SingleInspectionProfilePanel extends JPanel {
         configPanelAnchor.add(ScrollPaneFactory.createScrollPane(additionalConfigPanel, SideBorder.NONE));
       }
     }
-    UIUtil.setEnabled(configPanelAnchor, state.isEnabled(), true);
   }
 
   private static InspectionConfigTreeNode getGroupNode(InspectionConfigTreeNode root, String[] groupPath) {
@@ -499,25 +509,11 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        myProfile.resetToEmpty(e.getProject());
+        myProfile.resetToEmpty(myProjectProfileManager.getProject());
         loadDescriptorsConfigs(false);
         postProcessModification();
       }
     });
-
-    actions.add(new AdvancedSettingsAction(myProjectProfileManager.getProject(), myRoot) {
-      @Override
-      protected InspectionProfileModifiableModel getInspectionProfile() {
-        return myProfile;
-      }
-
-      @Override
-      protected void postProcessModification() {
-        loadDescriptorsConfigs(true);
-        SingleInspectionProfilePanel.this.postProcessModification();
-      }
-    });
-
 
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
     actionToolbar.setTargetComponent(this);
@@ -713,10 +709,12 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private boolean includeDoNotShow(List<InspectionConfigTreeNode> nodes) {
     final Project project = myProjectProfileManager.getProject();
-    return !nodes.stream()
-      .filter(node -> myProfile.getToolDefaultState(node.getKey().toString(), project).getTool() instanceof GlobalInspectionToolWrapper)
-      .findFirst()
-      .isPresent();
+    return nodes
+      .stream()
+      .noneMatch(node -> {
+        final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
+        return tool instanceof GlobalInspectionToolWrapper && ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper() == null;
+      });
   }
 
   private void fillTreeData(@Nullable String filter, boolean forceInclude) {
@@ -749,7 +747,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         fillTreeData(filter, false);
       }
     }
-    TreeUtil.sort(myRoot, new InspectionsConfigTreeComparator());
+    TreeUtil.sortRecursively(myRoot, new InspectionsConfigTreeComparator());
   }
 
   // TODO 134099: see IntentionDescriptionPanel#readHTML
@@ -1091,9 +1089,25 @@ public class SingleInspectionProfilePanel extends JPanel {
     mainSplitter.setSecondComponent(rightSplitter);
     mainSplitter.setHonorComponentsMinimumSize(false);
 
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(northPanel, BorderLayout.NORTH);
-    panel.add(mainSplitter, BorderLayout.CENTER);
+    final JPanel inspectionTreePanel = new JPanel(new BorderLayout());
+    inspectionTreePanel.add(northPanel, BorderLayout.NORTH);
+    inspectionTreePanel.add(mainSplitter, BorderLayout.CENTER);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(inspectionTreePanel, BorderLayout.CENTER);
+    final JBCheckBox disableNewInspectionsCheckBox = new JBCheckBox("Disable new inspections by default",
+                                                                    getProfile().isProfileLocked());
+    panel.add(disableNewInspectionsCheckBox, BorderLayout.SOUTH);
+    disableNewInspectionsCheckBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        final boolean enabled = disableNewInspectionsCheckBox.isSelected();
+        final InspectionProfileImpl profile = getProfile();
+        if (profile != null) {
+          profile.lockProfile(enabled);
+        }
+      }
+    });
     return panel;
   }
 

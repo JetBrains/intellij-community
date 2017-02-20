@@ -37,11 +37,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,6 +202,13 @@ public class ParameterInfoController implements Disposable {
       }
     }, this);
 
+    MessageBusConnection connection = project.getMessageBus().connect(this);
+    connection.subscribe(ExternalParameterInfoChangesProvider.TOPIC, (e, offset) -> {
+      if (e != myEditor || myLbraceMarker.getStartOffset() != offset) return;
+      myAlarm.cancelAllRequests();
+      addAlarmRequest();
+    });
+
     PropertyChangeListener lookupListener = new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
@@ -275,7 +284,7 @@ public class ParameterInfoController implements Disposable {
       return;
     }
 
-    final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    final PsiFile file =  PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
     CharSequence chars = myEditor.getDocument().getCharsSequence();
     boolean noDelimiter = myHandler instanceof ParameterInfoHandlerWithTabActionSupport &&
                           ((ParameterInfoHandlerWithTabActionSupport)myHandler).getActualParameterDelimiterType() == TokenType.WHITE_SPACE;

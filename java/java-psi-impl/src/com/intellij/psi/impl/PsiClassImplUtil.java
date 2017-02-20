@@ -120,7 +120,7 @@ public class PsiClassImplUtil {
                                                         boolean stopOnFirst) {
     final PsiMethod[] methodsByName = aClass.findMethodsByName(patternMethod.getName(), checkBases);
     if (methodsByName.length == 0) return Collections.emptyList();
-    final List<PsiMethod> methods = new SmartList<PsiMethod>();
+    final List<PsiMethod> methods = new SmartList<>();
     final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
     for (final PsiMethod method : methodsByName) {
       final PsiClass superClass = method.getContainingClass();
@@ -169,7 +169,7 @@ public class PsiClassImplUtil {
           break;
       }
 
-      List<PsiMember> list = new ArrayList<PsiMember>();
+      List<PsiMember> list = new ArrayList<>();
       for (PsiMember member : members) {
         if (name.equals(member.getName())) {
           list.add(member);
@@ -188,7 +188,7 @@ public class PsiClassImplUtil {
   private static <T extends PsiMember> List<T> getAllByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
     List<Pair<T, PsiSubstitutor>> pairs = getAllWithSubstitutorsByMap(aClass, type);
 
-    final List<T> ret = new ArrayList<T>(pairs.size());
+    final List<T> ret = new ArrayList<>(pairs.size());
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < pairs.size(); i++) {
       Pair<T, PsiSubstitutor> pair = pairs.get(i);
@@ -250,20 +250,17 @@ public class PsiClassImplUtil {
     }
   }
 
-  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = new NullableFunction<ClassIconRequest, Icon>() {
-    @Override
-    public Icon fun(ClassIconRequest r) {
-      if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
+  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = (NullableFunction<ClassIconRequest, Icon>)r -> {
+    if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
 
-      final boolean isLocked = BitUtil.isSet(r.flags, Iconable.ICON_FLAG_READ_STATUS) && !r.psiClass.isWritable();
-      Icon symbolIcon = r.symbolIcon != null
-                        ? r.symbolIcon
-                        : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
-      RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(symbolIcon, r.psiClass, isLocked);
-      Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
-      Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
-      return result;
-    }
+    final boolean isLocked = BitUtil.isSet(r.flags, Iconable.ICON_FLAG_READ_STATUS) && !r.psiClass.isWritable();
+    Icon symbolIcon = r.symbolIcon != null
+                      ? r.symbolIcon
+                      : ElementPresentationUtil.getClassIconOfKind(r.psiClass, ElementPresentationUtil.getClassKind(r.psiClass));
+    RowIcon baseIcon = ElementPresentationUtil.createLayeredIcon(symbolIcon, r.psiClass, isLocked);
+    Icon result = ElementPresentationUtil.addVisibilityIcon(r.psiClass, r.flags, baseIcon);
+    Iconable.LastComputedIcon.put(r.psiClass, result, r.flags);
+    return result;
   };
 
   public static Icon getClassIcon(final int flags, @NotNull PsiClass aClass) {
@@ -388,7 +385,7 @@ public class PsiClassImplUtil {
             String currentName = ((PsiMember)element).getName();
             List<PsiMember> listByName = map.get(currentName);
             if (listByName == null) {
-              listByName = ContainerUtil.newArrayList();
+              listByName = ContainerUtil.newSmartList();
               map.put(currentName, listByName);
             }
             listByName.add((PsiMember)element);
@@ -659,7 +656,7 @@ public class PsiClassImplUtil {
                                                              final boolean isRaw,
                                                              @NotNull final LanguageLevel languageLevel,
                                                              @NotNull final GlobalSearchScope resolveScope) {
-    if (visited == null) visited = new THashSet<PsiClass>();
+    if (visited == null) visited = new THashSet<>();
     if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
@@ -718,13 +715,9 @@ public class PsiClassImplUtil {
     if (last instanceof PsiReferenceList) return true;
 
     final Set<PsiClass> visited1 = visited;
-    return processSuperTypes(aClass, state.get(PsiSubstitutor.KEY), factory, languageLevel, resolveScope, new PairProcessor<PsiClass, PsiSubstitutor>() {
-      @Override
-      public boolean process(PsiClass superClass, PsiSubstitutor finalSubstitutor) {
-        return processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited1, last, place,
-                                          languageLevel, isRaw, resolveScope);
-      }
-    });
+    return processSuperTypes(aClass, state.get(PsiSubstitutor.KEY), factory, languageLevel, resolveScope,
+                             (superClass, finalSubstitutor) -> processDeclarationsInClass(superClass, processor, state.put(PsiSubstitutor.KEY, finalSubstitutor), visited1, last, place,
+                                                                                                               languageLevel, isRaw, resolveScope));
   }
 
   @Nullable
@@ -908,7 +901,7 @@ public class PsiClassImplUtil {
     if (referencedTypes.length == 0) {
       return PsiClass.EMPTY_ARRAY;
     }
-    final List<PsiClass> result = new ArrayList<PsiClass>(referencedTypes.length);
+    final List<PsiClass> result = new ArrayList<>(referencedTypes.length);
     for (PsiClassType referencedType : referencedTypes) {
       final PsiClass psiClass = referencedType.resolve();
       if (psiClass != null && psiClass.isInterface()) {
@@ -975,7 +968,7 @@ public class PsiClassImplUtil {
                                                                                             boolean checkBases) {
     if (!checkBases) {
       final PsiMethod[] methodsByName = psiClass.findMethodsByName(name, false);
-      final List<Pair<PsiMethod, PsiSubstitutor>> ret = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>(methodsByName.length);
+      final List<Pair<PsiMethod, PsiSubstitutor>> ret = new ArrayList<>(methodsByName.length);
       for (final PsiMethod method : methodsByName) {
         ret.add(Pair.create(method, PsiSubstitutor.EMPTY));
       }
@@ -990,14 +983,11 @@ public class PsiClassImplUtil {
   private static <T extends PsiMember> List<Pair<T, PsiSubstitutor>> withSubstitutors(@NotNull final PsiClass psiClass, PsiMember[] members) {
     final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(psiClass, psiClass.getResolveScope());
     final LanguageLevel level = PsiUtil.getLanguageLevel(psiClass);
-    return ContainerUtil.map(members, new Function<PsiMember, Pair<T, PsiSubstitutor>>() {
-      @Override
-      public Pair<T, PsiSubstitutor> fun(PsiMember member) {
-        PsiClass containingClass = member.getContainingClass();
-        PsiSubstitutor substitutor = containingClass == null ? null : hierarchy.getSuperMembersSubstitutor(containingClass, level);
-        //noinspection unchecked
-        return Pair.create((T)member, substitutor == null ? PsiSubstitutor.EMPTY : substitutor);
-      }
+    return ContainerUtil.map(members, member -> {
+      PsiClass containingClass = member.getContainingClass();
+      PsiSubstitutor substitutor = containingClass == null ? null : hierarchy.getSuperMembersSubstitutor(containingClass, level);
+      //noinspection unchecked
+      return Pair.create((T)member, substitutor == null ? PsiSubstitutor.EMPTY : substitutor);
     });
   }
 
@@ -1016,7 +1006,7 @@ public class PsiClassImplUtil {
     }
     if (upperBound instanceof PsiIntersectionType) {
       final PsiType[] conjuncts = ((PsiIntersectionType)upperBound).getConjuncts();
-      final List<PsiClassType> result = new ArrayList<PsiClassType>();
+      final List<PsiClassType> result = new ArrayList<>();
       for (PsiType conjunct : conjuncts) {
         if (conjunct instanceof PsiClassType) {
           result.add((PsiClassType)conjunct);
@@ -1238,7 +1228,7 @@ public class PsiClassImplUtil {
       PsiParameter parameter2 = parameters2[i];
       PsiType type1 = parameter1.getType();
       PsiType type2 = parameter2.getType();
-      if (!compareParamTypes(manager, type1, type2, new HashSet<String>())) return false;
+      if (!compareParamTypes(manager, type1, type2, new HashSet<>())) return false;
     }
     return true;
   }

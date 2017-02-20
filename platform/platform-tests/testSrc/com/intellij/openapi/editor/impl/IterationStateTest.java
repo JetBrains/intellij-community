@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -71,10 +72,10 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     mouse().pressAt(0, 2).dragTo(2, 4).release();
     verifySplitting(false,
                     new Segment(0, 1, DEFAULT_BACKGROUND),
-                    new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(2, SELECTION_BACKGROUND),
+                    new Segment(1, 2, DEFAULT_BACKGROUND),
                     new Segment(2, 4, DEFAULT_BACKGROUND),
                     new Segment(4, 5, SELECTION_BACKGROUND),
-                    new Segment(5, 6, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
+                    new Segment(5, 6, DEFAULT_BACKGROUND),
                     new Segment(6, 8, CARET_ROW_BACKGROUND),
                     new Segment(8, 10, SELECTION_BACKGROUND),
                     new Segment(10, 11, CARET_ROW_BACKGROUND));
@@ -88,13 +89,12 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     mouse().pressAt(0, 2).dragTo(2, 6).release();
     verifySplitting(false,
                     new Segment(0, 1, DEFAULT_BACKGROUND),
-                    new Segment(1, 2, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(4, SELECTION_BACKGROUND),
+                    new Segment(1, 2, DEFAULT_BACKGROUND),
                     new Segment(2, 4, DEFAULT_BACKGROUND),
                     new Segment(4, 5, SELECTION_BACKGROUND),
-                    new Segment(5, 6, DEFAULT_BACKGROUND).plus(3, SELECTION_BACKGROUND),
+                    new Segment(5, 6, DEFAULT_BACKGROUND),
                     new Segment(6, 8, CARET_ROW_BACKGROUND),
-                    new Segment(8, 11, SELECTION_BACKGROUND),
-                    new Segment(11, 11, null).plus(1, SELECTION_BACKGROUND));
+                    new Segment(8, 11, SELECTION_BACKGROUND));
   }
 
   public void testColumnModeBlockSelectionAtLastEmptyLine() {
@@ -104,8 +104,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     mouse().pressAt(1, 1).dragTo(1, 2).release();
     verifySplitting(false,
                     new Segment(0, 1, DEFAULT_BACKGROUND),
-                    new Segment(1, 2, DEFAULT_BACKGROUND),
-                    new Segment(2, 2, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
+                    new Segment(1, 2, DEFAULT_BACKGROUND));
   }
 
   public void testColumnModeBlockSelectionAtEmptyLines() {
@@ -113,8 +112,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     setColumnModeOn();
     mouse().pressAt(0, 1).dragTo(1, 2).release();
     verifySplitting(false,
-                    new Segment(0, 1, DEFAULT_BACKGROUND).plus(1, DEFAULT_BACKGROUND).plus(1, SELECTION_BACKGROUND),
-                    new Segment(1, 1, null).plus(1, CARET_ROW_BACKGROUND).plus(1, SELECTION_BACKGROUND));
+                    new Segment(0, 1, DEFAULT_BACKGROUND));
   }
 
   public void testColumnModeSelectionWithCurrentBreakpointHighlighting() {
@@ -135,7 +133,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     verifySplitting(false,
                     new Segment(0, 4, currentDebuggingLineColor),
                     new Segment(4, 5, SELECTION_BACKGROUND),
-                    new Segment(5, 6, currentDebuggingLineColor).plus(1, SELECTION_BACKGROUND),
+                    new Segment(5, 6, currentDebuggingLineColor),
                     new Segment(6, 11, DEFAULT_BACKGROUND));
   }
 
@@ -160,7 +158,7 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     init("abc");
     myFixture.getEditor().getColorsScheme().setAttributes(HighlighterColors.TEXT, 
                                                           new TextAttributes(Color.black, Color.white, null, null, Font.BOLD));
-    IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 0, 3, false);
+    IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 0, 3, null, false, false, true, false);
     assertFalse(it.atEnd());
     assertEquals(0, it.getStartOffset());
     assertEquals(3, it.getEndOffset());
@@ -170,33 +168,21 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
 
   private void verifySplitting(boolean checkForegroundColor, @NotNull Segment... expectedSegments) {
     EditorEx editor = (EditorEx)myFixture.getEditor();
-    IterationState iterationState = new IterationState(editor, 0, editor.getDocument().getTextLength(), true);
+    IterationState.CaretData caretData = IterationState.createCaretData(editor);
+    IterationState iterationState = new IterationState(editor, 0, editor.getDocument().getTextLength(),
+                                                       caretData, false, false, true, false);
     List<Segment> actualSegments = new ArrayList<>();
     do {
       Segment segment = new Segment(iterationState.getStartOffset(),
                                     iterationState.getEndOffset(),
                                     checkForegroundColor ? iterationState.getMergedAttributes().getForegroundColor()
                                                          : iterationState.getMergedAttributes().getBackgroundColor());
-      readPastLineState(iterationState, segment);
       actualSegments.add(segment);
       iterationState.advance();
     }
     while (!iterationState.atEnd());
 
-    if (iterationState.hasPastFileEndBackgroundSegments()) {
-      Segment segment = new Segment(iterationState.getEndOffset(), iterationState.getEndOffset(), null);
-      readPastLineState(iterationState, segment);
-      actualSegments.add(segment);
-    }
-
     Assert.assertArrayEquals(expectedSegments, actualSegments.toArray());
-  }
-
-  private static void readPastLineState(IterationState iterationState, Segment segment) {
-    while(iterationState.hasPastLineEndBackgroundSegment()) {
-      segment.plus(iterationState.getPastLineEndBackgroundSegmentWidth(), iterationState.getPastLineEndBackgroundAttributes().getBackgroundColor());
-      iterationState.advanceToNextPastLineEndBackgroundSegment();
-    }
   }
 
   private void init(String text) {
@@ -216,22 +202,11 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
     private final int start;
     private final int end;
     private final Color color;
-    private final List<Integer> pastLineEndSegmentWidths = new ArrayList<>();
-    private final List<Color> pastLineEndSegmentColors = new ArrayList<>();
 
     private Segment(int start, int end, Color color) {
       this.start = start;
       this.end = end;
       this.color = color;
-    }
-
-    /**
-     * Adds a past-line-end background segment
-     */
-    private Segment plus(int width, Color color) {
-      pastLineEndSegmentWidths.add(width);
-      pastLineEndSegmentColors.add(color);
-      return this;
     }
 
     @Override
@@ -244,8 +219,6 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
       if (end != segment.end) return false;
       if (start != segment.start) return false;
       if (color != null ? !color.equals(segment.color) : segment.color != null) return false;
-      if (!pastLineEndSegmentColors.equals(segment.pastLineEndSegmentColors)) return false;
-      if (!pastLineEndSegmentWidths.equals(segment.pastLineEndSegmentWidths)) return false;
 
       return true;
     }
@@ -255,8 +228,6 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
       int result = start;
       result = 31 * result + end;
       result = 31 * result + (color != null ? color.hashCode() : 0);
-      result = 31 * result + pastLineEndSegmentWidths.hashCode();
-      result = 31 * result + pastLineEndSegmentColors.hashCode();
       return result;
     }
 
@@ -266,8 +237,6 @@ public class IterationStateTest extends LightPlatformCodeInsightFixtureTestCase 
              "start=" + start +
              ", end=" + end +
              ", color=" + color +
-             (pastLineEndSegmentWidths.isEmpty() ? "" : ", pastLineEndSegmentWidths=" + pastLineEndSegmentWidths) +
-             (pastLineEndSegmentColors.isEmpty() ? "" : ", pastLineEndSegmentColors=" + pastLineEndSegmentColors) +
              '}';
     }
   }

@@ -50,7 +50,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
   final ReadWriteLock l = new ReentrantReadWriteLock();
 
   protected abstract int compareEqualStartIntervals(@NotNull IntervalNode<T> i1, @NotNull IntervalNode<T> i2);
-  private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<T>();
+  private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<>();
   private int deadReferenceCount;
 
   static class IntervalNode<E extends MutableInterval> extends RedBlackTree.Node<E> implements MutableInterval {
@@ -75,7 +75,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
       myIntervalTree = intervalTree;
       myStart = start;
       myEnd = end;
-      intervals = new SmartList<Getter<E>>(createGetter(key));
+      intervals = new SmartList<>(createGetter(key));
       setValid(true);
     }
 
@@ -172,7 +172,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
     }
 
     protected Getter<E> createGetter(@NotNull E interval) {
-      return new WeakReferencedGetter<E>(interval, myIntervalTree.myReferenceQueue);
+      return new WeakReferencedGetter<>(interval, myIntervalTree.myReferenceQueue);
     }
 
     private static class WeakReferencedGetter<T> extends WeakReference<T> implements Getter<T> {
@@ -346,8 +346,10 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
         return left;
       }
       IntervalNode<E> parent = getParent();
+      IntervalNode<E> prev = this;
       while (parent != null) {
-        if (parent.getRight() == this) break;
+        if (parent.getRight() == prev) break;
+        prev = parent;
         parent = parent.getParent();
       }
       return parent;
@@ -363,8 +365,10 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
         return right;
       }
       IntervalNode<E> parent = getParent();
+      IntervalNode<E> prev = this;
       while (parent != null) {
-        if (parent.getLeft() == this) break;
+        if (parent.getLeft() == prev) break;
+        prev = parent;
         parent = parent.getParent();
       }
       return parent;
@@ -433,13 +437,10 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
     if (root == null) return true;
 
     WalkingState.TreeGuide<IntervalNode<T>> guide = getGuide();
-    return WalkingState.processAll(root, guide, new Processor<IntervalNode<T>>() {
-      @Override
-      public boolean process(IntervalNode<T> node) {
-        if (!node.processAliveKeys(processor)) return false;
-        if (modCount != modCountBefore) throw new ConcurrentModificationException();
-        return true;
-      }
+    return WalkingState.processAll(root, guide, node -> {
+      if (!node.processAliveKeys(processor)) return false;
+      if (modCount != modCountBefore) throw new ConcurrentModificationException();
+      return true;
     });
   }
 
@@ -717,7 +718,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
     node.setLeft(null);
     node.setRight(null);
 
-    List<IntervalNode<T>> gced = new SmartList<IntervalNode<T>>();
+    List<IntervalNode<T>> gced = new SmartList<>();
     if (root == null) {
       root = node;
     }
@@ -883,7 +884,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
     }
     IntervalNode<T> parent = root.getParent();
     if (parent != null && assertInvalid && root.hasAliveKey(false)) {
-      int c = compareNodes(root, delta, parent, delta - root.delta, new SmartList<IntervalNode<T>>());
+      int c = compareNodes(root, delta, parent, delta - root.delta, new SmartList<>());
       assert c != 0;
       assert c < 0 && parent.getLeft() == root || c > 0 && parent.getRight() == root;
     }
@@ -1264,7 +1265,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
 
   private void purgeDeadNodes() {
     assertUnderWriteLock();
-    List<IntervalNode<T>> gced = new SmartList<IntervalNode<T>>();
+    List<IntervalNode<T>> gced = new SmartList<>();
     collectGced(getRoot(), gced);
     deleteNodes(gced);
     checkMax(true);
@@ -1273,12 +1274,9 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
   @Override
   public void clear() {
     l.writeLock().lock();
-    process(new Processor<T>() {
-      @Override
-      public boolean process(T t) {
-        beforeRemove(t, "Clear all");
-        return true;
-      }
+    process(t -> {
+      beforeRemove(t, "Clear all");
+      return true;
     });
     try {
       super.clear();
@@ -1426,5 +1424,66 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
         return choose().peek();
       }
     };
+  }
+
+  T findRangeMarkerAfter(@NotNull T marker) {
+    l.readLock().lock();
+    try {
+      IntervalNode<T> node = lookupNode(marker);
+
+      boolean foundMarker = false;
+      while (node != null) {
+        List<Getter<T>> intervals = node.intervals;
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < intervals.size(); i++) {
+          Getter<T> interval = intervals.get(i);
+          T m = interval.get();
+          if (m == null) continue;
+          if (m == marker) {
+            foundMarker = true;
+          }
+          else if (foundMarker) {
+            // found next to marker
+            return m;
+          }
+        }
+        node = node.next();
+        foundMarker = true; // protection against sudden removal of marker
+      }
+      return null;
+    }
+    finally {
+      l.readLock().unlock();
+    }
+  }
+
+  T findRangeMarkerBefore(@NotNull T marker) {
+    l.readLock().lock();
+    try {
+      IntervalNode<T> node = lookupNode(marker);
+
+      boolean foundMarker = false;
+      while (node != null) {
+        List<Getter<T>> intervals = node.intervals;
+        for (int i = intervals.size() - 1; i >= 0; i--) {
+          Getter<T> interval = intervals.get(i);
+          T m = interval.get();
+          if (m == null) continue;
+          if (m == marker) {
+            foundMarker = true;
+          }
+          else if (foundMarker) {
+            // found next to marker
+            return m;
+          }
+        }
+        node = node.previous();
+        foundMarker = true; // protection against sudden removal of marker
+      }
+      return null;
+    }
+    finally {
+      l.readLock().unlock();
+    }
   }
 }

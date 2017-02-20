@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -72,7 +72,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
 
   public UseDistributionWithSourcesNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         notifications.updateAllNotifications();
@@ -117,9 +117,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
         return panel;
       }
     }
-    catch (ProcessCanceledException ignored) {
-    }
-    catch (IndexNotReadyException ignored) {
+    catch (ProcessCanceledException | IndexNotReadyException ignored) {
     }
 
     return null;
@@ -159,7 +157,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
     String distributionUri = wrapperConfiguration.getDistribution().toString();
     try {
       String host = new URI(distributionUri).getHost();
-      return host.endsWith("gradle.org") && !GRADLE_SRC_DISTRIBUTION_PATTERN.matcher(distributionUri).matches();
+      return host != null && host.endsWith("gradle.org") && !GRADLE_SRC_DISTRIBUTION_PATTERN.matcher(distributionUri).matches();
     }
     catch (URISyntaxException ignore) {
     }

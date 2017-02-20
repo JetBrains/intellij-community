@@ -75,36 +75,32 @@ public class CompositeElement extends TreeElement {
   public CompositeElement clone() {
     CompositeElement clone = (CompositeElement)super.clone();
 
-    synchronized (PsiLock.LOCK) {
-      clone.firstChild = null;
-      clone.lastChild = null;
-      clone.myModificationsCount = 0;
-      clone.myWrapper = null;
-      for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
-        clone.rawAddChildrenWithoutNotifications((TreeElement)child.clone());
-      }
-      clone.clearCaches();
+    clone.firstChild = null;
+    clone.lastChild = null;
+    clone.myModificationsCount = 0;
+    clone.myWrapper = null;
+    for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
+      clone.rawAddChildrenWithoutNotifications((TreeElement)child.clone());
     }
+    clone.clearCaches();
     return clone;
   }
 
   public void subtreeChanged() {
-    synchronized (PsiLock.LOCK) {
-      CompositeElement compositeElement = this;
-      while(compositeElement != null) {
-        compositeElement.clearCaches();
-        if (!(compositeElement instanceof PsiElement)) {
-          final PsiElement psi = compositeElement.myWrapper;
-          if (psi instanceof ASTDelegatePsiElement) {
-            ((ASTDelegatePsiElement)psi).subtreeChanged();
-          }
-          else if (psi instanceof PsiFile) {
-            ((PsiFile)psi).subtreeChanged();
-          }
+    CompositeElement compositeElement = this;
+    while(compositeElement != null) {
+      compositeElement.clearCaches();
+      if (!(compositeElement instanceof PsiElement)) {
+        final PsiElement psi = compositeElement.myWrapper;
+        if (psi instanceof ASTDelegatePsiElement) {
+          ((ASTDelegatePsiElement)psi).subtreeChanged();
         }
-
-        compositeElement = compositeElement.getTreeParent();
+        else if (psi instanceof PsiFile) {
+          ((PsiFile)psi).subtreeChanged();
+        }
       }
+
+      compositeElement = compositeElement.getTreeParent();
     }
   }
 
@@ -786,12 +782,7 @@ public class CompositeElement extends TreeElement {
   @Nullable
   private PsiElement obtainStubBasedPsi() {
     AstPath path = getElementType() instanceof IStubElementType ? AstPath.getNodePath(this) : null;
-    return path == null ? null : path.getContainingFile().obtainPsi(path, new Factory<StubBasedPsiElementBase<?>>() {
-      @Override
-      public StubBasedPsiElementBase<?> create() {
-        return (StubBasedPsiElementBase<?>)createPsiNoLock();
-      }
-    });
+    return path == null ? null : path.getContainingFile().obtainPsi(path, () -> (StubBasedPsiElementBase<?>)createPsiNoLock());
   }
 
   @Override

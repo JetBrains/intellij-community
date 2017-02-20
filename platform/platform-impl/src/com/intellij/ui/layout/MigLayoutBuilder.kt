@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.ui.SeparatorComponent
+import com.intellij.ui.TextFieldWithHistory
+import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
 import com.intellij.util.SmartList
@@ -81,6 +83,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
     }
 
     lc.noVisualPadding()
+    lc.hideMode = 3
 
     container.layout = MigLayout(lc)
 
@@ -172,11 +175,15 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 }
 
 private fun addGrowIfNeed(cc: CC, component: Component) {
-  if (component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*>) {
+  if (component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton) {
+    cc.minWidth("350")
+    cc.growX()
+  }
+  else if (component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*>) {
     cc.growX()
   }
   else if (component is JPanel && component.componentCount == 1 &&
-      (component.getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) {
+           (component.getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) {
     cc.grow().push()
   }
 }
@@ -209,6 +216,19 @@ private class MigLayoutRow(private val componentConstraints: MutableMap<Componen
       }
     }
 
+  override var visible: Boolean = true
+    get() = field
+    set(value) {
+      if (field == value) {
+        return
+      }
+
+      field = value
+      for (c in components) {
+        c.isVisible = value
+      }
+    }
+
   override var subRowsEnabled: Boolean = true
     get() = field
     set(value) {
@@ -218,6 +238,17 @@ private class MigLayoutRow(private val componentConstraints: MutableMap<Componen
 
       field = value
       _subRows?.forEach { it.enabled = value }
+    }
+
+  override var subRowsVisible: Boolean = true
+    get() = field
+    set(value) {
+      if (field == value) {
+        return
+      }
+
+      field = value
+      _subRows?.forEach { it.visible = value }
     }
 
   override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?) {

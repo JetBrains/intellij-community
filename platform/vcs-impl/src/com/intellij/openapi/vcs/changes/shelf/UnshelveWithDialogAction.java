@@ -90,8 +90,8 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                             VcsBundle.message("unshelve.changelist.chooser.title"), suggestedName) {
         @Nullable
         @Override
-        protected JComponent createSouthPanel() {
-          return addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), createRemoveFilesStrategyCheckbox(project));
+        protected JComponent createDoNotAskCheckbox() {
+          return createRemoveFilesStrategyCheckbox(project);
         }
       };
 
@@ -127,8 +127,8 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
 
     @Nullable
     @Override
-    protected JComponent createSouthPanel() {
-      return addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), createRemoveFilesStrategyCheckbox(myProject));
+    protected JComponent createDoNotAskCheckbox() {
+      return createRemoveFilesStrategyCheckbox(myProject);
     }
   }
 

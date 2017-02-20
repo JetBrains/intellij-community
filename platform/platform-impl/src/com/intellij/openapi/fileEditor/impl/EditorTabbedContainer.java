@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -91,7 +95,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myWindow = window;
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
-    myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this);
+    myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this) {
+      @Override
+      public boolean hasUnderlineSelection() {
+        return UIUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
+      }
+    };
     myTabs.setBorder(new MyShadowBorder(myTabs));
     myTabs.setTransferHandler(new MyTransferHandler());
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(
@@ -137,7 +146,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       }
     });
 
-    setTabPlacement(UISettings.getInstance().EDITOR_TAB_PLACEMENT);
+    setTabPlacement(UISettings.getInstance().getEditorTabPlacement());
 
     updateTabBorder();
 
@@ -194,7 +203,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     List<String> rightIds = mgr.getIdsOn(ToolWindowAnchor.RIGHT);
     List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
 
-    if (!uiSettings.HIDE_TOOL_STRIPES && !uiSettings.PRESENTATION_MODE) {
+    if (!uiSettings.getHideToolStripes() && !uiSettings.getPresentationMode()) {
       border.top = !topIds.isEmpty() ? 1 : 0;
       border.bottom = !bottom.isEmpty() ? 1 : 0;
       border.left = !leftIds.isEmpty() ? 1 : 0;
@@ -415,9 +424,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setIcon(AllIcons.Actions.Close);
-      e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
-      e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
+      e.getPresentation().setIcon(AllIcons.Actions.CloseNew);
+      e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
+      e.getPresentation().setVisible(UISettings.getInstance().getShowCloseButton());
       e.getPresentation().setText("Close. Alt-click to close others.");
     }
 

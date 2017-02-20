@@ -105,8 +105,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     try {
       if (myProject != null) {
         FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-        VirtualFile[] openFiles = editorManager.getOpenFiles();
-        for (VirtualFile openFile : openFiles) {
+        for (VirtualFile openFile : editorManager.getOpenFiles()) {
           editorManager.closeFile(openFile);
         }
       }
@@ -134,6 +133,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
       vFiles[i] = findVirtualFile(files[i]);
+      if (vFiles[i] != null) {
+        VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFiles[i], files[i]);
+      }
     }
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
@@ -455,6 +457,8 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
         VirtualFile vFile = findVirtualFile(filePath);
+
+        VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFile, filePath);
         String ft;
         try {
           ft = VfsUtilCore.loadText(vFile);

@@ -329,11 +329,6 @@ public class ToBeMergedDialog extends DialogWrapper {
       }
 
       @Override
-      public List<Pair<String, Stress>> stressPartsOfFileName(Change change, String parentPath) {
-        return null;
-      }
-
-      @Override
       public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
         if (myAlreadyMerged.contains(change)) {
           renderer.append(" [already merged] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);

@@ -21,13 +21,9 @@ import java.awt.*;
 
 /**
  * A building block of text line layout, that knows how to draw itself, and convert between offset, column and x coordinate within itself.
- * <p>
- * Existing implementations: {@link TextFragment} subclasses and {@link TabFragment}. 
- * Adding additional ones should be done with care as the code using them relies on specific properties of these implementations 
- * (e.g. fragments that have column count different from their length, like {@link TabFragment} shouldn't be reordered visually 
- * with respect to logically surrounding fragments and always belong to LTR runs). 
  */
 interface LineFragment {
+  // offset-based
   int getLength();
 
   int getLogicalColumnCount(int startColumn);
@@ -52,8 +48,8 @@ interface LineFragment {
   // offsets are visual
   float offsetToX(float startX, int startOffset, int offset);
 
-  // columns are visual
-  void draw(Graphics2D g, float x, float y, int startColumn, int endColumn);
+  // offsets are visual
+  void draw(Graphics2D g, float x, float y, int startOffset, int endOffset);
 
   // offsets are logical
   @NotNull

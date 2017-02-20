@@ -450,7 +450,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   protected final HierarchyTreeBuilder getBuilderForType(String viewType) {
-    return myType2BuilderMap.get(viewType);
+    return viewType == null ? null : myType2BuilderMap.get(viewType);
   }
 
   protected final Iterable<HierarchyTreeBuilder> getBuilders() {
@@ -458,6 +458,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   final boolean isValidBase() {
+    if (myProject.isDisposed()) return false;
     if (PsiDocumentManager.getInstance(myProject).getUncommittedDocuments().length > 0) {
       return myCachedIsValidBase;
     }

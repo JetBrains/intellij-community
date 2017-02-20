@@ -34,8 +34,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class PsiTypesUtil {
-  @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<String, String>();
-  @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<String, String>();
+  @NonNls private static final Map<String, String> ourUnboxedTypes = new THashMap<>();
+  @NonNls private static final Map<String, String> ourBoxedTypes = new THashMap<>();
 
   static {
     ourUnboxedTypes.put(CommonClassNames.JAVA_LANG_BOOLEAN, "boolean");
@@ -74,10 +74,11 @@ public class PsiTypesUtil {
         }
       }
 
+      PsiType erasedComponentType = TypeConversionUtil.erasure(componentType);
       StringBuilder buffer = new StringBuilder();
       buffer.append(PsiKeyword.NEW);
       buffer.append(" ");
-      buffer.append(componentType.getCanonicalText());
+      buffer.append(erasedComponentType.getCanonicalText());
       buffer.append("[0]");
       for (int i = 0; i < count; i++) {
         buffer.append("[]");
@@ -204,7 +205,7 @@ public class PsiTypesUtil {
    * Return type explicitly declared in parent
    */
   @Nullable
-  public static PsiType getExpectedTypeByParent(PsiElement element) {
+  public static PsiType getExpectedTypeByParent(@NotNull PsiElement element) {
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiVariable) {
       if (PsiUtil.checkSameExpression(element, ((PsiVariable)parent).getInitializer())) {
@@ -337,7 +338,7 @@ public class PsiTypesUtil {
                                                               final PsiTypeParameter[] typeParameters) {
     if (typeParameters.length == 0) return typeParameters;
 
-    final Set<PsiTypeParameter> usedParameters = new HashSet<PsiTypeParameter>();
+    final Set<PsiTypeParameter> usedParameters = new HashSet<>();
     superReturnTypeInBaseClassType.accept(new PsiTypeVisitor<Object>(){
       @Nullable
       @Override

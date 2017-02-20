@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
 
 public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
@@ -29,6 +28,7 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
     myProject = project;
     myPanel = new CCCreateAnswerPlaceholderPanel(placeholderText, hints);
     setTitle(TITLE);
+    setResizable(false);
     init();
     initValidation();
   }
@@ -38,8 +38,7 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
   }
 
   public List<String> getHints() {
-    final List<String> hints = myPanel.getHints();
-    return hints.size() == 1 && hints.get(0).isEmpty() ? Collections.emptyList() : hints;
+    return myPanel.getHints();
   }
 
   @Nullable
@@ -51,7 +50,7 @@ public class CCCreateAnswerPlaceholderDialog extends DialogWrapper {
   @Nullable
   @Override
   public ValidationInfo doValidate() {
-    return !myPanel.getHints().isEmpty() ? null : new ValidationInfo("Type hint");
+    return null;
   }
 
   @Nullable

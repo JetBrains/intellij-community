@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.util.io
 
+import com.intellij.util.io.readCharSequence
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-private class FileUtilKtTest {
-  @Test fun testEndsWithName() {
+class FileUtilKtTest {
+  @Test
+  fun testEndsWithName() {
     assertThat(endsWithName("foo", "bar")).isFalse()
     assertThat(endsWithName("foo", "foo")).isTrue()
     assertThat(endsWithName("foo/bar", "foo")).isFalse()
@@ -27,5 +29,15 @@ private class FileUtilKtTest {
     assertThat(endsWithName("/foo", "foo")).isTrue()
     assertThat(endsWithName("fooBar", "Bar")).isFalse()
     assertThat(endsWithName("/foo/bar_bar", "bar")).isFalse()
+  }
+
+  @Test
+  fun `readCharSequence without length parameter`() {
+    fun String.read() = byteInputStream().reader().readCharSequence().toString()
+
+    assertThat("foo").isEqualTo("foo".read())
+
+    val data = "f".repeat(DEFAULT_BUFFER_SIZE + 1)
+    assertThat(data).isEqualTo(data.read())
   }
 }

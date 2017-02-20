@@ -104,16 +104,6 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
   }
 
   @Override
-  public int getDirNum() {
-    return myIdeIgnoredFilesHolder.getDirNum() + myVcsIgnoredHolderMap.values().stream().mapToInt(IgnoredFilesHolder::getDirNum).sum();
-  }
-
-  @Override
-  public int getFilesNum() {
-    return myIdeIgnoredFilesHolder.getFilesNum() + myVcsIgnoredHolderMap.values().stream().mapToInt(IgnoredFilesHolder::getFilesNum).sum();
-  }
-
-  @Override
   public void notifyVcsStarted(AbstractVcs vcs) {
     myCurrentVcs = vcs;
     if (myVcsIgnoredHolderMap.containsKey(vcs)) return;

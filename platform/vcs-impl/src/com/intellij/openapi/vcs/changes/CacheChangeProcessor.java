@@ -241,7 +241,7 @@ public abstract class CacheChangeProcessor extends CacheDiffRequestProcessor<Cac
 
     @Override
     public int hashCode() {
-      return change.hashCode();
+      return ChangeDiffRequestProducer.hashCode(change);
     }
 
     @Override

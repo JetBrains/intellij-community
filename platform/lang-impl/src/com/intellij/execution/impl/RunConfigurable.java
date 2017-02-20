@@ -78,6 +78,7 @@ class RunConfigurable extends BaseConfigurable {
       return "Defaults";
     }
   };
+  @NonNls private static final String INITIAL_VALUE_KEY = "initialValue";
 
   private volatile boolean isDisposed;
 
@@ -414,9 +415,9 @@ class RunConfigurable extends BaseConfigurable {
 
   private void sortTopLevelBranches() {
     List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
-    TreeUtil.sort(myRoot, (o1, o2) -> {
-      final Object userObject1 = ((DefaultMutableTreeNode)o1).getUserObject();
-      final Object userObject2 = ((DefaultMutableTreeNode)o2).getUserObject();
+    TreeUtil.sortRecursively(myRoot, (o1, o2) -> {
+      final Object userObject1 = o1.getUserObject();
+      final Object userObject2 = o2.getUserObject();
       if (userObject1 instanceof ConfigurationType && userObject2 instanceof ConfigurationType) {
         return ((ConfigurationType)userObject1).getDisplayName().compareTo(((ConfigurationType)userObject2).getDisplayName());
       }
@@ -557,6 +558,7 @@ class RunConfigurable extends BaseConfigurable {
       .addExtraAction(AnActionButton.fromAction(new MyEditDefaultsAction()))
       .addExtraAction(AnActionButton.fromAction(new MyCreateFolderAction()))
       .addExtraAction(AnActionButton.fromAction(new MySortFolderAction()))
+      .setMinimumSize(new JBDimension(200, 200))
       .setButtonComparator(ExecutionBundle.message("add.new.run.configuration.acrtion.name"),
                            ExecutionBundle.message("remove.run.configuration.action.name"),
                            ExecutionBundle.message("copy.configuration.action.name"),
@@ -580,13 +582,13 @@ class RunConfigurable extends BaseConfigurable {
     myRecentsLimit.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        setModified(true);
+        setModified(!Comparing.equal(myRecentsLimit.getText(), myRecentsLimit.getClientProperty(INITIAL_VALUE_KEY)));
       }
     });
     myConfirmation.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        setModified(true);
+        setModified(!Comparing.equal(myConfirmation.isSelected(), myConfirmation.getClientProperty(INITIAL_VALUE_KEY)));
       }
     });
     return bottomPanel;
@@ -620,6 +622,7 @@ class RunConfigurable extends BaseConfigurable {
     });
 
     mySplitter.setFirstComponent(createLeftPanel());
+    mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setSecondComponent(myRightPanel);
     myWholePanel.add(mySplitter, BorderLayout.CENTER);
 
@@ -638,7 +641,9 @@ class RunConfigurable extends BaseConfigurable {
     final RunManagerEx manager = getRunManager();
     final RunManagerConfig config = manager.getConfig();
     myRecentsLimit.setText(Integer.toString(config.getRecentsLimit()));
+    myRecentsLimit.putClientProperty(INITIAL_VALUE_KEY, myRecentsLimit.getText());
     myConfirmation.setSelected(config.isRestartRequiresConfirmation());
+    myConfirmation.putClientProperty(INITIAL_VALUE_KEY, myConfirmation.isSelected());
 
     for (Pair<UnnamedConfigurable, JComponent> each : myAdditionalSettings) {
       each.first.reset();
@@ -736,9 +741,7 @@ class RunConfigurable extends BaseConfigurable {
         if (userObject instanceof SingleConfigurationConfigurable) {
           final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
           settings = (RunnerAndConfigurationSettings)configurable.getSettings();
-          if (settings.isTemporary()) {
-            applyConfiguration(typeNode, configurable);
-          }
+          applyConfiguration(typeNode, configurable);
           configurationBean = new RunConfigurationBean(configurable);
         }
         else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
@@ -778,10 +781,7 @@ class RunConfigurable extends BaseConfigurable {
     }
     // try to apply all
     for (RunConfigurationBean bean : stableConfigurations) {
-      final SingleConfigurationConfigurable configurable = bean.getConfigurable();
-      if (configurable != null) {
-        applyConfiguration(typeNode, configurable);
-      }
+      applyConfiguration(typeNode, bean.getConfigurable());
     }
 
     // if apply succeeded, update the list of configurations in RunManager
@@ -800,7 +800,6 @@ class RunConfigurable extends BaseConfigurable {
     }
     for (RunConfigurationBean each : stableConfigurations) {
       toDeleteSettings.remove(each.getSettings());
-      manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch(), false);
     }
 
     for (RunnerAndConfigurationSettings each : toDeleteSettings) {
@@ -829,9 +828,8 @@ class RunConfigurable extends BaseConfigurable {
 
   private void applyConfiguration(DefaultMutableTreeNode typeNode, SingleConfigurationConfigurable<?> configurable) throws ConfigurationException {
     try {
-      if (configurable != null) {
+      if (configurable != null && configurable.isModified()) {
         configurable.apply();
-        RunManagerImpl.getInstanceImpl(myProject).fireRunConfigurationChanged(configurable.getSettings());
       }
     }
     catch (ConfigurationException e) {
@@ -866,9 +864,6 @@ class RunConfigurable extends BaseConfigurable {
           final Object userObject = configurationNode.getUserObject();
           if (userObject instanceof SingleConfigurationConfigurable) {
             SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-            if (!Comparing.strEqual(configurationSettings.get(j).getConfiguration().getName(), configurable.getConfiguration().getName())) {
-              return true;
-            }
             if (configurable.isModified()) return true;
             currentConfigurations.add(configurable.getConfiguration());
           }
@@ -1352,14 +1347,9 @@ class RunConfigurable extends BaseConfigurable {
     public void actionPerformed(final AnActionEvent e) {
       final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = getSelectedConfiguration();
       LOG.assertTrue(configurationConfigurable != null);
-      try {
-        configurationConfigurable.apply();
-      }
-      catch (ConfigurationException e1) {
-        //do nothing
-      }
       final RunnerAndConfigurationSettings originalConfiguration = configurationConfigurable.getSettings();
       if (originalConfiguration.isTemporary()) {
+        //todo Don't make 'stable' real configurations here but keep the set 'they want to be stable' until global 'Apply' action
         getRunManager().makeStable(originalConfiguration);
         adjustOrder();
       }
@@ -1377,8 +1367,7 @@ class RunConfigurable extends BaseConfigurable {
         RunnerAndConfigurationSettings settings = configuration.getSettings();
         enabled = settings != null && settings.isTemporary();
       }
-      presentation.setEnabled(enabled);
-      presentation.setVisible(enabled);
+      presentation.setEnabledAndVisible(enabled);
     }
   }
 

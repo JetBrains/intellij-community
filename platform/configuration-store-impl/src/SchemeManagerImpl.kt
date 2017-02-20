@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
                                                         val roamingType: RoamingType = RoamingType.DEFAULT,
                                                         val presentableName: String? = null,
                                                         private val isUseOldFileNameSanitize: Boolean = false,
-                                                        private val messageBus: MessageBus? = null) : SchemeManager<T>(), SafeWriteRequestor {
+                                                        private val messageBus: MessageBus? = null) : SchemesManager<T>(), SafeWriteRequestor {
   private val isLoadingSchemes = AtomicBoolean()
 
   private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
@@ -278,16 +278,15 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       val oldSchemes = schemes
       val schemes = oldSchemes.toMutableList()
       val newSchemesOffset = schemes.size
-      if (provider != null && provider.isApplicable(fileSpec, roamingType)) {
-        provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
-          catchAndLog(name) {
-            val scheme = loadScheme(name, input, schemes, filesToDelete)
-            if (readOnly && scheme != null) {
-              readOnlyExternalizableSchemes.put(scheme.name, scheme)
-            }
+      if (provider != null && provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
+        catchAndLog(name) {
+          val scheme = loadScheme(name, input, schemes, filesToDelete)
+          if (readOnly && scheme != null) {
+            readOnlyExternalizableSchemes.put(scheme.name, scheme)
           }
-          true
         }
+        true
+      }) {
       }
       else {
         ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) {
@@ -335,14 +334,14 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     loadSchemes()
 
-    (processor as? LazySchemeProcessor)?.reloaded()
+    (processor as? LazySchemeProcessor)?.reloaded(this)
   }
 
   private fun removeExternalizableSchemes() {
     // todo check is bundled/read-only schemes correctly handled
     val iterator = schemes.iterator()
     for (scheme in iterator) {
-      if (processor.getState(scheme) == SchemeState.NON_PERSISTENT) {
+      if ((scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme) == SchemeState.NON_PERSISTENT) {
         continue
       }
 
@@ -499,9 +498,9 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
     var hasSchemes = false
     val nameGenerator = UniqueNameGenerator()
-    val schemesToSave = SmartList<MUTABLE_SCHEME>()
+    val changedSchemes = SmartList<MUTABLE_SCHEME>()
     for (scheme in schemes) {
-      val state = processor.getState(scheme)
+      val state = (scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme)
       if (state == SchemeState.NON_PERSISTENT) {
         continue
       }
@@ -510,7 +509,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
       if (state != SchemeState.UNCHANGED) {
         @Suppress("UNCHECKED_CAST")
-        schemesToSave.add(scheme as MUTABLE_SCHEME)
+        changedSchemes.add(scheme as MUTABLE_SCHEME)
       }
 
       val fileName = scheme.fileName
@@ -519,7 +518,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
-    for (scheme in schemesToSave) {
+    for (scheme in changedSchemes) {
       try {
         saveScheme(scheme, nameGenerator)
       }
@@ -717,14 +716,13 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   }
 
   private fun deleteFiles(errors: MutableList<Throwable>, filesToDelete: MutableSet<String>) {
-    if (provider != null && provider.enabled) {
+    if (provider != null) {
       val iterator = filesToDelete.iterator()
       for (name in iterator) {
         errors.catch {
           val spec = "$fileSpec/$name"
-          if (provider.isApplicable(spec, roamingType)) {
+          if (provider.delete(spec, roamingType)) {
             iterator.remove()
-            provider.delete(spec, roamingType)
           }
         }
       }

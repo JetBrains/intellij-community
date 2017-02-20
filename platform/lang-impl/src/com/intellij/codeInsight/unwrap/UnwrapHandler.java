@@ -18,7 +18,6 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -26,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -54,17 +54,17 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     List<AnAction> options = collectOptions(project, editor, file);
     selectOption(options, editor, file);
   }
 
-  private List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
+  private static List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
     List<AnAction> result = new ArrayList<>();
 
     UnwrapDescriptor d = getUnwrapDescription(file);
@@ -80,7 +80,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     return LanguageUnwrappers.INSTANCE.forLanguage(file.getLanguage());
   }
 
-  private AnAction createUnwrapAction(Unwrapper u, PsiElement el, Editor ed, Project p) {
+  private static AnAction createUnwrapAction(Unwrapper u, PsiElement el, Editor ed, Project p) {
     return new MyUnwrapAction(p, ed, u, el);
   }
 
@@ -97,10 +97,10 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     showPopup(options, editor);
   }
 
-  private void showPopup(final List<AnAction> options, Editor editor) {
+  private static void showPopup(final List<AnAction> options, Editor editor) {
     final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
 
-    DefaultListModel m = new DefaultListModel();
+    DefaultListModel<String> m = new DefaultListModel<>();
     for (AnAction a : options) {
       m.addElement(((MyUnwrapAction)a).getName());
     }
@@ -192,7 +192,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     private void saveCaretPosition(PsiFile file) {
       int offset = myEditor.getCaretModel().getOffset();
       PsiElement el = file.findElementAt(offset);
-
+      if (el == null) return;
       int innerOffset = offset - el.getTextOffset();
       el.putCopyableUserData(CARET_POS_KEY, innerOffset);
     }

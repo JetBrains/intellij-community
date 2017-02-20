@@ -16,10 +16,9 @@
 package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,6 +88,8 @@ public class MergePanel2 implements DiffViewer {
   private final MyDataProvider myProvider;
 
   public MergePanel2(DialogBuilder builder, @NotNull Disposable parent) {
+    UsageTrigger.trigger("diff.MergePanel2");
+
     ArrayList<EditorPlace> editorPlaces = new ArrayList<>();
     EditorPlace.EditorListener placeListener = new EditorPlace.EditorListener() {
       public void onEditorCreated(EditorPlace place) {

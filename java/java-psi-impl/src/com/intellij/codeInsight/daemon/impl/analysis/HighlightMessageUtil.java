@@ -27,6 +27,11 @@ public class HighlightMessageUtil {
 
   @Nullable
   public static String getSymbolName(@NotNull PsiElement symbol, PsiSubstitutor substitutor) {
+    return getSymbolName(symbol, substitutor, PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.USE_INTERNAL_CANONICAL_TEXT);
+  }
+
+  @Nullable
+  public static String getSymbolName(@NotNull PsiElement symbol, PsiSubstitutor substitutor, final int parameterOptions) {
     String symbolName = null;
 
     if (symbol instanceof PsiClass) {
@@ -43,7 +48,7 @@ public class HighlightMessageUtil {
     else if (symbol instanceof PsiMethod) {
       symbolName = PsiFormatUtil.formatMethod((PsiMethod)symbol,
                                               substitutor, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                              PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES | PsiFormatUtilBase.USE_INTERNAL_CANONICAL_TEXT);
+                                              parameterOptions);
     }
     else if (symbol instanceof PsiVariable) {
       symbolName = ((PsiVariable)symbol).getName();

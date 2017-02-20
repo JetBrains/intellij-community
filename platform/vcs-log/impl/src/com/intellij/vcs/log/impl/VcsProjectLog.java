@@ -17,17 +17,20 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogTabsProperties;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAny;
@@ -39,14 +42,19 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
+
 public class VcsProjectLog {
+  private static final Logger LOG = Logger.getInstance(VcsProjectLog.class);
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED =
     Topic.create("Project Vcs Log Created or Disposed", ProjectLogListener.class);
+  private static final int RECREATE_LOG_TRIES = 5;
   @NotNull private final Project myProject;
   @NotNull private final MessageBus myMessageBus;
   @NotNull private final VcsLogTabsProperties myUiProperties;
 
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
+  private int myRecreatedLogCount = 0;
   private volatile VcsLogUiImpl myUi;
 
   public VcsProjectLog(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
@@ -69,7 +77,7 @@ public class VcsProjectLog {
 
   @NotNull
   public JComponent initMainLog(@NotNull String contentTabName) {
-    myUi = myLogManager.getValue().createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName, null);
+    myUi = myLogManager.getValue().createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, contentTabName);
     return new VcsLogPanel(myLogManager.getValue(), myUi);
   }
 
@@ -95,6 +103,28 @@ public class VcsProjectLog {
         createLog();
       }
     });
+  }
+
+  @CalledInAwt
+  private void recreateOnError(@NotNull Throwable t) {
+    if (++myRecreatedLogCount > RECREATE_LOG_TRIES) {
+      myRecreatedLogCount = 0;
+
+      String message = String
+        .format("VCS Log was recreated %d times due to data corruption\nDelete %s directory and restart %s if this happens often.\n%s",
+                myRecreatedLogCount, LOG_CACHE, ApplicationNamesInfo.getInstance().getFullProductName(), t.getMessage());
+      LOG.error(message, t);
+
+      VcsLogManager manager = getLogManager();
+      if (manager != null && manager.isLogVisible()) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+      }
+    }
+    else {
+      LOG.debug("Recreating VCS Log after storage corruption", t);
+    }
+
+    recreateLog();
   }
 
   @CalledInAwt
@@ -142,7 +172,7 @@ public class VcsProjectLog {
     @NotNull
     @CalledInAwt
     protected synchronized VcsLogManager compute() {
-      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, VcsProjectLog.this::recreateLog);
+      return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, VcsProjectLog.this::recreateOnError);
     }
 
     @CalledInAwt

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
@@ -44,13 +43,13 @@ public class GebUtil {
   public static boolean contributeMembersInsideTest(PsiScopeProcessor processor,
                                                     PsiElement place,
                                                     ResolveState state) {
-    GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(place.getProject());
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(place.getProject());
 
-    PsiClass browserClass = groovyPsiManager.findClassWithCache("geb.Browser", place.getResolveScope());
+    PsiClass browserClass = facade.findClass("geb.Browser", place.getResolveScope());
     if (browserClass != null) {
       if (!browserClass.processDeclarations(processor, state, null, place)) return false;
 
-      PsiClass pageClass = groovyPsiManager.findClassWithCache("geb.Page", place.getResolveScope());
+      PsiClass pageClass = facade.findClass("geb.Page", place.getResolveScope());
 
       if (pageClass != null) {
         if (!pageClass.processDeclarations(processor, state, null, place)) return false;

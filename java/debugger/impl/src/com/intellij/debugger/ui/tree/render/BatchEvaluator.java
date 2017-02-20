@@ -216,13 +216,7 @@ public class BatchEvaluator {
       }
       return true;
     }
-    catch (ClassNotLoadedException e) {
-    }
-    catch (InvalidTypeException e) {
-    }
-    catch (EvaluateException e) {
-    }
-    catch (ObjectCollectedException e) {
+    catch (ClassNotLoadedException | ObjectCollectedException | EvaluateException | InvalidTypeException e) {
     }
     return false;
   }

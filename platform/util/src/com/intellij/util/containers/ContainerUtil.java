@@ -1832,12 +1832,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T,V> List<V> map(@NotNull Collection<? extends T> iterable, @NotNull Function<T, V> mapping) {
-    if (iterable.isEmpty()) return emptyList();
-    List<V> result = new ArrayList<V>(iterable.size());
-    for (T t : iterable) {
-      result.add(mapping.fun(t));
-    }
-    return result;
+    return ContainerUtilRt.map2List(iterable, mapping);
   }
 
   /**
@@ -2051,6 +2046,15 @@ public class ContainerUtil extends ContainerUtilRt {
       if (condition.value(t)) return true;
     }
     return false;
+  }
+
+  @Contract(pure=true)
+  public static <T> int count(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
+    int count = 0;
+    for (final T t : iterable) {
+      if (condition.value(t)) count++;
+    }
+    return count;
   }
 
   @NotNull
@@ -2752,6 +2756,11 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> Set<T> notNullize(@Nullable Set<T> set) {
     //noinspection unchecked
     return set == null ? Collections.<T>emptySet() : set;
+  }
+
+  @Contract(pure = true)
+  public static <T> boolean startsWith(@NotNull List<T> list, @NotNull List<T> prefix) {
+    return list.size() >= prefix.size() && list.subList(0, prefix.size()).equals(prefix);
   }
 
   @Nullable

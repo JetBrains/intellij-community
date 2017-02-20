@@ -20,137 +20,137 @@ import com.intellij.diff.DiffTestCase
 class MergeResolveUtilTest : DiffTestCase() {
   fun testSimple() {
     test(
-        "",
-        "",
-        "",
-        ""
+      "",
+      "",
+      "",
+      ""
     )
 
     test(
-        "x x x",
-        "x x x",
-        "x x x",
-        "x x x"
+      "x x x",
+      "x x x",
+      "x x x",
+      "x x x"
     )
 
     test(
-        "x x x",
-        "x Y x",
-        "x x x",
-        "x Y x"
+      "x x x",
+      "x Y x",
+      "x x x",
+      "x Y x"
     )
 
     test(
-        "x x",
-        "x x",
-        "x Y x",
-        "x Y x"
+      "x x",
+      "x x",
+      "x Y x",
+      "x Y x"
     )
 
     test(
-        "x X x",
-        "x x",
-        "x X x",
-        "x x"
+      "x X x",
+      "x x",
+      "x X x",
+      "x x"
     )
   }
 
   fun testSameModification() {
     test(
-        "x x x",
-        "x Y x",
-        "x Y x",
-        "x Y x"
+      "x x x",
+      "x Y x",
+      "x Y x",
+      "x Y x"
     )
 
     test(
-        "x x",
-        "x Y x",
-        "x Y x",
-        "x Y x"
+      "x x",
+      "x Y x",
+      "x Y x",
+      "x Y x"
     )
 
     test(
-        "x X x",
-        "x x",
-        "x x",
-        "x x"
+      "x X x",
+      "x x",
+      "x x",
+      "x x"
     )
   }
 
   fun testNonConflictingChanges() {
     test(
-        "x x x",
-        "x Y x x",
-        "x x Z x",
-        "x Y x Z x"
+      "x x x",
+      "x Y x x",
+      "x x Z x",
+      "x Y x Z x"
     )
 
     test(
-        "x",
-        "x Y",
-        "Z x",
-        "Z x Y"
+      "x",
+      "x Y",
+      "Z x",
+      "Z x Y"
     )
 
     test(
-        "x x",
-        "x",
-        "Z x x",
-        "Z x"
+      "x x",
+      "x",
+      "Z x x",
+      "Z x"
     )
   }
 
   fun testFailure() {
     test(
-        "x x x",
-        "x Y x",
-        "x Z x",
-        null
+      "x x x",
+      "x Y x",
+      "x Z x",
+      null
     )
 
     test(
-        "x x",
-        "x Y x",
-        "x Z x",
-        null
+      "x x",
+      "x Y x",
+      "x Z x",
+      null
     )
   }
 
   fun testNonFailureConflicts() {
     testGreedy(
-        "x X x",
-        "x x",
-        "x X Y x",
-        "x Y x"
+      "x X x",
+      "x x",
+      "x X Y x",
+      "x Y x"
     )
 
     testGreedy(
-        "x X x",
-        "x x",
-        "x Y X x",
-        "x Y x"
+      "x X x",
+      "x x",
+      "x Y X x",
+      "x Y x"
     )
 
     testGreedy(
-        "x X Y x",
-        "x X x",
-        "x Y x",
-        "x x"
+      "x X Y x",
+      "x X x",
+      "x Y x",
+      "x x"
     )
 
     testGreedy(
-        "x X Y Z x",
-        "x X x",
-        "x Z x",
-        "x x"
+      "x X Y Z x",
+      "x X x",
+      "x Z x",
+      "x x"
     )
 
     testGreedy(
-        "x A B C D E F G H K x",
-        "x C F K x",
-        "x A D H x",
-        "x x"
+      "x A B C D E F G H K x",
+      "x C F K x",
+      "x A D H x",
+      "x x"
     )
   }
 
@@ -158,32 +158,32 @@ class MergeResolveUtilTest : DiffTestCase() {
     // these cases might be a failure as well
 
     testGreedy(
-        "x X x",
-        "x x",
-        "x Z x",
-        "xZ x"
+      "x X x",
+      "x x",
+      "x Z x",
+      "xZ x"
     )
 
     testGreedy(
-        "x X X x",
-        "x X Y X x",
-        "x x",
-        "x Y x"
+      "x X X x",
+      "x X Y X x",
+      "x x",
+      "x Y x"
     )
 
     testGreedy(
-        "x X x",
-        "x x",
-        "x Y x",
-        "xY x"
+      "x X x",
+      "x x",
+      "x Y x",
+      "xY x"
     )
 
 
     testGreedy(
-        "x X X x",
-        "x Y x",
-        "x X Y x",
-        "x Y x"
+      "x X X x",
+      "x Y x",
+      "x X Y x",
+      "x Y x"
     )
   }
 

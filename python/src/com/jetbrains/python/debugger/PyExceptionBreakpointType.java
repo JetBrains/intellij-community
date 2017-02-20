@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.AbstractTreeClassChooserDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TooltipWithClickableLinks;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -34,12 +38,11 @@ import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
+
+import static com.jetbrains.python.debugger.PyDebugSupportUtils.DEBUGGER_WARNING_MESSAGE;
 
 
 public class PyExceptionBreakpointType
@@ -170,6 +173,7 @@ public class PyExceptionBreakpointType
     private JCheckBox myNotifyOnTerminateCheckBox;
     private JCheckBox myNotifyOnRaiseCheckBox;
     private JCheckBox myIgnoreLibrariesCheckBox;
+    private JBLabel myWarningIcon;
 
     @NotNull
     @Override
@@ -182,8 +186,16 @@ public class PyExceptionBreakpointType
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(myNotifyOnTerminateCheckBox, BorderLayout.NORTH);
       notificationsBox.add(panel);
-      panel = new JPanel(new BorderLayout());
-      panel.add(myNotifyOnRaiseCheckBox, BorderLayout.NORTH);
+      panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+      panel.setBorder(JBUI.Borders.empty());
+      panel.add(myNotifyOnRaiseCheckBox, FlowLayout.LEFT);
+      myWarningIcon = new JBLabel(AllIcons.General.BalloonWarning);
+      IdeTooltipManager.getInstance().setCustomTooltip(
+        myWarningIcon,
+        new TooltipWithClickableLinks.ForBrowser(myWarningIcon,
+                                                 DEBUGGER_WARNING_MESSAGE));
+      myWarningIcon.setBorder(JBUI.Borders.emptyLeft(5));
+      panel.add(myWarningIcon);
       notificationsBox.add(panel);
       panel = new JPanel(new BorderLayout());
       panel.add(myIgnoreLibrariesCheckBox, BorderLayout.NORTH);

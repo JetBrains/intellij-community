@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,7 +207,9 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     for (String waiting : waitingMap.keySet()) {
       final ThreadState waitingThread = nameToThreadMap.get(waiting);
       final ThreadState awaitedThread = nameToThreadMap.get(waitingMap.get(waiting));
-      awaitedThread.addWaitingThread(waitingThread);
+      if (waitingThread != null && awaitedThread != null) { //zombie
+        awaitedThread.addWaitingThread(waitingThread);
+      }
     }
 
     // detect simple deadlocks
@@ -305,14 +307,8 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
       methodName.append(e.getMessage());
     }
 
-    int lineNumber;
-    try {
-      lineNumber = location.lineNumber();
-    }
-    catch (Throwable e) {
-      lineNumber = -1;
-    }
-    return DebuggerBundle.message("export.threads.stackframe.format", methodName.toString(), sourceName, lineNumber);
+    return DebuggerBundle.message("export.threads.stackframe.format", methodName.toString(), sourceName,
+                                  DebuggerUtilsEx.getLineNumber(location, false));
   }
 
   private static String threadName(ThreadReference threadReference) {

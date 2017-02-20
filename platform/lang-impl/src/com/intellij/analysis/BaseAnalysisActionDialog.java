@@ -38,7 +38,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -65,7 +67,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private JRadioButton myFileButton;
   private ScopeChooserCombo myScopeCombo;
   private JCheckBox myInspectTestSource;
-  private JComboBox myChangeLists;
+  private JComboBox<String> myChangeLists;
   private TitledSeparator myTitledSeparator;
   private final Project myProject;
   private final boolean myRememberScope;
@@ -128,12 +130,28 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
     myUncommitedFilesButton.setVisible(hasVCS);
 
-    DefaultComboBoxModel model = new DefaultComboBoxModel();
+    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
     model.addElement(ALL);
     final List<? extends ChangeList> changeLists = changeListManager.getChangeListsCopy();
     for (ChangeList changeList : changeLists) {
       model.addElement(changeList.getName());
     }
+    myChangeLists.setRenderer(new ListCellRendererWrapper<String>() {
+      @Override
+      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        int availableWidth = myPanel.getWidth() - myUncommitedFilesButton.getWidth() - JBUI.scale(10);
+        if (availableWidth <= 0) {
+          availableWidth = JBUI.scale(200);
+        }
+        if (list.getFontMetrics(list.getFont()).stringWidth(value) < availableWidth) {
+          setText(value);
+        }
+        else {
+          setText(StringUtil.trimLog(value, 50));
+        }
+      }
+    });
+
     myChangeLists.setModel(model);
     myChangeLists.setEnabled(myUncommitedFilesButton.isSelected());
     myChangeLists.setVisible(hasVCS);

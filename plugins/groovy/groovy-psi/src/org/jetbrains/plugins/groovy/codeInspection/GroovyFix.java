@@ -38,18 +38,13 @@ public abstract class GroovyFix implements LocalQuickFix {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       throw new UnsupportedOperationException();
     }
   };
   public static final GroovyFix[] EMPTY_ARRAY = new GroovyFix[0];
 
-  //to appear in "Apply Fix" statement when multiple Quick Fixes exist
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return "";
-  }
+
 
   @Override
   public void applyFix(@NotNull Project project,
@@ -73,9 +68,7 @@ public abstract class GroovyFix implements LocalQuickFix {
 
 
   protected static void replaceExpression(GrExpression expression, String newExpression) {
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-    final GrExpression newCall = factory.createExpressionFromText(newExpression);
-    expression.replaceWithExpression(newCall, true);
+    GrInspectionUtil.replaceExpression(expression, newExpression);
   }
 
   protected static void replaceStatement(GrStatement statement, String newStatement) {

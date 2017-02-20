@@ -37,7 +37,7 @@ public interface CopyPastePreProcessor {
   String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, String text);
 
   /**
-   * Replaces pasted text. <code>text</code> value should be returned if no processing is required.
+   * Replaces pasted text. {@code text} value should be returned if no processing is required.
    */
   @NotNull
   String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText);

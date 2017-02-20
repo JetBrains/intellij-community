@@ -32,7 +32,7 @@ public abstract class DocumentationDelegateProvider {
    * Computes PsiDocCommentOwner to get documentation from.
    * </p>
    * <p>
-   * Suppose there is a <code>Foo#bar()</code> with doc and <code>Baz#bar()</code> without doc:
+   * Suppose there is a {@code Foo#bar()} with doc and {@code Baz#bar()} without doc:
    * <pre>
    * class Foo {
    *   /**
@@ -44,8 +44,8 @@ public abstract class DocumentationDelegateProvider {
    *   void bar() {}
    * }
    * </pre>
-   * If it is needed to display doc from <code>Foo#bar()</code> when doc for <code>Baz#bar()</code> is queried
-   * then this method should return PsiMethod corresponding to <code>Foo#bar()</code> for PsiMethod corresponding to <code>Baz#bar()</code>.
+   * If it is needed to display doc from {@code Foo#bar()} when doc for {@code Baz#bar()} is queried
+   * then this method should return PsiMethod corresponding to {@code Foo#bar()} for PsiMethod corresponding to {@code Baz#bar()}.
    * <br>
    * The copied documentation will include <i>Description copied from</i> link.
    * </p>

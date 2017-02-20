@@ -30,4 +30,5 @@ public class VcsLogIcons {
 
   }
   public static final Icon ShowHideLongEdges = load("/icons/ShowHideLongEdges.png"); // 16x16
+  public static final Icon ShowOtherBranches = load("/icons/ShowOtherBranches.png"); // 16x16
 }

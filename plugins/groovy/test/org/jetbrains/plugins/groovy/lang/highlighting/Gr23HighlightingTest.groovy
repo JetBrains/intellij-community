@@ -475,4 +475,14 @@ class A implements T {}
 new A().foo
 ''', GroovyUnusedDeclarationInspection
   }
+
+  void 'test no exception on super reference in trait without supertypes'() {
+    testHighlighting '''\
+trait SimpleTrait {
+  void foo() {
+    super.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
+  }
+}
+'''
+  }
 }

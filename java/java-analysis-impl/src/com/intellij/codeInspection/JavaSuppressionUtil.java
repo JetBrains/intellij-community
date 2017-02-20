@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -267,7 +268,7 @@ public class JavaSuppressionUtil {
     final PsiAnnotation newAnnotation = createNewAnnotation(project, container, annotation, id);
     if (newAnnotation != null) {
       if (annotation != null && annotation.isPhysical()) {
-        annotation.replace(newAnnotation);
+        WriteCommandAction.runWriteCommandAction(project, null, null, () -> annotation.replace(newAnnotation), annotation.getContainingFile());
       }
       else {
         final PsiNameValuePair[] attributes = newAnnotation.getParameterList().getAttributes();

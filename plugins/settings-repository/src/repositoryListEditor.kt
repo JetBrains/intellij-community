@@ -34,7 +34,7 @@ internal class RepositoryItem(var url: String? = null) {
   override fun toString() = url ?: ""
 }
 
-internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
+internal fun createRepositoryListEditor(icsManager: IcsManager): ConfigurableUi<IcsSettings> {
   val editor = ComboBoxModelEditor(object: ListItemEditor<RepositoryItem> {
     override fun getItemClass() = RepositoryItem::class.java
 
@@ -50,10 +50,16 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
   }
 
   return object: ConfigurableUi<IcsSettings> {
+    private var noRepositoryRow: Row? = null
+    private var repositoryRow: Row? = null
+
     override fun isModified(settings: IcsSettings) = editor.isModified
 
     override fun getComponent() = panel {
-      row("Repository:") {
+      noRepositoryRow = row("Repository:") {
+        hint("Use File -> Settings Repository... to configure")
+      }
+      repositoryRow = row("Repository:") {
         editor.comboBox()
         deleteButton()
       }
@@ -63,13 +69,13 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
       val newList = editor.apply()
       if (newList.isEmpty()) {
         // repo is deleted
-        deleteRepository()
+        deleteRepository(icsManager)
       }
     }
 
     override fun reset(settings: IcsSettings) {
       val list = ArrayList<RepositoryItem>()
-      val upstream = icsManager.repositoryManager.getUpstream()?.let { RepositoryItem(it) }
+      val upstream = icsManager.repositoryManager.getUpstream()?.let(::RepositoryItem)
       upstream?.let {
         list.add(it)
       }
@@ -77,12 +83,15 @@ internal fun createRepositoryListEditor(): ConfigurableUi<IcsSettings> {
       editor.reset(list)
       editor.model.selectedItem = upstream
 
+      noRepositoryRow!!.visible = list.isEmpty()
+      repositoryRow!!.visible = list.isNotEmpty()
+
       deleteButton.isEnabled = editor.model.selectedItem != null
     }
   }
 }
 
-private fun deleteRepository() {
+private fun deleteRepository(icsManager: IcsManager) {
   // as two tasks, - user should be able to cancel syncing before delete and continue to delete
   runModalTask("Syncing before delete Repository", cancellable = true) { indicator ->
     indicator.isIndeterminate = true

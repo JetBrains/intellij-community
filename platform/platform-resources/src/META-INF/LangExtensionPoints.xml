@@ -415,6 +415,9 @@
     <extensionPoint name="printOption" interface="com.intellij.codeEditor.printing.PrintOption"/>
 
     <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
+    <extensionPoint name="commentTokenSetProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.impl.cache.CommentTokenSetProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="configurationType"
                     interface="com.intellij.execution.configurations.ConfigurationType"/>
@@ -455,6 +458,11 @@
     <extensionPoint name="runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
     </extensionPoint>
+
+    <extensionPoint name="runDashboardContributor"
+                    interface="com.intellij.execution.dashboard.RunDashboardContributor"/>
+    <extensionPoint name="runDashboardGroupingRule"
+                    interface="com.intellij.execution.dashboard.DashboardGroupingRule"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider"
                     area="IDEA_PROJECT"/>
@@ -889,6 +897,11 @@
 
     <extensionPoint name="projectViewNestingRulesProvider"
                     interface="com.intellij.ide.projectView.ProjectViewNestingRulesProvider"/>
+    <extensionPoint name="importTestOutput"
+                    interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension"/>
+
+    <extensionPoint name="sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
+    <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
   </extensionPoints>
 </idea-plugin>
 

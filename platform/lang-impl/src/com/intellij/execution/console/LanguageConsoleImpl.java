@@ -27,8 +27,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -70,7 +70,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -445,7 +444,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   private void installEditorFactoryListener() {
-    FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
+    FileEditorManagerListener fileEditorListener = new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (myConsoleEditor == null || !Comparing.equal(file, getVirtualFile())) {
@@ -675,40 +674,6 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
         position.translate(0, oldHistoryHeight - newHistoryHeight);
         viewport.setViewPosition(position);
       }
-    }
-  }
-
-  private static class EmptyScrollBar extends JBScrollBar {
-
-    final JScrollBar original;
-
-    public EmptyScrollBar(JScrollBar original) {
-      this.original = original;
-      setModel(original.getModel());
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return JBUI.emptySize();
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return JBUI.emptySize();
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-      return JBUI.emptySize();
-    }
-
-    @Override
-    public Border getBorder() {
-      return null;
-    }
-
-    @Override
-    public void paint(Graphics g) {
     }
   }
 

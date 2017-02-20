@@ -67,6 +67,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
+import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
@@ -75,6 +76,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -282,6 +284,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     BuildScriptClasspathData buildScriptClasspathData = new BuildScriptClasspathData(GradleConstants.SYSTEM_ID, classpathEntries);
     buildScriptClasspathData.setGradleHomeDir(buildScriptClasspathModel != null ? buildScriptClasspathModel.getGradleHomeDir() : null);
     ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData);
+
+    GradleExtensions gradleExtensions = resolverCtx.getExtraProject(gradleModule, GradleExtensions.class);
+    if (gradleExtensions != null) {
+      DefaultGradleExtensions extensions = new DefaultGradleExtensions(gradleExtensions);
+      ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
+      if (externalProject != null) {
+        extensions.getTasks().addAll(externalProject.getTasks().values());
+      }
+      ideModule.createChild(GradleExtensionsDataService.KEY, extensions);
+    }
   }
 
   @Override
@@ -528,7 +540,17 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
-    final String rootProjectPath = ideProject.getData().getLinkedExternalProjectPath();
+    String rootProjectPath = ideProject.getData().getLinkedExternalProjectPath();
+    try {
+      GradleBuild build = resolverCtx.getExtraProject(gradleModule, GradleBuild.class);
+      if (build != null) {
+        rootProjectPath = ExternalSystemApiUtil.toCanonicalPath(build.getRootProject().getProjectDirectory().getCanonicalPath());
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("construction of the canonical path for the module fails", e);
+    }
+
     final boolean isFlatProject = !FileUtil.isAncestor(rootProjectPath, moduleConfigPath, false);
     if (externalProject != null) {
       for (ExternalTask task : externalProject.getTasks().values()) {
@@ -581,6 +603,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   public Set<Class> getExtraProjectModelClasses() {
     Set<Class> result = ContainerUtil.<Class>set(GradleBuild.class, ModuleExtendedModel.class);
     result.add(BuildScriptClasspathModel.class);
+    result.add(GradleExtensions.class);
     result.add(ExternalProject.class);
     return result;
   }
@@ -779,10 +802,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           LOG.debug(String.format("delegate m: %s", m));
         }
       }
-      catch (NoSuchFieldException e) {
-        LOG.debug(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (NoSuchFieldException | IllegalAccessException e) {
         LOG.debug(e);
       }
     }

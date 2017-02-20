@@ -85,10 +85,10 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.mainJarName = "idea.jar"
     productLayout.searchableOptionsModule = "resources-en"
 
-    productLayout.additionalPlatformJars.put("rt/jps-plugin-system.jar", "jps-plugin-system")
     productLayout.additionalPlatformJars.put("external-system-rt.jar", "external-system-rt")
     productLayout.additionalPlatformJars.put("jps-launcher.jar", "jps-launcher")
     productLayout.additionalPlatformJars.put("jps-builders.jar", "jps-builders")
+    productLayout.additionalPlatformJars.put("jps-builders-6.jar", "jps-builders-6")
     productLayout.additionalPlatformJars.putAll("jps-model.jar", ["jps-model-impl", "jps-model-serialization"])
     productLayout.additionalPlatformJars.put("forms_rt.jar", "forms-compiler")
     productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
@@ -103,6 +103,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withProjectLibrary("jgoodies-common")
         withProjectLibrary("jgoodies-looks")
         withProjectLibrary("commons-net")
+        withProjectLibrary("snakeyaml")
         withoutProjectLibrary("Ant")
         withoutProjectLibrary("Gradle")
         withoutProjectLibrary("com.twelvemonkeys.imageio:imageio-tiff:3.2.1")

@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.impl.source.xml.XmlAttributeReference;
 import com.intellij.psi.meta.PsiPresentableMetaData;
@@ -78,10 +79,6 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
                           ? attribute.getNamespacePrefix() + ":"
                           : null;
 
-    CompletionData
-      completionData = CompletionUtil.getCompletionDataByElement(attribute, attribute.getContainingFile().getOriginalFile());
-    boolean caseSensitive = !(completionData instanceof HtmlCompletionData) || ((HtmlCompletionData)completionData).isCaseSensitive();
-
     for (XmlAttributeDescriptor descriptor : descriptors) {
       if (isValidVariant(attribute, descriptor, attributes, extension)) {
         String name = descriptor.getName(tag);
@@ -121,7 +118,7 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
             element = element.withLookupString(name.substring(separator + 1));
           }
           element = element
-            .withCaseSensitivity(caseSensitive)
+            .withCaseSensitivity(!(descriptor instanceof HtmlAttributeDescriptorImpl))
             .withInsertHandler(insertHandler);
           result.addElement(
             descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) :

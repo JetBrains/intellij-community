@@ -70,7 +70,7 @@ public class CodeFormatterFacade {
   private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
   /**
-   * This key is used as a flag that indicates if <code>'wrap long line during formatting'</code> activity is performed now.
+   * This key is used as a flag that indicates if {@code 'wrap long line during formatting'} activity is performed now.
    *
    * @see CodeStyleSettings#WRAP_LONG_LINES
    */
@@ -547,7 +547,7 @@ public class CodeFormatterFacade {
   }
 
   /**
-   * Emulates pressing <code>Enter</code> at current caret position.
+   * Emulates pressing {@code Enter} at current caret position.
    *
    * @param editor       target editor
    * @param project      target project

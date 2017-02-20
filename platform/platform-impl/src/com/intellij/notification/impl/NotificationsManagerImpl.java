@@ -15,6 +15,7 @@
  */
 package com.intellij.notification.impl;
 
+import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
@@ -30,6 +31,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
@@ -88,6 +90,15 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
   public NotificationsManagerImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new MyNotificationListener(null));
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+      @Override
+      public void projectClosed(Project project) {
+        for (Notification notification : getNotificationsOfType(Notification.class, project)) {
+          notification.hideBalloon();
+        }
+        TooltipController.getInstance().resetCurrent();
+      }
+    });
   }
 
   @Override
@@ -438,7 +449,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     LinkLabel<Void> expandAction = null;
 
     int lines = 3;
-    if (notification.isTitle()) {
+    if (notification.hasTitle()) {
       lines--;
     }
     if (actions) {
@@ -553,7 +564,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     };
     content.add(centerPanel, BorderLayout.CENTER);
 
-    if (notification.isTitle()) {
+    if (notification.hasTitle()) {
       String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
       String titleR = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundR, null);
       String titleD = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundD, null);
@@ -571,7 +582,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       centerPanel.add(expandAction, BorderLayout.EAST);
     }
 
-    if (notification.isContent()) {
+    if (notification.hasContent()) {
       centerPanel.add(layoutData.welcomeScreen ? text : pane, BorderLayout.CENTER);
     }
 
@@ -1040,7 +1051,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
           int lineY = getUI().getBaseline(DropDownAction.this, getWidth(), getHeight()) - getIconHeight();
-          IconUtil.colorize(myIcon, getTextColor()).paintIcon(c, g, x - 1, lineY);
+          IconUtil.colorize((Graphics2D)g, myIcon, getTextColor()).paintIcon(c, g, x - 1, lineY);
         }
 
         @Override

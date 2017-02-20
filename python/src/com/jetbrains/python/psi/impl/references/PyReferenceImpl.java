@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +100,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * First element is always what resolve() would return.
    * Imported module names: to module file, or {directory, '__init__.py}' for a qualifier.
    * todo Local identifiers: a list of definitions in the most recent compound statement
-   * (e.g. <code>if X: a = 1; else: a = 2</code> has two definitions of <code>a</code>.).
+   * (e.g. {@code if X: a = 1; else: a = 2} has two definitions of {@code a}.).
    * todo Identifiers not found locally: similar definitions in imported files and builtins.
    *
    * @see PsiPolyVariantReference#multiResolve(boolean)
@@ -123,28 +124,29 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final String referencedName = myElement.getReferencedName();
     if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
 
-    List<RatedResolveResult> targets = resolveInner();
-    if (targets.size() == 0) return ResolveResult.EMPTY_ARRAY;
+    final List<RatedResolveResult> targets = resolveInner();
+    if (targets.isEmpty()) return ResolveResult.EMPTY_ARRAY;
 
     // change class results to constructor results if there are any
     if (myElement.getParent() instanceof PyCallExpression) { // we're a call
-      ListIterator<RatedResolveResult> it = targets.listIterator();
-      while (it.hasNext()) {
-        final RatedResolveResult rrr = it.next();
-        final PsiElement elt = rrr.getElement();
-        if (elt instanceof PyClass) {
-          PyClass cls = (PyClass)elt;
-          PyFunction init = cls.findMethodByName(PyNames.INIT, false, null);
-          if (init != null) {
+      final ListIterator<RatedResolveResult> iterator = targets.listIterator();
+      while (iterator.hasNext()) {
+        final RatedResolveResult rrr = iterator.next();
+        final PsiElement element = rrr.getElement();
+        if (element instanceof PyClass) {
+          final PyClass cls = (PyClass)element;
+          final List<PyFunction> ownInits = cls.multiFindMethodByName(PyNames.INIT, false, null);
+          if (!ownInits.isEmpty()) {
             // replace
-            it.set(rrr.replace(init));
+            iterator.remove();
+            ownInits.forEach(init -> iterator.add(rrr.replace(init)));
           }
-          else { // init not found; maybe it's ancestor's
+          else {// init not found; maybe it's ancestor's
             for (PyClass ancestor : cls.getAncestorClasses(myContext.getTypeEvalContext())) {
-              init = ancestor.findMethodByName(PyNames.INIT, false, null);
-              if (init != null) {
+              final List<PyFunction> ancestorInits = ancestor.multiFindMethodByName(PyNames.INIT, false, null);
+              if (!ancestorInits.isEmpty()) {
                 // add to results as low priority
-                it.add(new RatedResolveResult(RatedResolveResult.RATE_LOW, init));
+                ancestorInits.forEach(init -> iterator.add(new RatedResolveResult(RatedResolveResult.RATE_LOW, init)));
                 break;
               }
             }
@@ -153,9 +155,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       }
     }
 
-    // put everything in a sorting container
-    List<RatedResolveResult> ret = RatedResolveResult.sorted(targets);
-    return ret.toArray(new ResolveResult[ret.size()]);
+    return RatedResolveResult.sorted(targets).toArray(ResolveResult.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -274,6 +274,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           else if (resolvedOwner instanceof PyClass || instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
             resolveInParentScope = true;
           }
+          else if (PyiUtil.isInsideStubAnnotation(myElement)) {
+            for (PsiElement element : resolvedElements) {
+              resultList.poke(element, getRate(element, typeEvalContext));
+            }
+            return resultList;
+          }
           else {
             unreachableLocalDeclaration = true;
           }
@@ -305,7 +311,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
             continue;
           }
-          if (resolved == referenceOwner && referenceOwner instanceof PyClass) {
+          if (skipClassForwardReferences(referenceOwner, resolved)) {
             continue;
           }
           if (definer == null) {
@@ -327,6 +333,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     return resolveByReferenceResolveProviders();
+  }
+
+  private boolean skipClassForwardReferences(@Nullable ScopeOwner referenceOwner, @NotNull PsiElement resolved) {
+    return resolved == referenceOwner && referenceOwner instanceof PyClass && !PyiUtil.isInsideStubAnnotation(myElement);
   }
 
   private static boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
@@ -703,7 +713,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   private boolean isBuiltInConstant() {
     // TODO: generalize
     String name = myElement.getReferencedName();
-    return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name);
+    return PyNames.NONE.equals(name) || "True".equals(name) || "False".equals(name) || PyNames.DEBUG.equals(name);
   }
 
   @Override

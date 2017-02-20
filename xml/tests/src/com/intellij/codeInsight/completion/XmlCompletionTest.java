@@ -26,15 +26,12 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -79,16 +76,6 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     }
 
     ExternalResourceManagerExImpl.addTestResource(url, location, getTestRootDisposable());
-  }
-
-  @Override
-  protected void runTest() throws Throwable {
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        XmlCompletionTest.super.runTest();
-      }
-    }.execute();
   }
 
   public void testCompleteWithAnyInSchema() throws Exception {
@@ -345,7 +332,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInsertExtraRequiredAttributeSingleQuote() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
@@ -357,7 +344,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInsertExtraRequiredAttributeNoneQuote() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
@@ -513,7 +500,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     selectItem(myFixture.getLookupElements()[4], '\t');
     checkResultByFile("CorrectSelectionInsertion_after.xml");
     
-    CompletionLookupArranger.applyLastCompletionStatisticsUpdate();
+    StatisticsUpdate.applyLastCompletionStatisticsUpdate();
 
     configureByFile("CorrectSelectionInsertion2.xml");
     myFixture.getEditor().getSelectionModel().removeSelection();
@@ -787,6 +774,14 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.type('?');
     myFixture.type('\n');
     myFixture.checkResult("<?xml version=\"1.0\" encoding=\"<caret>\" ?>");
+  }
+
+  public void testAttributeValueToken() throws Exception {
+    myFixture.configureByText("foo.xml", "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
+                                         "    <element name=\"a\" abstract=<caret>\"\"/>\n" +
+                                         "</schema>");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(0, elements.length);
   }
 }
 

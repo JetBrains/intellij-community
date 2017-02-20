@@ -197,6 +197,7 @@
       <action id="Diff.AppendRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowLeftDown"/>
       <action id="Diff.IgnoreLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
       <action id="Diff.IgnoreRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
+      <action id="Diff.ResolveConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.MagicResolve"/>
       <separator/>
 
       <action id="Diff.ApplyNonConflicts" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflicts"/>
@@ -232,6 +233,7 @@
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project" internal="true"/>
           <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
+          <action id="AttachProject" class="com.intellij.platform.AttachProjectAction"/>
           <group id="$LRU" popup="true">
             <group id="RecentProjectListGroup" class="com.intellij.ide.actions.RecentProjectsGroup" popup="false"/>
             <separator/>
@@ -254,7 +256,7 @@
         </group>
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.Menu_saveall"/>
-        <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
+        <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.SynchronizeFS"/>
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
 
         <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
@@ -335,6 +337,8 @@
           </group>
         </group>
         <reference ref="TemplateParametersNavigation"/>
+        <separator/>
+        <action id="EmojiAndSymbols" class="com.intellij.ide.actions.MacEmojiAndSymbolsInputAction"/>
       </group>
 
       <!-- View -->
@@ -467,17 +471,22 @@
           <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
           <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
           <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
-          <group id="TabsPlacementGroup" popup="true" text="Tabs Placement">
-            <action id="TabsPlacementTop"    text="Top"    class="com.intellij.ide.actions.TabsPlacementAction$Top" />
-            <action id="TabsPlacementBottom" text="Bottom" class="com.intellij.ide.actions.TabsPlacementAction$Bottom" />
-            <action id="TabsPlacementLeft"   text="Left"   class="com.intellij.ide.actions.TabsPlacementAction$Left" />
-            <action id="TabsPlacementRight"  text="Right"  class="com.intellij.ide.actions.TabsPlacementAction$Right" />
-            <action id="TabsPlacementNone"   text="None"   class="com.intellij.ide.actions.TabsPlacementAction$None" />
+          <group id="TabsPlacementGroup" popup="true">
+            <action id="TabsPlacementTop"    class="com.intellij.ide.actions.TabsPlacementAction$Top" />
+            <action id="TabsPlacementBottom" class="com.intellij.ide.actions.TabsPlacementAction$Bottom" />
+            <action id="TabsPlacementLeft"   class="com.intellij.ide.actions.TabsPlacementAction$Left" />
+            <action id="TabsPlacementRight"  class="com.intellij.ide.actions.TabsPlacementAction$Right" />
+            <action id="TabsPlacementNone"   class="com.intellij.ide.actions.TabsPlacementAction$None" />
             <separator/>
             <action id="ShowTabsInSingleRow" text="Show Tabs In Single Row" class="com.intellij.ide.actions.ShowTabsInSingleRowAction"/>
           </group>
           <action id="TabsAlphabeticalMode" class="com.intellij.ide.actions.TabsAlphabeticalModeSwitcher" text="Sort Tabs By Filename"/>
           <action id="AddNewTabToTheEndMode" class="com.intellij.ide.actions.TabsAddedToTheEndSwitcher"/>
+        </group>
+
+        <group id="Notifications" popup="true">
+          <action class="com.intellij.ui.CloseFirstNotificationAction" id="CloseFirstNotification"/>
+          <action class="com.intellij.ui.CloseAllNotificationsAction" id="CloseAllNotifications"/>
         </group>
 
         <group id="BackgroundTasks" popup="true">
@@ -563,6 +572,12 @@
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingAction"/>
+    </group>
+
+    <group id="BasicEditorPopupMenu">
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
     </group>
 
     <group id="ConsoleEditorPopupMenu">
@@ -691,7 +706,7 @@
     <action id="Console.Open" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="Console.Execute" class="com.intellij.openapi.actionSystem.EmptyAction"/>
     <action id="Console.Execute.Multiline" class="com.intellij.openapi.actionSystem.EmptyAction"/>
-    <action id="Console.SplitLine" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="SplitLine"/>
+    <action id="Console.SplitLine" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorSplitLine"/>
     <group id="Console.HistoryActions">
       <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction"/>
       <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction"/>
@@ -703,7 +718,7 @@
         <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
         <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"/>
         <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
-        <action id="DropAnOutOfPermGenMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfPermGenMemoryErrorAction"/>
+        <action id="DropAnOutOfMetaspaceError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMetaspaceErrorAction"/>
       </group>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
@@ -714,6 +729,9 @@
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
                 text="Add Test Notification"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
+        <separator/>
+        <action id="EditorRenderingBenchmarkAction" internal="true" class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"
+                text="Editor Rendering Benchmark"/>
         <separator/>
         <group id="Internal.focusAndModality" popup="true" text="Focus and modality testing">
           <action id="CheckMessagesButtonsOrderAction" internal="true" class="com.intellij.internal.validation.CheckMessagesButtonsOrderAction"
@@ -735,6 +753,8 @@
         </action>
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
+        <action id="ShowAboutPopupInDebugModeAction" class="com.intellij.internal.ui.ShowAboutPopupInDebugModeAction"
+                text="Show About Popup in Debug Mode"/>
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />
         <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction" text="Test ColorBlindness" />
@@ -746,17 +766,20 @@
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction" text="Add Test Process"/>
         <action id="AddTestProcessActionIndefinte" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessActionIndefinite" text="Add Test Process Indefinite"/>
         <action id="AddManyTestProcesses" internal="true" class="com.intellij.openapi.wm.impl.status.AddManyTestProcesses" text="Add Many Test Processes"/>
-        <action id="ShowProgressTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowProgressTestDialogAction" text="Show Progress Test Dialog"/>
+        <action id="WriteActionUnderProgress" internal="true" class="com.intellij.internal.TestWriteActionUnderProgress" text="Test Write Action Under Progress"/>
         <separator/>
         <action id="TestGestureAction" class="com.intellij.openapi.keymap.impl.ui.TestGestureAction" text="Test Gesture Action"/>
         <action id="TestDndAction" class="com.intellij.internal.validation.TestDnd" text="Test Dnd"/>
         <action id="AnimatorTestAction" class="com.intellij.internal.ui.AnimatorTestAction" text="Test Animator"/>
+        <action id="ShowProgressTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowProgressTestDialogAction" text="Test Progress Indicators"/>
+        <action id="ShowSouthPanelTestDialogAction" internal="true" class="com.intellij.openapi.wm.impl.status.ShowSouthPanelTestDialogAction" text="Test DialogWrapper South Panel"/>
         <separator/>
         <action id="DebugMigLayoutAction" internal="true" class="com.intellij.ui.layout.DebugMigLayoutAction" text="MigLayout Debug Mode" />
       </group>
       <group id="TopAnomalies" internal="true" class="com.intellij.internal.anomalies.TopAnomaliesAction" text="Top Anomalies" popup="true"/>
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction" text="Find Image Duplicates"/>
       <action id="ShowNonRetinaImages" internal="true" class="com.intellij.internal.ShowNonRetinaImagesActions" text="Show Non Retina Images"/>
+      <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.openapi.updateSettings.impl.ShowUpdateInfoDialogAction" text="Show Update Dialog"/>
       <separator/>
       <reference ref="MaintenanceGroup"/>
 

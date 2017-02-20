@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,16 +130,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyDictCreationInspection() {
     doHighlightingTest(PyDictCreationInspection.class, LanguageLevel.PYTHON26);
-  }
-
-  public void testPyTupleAssignmentBalanceInspection() {
-    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  public void testPyTupleAssignmentBalanceInspection2() {
-    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
-    doTestWithPy3k(getTestName(false), inspection);
   }
 
   public void testPyClassicStyleClassInspection() {
@@ -295,16 +285,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyDictDuplicateKeysInspection.class);
   }
 
-
-  public void testPyTupleAssignmentBalanceInspection3() {
-    try {
-      setLanguageLevel(LanguageLevel.PYTHON27);
-      doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
-    } finally {
-      setLanguageLevel(null);
-    }
-  }
-
   public void testPyListCreationInspection() {         //PY-2823
     doHighlightingTest(PyListCreationInspection.class);
   }
@@ -350,5 +330,18 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyDunderSlotsInspection() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
+  }
+
+  // PY-21645
+  public void testInspectionsDisabledInFunctionTypeComments() {
+    myFixture.enableInspections(PyIncorrectDocstringInspection.class); 
+    myFixture.enableInspections(PyMissingOrEmptyDocstringInspection.class);
+    myFixture.enableInspections(PySingleQuotedDocstringInspection.class); 
+    myFixture.enableInspections(PyByteLiteralInspection.class); 
+    myFixture.enableInspections(PyMandatoryEncodingInspection.class); 
+    myFixture.enableInspections(PyNonAsciiCharInspection.class); 
+
+    myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
+    myFixture.checkHighlighting(true, false, true);
   }
 }

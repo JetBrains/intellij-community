@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface HtmlScriptContentProvider {
   /**
-   * @return instance of the <code>com.intellij.psi.tree.IElementType</code> to use in html script tag
+   * @return instance of the {@code com.intellij.psi.tree.IElementType} to use in html script tag
    */
   IElementType getScriptElementType();
 

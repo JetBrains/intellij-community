@@ -74,6 +74,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final boolean myInlineThisOnly;
   private final boolean mySearchInComments;
   private final boolean mySearchForTextOccurrences;
+  private final boolean myDeleteTheDeclaration;
 
   private final PsiManager myManager;
   private final PsiElementFactory myFactory;
@@ -91,7 +92,17 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                @Nullable PsiJavaCodeReferenceElement reference,
                                Editor editor,
                                boolean isInlineThisOnly) {
-    this(project, method, reference, editor, isInlineThisOnly, false, false);
+    this(project, method, reference, editor, isInlineThisOnly, false, false, true);
+  }
+
+  public InlineMethodProcessor(@NotNull Project project,
+                             @NotNull PsiMethod method,
+                             @Nullable PsiJavaCodeReferenceElement reference,
+                             Editor editor,
+                             boolean isInlineThisOnly,
+                             boolean searchInComments,
+                             boolean searchForTextOccurrences) {
+    this(project, method, reference, editor, isInlineThisOnly, searchInComments, searchForTextOccurrences, true);
   }
 
   public InlineMethodProcessor(@NotNull Project project,
@@ -100,7 +111,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                Editor editor,
                                boolean isInlineThisOnly,
                                boolean searchInComments,
-                               boolean searchForTextOccurrences) {
+                               boolean searchForTextOccurrences,
+                               boolean isDeleteTheDeclaration) {
     super(project);
     myMethod = method;
     myReference = reference;
@@ -108,6 +120,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myInlineThisOnly = isInlineThisOnly;
     mySearchInComments = searchInComments;
     mySearchForTextOccurrences = searchForTextOccurrences;
+    myDeleteTheDeclaration = isDeleteTheDeclaration;
 
     myManager = PsiManager.getInstance(myProject);
     myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
@@ -513,7 +526,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        if (myMethod.isWritable()) myMethod.delete();
+        if (myMethod.isWritable() && myDeleteTheDeclaration) myMethod.delete();
       }
       removeAddedBracesWhenPossible();
     }

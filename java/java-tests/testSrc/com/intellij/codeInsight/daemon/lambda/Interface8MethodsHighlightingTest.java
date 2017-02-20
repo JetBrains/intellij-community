@@ -71,6 +71,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
     doTest(false, false);
   }
 
+  public void testUnrelatedDefaultsWhenOverridingIsPresentExplicitly() throws Exception {
+    doTest(false, false);
+  }
+
   public void testStaticMethodAccessibleBothThroughStaticImportAndInheritance() throws Exception {
     myFixture.addClass("package p; public interface Foo {" +
                        "    static void foo() {}" +
@@ -116,6 +120,10 @@ public class Interface8MethodsHighlightingTest extends LightCodeInsightFixtureTe
   }
 
   public void testAbstractOverriddenBySecondDefault() throws Exception {
+    doTest();
+  }
+
+  public void testMethodHierarchyWithDeclaredTypeParameters() throws Exception {
     doTest();
   }
 

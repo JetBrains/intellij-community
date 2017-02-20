@@ -361,7 +361,7 @@ public final class Annotation implements Segment {
   /**
    * File level annotations are visualized differently than lesser range annotations by showing a title bar on top of the
    * editor rather than applying text attributes to the text range.
-   * @return <code>true</code> if this particular annotation have been defined as file level.
+   * @return {@code true} if this particular annotation have been defined as file level.
    */
   public boolean isFileLevelAnnotation() {
     return myIsFileLevelAnnotation;
@@ -370,7 +370,7 @@ public final class Annotation implements Segment {
   /**
    * File level annotations are visualized differently than lesser range annotations by showing a title bar on top of the
    * editor rather than applying text attributes to the text range.
-   * @param isFileLevelAnnotation <code>true</code> if this particular annotation should be visualized at file level.
+   * @param isFileLevelAnnotation {@code true} if this particular annotation should be visualized at file level.
    */
   public void setFileLevelAnnotation(final boolean isFileLevelAnnotation) {
     myIsFileLevelAnnotation = isFileLevelAnnotation;

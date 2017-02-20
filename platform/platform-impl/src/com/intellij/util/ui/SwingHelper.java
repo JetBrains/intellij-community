@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -65,6 +66,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -625,12 +627,15 @@ public class SwingHelper {
   public static void setHtml(@NotNull JEditorPane editorPane,
                              @NotNull String bodyInnerHtml,
                              @Nullable Color foregroundColor) {
-    String html = String.format(
-      "<html><head>%s</head><body>%s</body></html>",
+    editorPane.setText(buildHtml(
       UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, null, null),
       bodyInnerHtml
-    );
-    editorPane.setText(html);
+    ));
+  }
+
+  @NotNull
+  public static String buildHtml(@NotNull String headInnerHtml, @NotNull String bodyInnedHtml) {
+    return "<html><head>" + headInnerHtml + "</head><body>" + bodyInnedHtml + "</body></html>";
   }
 
   @NotNull
@@ -750,13 +755,11 @@ public class SwingHelper {
                                             @Nullable final Consumer<String> hyperlinkListener) {
     disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
     final Font font = UIUtil.getLabelFont();
-    String html = String.format(
-      "<html><head>%s</head><body>%s</body></html>",
+    String html = buildHtml(
       UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
       innerHtml
     );
-    String disabled = String.format(
-      "<html><head>%s</head><body>%s</body></html>",
+    String disabled = buildHtml(
       UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
       disabledHtml
     );
@@ -778,5 +781,27 @@ public class SwingHelper {
       }
     );
     return pane;
+  }
+
+  @Nullable
+  public static Component getComponentFromRecentMouseEvent() {
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    if (event instanceof MouseEvent) {
+      MouseEvent mouseEvent = (MouseEvent)event;
+      Component component = mouseEvent.getComponent();
+      if (component != null) {
+        component = SwingUtilities.getDeepestComponentAt(component, mouseEvent.getX(), mouseEvent.getY());
+        if (component != null) {
+          if (component instanceof JTabbedPane) {
+            mouseEvent = SwingUtilities.convertMouseEvent(mouseEvent.getComponent(), mouseEvent, component);
+            JTabbedPane tabbedPane = (JTabbedPane)component;
+            int index = tabbedPane.getUI().tabForCoordinate(tabbedPane, mouseEvent.getX(), mouseEvent.getY());
+            if (index != -1) return tabbedPane.getComponentAt(index);
+          }
+          return component;
+        }
+      }
+    }
+    return null;
   }
 }

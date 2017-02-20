@@ -777,12 +777,12 @@ public class ControlFlowUtils {
   }
 
   @NotNull
-  public static ArrayList<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
+  public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
     final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
       @NotNull
       @Override
-      public BitSet join(@NotNull ArrayList<BitSet> ins) {
+      public BitSet join(@NotNull List<BitSet> ins) {
         BitSet result = new BitSet(flow.length);
         for (BitSet set : ins) {
           result.or(set);
@@ -791,14 +791,14 @@ public class ControlFlowUtils {
       }
 
       @Override
-      public boolean eq(BitSet e1, BitSet e2) {
+      public boolean eq(@NotNull BitSet e1, @NotNull BitSet e2) {
         return e1.equals(e2);
       }
     };
 
     DfaInstance<BitSet> dfa = new DfaInstance<BitSet>() {
       @Override
-      public void fun(BitSet bitSet, Instruction instruction) {
+      public void fun(@NotNull BitSet bitSet, @NotNull Instruction instruction) {
         if (!(instruction instanceof ReadWriteVariableInstruction)) return;
         if (!((ReadWriteVariableInstruction)instruction).isWrite()) return;
 
@@ -822,11 +822,6 @@ public class ControlFlowUtils {
       @Override
       public BitSet initial() {
         return new BitSet(flow.length);
-      }
-
-      @Override
-      public boolean isForward() {
-        return true;
       }
     };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,14 @@ public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
 
   public void testParenthesis() { doTest(); }
   public void testInstanceofAndWhitespace() { doTest(); }
+  public void testQualifyWithThis1() { doTest(); }
+  public void testQualifyWithThis2() { doTest(); }
+  public void testQualifyWithThisInner() { doTest(); }
+  public void testNoQualifier() { doTest(); }
+  public void testForThisClass() { doTest(); }
+  public void testForOuterClass() { doTest(); }
+  public void testForOuterClassIterator() { doTest(); }
+  public void testForQualifiedArray() { doTest(); }
 
   @Override
   public void setUp() throws Exception {

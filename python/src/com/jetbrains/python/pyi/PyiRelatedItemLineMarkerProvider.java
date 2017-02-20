@@ -22,19 +22,23 @@ import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PsiNavigateUtil;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.PsiUtilCore;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author vlan
@@ -45,28 +49,40 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
-    final PsiElement pythonStub = getPythonStub(element);
-    if (pythonStub != null) {
-      final List<GotoRelatedItem> relatedItems = GotoRelatedItem.createItems(Collections.singletonList(pythonStub));
-      result.add(new RelatedItemLineMarkerInfo<PsiElement>(
-        element, element.getTextRange(), ICON, Pass.LINE_MARKERS,
-        element1 -> "Has stub item in " + pythonStub.getContainingFile().getName(), new GutterIconNavigationHandler<PsiElement>() {
-          @Override
-          public void navigate(MouseEvent e, PsiElement elt) {
-            final PsiElement pythonStub = getPythonStub(elt);
-            if (pythonStub != null) {
-              PsiNavigateUtil.navigate(pythonStub);
-            }
-          }
-        }, GutterIconRenderer.Alignment.RIGHT, relatedItems));
+    if (element instanceof PyFunction || element instanceof PyTargetExpression || element instanceof PyClass) {
+      final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)element);
+      if (pythonStub != null) {
+        result.add(createLineMarkerInfo(element, pythonStub, "Has stub item"));
+      }
+      final PsiElement originalElement = PyiUtil.getOriginalElement((PyElement)element);
+      if (originalElement != null) {
+        result.add(createLineMarkerInfo(element, originalElement, "Stub for item"));
+      }
     }
   }
 
-  @Nullable
-  private static PsiElement getPythonStub(@NotNull PsiElement element) {
-    if (element instanceof PyFunction || element instanceof PyTargetExpression) {
-      return PyiUtil.getPythonStub((PyElement)element);
-    }
-    return null;
+  @NotNull
+  private static RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
+                                                                            @NotNull PsiElement relatedElement,
+                                                                            @NotNull String itemTitle) {
+    final SmartPointerManager pointerManager = SmartPointerManager.getInstance(element.getProject());
+    final SmartPsiElementPointer<PsiElement> relatedElementPointer = pointerManager.createSmartPsiElementPointer(relatedElement);
+    final String stubFileName = relatedElement.getContainingFile().getName();
+    return new RelatedItemLineMarkerInfo<>(
+      element, element.getTextRange(), ICON, Pass.LINE_MARKERS,
+      element1 -> itemTitle + " in " + stubFileName, new GutterIconNavigationHandler<PsiElement>() {
+      @Override
+      public void navigate(MouseEvent e, PsiElement elt) {
+        final PsiElement restoredRelatedElement = relatedElementPointer.getElement();
+        if (restoredRelatedElement == null) {
+          return;
+        }
+        final int offset = restoredRelatedElement instanceof PsiFile ? -1 : restoredRelatedElement.getTextOffset();
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(restoredRelatedElement);
+        if (virtualFile != null && virtualFile.isValid()) {
+          new OpenFileDescriptor(restoredRelatedElement.getProject(), virtualFile, offset).navigate(true);
+        }
+      }
+    }, GutterIconRenderer.Alignment.RIGHT, GotoRelatedItem.createItems(Collections.singletonList(relatedElement)));
   }
 }

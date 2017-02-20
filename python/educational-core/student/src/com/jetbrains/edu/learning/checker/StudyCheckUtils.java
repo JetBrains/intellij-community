@@ -47,7 +47,11 @@ public class StudyCheckUtils {
   private StudyCheckUtils() {
   }
 
-  public static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task, @NotNull final VirtualFile taskDir) {
+  public static void drawAllPlaceholders(@NotNull final Project project, @NotNull final Task task) {
+    VirtualFile taskDir = task.getTaskDir(project);
+    if (taskDir == null) {
+      return;
+    }
     for (Map.Entry<String, TaskFile> entry : task.getTaskFiles().entrySet()) {
       String name = entry.getKey();
       TaskFile taskFile = entry.getValue();
@@ -126,15 +130,19 @@ public class StudyCheckUtils {
     }
     VirtualFile answerFile = pair.getFirst();
     TaskFile answerTaskFile = pair.getSecond();
-    for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
-      final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      if (document == null) {
-        continue;
+    try {
+      for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
+        final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+        if (document == null) {
+          continue;
+        }
+        StudySmartChecker.smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
+                                     virtualFile, document);
       }
-      StudySmartChecker.smartCheck(answerPlaceholder, project, answerFile, answerTaskFile, taskFile, testRunner,
-                                   virtualFile, document);
     }
-    StudyUtils.deleteFile(answerFile);
+    finally {
+      StudyUtils.deleteFile(answerFile);
+    }
   }
 
 

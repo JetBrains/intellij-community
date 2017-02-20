@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 package com.intellij.ide;
 
 import com.intellij.Patches;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ClipboardUtil;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.ApplicationComponentAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -58,7 +59,7 @@ import java.util.function.Supplier;
  *
  * @author nik
  */
-public class ClipboardSynchronizer implements ApplicationComponent {
+public class ClipboardSynchronizer implements ApplicationComponentAdapter, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ClipboardSynchronizer");
 
   private final ClipboardHandler myClipboardHandler;
@@ -88,14 +89,8 @@ public class ClipboardSynchronizer implements ApplicationComponent {
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myClipboardHandler.dispose();
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "ClipboardSynchronizer";
   }
 
   public void areDataFlavorsAvailableAsync(@NotNull Consumer<Boolean> callback, @NotNull DataFlavor... flavors) {
@@ -233,10 +228,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
             return myFullTransferable.getSecond();
           }
         }
-        catch (UnsupportedFlavorException e) {
-          LOG.info(e);
-        }
-        catch (IOException e) {
+        catch (UnsupportedFlavorException | IOException e) {
           LOG.info(e);
         }
       }
@@ -259,10 +251,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           myFullTransferable = Pair.create(stringData, content);
           super.setContent(new StringSelection(stringData), owner);
         }
-        catch (UnsupportedFlavorException e) {
-          LOG.info(e);
-        }
-        catch (IOException e) {
+        catch (UnsupportedFlavorException | IOException e) {
           LOG.info(e);
         }
       } else {
@@ -438,8 +427,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         @SuppressWarnings({"unchecked"}) final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
         return set;
       }
-      catch (IllegalAccessException ignore) { }
-      catch (IllegalArgumentException ignore) { }
+      catch (IllegalAccessException | IllegalArgumentException ignore) { }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
         if (cause instanceof IllegalStateException) {

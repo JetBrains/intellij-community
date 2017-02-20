@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -280,20 +280,23 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         }
 
         final Runnable finalApply = apply;
-        invokeAndWait(() -> {
-          if (isDisposed() || myProject.isDisposed()) return;
+        invokeAndWait(new Runnable() {
+          @Override
+          public void run() {
+            if (isDisposed() || myProject.isDisposed()) return;
 
-          isUpdating = false;
-          if (finalApply != null) {
-            try {
-              finalApply.run();
+            isUpdating = false;
+            if (finalApply != null) {
+              try {
+                finalApply.run();
+              }
+              catch (Exception e) {
+                LocalHistoryLog.LOG.error(e);
+              }
             }
-            catch (Exception e) {
-              LocalHistoryLog.LOG.error(e);
-            }
+            updateActions();
+            myDiffView.finishUpdating();
           }
-          updateActions();
-          myDiffView.finishUpdating();
         });
       }
     });
@@ -308,10 +311,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         SwingUtilities.invokeAndWait(runnable);
       }
     }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
+    catch (InterruptedException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }
@@ -463,10 +463,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       showNotification(LocalHistoryBundle.message("message.patch.created"));
       ShowFilePathAction.openFile(new File(p.getFileName()));
     }
-    catch (VcsException e) {
-      showError(message("message.error.during.create.patch", e));
-    }
-    catch (IOException e) {
+    catch (VcsException | IOException e) {
       showError(message("message.error.during.create.patch", e));
     }
   }

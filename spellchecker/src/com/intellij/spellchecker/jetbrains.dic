@@ -108,6 +108,7 @@ constexpr
 contravariant
 contrib
 controlfile
+couchbase
 coursecreator
 covariant
 cron
@@ -204,6 +205,7 @@ geocode
 geometrycollection
 getters
 giud
+gists
 globals
 google
 gruntfile
@@ -255,6 +257,7 @@ inout
 instantiable
 insteadof
 intellij
+interpolator
 intrinsics
 iphone
 iphoneos
@@ -275,6 +278,7 @@ jetbrains
 jibx
 jndi
 jnilib
+jooq
 jpeg
 jpdl
 jquery
@@ -290,6 +294,7 @@ keyframe
 keyframes
 keymap
 keymaps
+keystore
 kotlin
 labeler
 labelers
@@ -301,6 +306,7 @@ lifecycle
 likec
 linestring
 linkplain
+listable
 lldb
 llvm
 logback
@@ -337,6 +343,8 @@ mediumblob
 mediumint
 mediumtext
 metadata
+metas
+metaspace
 middleint
 middleware
 millis
@@ -348,16 +356,19 @@ miny
 mixin
 mlslabel
 mockito
+mojo
 monad
 monoidal
 mongodb
 monospaced
+msvc
 multi
 multilinestring
 multipart
 multipoint
 multipolygon
 multiset
+mutator
 mutex
 mutexes
 mxml
@@ -365,9 +376,12 @@ mybatis
 mysql
 namespace
 namespaces
+narayana
 nchar
 nclob
 ndbcluster
+netflix
+nmake
 nmtoken
 noarchivelog
 noaudit
@@ -444,6 +458,8 @@ pointcut
 pointcuts
 portlet
 polyadic
+polyfill
+polyfills
 popup
 popups
 posix
@@ -472,6 +488,7 @@ proto
 proven
 proxool
 pycharm
+queryable
 readme
 readonly
 readwrite
@@ -500,9 +517,11 @@ reifying
 reindex
 reindexing
 renderer
+repackager
 replacer
 repo
 repos
+requeue
 resetlogs
 resizable
 resize
@@ -525,6 +544,8 @@ schemas
 screenshots
 scriptlet
 scriptlets
+scrollbar
+scrollbars
 securefile
 serializable
 serializer
@@ -596,6 +617,7 @@ stepic
 stmt
 strictfp
 stringify
+stringifier
 stylesheet
 stylesheets
 subexpression
@@ -710,12 +732,14 @@ webjar
 webjars
 webpack
 webservice
+webservices
 whitespace
 whitespaces
 wifi
 wiki
 wildcard
 wildcards
+wildfly
 wordwrap
 workflow
 writeln

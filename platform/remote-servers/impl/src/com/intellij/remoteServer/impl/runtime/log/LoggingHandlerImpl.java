@@ -3,11 +3,14 @@ package com.intellij.remoteServer.impl.runtime.log;
 import com.intellij.execution.filters.BrowserHyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.remoteServer.runtime.log.LoggingHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +40,11 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
 
   @Override
   public void print(@NotNull String s) {
-    myConsole.print(s, ConsoleViewContentType.NORMAL_OUTPUT);
+    printText(s, ConsoleViewContentType.NORMAL_OUTPUT);
+  }
+
+  protected void printText(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
+    myConsole.print(text, contentType);
   }
 
   @Override
@@ -51,7 +58,7 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
   }
 
   public void printlnSystemMessage(@NotNull String s) {
-    myConsole.print(s + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    printText(s + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
   }
 
   @Override
@@ -67,5 +74,23 @@ public class LoggingHandlerImpl extends LoggingHandlerBase implements LoggingHan
   @Override
   public boolean isClosed() {
     return false;
+  }
+
+  public static class Colored extends LoggingHandlerImpl {
+
+    private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+
+    public Colored(String presentableName, @NotNull Project project) {
+      super(presentableName, project);
+    }
+
+    @Override
+    public void print(@NotNull String s) {
+      myAnsiEscapeDecoder.escapeText(s, ProcessOutputTypes.STDOUT, this::printTextWithOutputKey);
+    }
+
+    private void printTextWithOutputKey(@NotNull String text, Key outputType) {
+      printText(text, ConsoleViewContentType.getConsoleViewType(outputType));
+    }
   }
 }

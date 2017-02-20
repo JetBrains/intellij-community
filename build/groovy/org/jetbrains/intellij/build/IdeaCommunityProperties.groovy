@@ -80,7 +80,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       }
 
       @Override
-      String getBaseDownloadUrlForJre64() { "https://download.jetbrains.com/idea" }
+      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/idea" }
     }
   }
 
@@ -106,6 +106,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"
+        icnsPathForEAP = "$projectHome/build/conf/mac/communityEAP.icns"
       }
 
       @Override

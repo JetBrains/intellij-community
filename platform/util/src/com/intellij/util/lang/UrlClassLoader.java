@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,8 @@ import java.util.List;
 public class UrlClassLoader extends ClassLoader {
   public static final String CLASS_EXTENSION = ".class";
 
-  private static final boolean HAS_PARALLEL_LOADERS = SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm;
+  private static final boolean HAS_PARALLEL_LOADERS = SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm &&
+                                                      SystemProperties.getBooleanProperty("use.parallel.class.loading", true);
 
   static {
     if (HAS_PARALLEL_LOADERS) {
@@ -142,11 +144,14 @@ public class UrlClassLoader extends ClassLoader {
       return this; 
     }
     
-    public Builder allowUnescaped() { return allowUnescaped(true); }
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    public Builder noPreload() { return preload(false); }
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
+    public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+
+    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
+    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
+    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
+    public Builder preload(boolean preload) { myPreload = preload; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
 
@@ -345,11 +350,13 @@ public class UrlClassLoader extends ClassLoader {
 
     if (!new File(libPath).exists()) {
       String platform = getPlatformName();
-      if (!new File(libPath = PathManager.getHomePath() + "/community/bin/" + platform + libFileName).exists()) {
-        if (!new File(libPath = PathManager.getHomePath() + "/bin/" + platform + libFileName).exists()) {
-          if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
-            File libDir = new File(PathManager.getBinPath());
-            throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
+      if (!new File(libPath = PathManager.getHomePath() + "/ultimate/community/bin/" + platform + libFileName).exists()) {
+        if (!new File(libPath = PathManager.getHomePath() + "/community/bin/" + platform + libFileName).exists()) {
+          if (!new File(libPath = PathManager.getHomePath() + "/bin/" + platform + libFileName).exists()) {
+            if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
+              File libDir = new File(PathManager.getBinPath());
+              throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
+            }
           }
         }
       }

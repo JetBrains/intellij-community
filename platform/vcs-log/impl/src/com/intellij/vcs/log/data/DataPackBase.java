@@ -21,12 +21,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-class DataPackBase {
+public class DataPackBase {
   @NotNull protected final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull protected final RefsModel myRefsModel;
   protected final boolean myIsFull;
 
-  DataPackBase(@NotNull Map<VirtualFile, VcsLogProvider> providers, @NotNull RefsModel refsModel, boolean isFull) {
+  public DataPackBase(@NotNull Map<VirtualFile, VcsLogProvider> providers, @NotNull RefsModel refsModel, boolean isFull) {
     myLogProviders = providers;
     myRefsModel = refsModel;
     myIsFull = isFull;

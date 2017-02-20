@@ -24,7 +24,9 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -341,7 +343,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
   @Override
   public Dimension getPreferredSize() {
-    Graphics2D g2 = (Graphics2D)getGraphics();
+    Graphics2D g2 = (Graphics2D) GraphicsUtil.safelyGetGraphics(this);
     Dimension dim = new Dimension(Integer.MAX_VALUE, g2 != null ? DEFAULT_PAINTER.getSize("DUMMY", g2.getFontMetrics(), Integer.MAX_VALUE).height + 1 : 1);
     JBInsets.addTo(dim, getInsets());
     return dim;

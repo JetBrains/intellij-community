@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,10 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -223,7 +226,7 @@ public class SvnHistoryProvider
       }
     }
 
-    final boolean showMergeSources = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate();
+    boolean showMergeSources = myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate();
     final LogLoader logLoader;
     if (path.isNonLocal()) {
       logLoader = new RepositoryLoader(myVcs, committedPath, from, to, limit, peg, forceBackwards, showMergeSources);
@@ -234,9 +237,6 @@ public class SvnHistoryProvider
 
     try {
       logLoader.preliminary();
-    }
-    catch (SVNCancelException e) {
-      throw new VcsException(e);
     }
     catch (SVNException e) {
       throw new VcsException(e);

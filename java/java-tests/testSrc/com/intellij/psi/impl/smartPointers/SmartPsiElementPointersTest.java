@@ -931,4 +931,26 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertFalse(createPointer(clazz).hashCode() == createPointer(clazz.getMethods()[0]).hashCode());
   }
 
+  public void testImportListPointerSurvivesImportAddition() throws Exception {
+    PsiJavaFile file = (PsiJavaFile)createFile("a.java", "import foo.Bar;\nclass Foo {}");
+    SmartPointerEx<PsiImportList> pointer = createPointer(file.getImportList());
+    Document document = file.getViewProvider().getDocument();
+    
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.insertString(document.getText().indexOf("class"), "import foo.Goo;\n");
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    });
+    assertEquals(file.getImportList(), pointer.getElement());
+    assertSize(2, file.getImportList().getImportStatements());
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      document.insertString(0, " ");
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      document.deleteString(0, document.getText().indexOf("\nimport"));
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    });
+    assertEquals(file.getImportList(), pointer.getElement());
+    assertSize(1, file.getImportList().getImportStatements());
+  }
+
 }

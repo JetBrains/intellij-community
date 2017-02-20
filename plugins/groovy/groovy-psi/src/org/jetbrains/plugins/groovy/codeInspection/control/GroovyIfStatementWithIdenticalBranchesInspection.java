@@ -59,7 +59,7 @@ public class GroovyIfStatementWithIdenticalBranchesInspection extends BaseInspec
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Collapse 'if' statement'";
     }
 

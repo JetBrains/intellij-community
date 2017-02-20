@@ -37,7 +37,8 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
 
   @Override
   public void doExecute(final Editor editor, @Nullable final Caret caret, final DataContext dataContext) {
-    if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
+    if (editor.isViewer()) return;
+    if (!ApplicationManager.getApplication().isWriteAccessAllowed() && !EditorModificationUtil.requestWriting(editor)) return;
 
     DocumentRunnable runnable = new DocumentRunnable(editor.getDocument(), editor.getProject()) {
       @Override

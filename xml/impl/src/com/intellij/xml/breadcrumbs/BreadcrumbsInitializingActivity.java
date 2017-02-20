@@ -19,7 +19,10 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -54,7 +57,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener(project));
   }
 
-  private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {
+  private static class MyFileEditorManagerListener implements FileEditorManagerListener {
     @Override
     public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
       reinitBreadcrumbsComponent(source, file);
@@ -121,7 +124,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     if (isSuitable(fileEditorManager.getProject(), file)) {
       FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
       for (final FileEditor fileEditor : fileEditors) {
-        if (fileEditor instanceof TextEditor) {
+        if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
           Editor editor = ((TextEditor)fileEditor).getEditor();
           final BreadcrumbsXmlWrapper existingWrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
           if (existingWrapper != null) {

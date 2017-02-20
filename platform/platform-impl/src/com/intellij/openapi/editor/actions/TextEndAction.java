@@ -39,7 +39,7 @@ public class TextEndAction extends TextComponentEditorAction {
     public void execute(Editor editor, DataContext dataContext) {
       editor.getCaretModel().removeSecondaryCarets();
       int offset = editor.getDocument().getTextLength();
-      if (editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) {
+      if (editor instanceof EditorImpl) {
         editor.getCaretModel().moveToLogicalPosition(editor.offsetToLogicalPosition(offset).leanForward(true));
       }
       else {

@@ -39,7 +39,7 @@ public class MergeQuery<T> implements Query<T>{
   @Override
   @NotNull
   public Collection<T> findAll() {
-    List<T> results = new ArrayList<T>();
+    List<T> results = new ArrayList<>();
     Processor<T> processor = Processors.cancelableCollectProcessor(results);
     forEach(processor);
     return results;
@@ -47,7 +47,7 @@ public class MergeQuery<T> implements Query<T>{
 
   @Override
   public T findFirst() {
-    final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<T>();
+    final CommonProcessors.FindFirstProcessor<T> processor = new CommonProcessors.FindFirstProcessor<>();
     forEach(processor);
     return processor.getFoundValue();
   }
@@ -69,7 +69,7 @@ public class MergeQuery<T> implements Query<T>{
       public void onSuccess(Boolean value) {
         if (value.booleanValue()) {
           final AsyncFuture<Boolean> fq2 = processSubQueryAsync(myQuery2, consumer);
-          fq2.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<Boolean>(result));
+          fq2.addConsumer(SameThreadExecutor.INSTANCE, new DefaultResultConsumer<>(result));
         }
         else {
           result.set(false);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.struct.StructContext;
 
 import java.util.*;
-import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class ImportCollector {
   private static final String JAVA_LANG_PACKAGE = "java.lang";
@@ -124,26 +124,17 @@ public class ImportCollector {
   }
 
   private List<String> packImports() {
-    List<Entry<String, String>> lst = new ArrayList<>(mapSimpleNames.entrySet());
-
-    Collections.sort(lst, (par0, par1) -> {
-      int res = par0.getValue().compareTo(par1.getValue());
-      if (res == 0) {
-        res = par0.getKey().compareTo(par1.getKey());
-      }
-      return res;
-    });
-
-    List<String> res = new ArrayList<>();
-    for (Entry<String, String> ent : lst) {
-      // exclude a current class or one of the nested ones, java.lang and empty packages
-      if (!setNotImportedNames.contains(ent.getKey()) &&
-          !JAVA_LANG_PACKAGE.equals(ent.getValue()) &&
-          !ent.getValue().isEmpty()) {
-        res.add(ent.getValue() + "." + ent.getKey());
-      }
-    }
-
-    return res;
+    return mapSimpleNames.entrySet().stream()
+      .filter(ent ->
+                // exclude the current class or one of the nested ones
+                // empty, java.lang and the current packages
+                !setNotImportedNames.contains(ent.getKey()) &&
+                !ent.getValue().isEmpty() &&
+                !JAVA_LANG_PACKAGE.equals(ent.getValue()) &&
+                !ent.getValue().equals(currentPackagePoint)
+      )
+      .sorted(Map.Entry.<String, String>comparingByValue().thenComparing(Map.Entry.comparingByKey()))
+      .map(ent -> ent.getValue() + "." + ent.getKey())
+      .collect(Collectors.toList());
   }
 }

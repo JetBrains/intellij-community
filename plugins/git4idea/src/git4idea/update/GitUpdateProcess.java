@@ -17,7 +17,6 @@ package git4idea.update;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -56,6 +55,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.vcsUtil.VcsImplUtil.getShortVcsRootName;
 import static git4idea.util.GitUIUtil.*;
 
 /**
@@ -68,11 +68,14 @@ public class GitUpdateProcess {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final ChangeListManager myChangeListManager;
+
   @NotNull private final Collection<GitRepository> myRepositories;
   private final boolean myCheckRebaseOverMergeProblem;
   private final UpdatedFiles myUpdatedFiles;
   @NotNull private final ProgressIndicator myProgressIndicator;
-  private final GitMerger myMerger;
+  @NotNull private final GitMerger myMerger;
 
   private final Map<VirtualFile, GitBranchPair> myTrackedBranches = new HashMap<>();
 
@@ -84,7 +87,10 @@ public class GitUpdateProcess {
     myProject = project;
     myRepositories = repositories;
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
+    myChangeListManager = ChangeListManager.getInstance(project);
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+
     myUpdatedFiles = updatedFiles;
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
     myMerger = new GitMerger(myProject);
@@ -123,13 +129,13 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
+    DvcsUtil.workingTreeChangeStarted(myProject);
     GitUpdateResult result;
     try {
       result = updateImpl(updateMethod);
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      DvcsUtil.workingTreeChangeFinished(myProject);
     }
     myProgressIndicator.setText(oldText);
     return result;
@@ -248,12 +254,12 @@ public class GitUpdateProcess {
   private Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
     Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<>();
     Map<VirtualFile, Collection<Change>> changesUnderRoots =
-      new LocalChangesUnderRoots(ChangeListManager.getInstance(myProject), ProjectLevelVcsManager.getInstance(myProject)).
-        getChangesUnderRoots(updaters.keySet());
+      new LocalChangesUnderRoots(myChangeListManager, myVcsManager).getChangesUnderRoots(updaters.keySet());
     for (Map.Entry<VirtualFile, GitUpdater> updaterEntry : updaters.entrySet()) {
       VirtualFile root = updaterEntry.getKey();
       GitUpdater updater = updaterEntry.getValue();
       Collection<Change> changes = changesUnderRoots.get(root);
+      LOG.debug("Changes under root '" + getShortVcsRootName(myProject, root) + "': " + changes);
       if (updater instanceof GitRebaseUpdater && changes != null && !changes.isEmpty()) {
         // check only if there are local changes, otherwise stash won't happen anyway and there would be no optimization
         GitRebaseUpdater rebaseUpdater = (GitRebaseUpdater) updater;

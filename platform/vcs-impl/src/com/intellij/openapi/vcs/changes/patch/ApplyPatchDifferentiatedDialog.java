@@ -45,7 +45,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ObjectsConvertor;
@@ -61,6 +60,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
@@ -196,10 +196,13 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
     myReset = myCanChangePatchFile ? this::reset : EmptyRunnable.getInstance();
 
-    myChangeListChooser = new ChangeListChooserPanel(project, errorMessage -> {
-      setOKActionEnabled(errorMessage == null && isChangeTreeEnabled());
-      setErrorText(errorMessage);
+    myChangeListChooser = new ChangeListChooserPanel(project, new NullableConsumer<String>() {
+      @Override public void consume(@Nullable String errorMessage) {
+        setOKActionEnabled(errorMessage == null && isChangeTreeEnabled());
+        setErrorText(errorMessage, myChangeListChooser);
+      }
     });
+
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
     if (defaultList != null) {
@@ -558,8 +561,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     protected DefaultTreeModel buildTreeModel(List<AbstractFilePatchInProgress.PatchChange> changes,
                                               ChangeNodeDecorator changeNodeDecorator) {
-      TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
-      return builder.buildModel(ObjectsConvertor.convert(changes, o -> o), changeNodeDecorator);
+      return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), changes, changeNodeDecorator);
     }
 
     @Override
@@ -966,19 +968,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           }
         }
       }
-    }
-
-    public List<Pair<String, Stress>> stressPartsOfFileName(final Change change, final String parentPath) {
-      if (change instanceof AbstractFilePatchInProgress.PatchChange) {
-        final AbstractFilePatchInProgress.PatchChange patchChange = (AbstractFilePatchInProgress.PatchChange)change;
-        final String basePath = patchChange.getPatchInProgress().getBase().getPath();
-        final String basePathCorrected = basePath.trim().replace('/', File.separatorChar);
-        if (parentPath.startsWith(basePathCorrected)) {
-          return Arrays.asList(Pair.create(basePathCorrected, Stress.BOLD),
-                               Pair.create(StringUtil.tail(parentPath, basePathCorrected.length()), Stress.PLAIN));
-        }
-      }
-      return null;
     }
 
     public void preDecorate(Change change, ChangesBrowserNodeRenderer renderer, boolean showFlatten) {

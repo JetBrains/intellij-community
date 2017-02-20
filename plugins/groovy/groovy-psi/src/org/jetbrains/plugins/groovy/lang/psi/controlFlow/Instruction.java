@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,18 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public interface Instruction {
-  Iterable<? extends Instruction> successors(CallEnvironment environment);
-  Iterable<? extends Instruction> predecessors(CallEnvironment environment);
 
-  Iterable<? extends Instruction> allSuccessors();
-  Iterable<? extends Instruction> allPredecessors();
+  @NotNull
+  Iterable<Instruction> successors(@NotNull CallEnvironment environment);
+
+  @NotNull
+  Iterable<Instruction> predecessors(@NotNull CallEnvironment environment);
+
+  @NotNull
+  Iterable<Instruction> allSuccessors();
+
+  @NotNull
+  Iterable<Instruction> allPredecessors();
 
   int num();
 
@@ -36,5 +43,4 @@ public interface Instruction {
 
   @Nullable
   PsiElement getElement();
-
 }

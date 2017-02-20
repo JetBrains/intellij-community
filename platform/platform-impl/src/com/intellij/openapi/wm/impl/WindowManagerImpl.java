@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -40,6 +41,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.platform.WindowUtils;
 import org.jdom.Element;
@@ -50,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
 import java.util.Collection;
@@ -152,7 +156,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       }
     };
 
-    bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         // save full screen window states
@@ -557,6 +561,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       myProject2Frame.put(project, frame);
       frame.setExtendedState(myFrameExtendedState);
       frame.setVisible(true);
+      if (RecentProjectsManagerBase.getInstanceEx().isBatchOpening()) {
+        frame.toBack();
+      }
     }
 
     frame.addWindowListener(myActivationListener);
@@ -688,7 +695,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     catch (NumberFormatException ignored) {
       return null;
     }
-    return bounds;
+    return FrameBoundsConverter.convertFromDeviceSpace(bounds);
   }
 
   @Nullable
@@ -703,9 +710,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     state.addContent(frameState);
 
     // Save default layout
-    Element layoutElement = new Element(DesktopLayout.TAG);
-    state.addContent(layoutElement);
-    myLayout.writeExternal(layoutElement);
+    Element layoutElement = myLayout.writeExternal(DesktopLayout.TAG);
+    if (layoutElement != null) {
+      state.addContent(layoutElement);
+    }
     return state;
   }
 
@@ -723,7 +731,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     }
 
     int extendedState = updateFrameBounds(frame);
-    Rectangle rectangle = myFrameBounds;
+
+    Rectangle rectangle = FrameBoundsConverter.convertToDeviceSpace(frame.getGraphicsConfiguration(), myFrameBounds);
+
     final Element frameElement = new Element(FRAME_ELEMENT);
     frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
     frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
@@ -783,5 +793,85 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
   public static boolean isFloatingMenuBarSupported() {
     return !SystemInfo.isMac && getInstance().isFullScreenSupportedInCurrentOS();
+  }
+
+  /**
+   * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
+   * See {@link UIUtil#isJreHiDPIEnabled()}
+   */
+  private static class FrameBoundsConverter {
+    /**
+     * @param bounds the bounds in the device space
+     * @return the bounds in the user space
+     */
+    public static Rectangle convertFromDeviceSpace(@NotNull Rectangle bounds) {
+      Rectangle b = bounds.getBounds();
+      if (!shouldConvert()) return b;
+      
+      try {
+        for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
+          Rectangle devBounds = gd.getDefaultConfiguration().getBounds(); // in user space
+          scaleUp(devBounds, gd.getDefaultConfiguration()); // to device space
+          Rectangle2D.Float devBounds2D = new Rectangle2D.Float(devBounds.x, devBounds.y, devBounds.width, devBounds.height);
+          Point2D.Float center2d = new Point2D.Float(b.x + b.width / 2, b.y + b.height / 2);
+          if (devBounds2D.contains(center2d)) {
+            scaleDown(b, gd.getDefaultConfiguration());
+            break;
+          }
+        }
+      }
+      catch (HeadlessException ignore) {
+      }
+      return b;
+    }
+
+    /**
+     * @param gc the graphics config
+     * @param bounds the bounds in the user space
+     * @return the bounds in the device space
+     */
+    public static Rectangle convertToDeviceSpace(GraphicsConfiguration gc, @NotNull Rectangle bounds) {
+      Rectangle b = bounds.getBounds();
+      if (!shouldConvert()) return b;
+      
+      try {
+        scaleUp(b, gc);
+      }
+      catch (HeadlessException ignore) {
+      }
+      return b;
+    }
+
+    private static boolean shouldConvert() {
+      if (SystemInfo.isLinux || // JRE-managed HiDPI mode is not yet implemented (pending)
+          SystemInfo.isMac)     // JRE-managed HiDPI mode is permanent
+      {
+        return false;
+      }
+      if (!UIUtil.isJreHiDPIEnabled()) return false; // device space equals user space
+      return true;
+    }
+
+    private static void scaleUp(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
+      scale(bounds, gc.getBounds(), JBUI.sysScale(gc));
+    }
+
+    private static void scaleDown(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {
+      float scale = JBUI.sysScale(gc);
+      assert scale != 0;
+      scale(bounds, gc.getBounds(), 1 / scale);
+    }
+
+    private static void scale(@NotNull Rectangle bounds, @NotNull Rectangle deviceBounds, float scale) {
+      // On Windows, JB SDK transforms the screen bounds to the user space as follows:
+      // [x, y, width, height] -> [x, y, width / scale, height / scale]
+      // xy are not transformed in order to avoid overlapping of the screen bounds in multi-dpi env.
+
+      // scale the delta b/w xy and deviceBounds.xy
+      int x = (int)Math.floor(deviceBounds.x + (bounds.x - deviceBounds.x) * scale);
+      int y = (int)Math.floor(deviceBounds.y + (bounds.y - deviceBounds.y) * scale);
+
+      bounds.setBounds(x, y, (int)Math.ceil(bounds.width * scale), (int)Math.ceil(bounds.height * scale));
+    }
   }
 }

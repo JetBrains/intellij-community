@@ -189,15 +189,6 @@ def locals():
     return {}
 
 
-def max(*args, key=None, default=None):
-    """Return the largest item in an iterable or the largest of two or more
-    arguments.
-
-    :rtype: object | unknown
-    """
-    pass
-
-
 class map(object):
     def __init__(self, function, sequence, *sequence_1):
         """Return an iterable of the results of applying the function to the items of
@@ -225,7 +216,27 @@ def min(*args, key=None, default=None):
     """Return the smallest item in an iterable or the smallest of two or more
     arguments.
 
-    :type args: tuple[T]
+    :type args: T
+    :rtype: T
+    """
+    pass
+
+
+def max(*args, key=None, default=None):
+    """Return the largest item in an iterable or the largest of two or more
+    arguments.
+
+    :type args: T
+    :rtype: T
+    """
+    pass
+
+
+def sum(iterable, start=0):
+    """Sums start and the items of an iterable from left to right and returns
+    the total.
+
+    :type iterable: collections.Iterable[T]
     :rtype: T
     """
     pass

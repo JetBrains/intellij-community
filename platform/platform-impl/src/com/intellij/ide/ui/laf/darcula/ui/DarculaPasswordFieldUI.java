@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -72,11 +73,11 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        g.fillRoundRect(i.left - 5, i.top - 2, width - i.left - i.right + 10, height - i.top - i.bottom + 6, 5, 5);
+        g.fillRoundRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.left - i.right + JBUI.scale(10), height - i.top - i.bottom + JBUI.scale(6), JBUI.scale(5), JBUI.scale(5));
         config.restore();
       }
       else {
-        g.fillRect(i.left - 5, i.top - 2, width - i.left - i.right + 12, height - i.top - i.bottom + 6);
+        g.fillRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.left - i.right + JBUI.scale(12), height - i.top - i.bottom + JBUI.scale(6));
       }
     } else {
       super.paintBackground(g);

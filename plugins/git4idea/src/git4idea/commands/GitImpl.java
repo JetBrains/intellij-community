@@ -719,9 +719,13 @@ public class GitImpl implements Git {
       handler.addLineListener(new GitLineHandlerListener() {
         @Override public void onLineAvailable(String line, Key outputType) {
           if (looksLikeError(line)) {
-            errorOutput.add(line);
+            synchronized (errorOutput) {
+              errorOutput.add(line);
+            }
           } else {
-            output.add(line);
+            synchronized (output) {
+              output.add(line);
+            }
           }
         }
 

@@ -53,11 +53,13 @@ public class UsageViewManagerImpl extends UsageViewManager {
     new ContentManagerWatcher(toolWindow, myFindContentManager);
   }
 
+  @NotNull
   @Override
   public Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
     return addContent(contentName, null, null, reusable, component, toOpenInNewTab, isLockable);
   }
 
+  @NotNull
   @Override
   public Content addContent(String contentName, String tabName, String toolwindowTitle, boolean reusable, final JComponent component,
                             boolean toOpenInNewTab, boolean isLockable) {

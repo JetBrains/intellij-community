@@ -1,12 +1,21 @@
 <html>
 <body>
-Reports any references to classes which allow the class name to
-be used outside the class's stated scope. For instance, this inspection would report
-a <b>public</b> method which returns a <b>private</b> inner class, or a <b>protected</b> field whose
-type is a package-visible class. While legal Java, such references can be very
-confusing, and make reuse difficult.
+Reports usages of classes in field types and in method signatures where the class is less visible than the field or the method.
+<p>
+  Examples are a <b>public</b> method which returns a <b>private</b> inner class, or a <b>protected</b> field
+  whose type is a package-visible class.<br>
+  While legal Java, such fields and methods aren't useful outside of the visibility scope of the classes used in the field or the method.
+<p>
+  In addition to that, in Java 9 a module may hide some of its classes by not exporting their packages.<br>
+  If the public API of a class in an exported package references a class from non-exported package,
+  such API isn't useful outside of the module.
 <!-- tooltip end -->
 <p>
-
+  The options of what is checked are:
+<ul>
+  <li>The module API - the public&protected fields&methods within exported packages (for Java 9+)</li>
+  <li>The public&protected fields&methods (the "public API") in all packages</li>
+  <li>The package-local fields&methods</li>
+</ul>
 </body>
 </html>

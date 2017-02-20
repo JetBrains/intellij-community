@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ import java.awt.image.ImageObserver;
  * @author Anton Makeev
  * @author Konstantin Bulenkov
  */
-public class RetinaImage {
+public class RetinaImage { // [tav] todo: create HiDPIImage class
 
   /**
    * Creates a Retina-aware wrapper over a raw image.
@@ -42,6 +43,14 @@ public class RetinaImage {
   }
 
   /**
+   * @deprecated use {@link #createFrom(Image, float, ImageObserver)} instead
+   */
+  @NotNull
+  public static Image createFrom(Image image, final int scale, ImageObserver observer) {
+    return createFrom(image, (float)scale, observer);
+  }
+
+  /**
    * Creates a Retina-aware wrapper over a raw image.
    * The raw image should be provided in the specified scale.
    * The wrapper will represent the raw image in the user coordinate space.
@@ -52,11 +61,11 @@ public class RetinaImage {
    * @return the Retina-aware wrapper
    */
   @NotNull
-  public static Image createFrom(Image image, final int scale, ImageObserver observer) {
+  public static Image createFrom(Image image, final float scale, ImageObserver observer) {
     int w = image.getWidth(observer);
     int h = image.getHeight(observer);
 
-    Image hidpi = create(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
+    Image hidpi = new JBHiDPIScaledImage(image, (int)(w / scale), (int)(h / scale), BufferedImage.TYPE_INT_ARGB);
     if (SystemInfo.isAppleJvm) {
       Graphics2D g = (Graphics2D)hidpi.getGraphics();
       g.scale(1f / scale, 1f / scale);
@@ -69,21 +78,17 @@ public class RetinaImage {
 
   @NotNull
   public static BufferedImage create(final int width, int height, int type) {
-    return create(null, width, height, type);
+    return new JBHiDPIScaledImage(width, height, type);
   }
 
+  @NotNull
+  public static BufferedImage create(Graphics2D g, final int width, int height, int type) {
+    return new JBHiDPIScaledImage(g, width, height, type);
+  }
 
   @NotNull
-  private static BufferedImage create(Image image, final int width, int height, int type) {
-    if (SystemInfo.isAppleJvm) {
-      return AppleHiDPIScaledImage.create(width, height, type);
-    } else {
-      if (image == null) {
-        return new JBHiDPIScaledImage(width, height, type);
-      } else {
-        return new JBHiDPIScaledImage(image, width, height, type);
-      }
-    }
+  public static BufferedImage create(GraphicsConfiguration gc, final int width, int height, int type) {
+    return new JBHiDPIScaledImage(gc, width, height, type);
   }
 
   public static boolean isAppleHiDPIScaledImage(Image image) {

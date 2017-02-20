@@ -24,13 +24,26 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ConfusingElseInspectionTest extends LightInspectionTestCase {
 
+  private ConfusingElseInspection myInspection = new ConfusingElseInspection();
+
   public void testConfusingElse() {
     doTest();
+  }
+
+  public void testConfusingLastElse() {
+    boolean oldValue = myInspection.reportWhenNoStatementFollow;
+    myInspection.reportWhenNoStatementFollow = false;
+    try {
+      doTest();
+    }
+    finally {
+      myInspection.reportWhenNoStatementFollow = oldValue;
+    }
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ConfusingElseInspection();
+    return myInspection;
   }
 }

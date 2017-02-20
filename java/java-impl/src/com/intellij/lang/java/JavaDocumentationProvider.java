@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -303,7 +303,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     buffer.append(method.getName());
 
-    buffer.append(" (");
+    buffer.append("(");
     PsiParameter[] params = method.getParameterList().getParameters();
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
@@ -384,7 +384,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
-    sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getModuleName());
+    sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getName());
 
     return sb.toString();
   }
@@ -506,8 +506,11 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    if (element instanceof PsiExpressionList) {
-      element = element.getParent(); // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
+    // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
+    // same for new Cl<caret>ass() or method<caret>Call()
+    if (element instanceof PsiExpressionList ||
+        element instanceof PsiReferenceExpression && element.getParent() instanceof PsiMethodCallExpression) {
+      element = element.getParent();
       originalElement = null;
     }
     if (element instanceof PsiMethodCallExpression) {

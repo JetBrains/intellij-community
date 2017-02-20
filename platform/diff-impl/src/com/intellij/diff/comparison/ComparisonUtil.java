@@ -15,11 +15,14 @@
  */
 package com.intellij.diff.comparison;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public class ComparisonUtil {
+  private static final int UNIMPORTANT_LINE_CHAR_COUNT = Registry.intValue("diff.unimportant.line.char.count");
+
   @Contract(pure = true)
   public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
     switch (policy) {
@@ -63,5 +66,9 @@ public class ComparisonUtil {
       index2 = end2;
       if (lastLine1) return true;
     }
+  }
+
+  public static int getUnimportantLineCharCount() {
+    return UNIMPORTANT_LINE_CHAR_COUNT;
   }
 }

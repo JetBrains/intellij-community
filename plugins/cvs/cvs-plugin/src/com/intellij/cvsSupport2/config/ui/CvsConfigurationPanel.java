@@ -25,11 +25,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.util.Options;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -61,25 +60,25 @@ public class CvsConfigurationPanel {
       mySkipOnMergedWithConflict
     };
 
-    myConfigureGlobalButton.addActionListener(new ActionListener(){
-      public void actionPerformed(ActionEvent e) {
-        final ConfigureCvsGlobalSettingsDialog dialog = new ConfigureCvsGlobalSettingsDialog(project);
-        dialog.show();
-      }
+    myConfigureGlobalButton.addActionListener(e -> {
+      final ConfigureCvsGlobalSettingsDialog dialog = new ConfigureCvsGlobalSettingsDialog(project);
+      dialog.show();
     });
   }
 
   public static void addBrowseHandler(Project project, final TextFieldWithBrowseButton field, final String title) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
     field.addBrowseFolderListener(title, null, project, descriptor, new TextComponentAccessor<JTextField>() {
+      @Override
       public String getText(JTextField textField) {
         String text = textField.getText();
-        if (text.length() > 0) {
+        if (!text.isEmpty()) {
           text = CvsApplicationLevelConfiguration.convertToIOFilePath(text);
         }
         return text;
       }
 
+      @Override
       public void setText(JTextField textField, @NotNull String text) {
         textField.setText(text);
       }
@@ -100,11 +99,11 @@ public class CvsConfigurationPanel {
       KeywordSubstitutionWrapper.getValue(config.DEFAULT_TEXT_FILE_SUBSTITUTION));
   }
 
+  @Options.Values
   private static int getSelected(JRadioButton[] group) {
-    for (int i = 0; i < group.length; i++) {
-      final JRadioButton jRadioButton = group[i];
-      if (jRadioButton.isSelected()) return i;
-    }
+    if (group[0].isSelected()) return Options.SHOW_DIALOG;
+    if (group[1].isSelected()) return Options.PERFORM_ACTION_AUTOMATICALLY;
+    if (group[2].isSelected()) return Options.DO_NOTHING;
     LOG.assertTrue(false);
     return -1;
   }

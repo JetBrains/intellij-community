@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -78,9 +77,9 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   }
 
   protected Map<String, String> getPathVariables() {
-    Map<String, String> variables = new HashMap<String, String>();
-    variables.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    variables.put(PathMacrosImpl.USER_HOME_MACRO_NAME, SystemProperties.getUserHome());
+    Map<String, String> variables = new HashMap<>();
+    variables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
+    variables.put(PathMacroUtil.USER_HOME_NAME, SystemProperties.getUserHome());
     return variables;
   }
 

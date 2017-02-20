@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import gnu.trove.THashSet;
@@ -79,10 +78,6 @@ public class InspectionProfileWrapper {
 
   public InspectionToolWrapper getInspectionTool(final String shortName, PsiElement element) {
     return myProfile.getInspectionTool(shortName, element);
-  }
-
-  public void cleanup(@NotNull Project project) {
-    myProfile.cleanup(project);
   }
 
   @NotNull

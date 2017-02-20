@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsLogUi {
@@ -34,24 +33,5 @@ public interface VcsLogUi {
 
   boolean isMultipleRoots();
 
-  boolean isShowRootNames();
-
-  void setLongEdgeVisibility(boolean visibility);
-
-  boolean areLongEdgesVisible();
-
-  void setBekType(@NotNull PermanentGraph.SortType bekType);
-
-  @NotNull
-  PermanentGraph.SortType getBekType();
-
-  void setShowRootNames(boolean showRootNames);
-
   boolean isHighlighterEnabled(@NotNull String id);
-
-  void setHighlighterEnabled(@NotNull String id, boolean enabled);
-
-  boolean isShowDetails();
-
-  void setShowDetails(boolean showDetails);
 }

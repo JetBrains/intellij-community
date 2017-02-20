@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,23 +119,23 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testFileRoot() {
-    val file = tempDir.newFile("test.txt")
-    refresh(file)
+    val files = arrayOf(tempDir.newFile("test1.txt"), tempDir.newFile("test2.txt"))
+    files.forEach { refresh(it) }
+    files.forEach { watch(it, false) }
 
-    watch(file, false)
-    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ file.delete() }, mapOf(file to 'D'))
-    assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
+    assertEvents({ files.forEach { it.writeText("new content") } }, files.map { it to 'U' }.toMap())
+    assertEvents({ files.forEach { it.delete() } }, files.map { it to 'D' }.toMap())
+    assertEvents({ files.forEach { it.writeText("re-creation") } }, files.map { it to 'C' }.toMap())
   }
 
   @Test fun testFileRootRecursive() {
-    val file = tempDir.newFile("test.txt")
-    refresh(file)
+    val files = arrayOf(tempDir.newFile("test1.txt"), tempDir.newFile("test2.txt"))
+    files.forEach { refresh(it) }
+    files.forEach { watch(it, true) }
 
-    watch(file, true)
-    assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ file.delete() }, mapOf(file to 'D'))
-    assertEvents({ file.writeText("re-creation") }, mapOf(file to 'C'))
+    assertEvents({ files.forEach { it.writeText("new content") } }, files.map { it to 'U' }.toMap())
+    assertEvents({ files.forEach { it.delete() } }, files.map { it to 'D' }.toMap())
+    assertEvents({ files.forEach { it.writeText("re-creation") } }, files.map { it to 'C' }.toMap())
   }
 
   @Test fun testNonCanonicallyNamedFileRoot() {
@@ -454,17 +454,14 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ file.renameTo(newFile) }, mapOf(newFile to 'P'))
   }
 
-  @Test fun testPartialRefresh() {
-    // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
-    val top = tempDir.newFolder("top")
-    LocalFileSystemTest.doTestPartialRefresh(top)
-  }
+  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
+  @Test fun testPartialRefresh() = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
 
-  @Test fun testInterruptedRefresh() {
-    // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
-    val top = tempDir.newFolder("top")
-    LocalFileSystemTest.doTestInterruptedRefresh(top)
-  }
+  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
+  @Test fun testInterruptedRefresh() = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
+
+  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
+  @Test fun testRefreshAndFindFile() = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
 
   @Test fun testUnicodePaths() {
     val root = tempDir.newFolder(UNICODE_NAME_1)

@@ -22,7 +22,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.vcs.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -33,6 +32,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcs.ProgressManagerQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
@@ -101,13 +101,14 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   private ConfigurationBean myConfigurationBean = new ConfigurationBean();
-  private final NewRootBunch myBunch;
+  @NotNull private final NewRootBunch myBunch;
 
   @NotNull
   public SvnBranchConfigurationNew get(@NotNull final VirtualFile vcsRoot) {
     return myBunch.getConfig(vcsRoot);
   }
 
+  @NotNull
   public NewRootBunch getSvnBranchConfigManager() {
     return myBunch;
   }

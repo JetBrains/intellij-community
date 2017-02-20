@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
 public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + OptionalIsPresentInspection.class.getName());
 
-  private static final OptionalIfPresentCase[] CASES = {
+  private static final OptionalIsPresentCase[] CASES = {
     new ReturnCase(),
     new AssignmentCase(),
     new ConsumerCase(),
@@ -57,11 +55,11 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
   private enum ProblemType {
     WARNING, INFO, NONE;
 
-    void registerProblem(ProblemsHolder holder, PsiExpression condition, OptionalIfPresentCase scenario) {
+    void registerProblem(ProblemsHolder holder, PsiExpression condition, OptionalIsPresentCase scenario) {
       if(this != NONE) {
         holder.registerProblem(condition, "Can be replaced with single expression in functional style",
                                this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               new OptionalIfPresentFix(scenario));
+                               new OptionalIsPresentFix(scenario));
       }
     }
   }
@@ -110,7 +108,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       }
 
       void check(PsiExpression condition, PsiVariable optionalVariable, PsiElement thenElement, PsiElement elseElement) {
-        for (OptionalIfPresentCase scenario : CASES) {
+        for (OptionalIsPresentCase scenario : CASES) {
           scenario.getProblemType(optionalVariable, thenElement, elseElement).registerProblem(holder, condition, scenario);
         }
       }
@@ -177,18 +175,15 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
         ((PsiReferenceExpression)lambdaCandidate).isReferenceTo(optionalVariable) && OptionalUtil.isOptionalEmptyCall(falseExpression)) {
       return ProblemType.WARNING;
     }
-    if (!ExceptionUtil.getThrownCheckedExceptions(lambdaCandidate).isEmpty()) return ProblemType.NONE;
+    if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaCandidate, optionalVariable::equals)) return ProblemType.NONE;
     Ref<Boolean> hasOptionalReference = new Ref<>(Boolean.FALSE);
     boolean hasNoBadRefs = PsiTreeUtil.processElements(lambdaCandidate, e -> {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiElement element = ((PsiReferenceExpression)e).resolve();
-      if (!(element instanceof PsiVariable)) return true;
-      // Check that Optional variable is referenced only in context of get() call and other variables are effectively final
-      if (element == optionalVariable) {
-        hasOptionalReference.set(Boolean.TRUE);
-        return isOptionalGetCall(e.getParent().getParent(), optionalVariable);
-      }
-      return HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, lambdaCandidate, null);
+      if (element != optionalVariable) return true;
+      // Check that Optional variable is referenced only in context of get() call
+      hasOptionalReference.set(Boolean.TRUE);
+      return isOptionalGetCall(e.getParent().getParent(), optionalVariable);
     });
     if(!hasNoBadRefs) return ProblemType.NONE;
     if(hasOptionalReference.get() && lambdaCandidate instanceof PsiExpression) return ProblemType.WARNING;
@@ -241,10 +236,10 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     return ExpressionUtils.isSimpleExpression(expression) || LambdaGenerationUtil.canBeUncheckedLambda(expression);
   }
 
-  static class OptionalIfPresentFix implements LocalQuickFix {
-    private final OptionalIfPresentCase myScenario;
+  static class OptionalIsPresentFix implements LocalQuickFix {
+    private final OptionalIsPresentCase myScenario;
 
-    public OptionalIfPresentFix(OptionalIfPresentCase scenario) {
+    public OptionalIsPresentFix(OptionalIsPresentCase scenario) {
       myScenario = scenario;
     }
 
@@ -283,17 +278,14 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       String replacementText = myScenario.generateReplacement(factory, ct, optionalVariable, thenElement, elseElement);
       if (thenElement != null && !PsiTreeUtil.isAncestor(cond, thenElement, true)) ct.delete(thenElement);
       if (elseElement != null && !PsiTreeUtil.isAncestor(cond, elseElement, true)) ct.delete(elseElement);
-      PsiElement replacement = cond instanceof PsiExpression ?
-                               factory.createExpressionFromText(replacementText, cond) :
-                               factory.createStatementFromText(replacementText, cond);
-      PsiElement result = ct.replaceAndRestoreComments(cond, replacement);
+      PsiElement result = ct.replaceAndRestoreComments(cond, replacementText);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
   }
 
-  interface OptionalIfPresentCase {
+  interface OptionalIsPresentCase {
     ProblemType getProblemType(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement);
 
     String generateReplacement(PsiElementFactory factory,
@@ -302,7 +294,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
                                PsiElement falseElement);
   }
 
-  static class ReturnCase implements OptionalIfPresentCase {
+  static class ReturnCase implements OptionalIsPresentCase {
     @Override
     public ProblemType getProblemType(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement) {
       if (!(trueElement instanceof PsiReturnStatement) || !(falseElement instanceof PsiReturnStatement)) return ProblemType.NONE;
@@ -327,7 +319,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     }
   }
 
-  static class AssignmentCase implements OptionalIfPresentCase {
+  static class AssignmentCase implements OptionalIsPresentCase {
     @Override
     public ProblemType getProblemType(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement) {
       PsiAssignmentExpression trueAssignment = ExpressionUtils.getAssignment(trueElement);
@@ -359,7 +351,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     }
   }
 
-  static class TernaryCase implements OptionalIfPresentCase {
+  static class TernaryCase implements OptionalIsPresentCase {
     @Override
     public ProblemType getProblemType(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement) {
       if(!(trueElement instanceof PsiExpression) || !(falseElement instanceof PsiExpression)) return ProblemType.NONE;
@@ -382,10 +374,11 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     }
   }
 
-  static class ConsumerCase implements OptionalIfPresentCase {
+  static class ConsumerCase implements OptionalIsPresentCase {
     @Override
     public ProblemType getProblemType(PsiVariable optionalVariable, PsiElement trueElement, PsiElement falseElement) {
       if (falseElement != null && !(falseElement instanceof PsiEmptyStatement)) return ProblemType.NONE;
+      if (!(trueElement instanceof PsiStatement)) return ProblemType.NONE;
       if (trueElement instanceof PsiExpressionStatement) {
         PsiExpression expression = ((PsiExpressionStatement)trueElement).getExpression();
         if(isOptionalGetCall(expression, optionalVariable)) return ProblemType.NONE;

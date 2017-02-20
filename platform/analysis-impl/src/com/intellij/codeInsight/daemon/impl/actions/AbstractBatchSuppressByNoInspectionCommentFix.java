@@ -16,9 +16,11 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -108,7 +110,8 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   }
 
   protected final void replaceSuppressionComment(@NotNull final PsiElement comment) {
-    SuppressionUtil.replaceSuppressionComment(comment, myID, myReplaceOtherSuppressionIds, getCommentLanguage(comment));
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(comment)) return;
+    WriteAction.run(() -> SuppressionUtil.replaceSuppressionComment(comment, myID, myReplaceOtherSuppressionIds, getCommentLanguage(comment)));
   }
 
   protected void createSuppression(@NotNull Project project,

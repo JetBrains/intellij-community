@@ -75,8 +75,6 @@ public interface InspectionProfile extends Comparable {
   @NotNull
   InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element);
 
-  void cleanup(@NotNull Project project);
-
   boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element);
 
   boolean isToolEnabled(@Nullable HighlightDisplayKey key);
@@ -84,7 +82,7 @@ public interface InspectionProfile extends Comparable {
   boolean isExecutable(Project project);
 
   /**
-   * @see {@link ModifiableModel#setSingleTool(String)}
+   * @see {@link InspectionProfileImpl#setSingleTool(String)}
    *
    * @return tool short name when inspection profile corresponds to synthetic profile for single inspection run
    */
@@ -93,8 +91,6 @@ public interface InspectionProfile extends Comparable {
 
   @NotNull
   String getDisplayName();
-
-  void scopesChanged();
 
   @NotNull
   List<Tools> getAllEnabledInspectionTools(Project project);

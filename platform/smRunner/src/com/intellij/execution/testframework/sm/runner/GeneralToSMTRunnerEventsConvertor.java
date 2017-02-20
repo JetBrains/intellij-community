@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -289,7 +288,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
     addToInvokeLater(() -> {
       final String testName = testFinishedEvent.getName();
-      final long duration = testFinishedEvent.getDuration();
+      final Long duration = testFinishedEvent.getDuration();
       final String fullTestName = getFullTestName(testName);
       final SMTestProxy testProxy = getProxyByFullTestName(fullTestName);
 
@@ -299,7 +298,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         return;
       }
 
-      testProxy.setDuration(duration);
+      testProxy.setDuration(duration != null ? duration : 0);
       testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
       testProxy.setFinished();
       myRunningTestsFullNameToProxy.remove(fullTestName);
@@ -387,9 +386,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       }
 
       if (comparisionFailureActualText != null && comparisionFailureExpectedText != null) {
-        testProxy.setTestComparisonFailed(localizedMessage, stackTrace,
-                                          comparisionFailureActualText, comparisionFailureExpectedText,
-                                          testFailedEvent.getExpectedFilePath(), testFailedEvent.getActualFilePath());
+        testProxy.setTestComparisonFailed(localizedMessage, stackTrace, comparisionFailureActualText, comparisionFailureExpectedText, testFailedEvent);
       }
       else if (comparisionFailureActualText == null && comparisionFailureExpectedText == null) {
         testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
@@ -410,7 +407,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
      addToInvokeLater(() -> {
-       final String testName = ObjectUtils.assertNotNull(testIgnoredEvent.getName());
+       final String testName = testIgnoredEvent.getName();
+       if (testName == null) {
+         logProblem("TestIgnored event: no name");
+       }
        String ignoreComment = testIgnoredEvent.getIgnoreComment();
        final String stackTrace = testIgnoredEvent.getStacktrace();
        final String fullTestName = getFullTestName(testName);

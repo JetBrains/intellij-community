@@ -17,12 +17,13 @@ package com.intellij.usages.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Manuel Stadelmann
@@ -38,7 +39,8 @@ public class RemoveUsageAction extends AnAction {
     process(getUsages(e), e.getData(UsageView.USAGE_VIEW_KEY));
   }
 
-  private static void process(Usage[] usages, UsageView usageView) {
+  private static void process(@NotNull Usage[] usages, @NotNull UsageView usageView) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (usages.length == 0) return;
     Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
     final Usage nextToSelect = getNextToSelect(usageView, usages[usages.length - 1]);
@@ -52,24 +54,16 @@ public class RemoveUsageAction extends AnAction {
     }
   }
 
+  @NotNull
   private static Usage[] getUsages(AnActionEvent context) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     UsageView usageView = context.getData(UsageView.USAGE_VIEW_KEY);
     if (usageView == null) return Usage.EMPTY_ARRAY;
     Usage[] usages = context.getData(UsageView.USAGES_KEY);
     return usages == null ? Usage.EMPTY_ARRAY : usages;
   }
 
-  private static Usage getNextToSelect(UsageView usageView, Usage toDelete) {
-    List<Usage> sortedUsages = usageView.getSortedUsages();
-    int curIndex = sortedUsages.indexOf(toDelete);
-
-    int selectIndex = 0;
-    if (curIndex < sortedUsages.size() - 1) {
-      selectIndex = curIndex + 1;
-    }
-    else if (curIndex > 0) {
-      selectIndex = curIndex - 1;
-    }
-    return sortedUsages.get(selectIndex);
+  private static Usage getNextToSelect(@NotNull UsageView usageView, @NotNull Usage toDelete) {
+    return ((UsageViewImpl)usageView).getNextToSelect(toDelete);
   }
 }

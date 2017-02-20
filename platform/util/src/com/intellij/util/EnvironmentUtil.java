@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.FixedFuture;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -164,6 +165,7 @@ public class EnvironmentUtil {
       String os = SystemInfo.isLinux ? "linux" : "mac";
       File reader = FileUtil.findFirstThatExist(
         PathManager.getBinPath() + "/printenv.py",
+        PathManager.getHomePath() + "/ultimate/community/bin/" + os + "/printenv.py",
         PathManager.getHomePath() + "/community/bin/" + os + "/printenv.py",
         PathManager.getHomePath() + "/bin/" + os + "/printenv.py");
       if (reader == null) {
@@ -195,7 +197,16 @@ public class EnvironmentUtil {
     @NotNull
     protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
       throws Exception {
+      return runProcessAndReadEnvs(command, null, envFile, lineSeparator);
+    }
+    
+    @NotNull                                                                                  
+    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
+                                                               @Nullable File workingDir, 
+                                                               @NotNull File envFile, 
+                                                               String lineSeparator) throws Exception {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
+      if (workingDir != null) builder.directory(workingDir);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       Process process = builder.start();
       StreamGobbler gobbler = new StreamGobbler(process.getInputStream());
@@ -209,14 +220,20 @@ public class EnvironmentUtil {
       return parseEnv(lines, lineSeparator);
     }
 
+    @NotNull
     protected List<String> getShellProcessCommand() throws Exception {
       String shell = getShell();
-
       if (shell == null || !new File(shell).canExecute()) {
         throw new Exception("shell:" + shell);
       }
-
-      return new ArrayList<String>(Arrays.asList(shell, "-l", "-i"));
+      List<String> commands = ContainerUtil.newArrayList(shell);
+      if (!shell.endsWith("/tcsh") && !shell.endsWith("/csh")) {
+        // Act as a login shell
+        // tsch does allow to use -l with any other options
+        commands.add("-l");
+      }
+      commands.add("-i"); // enable interactive shell
+      return commands;
     }
 
     @Nullable

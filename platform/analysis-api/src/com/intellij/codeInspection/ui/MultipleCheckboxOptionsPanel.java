@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Bas Leijdekkers
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class MultipleCheckboxOptionsPanel extends JPanel {
 
     private final OptionAccessor myOptionAccessor;
@@ -36,25 +39,27 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         myOptionAccessor = optionAccessor;
     }
 
-    public void addCheckbox(String label,
-                            @NonNls String property) {
+    public void addCheckbox(String label, @NonNls String property) {
         final boolean selected = myOptionAccessor.getOption(property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
         configureCheckbox(myOptionAccessor, property, checkBox);
+        addComponent(checkBox);
+    }
+
+    public void addComponent(JComponent component) {
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.weightx = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
         final Component[] components = getComponents();
         removeAll();
-        for (Component component : components) {
-            add(component, constraints);
+        for (Component component1 : components) {
+            add(component1, constraints);
             constraints.gridy++;
         }
         constraints.weighty = 1.0;
-        add(checkBox, constraints);
+        add(component, constraints);
     }
 
     private static void configureCheckbox(OptionAccessor accessor, String property, JCheckBox checkBox) {

@@ -29,6 +29,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -43,8 +44,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -103,8 +104,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
 
   private static final UsageNode MORE_USAGES_SEPARATOR_NODE = UsageViewImpl.NULL_NODE;
-  private static final UsageNode USAGES_OUTSIDE_SCOPE_NODE =
-    new UsageNode(USAGES_OUTSIDE_SCOPE_SEPARATOR, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
+  private static final UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, USAGES_OUTSIDE_SCOPE_SEPARATOR);
 
   private static final Comparator<UsageNode> USAGE_NODE_COMPARATOR = (c1, c2) -> {
     if (c1 instanceof StringNode || c2 instanceof StringNode) {
@@ -251,7 +251,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final UsageViewPresentation presentation = findUsagesManager.createPresentation(handler, options);
     presentation.setDetachedMode(true);
-    final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
+    UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
     if (editor != null) {
       PsiReference reference = TargetElementUtil.findReference(editor);
       if (reference != null) {
@@ -323,12 +323,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       synchronized (usages) {
         if (visibleNodes.size() >= maxUsages) return false;
         if(UsageViewManager.isSelfUsage(usage, myUsageTarget)) return true;
-        UsageNode node = ApplicationManager.getApplication().runReadAction(new Computable<UsageNode>() {
-          @Override
-          public UsageNode compute() {
-            return usageView.doAppendUsage(usage);
-          }
-        });
+        UsageNode node = ReadAction.compute(() -> usageView.doAppendUsage(usage));
         usages.add(usage);
         if (node != null) {
           visibleNodes.add(node);
@@ -644,6 +639,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final Runnable itemChoseCallback,
                                    @NotNull final UsageViewPresentation presentation,
                                    @NotNull final AsyncProcessIcon processIcon) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     PopupChooserBuilder builder = new PopupChooserBuilder(table);
     final String title = presentation.getTabText();
@@ -1156,7 +1152,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     public MyTable() {
       ScrollingUtil.installActions(this);
-      HintUpdateSupply.installSimpleHintUpdateSupply(this);
+      HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }
 
     @Override
@@ -1171,6 +1167,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         if (selected.length == 1) {
           return getPsiElementForHint(getValueAt(selected[0], 0));
         }
+      }
+      else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+        return PopupUtil.getPopupContainerFor(this);
       }
       return null;
     }
@@ -1210,7 +1209,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     @NotNull private final Object myString;
 
     StringNode(@NotNull Object string) {
-      super(NullUsage.INSTANCE, new UsageViewTreeModelBuilder(new UsageViewPresentation(), UsageTarget.EMPTY_ARRAY));
+      super(null, NullUsage.INSTANCE);
       myString = string;
     }
 
@@ -1249,7 +1248,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       Usage usage = node.getUsage();
       if (usage == MORE_USAGES_SEPARATOR || usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) return "";
       GroupNode group = (GroupNode)node.getParent();
-      return group + usage.getPresentation().getPlainText();
+      String groupText = group == null ? "" : group.getGroup().getText(null);
+      return groupText + usage.getPresentation().getPlainText();
     }
 
     @Override

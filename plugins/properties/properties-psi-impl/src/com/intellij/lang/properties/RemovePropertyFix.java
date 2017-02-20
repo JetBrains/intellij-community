@@ -19,13 +19,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
@@ -55,6 +53,12 @@ class RemovePropertyFix implements IntentionAction {
            file.isValid() &&
            PsiManager.getInstance(project).isInProject(file) &&
            myProperty.getElement() != null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return myProperty.getElement();
   }
 
   @Override

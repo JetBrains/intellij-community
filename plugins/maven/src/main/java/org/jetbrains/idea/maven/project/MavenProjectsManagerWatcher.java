@@ -23,20 +23,19 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.externalSystem.service.project.autoimport.FileChangeListenerBase;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -115,7 +114,7 @@ public class MavenProjectsManagerWatcher {
     myChangedDocumentsQueue.makeUserAware(myProject);
     myChangedDocumentsQueue.activate();
 
-    myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    myBusConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
         MavenProject mavenProject = myManager.findProject(module);
@@ -324,7 +323,7 @@ public class MavenProjectsManagerWatcher {
     // onSettingsChange() will be called indirectly by pathsChanged listener on GeneralSettings object
   }
 
-  private class MyRootChangesListener extends ModuleRootAdapter {
+  private class MyRootChangesListener implements ModuleRootListener {
     @Override
     public void rootsChanged(ModuleRootEvent event) {
       // todo is this logic necessary?
@@ -372,7 +371,7 @@ public class MavenProjectsManagerWatcher {
     return false;
   }
 
-  private class MyFileChangeListener extends MyFileChangeListenerBase {
+  private class MyFileChangeListener extends FileChangeListenerBase {
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
     private boolean settingsHaveChanged;
@@ -502,95 +501,6 @@ public class MavenProjectsManagerWatcher {
     private void clearLists() {
       filesToUpdate = null;
       filesToRemove = null;
-    }
-  }
-
-  private static abstract class MyFileChangeListenerBase implements BulkFileListener {
-    protected abstract boolean isRelevant(String path);
-
-    protected abstract void updateFile(VirtualFile file, VFileEvent event);
-
-    protected abstract void deleteFile(VirtualFile file, VFileEvent event);
-
-    protected abstract void apply();
-
-    @Override
-    public void before(@NotNull List<? extends VFileEvent> events) {
-      for (VFileEvent each : events) {
-        if (each instanceof VFileDeleteEvent) {
-          deleteRecursively(each.getFile(), each);
-        }
-        else {
-          if (!isRelevant(each.getPath())) continue;
-          if (each instanceof VFilePropertyChangeEvent) {
-            if (isRenamed(each)) {
-              deleteRecursively(each.getFile(), each);
-            }
-          }
-          else if (each instanceof VFileMoveEvent) {
-            VFileMoveEvent moveEvent = (VFileMoveEvent)each;
-            String newPath = moveEvent.getNewParent().getPath() + "/" + moveEvent.getFile().getName();
-            if (!isRelevant(newPath)) {
-              deleteRecursively(moveEvent.getFile(), each);
-            }
-          }
-        }
-      }
-    }
-
-    private void deleteRecursively(VirtualFile f, final VFileEvent event) {
-      VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor() {
-        @Override
-        public boolean visitFile(@NotNull VirtualFile f) {
-          if (isRelevant(f.getPath())) deleteFile(f, event);
-          return true;
-        }
-
-        @Nullable
-        @Override
-        public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile f) {
-          return f.isDirectory() && f instanceof NewVirtualFile ? ((NewVirtualFile)f).iterInDbChildren() : null;
-        }
-      });
-    }
-
-    @Override
-    public void after(@NotNull List<? extends VFileEvent> events) {
-      for (VFileEvent each : events) {
-        if (!isRelevant(each.getPath())) continue;
-
-        if (each instanceof VFileCreateEvent) {
-          VFileCreateEvent createEvent = (VFileCreateEvent)each;
-          VirtualFile newChild = createEvent.getParent().findChild(createEvent.getChildName());
-          if (newChild != null) {
-            updateFile(newChild, each);
-          }
-        }
-        else if (each instanceof VFileCopyEvent) {
-          VFileCopyEvent copyEvent = (VFileCopyEvent)each;
-          VirtualFile newChild = copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
-          if (newChild != null) {
-            updateFile(newChild, each);
-          }
-        }
-        else if (each instanceof VFileContentChangeEvent) {
-          updateFile(each.getFile(), each);
-        }
-        else if (each instanceof VFilePropertyChangeEvent) {
-          if (isRenamed(each)) {
-            updateFile(each.getFile(), each);
-          }
-        }
-        else if (each instanceof VFileMoveEvent) {
-          updateFile(each.getFile(), each);
-        }
-      }
-      apply();
-    }
-
-    private static boolean isRenamed(VFileEvent each) {
-      return ((VFilePropertyChangeEvent)each).getPropertyName().equals(VirtualFile.PROP_NAME)
-             && !Comparing.equal(((VFilePropertyChangeEvent)each).getOldValue(), ((VFilePropertyChangeEvent)each).getNewValue());
     }
   }
 }

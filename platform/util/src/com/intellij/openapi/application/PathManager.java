@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.ElementTraversal;
 
 import java.io.*;
 import java.net.URL;
@@ -194,7 +195,7 @@ public class PathManager {
   }
 
   public static void ensureConfigFolderExists() {
-    checkAndCreate(getConfigPath(), true);
+    FileUtil.createDirectory(new File(getConfigPath()));
   }
 
   @NotNull
@@ -205,11 +206,6 @@ public class PathManager {
   @NotNull
   public static File getOptionsFile(@NotNull String fileName) {
     return new File(getOptionsPath(), fileName + ".xml");
-  }
-
-  @NotNull
-  public static File getOptionsFile(@NotNull NamedJDOMExternalizable externalizable) {
-    return getOptionsFile(externalizable.getExternalFileName());
   }
 
   @NotNull
@@ -256,7 +252,7 @@ public class PathManager {
       ourSystemPath = getHomePath() + File.separator + SYSTEM_FOLDER;
     }
 
-    checkAndCreate(ourSystemPath, true);
+    FileUtil.createDirectory(new File(ourSystemPath));
     return ourSystemPath;
   }
 
@@ -267,9 +263,9 @@ public class PathManager {
 
   @NotNull
   public static File getIndexRoot() {
-    String indexRoot = System.getProperty("index_root_path", getSystemPath() + "/index");
-    checkAndCreate(indexRoot, true);
-    return new File(indexRoot);
+    File indexRoot = new File(System.getProperty("index_root_path", getSystemPath() + "/index"));
+    FileUtil.createDirectory(indexRoot);
+    return indexRoot;
   }
 
   @NotNull
@@ -459,7 +455,8 @@ public class PathManager {
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
       Snappy.class,                 // Snappy
-      SecurityManager.class         // xercesImpl
+      SecurityManager.class,        // xercesImpl
+      ElementTraversal.class        // xml-apis (required by Xerces)
     };
 
     final Set<String> classPath = new HashSet<String>();
@@ -514,6 +511,7 @@ public class PathManager {
     return platformPath(selector, macPart, null, null, null, fallback);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static String platformPath(@NotNull String selector,
                                      @Nullable String macPart,
                                      @Nullable String winVar,
@@ -540,13 +538,10 @@ public class PathManager {
     return getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
   }
 
-  private static boolean checkAndCreate(String path, boolean createIfNotExists) {
-    if (createIfNotExists) {
-      File file = new File(path);
-      if (!file.exists()) {
-        return file.mkdirs();
-      }
-    }
-    return false;
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #getOptionsFile(String)} (to be removed in IDEA 2018) */
+  public static File getOptionsFile(@NotNull NamedJDOMExternalizable externalizable) {
+    return getOptionsFile(externalizable.getExternalFileName());
   }
+  //</editor-fold>
 }

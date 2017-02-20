@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private final Map<String, String> myNameCache = Collections.synchronizedMap(new THashMap<String, String>());
   private Set<String> myDuplicatesCache = null;
   private boolean isDuplicatesCacheUpdating = false;
+  private boolean myBatchOpening;
 
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
     MessageBusConnection connection = messageBus.connect();
@@ -269,10 +270,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (UIUtil.isRetina()) {
+        // [tav] todo: the icon is created in def screen scale
+        if (UIUtil.isJreHiDPI()) {
           final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
-          newG.scale(0.5, 0.5);
-          newG.drawImage(image, x/2, y/2, null);
+          float s = JBUI.sysScale();
+          newG.scale(1/s, 1/s);
+          newG.drawImage(image, (int)(x / s), (int)(y / s), null);
           newG.scale(1, 1);
           newG.dispose();
         }
@@ -283,12 +286,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
       @Override
       public int getIconWidth() {
-        return UIUtil.isRetina() ? image.getWidth() / 2 : image.getWidth();
+        return UIUtil.isJreHiDPI() ? (int)(image.getWidth() / JBUI.sysScale()) : image.getWidth();
       }
 
       @Override
       public int getIconHeight() {
-        return UIUtil.isRetina() ? image.getHeight() / 2 : image.getHeight();
+        return UIUtil.isJreHiDPI() ? (int)(image.getHeight() / JBUI.sysScale()) : image.getHeight();
       }
     };
   }
@@ -296,7 +299,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   private static BufferedImage loadAndScaleImage(File file) {
     try {
       Image img = ImageLoader.loadFromUrl(file.toURL());
-      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16));
+      return Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : (int)JBUI.pixScale(16));
     }
     catch (MalformedURLException e) {//
     }
@@ -326,11 +329,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         Icon appIcon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getIconUrl());
 
         if (appIcon != null) {
-          if (appIcon.getIconWidth() == JBUI.scale(16) && appIcon.getIconHeight() == JBUI.scale(16)) {
+          if (appIcon.getIconWidth() == JBUI.pixScale(16) && appIcon.getIconHeight() == JBUI.pixScale(16)) {
             ourSmallAppIcon = appIcon;
           } else {
             BufferedImage image = ImageUtil.toBufferedImage(IconUtil.toImage(appIcon));
-            image = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : JBUI.scale(16));
+            image = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : (int)JBUI.pixScale(16));
             ourSmallAppIcon = toRetinaAwareIcon(image);
           }
         }
@@ -518,9 +521,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     @Override
     public void projectClosing(Project project) {
+      String path = getProjectPath(project);
       synchronized (myStateLock) {
-        myState.names.put(getProjectPath(project), getProjectDisplayName(project));
+        myState.names.put(path, getProjectDisplayName(project));
       }
+      myNameCache.put(path, project.getName());
     }
 
     @Override
@@ -562,8 +567,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   @Override
   public void clearNameCache() {
-    myNameCache.clear();
-    myDuplicatesCache = null;
   }
 
   private static String readProjectName(@NotNull String path) {
@@ -608,12 +611,23 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
           forceNewFrame = false;
         }
       }
-      for (String openPath : openPaths) {
-        if (ProjectKt.isValidProjectPath(openPath)) {
-          doOpenProject(openPath, null, forceNewFrame);
+      try {
+        myBatchOpening = true;
+        for (String openPath : openPaths) {
+          // https://youtrack.jetbrains.com/issue/IDEA-166321
+          if (ProjectKt.isValidProjectPath(openPath, true)) {
+            doOpenProject(openPath, null, forceNewFrame);
+          }
         }
       }
+      finally {
+        myBatchOpening = false;
+      }
     }
+  }
+
+  public boolean isBatchOpening() {
+    return myBatchOpening;
   }
 
   @Override
@@ -633,7 +647,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     myState.groups.remove(group);
   }
 
-  private class MyAppLifecycleListener extends AppLifecycleListener.Adapter {
+  private class MyAppLifecycleListener implements AppLifecycleListener {
     @Override
     public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
       if (willReopenProjectOnStart()) {

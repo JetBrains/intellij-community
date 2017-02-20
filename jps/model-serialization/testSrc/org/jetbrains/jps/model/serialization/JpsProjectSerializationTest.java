@@ -32,7 +32,6 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -215,18 +214,13 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
   }
 
   private void doTestSaveLibrary(File libFile, String libName, JpsLibrary library) {
-    try {
-      Element actual = new Element("library");
-      JpsLibraryTableSerializer.saveLibrary(library, actual, libName);
-      JpsMacroExpander
-        macroExpander = JpsProjectLoader.createProjectMacroExpander(Collections.<String, String>emptyMap(), getFileInSampleProject(""));
-      Element rootElement = JpsLoaderBase.loadRootElement(libFile, macroExpander);
-      Element expected = rootElement.getChild("library");
-      PlatformTestUtil.assertElementsEqual(expected, actual);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    Element actual = new Element("library");
+    JpsLibraryTableSerializer.saveLibrary(library, actual, libName);
+    JpsMacroExpander
+      macroExpander = JpsProjectLoader.createProjectMacroExpander(Collections.<String, String>emptyMap(), getFileInSampleProject(""));
+    Element rootElement = JpsLoaderBase.loadRootElement(libFile, macroExpander);
+    Element expected = rootElement.getChild("library");
+    PlatformTestUtil.assertElementsEqual(expected, actual);
   }
 
   private void doTestSaveModule(JpsModule module, final String moduleFilePath) {

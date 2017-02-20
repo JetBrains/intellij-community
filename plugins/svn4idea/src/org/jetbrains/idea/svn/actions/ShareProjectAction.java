@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,13 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
@@ -38,230 +32,180 @@ import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import java.io.File;
+import static com.intellij.openapi.progress.ProgressManager.progress;
+import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.ArrayUtil.isEmpty;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class ShareProjectAction extends BasicAction {
 
-  protected String getActionName(AbstractVcs vcs) {
-    return SvnBundle.message("share.directory.action");
+  @NotNull
+  @Override
+  protected String getActionName() {
+    return message("share.directory.action");
   }
 
-  public void update(AnActionEvent e) {
-    Presentation presentation = e.getPresentation();
-    final DataContext dataContext = e.getDataContext();
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    Project project = e.getProject();
+    boolean visible = project != null &&
+                      !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning() &&
+                      !isEmpty(files) &&
+                      files.length == 1 &&
+                      files[0].isDirectory();
 
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if ((project == null) || (ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning())) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
-    }
-
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (files == null || files.length == 0) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
-    }
-    boolean enabled = false;
-    boolean visible = false;
-    if (files.length == 1 && files [0].isDirectory()) {
-      visible = true;
-      if (! SvnStatusUtil.isUnderControl(project, files[0])) {
-        enabled = true;
-      }
-    }
-    presentation.setEnabled(enabled);
-    presentation.setVisible(visible);
+    e.getPresentation().setVisible(visible);
+    e.getPresentation().setEnabled(visible && !SvnStatusUtil.isUnderControl(project, files[0]));
   }
 
-  protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     return false;
   }
 
-  protected boolean needsFiles() {
-    return true;
+  public static boolean share(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
+    return performImpl(SvnVcs.getInstance(project), file);
   }
 
-  public static boolean share(final Project project, final VirtualFile file) throws VcsException {
-    return performImpl(project, SvnVcs.getInstance(project), file);
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
+    performImpl(vcs, file);
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, DataContext context) throws VcsException {
-    performImpl(project, activeVcs, file);
-  }
-
-  private static boolean performImpl(final Project project, final SvnVcs activeVcs, final VirtualFile file) throws VcsException {
-    final ShareDialog shareDialog = new ShareDialog(project, file.getName());
+  private static boolean performImpl(@NotNull SvnVcs vcs, @NotNull VirtualFile file) throws VcsException {
+    ShareDialog shareDialog = new ShareDialog(vcs.getProject(), file.getName());
     shareDialog.show();
 
-    final String parent = shareDialog.getSelectedURL();
+    String parent = shareDialog.getSelectedURL();
     if (shareDialog.isOK() && parent != null) {
-      final Ref<Boolean> actionStarted = new Ref<>(Boolean.TRUE);
-      final Exception[] error = new Exception[1];
+      Ref<Boolean> actionStarted = new Ref<>(Boolean.TRUE);
+      Exception[] error = new Exception[1];
+      ShareDialog.ShareTarget shareTarget = shareDialog.getShareTarget();
 
-      final ShareDialog.ShareTarget shareTarget = shareDialog.getShareTarget();
-      final ProgressManager progressManager = ProgressManager.getInstance();
-
-      if (ShareDialog.ShareTarget.useSelected.equals(shareTarget)) {
-        final boolean folderEmpty = checkRemoteFolder(project, activeVcs, parent, progressManager);
-
-        if (! folderEmpty) {
-          final int promptAnswer =
-            Messages.showYesNoDialog(project, "Remote folder \"" + parent + "\" is not empty.\nDo you want to continue sharing?",
-                                     "Share directory", Messages.getWarningIcon());
-          if (Messages.YES != promptAnswer) return false;
-        }
+      if (ShareDialog.ShareTarget.useSelected.equals(shareTarget) &&
+          !isFolderEmpty(vcs, parent) &&
+          YES !=
+          showYesNoDialog(vcs.getProject(), "Remote folder \"" + parent + "\" is not empty.\nDo you want to continue sharing?",
+                          "Share Directory", getWarningIcon())) {
+        return false;
       }
 
-      final WorkingCopyFormat format = SvnCheckoutProvider.promptForWCopyFormat(VfsUtilCore.virtualToIoFile(file), project);
+      WorkingCopyFormat format = SvnCheckoutProvider.promptForWCopyFormat(virtualToIoFile(file), vcs.getProject());
       actionStarted.set(format != WorkingCopyFormat.UNKNOWN);
       // means operation cancelled
       if (format == WorkingCopyFormat.UNKNOWN) {
         return true;
       }
 
-      ExclusiveBackgroundVcsAction.run(project, new Runnable() {
-        public void run() {
-          progressManager.runProcessWithProgressSynchronously(new Runnable() {
-            public void run() {
-              try {
-                final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-                final File path = new File(file.getPath());
+      ExclusiveBackgroundVcsAction.run(vcs.getProject(), () ->
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          try {
+            SvnWorkingCopyFormatHolder.setPresetFormat(format);
 
-                SvnWorkingCopyFormatHolder.setPresetFormat(format);
+            SvnTarget checkoutTarget =
+              createFolderStructure(vcs, file, shareTarget, shareDialog.createStandardStructure(), createUrl(parent),
+                                    shareDialog.getCommitText());
 
-                final SVNURL parenUrl = SVNURL.parseURIEncoded(parent);
-                final SVNURL checkoutUrl;
-                final SVNRevision revision;
-                final String commitText = shareDialog.getCommitText();
-                if (ShareDialog.ShareTarget.useSelected.equals(shareTarget)) {
-                  checkoutUrl = parenUrl;
-                  revision = SVNRevision.HEAD;
-                } else if (ShareDialog.ShareTarget.useProjectName.equals(shareTarget)) {
-                  final Pair<SVNRevision, SVNURL> pair = createRemoteFolder(activeVcs, parenUrl, file.getName(), commitText);
-                  revision = pair.getFirst();
-                  checkoutUrl = pair.getSecond();
-                } else {
-                  final Pair<SVNRevision, SVNURL> pair = createRemoteFolder(activeVcs, parenUrl, file.getName(), commitText);
-                  final Pair<SVNRevision, SVNURL> trunkPair = createRemoteFolder(activeVcs, pair.getSecond(), "trunk", commitText);
-                  checkoutUrl = trunkPair.getSecond();
-                  revision = trunkPair.getFirst();
+            progress(message("share.directory.checkout.back.progress.text", checkoutTarget.getPathOrUrlString()));
 
-                  if (shareDialog.createStandardStructure()) {
-                    createRemoteFolder(activeVcs, pair.getSecond(), "branches", commitText);
-                    createRemoteFolder(activeVcs, pair.getSecond(), "tags", commitText);
-                  }
-                }
+            ClientFactory factory = SvnCheckoutProvider.getFactory(vcs, format);
 
-                if (indicator != null) {
-                  indicator.checkCanceled();
-                  indicator.setText(SvnBundle.message("share.directory.checkout.back.progress.text", checkoutUrl.toString()));
-                }
-
-                final ClientFactory factory = SvnCheckoutProvider.getFactory(activeVcs, format);
-
-                factory.createCheckoutClient()
-                  .checkout(SvnTarget.fromURL(checkoutUrl), path, revision, Depth.INFINITY, false, false, format, null);
-                addRecursively(activeVcs, factory, file);
-              } catch (SVNException e) {
-                error[0] = e;
-              }
-              catch (VcsException e) {
-                error[0] = e;
-              } finally {
-                activeVcs.invokeRefreshSvnRoots();
-                SvnWorkingCopyFormatHolder.setPresetFormat(null);
-              }
-            }
-          }, SvnBundle.message("share.directory.title"), true, project);
-        }
-      });
+            factory.createCheckoutClient()
+              .checkout(SvnTarget.fromURL(checkoutTarget.getURL()), virtualToIoFile(file), checkoutTarget.getPegRevision(), Depth.INFINITY,
+                        false, false, format, null);
+            addRecursively(vcs, factory, file);
+          }
+          catch (VcsException e) {
+            error[0] = e;
+          }
+          finally {
+            vcs.invokeRefreshSvnRoots();
+            SvnWorkingCopyFormatHolder.setPresetFormat(null);
+          }
+        }, message("share.directory.title"), true, vcs.getProject()));
 
       if (Boolean.TRUE.equals(actionStarted.get())) {
         if (error[0] != null) {
           throw new VcsException(error[0].getMessage());
         }
-        Messages.showInfoMessage(project, SvnBundle.message("share.directory.info.message", file.getName()),
-                                 SvnBundle.message("share.directory.title"));
+        showInfoMessage(vcs.getProject(), message("share.directory.info.message", file.getName()), message("share.directory.title"));
       }
       return true;
     }
     return false;
   }
 
-  private static boolean checkRemoteFolder(Project project,
-                                        final SvnVcs activeVcs,
-                                        final String parent,
-                                        ProgressManager progressManager) throws VcsException {
-    final VcsException[] exc = new VcsException[1];
-    final boolean[] folderEmpty = new boolean[1];
+  @NotNull
+  private static SvnTarget createFolderStructure(@NotNull SvnVcs vcs,
+                                                 @NotNull VirtualFile file,
+                                                 @NotNull ShareDialog.ShareTarget shareTarget,
+                                                 boolean createStandardStructure,
+                                                 @NotNull SVNURL parentUrl,
+                                                 @NotNull String commitText) throws VcsException {
+    switch (shareTarget) {
+      case useSelected:
+        return SvnTarget.fromURL(parentUrl, SVNRevision.HEAD);
+      case useProjectName:
+        return createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
+      default:
+        SvnTarget projectRoot = createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
+        SvnTarget trunk = createRemoteFolder(vcs, projectRoot.getURL(), "trunk", commitText);
 
-    progressManager.runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          folderEmpty[0] = SvnUtil.remoteFolderIsEmpty(activeVcs, parent);
+        if (createStandardStructure) {
+          createRemoteFolder(vcs, projectRoot.getURL(), "branches", commitText);
+          createRemoteFolder(vcs, projectRoot.getURL(), "tags", commitText);
         }
-        catch (VcsException e) {
-          exc[0] = e;
-        }
-      }
-    }, "Check remote folder contents", false, project);
-    if (exc[0] != null) {
-      throw exc[0];
+        return trunk;
     }
-    return folderEmpty[0];
   }
 
-  private static Pair<SVNRevision, SVNURL> createRemoteFolder(@NotNull final SvnVcs vcs,
-                                                              @NotNull final SVNURL parent,
-                                                              final String folderName,
-                                                              String commitText) throws VcsException, SVNException {
-    SVNURL url = parent.appendPath(folderName, false);
-    final String urlText = url.toString();
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.checkCanceled();
-      indicator.setText(SvnBundle.message("share.directory.create.dir.progress.text", urlText));
-    }
+  private static boolean isFolderEmpty(@NotNull SvnVcs vcs, @NotNull String folderUrl) throws VcsException {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> SvnUtil.remoteFolderIsEmpty(vcs, folderUrl), "Check Remote Folder Contents", false, vcs.getProject());
+  }
 
+  @NotNull
+  private static SvnTarget createRemoteFolder(@NotNull SvnVcs vcs,
+                                              @NotNull SVNURL parent,
+                                              @NotNull String folderName,
+                                              @NotNull String commitText) throws VcsException {
+    SVNURL url = append(parent, folderName);
     String message =
-      SvnBundle.message("share.directory.commit.message", folderName, ApplicationNamesInfo.getInstance().getFullProductName(), commitText);
+      message("share.directory.commit.message", folderName, ApplicationNamesInfo.getInstance().getFullProductName(), commitText);
     SvnTarget target = SvnTarget.fromURL(url);
-    long revision = vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, message, false);
 
-    return Pair.create(SVNRevision.create(revision), url);
+    progress(message("share.directory.create.dir.progress.text", url.toString()));
+
+    long revision = vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, message, false);
+    return SvnTarget.fromURL(url, SVNRevision.create(revision));
   }
 
   @Override
-  protected void doVcsRefresh(final Project project, final VirtualFile file) {
-    VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    VcsDirtyScopeManager.getInstance(vcs.getProject()).dirDirtyRecursively(file);
   }
 
-  private static void addRecursively(@NotNull final SvnVcs activeVcs, @NotNull final ClientFactory factory, final VirtualFile file)
+  private static void addRecursively(@NotNull SvnVcs vcs, @NotNull ClientFactory factory, @NotNull VirtualFile rootFile)
     throws VcsException {
-    final SvnExcludingIgnoredOperation operation = new SvnExcludingIgnoredOperation(activeVcs.getProject(), new SvnExcludingIgnoredOperation.Operation() {
-      public void doOperation(final VirtualFile virtualFile) throws VcsException {
-        final File ioFile = new File(virtualFile.getPath());
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null) {
-          indicator.checkCanceled();
-          indicator.setText(SvnBundle.message("share.or.import.add.progress.text", virtualFile.getPath()));
-        }
-        factory.createAddClient().add(ioFile, Depth.EMPTY, false, false, true, null);
-      }
+    SvnExcludingIgnoredOperation operation = new SvnExcludingIgnoredOperation(vcs.getProject(), file -> {
+      progress(message("share.or.import.add.progress.text", file.getPath()));
+
+      factory.createAddClient().add(virtualToIoFile(file), Depth.EMPTY, false, false, true, null);
     }, Depth.INFINITY);
 
-    operation.execute(file);
+    operation.execute(rootFile);
   }
 
-  protected void batchPerform(Project project, final SvnVcs activeVcs, VirtualFile[] file, DataContext context) throws VcsException {
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
   }
 
   protected boolean isBatchAction() {

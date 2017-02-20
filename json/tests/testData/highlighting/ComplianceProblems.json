@@ -2,13 +2,13 @@
   <weak_warning descr="JSON standard does not allow comments. Use JSMin or similar tool to remove comments before parsing.">/* Property key checks */</weak_warning>
   "key1": null,
   <error descr="JSON standard allows only double quoted string as property key"><error descr="JSON standard does not allow single quoted strings">'key2'</error></error>: null,
-  <error descr="JSON standard does not allow identifiers">key3</error>: null,
+  <error descr="JSON standard does not allow such tokens">key3</error>: null,
   <error descr="JSON standard allows only double quoted string as property key">42</error>: null,
 
   <weak_warning descr="JSON standard does not allow comments. Use JSMin or similar tool to remove comments before parsing.">// Property value checks</weak_warning>
   "key4": "foo",
   "key5": <error descr="JSON standard does not allow single quoted strings">'foo'</error>,
-  "key6": <error descr="JSON standard does not allow identifiers">foo</error>,
+  "key6": <error descr="JSON standard does not allow such tokens">foo</error>,
   "key7": [42<error descr="JSON standard does not allow trailing comma">,</error>],
   "key8": false<error descr="JSON standard does not allow trailing comma">,</error>
 }

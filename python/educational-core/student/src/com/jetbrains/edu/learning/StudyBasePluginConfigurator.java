@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.courseFormat.Task;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +52,15 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         Task task = getTask(file);
         setTaskText(task, StudyUtils.getTaskDir(file));
+        if (task != null) {
+          if (task.isChoiceTask()) {
+            final StudyChoiceVariantsPanel choicePanel = new StudyChoiceVariantsPanel(task);
+            toolWindow.setBottomComponent(choicePanel);
+          }
+          else {
+            toolWindow.setBottomComponent(null);
+          }
+        }
       }
 
       @Override
@@ -76,13 +85,7 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
 
       @Nullable
       private Task getTask(@NotNull VirtualFile file) {
-        TaskFile taskFile = StudyUtils.getTaskFile(project, file);
-        if (taskFile != null) {
-          return taskFile.getTask();
-        }
-        else {
-          return null;
-        }
+        return StudyUtils.getTaskForFile(project, file);
       }
 
       private void setTaskText(@Nullable final Task task, @Nullable final VirtualFile taskDirectory) {

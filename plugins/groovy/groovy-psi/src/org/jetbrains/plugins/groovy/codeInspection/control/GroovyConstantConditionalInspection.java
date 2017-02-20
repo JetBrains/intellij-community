@@ -81,7 +81,7 @@ public class GroovyConstantConditionalInspection extends BaseInspection {
 
         @Override
         @NotNull
-        public String getName() {
+        public String getFamilyName() {
             return "Simplify";
         }
 

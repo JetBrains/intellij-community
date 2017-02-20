@@ -65,7 +65,6 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
       }
     });
     myTemplatesList.setEmptyText("No user-defined project templates");
-    myTemplatesList.setPreferredSize(JBUI.size(300, 100));
     myTemplatesList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -81,7 +80,9 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
     });
 
     myPanel = new JPanel(new BorderLayout(0, 5));
-    myPanel.add(ToolbarDecorator.createDecorator(myTemplatesList).disableUpDownActions().createPanel());
+    JPanel panel = ToolbarDecorator.createDecorator(myTemplatesList).disableUpDownActions().createPanel();
+    panel.setPreferredSize(JBUI.size(300, 200));
+    myPanel.add(panel);
 
     myDescriptionPane = new JTextPane();
     myDescriptionPane.setPreferredSize(JBUI.size(300, 50));

@@ -43,6 +43,7 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
     return ServiceManager.getService(project, MavenWorkspaceSettingsComponent.class);
   }
 
+  @Override
   @NotNull
   public MavenWorkspaceSettings getState() {
     MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(myProject).getExplicitProfiles();
@@ -51,6 +52,7 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
     return mySettings;
   }
 
+  @Override
   public void loadState(MavenWorkspaceSettings state) {
     mySettings = state;
     applyDefaults(mySettings);
@@ -68,7 +70,8 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
       else {
         settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
       }
-    } else {
+    }
+    else {
       MavenServerManager.getInstance().setMavenHome(settings.generalSettings.getMavenHome());
     }
   }

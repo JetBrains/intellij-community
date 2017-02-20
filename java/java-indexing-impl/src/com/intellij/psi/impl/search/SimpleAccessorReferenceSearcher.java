@@ -53,7 +53,8 @@ public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiRefere
       for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
         additional = additional.union(provider.getScope(method.getProject()));
       }
-      final SearchScope propScope = scope.intersectWith(method.getUseScope()).intersectWith(additional);
+
+      SearchScope propScope = scope.intersectWith(method.getUseScope()).intersectWith(additional);
       collector.searchWord(propertyName, propScope, UsageSearchContext.IN_FOREIGN_LANGUAGES, true, method);
     }
   }

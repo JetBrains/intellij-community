@@ -91,15 +91,24 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testDiamondCollapsedInsideAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testDiamondCollapsedInFieldInitializerInsideAnonymous() throws Exception {
+    doTest();
+  }
+
   public void testInheritorConstructorRef() {
     myFixture.addClass("package intf; public interface Intf<T> {}");
     myFixture.addClass("package foo; public class ImplBar implements intf.Intf<String> {}");
     myFixture.addClass("package foo; public class ImplFoo<T> implements intf.Intf<T> {}");
     myFixture.addClass("package foo; public class ImplIncompatible implements intf.Intf<Integer> {}");
+    myFixture.addClass("package foo; public abstract class ImplAbstract implements intf.Intf<String> { public ImplAbstract() {} }");
     myFixture.addClass("package foo; class ImplInaccessible implements intf.Intf<String> {}");
 
     configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "ImplBar::new", "ImplFoo::new", "()");
+    myFixture.assertPreferredCompletionItems(0, "ImplBar::new", "ImplFoo::new", "() -> ");
     myFixture.type('\n');
     checkResultByFile("/" + getTestName(false) + "-out.java");
   }

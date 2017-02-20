@@ -9,7 +9,6 @@ class Color(Enum):
 
 print(Color.red.name, Color.red.name.upper())
 print(Color.red.name.<warning descr="Unresolved attribute reference 'foo' for class 'str'">foo</warning>)
-print(Color.red.value, Color.red.value.real)
 print(Color.red.value.<warning descr="Unresolved attribute reference 'foo' for class 'int'">foo</warning>)
 print(Color.red.<warning descr="Unresolved attribute reference 'foo' for class 'Color'">foo</warning>)
 

@@ -48,6 +48,14 @@ public abstract class XValueGroup extends XValueContainer {
   }
 
   /**
+   * @return {@code true} to save and restore expansion state between sessions.
+   * If it is enabled, return value from {@code isAutoExpand()} will be considered as default state.
+   */
+  public boolean  isRestoreExpansion() {
+    return false;
+  }
+
+  /**
    * @return separator between the group name and the {@link #getComment() comment} in the node text
    */
   @NotNull

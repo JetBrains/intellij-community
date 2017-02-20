@@ -134,7 +134,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
   }
 
   /**
-   * @return <code>true</code> if exact TYPEs match
+   * @return {@code true} if exact TYPEs match
    */
   private static boolean findMatchingExpressions(final PsiExpression[] arguments, final PsiMethod existingMethod,
                                                                    final Set<PsiLiteralExpression> result) {

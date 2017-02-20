@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -64,7 +63,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     PsiFile file = anchorStatement.getContainingFile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     Document document = documentManager.getDocument(file);
-    if (document == null || !FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    if (document == null) return;
     PsiElement[] elements = {anchorStatement};
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {

@@ -21,6 +21,8 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -257,7 +259,19 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   public void testFinalParamUsedInsideAnon() throws Exception {
     CodeStyleSettingsManager.getSettings(getProject()).GENERATE_FINAL_PARAMETERS = false;
-    doTest();
+    doTestWithJava17();
+  }
+
+  private void doTestWithJava17() throws Exception {
+    LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
+    LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    try {
+      projectExtension.setLanguageLevel(LanguageLevel.JDK_1_7);
+      doTest();
+    }
+    finally {
+      projectExtension.setLanguageLevel(oldLevel);
+    }
   }
 
   public void testNonFinalWritableParam() throws Exception {
@@ -426,6 +440,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testDontSkipVariablesUsedInLeftSideOfAssignments() throws Exception {
+    doTest();
+  }
+
   public void testIDEADEV11748() throws Exception {
     doTest();
   }
@@ -506,7 +524,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testParamsUsedInLocalClass() throws Exception {
-    doTest();
+    doTestWithJava17();
   }
 
   private void doChainedConstructorTest(final boolean replaceAllDuplicates) throws Exception {
@@ -656,6 +674,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testFromLambdaBodyCapturedWildcardParams() throws Exception {
+    doTest();
+  }
+
   public void testFromLambdaBodyToAnonymous() throws Exception {
     doTest();
   }
@@ -693,7 +715,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testFinalParams4LocalClasses() throws Exception {
-    doTest();
+    doTestWithJava17();
   }
 
   public void testIncompleteExpression() throws Exception {
@@ -783,7 +805,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testExpression() throws Exception {
-    doTest();
+    doTestWithJava17();
   }
 
   public void testCopyParamAnnotations() throws Exception {
@@ -872,6 +894,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testTypeUseAnnotationsOnParameter() throws Exception {
+    doTest();
+  }
+
   public void testSameAnnotations() throws Exception {
     doTest();
   }
@@ -898,6 +924,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, null, psiClass.getContainingClass());
     assertTrue(success);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testDontMakeParametersFinalDueToUsagesInsideAnonymous() throws Exception {
+    doTest();
   }
 
   private void doTestDisabledParam() throws PrepareFailedException {

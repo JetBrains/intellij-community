@@ -31,7 +31,7 @@ import java.awt.event.ActionListener;
  * Can be used for languages which do not use standard "Wrapping and Braces" panel.
  * <p>
  * <strong>Note</strong>: besides adding the panel to UI it is necessary to make sure that language's own
- * <code>LanguageCodeStyleSettingsProvider</code> explicitly supports RIGHT_MARGIN field in <code>customizeSettings()</code>
+ * {@code LanguageCodeStyleSettingsProvider} explicitly supports RIGHT_MARGIN field in {@code customizeSettings()}
  * method as shown below:
  * <pre>
  * public void customizeSettings(...) {

@@ -62,7 +62,7 @@ public abstract class PsiDocumentManager {
    * Returns the cached PSI file for the specified document.
    *
    * @param document the document for which the PSI file is requested.
-   * @return the PSI file instance, or <code>null</code> if there is currently no cached PSI tree for the file.
+   * @return the PSI file instance, or {@code null} if there is currently no cached PSI tree for the file.
    */
   @Nullable
   public abstract PsiFile getCachedPsiFile(@NotNull Document document);
@@ -71,7 +71,7 @@ public abstract class PsiDocumentManager {
    * Returns the document for the specified PSI file.
    *
    * @param file the file for which the document is requested.
-   * @return the document instance, or <code>null</code> if the file is binary or has no associated document.
+   * @return the document instance, or {@code null} if the file is binary or has no associated document.
    */
   @Nullable
   public abstract Document getDocument(@NotNull PsiFile file);
@@ -80,7 +80,7 @@ public abstract class PsiDocumentManager {
    * Returns the cached document for the specified PSI file.
    *
    * @param file the file for which the document is requested.
-   * @return the document instance, or <code>null</code> if there is currently no cached document for the file.
+   * @return the document instance, or {@code null} if there is currently no cached document for the file.
    */
   @Nullable
   public abstract Document getCachedDocument(@NotNull PsiFile file);

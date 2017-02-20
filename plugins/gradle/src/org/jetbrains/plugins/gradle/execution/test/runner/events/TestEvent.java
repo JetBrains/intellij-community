@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/28/14
  */
 public interface TestEvent {
-  void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException;
+  void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException;
 }

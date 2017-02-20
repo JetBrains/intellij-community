@@ -67,8 +67,6 @@ public abstract class NextPrevParameterAction extends CodeInsightAction {
     public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
       TemplateParameterTraversalPolicy policy = findSuitableTraversalPolicy(editor, file);
       if (policy != null) {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-
         policy.invoke(editor, file, myNext);
       }
     }

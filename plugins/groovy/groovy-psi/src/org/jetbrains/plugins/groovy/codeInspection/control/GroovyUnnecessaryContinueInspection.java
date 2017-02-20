@@ -76,7 +76,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Remove unnecessary continue";
     }
 

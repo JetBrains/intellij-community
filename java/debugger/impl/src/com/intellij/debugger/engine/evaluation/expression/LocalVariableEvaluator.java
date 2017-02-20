@@ -32,10 +32,9 @@ import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
@@ -198,7 +197,7 @@ class LocalVariableEvaluator implements Evaluator {
     if (place == null) {
       return null;
     }
-    return ApplicationManager.getApplication().runReadAction((Computable<PsiVariable>)() ->
+    return ReadAction.compute(() ->
       JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(name, place));
   }
 

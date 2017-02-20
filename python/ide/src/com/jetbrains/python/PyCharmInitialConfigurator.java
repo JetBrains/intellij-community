@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,10 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 /**
+ * Initialize PyCharm.
+ *
+ * This class is called <strong>only in PyCharm</strong>.
+ * It does not work in plugin
  * @author yole
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "UtilityClassWithPublicConstructor"})
@@ -50,11 +54,11 @@ public class PyCharmInitialConfigurator {
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
       settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-      UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
+      UISettings.getInstance().setShowDirectoryForNonUniqueFilenames(true);
     }
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V3")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V3", "true");
-      UISettings.getInstance().SHOW_MEMORY_INDICATOR = false;
+      UISettings.getInstance().setShowMemoryIndicator(false);
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
     }
@@ -72,7 +76,7 @@ public class PyCharmInitialConfigurator {
     }
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void welcomeScreenDisplayed() {
           ApplicationManager.getApplication().invokeLater(() -> {
@@ -84,6 +88,7 @@ public class PyCharmInitialConfigurator {
     }
 
     Registry.get("ide.scratch.enabled").setValue(true);
+    Registry.get("ide.ssh.one.time.password").setValue(true);
   }
 
   private static void showInitialConfigurationDialog() {

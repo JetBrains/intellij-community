@@ -154,7 +154,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
 
   public boolean isAvailable() {
     final List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-    return !mappings.isEmpty() && !StringUtil.isEmpty(mappings.get(0).getVcs());
+    return mappings.stream().anyMatch(mapping -> !StringUtil.isEmpty(mapping.getVcs()));
   }
 
   public void projectClosed() {

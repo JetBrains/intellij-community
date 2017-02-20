@@ -21,9 +21,9 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
@@ -53,7 +53,7 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
                     @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
-                    @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);

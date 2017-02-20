@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -470,7 +470,7 @@ public class AbstractPopup implements JBPopup {
   @Override
   public void showInBestPositionFor(@NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor != null) {
+    if (editor != null && editor.getComponent().isShowing()) {
       showInBestPositionFor(editor);
     }
     else {
@@ -694,6 +694,7 @@ public class AbstractPopup implements JBPopup {
 
   private void disposePopup() {
     if (myPopup != null) {
+      resetWindow();
       myPopup.hide(true);
     }
     myPopup = null;
@@ -1233,7 +1234,7 @@ public class AbstractPopup implements JBPopup {
   private PopupComponent.Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
     if (Registry.is("allow.dialog.based.popups")) {
       boolean noFocus = !myFocusable || !myRequestFocus;
-      boolean cannotBeDialog = noFocus && SystemInfo.isXWindow;
+      boolean cannotBeDialog = noFocus; // && SystemInfo.isXWindow
 
       if (!cannotBeDialog && (isPersistent() || forceDialog)) {
         return new PopupComponent.Factory.Dialog();
@@ -1380,8 +1381,6 @@ public class AbstractPopup implements JBPopup {
       }
     }
     myMouseOutCanceller = null;
-
-    resetWindow();
 
     if (myFinalRunnable != null) {
       final ActionCallback typeAheadDone = new ActionCallback();
@@ -1738,7 +1737,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   @NotNull
-  CaptionPanel getTitle() {
+  public CaptionPanel getTitle() {
     return myCaption;
   }
 
@@ -1769,7 +1768,7 @@ public class AbstractPopup implements JBPopup {
   public void setWarning(@NotNull String text) {
     JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
     label.setOpaque(true);
-    Color color = HintUtil.INFORMATION_COLOR;
+    Color color = HintUtil.getInformationColor();
     label.setBackground(color);
     label.setBorder(BorderFactory.createLineBorder(color, 3));
     myHeaderPanel.add(label, BorderLayout.SOUTH);
@@ -1890,7 +1889,7 @@ public class AbstractPopup implements JBPopup {
     return location;
   }
 
-  private boolean isBusy() {
+  protected boolean isBusy() {
     return myResizeListener != null && myResizeListener.isBusy() || myMoveListener != null && myMoveListener.isBusy();
   }
 

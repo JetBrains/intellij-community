@@ -16,13 +16,15 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.fragments.*
+import com.intellij.diff.fragments.DiffFragment
+import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.fragments.MergeLineFragment
+import com.intellij.diff.fragments.MergeWordFragment
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 
 class ComparisonUtilAutoTest : DiffTestCase() {
@@ -145,7 +147,7 @@ class ComparisonUtilAutoTest : DiffTestCase() {
         val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
 
         val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, INDICATOR)
-        MergeLineFragmentImpl(f, wordFragments)
+        Pair(f, wordFragments)
       }
       debugData.put("Fragments", fineFragments)
 
@@ -217,20 +219,27 @@ class ComparisonUtilAutoTest : DiffTestCase() {
     checkValidRanges(text1, text2, fragments, policy, false)
   }
 
-  private fun checkResultMerge(text1: Document, text2: Document, text3: Document, fragments: List<MergeLineFragment>, policy: ComparisonPolicy) {
-    checkLineConsistency3(text1, text2, text3, fragments)
+  private fun checkResultMerge(text1: Document,
+                               text2: Document,
+                               text3: Document,
+                               fragments: List<Pair<MergeLineFragment, List<MergeWordFragment>>>,
+                               policy: ComparisonPolicy) {
+    val lineFragments = fragments.map { it.first }
+    checkLineConsistency3(text1, text2, text3, lineFragments)
 
-    for (f in fragments) {
+    checkValidRanges3(text1, text2, text3, lineFragments, policy)
+    checkCantTrimLines3(text1, text2, text3, lineFragments, policy)
+
+    for (pair in fragments) {
+      val f = pair.first
+      val innerFragments = pair.second
       val chunk1 = DiffUtil.getLinesContent(text1, f.startLine1, f.endLine1)
       val chunk2 = DiffUtil.getLinesContent(text2, f.startLine2, f.endLine2)
       val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
 
-      checkDiffConsistency3(f.innerFragments!!)
-      checkValidRanges3(chunk1, chunk2, chunk3, f.innerFragments!!, policy)
+      checkDiffConsistency3(innerFragments)
+      checkValidRanges3(chunk1, chunk2, chunk3, innerFragments, policy)
     }
-
-    checkValidRanges3(text1, text2, text3, fragments, policy)
-    checkCantTrimLines3(text1, text2, text3, fragments, policy)
   }
 
   private fun checkLineConsistency(text1: Document, text2: Document, fragments: List<LineFragment>, allowNonSquashed: Boolean) {
@@ -464,7 +473,7 @@ class ComparisonUtilAutoTest : DiffTestCase() {
       val chunkContent2 = text2.subSequence(start2, end2)
       val chunkContent3 = text3.subSequence(start3, end3)
       assertFalse(isEqualsCharSequences(chunkContent2, chunkContent1, ignoreSpacesChanged) &&
-                    isEqualsCharSequences(chunkContent2, chunkContent3, ignoreSpacesChanged))
+                  isEqualsCharSequences(chunkContent2, chunkContent3, ignoreSpacesChanged))
 
       last1 = fragment.endOffset1
       last2 = fragment.endOffset2
@@ -506,8 +515,8 @@ class ComparisonUtilAutoTest : DiffTestCase() {
     // in non-squashed blocks non-trimmed elements are possible
     if (allowNonSquashed) {
       if (policy != ComparisonPolicy.IGNORE_WHITESPACES) return
-      if (countNonWhitespaceCharacters(line1) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
-      if (countNonWhitespaceCharacters(line2) <= Registry.get("diff.unimportant.line.char.count").asInteger()) return
+      if (countNonWhitespaceCharacters(line1) <= ComparisonUtil.getUnimportantLineCharCount()) return
+      if (countNonWhitespaceCharacters(line2) <= ComparisonUtil.getUnimportantLineCharCount()) return
     }
 
     assertFalse(MANAGER.isEquals(line1, line2, policy))

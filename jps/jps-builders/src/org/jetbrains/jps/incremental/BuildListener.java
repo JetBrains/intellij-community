@@ -15,9 +15,9 @@
  */
 package org.jetbrains.jps.incremental;
 
-import com.intellij.openapi.util.Pair;
+import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
+import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 
-import java.util.Collection;
 import java.util.EventListener;
 
 /**
@@ -28,9 +28,9 @@ public interface BuildListener extends EventListener{
 
   /**
    * Note: when parallel build is on, might be called from several simultaneously running threads
-   * @param paths collection of pairs [output root->relative path to generated file]
+   * @param event
    */
-  void filesGenerated(Collection<Pair<String, String>> paths);
+  void filesGenerated(FileGeneratedEvent event);
 
-  void filesDeleted(Collection<String> paths);
+  void filesDeleted(FileDeletedEvent event);
 }

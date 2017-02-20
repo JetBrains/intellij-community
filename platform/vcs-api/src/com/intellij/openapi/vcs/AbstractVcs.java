@@ -21,7 +21,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -403,7 +402,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    * This method is used for VCS autodetection during initial project creation and VCS configuration.
    *
    * @param dir the directory to check.
-   * @return <code>true</code> if directory is managed by this VCS
+   * @return {@code true} if directory is managed by this VCS
    */
   public boolean isVersionedDirectory(VirtualFile dir) {
     return false;
@@ -411,7 +410,7 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   /**
    * If VCS does not implement detection whether directory is versioned ({@link #isVersionedDirectory(VirtualFile)}),
-   * it should return <code>false</code>. Otherwise return <code>true</code>
+   * it should return {@code false}. Otherwise return {@code true}
    */
   public boolean supportsVersionedStateDetection() {
     return true;
@@ -457,11 +456,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  @Nullable
-  public ChangeListEditHandler getEditHandler() {
-    return null;
-  }
-
   public boolean allowsNestedRoots() {
     return false;
   }
@@ -496,11 +490,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   public VcsType getType() {
     return VcsType.centralized;
-  }
-
-  // todo ?
-  public boolean checkImmediateParentsBeforeCommit() {
-    return false;
   }
 
   @Nullable

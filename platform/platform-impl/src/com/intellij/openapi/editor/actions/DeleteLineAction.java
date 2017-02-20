@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,13 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -43,6 +47,7 @@ public class DeleteLineAction extends TextComponentEditorAction {
   private static class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(final Editor editor, Caret caret, DataContext dataContext) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("editor.delete.line");
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
       final Document document = editor.getDocument();

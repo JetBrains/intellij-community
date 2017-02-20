@@ -193,7 +193,9 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   private static List<? extends GenerationInfo> filterOutAlreadyInsertedConstructors(PsiClass aClass, List<? extends GenerationInfo> constructors) {
     boolean alreadyExist = true;
     for (GenerationInfo constructor : constructors) {
-      alreadyExist &= aClass.findMethodBySignature((PsiMethod)constructor.getPsiMember(), false) != null;
+      PsiMethod existingMethod = aClass.findMethodBySignature((PsiMethod)constructor.getPsiMember(), false);
+
+      alreadyExist &= existingMethod != null && existingMethod.isPhysical();
     }
     if (alreadyExist) {
       return Collections.emptyList();

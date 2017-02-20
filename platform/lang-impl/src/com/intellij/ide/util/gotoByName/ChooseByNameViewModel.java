@@ -288,7 +288,7 @@ public abstract class ChooseByNameViewModel {
   protected void doClose(final boolean ok) {
     if (checkDisposed()) return;
 
-    if (closeForbidden(ok)) return;
+    if (closeForbidden(ok) || getChosenElements().isEmpty()) return;
 
     cancelListUpdater();
     close(ok);
@@ -472,12 +472,9 @@ public abstract class ChooseByNameViewModel {
     Object[] oldElements = myListModel.getItems().toArray();
     Object[] newElements = elements.toArray();
     List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
-    if (commands == null) {
-      return; // Nothing changed
-    }
 
     setHasResults(true);
-    if (commands.isEmpty()) {
+    if (commands == null || commands.isEmpty()) {
       selectItem(pos, newElements);
       updateVisibleRowCount();
       showList();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -358,7 +358,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (width <= 0 || height <= 0) return null;
 
     Dimension size = getImageSize(width, height);
-    myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
+    myImage = UIUtil.createImage(myComponent, size.width, size.height, BufferedImage.TYPE_INT_RGB);
 
     Graphics2D g = myImage.createGraphics();
     g.setClip(null);

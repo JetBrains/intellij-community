@@ -241,4 +241,24 @@ public class EditorActionTest extends AbstractEditorTest {
     executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES);
     checkResultByText("a b c");
   }
+
+  public void testDeleteAtSurrogatePair() throws Exception {
+    initText("a<caret>" + SURROGATE_PAIR + "b");
+    delete();
+    checkResultByText("a<caret>b");
+  }
+
+  public void testBackspaceAtSurrogatePair() throws Exception {
+    initText("a" + SURROGATE_PAIR + "<caret>b");
+    backspace();
+    checkResultByText("a<caret>b");
+  }
+
+  public void testCaretMovementNearSurrogatePair() throws Exception {
+    initText("a<caret>" + SURROGATE_PAIR + "b");
+    right();
+    checkResultByText("a" + SURROGATE_PAIR + "<caret>b");
+    left();
+    checkResultByText("a<caret>" + SURROGATE_PAIR + "b");
+  }
 }

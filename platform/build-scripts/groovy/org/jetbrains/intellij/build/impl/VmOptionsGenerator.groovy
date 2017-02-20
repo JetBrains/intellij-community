@@ -46,6 +46,7 @@ class VmOptionsGenerator {
 
   static String vmOptionsForArch(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
+      // NOTE: when changing, please review usages of ProductProperties.getCustomJvmMemoryOptionsX64 and synchronize if necessary  
       case JvmArchitecture.x32: return "-server -Xms128m -Xmx512m -XX:ReservedCodeCacheSize=240m"
       case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m"
     }

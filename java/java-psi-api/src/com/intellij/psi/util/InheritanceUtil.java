@@ -46,7 +46,7 @@ public class InheritanceUtil {
 
     if (includeSelf && !superProcessor.process(aClass)) return false;
 
-    return processSupers(aClass, superProcessor, new THashSet<PsiClass>());
+    return processSupers(aClass, superProcessor, new THashSet<>());
   }
 
   private static boolean processSupers(@NotNull PsiClass aClass, @NotNull Processor<PsiClass> superProcessor, @NotNull Set<PsiClass> visited) {
@@ -66,6 +66,12 @@ public class InheritanceUtil {
   public static boolean isInheritor(@Nullable PsiType type, @NotNull @NonNls final String baseClassName) {
     if (type instanceof PsiClassType) {
       return isInheritor(((PsiClassType)type).resolve(), baseClassName);
+    }
+
+    if (type instanceof PsiIntersectionType) {
+      for (PsiType conjunct : ((PsiIntersectionType)type).getConjuncts()) {
+        if (isInheritor(conjunct, baseClassName)) return true;
+      }
     }
 
     return false;
@@ -97,11 +103,11 @@ public class InheritanceUtil {
    * @param includeNonProject
    */
   public static void getSuperClasses(@NotNull PsiClass aClass, @NotNull Set<PsiClass> results, boolean includeNonProject) {
-    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new THashSet<PsiClass>(), aClass.getManager());
+    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new THashSet<>(), aClass.getManager());
   }
 
   public static LinkedHashSet<PsiClass> getSuperClasses(@NotNull PsiClass aClass) {
-    LinkedHashSet<PsiClass> result = new LinkedHashSet<PsiClass>();
+    LinkedHashSet<PsiClass> result = new LinkedHashSet<>();
     getSuperClasses(aClass, result, true);
     return result;
   }

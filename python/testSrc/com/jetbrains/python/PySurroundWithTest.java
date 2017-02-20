@@ -18,7 +18,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.lang.folding.CustomFoldingSurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -84,15 +83,22 @@ public class PySurroundWithTest extends PyTestCase {
     doTest(surrounder);
   }
 
+  public void testSurroundCommentAtStart() throws Exception {
+    doTest(new PyWithIfSurrounder());
+  }
+
+  public void testSurroundCommentAtEnd() throws Exception {
+    doTest(new PyWithIfSurrounder());
+  }
+
+  public void testSurroundNewline() throws Exception {
+    doTest(new PyWithIfSurrounder());
+  }
+
   private void doTest(final Surrounder surrounder) throws Exception {
     String baseName = "/surround/" + getTestName(false);
     myFixture.configureByFile(baseName + ".py");
-    new WriteCommandAction.Simple(myFixture.getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        SurroundWithHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), surrounder);
-      }
-    }.execute();
+    SurroundWithHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), surrounder);
     myFixture.checkResultByFile(baseName + "_after.py", true);
   }
 }

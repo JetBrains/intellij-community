@@ -90,7 +90,7 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     TextFieldWithAutoCompletion.installCompletion(document, project,
                                                   new TaskAutoCompletionListProvider(project),
                                                   false);
-    document.putUserData(CommitMessage.DATA_CONTEXT_KEY, new MapDataContext());
+    document.putUserData(CommitMessage.DATA_KEY, new CommitMessage(project));
   }
 
   private TestRepository configureRepository(LocalTaskImpl... tasks) {

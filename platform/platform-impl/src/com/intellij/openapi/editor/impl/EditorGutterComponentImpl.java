@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -62,9 +63,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
 import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -227,6 +227,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       })
       .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
         Image image = IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon()));
+        // [tav] temp workaround for JRE-224
+        boolean inUserScale = SystemInfo.isWindows ? !UIUtil.isJreHiDPI(myEditor.getComponent()) : true;
+        image = ImageUtil.toBufferedImage(image, inUserScale);
         return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
       .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
@@ -297,7 +300,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
       Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      if (!UIUtil.isRetina()) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+      if (!UIUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
       try {
         paintAnnotations(g, startVisualLine, endVisualLine);
@@ -321,24 +324,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myTextFgColors.clear();
     Color defaultBackgroundColor = myEditor.getBackgroundColor();
     Color defaultForegroundColor = myEditor.getColorsScheme().getDefaultForeground();
-    int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
-    if (myEditor.myUseNewRendering) {
-      com.intellij.openapi.editor.impl.view.IterationState state =
-        new com.intellij.openapi.editor.impl.view.IterationState(myEditor, firstVisibleOffset, lastVisibleOffset,
-                                                                 null, true, false, true, false);
-      while (!state.atEnd()) {
-        drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
-                                     defaultBackgroundColor, defaultForegroundColor, startX);
-        state.advance();
-      }
-    }
-    else {
-      IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, false, true);
-      while (!state.atEnd()) {
-        drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
-                                     defaultBackgroundColor, defaultForegroundColor, startX);
-        state.advance();
-      }
+    int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset();
+    IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, null, true, false, true, false);
+    while (!state.atEnd()) {
+      drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
+                                   defaultBackgroundColor, defaultForegroundColor, startX);
+      state.advance();
     }
   }
 
@@ -983,6 +974,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
       float scale = myEditor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
+        if (icon instanceof JBUIScaleTrackable) {
+          ((JBUIScaleTrackable)icon).updateJBUIScale(getGraphicsConfiguration());
+        }
         return ((ScalableIcon)icon).scale(scale);
       }
     }
@@ -1169,7 +1163,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                int baseHeight,
                                boolean active) {
     Object antialiasing = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1") || UIUtil.isRetina()) {
+    if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1") || UIUtil.isJreHiDPI(g)) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
 

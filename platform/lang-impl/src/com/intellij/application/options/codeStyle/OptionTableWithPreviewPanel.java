@@ -33,6 +33,7 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -256,7 +257,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     treeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     treeTable.setTableHeader(null);
 
-    expandTree(tree);
+    TreeUtil.expandAll(tree);
 
     treeTable.getColumnModel().getSelectionModel().setAnchorSelectionIndex(1);
     treeTable.getColumnModel().getSelectionModel().setLeadSelectionIndex(1);
@@ -285,19 +286,6 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   private String getRenamedTitle(String fieldOrGroupName, String defaultName) {
     String result = myRenamedFields.get(fieldOrGroupName);
     return result == null ? defaultName : result;
-  }
-
-  public static void expandTree(final JTree tree) {
-    int oldRowCount = 0;
-    do {
-      int rowCount = tree.getRowCount();
-      if (rowCount == oldRowCount) break;
-      oldRowCount = rowCount;
-      for (int i = 0; i < rowCount; i++) {
-        tree.expandRow(i);
-      }
-    }
-    while (true);
   }
 
   protected abstract void initTables();

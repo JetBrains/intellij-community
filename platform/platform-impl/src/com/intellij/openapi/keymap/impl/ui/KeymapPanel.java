@@ -67,7 +67,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -484,7 +483,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       int result = showConfirmationDialog(parent);
       if (result == Messages.YES) {
         keymap = createKeymapCopyIfNeededAndPossible(parent, keymapSelected);
-        Map<String, ArrayList<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
+        Map<String, List<KeyboardShortcut>> conflicts = keymap.getConflicts(actionId, keyboardShortcut);
         for (String id : conflicts.keySet()) {
           for (KeyboardShortcut s : conflicts.get(id)) {
             keymap.removeShortcut(id, s);

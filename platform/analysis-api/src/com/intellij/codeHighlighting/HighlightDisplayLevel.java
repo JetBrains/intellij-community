@@ -47,7 +47,7 @@ public class HighlightDisplayLevel {
     return new SingleColorIcon(CodeInsightColors.ERRORS_ATTRIBUTES) {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        IconUtil.colorize(AllIcons.General.InspectionsError, getColor()).paintIcon(c, g, x, y);
+        IconUtil.colorize((Graphics2D)g, AllIcons.General.InspectionsError, getColor()).paintIcon(c, g, x, y);
       }
     };
   }

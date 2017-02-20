@@ -38,13 +38,27 @@ import org.eclipse.jgit.merge.ResolveMerger
 import org.eclipse.jgit.merge.SquashMessageFormatter
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.RevWalkUtils
+import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.RemoteConfig
+import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.jetbrains.settingsRepository.*
 import java.io.IOException
 import java.text.MessageFormat
 
-open internal class Pull(val manager: GitRepositoryManager, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
+interface GitRepositoryClient {
+  val repository: Repository
+
+  val credentialsProvider: CredentialsProvider
+}
+
+class GitRepositoryClientImpl(override val repository: Repository, private val credentialsStore: Lazy<IcsCredentialsStore>) : GitRepositoryClient {
+  override val credentialsProvider: CredentialsProvider by lazy {
+    JGitCredentialsProvider(credentialsStore, repository)
+  }
+}
+
+open internal class Pull(val manager: GitRepositoryClient, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
   val repository = manager.repository
 
   // we must use the same StoredConfig instance during the operation
@@ -67,18 +81,14 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
     val mergeStatus = mergeResult.status
     LOG.debug { mergeStatus.toString() }
 
-    if (mergeStatus == MergeStatus.CONFLICTING) {
-      return resolveConflicts(mergeResult, repository)
-    }
-    else if (!mergeStatus.isSuccessful) {
-      throw IllegalStateException(mergeResult.toString())
-    }
-    else {
-      return mergeResult.result
+    return when {
+      mergeStatus == MergeStatus.CONFLICTING -> resolveConflicts(mergeResult, repository)
+      !mergeStatus.isSuccessful -> throw IllegalStateException(mergeResult.toString())
+      else -> mergeResult.result
     }
   }
 
-  fun fetch(prevRefUpdateResult: RefUpdate.Result? = null): Ref? {
+  fun fetch(prevRefUpdateResult: RefUpdate.Result? = null, refUpdateProcessor: ((TrackingRefUpdate) -> Unit)? = null): Ref? {
     indicator?.checkCanceled()
 
     val fetchResult = repository.fetch(remoteConfig, manager.credentialsProvider, indicator.asProgressMonitor()) ?: return null
@@ -119,6 +129,8 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
       if (!hasChanges) {
         hasChanges = refUpdateResult != RefUpdate.Result.NO_CHANGE
       }
+
+      refUpdateProcessor?.invoke(refUpdate)
     }
 
     if (!hasChanges) {
@@ -152,7 +164,7 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
       if (headId == null) {
         revWalk.parseHeaders(srcCommit)
         dirCacheCheckout = DirCacheCheckout(repository, repository.lockDirCache(), srcCommit.tree)
-        dirCacheCheckout.setFailOnConflict(true)
+        dirCacheCheckout.setFailOnConflict(false)
         dirCacheCheckout.checkout()
         val refUpdate = repository.updateRef(head.target.name)
         refUpdate.setNewObjectId(objectId)
@@ -175,7 +187,7 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
         // FAST_FORWARD detected: skip doing a real merge but only update HEAD
         refLogMessage.append(": ").append(MergeStatus.FAST_FORWARD)
         dirCacheCheckout = DirCacheCheckout(repository, headCommit.tree, repository.lockDirCache(), srcCommit.tree)
-        dirCacheCheckout.setFailOnConflict(true)
+        dirCacheCheckout.setFailOnConflict(false)
         dirCacheCheckout.checkout()
         val mergeStatus: MergeStatus
         if (squash) {
@@ -229,7 +241,7 @@ open internal class Pull(val manager: GitRepositoryManager, val indicator: Progr
           // ResolveMerger does checkout
           if (merger !is ResolveMerger) {
             dirCacheCheckout = DirCacheCheckout(repository, headCommit.tree, repository.lockDirCache(), merger.resultTreeId)
-            dirCacheCheckout.setFailOnConflict(true)
+            dirCacheCheckout.setFailOnConflict(false)
             dirCacheCheckout.checkout()
             result = ImmutableUpdateResult(dirCacheCheckout.updated.keys, dirCacheCheckout.removed)
           }

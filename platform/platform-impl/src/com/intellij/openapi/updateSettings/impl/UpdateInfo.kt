@@ -47,7 +47,6 @@ class UpdateChannel(node: Element) {
   val id: String = node.getAttributeValue("id") ?: throw JDOMException("channel@id missing")
   val status: ChannelStatus = ChannelStatus.fromCode(node.getAttributeValue("status"))
   val licensing: String = node.getAttributeValue("licensing", LICENSING_PRODUCTION)
-  val homePageUrl: String? = node.getAttributeValue("url")
   val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
   val builds: List<BuildInfo> = node.getChildren("build").map(::BuildInfo)
 
@@ -73,6 +72,9 @@ class BuildInfo(node: Element) {
       null
     }
   }
+
+  val downloadUrl: String?
+    get() = buttons.find(ButtonInfo::isDownload)?.url
 
   override fun toString() = "${number}/${version}"
 }

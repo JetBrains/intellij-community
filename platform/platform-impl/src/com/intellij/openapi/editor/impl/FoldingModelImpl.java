@@ -39,10 +39,12 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -52,7 +54,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
   
-  private static final Key<LogicalPosition> SAVED_CARET_POSITION = Key.create("saved.position.before.folding");
+  private static final Key<SavedCaretPosition> SAVED_CARET_POSITION = Key.create("saved.position.before.folding");
   private static final Key<Boolean> MARK_FOR_UPDATE = Key.create("marked.for.position.update");
 
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -188,7 +190,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
       return false;
     }
-
+    if (!region.isValid() ||
+        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getStartOffset()) ||
+        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getEndOffset())) {
+      return false;
+    }
     myFoldRegionsProcessed = true;
     if (myFoldTree.addRegion(region)) {
       final FoldingGroup group = region.getGroup();
@@ -230,11 +236,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     }
     finally {
       if (!oldBatchFlag) {
+        myIsBatchFoldingProcessing = false;
         if (myFoldRegionsProcessed) {
           notifyBatchFoldingProcessingDone(moveCaret);
           myFoldRegionsProcessed = false;
         }
-        myIsBatchFoldingProcessing = false;
       }
       myDoNotCollapseCaret = oldDontCollapseCaret;
     }
@@ -316,13 +322,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
       return;
     }
-    if (myEditor.myUseNewRendering) {
-      FoldRegion[] regions = getAllFoldRegions();
-      for (FoldRegion region : regions) {
-        if (!region.isExpanded()) {
-          notifyListenersOnFoldRegionStateChange(region);
-          myFoldRegionsProcessed = true;
-        }
+    FoldRegion[] regions = getAllFoldRegions();
+    for (FoldRegion region : regions) {
+      if (!region.isExpanded()) {
+        notifyListenersOnFoldRegionStateChange(region);
+        myFoldRegionsProcessed = true;
       }
     }
     doClearFoldRegions();
@@ -342,9 +346,9 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     }
 
     for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
-      LogicalPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
-      if (savedPosition != null) {
-        int savedOffset = myEditor.logicalPositionToOffset(savedPosition);
+      SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
+      if (savedPosition != null && savedPosition.isUpToDate(myEditor)) {
+        int savedOffset = myEditor.logicalPositionToOffset(savedPosition.position);
 
         FoldRegion[] allCollapsed = myFoldTree.fetchCollapsedAt(savedOffset);
         if (allCollapsed.length == 1 && allCollapsed[0] == region) {
@@ -377,12 +381,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       }
     }
     for (Caret caret : carets) {
-      LogicalPosition caretPosition = caret.getLogicalPosition();
-      int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
-      
+      int caretOffset = caret.getOffset();
       if (FoldRegionsTree.contains(region, caretOffset)) {
-        if (caret.getUserData(SAVED_CARET_POSITION) == null) {
-          caret.putUserData(SAVED_CARET_POSITION, caretPosition.withoutVisualPositionInfo());
+        SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
+        if (savedPosition == null || !savedPosition.isUpToDate(myEditor)) {
+          caret.putUserData(SAVED_CARET_POSITION, new SavedCaretPosition(caret));
         }
       }
     }
@@ -418,14 +421,14 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       int offsetToUse = -1;
 
       FoldRegion collapsed = myFoldTree.fetchOutermost(caretOffset);
-      LogicalPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
+      SavedCaretPosition savedPosition = caret.getUserData(SAVED_CARET_POSITION);
       boolean markedForUpdate = caret.getUserData(MARK_FOR_UPDATE) != null;
       
-      if (savedPosition != null) {
-        int savedOffset = myEditor.logicalPositionToOffset(savedPosition);
+      if (savedPosition != null && savedPosition.isUpToDate(myEditor)) {
+        int savedOffset = myEditor.logicalPositionToOffset(savedPosition.position);
         FoldRegion collapsedAtSaved = myFoldTree.fetchOutermost(savedOffset);
         if (collapsedAtSaved == null) {
-          positionToUse = savedPosition;
+          positionToUse = savedPosition.position;
         }
         else {
           offsetToUse = collapsedAtSaved.getStartOffset();
@@ -607,5 +610,28 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public long getModificationCount() {
     return myExpansionCounter.get();
+  }
+
+  @TestOnly
+  public void validateState() {
+    for (FoldRegion region : getAllFoldRegions()) {
+      LOG.assertTrue (!region.isValid() ||
+                      !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getStartOffset()) &&
+                      !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getEndOffset()));
+    }
+  }
+
+  private static class SavedCaretPosition {
+    private final LogicalPosition position;
+    private final long docStamp;
+
+    private SavedCaretPosition(Caret caret) {
+      position = caret.getLogicalPosition().withoutVisualPositionInfo();
+      docStamp = caret.getEditor().getDocument().getModificationStamp();
+    }
+
+    private boolean isUpToDate(Editor editor) {
+      return docStamp == editor.getDocument().getModificationStamp();
+    }
   }
 }

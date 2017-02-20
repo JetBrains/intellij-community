@@ -1,0 +1,14 @@
+{
+  "array": [
+    1,
+    2,
+    3
+  ],
+  "singleLineObj": {},
+  "multiLineObj": {
+    "foo": ""
+    //comment
+  },
+  "emptyArray": [],
+  "emptyObject": {}
+}

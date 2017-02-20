@@ -17,6 +17,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
@@ -194,14 +195,18 @@ abstract class UndoRedo {
   }
 
   private boolean askUser() {
-    String actionText = getActionName(myUndoableGroup.getCommandName());
+    final boolean[] isOk = new boolean[1];
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      String actionText = getActionName(myUndoableGroup.getCommandName());
 
-    if (actionText.length() > 80) {
-      actionText = actionText.substring(0, 80) + "... ";
-    }
+      if (actionText.length() > 80) {
+        actionText = actionText.substring(0, 80) + "... ";
+      }
 
-    return Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
-                                       Messages.getQuestionIcon()) == Messages.OK;
+      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
+                                            Messages.getQuestionIcon()) == Messages.OK;
+    });
+    return isOk[0];
   }
 
   private boolean restore(EditorAndState pair) {

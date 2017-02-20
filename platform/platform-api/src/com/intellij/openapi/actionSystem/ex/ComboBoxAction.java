@@ -35,6 +35,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -77,7 +78,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       DataContext context = e.getDataContext();
       Project project = e.getProject();
       if (project == null) return;
-      DefaultActionGroup group = createPopupActionGroup(button);
+      DefaultActionGroup group = createPopupActionGroup(button, context);
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
         myPopupTitle, group, context, false, shouldShowDisabledActions(), false, null, getMaxRows(), getPreselectCondition());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
@@ -120,6 +121,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
+
+  @NotNull
+  protected DefaultActionGroup createPopupActionGroup(JComponent button, @NotNull  DataContext dataContext) {
+    return createPopupActionGroup(button);
+  }
 
   protected int getMaxRows() {
     return 30;
@@ -247,6 +253,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         ApplicationManager.getApplication().invokeLater(() -> {
           myForcePressed = false;
           myPopup = null;
+          repaint();
         }, ModalityState.any());
         repaint();
         fireStateChanged();
@@ -264,9 +271,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     protected JBPopup createPopup(Runnable onDispose) {
-      DefaultActionGroup group = createPopupActionGroup(this);
 
       DataContext context = getDataContext();
+      DefaultActionGroup group = createPopupActionGroup(this, context);
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
         myPopupTitle, group, context, false, shouldShowDisabledActions(), false, onDispose, getMaxRows(), getPreselectCondition());
       popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
@@ -412,10 +419,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         super.paint(g);
       } else {
         UISettings.setupAntialiasing(g);
-        Graphics2D g2d = (Graphics2D)g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-        g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+        GraphicsUtil.setupRoundedBorderAntialiasing(g);
 
         final Color textColor = isEnabled()
                                 ? UIManager.getColor("Panel.foreground")

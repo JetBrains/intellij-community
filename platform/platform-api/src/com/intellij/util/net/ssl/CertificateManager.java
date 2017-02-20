@@ -24,6 +24,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -339,6 +340,17 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
       proceeded.countDown();
     }
     return accepted.get();
+  }
+
+  public <T, E extends Throwable> T runWithUntrustedCertificateStrategy(@NotNull final ThrowableComputable<T, E> computable,
+                                                                        @NotNull final UntrustedCertificateStrategy strategy) throws E {
+    myTrustManager.myUntrustedCertificateStrategy.set(strategy);
+    try {
+      return computable.compute();
+    }
+    finally {
+      myTrustManager.myUntrustedCertificateStrategy.remove();
+    }
   }
 
   @NotNull

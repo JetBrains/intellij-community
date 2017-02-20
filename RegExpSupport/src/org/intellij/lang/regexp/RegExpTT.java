@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.StringEscapesTokenTypes;
@@ -24,31 +25,48 @@ public interface RegExpTT {
     IElementType NAME = new RegExpElementType("NAME");
     IElementType COMMA = new RegExpElementType("COMMA");
 
-    // "\\Q"
+    /** "\\Q" */
     IElementType QUOTE_BEGIN = new RegExpElementType("QUOTE_BEGIN");
-    // <QUOTE> "\\E"
+    /** <QUOTE> "\\E" */
     IElementType QUOTE_END = new RegExpElementType("QUOTE_END");
 
-    // "\\" 0-9
+    /** "\\" 0-9 */
     IElementType BACKREF = new RegExpElementType("BACKREF");
 
+    /** "{" */
     IElementType LBRACE = new RegExpElementType("LBRACE");
+    /** "}" */
     IElementType RBRACE = new RegExpElementType("RBRACE");
 
+    /** "[" */
     IElementType CLASS_BEGIN = new RegExpElementType("CLASS_BEGIN");
+    /** "]" */
     IElementType CLASS_END = new RegExpElementType("CLASS_END");
+    /** "&&" */
     IElementType ANDAND = new RegExpElementType("ANDAND");
+    /** "[:" */
     IElementType BRACKET_EXPRESSION_BEGIN = new RegExpElementType("BRACKET_EXPRESSION_BEGIN");
+    /** ":]" */
     IElementType BRACKET_EXPRESSION_END = new RegExpElementType("BRACKET_EXPRESSION_END");
 
+    /** "(" */
     IElementType GROUP_BEGIN = new RegExpElementType("GROUP_BEGIN");
+    /** ")" */
     IElementType GROUP_END = new RegExpElementType("GROUP_END");
 
+    /** "(?:" */
     IElementType NON_CAPT_GROUP = new RegExpElementType("NON_CAPT_GROUP");
+    /** "(?>" */
+    IElementType ATOMIC_GROUP = new RegExpElementType("ATOMIC_GROUP");
+    /** "(?<=" */
     IElementType POS_LOOKBEHIND = new RegExpElementType("POS_LOOKBEHIND");
+    /** "(?<!" */
     IElementType NEG_LOOKBEHIND = new RegExpElementType("NEG_LOOKBEHIND");
+    /** "(?=" */
     IElementType POS_LOOKAHEAD = new RegExpElementType("POS_LOOKAHEAD");
+    /** "(?!" */
     IElementType NEG_LOOKAHEAD = new RegExpElementType("NEG_LOOKAHEAD");
+    /** "(?" */
     IElementType SET_OPTIONS = new RegExpElementType("SET_OPTIONS");
 
     IElementType QUEST = new RegExpElementType("QUEST");
@@ -56,51 +74,52 @@ public interface RegExpTT {
     IElementType PLUS = new RegExpElementType("PLUS");
     IElementType COLON = new RegExpElementType("COLON");
 
-    // "\\" ("b" | "B" | "A" | "z" | "Z" | "G")
+    /** "\\" ("b" | "B" | "A" | "z" | "Z" | "G") */
     IElementType BOUNDARY = new RegExpElementType("BOUNDARY");
-    // "^"
+    /** "^" */
     IElementType CARET = new RegExpElementType("CARET");
-    // "$"
+    /** "$" */
     IElementType DOLLAR = new RegExpElementType("DOLLAR");
 
     IElementType DOT = new RegExpElementType("DOT");
+    /** "|" */
     IElementType UNION = new RegExpElementType("UNION");
 
-    // > in Python/Ruby named group
+    /** ">" in Python/Ruby named group */
     IElementType GT = new RegExpElementType("GT");
-    // ' in Ruby quoted named group
+    /* "'" in Ruby quoted named group */
     IElementType QUOTE = new RegExpElementType("QUOTE");
 
-    // "\b" | "\t" | "\f" | "\r" | "\n"
+    /** "\b" | "\t" | "\f" | "\r" | "\n" */
     IElementType CTRL_CHARACTER = new RegExpElementType("CTRL_CHARACTER");
-    // "\\" ("t" | "n" | "r" | "f" | "a" | "e")
+    /** "\\" ("t" | "n" | "r" | "f" | "a" | "e") */
     IElementType ESC_CTRL_CHARACTER = new RegExpElementType("ESC_CTRL_CHARACTER");
-    // "\\" ("." | "|" | "$" | "^" | "?" | "*" | "+" | "[" | "{" | "(" | ")")
+    /** "\\" ("." | "|" | "$" | "^" | "?" | "*" | "+" | "[" | "{" | "(" | ")") */
     IElementType ESC_CHARACTER = new RegExpElementType("ESC_CHARACTER");
-    // "\\" ("w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "h" | "H" | "X" | "R")
+    /** "\\" ("w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "h" | "H" | "X" | "R") */
     IElementType CHAR_CLASS = new RegExpElementType("CHAR_CLASS");
-    // "\\u" XXXX
+    /** "\\u" XXXX */
     IElementType UNICODE_CHAR = new RegExpElementType("UNICODE_CHAR");
-    // "\\x" XX
+    /** "\\x" XX */
     IElementType HEX_CHAR = new RegExpElementType("HEX_CHAR");
-    // "\\0" OOO
+    /** "\\0" OOO */
     IElementType OCT_CHAR = new RegExpElementType("OCT_CHAR");
-    // "\\c" x
+    /** "\\c" x */
     IElementType CTRL = new RegExpElementType("CTRL");
-    // "\\p" | "\\P"
+    /** "\\p" | "\\P" */
     IElementType PROPERTY = new RegExpElementType("PROPERTY");
-    // "\\N
+    /** "\\N */
     IElementType NAMED_CHARACTER = new RegExpElementType("NAMED_CHARACTER");
-    // "L" | "M" | "Z" | "S" | "N" | "P" | "C" after a property escape
+    /** "L" | "M" | "Z" | "S" | "N" | "P" | "C" after a property escape */
     IElementType CATEGORY_SHORT_HAND = new RegExpElementType("CATEGORY_SHORT_HAND");
 
-    // e.g. "\\#" but also "\\q" which is not a valid escape actually
+    /** e.g. "\\#" but also "\\q" which is not a valid escape actually */
     IElementType REDUNDANT_ESCAPE = new RegExpElementType("REDUNDANT_ESCAPE");
 
     IElementType MINUS = new RegExpElementType("MINUS");
     IElementType CHARACTER = new RegExpElementType("CHARACTER");
 
-    IElementType BAD_CHARACTER = new RegExpElementType("BAD_CHARACTER");
+    IElementType BAD_CHARACTER = TokenType.BAD_CHARACTER;
     IElementType BAD_OCT_VALUE = new RegExpElementType("BAD_OCT_VALUE");
     IElementType BAD_HEX_VALUE = new RegExpElementType("BAD_HEX_VALUE");
 
@@ -108,55 +127,43 @@ public interface RegExpTT {
     IElementType OPTIONS_ON = new RegExpElementType("OPTIONS_ON");
     IElementType OPTIONS_OFF = new RegExpElementType("OPTIONS_OFF");
 
-    // (?P<name>...
+    /** (?P<name>... */
     IElementType PYTHON_NAMED_GROUP = new RegExpElementType("PYTHON_NAMED_GROUP");
-    // (?P=name)
+    /** (?P=name) */
     IElementType PYTHON_NAMED_GROUP_REF = new RegExpElementType("PYTHON_NAMED_GROUP_REF");
-    // (?(id/name)yes-pattern|no-pattern)
+    /** (?(id/name)yes-pattern|no-pattern) */
     IElementType PYTHON_COND_REF = new RegExpElementType("PYTHON_COND_REF"); 
   
-    // (?<name>...
+    /** (?<name>... */
     IElementType RUBY_NAMED_GROUP = new RegExpElementType("RUBY_NAMED_GROUP");
-    // \k<name>
+    /** \k<name> */
     IElementType RUBY_NAMED_GROUP_REF = new RegExpElementType("RUBY_NAMED_GROUP_REF");
-    // \g<name>
+    /** \g<name> */
     IElementType RUBY_NAMED_GROUP_CALL = new RegExpElementType("RUBY_NAMED_GROUP_CALL");
 
-    // (?'name'...
+    /** (?'name'... */
     IElementType RUBY_QUOTED_NAMED_GROUP = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP");
-    // \k'name'
+    /** \k'name' */
     IElementType RUBY_QUOTED_NAMED_GROUP_REF = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_REF");
-    // \g'name'
+    /** \g'name' */
     IElementType RUBY_QUOTED_NAMED_GROUP_CALL = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_CALL");
 
-    TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
-
     TokenSet CHARACTERS = TokenSet.create(CHARACTER,
-            ESC_CTRL_CHARACTER,
-            ESC_CHARACTER,
-            CTRL_CHARACTER,
-            CTRL,
-            UNICODE_CHAR,
-            HEX_CHAR, BAD_HEX_VALUE,
-            OCT_CHAR, BAD_OCT_VALUE,
-            REDUNDANT_ESCAPE,
-            MINUS,
-            StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN,
-            StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
-
-    TokenSet SIMPLE_CLASSES = TokenSet.create(DOT, CHAR_CLASS);
-
-    // caret is just a character in classes after the first position: [a^] matches "a" or "^"
-    TokenSet CHARACTERS2 = TokenSet.orSet(CHARACTERS, SIMPLE_CLASSES, TokenSet.create(CARET, LBRACE));
+                                          ESC_CTRL_CHARACTER,
+                                          ESC_CHARACTER,
+                                          CTRL_CHARACTER,
+                                          CTRL,
+                                          UNICODE_CHAR,
+                                          HEX_CHAR, BAD_HEX_VALUE,
+                                          OCT_CHAR, BAD_OCT_VALUE,
+                                          REDUNDANT_ESCAPE,
+                                          MINUS,
+                                          StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN,
+                                          StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
 
     TokenSet QUANTIFIERS = TokenSet.create(QUEST, PLUS, STAR, LBRACE);
 
-    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN,
-            NON_CAPT_GROUP,
-            POS_LOOKAHEAD,
-            NEG_LOOKAHEAD,
-            POS_LOOKBEHIND,
-            NEG_LOOKBEHIND);
+    TokenSet GROUPS = TokenSet.create(GROUP_BEGIN, NON_CAPT_GROUP, ATOMIC_GROUP, POS_LOOKAHEAD, NEG_LOOKAHEAD, POS_LOOKBEHIND, NEG_LOOKBEHIND);
 
     TokenSet BOUNDARIES = TokenSet.create(BOUNDARY, CARET, DOLLAR);
 }

@@ -69,4 +69,10 @@
          target="build-dist-jars"
          deploy="${project.home}/out/deploy"/>
   </target>
+
+  <target name="build-intellij-core">
+    <run script="${project.home}/build/scripts/dist.gant"
+         target="build-intellij-core"
+         deploy="${project.home}/out/deploy"/>
+  </target>
 </project>

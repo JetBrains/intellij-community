@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -165,9 +166,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   /**
-   * @return <code>true</code> if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
-   * the user presses a key);
-   * <code>false</code> otherwise
+   * @return    {@codetrue} if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
+   *            the user presses a key);
+   *            {@codefalse} otherwise
    */
   public boolean isCloseOnSneeze() {
     return myCloseOnSneeze;
@@ -185,11 +186,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         final JBPopup hint = getDocInfoHint();
         if (hint != null) {
-          if (action instanceof HintManagerImpl.ActionToIgnore) {
+          if (action instanceof ShowQuickDocInfoAction) {
             ((AbstractPopup)hint).focusPreferredComponent();
             return;
           }
-          if (action instanceof ScrollingUtil.ListScrollAction) return;
+          if (action instanceof HintManagerImpl.ActionToIgnore) return;
+          if (action instanceof ScrollingUtil.ScrollingAction) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) return;
           if (action == myActionManager.getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN)) return;
@@ -207,11 +209,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (hint != null && LookupManager.getActiveLookup(myEditor) == null) {
           hint.cancel();
         }
-      }
-
-
-      @Override
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
       }
     };
     myActionManager.addAnActionListener(actionListener, project);
@@ -263,7 +260,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    * @param element       target element which documentation should be shown
    * @param original      element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
    *                      A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
-   *                      declaration but <code>'element'</code> argument is a {@code Runnable} descriptor
+   *                      declaration but {@code 'element'} argument is a {@code Runnable} descriptor
    * @param closeCallback callback to be notified on target hint close (if any)
    * @param closeOnSneeze flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
    *                      two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
@@ -730,7 +727,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           });
           return;
         }
-        
+
         LOG.debug("Documentation fetched successfully:\n", text);
 
       final PsiElement element = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {

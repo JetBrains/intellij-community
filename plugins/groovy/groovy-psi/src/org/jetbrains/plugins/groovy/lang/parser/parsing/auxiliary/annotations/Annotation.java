@@ -47,7 +47,7 @@ public class Annotation {
       return false;
     }
 
-    if (ReferenceElement.parse(builder, false, true, true, false, false) == ReferenceElement.ReferenceElementResult.FAIL) {
+    if (ReferenceElement.parse(builder, false, false, true, false, false) == ReferenceElement.ReferenceElementResult.FAIL) {
       builder.error("Annotation name expected");
       annMarker.drop();
       return false;

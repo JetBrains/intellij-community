@@ -16,6 +16,7 @@
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTaskHandler;
@@ -29,6 +30,7 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -49,6 +51,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
       ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
     }
     finally {
+      myTaskManager = null;
       super.tearDown();
     }
   }
@@ -147,14 +150,20 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     LocalTaskImpl task = myTaskManager.createLocalTask("foo");
     OpenTaskDialog dialog = new OpenTaskDialog(getProject(), task);
     Disposer.register(getTestRootDisposable(), dialog.getDisposable());
-    dialog.createTask();
-    assertEquals("foo", myTaskManager.getActiveTask().getSummary());
-    List<BranchInfo> branches = task.getBranches(true);
-    assertEquals(1, branches.size());
-    assertEquals(defaultBranchName, branches.get(0).name);
-    branches = task.getBranches(false);
-    assertEquals(1, branches.size());
-    assertEquals("foo", branches.get(0).name);
+    try {
+      dialog.createTask();
+      assertEquals("foo", myTaskManager.getActiveTask().getSummary());
+      List<BranchInfo> branches = task.getBranches(true);
+      assertEquals(1, branches.size());
+      assertEquals(defaultBranchName, branches.get(0).name);
+      branches = task.getBranches(false);
+      assertEquals(1, branches.size());
+      assertEquals("foo", branches.get(0).name);
+    }
+    finally {
+      dialog.close(DialogWrapper.OK_EXIT_CODE);
+    }
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void testBranchBloating() throws Exception {

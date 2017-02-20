@@ -17,7 +17,8 @@ SYSTEM_PATH = u'$SYSTEM_PATH$'
 def print_usage(cmd):
     print(('Usage:\n' +
            '  {0} -h | -? | --help\n' +
-           '  {0} [-l|--line line] file[:line]\n' +
+           '  {0} [project_dir]\n' +
+           '  {0} [-l|--line line] [project_dir|--temp-project] file[:line]\n' +
            '  {0} diff <left> <right>\n' +
            '  {0} merge <local> <remote> [base] <merged>').format(cmd))
 
@@ -41,16 +42,14 @@ def process_args(argv):
             args.append(arg)
             skip_next = False
         else:
+            path = arg
             if ':' in arg:
                 file_path, line_number = arg.rsplit(':', 1)
                 if line_number.isdigit():
                     args.append('-l')
                     args.append(line_number)
-                    args.append(os.path.abspath(file_path))
-                else:
-                    args.append(os.path.abspath(arg))
-            else:
-                args.append(os.path.abspath(arg))
+                    path = file_path
+            args.append(os.path.abspath(path))
 
     return args
 
@@ -61,8 +60,9 @@ def try_activate_instance(args):
     if not (os.path.exists(port_path) and os.path.exists(token_path)):
         return False
 
-    with open(port_path) as pf, open(token_path) as tf:
+    with open(port_path) as pf:
         port = int(pf.read())
+    with open(token_path) as tf:
         token = tf.read()
 
     s = socket.socket()

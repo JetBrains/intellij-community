@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -190,8 +192,7 @@ public class EditorModificationUtil {
     try {
       return (String)content.getTransferData(DataFlavor.stringFlavor);
     }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
+    catch (UnsupportedFlavorException | IOException ignore) { }
 
     return null;
   }
@@ -411,5 +412,17 @@ public class EditorModificationUtil {
       return false;
     }
     return true;
+  }
+
+  /**
+   * @return true when not viewer
+   *         false otherwise, additionally information hint with warning would be shown
+   */
+  public static boolean checkModificationAllowed(Editor editor) {
+    if (!editor.isViewer()) return true;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isOnAir() || editor instanceof TextComponentEditor) return false;
+
+    HintManager.getInstance().showInformationHint(editor, EditorBundle.message("editing.viewer.hint"));
+    return false;
   }
 }

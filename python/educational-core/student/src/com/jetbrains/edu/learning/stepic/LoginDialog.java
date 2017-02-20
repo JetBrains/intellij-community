@@ -43,7 +43,7 @@ public class LoginDialog extends DialogWrapper {
   protected void doOKAction() {
     if (!validateLoginAndPasswordFields()) return;
     myStepicUser = EduStepicAuthorizedClient.login(myLoginPanel.getLogin(), myLoginPanel.getPassword());
-    if (myStepicUser != null) {
+    if (myStepicUser != null && myStepicUser.getId() > 0 && myStepicUser.getAccessToken() != null) {
       doJustOkAction();
     }
     else {
@@ -53,11 +53,11 @@ public class LoginDialog extends DialogWrapper {
 
   public boolean validateLoginAndPasswordFields() {
     if (StringUtil.isEmptyOrSpaces(myLoginPanel.getLogin())) {
-      setErrorText("Please, enter your login");
+      setErrorText("Please, enter your login", myLoginPanel.getLoginField());
       return false;
     }
     if (StringUtil.isEmptyOrSpaces(myLoginPanel.getPassword())) {
-      setErrorText("Please, enter your password");
+      setErrorText("Please, enter your password", myLoginPanel.getPasswordField());
       return false;
     }
     return true;

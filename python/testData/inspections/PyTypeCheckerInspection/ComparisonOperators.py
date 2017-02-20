@@ -12,7 +12,7 @@ def test():
     f(<warning descr="Expected type 'str', got 'bool' instead">1 < 2</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead">o == o</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead">o >= o</warning>)
-    f(<warning descr="Expected type 'str', got 'bool' instead">'foo' > o</warning>)
+    f(<warning descr="Expected type 'str', got 'bool' instead">'foo' > 'bar'</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead">c < 1</warning>)
     f(<warning descr="Expected type 'str', got 'list' instead">c > 1</warning>)
     f(<warning descr="Expected type 'str', got 'bool' instead">c == 1</warning>)

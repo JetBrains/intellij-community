@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.Map.Entry;
 
 public class VarVersionsProcessor {
   private final StructMethod method;
-  private Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
+  private Map<Integer, Integer> mapOriginalVarIndices = Collections.emptyMap();
   private VarTypeProcessor typeProcessor;
 
   public VarVersionsProcessor(StructMethod mt, MethodDescriptor md) {
@@ -43,7 +43,7 @@ public class VarVersionsProcessor {
     typeProcessor = new VarTypeProcessor(mt, md);
   }
 
-  public void setVarVersions(RootStatement root) {
+  public void setVarVersions(RootStatement root, VarVersionsProcessor previousVersionsProcessor) {
     SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
     ssa.splitVariables(root, method);
 
@@ -60,7 +60,7 @@ public class VarVersionsProcessor {
 
     eliminateNonJavaTypes(typeProcessor);
 
-    setNewVarIndices(typeProcessor, graph);
+    setNewVarIndices(typeProcessor, graph, previousVersionsProcessor);
   }
 
   private static void mergePhiVersions(SSAConstructorSparseEx ssa, DirectGraph graph) {
@@ -227,7 +227,7 @@ public class VarVersionsProcessor {
     }
   }
 
-  private void setNewVarIndices(VarTypeProcessor typeProcessor, DirectGraph graph) {
+  private void setNewVarIndices(VarTypeProcessor typeProcessor, DirectGraph graph, VarVersionsProcessor previousVersionsProcessor) {
     final Map<VarVersionPair, VarType> mapExprentMaxTypes = typeProcessor.getMapExprentMaxTypes();
     Map<VarVersionPair, VarType> mapExprentMinTypes = typeProcessor.getMapExprentMinTypes();
     Map<VarVersionPair, Integer> mapFinalVars = typeProcessor.getMapFinalVars();
@@ -286,7 +286,19 @@ public class VarVersionsProcessor {
       }
     });
 
-    this.mapOriginalVarIndices = mapOriginalVarIndices;
+    if (previousVersionsProcessor != null) {
+      Map<Integer, Integer> oldIndices = previousVersionsProcessor.getMapOriginalVarIndices();
+      this.mapOriginalVarIndices = new HashMap<>(mapOriginalVarIndices.size());
+      for (Entry<Integer, Integer> entry : mapOriginalVarIndices.entrySet()) {
+        Integer value = entry.getValue();
+        Integer oldValue = oldIndices.get(value);
+        value = oldValue != null ? oldValue : value;
+        this.mapOriginalVarIndices.put(entry.getKey(), value);
+      }
+    }
+    else {
+      this.mapOriginalVarIndices = mapOriginalVarIndices;
+    }
   }
 
   public VarType getVarType(VarVersionPair pair) {

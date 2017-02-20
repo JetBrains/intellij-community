@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class ExpectedHighlightingDataTest {
 
   @Test
   public void empty() {
-    doTest("text", Collections.<HighlightInfo>emptyList(), "text");
+    doTest("text", Collections.emptyList(), "text");
   }
 
   @Test
@@ -97,9 +97,9 @@ public class ExpectedHighlightingDataTest {
 
   @Test
   public void samePriority() {
-    doTest("same",
-           asList(warning(0, 4, "1"), warning(0, 4, "2")),
-           "<warn descr=\"1\"><warn descr=\"2\">same</warn></warn>");
+    doTest("_same_",
+           asList(warning(1, 5, "1"), warning(1, 5, "2")),
+           "_<warn descr=\"1\"><warn descr=\"2\">same</warn></warn>_");
   }
 
   @Test
@@ -146,13 +146,14 @@ public class ExpectedHighlightingDataTest {
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR);
     builder.range(start, end);
     builder.descriptionAndTooltip(description);
-    return builder.create();
+    return builder.createUnconditionally();
   }
+
   private static HighlightInfo warning(int start, int end, @NotNull String description) {
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING);
     builder.range(start, end);
     builder.descriptionAndTooltip(description);
-    return builder.create();
+    return builder.createUnconditionally();
   }
 
   private static HighlightInfo eolError(int start, int end, @NotNull String description) {
@@ -160,6 +161,6 @@ public class ExpectedHighlightingDataTest {
     builder.range(start, end);
     builder.description(description);
     builder.endOfLine();
-    return builder.create();
+    return builder.createUnconditionally();
   }
 }

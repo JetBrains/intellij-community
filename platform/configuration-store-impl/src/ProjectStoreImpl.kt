@@ -52,6 +52,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
+import gnu.trove.THashSet
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
@@ -62,7 +63,7 @@ const val PROJECT_FILE = "\$PROJECT_FILE$"
 const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
 
 val IProjectStore.nameFile: Path
-  get() = Paths.get(projectBasePath, Project.DIRECTORY_STORE_FOLDER, ProjectImpl.NAME_FILE)
+  get() = Paths.get(directoryStorePath, ProjectImpl.NAME_FILE)
 
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
@@ -129,15 +130,15 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       wrapper.addContent(profile)
       val path = Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR), if (isInspection) "inspectionProfiles" else "copyright",
           "${FileUtil.sanitizeFileName(schemeName, true)}.xml")
-      JDOMUtil.writeParent(wrapper, path.outputStream(), "\n")
+      JDOMUtil.write(wrapper, path.outputStream(), "\n")
     }
   }
 
   override final fun getProjectBasePath(): String {
     if (isDirectoryBased) {
       val path = PathUtilRt.getParentPath(storageManager.expandMacro(PROJECT_CONFIG_DIR))
-      if (Registry.`is`("store.basedir.parent.detection", true) && path.startsWith("${Project.DIRECTORY_STORE_FOLDER}.")) {
-        return PathUtilRt.getParentPath(path)
+      if (Registry.`is`("store.basedir.parent.detection", true) && PathUtilRt.getFileName(path).startsWith("${Project.DIRECTORY_STORE_FOLDER}.")) {
+        return PathUtilRt.getParentPath(PathUtilRt.getParentPath(path))
       }
       return path
     }
@@ -444,6 +445,7 @@ fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Elem
     return
   }
 
+  val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
   @Suppress("DEPRECATION")
   val projectComponents = defaultProject.getComponents(PersistentStateComponent::class.java)
   projectComponents.forEachGuaranteed {
@@ -457,12 +459,14 @@ fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Elem
       return@forEachGuaranteed
     }
 
-    val iterator = componentElements.iterator()
-    for (componentElement in iterator) {
-      if (componentElement.getAttributeValue("name") == stateAnnotation.name) {
-        iterator.remove()
-        break
-      }
+    workspaceComponentNames.add(stateAnnotation.name)
+  }
+
+  val iterator = componentElements.iterator()
+  for (componentElement in iterator) {
+    val name = componentElement.getAttributeValue("name")
+    if (name != null && workspaceComponentNames.contains(name)) {
+      iterator.remove()
     }
   }
   return

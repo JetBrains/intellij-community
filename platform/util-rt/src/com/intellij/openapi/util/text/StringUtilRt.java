@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @since 12.0
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
+@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class StringUtilRt {
   @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {
@@ -79,7 +79,7 @@ public class StringUtilRt {
   }
 
   /**
-   * Converts line separators to <code>"\n"</code>
+   * Converts line separators to {@code "\n"}
    */
   @NotNull
   @Contract(pure = true)
@@ -119,10 +119,10 @@ public class StringUtilRt {
   }
 
   @NotNull
-  public static CharSequence unifyLineSeparators(@NotNull CharSequence text,
-                                                 @NotNull String newSeparator,
-                                                 @Nullable int[] offsetsToKeep,
-                                                 boolean keepCarriageReturn) {
+  private static CharSequence unifyLineSeparators(@NotNull CharSequence text,
+                                                  @NotNull String newSeparator,
+                                                  @Nullable int[] offsetsToKeep,
+                                                  boolean keepCarriageReturn) {
     StringBuilder buffer = null;
     int intactLength = 0;
     final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
@@ -241,7 +241,7 @@ public class StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static <E extends Enum<E>> E parseEnum(String string, E defaultValue, Class<E> clazz) {
+  static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
     try {
       return Enum.valueOf(clazz, string);
     }
@@ -300,14 +300,14 @@ public class StringUtilRt {
   }
 
   /**
-   * Allows to retrieve index of last occurrence of the given symbols at <code>[start; end)</code> sub-sequence of the given text.
+   * Allows to retrieve index of last occurrence of the given symbols at {@code [start; end)} sub-sequence of the given text.
    *
    * @param s     target text
    * @param c     target symbol which last occurrence we want to check
    * @param start start offset of the target text (inclusive)
    * @param end   end offset of the target text (exclusive)
    * @return index of the last occurrence of the given symbol at the target sub-sequence of the given text if any;
-   * <code>-1</code> otherwise
+   * {@code -1} otherwise
    */
   @Contract(pure = true)
   public static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {

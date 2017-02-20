@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.JBUI;
@@ -45,6 +46,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.StringReader;
@@ -94,7 +96,7 @@ public class TipUIUtil {
 
       StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
-      updateImages(text, tipLoader);
+      updateImages(text, tipLoader, browser);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       String major = ApplicationInfo.getInstance().getMajorVersion();
       replaced = replaced.replace("&majorVersion;", major);
@@ -140,16 +142,16 @@ public class TipUIUtil {
     }
   }
 
-  private static void updateImages(StringBuffer text, ClassLoader tipLoader) {
+  private static void updateImages(StringBuffer text, ClassLoader tipLoader, JEditorPane browser) {
     final boolean dark = UIUtil.isUnderDarcula();
-    final boolean retina = UIUtil.isRetina();
-    final boolean hidpi = retina || JBUI.scale(1f) > 1.5f;
 //    if (!dark && !retina) {
 //      return;
 //    }
 
     String suffix = "";
-    if (hidpi) suffix += "@2x";
+    Component af = IdeFrameImpl.getActiveFrame();
+    Component comp = af != null ? af: browser;
+    if (JBUI.isPixHiDPI(comp)) suffix += "@2x";
     if (dark) suffix += "_dark";
     int index = text.indexOf("<img", 0);
     while (index != -1) {
@@ -165,11 +167,11 @@ public class TipUIUtil {
           URL url = ResourceUtil.getResource(tipLoader, "/tips/", path);
           if (url != null) {
             String newImgTag = "<img src=\"" + path + "\" ";
-            if (retina) {
+            if (UIUtil.isJreHiDPI(comp)) {
               try {
                 final BufferedImage image = ImageIO.read(url.openStream());
-                final int w = image.getWidth() / 2;
-                final int h = image.getHeight() / 2;
+                final int w = (int)(image.getWidth() / JBUI.sysScale());
+                final int h = (int)(image.getHeight() / JBUI.sysScale());
                 newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
               } catch (Exception ignore) {
                 newImgTag += "width=\"400\" height=\"200\"";

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -99,7 +100,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   public void testSingleQuotes() {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
@@ -112,7 +113,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   public void testNoneQuotes() {
-    final CodeStyleSettings settings = CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings();
+    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
@@ -183,6 +184,80 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
       "    </p>\n" +
       "</div><caret>"
     );
+  }
+
+  public void testSelectionBraces() throws Exception {
+    boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
+    try {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
+      doTest("<selection><div></div></selection>",
+             '(',
+             "(<div></div>)");
+    } finally {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = surround;
+    }
+  }
+
+  public void testSelectionBracesInner() throws Exception {
+    boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
+    try {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
+      doTest("<div><selection><div></div></selection></div>",
+             '(',
+             "<div>(<div></div>)</div>");
+    } finally {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = surround;
+    }
+  }
+
+  public void testSelectionBracesStart() throws Exception {
+    boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
+    try {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
+      doTest("<selection><div></selection></div>",
+             '(',
+             "(<div>)</div>");
+    } finally {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = surround;
+    }
+  }
+
+  public void testSelectionBracesEnd() throws Exception {
+    boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
+    try {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
+      doTest("<div><selection></div></selection>",
+             '(',
+             "<div>(</div>)");
+    } finally {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = surround;
+    }
+  }
+
+  public void testSelectionBracesShort() throws Exception {
+    boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
+    try {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
+      doTest("<selection><div/></selection>",
+             '(',
+             "(<div/>)");
+    }
+    finally {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = surround;
+    }
+  }
+
+  public void testSelectionBracesShortInner() throws Exception {
+    boolean surround = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
+    try {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
+      doTest("<div><selection><div/></selection></div>",
+             '(',
+             "<div>(<div/>)</div>");
+    }
+    finally {
+      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = surround;
+    }
   }
 
   private void doTest(String text, char c, String result) {

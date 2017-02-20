@@ -55,7 +55,9 @@ public class Alarm implements Disposable {
 
   private volatile boolean myDisposed;
 
+  // requests scheduled to myExecutorService
   private final List<Request> myRequests = new SmartList<>(); // guarded by LOCK
+  // requests not yet scheduled to myExecutorService (because e.g. corresponding component isn't active yet)
   private final List<Request> myPendingRequests = new SmartList<>(); // guarded by LOCK
 
   private final ScheduledExecutorService myExecutorService;
@@ -251,18 +253,17 @@ public class Alarm implements Disposable {
     }
   }
 
+  // returns number of requests canceled
   public int cancelAllRequests() {
     synchronized (LOCK) {
-      int count = cancelAllRequests(myRequests);
+      return cancelAllRequests(myRequests) +
       cancelAllRequests(myPendingRequests);
-      return count;
     }
   }
 
   private int cancelAllRequests(@NotNull List<Request> list) {
-    int count = 0;
+    int count = list.size();
     for (Request request : list) {
-      count++;
       request.cancel();
     }
     list.clear();
@@ -296,8 +297,12 @@ public class Alarm implements Disposable {
     UIUtil.dispatchAllInvocationEvents();
   }
 
+  /**
+   * wait for all requests to start execution (i.e. their delay elapses and their run() method, well, runs)
+   * and then wait for the execution to finish.
+   */
   @TestOnly
-  void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     List<Request> requests;
     synchronized (LOCK) {
       requests = new ArrayList<>(myRequests);
@@ -369,22 +374,15 @@ public class Alarm implements Disposable {
             synchronized (LOCK) {
               task = myTask;
               myTask = null;
-
-              myRequests.remove(Request.this);
-              myFuture = null;
             }
-            if (task == null) return;
-
             if (myThreadToUse == ThreadToUse.SWING_THREAD && !isEdt()) {
               //noinspection SSBasedInspection
               EdtInvocationManager.getInstance().invokeLater(() -> {
-                if (!myDisposed) {
-                  QueueProcessor.runSafely(task);
-                }
+                runSafely(task);
               });
             }
             else {
-              QueueProcessor.runSafely(task);
+              runSafely(task);
             }
           }
 
@@ -411,6 +409,21 @@ public class Alarm implements Disposable {
       catch (ProcessCanceledException ignored) { }
       catch (Throwable e) {
         LOG.error(e);
+      }
+    }
+
+    private void runSafely(@Nullable Runnable task) {
+      try {
+        if (!myDisposed && task != null) {
+          QueueProcessor.runSafely(task);
+        }
+      }
+      finally {
+        // remove from the list after execution to be able for waitForAllExecuted() to wait for completion
+        synchronized (LOCK) {
+          myRequests.remove(Request.this);
+          myFuture = null;
+        }
       }
     }
 

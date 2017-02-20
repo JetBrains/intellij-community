@@ -27,6 +27,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Set;
@@ -88,5 +89,11 @@ public class GistManagerImpl extends GistManager {
     // Clear all cache at once to simplify and speedup this operation.
     // It can be made per-file if cache recalculation ever becomes an issue.
     PropertiesComponent.getInstance().setValue(ourPropertyName, myReindexCount.incrementAndGet(), 0);
+  }
+
+  @TestOnly
+  public void resetReindexCount() {
+    myReindexCount.set(0);
+    PropertiesComponent.getInstance().unsetValue(ourPropertyName);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,14 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.components.ApplicationComponentAdapter
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import gnu.trove.THashSet
 import java.util.function.Function
 
-class QuickListsManager(private val myActionManager: ActionManager, schemeManagerFactory: SchemeManagerFactory) : ApplicationComponent {
+class QuickListsManager(private val myActionManager: ActionManager, schemeManagerFactory: SchemeManagerFactory) : ApplicationComponentAdapter {
   private val mySchemeManager: SchemeManager<QuickList>
 
   init {
@@ -56,8 +56,6 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
       get() = ApplicationManager.getApplication().getComponent(QuickListsManager::class.java)
   }
 
-  override fun getComponentName() = "QuickListsManager"
-
   override fun initComponent() {
     for (provider in BundledQuickListsProvider.EP_NAME.extensions) {
       for (path in provider.bundledListsRelativePaths) {
@@ -66,9 +64,6 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
     }
     mySchemeManager.loadSchemes()
     registerActions()
-  }
-
-  override fun disposeComponent() {
   }
 
   val schemeManager: SchemeManager<QuickList>

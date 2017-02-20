@@ -25,5 +25,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="markdown4j-2.2" level="project" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>

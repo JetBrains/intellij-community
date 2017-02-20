@@ -425,10 +425,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     try {
       return ((PsiTypeCodeFragment)item.typeCodeFragment).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
       return null;
     }
   }    
@@ -487,10 +484,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         final PsiType type = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
         return CanonicalTypes.createTypeWrapper(type);
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         return null;
       }
     }

@@ -66,7 +66,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final String RIGHT_ALIGN_KEY = "RIGHT_ALIGN";
 
   static {
-    JBUI.addPropertyChangeListener(JBUI.SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
+    JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent e) {
         ((JBDimension)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE).update();

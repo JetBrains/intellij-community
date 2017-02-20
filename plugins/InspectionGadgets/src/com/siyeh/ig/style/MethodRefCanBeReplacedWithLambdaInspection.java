@@ -27,7 +27,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
@@ -74,12 +76,9 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression methodReferenceExpression) {
       super.visitMethodReferenceExpression(methodReferenceExpression);
-      final PsiType interfaceType = methodReferenceExpression.getFunctionalInterfaceType();
-      if (interfaceType != null &&
-          LambdaUtil.getFunctionalInterfaceMethod(interfaceType) != null &&
-          methodReferenceExpression.resolve() != null) {
+      if (LambdaRefactoringUtil.canConvertToLambda(methodReferenceExpression)) {
         registerError(methodReferenceExpression,
-                      getFixFactory(LambdaRefactoringUtil.canConvertToLambda(methodReferenceExpression), isOnTheFly()));
+                      getFixFactory(LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression), isOnTheFly()));
       }
     }
 

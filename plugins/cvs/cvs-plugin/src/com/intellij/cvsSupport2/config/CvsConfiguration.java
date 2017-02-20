@@ -48,7 +48,7 @@ public class CvsConfiguration implements PersistentStateComponent<CvsConfigurati
   public int MERGING_MODE = DO_NOT_MERGE;
   public String MERGE_WITH_BRANCH1_NAME = CvsUtil.HEAD;
   public String MERGE_WITH_BRANCH2_NAME = CvsUtil.HEAD;
-  public boolean RESET_STICKY = false;
+  public boolean RESET_STICKY;
   public boolean CREATE_NEW_DIRECTORIES = true;
   public String DEFAULT_TEXT_FILE_SUBSTITUTION = KeywordSubstitutionWrapper.KEYWORD_EXPANSION.getSubstitution().toString();
   
@@ -60,19 +60,21 @@ public class CvsConfiguration implements PersistentStateComponent<CvsConfigurati
   public DateOrRevisionSettings CHECKOUT_DATE_OR_REVISION_SETTINGS = new DateOrRevisionSettings();
   public DateOrRevisionSettings UPDATE_DATE_OR_REVISION_SETTINGS = new DateOrRevisionSettings();
   public DateOrRevisionSettings SHOW_CHANGES_REVISION_SETTINGS = new DateOrRevisionSettings();
-  public boolean SHOW_OUTPUT = false;
-  public int ADD_WATCH_INDEX = 0;
+  public boolean SHOW_OUTPUT;
+  public int ADD_WATCH_INDEX;
   public List<Watch> WATCHERS = Arrays.asList(Watch.ALL, Watch.EDIT, Watch.UNEDIT, Watch.COMMIT);
-  public int REMOVE_WATCH_INDEX = 0;
-  public String UPDATE_KEYWORD_SUBSTITUTION = null;
+  public int REMOVE_WATCH_INDEX;
+  public String UPDATE_KEYWORD_SUBSTITUTION;
 
-  public boolean MAKE_NEW_FILES_READONLY = false;
+  public boolean MAKE_NEW_FILES_READONLY;
+
+  @Options.Values
   public int SHOW_CORRUPTED_PROJECT_FILES = Options.SHOW_DIALOG;
 
-  public boolean TAG_AFTER_PROJECT_COMMIT = false;
+  public boolean TAG_AFTER_PROJECT_COMMIT;
   public boolean OVERRIDE_EXISTING_TAG_FOR_PROJECT = true;
   public String TAG_AFTER_PROJECT_COMMIT_NAME = "";
-  public boolean CLEAN_COPY = false;
+  public boolean CLEAN_COPY;
 
 
   public static CvsConfiguration getInstance(Project project) {
@@ -91,10 +93,12 @@ public class CvsConfiguration implements PersistentStateComponent<CvsConfigurati
     }
   }
 
+  @Override
   public CvsConfiguration getState() {
     return this;
   }
 
+  @Override
   public void loadState(CvsConfiguration object) {
     XmlSerializerUtil.copyBean(object, this);
     // safeguard (IDEADEV-15053)

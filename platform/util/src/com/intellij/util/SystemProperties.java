@@ -103,4 +103,8 @@ public class SystemProperties {
   public static boolean has(String key) {
     return System.getProperty(key) != null;
   }
+
+  public static boolean isTrueSmoothScrollingEnabled() {
+    return getBooleanProperty("idea.true.smooth.scrolling", false);
+  }
 }

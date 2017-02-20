@@ -58,8 +58,8 @@ public class WrapImpl extends Wrap {
   /**
    * Allows to register given wrap as a parent of the current wrap.
    * <p/>
-   * <code>'Parent'</code> wrap registration here means that {@link #isChildOf(WrapImpl, LeafBlockWrapper)} returns
-   * <code>'true'</code> if given wrap is used as a <code>'parent'</code> argument.
+   * {@code 'Parent'} wrap registration here means that {@link #isChildOf(WrapImpl, LeafBlockWrapper)} returns
+   * {@code 'true'} if given wrap is used as a {@code 'parent'} argument.
    *
    * @param parent    parent wrap to register for the current wrap
    */
@@ -74,9 +74,9 @@ public class WrapImpl extends Wrap {
   /**
    * Resets the following state of the current wrap object:
    * <ul>
-   *   <li>'{@link #getChopStartBlock() firstEntry}' property value is set to <code>null</code>;</li>
-   *   <li>'{@link #getWrapOffset() firstPosition}' property value is set to <code>'-1'</code>;</li>
-   *   <li>'{@link #isActive() isActive}' property value is set to <code>'false'</code>;</li>
+   *   <li>'{@link #getChopStartBlock() firstEntry}' property value is set to {@code null};</li>
+   *   <li>'{@link #getWrapOffset() firstPosition}' property value is set to {@code '-1'};</li>
+   *   <li>'{@link #isActive() isActive}' property value is set to {@code 'false'};</li>
    * </ul>
    */
   public void reset() {
@@ -90,7 +90,7 @@ public class WrapImpl extends Wrap {
    * it in case of success.
    *
    * @return    single wrap registered as a parent of the current wrap if any;
-   *            <code>null</code> if no wraps or more than one wrap is registered as a parent for the current wrap
+   *            {@code null} if no wraps or more than one wrap is registered as a parent for the current wrap
    */
   public WrapImpl getParent(){
     if (myParents != null && myParents.size() == 1) {
@@ -105,7 +105,7 @@ public class WrapImpl extends Wrap {
   }
 
   /**
-   * Allows to mark given wrap as <code>'ignored'</code> for the given block. I.e. 'false' will be returned
+   * Allows to mark given wrap as {@code 'ignored'} for the given block. I.e. 'false' will be returned
    * for subsequent calls to {@link #isChildOf(WrapImpl, LeafBlockWrapper)} with the same arguments.
    *
    * @param wrap          target wrap
@@ -130,8 +130,8 @@ public class WrapImpl extends Wrap {
   /**
    * Performs the following changes at wrap object state:
    * <ul>
-   *   <li>'{@link #getChopStartBlock() firstEntry}' property value is dropped (set to <code>null</code>)</li>
-   *   <li>'{@link #isActive() isActive}' property value is set (to <code>true</code>)</li>
+   *   <li>'{@link #getChopStartBlock() firstEntry}' property value is dropped (set to {@code null})</li>
+   *   <li>'{@link #isActive() isActive}' property value is set (to {@code true})</li>
    * </ul>
    */
   public void setActive() {
@@ -153,7 +153,7 @@ public class WrapImpl extends Wrap {
 
   /**
    * @return    '{@link #getWrapOffset() firstPosition}' property value defined previously via {@link #setWrapOffset(int)} if any;
-   *            <code>'-1'</code> otherwise
+   *            {@code '-1'} otherwise
    */
   public int getWrapOffset() {
     return myWrapOffset;
@@ -181,7 +181,7 @@ public class WrapImpl extends Wrap {
    * Allows to check if current wrap object is configured to wrap first element. This property is defined at
    * {@link #WrapImpl(WrapType, boolean) constructor} during object initialization and can't be changed later.
    *
-   * @return    <code>'wrapFirstElement'</code> property value
+   * @return    {@code 'wrapFirstElement'} property value
    */
   public final boolean isWrapFirstElement() {
     return (myFlags & WRAP_FIRST_ELEMENT_MASK) != 0;
@@ -203,7 +203,7 @@ public class WrapImpl extends Wrap {
   
   /**
    * Allows to instruct current wrap to ignore all parent wraps, i.e. all calls to {@link #isChildOf(WrapImpl, LeafBlockWrapper)}
-   * return <code>'false'</code> after invocation of this method.
+   * return {@code 'false'} after invocation of this method.
    */
   @Override
   public void ignoreParentWraps() {

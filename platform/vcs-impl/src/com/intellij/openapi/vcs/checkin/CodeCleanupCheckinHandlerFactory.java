@@ -85,7 +85,7 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
       if (VcsConfiguration.getInstance(myProject).CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT  && !DumbService.isDumb(myProject)) {
 
         List<VirtualFile> filesToProcess = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myPanel.getVirtualFiles(), myProject);
-        GlobalInspectionContextBase.codeCleanup(myProject, new AnalysisScope(myProject, filesToProcess), runnable);
+        GlobalInspectionContextBase.modalCodeCleanup(myProject, new AnalysisScope(myProject, filesToProcess), runnable);
 
       } else {
         runnable.run();

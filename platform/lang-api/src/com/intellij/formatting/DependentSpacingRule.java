@@ -68,8 +68,8 @@ public class DependentSpacingRule {
 
   /**
    * @param anchor  target data anchor
-   * @return        <code>true</code> if there is a data registered for the given anchor within the current rule;
-   *                <code>false</code> otherwise
+   * @return        {@code true} if there is a data registered for the given anchor within the current rule;
+   *                {@code false} otherwise
    */
   public boolean hasData(@NotNull Anchor anchor) {
     return myData.containsKey(anchor);

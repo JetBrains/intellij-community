@@ -45,7 +45,6 @@ public class SoftWrapHelper {
    * This method allows to answer if caret offset of the given editor points to soft wrap and visual caret position
    * belongs to the visual line where soft wrap end is located.
    *
-   * @param editor    target editor
    * @return          <code>true</code> if caret offset of the given editor points to visual position that belongs to
    *                  visual line where soft wrap end is located
    */
@@ -61,13 +60,8 @@ public class SoftWrapHelper {
       return false;
     }
 
-    if (editor.myUseNewRendering) {
-      VisualPosition afterWrapPosition = editor.offsetToVisualPosition(offset, false, false);
-      VisualPosition caretPosition = caret.getVisualPosition();
-      return caretPosition.line == afterWrapPosition.line && caretPosition.column <= afterWrapPosition.column;
-    }
-    else {
-      return editor.offsetToVisualLine(offset) == caret.getVisualPosition().line;
-    }
+    VisualPosition afterWrapPosition = editor.offsetToVisualPosition(offset, false, false);
+    VisualPosition caretPosition = caret.getVisualPosition();
+    return caretPosition.line == afterWrapPosition.line && caretPosition.column <= afterWrapPosition.column;
   }
 }

@@ -15,17 +15,20 @@
  */
 package com.intellij.codeInsight.daemon.inlays
 
+import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import org.assertj.core.api.Assertions
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
-class JavaInlayParameterHintsTest : InlayParameterHintsTest() {
-  
-  fun setup(text: String) = configureFile("a.java", text)
+class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
+
+  fun check(text: String) {
+    myFixture.configureByText("A.java", text)
+    myFixture.testInlays()
+  }
 
   fun `test insert literal arguments`() {
-    setup("""
+    check("""
 class Groo {
 
  public void test(File file) {
@@ -35,68 +38,51 @@ class Groo {
   String title = "Testing...";
   char ch = 'q';
 
-  configure(true, false, 555, 3.141f, "Huge Title", 'c', null);
+  configure(<hint text="testNow"/>true, <hint text="times"/>555, <hint text="pii"/>3.141f, <hint text="title"/>"Huge Title", <hint text="terminate"/>'c', <hint text="file"/>null);
   configure(testNow, shouldIgnoreRoots(), fourteen, pi, title, c, file);
  }
 
- public void configure(boolean testNow, boolean shouldIgnoreRoots, int times, float pii, String title, char terminate, File file) {
+ public void configure(boolean testNow, int times, float pii, String title, char terminate, File file) {
   System.out.println();
   System.out.println();
  }
 
 }""")
-
-    onLineStartingWith("configure(true").assertInlays(
-        "testNow->true",
-        "shouldIgnoreRoots->false",
-        "times->555",
-        "pii->3.141f",
-        """title->"Huge Title"""",
-        "terminate->'c'",
-        "file->null"
-    )
-
-    onLineStartingWith("configure(testNow").assertNoInlays()
   }
 
-
   fun `test do not show for Exceptions`() {
-    setup("""
+    check("""
 class Fooo {
-  
+
   public void test() {
     Throwable t = new IllegalStateException("crime");
   }
-  
+
 }
 """)
-    
-    onLineStartingWith("Throw").assertNoInlays()
   }
-  
+
 
   fun `test show hint for single string literal if there is multiple string params`() {
-    setup("""class Groo {
+    check("""class Groo {
 
  public void test() {
    String message = "sdfsdfdsf";
-   assertEquals("fooo", message);
+   assertEquals(<hint text="expected"/>"fooo", message);
 
    String title = "TT";
-   show(title, "Hi");
+   show(title, <hint text="message"/>"Hi");
  }
 
  public void assertEquals(String expected, String actual) {}
  public void show(String title, String message) {}
 
 }""")
-
-    onLineStartingWith("assertEquals").assertInlays("expected->\"fooo\"")
-    onLineStartingWith("show").assertInlays("message->\"Hi\"")
   }
-  
+
+
   fun `test no hints for generic builders`() {
-    setup("""
+    check("""
 class Foo {
   void test() {
     new IntStream().skip(10);
@@ -112,13 +98,11 @@ class Stream<T> {
   public Stream<T> skip(int n) {}
 }
 """)
-    
-    onLineStartingWith("new IntStream").assertNoInlays()
-    onLineStartingWith("new Stream").assertNoInlays()
   }
 
+
   fun `test do not show hints on setters`() {
-    setup("""class Groo {
+    check("""class Groo {
 
  public void test() {
   setTestNow(false);
@@ -131,17 +115,16 @@ class Stream<T> {
  }
 
 }""")
-
-    onLineStartingWith("setTestNow").assertNoInlays()
   }
 
+
   fun `test single varargs hint`() {
-    setup("""
+    check("""
 public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(13, false);
+    testBooleanVarargs(<hint text="test"/>13, <hint text="...booleans"/>false);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -150,18 +133,15 @@ public class VarArgTest {
   }
 }
 """)
-
-    onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "...booleans->false")
   }
 
   fun `test no hint if varargs null`() {
-    setup("""
+    check("""
 public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(13);
+    testBooleanVarargs(<hint text="test"/>13);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -170,17 +150,16 @@ public class VarArgTest {
   }
 }
 """)
-
-    onLineStartingWith("testBooleanVarargs").assertInlays("test->13")
   }
+
 
   fun `test multiple vararg hint`() {
-    setup("""
+    check("""
 public class VarArgTest {
 
   public void main() {
     System.out.println("AAA");
-    testBooleanVarargs(13, false, true, false);
+    testBooleanVarargs(<hint text="test"/>13, <hint text="...booleans"/>false, true, false);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -189,32 +168,11 @@ public class VarArgTest {
   }
 }
 """)
-
-    onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "...booleans->false")
   }
 
-  fun `test do not inline if parameter length is one or two`() {
-    setup("""
-public class CharSymbol {
-
-  public void main() {
-    System.out.println("AAA");
-    count(1, false);
-  }
-
-  public void count(int t, boolean fa) {
-    int temp = test;
-    boolean isFast = fast;
-  }
-}
-""")
-
-    onLineStartingWith("count").assertInlays("t->1", "fa->false")
-  }
 
   fun `test do not inline known subsequent parameter names`() {
-    setup("""
+    check("""
 public class Test {
   public void main() {
     test1(1, 2);
@@ -239,20 +197,16 @@ public class Test {
   }
 }
 """)
-
-    onLineStartingWith("test1").assertNoInlays()
-    onLineStartingWith("test2").assertNoInlays()
-    onLineStartingWith("test3").assertNoInlays()
-    onLineStartingWith("doTest").assertNoInlays()
   }
 
+
   fun `test show if can be assigned`() {
-    setup("""
+    check("""
 public class CharSymbol {
 
   public void main() {
     Object obj = new Object();
-    count(100, false, "Hi!");
+    count(<hint text="test"/>100, <hint text="boo"/>false, <hint text="seq"/>"Hi!");
   }
 
   public void count(Integer test, Boolean boo, CharSequence seq) {
@@ -261,19 +215,16 @@ public class CharSymbol {
   }
 }
 """)
-
-    onLineStartingWith("count(1")
-        .assertInlays("test->100", "boo->false", """seq->"Hi!"""")
   }
 
   fun `test inline positive and negative numbers`() {
-    setup("""
+    check("""
 public class CharSymbol {
 
   public void main() {
     Object obj = new Object();
-    count(-1, obj);
-    count(+1, obj);
+    count(<hint text="test"/>-1, obj);
+    count(<hint text="test"/>+1, obj);
   }
 
   public void count(int test, Object obj) {
@@ -282,60 +233,45 @@ public class CharSymbol {
   }
 }
 """)
-
-    onLineStartingWith("count(-")
-        .assertInlays("test->-")
-
-    onLineStartingWith("count(+")
-        .assertInlays("test->+")
   }
 
   fun `test inline literal arguments with crazy settings`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
-    setup("""
+    check("""
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
     System.out.println("AAA");
-    main(true,false, /*comment*/2);
+    main(<hint text="isActive"/>true,<hint text="requestFocus"/>false, /*comment*/<hint text="xoo"/>2);
   }
 }
 """)
 
-    onLineStartingWith("System")
-        .assertNoInlays()
-
-    onLineStartingWith("main(t")
-        .assertInlays("isActive->true", "requestFocus->false", "xoo->2")
   }
 
 
   fun `test ignored methods`() {
-    setup("""
+    check("""
 public class Test {
-  
+
   List<String> list = new ArrayList<>();
   StringBuilder builder = new StringBuilder();
 
   public void main() {
     System.out.println("A");
     System.out.print("A");
-    
+
     list.add("sss");
     list.get(1);
     list.set(1, "sss");
-    
+
     setNewIndex(10);
     "sss".contains("s");
     builder.append("sdfsdf");
     "sfsdf".startWith("s");
     "sss".charAt(3);
-    
-    clearStatus(false);
+
+    clearStatus(<hint text="updatedRecently"/>false);
   }
-  
+
   void print(String s) {}
   void println(String s) {}
   void get(int index) {}
@@ -346,18 +282,10 @@ public class Test {
 }
 """)
 
-    val inlays = getInlays()
-    Assertions.assertThat(inlays).hasSize(1)
-
-    Assertions.assertThat(inlays[0].offset).isEqualTo(myFixture.editor.document.text.indexOf("false"))
   }
 
   fun `test hints for generic arguments`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
-    setup("""
+    check("""
 
 class QList<E> {
   void add(int query, E obj) {}
@@ -370,26 +298,20 @@ class QCmp<E> {
 
 public class Test {
   public void main(QCmp<Integer> c, QList<String> l) {
-    c.compare(0, /** ddd */3);
-    l.add(1, "uuu");
+    c.compare(<hint text="o1"/>0, /** ddd */<hint text="o2"/>3);
+    l.add(<hint text="query"/>1, <hint text="obj"/>"uuu");
   }
 }
 """)
-
-    onLineStartingWith("c.compare")
-        .assertInlays("o1->0", "o2->3")
-
-    onLineStartingWith("l.add")
-        .assertInlays("query->1", """obj->"uuu"""")
   }
 
   fun `test inline constructor literal arguments names`() {
-    setup("""
+    check("""
 public class Test {
 
   public void main() {
     System.out.println("AAA");
-    Checker r = new Checker(true, false) {
+    Checker r = new Checker(<hint text="isActive"/>true, <hint text="requestFocus"/>false) {
         @Override
         void test() {
         }
@@ -402,13 +324,10 @@ public class Test {
   }
 }
 """)
-
-    onLineStartingWith("Checker r")
-        .assertInlays("isActive->true", "requestFocus->false")
   }
 
   fun `test inline anonymous class constructor parameters`() {
-    setup("""
+    check("""
 public class Test {
 
   Test(int counter, boolean shouldTest) {
@@ -418,18 +337,15 @@ public class Test {
 
   public static void main() {
     System.out.println();
-    Test t = new Test(10, false);
+    Test t = new Test(<hint text="counter"/>10, <hint text="shouldTest"/>false);
   }
 
 }
 """)
-
-    onLineStartingWith("Test t")
-        .assertInlays("counter->10", "shouldTest->false")
   }
 
   fun `test inline if one of vararg params is literal`() {
-    setup("""
+    check("""
 public class VarArgTest {
 
   public void main() {
@@ -437,7 +353,7 @@ public class VarArgTest {
     int test = 13;
     boolean isCheck = false;
     boolean isOk = true;
-    testBooleanVarargs(test, isCheck, true, isOk);
+    testBooleanVarargs(test, <hint text="...booleans"/>isCheck, true, isOk);
   }
 
   public boolean testBooleanVarargs(int test, Boolean... booleans) {
@@ -446,17 +362,14 @@ public class VarArgTest {
   }
 }
 """)
-
-    onLineStartingWith("testBooleanVarargs")
-        .assertInlays("...booleans->isCheck")
   }
 
   fun `test if any param matches inline all`() {
-    setup("""
+    check("""
 public class VarArgTest {
-  
+
   public void main() {
-    check(10, 1000);
+    check(<hint text="x"/>10, <hint text="paramNameLength"/>1000);
   }
 
   public void check(int x, int paramNameLength) {
@@ -464,18 +377,15 @@ public class VarArgTest {
 
 }
 """)
-
-    onLineStartingWith("check(")
-        .assertInlays("x->10", "paramNameLength->1000")
   }
 
   fun `test inline common name pair if more that 2 args`() {
-    setup("""
+    check("""
 public class VarArgTest {
-  
+
   public void main() {
     String s = "su";
-    check(10, 1000, s);
+    check(<hint text="beginIndex"/>10, <hint text="endIndex"/>1000, s);
   }
 
   public void check(int beginIndex, int endIndex, String params) {
@@ -483,31 +393,26 @@ public class VarArgTest {
 
 }
 """)
-
-    onLineStartingWith("check(")
-        .assertInlays("beginIndex->10", "endIndex->1000")
   }
 
   fun `test ignore String methods`() {
-    setup("""
+    check("""
 class Test {
-  
+
   public void main() {
     String.format("line", "eee", "www");
   }
-  
+
 }
 """)
-
-    onLineStartingWith("String").assertNoInlays()
   }
 
   fun `test inline common name pair if more that 2 args xxx`() {
-    setup("""
+    check("""
 public class VarArgTest {
-  
+
   public void main() {
-    check(10, 1000, "su");
+    check(<hint text="beginIndex"/>10, <hint text="endIndex"/>1000, <hint text="x"/>"su");
   }
 
   public void check(int beginIndex, int endIndex, String x) {
@@ -515,17 +420,14 @@ public class VarArgTest {
 
 }
 """)
-
-    onLineStartingWith("check(")
-        .assertInlays("beginIndex->10", "endIndex->1000", """x->"su"""" )
   }
 
   fun `test inline this`() {
-    setup("""
+    check("""
 public class VarArgTest {
-  
+
   public void main() {
-    check(this, 1000);
+    check(<hint text="test"/>this, <hint text="endIndex"/>1000);
   }
 
   public void check(VarArgTest test, int endIndex) {
@@ -533,18 +435,15 @@ public class VarArgTest {
 
 }
 """)
-
-    onLineStartingWith("check(t")
-        .assertInlays("test->this", "endIndex->1000")
   }
 
   fun `test inline strange methods`() {
-    setup("""
+    check("""
 public class Test {
-  
+
   void main() {
-    createContent(null);
-    createNewContent(this);
+    createContent(<hint text="manager"/>null);
+    createNewContent(<hint text="test"/>this);
   }
 
   Content createContent(DockManager manager) {}
@@ -554,13 +453,10 @@ public class Test {
 interface DockManager {}
 interface Content {}
 """)
-
-    onLineStartingWith("createContent").assertInlays("manager->null")
-    onLineStartingWith("createNewContent").assertInlays("test->this")
   }
 
   fun `test do not inline builder pattern`() {
-    setup("""
+    check("""
 class Builder {
   void await(boolean value) {}
   Builder bwait(boolean xvalue) {}
@@ -568,22 +464,19 @@ class Builder {
 }
 
 class Test {
-  
+
   public void test() {
     Builder builder = new Builder();
-    builder.await(true);
+    builder.await(<hint text="value"/>true);
     builder.bwait(false).timeWait(100);
   }
-  
+
 }
 """)
-
-    onLineStartingWith("builder.await").assertInlays("value->true")
-    onLineStartingWith("builder.bwait").assertNoInlays()
   }
 
   fun `test builder method only method with one param`() {
-    setup("""
+    check("""
 class Builder {
   Builder qwit(boolean value, String sValue) {}
   Builder trew(boolean value) {}
@@ -594,19 +487,16 @@ class Test {
     Builder builder = new Builder();
     builder
     .trew(false)
-    .qwit(true, "value");
+    .qwit(<hint text="value"/>true, <hint text="sValue"/>"value");
   }
 }
 """)
-
-    onLineStartingWith(".trew").assertNoInlays()
-    onLineStartingWith(".qw").assertInlays("value->true", "sValue->\"value\"")
   }
 
   fun `test do not show single parameter hint if it is string literal`() {
-    setup("""
+    check("""
 public class Test {
-  
+
   public void test() {
     debug("Error message");
     info("Error message", new Object());
@@ -614,45 +504,22 @@ public class Test {
 
   void debug(String message) {}
   void info(String message, Object error) {}
-  
+
 }
 """)
-
-    onLineStartingWith("debug(").assertNoInlays()
-    onLineStartingWith("info(").assertNoInlays()
-  }
-
-  fun `test show hints for literals if there are many of them`() {
-    setup("""
-public class Test {
-  
-  public void test() {
-    int a = 2;
-    debug("Debug", "DTitle", a);
-    info("Error message", "Title");
-  }
-
-  void debug(String message, String title, int value) {}
-  void info(String message, String title) {}
-  
-}
-""")
-
-    onLineStartingWith("debug(").assertInlays("message->\"Debug\"", "title->\"DTitle\"")
-    onLineStartingWith("info(").assertInlays("message->\"Error message\"", "title->\"Title\"")
   }
 
   fun `test show single`() {
-    setup("""
+    check("""
 class Test {
 
   void main() {
-    blah(1, 2);
+    blah(<hint text="a"/>1, <hint text="b"/>2);
     int z = 2;
-    draw(10, 20, z);
+    draw(<hint text="x"/>10, <hint text="y"/>20, z);
     int x = 10;
     int y = 12;
-    drawRect(x, y, 10, 12);
+    drawRect(x, y, <hint text="w"/>10, <hint text="h"/>12);
   }
 
   void blah(int a, int b) {}
@@ -661,99 +528,175 @@ class Test {
 
 }
 """)
-
-    onLineStartingWith("blah").assertInlays("a->1", "b->2")
-    onLineStartingWith("draw").assertInlays("x->10", "y->20")
-    onLineStartingWith("drawRect").assertInlays("w->10", "h->12")
   }
 
   fun `test do not show for setters`() {
-    setup("""
+    check("""
 class Test {
-  
+
   void main() {
     set(10);
   }
-  
+
   void set(int newValue) {}
-  
+
 }
 """)
-
-    onLineStartingWith("set(").assertNoInlays()
   }
 
-  fun `test show for method with boolean param and return value`() {
-    setup("""
+  fun `test do not show for equals and min`() {
+    check("""
 class Test {
-  
   void test() {
-    String name = getTestName(true);
-    System.out.println("");
     "xxx".equals(name);
     Math.min(10, 20);
   }
-  
-  String getTestName(boolean lowerCase) {}
 }
 """)
-
-    onLineStartingWith("String name").assertInlays("lowerCase->true")
-    onLineStartingWith("\"xxx\"").assertNoInlays()
-    onLineStartingWith("Math").assertNoInlays()
   }
 
   fun `test more blacklisted items`() {
-    setup("""
+    check("""
 class Test {
-  
+
   void test() {
     System.getProperty("aaa");
     System.setProperty("aaa", "bbb");
     new Key().create(10);
   }
-  
+
 }
 
 class Key {
   void create(int a) {}
 }
 """)
-
-    onLineStartingWith("System.get").assertNoInlays()
-    onLineStartingWith("System.set").assertNoInlays()
-    onLineStartingWith("new").assertNoInlays()
   }
-  
+
   fun `test poly and binary expressions`() {
-    setup("""
+      check("""
 class Test {
   void test() {
-    xxx(100);
-    check(1 + 1);
-    int i=1; check(1 + 1 + 1);
-    yyy(200);
+    xxx(<hint text="followTheSum"/>100);
+    check(<hint text="isShow"/>1 + 1);
+    check(<hint text="isShow"/>1 + 1 + 1);
+    yyy(<hint text="followTheSum"/>200);
   }
   void check(int isShow) {}
   void xxx(int followTheSum) {}
   void yyy(int followTheSum) {}
 }
 """)
-
-    onLineStartingWith("xxx").assertInlays("followTheSum->100")
-    onLineStartingWith("check").assertInlays("isShow->1")
-    onLineStartingWith("int").assertInlays("isShow->1")
-    onLineStartingWith("yyy").assertInlays("followTheSum->200")
   }
-  
+
   fun `test incorrect pattern`() {
     ParameterNameHintsSettings.getInstance().addIgnorePattern(JavaLanguage.INSTANCE, "")
-    setup("""
+    check("""
 class Test {
   void test() {
-    check(1000);  
+    check(<hint text="isShow"/>1000);
   }
   void check(int isShow) {}
+}
+""")
+  }
+
+  fun `test do not show hint for name contained in method`() {
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
+    check("""
+class Test {
+  void main() {
+    timeoutExecution(1000);
+    createSpace(true);
+  }
+  void timeoutExecution(int timeout) {}
+  void createSpace(boolean space) {}
+}
+""")
+  }
+
+  fun `test show if multiple params but name contained`() {
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowIfMethodNameContainsParameterName.set(true)
+    check("""
+class Test {
+  void main() {
+    timeoutExecution(<hint text="timeout"/>1000, <hint text="message"/>"xxx");
+    createSpace(<hint text="space"/>true, <hint text="a"/>10);
+  }
+  void timeoutExecution(int timeout, String message) {}
+  void createSpace(boolean space, int a) {}
+}
+""")
+  }
+
+  fun `test show same params`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    check("""
+class Test {
+  void main() {
+    String c = "c";
+    String d = "d";
+    test(<hint text="parent"/>c, <hint text="child"/>d);
+  }
+  void test(String parent, String child) {
+  }
+}
+""")
+  }
+
+  fun `test show triple`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    check("""
+class Test {
+  void main() {
+    String c = "c";
+    test(<hint text="parent"/>c, <hint text="child"/>c, <hint text="grandParent"/>c);
+  }
+  void test(String parent, String child, String grandParent) {
+  }
+}
+""")
+  }
+
+  fun `test show couple of doubles`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    check("""
+class Test {
+  void main() {
+    String c = "c";
+    String d = "d";
+    int v = 10;
+    test(<hint text="parent"/>c, <hint text="child"/>d, <hint text="vx"/>v, <hint text="vy"/>v);
+  }
+  void test(String parent, String child, int vx, int vy) {
+  }
+}
+""")
+  }
+
+  fun `test show ambigous`() {
+    check("""
+class Test {
+  void main() {
+    test(<hint text="a"/>10, x);
+  }
+  void test(int a, String bS) {}
+  void test(int a, int bI) {}
+}
+""")
+  }
+
+  fun `test show ambiguous constructor`() {
+    check("""
+class Test {
+  void main() {
+    new X(<hint text="a"/>10, x);
+  }
+}
+
+class X {
+  X(int a, int bI) {}
+  X(int a, String bS) {}
 }
 """)
   }

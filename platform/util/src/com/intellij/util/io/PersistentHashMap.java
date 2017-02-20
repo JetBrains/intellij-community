@@ -71,10 +71,10 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   @NonNls
-  public static final String DATA_FILE_EXTENSION = ".values";
+  static final String DATA_FILE_EXTENSION = ".values";
   private long myLiveAndGarbageKeysCounter; // first four bytes contain live keys count (updated via LIVE_KEY_MASK), last four bytes - number of dead keys
   private int myReadCompactionGarbageSize;
-  private static final long LIVE_KEY_MASK = (1L << 32);
+  private static final long LIVE_KEY_MASK = 1L << 32;
   private static final long USED_LONG_VALUE_MASK = 1L << 62;
   private static final int POSITIVE_VALUE_SHIFT = 1;
   private final int myParentValueRefOffset;
@@ -114,7 +114,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private final SLRUCache<Key, BufferExposingByteArrayOutputStream> myAppendCache;
 
   private boolean canUseIntAddressForNewRecord(long size) {
-    return myCanReEnumerate ? size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE: false;
+    return myCanReEnumerate && size + POSITIVE_VALUE_SHIFT < Integer.MAX_VALUE;
   }
 
   private final LowMemoryWatcher myAppendCacheFlusher = LowMemoryWatcher.register(new Runnable() {
@@ -293,7 +293,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  public int getGarbageSize() {
+  int getGarbageSize() {
     return (int)myLiveAndGarbageKeysCounter;
   }
 
@@ -302,6 +302,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   @TestOnly // public for tests
+  @SuppressWarnings("WeakerAccess") // used in upsource for some reason
   public boolean makesSenseToCompact() {
     if (myIsReadOnly) return false;
 
@@ -320,7 +321,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       return deadKeys > liveKeys ||
              avgValueSize *deadKeys > benefitSize ||
-             myReadCompactionGarbageSize > (fileSize / 2);
+             myReadCompactionGarbageSize > fileSize / 2;
     }
     return false;
   }
@@ -666,7 +667,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
-  protected void doClose() throws IOException {
+  private void doClose() throws IOException {
     myEnumerator.lockStorage();
     try {
       try {

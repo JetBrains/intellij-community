@@ -400,6 +400,7 @@ class BaseInterpreterInterface:
                         thread.interrupt_main()
                     else:
                         self.mainThread._thread.interrupt()  # Jython
+            self.finish_exec(False)
             return True
         except:
             traceback.print_exc()

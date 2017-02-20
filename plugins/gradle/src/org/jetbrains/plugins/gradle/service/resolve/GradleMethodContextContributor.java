@@ -20,7 +20,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
 
 import java.util.List;
 
@@ -56,9 +59,17 @@ public interface GradleMethodContextContributor {
    * @param processor      the processor receiving the declarations.
    * @param state          current resolve state
    * @param place          the original element from which the tree up walk was initiated.
+   * @return true if the processing should continue or false if it should be stopped.
    */
-  void process(@NotNull List<String> methodCallInfo,
-               @NotNull PsiScopeProcessor processor,
-               @NotNull ResolveState state,
-               @NotNull PsiElement place);
+  default boolean process(@NotNull List<String> methodCallInfo,
+                          @NotNull PsiScopeProcessor processor,
+                          @NotNull ResolveState state,
+                          @NotNull PsiElement place) {
+    return true;
+  }
+
+  @Nullable
+  default DelegatesToInfo getDelegatesToInfo(@NotNull GrClosableBlock closure) {
+    return null;
+  }
 }

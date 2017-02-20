@@ -27,26 +27,20 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CompressedRefs {
-  @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final VcsLogStorage myStorage;
 
   // maps each commit id to the list of tag ids on this commit
-  @NotNull private final TIntObjectHashMap<TIntArrayList> myTags;
+  @NotNull private final TIntObjectHashMap<TIntArrayList> myTags = new TIntObjectHashMap<>();
   // maps each commit id to the list of branches on this commit
-  @NotNull private final TIntObjectHashMap<SmartList<VcsRef>> myBranches;
+  @NotNull private final TIntObjectHashMap<List<VcsRef>> myBranches = new TIntObjectHashMap<>();
 
-  public CompressedRefs(@NotNull Set<VcsRef> refs, @NotNull VcsLogStorage hashMap) {
-    myHashMap = hashMap;
-
-    myTags = new TIntObjectHashMap<>();
-    myBranches = new TIntObjectHashMap<>();
+  public CompressedRefs(@NotNull Set<VcsRef> refs, @NotNull VcsLogStorage storage) {
+    myStorage = storage;
 
     Ref<VirtualFile> root = new Ref<>();
 
@@ -55,24 +49,27 @@ public class CompressedRefs {
       root.set(ref.getRoot());
 
       if (ref.getType().isBranch()) {
-        putRef(myBranches, ref, myHashMap);
+        putRef(myBranches, ref, myStorage);
       }
       else {
-        putRefIndex(myTags, ref, myHashMap);
+        putRefIndex(myTags, ref, myStorage);
       }
     });
-
-    myHashMap.flush();
+    myTags.forEachValue(list -> {
+      list.trimToSize();
+      return true;
+    });
+    myStorage.flush();
   }
 
   @NotNull
-  public SmartList<VcsRef> refsToCommit(int index) {
+  SmartList<VcsRef> refsToCommit(int index) {
     SmartList<VcsRef> result = new SmartList<>();
     if (myBranches.containsKey(index)) result.addAll(myBranches.get(index));
     TIntArrayList tags = myTags.get(index);
     if (tags != null) {
       tags.forEach(value -> {
-        result.add(myHashMap.getVcsRef(value));
+        result.add(myStorage.getVcsRef(value));
         return true;
       });
     }
@@ -86,7 +83,7 @@ public class CompressedRefs {
 
   @NotNull
   private Stream<VcsRef> streamTags() {
-    return TroveUtil.streamValues(myTags).flatMapToInt(TroveUtil::stream).mapToObj(myHashMap::getVcsRef);
+    return TroveUtil.streamValues(myTags).flatMapToInt(TroveUtil::stream).mapToObj(myStorage::getVcsRef);
   }
 
   @NotNull
@@ -100,6 +97,7 @@ public class CompressedRefs {
       private final Supplier<Collection<VcsRef>> myLoadedRefs =
         Suppliers.memoize(() -> CompressedRefs.this.stream().collect(Collectors.toList()));
 
+      @NotNull
       @Override
       public Iterator<VcsRef> iterator() {
         return myLoadedRefs.get().iterator();
@@ -120,17 +118,17 @@ public class CompressedRefs {
     return result;
   }
 
-  public static void putRef(@NotNull TIntObjectHashMap<SmartList<VcsRef>> map, @NotNull VcsRef ref, @NotNull VcsLogStorage hashMap) {
-    int index = hashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
-    SmartList<VcsRef> list = map.get(index);
+  private static void putRef(@NotNull TIntObjectHashMap<List<VcsRef>> map, @NotNull VcsRef ref, @NotNull VcsLogStorage storage) {
+    int index = storage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
+    List<VcsRef> list = map.get(index);
     if (list == null) map.put(index, list = new SmartList<>());
     list.add(ref);
   }
 
-  public static void putRefIndex(@NotNull TIntObjectHashMap<TIntArrayList> map, @NotNull VcsRef ref, @NotNull VcsLogStorage hashMap) {
-    int index = hashMap.getCommitIndex(ref.getCommitHash(), ref.getRoot());
+  private static void putRefIndex(@NotNull TIntObjectHashMap<TIntArrayList> map, @NotNull VcsRef ref, @NotNull VcsLogStorage storage) {
+    int index = storage.getCommitIndex(ref.getCommitHash(), ref.getRoot());
     TIntArrayList list = map.get(index);
     if (list == null) map.put(index, list = new TIntArrayList());
-    list.add(hashMap.getRefIndex(ref));
+    list.add(storage.getRefIndex(ref));
   }
 }

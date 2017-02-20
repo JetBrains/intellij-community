@@ -47,7 +47,7 @@ public class FCTSBackedLighterAST extends LighterAST {
   @NotNull
   @Override
   public List<LighterASTNode> getChildren(@NotNull final LighterASTNode parent) {
-    final Ref<LighterASTNode[]> into = new Ref<LighterASTNode[]>();
+    final Ref<LighterASTNode[]> into = new Ref<>();
     final int numKids = myTreeStructure.getChildren(myTreeStructure.prepareForGetChildren(parent), into);
     if (numKids == 0) {
       return ContainerUtil.emptyList();
@@ -55,18 +55,6 @@ public class FCTSBackedLighterAST extends LighterAST {
     LighterASTNode[] elements = into.get();
     assert elements != null : myTreeStructure +" ("+parent+")";
     return new LighterASTNodeList(numKids, elements);
-  }
-
-  @Override
-  public void disposeChildren(@NotNull List<LighterASTNode> children) {
-    if (children instanceof LighterASTNodeList) {
-      LighterASTNodeList nodes = (LighterASTNodeList)children;
-      myTreeStructure.disposeChildren(nodes.myElements, nodes.mySize);
-    }
-    else {
-      LighterASTNode[] astNodes = new LighterASTNode[children.size()];
-      myTreeStructure.disposeChildren(children.toArray(astNodes), astNodes.length);
-    }
   }
 
   private static class LighterASTNodeList extends AbstractList<LighterASTNode> {

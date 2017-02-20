@@ -9,7 +9,6 @@ import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
@@ -133,6 +132,40 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
              "\"r1\"", "\"r2\"");
   }
 
+  public void testSimpleNullCompletion() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": \"null\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "null");
+  }
+
+  public void testNullCompletionInEnum() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": [\"null\", \"integer\"],\n" +
+                          "      \"enum\": [null, 1, 2]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "1", "2", "null");
+  }
+
+  public void testNullCompletionInTypeVariants() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": [\"null\", \"boolean\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "false", "null", "true");
+  }
+
   @NotNull
   private static String parcelShopSchema() {
     return "{\n" +
@@ -178,10 +211,12 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
     final PsiElement element = file.findElementAt(position);
     Assert.assertNotNull(element);
 
-    final JsonSchemaObject schemaObject = new JsonSchemaReader(null).read(new StringReader(schema), null);
+    final PsiFile schemaFile = createFile(myModule, "testSchema.json", schema);
+    final JsonSchemaObject schemaObject = JsonSchemaReader.create(myProject, schemaFile.getVirtualFile()).read();
     Assert.assertNotNull(schemaObject);
 
-    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element);
+    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element,
+                                                                                                            file.getVirtualFile());
     Collections.sort(foundVariants, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
     myItems = foundVariants.toArray(new LookupElement[foundVariants.size()]);
     assertStringItems(variants);

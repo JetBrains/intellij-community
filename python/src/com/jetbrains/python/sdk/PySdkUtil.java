@@ -140,10 +140,7 @@ public class PySdkUtil {
       }
       return processHandler.runProcess(timeout);
     }
-    catch (ExecutionException e) {
-      return getOutputForException(e);
-    }
-    catch (IOException e) {
+    catch (ExecutionException | IOException e) {
       return getOutputForException(e);
     }
   }
@@ -202,7 +199,7 @@ public class PySdkUtil {
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        final Sdk sdk = PythonSdkType.getSdk(element);
+        final Sdk sdk = PythonSdkType.findPythonSdk(element);
         if (sdk != null) {
           final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
           if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false)) {

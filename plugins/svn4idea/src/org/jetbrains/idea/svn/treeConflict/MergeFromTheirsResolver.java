@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.BackgroundTaskGroup;
 import com.intellij.openapi.vcs.changes.*;
@@ -202,7 +203,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
                       @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
-                      @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                      @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       List<FilePatch> patches = null;
       VcsException exception = null;
       try {

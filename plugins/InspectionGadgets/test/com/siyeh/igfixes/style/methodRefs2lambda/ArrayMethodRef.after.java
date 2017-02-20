@@ -1,6 +1,6 @@
 public class Foo {
     static void foo() {
-        Cln j = (ints) -> ints.clone();
+        Cln j = ints -> ints.clone();
     }
 
     interface Cln {

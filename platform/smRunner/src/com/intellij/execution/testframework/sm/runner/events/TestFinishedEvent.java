@@ -21,38 +21,43 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestFinishedEvent extends TreeNodeEvent {
 
-  private final long myDuration;
+  @Nullable
+  private final Long myDuration;
   private final String myOutputFile;
 
-  public TestFinishedEvent(@NotNull TestFinished testFinished, long duration) {
+  public TestFinishedEvent(@NotNull TestFinished testFinished, @Nullable Long duration) {
     this(testFinished, duration, null);
   }
 
-  public TestFinishedEvent(@NotNull TestFinished testFinished, long duration, String outputFile) {
+  public TestFinishedEvent(@NotNull TestFinished testFinished, @Nullable Long  duration, String outputFile) {
     this(testFinished.getTestName(), TreeNodeEvent.getNodeId(testFinished), duration, outputFile);
   }
 
-  public TestFinishedEvent(@Nullable String name, @Nullable String id, long duration) {
+  public TestFinishedEvent(@Nullable String name, @Nullable String id, @Nullable Long duration) {
     this(name, id, duration, null);
   }
 
-  public TestFinishedEvent(@Nullable String name, @Nullable String id, long duration, String outputFile) {
+  public TestFinishedEvent(@Nullable String name, @Nullable String id, @Nullable Long duration, String outputFile) {
     super(name, id);
     myDuration = duration;
     myOutputFile = outputFile;
   }
 
-  public TestFinishedEvent(@NotNull String name, long duration) {
+  public TestFinishedEvent(@NotNull String name, @Nullable Long duration) {
     this(name, null, duration);
   }
 
   /** @deprecated use {@link #TestFinishedEvent(String, long)} (to be removed in IDEA 16) */
   @SuppressWarnings("unused")
   public TestFinishedEvent(@NotNull String name, int duration) {
-    this(name, null, duration);
+    this(name, null, Long.valueOf(duration));
   }
 
-  public long getDuration() {
+  /**
+   * @return duration in ms if reported
+   */
+  @Nullable
+  public Long getDuration() {
     return myDuration;
   }
 

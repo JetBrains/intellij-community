@@ -136,7 +136,7 @@ public class MacColorPipette extends ColorPipetteBase {
       pickerDialog.setSize(DIALOG_SIZE, DIALOG_SIZE);
       pickerDialog.setBackground(myTransparentColor);
       
-      BufferedImage emptyImage = UIUtil.createImage(1, 1, Transparency.TRANSLUCENT);
+      BufferedImage emptyImage = UIUtil.createImage(pickerDialog, 1, 1, Transparency.TRANSLUCENT);
       pickerDialog.setCursor(myParent.getToolkit().createCustomCursor(emptyImage, new Point(0, 0), "ColorPicker"));
     }
     return pickerDialog;

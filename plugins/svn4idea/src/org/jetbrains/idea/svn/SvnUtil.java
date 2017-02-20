@@ -88,9 +88,17 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static java.util.Collections.emptyList;
 
 public class SvnUtil {
   // TODO: ASP.NET hack behavior should be supported - http://svn.apache.org/repos/asf/subversion/trunk/notes/asp-dot-net-hack.txt
@@ -123,52 +131,49 @@ public class SvnUtil {
     return error;
   }
 
-  public static boolean isSvnVersioned(final Project project, File parent) {
-    return isSvnVersioned(SvnVcs.getInstance(project), parent);
+  public static boolean isSvnVersioned(@NotNull SvnVcs vcs, @NotNull File file) {
+    return vcs.getInfo(file) != null;
   }
 
-  public static boolean isSvnVersioned(final @NotNull SvnVcs vcs, File parent) {
-    final Info info = vcs.getInfo(parent);
+  @NotNull
+  public static Collection<VirtualFile> crawlWCRoots(@NotNull SvnVcs vcs,
+                                                     @NotNull File path,
+                                                     @NotNull SvnWCRootCrawler callback,
+                                                     @Nullable ProgressIndicator progress) {
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path);
 
-    return info != null;
+    return file != null ? crawlWCRoots(vcs, file, callback, progress) : emptyList();
   }
 
-  public static Collection<VirtualFile> crawlWCRoots(final Project project, File path, SvnWCRootCrawler callback, ProgressIndicator progress) {
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile vf = lfs.findFileByIoFile(path);
-    if (vf == null) {
-      vf = lfs.refreshAndFindFileByIoFile(path);
-    }
-    if (vf == null) return Collections.emptyList();
-    return crawlWCRoots(project, vf, callback, progress);
-  }
+  @NotNull
+  private static Collection<VirtualFile> crawlWCRoots(@NotNull SvnVcs vcs,
+                                                      @NotNull VirtualFile file,
+                                                      @NotNull SvnWCRootCrawler callback,
+                                                      @Nullable ProgressIndicator progress) {
+    Set<VirtualFile> result = newHashSet();
+    // TODO: Actually it is not OK to call getParent() if file is invalid.
+    VirtualFile parent = !file.isDirectory() || !file.isValid() ? file.getParent() : file;
 
-  private static Collection<VirtualFile> crawlWCRoots(final Project project, VirtualFile vf, SvnWCRootCrawler callback, ProgressIndicator progress) {
-    final Collection<VirtualFile> result = new HashSet<>();
-    final boolean isDirectory = vf.isDirectory();
-    VirtualFile parent = ! isDirectory || !vf.exists() ? vf.getParent() : vf;
-
-    final File parentIo = new File(parent.getPath());
-    if (isSvnVersioned(project, parentIo)) {
+    if (isSvnVersioned(vcs, virtualToIoFile(parent))) {
       checkCanceled(progress);
-      File ioFile = new File(vf.getPath());
-      callback.handleWorkingCopyRoot(ioFile, progress);
+      callback.handleWorkingCopyRoot(virtualToIoFile(file), progress);
       checkCanceled(progress);
       result.add(parent);
-    } else if (isDirectory) {
+    }
+    else if (file.isDirectory()) {
       checkCanceled(progress);
-      final VirtualFile[] childrenVF = parent.getChildren();
-      for (VirtualFile file : childrenVF) {
+      for (VirtualFile child : parent.getChildren()) {
         checkCanceled(progress);
-        if (file.isDirectory()) {
-          result.addAll(crawlWCRoots(project, file, callback, progress));
+        if (child.isDirectory()) {
+          result.addAll(crawlWCRoots(vcs, child, callback, progress));
         }
       }
     }
+
     return result;
   }
 
-  private static void checkCanceled(final ProgressIndicator progress) {
+  private static void checkCanceled(@Nullable ProgressIndicator progress) {
     if (progress != null && progress.isCanceled()) {
       throw new ProcessCanceledException();
     }
@@ -178,6 +183,11 @@ public class SvnUtil {
   public static String getExactLocation(final SvnVcs vcs, File path) {
     Info info = vcs.getInfo(path);
     return info != null && info.getURL() != null ? info.getURL().toString() : null;
+  }
+
+  @NotNull
+  public static File[] toIoFiles(@NotNull VirtualFile[] files) {
+    return map2Array(files, File.class, VfsUtilCore::virtualToIoFile);
   }
 
   public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
@@ -584,9 +594,9 @@ public class SvnUtil {
     return info == null ? null : info.getURL();
   }
 
-  public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws VcsException {
+  public static boolean remoteFolderIsEmpty(@NotNull SvnVcs vcs, @NotNull String url) throws VcsException {
     SvnTarget target = SvnTarget.fromURL(createUrl(url));
-    final Ref<Boolean> result = new Ref<>(true);
+    Ref<Boolean> result = new Ref<>(true);
     DirectoryEntryConsumer handler = new DirectoryEntryConsumer() {
 
       @Override

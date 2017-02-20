@@ -62,7 +62,7 @@ public abstract class ProjectBuilder {
    * Used for automatically assigning an SDK to the project when it gets created.
    * If no SDK is specified in the template project and there is no specific SDK chooser step,
    * the SDK which is set for the project is the highest version SDK for which
-   * <code>isSuitableSdk</code> returns true.
+   * {@code isSuitableSdk} returns true.
    *
    * @param sdk the candidate SDK
    * @return true if the SDK can be used for this project type, false otherwise

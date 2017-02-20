@@ -28,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +95,7 @@ public class AddVariableInitializerFix implements IntentionAction {
                                            @Nullable Editor editor) {
     if (editor == null) return;
     LOG.assertTrue(!initializers.isEmpty());
-    final PsiExpression initializer = ContainerUtil.getFirstItem(initializers);
+    final PsiExpression initializer = ObjectUtils.notNull(ContainerUtil.getFirstItem(initializers));
     PsiElement context = initializers.size() == 1 ? initializer : PsiTreeUtil.findCommonParent(initializers);
     PsiDocumentManager.getInstance(initializer.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     final TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(context);

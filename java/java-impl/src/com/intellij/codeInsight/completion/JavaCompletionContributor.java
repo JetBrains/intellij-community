@@ -59,10 +59,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.util.ObjectUtils.assertNotNull;
@@ -236,6 +233,10 @@ public class JavaCompletionContributor extends CompletionContributor {
       addIdentifierVariants(parameters, position, result, matcher, parent, session);
     }
 
+    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
+      return;
+    }
+
     Set<String> usedWords = addReferenceVariants(parameters, result, session);
 
     if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
@@ -290,7 +291,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (SmartCastProvider.shouldSuggestCast(parameters)) {
-      SmartCastProvider.addCastVariants(parameters, element -> {
+      SmartCastProvider.addCastVariants(parameters, result.getPrefixMatcher(), element -> {
         registerClassFromTypeElement(element, session);
         result.addElement(PrioritizedLookupElement.withPriority(element, 1));
       });
@@ -478,7 +479,9 @@ public class JavaCompletionContributor extends CompletionContributor {
     boolean isSecondCompletion = parameters.getInvocationCount() >= 2;
 
     PsiElement position = parameters.getPosition();
-    if (JavaKeywordCompletion.isInstanceofPlace(position)) return false;
+    if (JavaKeywordCompletion.isInstanceofPlace(position) || JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
+      return false;
+    }
 
     final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return isSecondCompletion;
@@ -772,6 +775,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       if (ref.getParent() instanceof PsiTypeElement) {
         return true;
       }
+    }
+    if (psiElement(PsiIdentifier.class).withParent(psiParameter()).accepts(file.findElementAt(startOffset))) {
+      return true;
     }
 
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);

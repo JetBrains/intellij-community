@@ -31,7 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.FileContentUtilCore
-import com.intellij.util.GCUtil
+import com.intellij.util.ref.GCUtil
 import com.intellij.util.io.EnumeratorIntegerDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 
@@ -52,6 +52,16 @@ class FileGistTest extends LightCodeInsightFixtureTestCase {
 
   private VirtualFileGist<String> take3Gist() {
     return GistManager.instance.newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, { p, f -> LoadTextUtil.loadText(f).toString().substring(0, 3) })
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      ((GistManagerImpl)GistManager.instance).resetReindexCount()
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   void "test data is cached per file"() {

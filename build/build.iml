@@ -38,14 +38,5 @@
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="groovy-jps-plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="groovy_rt" scope="RUNTIME" />
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gant/lib/gant-1.9.11_groovy-2.3.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
   </component>
 </module>

@@ -53,13 +53,6 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     }
     refreshSorting(lookup)
     assertPreferredItems(2, "Component", "String", "Container", "FooBean3", "JComponent")
-
-    int component = lookup.items.findIndexOf { it.lookupString == 'Component' }
-    for (int i = 0; i < StatisticsManager.OBLIVION_THRESHOLD; i++) {
-      imitateItemSelection(lookup, component)
-    }
-    refreshSorting(lookup)
-    assertPreferredItems(1, "String", "Component", "FooBean3")
   }
 
   void testNewListAlwaysFirst() {
@@ -77,7 +70,7 @@ class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")
     lookup.currentItem = lookup.items[4] //Container
     myFixture.type('\n\b')
-    CompletionLookupArranger.applyLastCompletionStatisticsUpdate()
+    StatisticsUpdate.applyLastCompletionStatisticsUpdate()
     FileDocumentManager.instance.saveAllDocuments()
     invokeCompletion("/JComponentAddNew.java")
     assertPreferredItems(2, "Component", "String", "FooBean3", "JComponent", "Container")

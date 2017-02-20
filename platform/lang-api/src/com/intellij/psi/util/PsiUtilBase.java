@@ -157,23 +157,15 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     PsiElement elt = getElementAtOffset(file, start);
 
     TextRange selectionRange = new TextRange(start, end);
-    if (!(elt instanceof PsiFile)) {
-      elt = elt.getParent();
+    while (true) {
+      PsiElement parent = elt.getParent();
       TextRange range = elt.getTextRange();
       assert range != null : "Range is null for " + elt + "; " + elt.getClass();
-      while(!range.contains(selectionRange) && !(elt instanceof PsiFile)) {
-        elt = elt.getParent();
-        if (elt == null) break;
-        range = elt.getTextRange();
-        assert range != null : "Range is null for " + elt + "; " + elt.getClass();
-      }
-
-      if (elt != null) {
+      if (range.contains(selectionRange) || parent == null || elt instanceof PsiFile) {
         return elt.getLanguage();
       }
+      elt = parent;
     }
-
-    return reallyEvaluateLanguageInRange(start, end, file);
   }
 
   @NotNull
@@ -206,7 +198,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
    * @see {@link com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement}
    *
    * @param element   target element
-   * @return          editor that works with a given element if the one is found; <code>null</code> otherwise
+   * @return          editor that works with a given element if the one is found; {@code null} otherwise
    */
   @Nullable
   public static Editor findEditor(@NotNull PsiElement element) {

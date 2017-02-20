@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.stream.Stream;
 
 /**
- * represents search result for functional expressions or inheritance hierarchy of given interface/class
+ * represents search result for functional expressions or inheritance hierarchy of given interface/class using indices built on compilation time.
  */
 public interface CompilerDirectHierarchyInfo {
   /**

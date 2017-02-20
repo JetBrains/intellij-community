@@ -135,7 +135,26 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    return new Dimension(size.width, Math.max(26, size.height));
+    return new Dimension(size.width + getIconsWidth(c), Math.max(26, size.height));
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    Dimension minimumSize = super.getMinimumSize(c);
+    return new Dimension(minimumSize.width + getIconsWidth(c), minimumSize.height);
+  }
+
+  private int getIconsWidth(JComponent c) {
+    int width = 0;
+    if (isSearchField(c)) {
+      Icon label = getSearchIcon(c);
+      width += label.getIconWidth();
+      if (hasText()) {
+        Icon clearIcon = MacIntelliJIconCache.getIcon("searchFieldClear");
+        width += clearIcon.getIconWidth() + 3;
+      }
+    }
+    return width;
   }
 
   protected void paintSearchField(Graphics2D g, JTextComponent c, Rectangle r) {
@@ -223,7 +242,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     if (c.hasFocus()) {
       Color graphiteColor = new Color(0x6f6f72);
       Color blueColor = ColorUtil.brighter(new Color(0x006de2), 3);
-      g.setColor(ColorUtil.withAlpha(IntelliJLaf.isGraphite() ? graphiteColor : blueColor, .3));
+      g.setColor(ColorUtil.withAlpha(IntelliJLaf.isGraphite() ? graphiteColor : blueColor, .35));
       Area area = new Area(getShape(r, 7, false));
       area.subtract(new Area(getShape(r, 3.5, true)));
       g.fill(area);
@@ -232,7 +251,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   private static RoundRectangle2D.Double getShape(Rectangle r, double radius, boolean inner) {
-    double max_radius = 7;
+    double max_radius = 6;
     radius = Math.min(max_radius, Math.max(0, radius));
     double inset = max_radius - radius;
     double indent = inner ? 0.5 : 0;

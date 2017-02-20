@@ -16,7 +16,7 @@
 package git4idea.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -64,7 +64,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -539,119 +538,9 @@ public class GitHistoryUtils {
                                                  @NotNull Consumer<StringBuilder> recordConsumer,
                                                  int bufferSize)
     throws VcsException {
-    final StringBuilder output = new StringBuilder();
-    final StringBuilder errors = new StringBuilder();
-    final Ref<Boolean> foundRecordEnd = Ref.create(false);
-    final Ref<VcsException> ex = new Ref<>();
-    final AtomicInteger records = new AtomicInteger();
-    handler.addLineListener(new GitLineHandlerListener() {
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        if (outputType == ProcessOutputTypes.STDERR) {
-          errors.append(line).append("\n");
-        }
-        else if (outputType == ProcessOutputTypes.STDOUT) {
-          try {
-            // format of the record is <RECORD_START>.*<RECORD_END>.*
-            // then next record goes
-            // (rather inconveniently, after RECORD_END there is a list of modified files)
-            // so here I'm trying to find text between two RECORD_START symbols
-            // that simultaneously contains a RECORD_END
-            // this helps to deal with commits like a929478f6720ac15d949117188cd6798b4a9c286 in linux repo that have RECORD_START symbols in the message
-            // wont help with RECORD_END symbols in the message however (have not seen those yet)
-
-            String tail = null;
-            if (!foundRecordEnd.get()) {
-              int recordEnd = line.indexOf(GitLogParser.RECORD_END);
-              if (recordEnd != -1) {
-                foundRecordEnd.set(true);
-                output.append(line.substring(0, recordEnd + 1));
-                line = line.substring(recordEnd + 1);
-              }
-              else {
-                output.append(line).append("\n");
-              }
-            }
-
-            if (foundRecordEnd.get()) {
-              int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
-              if (nextRecordStart == -1) {
-                output.append(line).append("\n");
-              }
-              else if (nextRecordStart == 0) {
-                tail = line + "\n";
-              }
-              else {
-                output.append(line.substring(0, nextRecordStart));
-                tail = line.substring(nextRecordStart) + "\n";
-              }
-            }
-
-            if (tail != null) {
-              if (records.incrementAndGet() > bufferSize) {
-                recordConsumer.consume(output);
-                output.setLength(0);
-              }
-              output.append(tail);
-              foundRecordEnd.set(tail.contains(GitLogParser.RECORD_END));
-            }
-          }
-          catch (Exception e) {
-            ex.set(new VcsException(e));
-          }
-        }
-      }
-
-      @Override
-      public void processTerminated(int exitCode) {
-        if (exitCode != 0) {
-          String errorMessage = errors.toString();
-          if (errorMessage.isEmpty()) {
-            errorMessage = GitBundle.message("git.error.exit", exitCode);
-          }
-          ex.set(new VcsException(errorMessage));
-        }
-        else {
-          try {
-            recordConsumer.consume(output);
-          }
-          catch (Exception e) {
-            ex.set(new VcsException(e));
-          }
-        }
-      }
-
-      @Override
-      public void startFailed(Throwable exception) {
-        ex.set(new VcsException(exception));
-      }
-    });
+    MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, recordConsumer, bufferSize);
     handler.runInCurrentThread(null);
-    if (!ex.isNull()) {
-      if (ex.get().getCause() instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)ex.get().getCause();
-      }
-      throw ex.get();
-    }
-  }
-
-  /*
-  Unlike loadDetails, which accepts list of hashes in parameters, loads details for all commits in the repository.
-  To optimize memory consumption, git log command output is parsed on-the-fly and resulting commits are immediately fed to the consumer
-  and not stored in memory.
-   */
-  public static void loadAllDetails(@NotNull Project project,
-                                    @NotNull VirtualFile root,
-                                    @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
-    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return;
-    }
-
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = createParserForDetails(h, project, false, true, ArrayUtil.toStringArray(LOG_ALL));
-
-    processHandlerOutputByLine(h, parser, record -> commitConsumer.consume(createCommit(project, root, record, factory)));
+    handlerListener.reportErrors();
   }
 
   public static void readCommits(@NotNull Project project,
@@ -729,7 +618,7 @@ public class GitHistoryUtils {
 
   @Nullable
   private static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction((Computable<VcsLogObjectsFactory>)() -> {
+    return ReadAction.compute(() -> {
       if (!project.isDisposed()) {
         return ServiceManager.getService(project, VcsLogObjectsFactory.class);
       }
@@ -877,7 +766,7 @@ public class GitHistoryUtils {
     }
     final Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
-      loadDetails(project, root, true, false, record -> {
+      collectDetails(project, root, true, false, record -> {
         GitCommit commit = createCommit(project, root, record, factory);
         Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
         for (VcsRef ref : refsInRecord) {
@@ -904,7 +793,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return Collections.emptyList();
     }
-    return loadDetails(project, root, false, true, record -> createCommit(project, root, record, factory), parameters);
+    return collectDetails(project, root, false, true, record -> createCommit(project, root, record, factory), parameters);
   }
 
   @NotNull
@@ -937,26 +826,56 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static <T> List<T> loadDetails(@NotNull final Project project,
-                                        @NotNull final VirtualFile root,
-                                        boolean withRefs,
-                                        boolean withChanges,
-                                        @NotNull NullableFunction<GitLogRecord, T> converter,
-                                        String... parameters)
+  public static <T> List<T> collectDetails(@NotNull Project project,
+                                           @NotNull VirtualFile root,
+                                           boolean withRefs,
+                                           boolean withChanges,
+                                           @NotNull NullableFunction<GitLogRecord, T> converter,
+                                           String... parameters) throws VcsException {
+
+    List<T> commits = ContainerUtil.newArrayList();
+
+    try {
+      loadDetails(project, root, withRefs, withChanges, record -> commits.add(converter.fun(record)), parameters);
+    }
+    catch (VcsException e) {
+      if (commits.isEmpty()) {
+        throw e;
+      }
+      LOG.warn("Error during loading details, returning partially loaded commits\n", e);
+    }
+
+    return commits;
+  }
+
+  public static void loadDetails(@NotNull Project project,
+                                 @NotNull VirtualFile root,
+                                 @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                                 @NotNull String... parameters) throws VcsException {
+    final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
+    if (factory == null) {
+      return;
+    }
+
+    loadDetails(project, root, false, true, record -> commitConsumer.consume(createCommit(project, root, record, factory)), parameters);
+  }
+
+  public static void loadDetails(@NotNull Project project,
+                                 @NotNull VirtualFile root,
+                                 boolean withRefs,
+                                 boolean withChanges,
+                                 @NotNull Consumer<GitLogRecord> converter,
+                                 String... parameters)
     throws VcsException {
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
 
-    List<T> commits = ContainerUtil.newArrayList();
-
     StopWatch sw = StopWatch.start("loading details");
 
-    processHandlerOutputByLine(h, parser, record -> commits.add(converter.fun(record)));
+    processHandlerOutputByLine(h, parser, converter);
 
     sw.report();
-
-    return commits;
   }
 
   @NotNull
@@ -1090,6 +1009,115 @@ public class GitHistoryUtils {
     }
     else {
       return GitRevisionNumber.resolve(project, root, output);
+    }
+  }
+
+  private static class MyGitLineHandlerListener implements GitLineHandlerListener {
+    @NotNull private final GitLineHandler myHandler;
+    @NotNull private final Consumer<StringBuilder> myRecordConsumer;
+    private final int myBufferSize;
+
+    @NotNull private final StringBuilder myOutput = new StringBuilder();
+    @NotNull private final StringBuilder myErrors = new StringBuilder();
+    @Nullable private VcsException myException = null;
+
+    private int myRecords = 0;
+    private boolean myIsInsideBody = true;
+
+    public MyGitLineHandlerListener(@NotNull GitLineHandler handler,
+                                    @NotNull Consumer<StringBuilder> recordConsumer,
+                                    int bufferSize) {
+      myHandler = handler;
+      myRecordConsumer = recordConsumer;
+      myBufferSize = bufferSize;
+
+      myHandler.addLineListener(this);
+    }
+
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      if (outputType == ProcessOutputTypes.STDERR) {
+        myErrors.append(line).append("\n");
+      }
+      else if (outputType == ProcessOutputTypes.STDOUT) {
+        try {
+          processOutputLine(line);
+        }
+        catch (Exception e) {
+          myException = new VcsException(e);
+        }
+      }
+    }
+
+    private void processOutputLine(@NotNull String line) {
+      // format of the record is <RECORD_START><BODY><RECORD_END><CHANGES>
+      // then next record goes
+      // (rather inconveniently, after RECORD_END there is a list of modified files)
+      // so here I'm trying to find text between two RECORD_START symbols
+      // that simultaneously contains a RECORD_END
+      // this helps to deal with commits like a929478f6720ac15d949117188cd6798b4a9c286 in linux repo that have RECORD_START symbols in the message
+      // wont help with RECORD_END symbols in the message however (have not seen those yet)
+
+      if (myIsInsideBody) {
+        // find body
+        int bodyEnd = line.indexOf(GitLogParser.RECORD_END);
+        if (bodyEnd >= 0) {
+          myIsInsideBody = false;
+          myOutput.append(line.substring(0, bodyEnd + 1));
+          processOutputLine(line.substring(bodyEnd + 1));
+        }
+        else {
+          myOutput.append(line).append("\n");
+        }
+      }
+      else {
+        int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
+        if (nextRecordStart >= 0) {
+          myOutput.append(line.substring(0, nextRecordStart));
+          if (++myRecords > myBufferSize) {
+            myRecordConsumer.consume(myOutput);
+            myOutput.setLength(0);
+          }
+          myIsInsideBody = true;
+          processOutputLine(line.substring(nextRecordStart));
+        }
+        else {
+          myOutput.append(line).append("\n");
+        }
+      }
+    }
+
+    @Override
+    public void processTerminated(int exitCode) {
+      if (exitCode != 0) {
+        String errorMessage = myErrors.toString();
+        if (errorMessage.isEmpty()) {
+          errorMessage = GitBundle.message("git.error.exit", exitCode);
+        }
+        myException = new VcsException(errorMessage + "\nCommand line: [" + myHandler.printableCommandLine() + "]");
+      }
+      else {
+        try {
+          myRecordConsumer.consume(myOutput);
+        }
+        catch (Exception e) {
+          myException = new VcsException(e);
+        }
+      }
+    }
+
+    @Override
+    public void startFailed(Throwable exception) {
+      myException = new VcsException(exception);
+    }
+
+    public void reportErrors() throws VcsException {
+      if (myException != null) {
+        if (myException.getCause() instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)myException.getCause();
+        }
+        throw myException;
+      }
     }
   }
 }

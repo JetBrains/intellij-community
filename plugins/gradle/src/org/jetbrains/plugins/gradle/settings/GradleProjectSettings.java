@@ -17,12 +17,17 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Denis Zhdanov
@@ -31,11 +36,43 @@ import java.util.Set;
 public class GradleProjectSettings extends ExternalProjectSettings {
 
   @Nullable private String myGradleHome;
-  @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;;
+  @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet = true;
-  @Nullable private Set<String> myCompositeParticipants = new HashSet<>();
+  @Nullable private CompositeBuild myCompositeBuild;
+  @Nullable private Set<String> myNonCompositeModules = new HashSet<>();
+
+  @OptionTag("modules")
+  @Nullable
+  public Set<String> getNonCompositeModules() {
+    Set<String> modules = getModules();
+    if (myCompositeBuild != null && !modules.isEmpty()) {
+      Set<String> compositePaths = myCompositeBuild.getCompositeParticipants().stream()
+        .flatMap(participant -> participant.getProjects().stream()).collect(Collectors.toSet());
+      return modules.stream().filter(m -> !compositePaths.contains(m)).collect(Collectors.toSet());
+    }
+    else {
+      return myNonCompositeModules;
+    }
+  }
+
+  public void setNonCompositeModules(@Nullable Set<String> modules) {
+    myNonCompositeModules = modules;
+  }
+
+  @Transient
+  @NotNull
+  @Override
+  public Set<String> getModules() {
+    return super.getModules();
+  }
+
+  @Override
+  public void setModules(@Nullable Set<String> modules) {
+    super.setModules(modules);
+    setNonCompositeModules(modules);
+  }
 
   @Nullable
   public String getGradleHome() {
@@ -80,13 +117,14 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     this.resolveModulePerSourceSet = useIdeModulePerSourceSet;
   }
 
-  @NotNull
-  public Set<String> getCompositeParticipants() {
-    return myCompositeParticipants == null ? Collections.emptySet() : myCompositeParticipants;
+  @OptionTag(tag = "compositeConfiguration", nameAttribute = "")
+  @Nullable
+  public CompositeBuild getCompositeBuild() {
+    return myCompositeBuild;
   }
 
-  public void setCompositeParticipants(@Nullable Set<String> compositeParticipants) {
-    myCompositeParticipants = compositeParticipants;
+  public void setCompositeBuild(@Nullable CompositeBuild compositeBuild) {
+    myCompositeBuild = compositeBuild;
   }
 
   @NotNull
@@ -99,7 +137,45 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     result.distributionType = distributionType;
     result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
     result.resolveModulePerSourceSet = resolveModulePerSourceSet;
-    result.myCompositeParticipants = myCompositeParticipants != null ? new HashSet<>(myCompositeParticipants) : null;
+    result.myCompositeBuild = myCompositeBuild != null ? myCompositeBuild.copy() : null;
     return result;
+  }
+
+  @Tag("compositeBuild")
+  public static class CompositeBuild {
+    @Nullable private CompositeDefinitionSource myCompositeDefinitionSource;
+    private List<BuildParticipant> myCompositeParticipants = new SmartList<>();
+
+    @Attribute
+    @Nullable
+    public CompositeDefinitionSource getCompositeDefinitionSource() {
+      return myCompositeDefinitionSource;
+    }
+
+    public void setCompositeDefinitionSource(@Nullable CompositeDefinitionSource compositeDefinitionSource) {
+      myCompositeDefinitionSource = compositeDefinitionSource;
+    }
+
+    @AbstractCollection(surroundWithTag = false, elementTag = "build")
+    @OptionTag(tag = "builds", nameAttribute = "")
+    @NotNull
+    public List<BuildParticipant> getCompositeParticipants() {
+      return myCompositeParticipants;
+    }
+
+    public void setCompositeParticipants(List<BuildParticipant> compositeParticipants) {
+      myCompositeParticipants = compositeParticipants == null ? new SmartList<>() : ContainerUtil.newArrayList(compositeParticipants);
+    }
+
+    @NotNull
+    public CompositeBuild copy() {
+      CompositeBuild result = new CompositeBuild();
+      result.myCompositeParticipants = ContainerUtil.newArrayList();
+      for (BuildParticipant participant : myCompositeParticipants) {
+        result.myCompositeParticipants.add(participant.copy());
+      }
+      result.myCompositeDefinitionSource = myCompositeDefinitionSource;
+      return result;
+    }
   }
 }

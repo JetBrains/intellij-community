@@ -46,7 +46,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Consumer;
@@ -97,6 +96,9 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static java.util.Collections.emptyList;
+
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
@@ -112,7 +114,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final Map<String, Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
     new SoftHashMap<>();
 
-  private final SvnConfiguration myConfiguration;
+  @NotNull private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
 
   private CheckinEnvironment myCheckinEnvironment;
@@ -223,24 +225,20 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private void cleanup17copies() {
     Runnable callCleanupWorker = () -> {
       if (myProject.isDisposed()) return;
-      new CleanupWorker(VirtualFile.EMPTY_ARRAY, myProject, "action.Subversion.cleanup.progress.title") {
+      new CleanupWorker(this, emptyList()) {
         @Override
-        protected void chanceToFillRoots() {
-          final List<WCInfo> infos = getAllWcInfos();
-          final LocalFileSystem lfs = LocalFileSystem.getInstance();
-          final List<VirtualFile> roots = new ArrayList<>(infos.size());
-          for (WCInfo info : infos) {
+        protected void fillRoots() {
+          for (WCInfo info : getAllWcInfos()) {
             if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-              final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
+              VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(info.getRootInfo().getIoFile());
               if (file == null) {
                 LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
               }
               else {
-                roots.add(file);
+                myRoots.add(file);
               }
             }
           }
-          myRoots = roots.toArray(new VirtualFile[roots.size()]);
         }
       }.execute();
     };
@@ -259,11 +257,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myCopiesRefreshManager != null) {
       myCopiesRefreshManager.asynchRequest();
     }
-  }
-
-  @Override
-  public boolean checkImmediateParentsBeforeCommit() {
-    return true;
   }
 
   private void upgradeIfNeeded(final MessageBus bus) {
@@ -479,12 +472,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return new SvnConfigurable(myProject);
   }
 
-
+  @NotNull
   public SvnConfiguration getSvnConfiguration() {
     return myConfiguration;
   }
 
-  public static SvnVcs getInstance(Project project) {
+  public static SvnVcs getInstance(@NotNull Project project) {
     return (SvnVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(VCS_NAME);
   }
 
@@ -593,13 +586,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  public boolean fileIsUnderVcs(FilePath path) {
-    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-    final VirtualFile file = path.getVirtualFile();
-    if (file == null) {
-      return false;
-    }
-    return !SvnStatusUtil.isIgnoredInAnySense(clManager, file) && !clManager.isUnversioned(file);
+  public boolean fileIsUnderVcs(@NotNull FilePath path) {
+    VirtualFile file = path.getVirtualFile();
+    return file != null && SvnStatusUtil.isUnderControl(this, file);
   }
 
   @Nullable
@@ -892,7 +881,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public boolean isVcsBackgroundOperationsAllowed(@NotNull VirtualFile root) {
-    ClientFactory factory = getFactory(VfsUtilCore.virtualToIoFile(root));
+    ClientFactory factory = getFactory(virtualToIoFile(root));
 
     return ThreeState.YES.equals(myAuthNotifier.isAuthenticatedFor(root, factory == cmdClientFactory ? factory : null));
   }
@@ -921,7 +910,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   private WorkingCopyFormat getProjectRootFormat() {
-    return !getProject().isDefault() ? getWorkingCopyFormat(new File(getProject().getBaseDir().getPath())) : WorkingCopyFormat.UNKNOWN;
+    VirtualFile baseDir = myProject.getBaseDir();
+
+    return baseDir != null ? getWorkingCopyFormat(virtualToIoFile(baseDir)) : WorkingCopyFormat.UNKNOWN;
   }
 
   /**

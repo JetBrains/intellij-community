@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,8 +47,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
     @Override
     public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
-      if (!JsonSchemaFileType.INSTANCE.equals(file.getFileType())) return false;
-      return JsonSchemaMappingsProjectConfiguration.getInstance(project).isRegisteredSchemaFile(file);
+      return JsonSchemaFileType.INSTANCE.equals(file.getFileType());
     }
 
     @NotNull

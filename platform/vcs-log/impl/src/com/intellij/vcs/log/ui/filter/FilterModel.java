@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,13 +28,13 @@ import java.util.List;
 
 abstract class FilterModel<Filter extends VcsLogFilter> {
   @NotNull private final String myName;
-  @NotNull protected final VcsLogUiProperties myUiProperties;
+  @NotNull protected final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Computable<VcsLogDataPack> myDataPackProvider;
   @NotNull private final Collection<Runnable> mySetFilterListeners = ContainerUtil.newArrayList();
 
   @Nullable private Filter myFilter;
 
-  FilterModel(@NotNull String name, @NotNull Computable<VcsLogDataPack> provider, @NotNull VcsLogUiProperties uiProperties) {
+  FilterModel(@NotNull String name, @NotNull Computable<VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties uiProperties) {
     myName = name;
     myUiProperties = uiProperties;
     myDataPackProvider = provider;

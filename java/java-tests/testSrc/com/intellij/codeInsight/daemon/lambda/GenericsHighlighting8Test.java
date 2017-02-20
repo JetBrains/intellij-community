@@ -1001,6 +1001,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest(true);
   }
 
+  public void testUncheckedWarningsInsideLambda() throws Exception {
+    doTest(true);
+  }
+
   public void testMembersContainedInCapturedWildcardType() throws Exception {
     doTest();
   }
@@ -1010,6 +1014,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testBoundsPromotionForDerivedType() throws Exception {
+    doTest();
+  }
+
+  public void testSameErasureForStaticMethodsInInterfaces() throws Exception {
     doTest();
   }
 }

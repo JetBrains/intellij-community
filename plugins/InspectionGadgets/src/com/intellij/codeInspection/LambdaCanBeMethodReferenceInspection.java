@@ -95,8 +95,14 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
                                                                         ? ((PsiNewExpression)methodRefCandidate).getQualifier()
                                                                         : null;
               boolean safeQualifier = checkQualifier(qualifier);
-              ProblemHighlightType errorOrWarning = safeQualifier ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                                                                  : ProblemHighlightType.INFORMATION;
+              ProblemHighlightType errorOrWarning;
+              if (safeQualifier) {
+                errorOrWarning = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+              }
+              else {
+                if (!isOnTheFly) return;
+                errorOrWarning = ProblemHighlightType.INFORMATION;
+              }
               holder.registerProblem(InspectionProjectProfileManager.isInformationLevel(getShortName(), expression) ? expression : candidate,
                                      "Can be replaced with method reference",
                                      errorOrWarning, new ReplaceWithMethodRefFix(safeQualifier ? "" : " (may change semantics)"));
@@ -273,13 +279,10 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (expression instanceof PsiInstanceOfExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_INSTANCEOF) {
       return expression;
     }
-    else if (expression instanceof PsiBinaryExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_NULL_CHECK) {
-      IElementType tokenType = ((PsiBinaryExpression)expression).getOperationTokenType();
-      if (JavaTokenType.EQEQ.equals(tokenType) || JavaTokenType.NE.equals(tokenType)) {
-        if (ExpressionUtils.isNullLiteral(((PsiBinaryExpression)expression).getLOperand()) ||
-            ExpressionUtils.isNullLiteral(((PsiBinaryExpression)expression).getROperand())) {
-          return expression;
-        }
+    else if (expression instanceof PsiBinaryExpression &&
+             CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_NULL_CHECK) {
+      if (ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null) {
+        return expression;
       }
     }
     else if (expression instanceof PsiTypeCastExpression && CodeStyleSettingsManager.getSettings(expression.getProject()).REPLACE_CAST) {
@@ -317,7 +320,7 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     if (qualifier == null) {
       return true;
     }
-    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class);
+    final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class, PsiArrayAccessExpression.class);
     final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
       if (expression instanceof PsiReferenceExpression) {
         PsiElement element = ((PsiReferenceExpression)expression).resolve();
@@ -408,13 +411,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
     }
     else if (element instanceof PsiBinaryExpression) {
       PsiBinaryExpression nullCheck = (PsiBinaryExpression)element;
-      PsiExpression operand;
-      if (ExpressionUtils.isNullLiteral(nullCheck.getROperand())) {
-        operand = nullCheck.getLOperand();
-      } else if(ExpressionUtils.isNullLiteral(nullCheck.getLOperand())) {
-        operand = nullCheck.getROperand();
-      } else return null;
-      if(isSoleParameter(parameters, operand)) {
+      PsiExpression operand = ExpressionUtils.getValueComparedWithNull(nullCheck);
+      if(operand != null && isSoleParameter(parameters, operand)) {
         IElementType tokenType = nullCheck.getOperationTokenType();
         if(JavaTokenType.EQEQ.equals(tokenType)) {
           return "java.util.Objects::isNull";

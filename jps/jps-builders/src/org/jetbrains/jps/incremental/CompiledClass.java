@@ -18,7 +18,6 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,12 +85,7 @@ public class CompiledClass extends UserDataHolderBase{
 
   @NotNull
   public List<String> getSourceFilesPaths() {
-    return ContainerUtil.map(mySourceFiles, new Function<File, String>() {
-      @Override
-      public String fun(File file) {
-        return file.getPath();
-      }
-    });
+    return ContainerUtil.map(mySourceFiles, file -> file.getPath());
   }
 
   /**

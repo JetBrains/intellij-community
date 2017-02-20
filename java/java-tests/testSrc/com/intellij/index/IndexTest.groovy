@@ -43,6 +43,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
+import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.source.JavaFileElementType
@@ -154,7 +155,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     final File storageFile = FileUtil.createTempFile("index_test", "storage")
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage")
     PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile)
-    final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024)
+    final VfsAwareMapIndexStorage indexStorage = new VfsAwareMapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024)
     return new StringIndex(testName, indexStorage, index)
   }
   
@@ -441,6 +442,24 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.setText("Foo3 class")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+  }
+
+  void "test snapshot index in memory state after commit of unsaved document"() throws IOException {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
+    def classEntry = new IdIndexEntry("class", true)
+    def findValueProcessor = { file, value -> file != vFile } as FileBasedIndex.ValueProcessor
+    
+    def projectScope = GlobalSearchScope.projectScope(project)
+    def result = FileBasedIndex.instance.processValues(IdIndexImpl.NAME, classEntry, null, findValueProcessor,
+                                                       projectScope)
+    assertFalse(result)
+    
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.setText("")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    result = FileBasedIndex.instance.processValues(IdIndexImpl.NAME, classEntry, null, findValueProcessor,
+                                                   projectScope)
+    assertTrue(result)
   }
 
   void "test no stub index stamp update when no change"() throws IOException {

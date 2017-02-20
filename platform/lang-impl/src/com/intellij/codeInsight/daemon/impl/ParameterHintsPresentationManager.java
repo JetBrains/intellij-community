@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -89,9 +91,11 @@ public class ParameterHintsPresentationManager implements Disposable {
   }
 
   @Override
-  public void dispose() {}
+  public void dispose() {
+  }
 
-  private void scheduleRendererUpdate(Editor editor, Inlay inlay) {
+  private void scheduleRendererUpdate(@NotNull Editor editor, @NotNull Inlay inlay) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // to avoid race conditions in "new AnimationStep"
     AnimationStep step = editor.getUserData(ANIMATION_STEP);
     if (step == null) {
       editor.putUserData(ANIMATION_STEP, step = new AnimationStep(editor));
@@ -100,7 +104,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     scheduleAnimationStep(step);
   }
 
-  private void scheduleAnimationStep(AnimationStep step) {
+  private void scheduleAnimationStep(@NotNull AnimationStep step) {
     myAlarm.cancelRequest(step);
     myAlarm.addRequest(step, ANIMATION_STEP_MS, ModalityState.any());
   }
@@ -116,10 +120,14 @@ public class ParameterHintsPresentationManager implements Disposable {
     if (metrics != null) {
       Font font = metrics.getFont();
       if (!familyName.equals(font.getFamily()) || size != font.getSize()) metrics = null;
+      else {
+        FontRenderContext currentContext = FontInfo.getFontRenderContext(editor.getContentComponent());
+        if (currentContext.equals(metrics.metrics.getFontRenderContext())) metrics = null;
+      }
     }
     if (metrics == null) {
       Font font = new Font(familyName, Font.PLAIN, size);
-      metrics = new MyFontMetrics(font);
+      metrics = new MyFontMetrics(editor, font);
       editor.putUserData(HINT_FONT_METRICS, metrics);
     }
     return metrics;
@@ -129,11 +137,10 @@ public class ParameterHintsPresentationManager implements Disposable {
     private final FontMetrics metrics;
     private final int lineHeight;
 
-    private MyFontMetrics(Font font) {
-      metrics = FontInfo.createReferenceGraphics().getFontMetrics(font);
+    private MyFontMetrics(Editor editor, Font font) {
+      metrics = editor.getContentComponent().getFontMetrics(font);
       // We assume this will be a better approximation to a real line height for a given font
-      lineHeight = (int)Math.ceil(metrics.getFont().createGlyphVector(metrics.getFontRenderContext(), "Ap")
-                                      .getVisualBounds().getHeight());
+      lineHeight = (int)Math.ceil(font.createGlyphVector(metrics.getFontRenderContext(), "Ap").getVisualBounds().getHeight());
     }
 
     private Font getFont() {
@@ -225,8 +232,9 @@ public class ParameterHintsPresentationManager implements Disposable {
     private final Editor myEditor;
     private final Set<Inlay> inlays = new HashSet<>();
 
-    AnimationStep(Editor editor) {
+    AnimationStep(@NotNull Editor editor) {
       myEditor = editor;
+      Disposer.register(((EditorImpl)editor).getDisposable(), () -> myAlarm.cancelRequest(this));
     }
 
     @Override

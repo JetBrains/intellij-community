@@ -18,7 +18,6 @@ package com.intellij.internal.statistic;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.util.OS;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,21 +31,17 @@ public class ScaleInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
-    float scale = JBUI.SYSTEM_DEF_SCALE;
+    float scale = JBUI.sysScale();
 
-    if (OS.isMacOSX()) {
-      scale = UIUtil.isRetina() ? 2.0f : 1.0f;
-    } else {
-      int scaleBase = (int)Math.floor(scale);
-      float scaleFract = scale - scaleBase;
+    int scaleBase = (int)Math.floor(scale);
+    float scaleFract = scale - scaleBase;
 
-      if (scaleFract == 0.0f) scaleFract = 0.0f; // count integer scale on a precise match only
-      else if (scaleFract < 0.375f) scaleFract = 0.25f;
-      else if (scaleFract < 0.625f) scaleFract = 0.5f;
-      else scaleFract = 0.75f;
+    if (scaleFract == 0.0f) scaleFract = 0.0f; // count integer scale on a precise match only
+    else if (scaleFract < 0.375f) scaleFract = 0.25f;
+    else if (scaleFract < 0.625f) scaleFract = 0.5f;
+    else scaleFract = 0.75f;
 
-      scale = scaleBase + scaleFract;
-    }
+    scale = scaleBase + scaleFract;
 
     String os = OS.isWindows() ? "Windows" : OS.isLinux() ? "Linux" : OS.isMacOSX() ? "Mac" : "Unknown OS";
     return Collections.singleton(new UsageDescriptor(os + " " + scale, 1));

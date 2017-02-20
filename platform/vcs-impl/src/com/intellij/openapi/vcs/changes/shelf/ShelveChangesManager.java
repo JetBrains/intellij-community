@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
@@ -61,8 +60,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.FilesProgress;
 import org.jdom.Element;
 import org.jdom.Parent;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.event.ChangeEvent;
@@ -81,7 +78,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
   @NonNls private static final String REMOVE_FILES_FROM_SHELF_STRATEGY = "remove_strategy";
 
-  @NotNull private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+  @NotNull private final PathMacroManager myPathMacroSubstitutor;
   @NotNull private final SchemeManager<ShelvedChangeList> mySchemeManager;
   private ScheduledFuture<?> myCleaningFuture;
   private boolean myRemoveFilesFromShelf;
@@ -101,7 +98,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   public ShelveChangesManager(final Project project, final MessageBus bus) {
     super(project);
-    myPathMacroSubstitutor = PathMacroManager.getInstance(myProject).createTrackingSubstitutor();
+    myPathMacroSubstitutor = PathMacroManager.getInstance(myProject);
     myBus = bus;
     mySchemeManager =
       SchemeManagerFactory.getInstance(project).create(SHELVE_MANAGER_DIR_PATH, new NonLazySchemeProcessor<ShelvedChangeList, ShelvedChangeList>() {
@@ -447,10 +444,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
             result.add(list);
           }
         }
-        catch (IOException e) {
-          exceptionConsumer.consume(new VcsException(e));
-        }
-        catch (PatchSyntaxException e) {
+        catch (IOException | PatchSyntaxException e) {
           exceptionConsumer.consume(new VcsException(e));
         }
       }
@@ -903,11 +897,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
         }
         writePatchesToFile(myProject, listCopy.PATH, patches, commitContext);
       }
-      catch (IOException e) {
-        LOG.info(e);
-        // left file as is
-      }
-      catch (PatchSyntaxException e) {
+      catch (IOException | PatchSyntaxException e) {
         LOG.info(e);
         // left file as is
       }
@@ -969,9 +959,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     char[] text = FileUtil.loadFileText(new File(patchPath), CharsetToolkit.UTF8);
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text), loadContent);
     final List<TextFilePatch> textFilePatches = reader.readTextPatches();
-    final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo = reader.getAdditionalInfo(
-      null);
-    ApplyPatchDefaultExecutor.applyAdditionalInfoBefore(project, additionalInfo, commitContext);
+    ApplyPatchDefaultExecutor.applyAdditionalInfoBefore(project, reader.getAdditionalInfo(null), commitContext);
     return textFilePatches;
   }
 

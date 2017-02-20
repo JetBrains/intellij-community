@@ -1112,7 +1112,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    * is refactored
    *
    * @param elementType   target element type
-   * @return              <code>null</code> all the time
+   * @return              {@code null} all the time
    */
   @Nullable
   @Override

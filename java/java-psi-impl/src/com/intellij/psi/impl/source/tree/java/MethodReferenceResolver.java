@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.PsiMethodReferenceCompatibilityConstraint;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -84,7 +85,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
         final PsiConflictResolver conflictResolver = createResolver(reference, qualifierResolveResult, interfaceMethod, signature);
         final MethodCandidatesProcessor processor =
-          new MethodCandidatesProcessor(reference, containingFile, new PsiConflictResolver[] {conflictResolver}, new SmartList<CandidateInfo>()) {
+          new MethodCandidatesProcessor(reference, containingFile, new PsiConflictResolver[] {conflictResolver}, new SmartList<>()) {
             @Override
             protected boolean acceptVarargs() {
               return true;
@@ -127,7 +128,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                   }
 
                   if (includeReturnConstraint && !PsiType.VOID.equals(interfaceMethodReturnType) && interfaceMethodReturnType != null) {
-                    final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, substitutor) : substitutor.substitute(method.getReturnType());
+                    PsiSubstitutor subst = PsiMethodReferenceCompatibilityConstraint.getSubstitutor(signature, qualifierResolveResult, method, containingClass, reference);
+                    final PsiType returnType = method.isConstructor() ? composeReturnType(containingClass, subst) : subst.substitute(method.getReturnType());
                     if (returnType != null) {
                       session.registerReturnTypeConstraints(returnType, interfaceMethodReturnType);
                     }
@@ -237,8 +239,8 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       final PsiType[] argTypes = mySignature.getParameterTypes();
       boolean hasReceiver = PsiMethodReferenceUtil.isSecondSearchPossible(argTypes, myQualifierResolveResult, myReferenceExpression);
 
-      final List<CandidateInfo> firstCandidates = new ArrayList<CandidateInfo>();
-      final List<CandidateInfo> secondCandidates = new ArrayList<CandidateInfo>();
+      final List<CandidateInfo> firstCandidates = new ArrayList<>();
+      final List<CandidateInfo> secondCandidates = new ArrayList<>();
 
       for (CandidateInfo conflict : conflicts) {
         if (!(conflict instanceof MethodCandidateInfo)) continue;

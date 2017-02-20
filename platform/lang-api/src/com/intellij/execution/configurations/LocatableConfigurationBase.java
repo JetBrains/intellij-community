@@ -53,11 +53,6 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
     myNameIsGenerated = true;
   }
 
-  @Override
-  public String suggestedName() {
-    return null;
-  }
-
   public void setNameChangedByUser(boolean nameChangedByUser) {
     myNameIsGenerated = !nameChangedByUser;
   }

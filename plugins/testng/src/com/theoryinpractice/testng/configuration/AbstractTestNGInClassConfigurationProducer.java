@@ -31,12 +31,11 @@ import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -51,7 +50,7 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
   }
 
   @Override
-  public void onFirstRun(final ConfigurationFromContext configuration, final ConfigurationContext fromContext, Runnable performRunnable) {
+  public void onFirstRun(final ConfigurationFromContext configuration, final ConfigurationContext fromContext, @NotNull Runnable performRunnable) {
     final PsiElement psiElement = configuration.getSourceElement();
     if (psiElement instanceof PsiMethod || psiElement instanceof PsiClass) {
 

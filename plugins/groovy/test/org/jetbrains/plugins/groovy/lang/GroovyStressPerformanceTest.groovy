@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiFile
-import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.*
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
@@ -119,7 +116,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
     myFixture.type 'foo {}\n'
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    
+
     PlatformTestUtil.startPerformanceTest("Reparse is not incremental", 10000, {
       story.toCharArray().each {
         myFixture.type it
@@ -529,5 +526,26 @@ public class Doo$i {}
       myFixture.checkHighlighting true, false, false
       configure 2
     }).attempts(1).cpuBound().assertTiming()
+  }
+
+  void 'test resolve long chains'() {
+    def header = """\
+class Node {
+  public Node nn
+  public Node nn() {}
+  public Node plus(Node n) {n}
+}
+def a = new Node()
+"""
+    def data = [
+      "a${'.nn' * 500}.nn",               // a.nn.nn ... .nn
+      "a${'.nn()' * 250}.nn",             // a.nn() ... .nn().nn
+      "a${' += a' * 500} += new Node()",  // a += a ... += a += new Node()
+    ]
+    for (expressionText in data) {
+      def file = (GroovyFile)fixture.configureByText('_.groovy', header + expressionText)
+      def reference = (PsiReference)file.statements.last()
+      assert reference.resolve() != null
+    }
   }
 }

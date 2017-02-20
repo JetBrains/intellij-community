@@ -6,5 +6,5 @@ class MyTest {
     void m(Integer i) {}
     void m(Double d) {}
 
-    SAM s = (i) -> m(i);
+    SAM s = i -> m(i);
 }

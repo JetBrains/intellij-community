@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
@@ -53,7 +52,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
 
   @Override
   @Nullable
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     Element targetElement = new Element(myTagName);
 
@@ -75,7 +74,7 @@ class OptionTagBinding extends BasePrimitiveBinding {
       else {
         Object node = myBinding.serialize(value, targetElement, filter);
         if (node != null && targetElement != node) {
-          JDOMUtil.addContent(targetElement, node);
+          addContent(targetElement, node);
         }
       }
     }
@@ -86,12 +85,13 @@ class OptionTagBinding extends BasePrimitiveBinding {
   }
 
   @Override
-  public Object deserialize(Object context, @NotNull Element element) {
+  @NotNull
+  public Object deserialize(@NotNull Object context, @NotNull Element element) {
     Attribute valueAttribute = element.getAttribute(myValueAttribute);
     if (valueAttribute == null) {
       if (myValueAttribute.isEmpty()) {
         assert myBinding != null;
-        myAccessor.set(context, myBinding.deserialize(context, element));
+        myAccessor.set(context, myBinding.deserializeUnsafe(context, element));
       }
       else {
         List<Element> children = element.getChildren();
@@ -105,7 +105,12 @@ class OptionTagBinding extends BasePrimitiveBinding {
       }
     }
     else if (myConverter == null) {
-      XmlSerializerImpl.doSet(context, valueAttribute.getValue(), myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+      try {
+        XmlSerializerImpl.doSet(context, valueAttribute.getValue(), myAccessor, XmlSerializerImpl.typeToClass(myAccessor.getGenericType()));
+      }
+      catch (Exception e) {
+        throw new RuntimeException("Cannot set value for field " + myName, e);
+      }
     }
     else {
       myAccessor.set(context, myConverter.fromString(valueAttribute.getValue()));

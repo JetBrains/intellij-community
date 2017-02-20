@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,10 @@ import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileSystemUtil;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -52,35 +54,28 @@ import junit.framework.TestSuite;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
  * @author peter
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class UsefulTestCase extends TestCase {
   public static final boolean IS_UNDER_TEAMCITY = System.getenv("TEAMCITY_VERSION") != null;
-  @Deprecated
-  public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.roots.IdeaModifiableModelsProvider";
   public static final String TEMP_DIR_MARKER = "unitTest_";
-
-  protected static boolean OVERWRITE_TESTDATA;
+  public static final boolean OVERWRITE_TESTDATA = Boolean.getBoolean("idea.tests.overwrite.data");
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
@@ -127,8 +122,6 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private boolean oldDisposerDebug;
-
   protected boolean shouldContainTempFiles() {
     return true;
   }
@@ -144,41 +137,48 @@ public abstract class UsefulTestCase extends TestCase {
       myTempDir = new File(ORIGINAL_TEMP_DIR, TEMP_DIR_MARKER + testName).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
-    boolean isPerformanceTest = isPerformanceTest();
-    ApplicationInfoImpl.setInPerformanceTest(isPerformanceTest);
+    boolean isStressTest = isStressTest();
+    ApplicationInfoImpl.setInStressTest(isStressTest);
     // turn off Disposer debugging for performance tests
-    oldDisposerDebug = Disposer.setDebugMode(Disposer.isDebugMode() && !isPerformanceTest);
+    Disposer.setDebugMode(!isStressTest);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Disposer.dispose(getTestRootDisposable());
-      cleanupSwingDataStructures();
-      cleanupDeleteOnExitHookList();
-    }
-    finally {
-      Disposer.setDebugMode(oldDisposerDebug);
-      if (shouldContainTempFiles()) {
-        FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-        if (hasTmpFilesToKeep()) {
-          File[] files = new File(myTempDir).listFiles();
-          if (files != null) {
-            for (File file : files) {
-              if (!shouldKeepTmpFile(file)) {
-                FileUtil.delete(file);
+      new RunAll(
+        () -> disposeRootDisposable(),
+        () -> cleanupSwingDataStructures(),
+        () -> cleanupDeleteOnExitHookList(),
+        () -> Disposer.setDebugMode(true),
+        () -> {
+          if (shouldContainTempFiles()) {
+            FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
+            if (hasTmpFilesToKeep()) {
+              File[] files = new File(myTempDir).listFiles();
+              if (files != null) {
+                for (File file : files) {
+                  if (!shouldKeepTmpFile(file)) {
+                    FileUtil.delete(file);
+                  }
+                }
               }
             }
+            else {
+              FileUtil.delete(new File(myTempDir));
+            }
           }
-        }
-        else {
-          FileUtil.delete(new File(myTempDir));
-        }
-      }
+        },
+        () -> UIUtil.removeLeakingAppleListeners()
+      ).run();
     }
+    finally {
+      super.tearDown();
+    }
+  }
 
-    UIUtil.removeLeakingAppleListeners();
-    super.tearDown();
+  protected final void disposeRootDisposable() {
+    Disposer.dispose(getTestRootDisposable());
   }
 
   protected void addTmpFileToKeep(@NotNull File file) {
@@ -208,11 +208,12 @@ public abstract class UsefulTestCase extends TestCase {
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    Set<String> files = ReflectionUtil.getStaticFieldValue(aClass, Set.class, "files");
+    @SuppressWarnings("unchecked") Set<String> files = ReflectionUtil.getStaticFieldValue(aClass, Set.class, "files");
     DELETE_ON_EXIT_HOOK_CLASS = aClass;
     DELETE_ON_EXIT_HOOK_DOT_FILES = files;
   }
 
+  @SuppressWarnings("SynchronizeOnThis")
   private static void cleanupDeleteOnExitHookList() throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
     // try to reduce file set retained by java.io.DeleteOnExitHook
     List<String> list;
@@ -222,7 +223,8 @@ public abstract class UsefulTestCase extends TestCase {
     }
     for (int i = list.size() - 1; i >= 0; i--) {
       String path = list.get(i);
-      if (FileSystemUtil.getAttributes(path) == null || new File(path).delete()) {
+      File file = new File(path);
+      if (file.delete() || !file.exists()) {
         synchronized (DELETE_ON_EXIT_HOOK_CLASS) {
           DELETE_ON_EXIT_HOOK_DOT_FILES.remove(path);
         }
@@ -230,6 +232,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   private static void cleanupSwingDataStructures() throws Exception {
     Object manager = ReflectionUtil.getDeclaredMethod(Class.forName("javax.swing.KeyboardManager"), "getCurrentManager").invoke(null);
     Map componentKeyStrokeMap = ReflectionUtil.getField(manager.getClass(), manager, Hashtable.class, "componentKeyStrokeMap");
@@ -240,7 +243,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected void checkForSettingsDamage() {
     Application app = ApplicationManager.getApplication();
-    if (isPerformanceTest() || app == null || app instanceof MockApplication) {
+    if (isStressTest() || app == null || app instanceof MockApplication) {
       return;
     }
 
@@ -279,7 +282,7 @@ public abstract class UsefulTestCase extends TestCase {
       .append(() -> {
         currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
         try {
-          checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings, "Code style settings damaged");
+          checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings);
         }
         finally {
           currentCodeStyleSettings.clearCodeStyleSettings();
@@ -291,7 +294,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   void storeSettings() {
-    if (!isPerformanceTest() && ApplicationManager.getApplication() != null) {
+    if (!isStressTest() && ApplicationManager.getApplication() != null) {
       myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
       myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
     }
@@ -390,6 +393,7 @@ public abstract class UsefulTestCase extends TestCase {
     costMap.put(superclass.getName(), newCost);
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void logSetupTeardownCosts() {
     System.out.println("Setup costs");
     long totalSetup = 0;
@@ -425,7 +429,13 @@ public abstract class UsefulTestCase extends TestCase {
     return true;
   }
 
-  @NonNls
+  /**
+   * If you want a more shorter name than runInEdtAndWait.
+   */
+  protected void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
+    EdtTestUtil.runInEdtAndWait(runnable);
+  }
+
   public static String toString(@NotNull Iterable<?> collection) {
     if (!collection.iterator().hasNext()) {
       return "<empty>";
@@ -434,12 +444,12 @@ public abstract class UsefulTestCase extends TestCase {
     final StringBuilder builder = new StringBuilder();
     for (final Object o : collection) {
       if (o instanceof THashSet) {
-        builder.append(new TreeSet<>((THashSet)o));
+        builder.append(new TreeSet<>((THashSet<?>)o));
       }
       else {
         builder.append(o);
       }
-      builder.append("\n");
+      builder.append('\n');
     }
     return builder.toString();
   }
@@ -475,7 +485,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(final String errorMsg, @NotNull Iterable<T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(String errorMsg, @NotNull Iterable<T> actual, @NotNull T... expected) {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
@@ -483,7 +493,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(null, actual, expected);
   }
 
-  public static <T> void assertOrderedEquals(final String erroMsg,
+  public static <T> void assertOrderedEquals(String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
                                              @NotNull Collection<? extends T> expected) {
     List<T> list = new ArrayList<>();
@@ -493,7 +503,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (!list.equals(new ArrayList<T>(expected))) {
       String expectedString = toString(expected);
       String actualString = toString(actual);
-      Assert.assertEquals(erroMsg, expectedString, actualString);
+      Assert.assertEquals(errorMsg, expectedString, actualString);
       Assert.fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
     }
   }
@@ -589,6 +599,7 @@ public abstract class UsefulTestCase extends TestCase {
         checkers[i].consume(actual);
       }
       catch (AssertionFailedError e) {
+        //noinspection UseOfSystemOutOrSystemErr
         System.out.println(i + ": " + actual);
         throw e;
       }
@@ -623,6 +634,7 @@ public abstract class UsefulTestCase extends TestCase {
         }
       }
       if (flag) {
+        //noinspection ConstantConditions,CallToPrintStackTrace
         lastError.printStackTrace();
         Assert.fail("Incorrect element(" + i + "): " + actual);
       }
@@ -663,7 +675,6 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  @Contract("null, _ -> fail")
   public static <T> void assertOneOf(T value, @NotNull T... values) {
     boolean found = false;
     for (T v : values) {
@@ -755,6 +766,7 @@ public abstract class UsefulTestCase extends TestCase {
     try {
       if (OVERWRITE_TESTDATA) {
         VfsTestUtil.overwriteTestData(filePath, actualText);
+        //noinspection UseOfSystemOutOrSystemErr
         System.out.println("File " + filePath + " created.");
       }
       fileText = FileUtil.loadFile(new File(filePath), CharsetToolkit.UTF8_CHARSET);
@@ -784,7 +796,7 @@ public abstract class UsefulTestCase extends TestCase {
   public static void clearDeclaredFields(Object test, Class aClass) throws IllegalAccessException {
     if (aClass == null) return;
     for (final Field field : aClass.getDeclaredFields()) {
-      @NonNls final String name = field.getDeclaringClass().getName();
+      final String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
         final int modifiers = field.getModifiers();
         if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
@@ -796,7 +808,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SuppressWarnings("deprecation")
-  private static void checkSettingsEqual(CodeStyleSettings expected, CodeStyleSettings settings, String message) throws Exception {
+  private static void checkSettingsEqual(CodeStyleSettings expected, CodeStyleSettings settings) throws Exception {
     if (expected == null || settings == null) return;
 
     Element oldS = new Element("temp");
@@ -806,12 +818,38 @@ public abstract class UsefulTestCase extends TestCase {
 
     String newString = JDOMUtil.writeElement(newS, "\n");
     String oldString = JDOMUtil.writeElement(oldS, "\n");
-    Assert.assertEquals(message, oldString, newString);
+    Assert.assertEquals("Code style settings damaged", oldString, newString);
   }
 
   public boolean isPerformanceTest() {
-    String name = getName();
-    return name != null && name.contains("Performance") || getClass().getName().contains("Performance");
+    String testName = getName();
+    String className = getClass().getName();
+    return isPerformanceTest(testName, className);
+  }
+
+  public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
+    return testName != null && StringUtil.containsIgnoreCase(testName, "performance") ||
+           className != null && StringUtil.containsIgnoreCase(className, "performance");
+  }
+
+  /**
+   * @return true for a test which performs A LOT of computations.
+   * Such test should typically avoid performing expensive checks, e.g. data structure consistency complex validations.
+   * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
+   * For example: {@code public void testStressPSIFromDifferentThreads()}
+   */
+  public boolean isStressTest() {
+    return isStressTest(getName(), getClass().getName());
+  }
+
+  private static boolean isStressTest(String testName, String className) {
+    return isPerformanceTest(testName, className) ||
+           containsStressWords(testName) ||
+           containsStressWords(className);
+  }
+
+  private static boolean containsStressWords(@Nullable String name) {
+    return name != null && (name.contains("Stress") || name.contains("Slow"));
   }
 
   public static void doPostponedFormatting(final Project project) {
@@ -835,10 +873,9 @@ public abstract class UsefulTestCase extends TestCase {
    * If expected error message is null it will not be checked.
    *
    * @param exceptionCase    Block annotated with some exception type
-   * @param expectedErrorMsg expected error messge
+   * @param expectedErrorMsg expected error message
    */
-  protected void assertException(final AbstractExceptionCase exceptionCase,
-                                 @Nullable final String expectedErrorMsg) throws Throwable {
+  protected void assertException(AbstractExceptionCase exceptionCase, @Nullable String expectedErrorMsg) throws Throwable {
     assertExceptionOccurred(true, exceptionCase, expectedErrorMsg);
   }
 
@@ -881,7 +918,9 @@ public abstract class UsefulTestCase extends TestCase {
       else if (exceptionCase.getExpectedExceptionClass().equals(e.getClass())) {
         wasThrown = true;
 
+        //noinspection UseOfSystemOutOrSystemErr
         System.out.println("");
+        //noinspection UseOfSystemOutOrSystemErr
         e.printStackTrace(System.out);
 
         fail("Exception isn't expected here. Exception message: " + e.getMessage());
@@ -897,7 +936,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  protected boolean annotatedWith(@NotNull Class annotationClass) {
+  protected boolean annotatedWith(@NotNull Class<? extends Annotation> annotationClass) {
     Class<?> aClass = getClass();
     String methodName = "test" + getTestName(false);
     boolean methodChecked = false;
@@ -917,10 +956,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected String getHomePath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
-  }
-
-  protected static boolean isInHeadlessEnvironment() {
-    return GraphicsEnvironment.isHeadless();
   }
 
   public static void refreshRecursively(@NotNull VirtualFile file) {
@@ -961,21 +996,8 @@ public abstract class UsefulTestCase extends TestCase {
     return UIUtil.invokeAndWaitIfNeeded(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
-  public static <E extends Exception> void invokeAndWaitIfNeeded(@NotNull final ThrowableRunnable<E> runnable) throws Exception {
-    if (SwingUtilities.isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      final Ref<Exception> ref = Ref.create();
-      SwingUtilities.invokeAndWait(() -> {
-        try {
-          runnable.run();
-        }
-        catch (Exception e) {
-          ref.set(e);
-        }
-      });
-      if (!ref.isNull()) throw ref.get();
-    }
-  }
+  //<editor-fold desc="Deprecated stuff.">
+  @Deprecated
+  public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.roots.IdeaModifiableModelsProvider";
+  //</editor-fold>
 }

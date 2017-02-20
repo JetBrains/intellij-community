@@ -18,27 +18,21 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
-  private static final LanguageExtension<PsiReferenceContributor> CONTRIBUTOR_EXTENSION = new LanguageExtension<PsiReferenceContributor>(PsiReferenceContributor.EP_NAME.getName());
-  private static final LanguageExtension<PsiReferenceProviderBean> REFERENCE_PROVIDER_EXTENSION = new LanguageExtension<PsiReferenceProviderBean>(PsiReferenceProviderBean.EP_NAME.getName());
-
-  private static final Comparator<ProviderBinding.ProviderInfo<ProcessingContext>> PRIORITY_COMPARATOR =
-    new Comparator<ProviderBinding.ProviderInfo<ProcessingContext>>() {
-      @Override
-      public int compare(ProviderBinding.ProviderInfo<ProcessingContext> o1,
-                         ProviderBinding.ProviderInfo<ProcessingContext> o2) {
-        return Comparing.compare(o2.priority, o1.priority);
-      }
-    };
+  private static final LanguageExtension<PsiReferenceContributor> CONTRIBUTOR_EXTENSION =
+    new LanguageExtension<>(PsiReferenceContributor.EP_NAME.getName());
+  private static final LanguageExtension<PsiReferenceProviderBean> REFERENCE_PROVIDER_EXTENSION =
+    new LanguageExtension<>(PsiReferenceProviderBean.EP_NAME.getName());
 
   private final Map<Language, PsiReferenceRegistrarImpl> myRegistrars = ContainerUtil.newConcurrentMap();
 
@@ -97,46 +91,102 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
 
   @NotNull
   @Override
+  // 1. we create priorities map: "priority" ->  non-empty references from providers
+  //    if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
+  // 2. references with the highest priority are added "as is"
+  // 3. all other references are added only they could be correctly merged with any reference with higher priority (ReferenceRange.containsRangeInElement(higherPriorityRef, lowerPriorityRef)
   protected PsiReference[] doGetReferencesFromProviders(@NotNull PsiElement context,
                                                         @NotNull PsiReferenceService.Hints hints) {
     List<ProviderBinding.ProviderInfo<ProcessingContext>> providers = getRegistrar(context.getLanguage()).getPairsByElement(context, hints);
 
-    if (providers.isEmpty()) {
-      return PsiReference.EMPTY_ARRAY;
-    }
+    final MultiMap<Double, PsiReference[]> allReferencesMap = mapNotEmptyReferencesFromProviders(context, providers);
 
-    if (providers.size() == 1) {
-      return providers.get(0).provider.getReferencesByElement(context, providers.get(0).processingContext);
-    }
+    if (allReferencesMap.isEmpty()) return PsiReference.EMPTY_ARRAY;
 
-    ContainerUtil.sort(providers, PRIORITY_COMPARATOR);
+    final List<PsiReference> result = ContainerUtil.newSmartList();
+    final double maxPriority = getMaxPriority(allReferencesMap.keySet());
+    final List<PsiReference> maxPriorityRefs = collectReferences(allReferencesMap.get(maxPriority));
 
-    List<PsiReference> result = new ArrayList<PsiReference>();
-    final double maxPriority = providers.get(0).priority;
-    next:
+    ContainerUtil.addAllNotNull(result, maxPriorityRefs);
+    ContainerUtil.addAllNotNull(result, getLowerPriorityReferences(allReferencesMap, maxPriority, maxPriorityRefs));
+
+    return result.toArray(new PsiReference[result.size()]);
+  }
+
+  @NotNull
+  //  we create priorities map: "priority" ->  non-empty references from providers
+  //  if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
+  private static MultiMap<Double, PsiReference[]> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
+                                                                                     @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
+    MultiMap<Double, PsiReference[]> map = new MultiMap<>();
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
-      final PsiReference[] refs;
-      try {
-        refs = trinity.provider.getReferencesByElement(context, trinity.processingContext);
+      final PsiReference[] refs = getReferences(context, trinity);
+      if (refs.length > 0) {
+        map.putValue(trinity.priority, refs);
       }
-      catch(IndexNotReadyException ex) {
-        continue;
-      }
-      if (trinity.priority != maxPriority) {
-        for (PsiReference ref : refs) {
-          for (PsiReference reference : result) {
-            if (ref != null && ReferenceRange.containsRangeInElement(reference, ref.getRangeInElement())) {
-              continue next;
-            }
+    }
+    return map;
+  }
+
+  @NotNull
+  private static PsiReference[] getReferences(@NotNull PsiElement context,
+                                              @NotNull ProviderBinding.ProviderInfo<ProcessingContext> providerInfo) {
+    try {
+      return providerInfo.provider.getReferencesByElement(context, providerInfo.processingContext);
+    }
+    catch (IndexNotReadyException ignored) {
+    }
+    return PsiReference.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  private static List<PsiReference> getLowerPriorityReferences(@NotNull MultiMap<Double, PsiReference[]> allReferencesMap,
+                                                               double maxPriority,
+                                                               @NotNull List<PsiReference> maxPriorityRefs) {
+    List<PsiReference> result = ContainerUtil.newSmartList();
+    for (Map.Entry<Double, Collection<PsiReference[]>> entry : allReferencesMap.entrySet()) {
+      if (maxPriority != entry.getKey().doubleValue()) {
+        for (PsiReference[] references : entry.getValue()) {
+          if (haveNotIntersectedTextRanges(maxPriorityRefs, references)) {
+            ContainerUtil.addAllNotNull(result, references);
           }
         }
       }
-      for (PsiReference ref : refs) {
-        if (ref != null) {
-          result.add(ref);
+    }
+    return result;
+  }
+
+  private static boolean haveNotIntersectedTextRanges(@NotNull List<PsiReference> higherPriorityRefs,
+                                                      @NotNull  PsiReference[] lowerPriorityRefs) {
+    for (PsiReference ref : lowerPriorityRefs) {
+      if (ref != null) {
+        for (PsiReference reference : higherPriorityRefs) {
+          if (reference != null && ReferenceRange.containsRangeInElement(reference, ref.getRangeInElement())) {
+            return false;
+          }
         }
       }
     }
-    return result.isEmpty() ? PsiReference.EMPTY_ARRAY : ContainerUtil.toArray(result, new PsiReference[result.size()]);
+    return true;
+  }
+
+  @NotNull
+  private static List<PsiReference> collectReferences(@Nullable Collection<PsiReference[]> references) {
+    if (references == null) return Collections.emptyList();
+    List<PsiReference> list = ContainerUtil.newSmartList();
+    for (PsiReference[] reference : references) {
+      ContainerUtil.addAllNotNull(list, reference);
+    }
+
+    return list;
+  }
+
+  private static double getMaxPriority(@NotNull Set<Double> doubles) {
+    //return doubles.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
+    double maxPriority = PsiReferenceRegistrar.LOWER_PRIORITY;
+    for (Double aDouble : doubles) {
+      if (aDouble.doubleValue() > maxPriority) maxPriority = aDouble.doubleValue();
+    }
+    return maxPriority;
   }
 }

@@ -133,9 +133,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
-    else {
+    else if (!classes.isEmpty()){
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), PsiClassListCellRenderer.INSTANCE,
+      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override
@@ -161,8 +161,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                             getRefactoringName(), getHelpID());
         return true;
       }
+      else if ("package-info.java".equals(file.getName())) {
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
+                                            getRefactoringName(), getHelpID());
+        return true;
+      }
       else {
-        LOG.assertTrue(false);
+        LOG.error(file);
         return true;
       }
     }

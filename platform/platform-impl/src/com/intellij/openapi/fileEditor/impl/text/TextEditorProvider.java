@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -31,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -209,9 +207,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     editor.putUserData(TEXT_EDITOR_KEY, textEditor);
   }
 
+  @NotNull
   protected TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level){
     TextEditorState state = new TextEditorState();
-    if (!Registry.is("editor.new.rendering") && editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering) return state;
     CaretModel caretModel = editor.getCaretModel();
     if (caretModel.supportsMultipleCarets()) {
       List<CaretState> caretsAndSelections = caretModel.getCaretsAndSelections();
@@ -313,7 +311,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
     private final Editor myEditor;
 
-    public EditorWrapper(@NotNull Editor editor) {
+    EditorWrapper(@NotNull Editor editor) {
       myEditor = editor;
     }
 

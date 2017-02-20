@@ -135,6 +135,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
     String nodeName = startedNodeEvent.getName();
     SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), true);
+    childProxy.setTreeBuildBeforeStart();
     TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;
     String nodeType = startedNodeEvent.getNodeType();
     if (printerProvider != null && nodeType != null && nodeName != null) {
@@ -178,7 +179,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       Node node = findNodeToTerminate(testFinishedEvent);
       if (node != null) {
         SMTestProxy testProxy = node.getProxy();
-        testProxy.setDuration(testFinishedEvent.getDuration());
+        final Long duration = testFinishedEvent.getDuration();
+        if (duration != null) {
+          testProxy.setDuration(duration);
+        }
         testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
         testProxy.setFinished();
         if (node.getState() != State.FAILED) {
@@ -254,10 +258,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       String failureMessage = testFailedEvent.getLocalizedFailureMessage();
       String stackTrace = testFailedEvent.getStacktrace();
       if (comparisonFailureActualText != null && comparisonFailureExpectedText != null) {
-        testProxy.setTestComparisonFailed(failureMessage, stackTrace,
-                                          comparisonFailureActualText, comparisonFailureExpectedText,
-                                          testFailedEvent.getExpectedFilePath(),
-                                          testFailedEvent.getActualFilePath());
+        testProxy.setTestComparisonFailed(failureMessage, stackTrace, comparisonFailureActualText, comparisonFailureExpectedText, testFailedEvent);
       } else if (comparisonFailureActualText == null && comparisonFailureExpectedText == null) {
         testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
       } else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ package com.siyeh.ipp.asserttoif;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -146,7 +144,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
         return false;
       }
       final PsiExpression condition = ifStatement.getCondition();
-      return isNullComparison(condition, variable, true);
+      return ComparisonUtils.isNullComparison(condition, variable, true);
     }
 
     private static boolean isNotNullAssertion(PsiStatement statement, @NotNull PsiVariable variable) {
@@ -155,33 +153,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
       }
       final PsiAssertStatement assertStatement = (PsiAssertStatement)statement;
       final PsiExpression condition = assertStatement.getAssertCondition();
-      return isNullComparison(condition, variable, false);
-    }
-
-    private static boolean isNullComparison(PsiExpression expression, @NotNull PsiVariable variable, boolean equal) {
-      expression = ParenthesesUtils.stripParentheses(expression);
-      if (!(expression instanceof PsiBinaryExpression)) {
-        return false;
-      }
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
-      if (equal) {
-        if (!JavaTokenType.EQEQ.equals(tokenType)) {
-          return false;
-        }
-      }
-      else {
-        if (!JavaTokenType.NE.equals(tokenType)) {
-          return false;
-        }
-      }
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (rhs == null) {
-        return false;
-      }
-      return PsiType.NULL.equals(rhs.getType()) && VariableAccessUtils.evaluatesToVariable(lhs, variable) ||
-             PsiType.NULL.equals(lhs.getType()) && VariableAccessUtils.evaluatesToVariable(rhs, variable);
+      return ComparisonUtils.isNullComparison(condition, variable, false);
     }
 
     public static boolean isSimpleThrowStatement(PsiStatement element) {

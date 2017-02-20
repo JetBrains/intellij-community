@@ -32,12 +32,6 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
-    super.collectAffectedElements(e, toExtract);
-    return JavaAnonymousUnwrapper.findElementToExtractFrom(e);
-  }
-
-  @Override
   protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
     PsiElement from = JavaAnonymousUnwrapper.findElementToExtractFrom(element);
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)element;

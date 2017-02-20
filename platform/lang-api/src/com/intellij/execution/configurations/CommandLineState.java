@@ -102,10 +102,12 @@ public abstract class CommandLineState implements RunProfileState {
   @NotNull
   protected abstract ProcessHandler startProcess() throws ExecutionException;
 
+  @NotNull
   protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler) {
     return createActions(console, processHandler, null);
   }
 
+  @NotNull
   protected AnAction[] createActions(final ConsoleView console, final ProcessHandler processHandler, Executor executor) {
     if (console == null || !console.canPause() || (executor != null && !DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId()))) {
       return AnAction.EMPTY_ARRAY;
@@ -143,7 +145,7 @@ public abstract class CommandLineState implements RunProfileState {
     }
 
     @Override
-    public void update(final AnActionEvent event) {
+    public void update(@NotNull final AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();
       final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();

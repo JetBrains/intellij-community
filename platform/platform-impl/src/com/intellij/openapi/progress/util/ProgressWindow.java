@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-@SuppressWarnings({"NonStaticInitializer"})
+@SuppressWarnings("NonStaticInitializer")
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
 
@@ -47,15 +47,16 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   final boolean myShouldShowCancel;
   String myCancelText;
 
-  private String myTitle = null;
+  private String myTitle;
 
-  private boolean myStoppedAlready = false;
-  private boolean myStarted = false;
-  protected boolean myBackgrounded = false;
+  private boolean myStoppedAlready;
+  private boolean myStarted;
+  protected boolean myBackgrounded;
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
   private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 
+  @FunctionalInterface
   public interface Listener {
     void progressWindowCreated(ProgressWindow pw);
   }
@@ -135,6 +136,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     startBlocking(EmptyRunnable.getInstance());
   }
 
+  @Nullable
+  protected ProgressDialog getDialog() {
+    return myDialog;
+  }
+
   public void startBlocking(@NotNull Runnable init) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (this) {
@@ -142,9 +148,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       LOG.assertTrue(!myStoppedAlready);
     }
 
+    enterModality();
     init.run();
 
     myDialog.startBlocking(myShouldShowCancel);
+    exitModality();
   }
 
   @NotNull
@@ -197,16 +205,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
 
     UIUtil.invokeLaterIfNeeded(() ->{
-
-        if (myDialog != null) {
-          myDialog.hide();
-        }
-
-
-
-        synchronized (this) {
-          myStoppedAlready = true;
-        }
+      if (myDialog != null) {
+        myDialog.hide();
+      }
+      synchronized (this) {
+        myStoppedAlready = true;
+      }
 
       Disposer.dispose(this);
     });
@@ -308,7 +312,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return myDialog != null && myDialog.isPopupWasShown();
   }
 
-  protected void enableCancel(boolean enable) {
+  private void enableCancel(boolean enable) {
     if (myDialog != null) {
       myDialog.enableCancelButtonIfNeeded(enable);
     }

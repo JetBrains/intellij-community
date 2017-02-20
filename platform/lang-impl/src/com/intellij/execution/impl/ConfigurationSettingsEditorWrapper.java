@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,13 +105,13 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   @Override
-  public void resetEditorFrom(final RunnerAndConfigurationSettings settings) {
+  public void resetEditorFrom(@NotNull final RunnerAndConfigurationSettings settings) {
     myEditor.resetEditorFrom(settings);
     doReset(settings);
   }
 
   @Override
-  public void applyEditorTo(final RunnerAndConfigurationSettings settings) throws ConfigurationException {
+  public void applyEditorTo(@NotNull final RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
     doApply(settings);
   }

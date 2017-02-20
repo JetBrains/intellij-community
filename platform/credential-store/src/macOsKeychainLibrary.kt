@@ -32,6 +32,8 @@ private val LIBRARY by lazy {
 private const val errSecSuccess = 0
 private const val errSecItemNotFound = -25300
 private const val errSecInvalidRecord = -67701
+// or if Deny clicked on access dialog
+private const val errUserNameNotCorrect = -25293
 private const val kSecFormatUnknown = 0
 private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 8 or 'c'.toInt()) shl 8 or 't'.toInt()
 
@@ -187,7 +189,13 @@ private fun checkForError(message: String, code: Int) {
     LIBRARY.CFRelease(translated)
     builder.append(buf).append(" (").append(code).append(')')
   }
-  LOG.error(builder.toString())
+
+  if (code == errUserNameNotCorrect || code == -25299 /* The specified item already exists in the keychain */) {
+    LOG.warn(builder.toString())
+  }
+  else {
+    LOG.error(builder.toString())
+  }
 }
 
 internal fun SecKeychainAttributeInfo(vararg ids: Int): SecKeychainAttributeInfo {

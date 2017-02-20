@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElement
@@ -46,6 +47,32 @@ interface InlayParameterHintsProvider {
    * E.g. to prevent possible Groovy and Kotlin extensions from showing hints for blacklisted java methods. 
    */
   fun getBlackListDependencyLanguage(): Language? = null
-  
+
+  /**
+   * List of supported options, shown in settings dialog
+   */
+  fun getSupportedOptions(): List<Option> = emptyList()
+
+}
+
+
+data class Option(val id: String,
+                  val name: String,
+                  val defaultValue: Boolean) {
+
+  fun get(): Boolean {
+    return ParameterNameHintsSettings.getInstance().getOption(id) ?: defaultValue
+  }
+
+  fun set(newValue: Boolean) {
+    val settings = ParameterNameHintsSettings.getInstance()
+    if (newValue == defaultValue) {
+      settings.setOption(id, null)
+    }
+    else {
+      settings.setOption(id, newValue)
+    }
+  }
+
 }
 

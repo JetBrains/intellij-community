@@ -32,11 +32,11 @@ public abstract class JavaClassSupers {
   }
 
   /**
-   * Calculates substitutor that binds type parameters in <code>superClass</code> with
-   * values that they have in <code>derivedClass</code>, given that type parameters in
-   * <code>derivedClass</code> are bound by <code>derivedSubstitutor</code>.
+   * Calculates substitutor that binds type parameters in {@code superClass} with
+   * values that they have in {@code derivedClass}, given that type parameters in
+   * {@code derivedClass} are bound by {@code derivedSubstitutor}.
    *
-   * @return substitutor or <code>null</code>, if <code>derivedClass</code> doesn't inherit <code>superClass</code>
+   * @return substitutor or {@code null}, if {@code derivedClass} doesn't inherit {@code superClass}
    * @see PsiClass#isInheritor(PsiClass, boolean)
    * @see InheritanceUtil#isInheritorOrSelf(PsiClass, PsiClass, boolean)
    */
@@ -45,6 +45,11 @@ public abstract class JavaClassSupers {
                                                           @NotNull PsiClass derivedClass,
                                                           @NotNull GlobalSearchScope resolveScope,
                                                           @NotNull PsiSubstitutor derivedSubstitutor);
+
+  /**
+   * Called internally when it's expected that derivedClass extends superClass, but no super class substitutor can be found for them
+   */
+  public abstract void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass);
 
 
 }

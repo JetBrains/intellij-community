@@ -40,6 +40,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -573,6 +574,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void onUpdated(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInBulkUpdate()) return;
     updateVisualPosition();
+  }
+
+  @TestOnly
+  public void validateState() {
+    for (CaretImpl caret : myCarets) {
+      caret.validateState();
+    }
   }
 
   private static class VisualPositionComparator implements Comparator<VisualPosition> {

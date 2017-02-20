@@ -31,7 +31,7 @@ public class StreamRefactoringUtil {
       return lambdaExpression.getParameterList().getParametersCount() == 1 &&
              (!requireExpressionLambda || LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody()) != null);
     } else if(expression instanceof PsiMethodReferenceExpression) {
-      return LambdaRefactoringUtil.canConvertToLambda((PsiMethodReferenceExpression)expression);
+      return LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects((PsiMethodReferenceExpression)expression);
     }
     return false;
   }

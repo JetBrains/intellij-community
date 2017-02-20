@@ -146,7 +146,8 @@ public class JBPatch {
     extraBlockIn.close();
     diffIn.close();
 
-    newFileOut.write(newBuf, 0, newBuf.length - 1);
+    oldBuf = null;
+
+    Utils.writeBytes(newBuf, newBuf.length - 1, newFileOut);
   }
 }
-

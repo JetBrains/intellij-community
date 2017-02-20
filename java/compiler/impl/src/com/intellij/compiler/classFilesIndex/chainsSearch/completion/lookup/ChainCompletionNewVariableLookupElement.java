@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -76,13 +75,8 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
     final Ref<PsiElement> insertedStatementRef = Ref.create();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     context.commitDocument();
-    new WriteCommandAction.Simple(project, file) {
-      @Override
-      protected void run() throws Throwable {
-        final PsiStatement statementFromText = elementFactory.createStatementFromText(String.format("%s %s = null;", myPsiClass.getName(), myNewVarName), null);
-        insertedStatementRef.set(codeBlock.addBefore(statementFromText, statement));
-      }
-    }.execute();
+    final PsiStatement statementFromText = elementFactory.createStatementFromText(String.format("%s %s = null;", myPsiClass.getName(), myNewVarName), null);
+    insertedStatementRef.set(codeBlock.addBefore(statementFromText, statement));
     final PsiLiteralExpression nullKeyword = findNull(insertedStatementRef.get());
     PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
     context.getDocument().insertString(rangeMarker.getStartOffset(), myNewVarName + ".");

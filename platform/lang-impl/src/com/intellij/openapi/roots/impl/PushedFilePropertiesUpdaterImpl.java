@@ -76,7 +76,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
     myFilePushers = ContainerUtil.findAllAsArray(myPushers, pusher -> !pusher.pushDirectoriesOnly());
 
     StartupManager.getInstance(project).registerPreStartupActivity(
-      () -> project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      () -> project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
         public void rootsChanged(final ModuleRootEvent event) {
           for (FilePropertyPusher pusher : myPushers) {
@@ -177,7 +177,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
         performPushTasks();
       }
     };
-    myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         DumbService.getInstance(myProject).cancelTask(task);

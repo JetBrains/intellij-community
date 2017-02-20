@@ -15,9 +15,10 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.execution.ui.ConsoleHighlighterLayer;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -152,13 +153,16 @@ public interface Filter {
   class ResultItem {
     private static final Map<TextAttributesKey, TextAttributes> GRAYED_BY_NORMAL_CACHE = ContainerUtil.newConcurrentMap(2);
     static {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-        @Override
-        public void globalSchemeChange(EditorColorsScheme scheme) {
-          // invalidate cache on Appearance Theme/Editor Scheme change
-          GRAYED_BY_NORMAL_CACHE.clear();
-        }
-      });
+      Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        application.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+          @Override
+          public void globalSchemeChange(EditorColorsScheme scheme) {
+            // invalidate cache on Appearance Theme/Editor Scheme change
+            GRAYED_BY_NORMAL_CACHE.clear();
+          }
+        });
+      }
     }
 
     /**
@@ -182,8 +186,6 @@ public interface Filter {
     @Deprecated @Nullable
     public final HyperlinkInfo hyperlinkInfo;
     
-    private final int myHighlighterLayer;
-
     private final TextAttributes myFollowedHyperlinkAttributes;
 
     @SuppressWarnings("deprecation")
@@ -214,21 +216,11 @@ public interface Filter {
                       @Nullable final HyperlinkInfo hyperlinkInfo,
                       @Nullable final TextAttributes highlightAttributes,
                       @Nullable final TextAttributes followedHyperlinkAttributes) {
-      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, followedHyperlinkAttributes, 
-           hyperlinkInfo != null ? ConsoleHighlighterLayer.HYPERLINK_LAYER : ConsoleHighlighterLayer.HIGHLIGHT_LAYER);
-    }
-    public ResultItem(final int highlightStartOffset,
-                      final int highlightEndOffset,
-                      @Nullable final HyperlinkInfo hyperlinkInfo,
-                      @Nullable final TextAttributes highlightAttributes,
-                      @Nullable final TextAttributes followedHyperlinkAttributes,
-                      int highlighterLayer) {
       this.highlightStartOffset = highlightStartOffset;
       this.highlightEndOffset = highlightEndOffset;
       this.hyperlinkInfo = hyperlinkInfo;
       this.highlightAttributes = highlightAttributes;
       myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
-      myHighlighterLayer = highlighterLayer;
     }
 
     public int getHighlightStartOffset() {
@@ -258,8 +250,11 @@ public interface Filter {
       return hyperlinkInfo;
     }
 
+    /**
+     * See {@link HighlighterLayer} for available predefined layers. 
+     */
     public int getHighlighterLayer() {
-      return myHighlighterLayer; 
+      return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.CONSOLE_FILTER; 
     }
 
     @Nullable

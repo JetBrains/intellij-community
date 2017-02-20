@@ -186,7 +186,7 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
   }
 
   @Override
-  public void setHelpId(String helpId) {
+  public void setHelpId(@NotNull String helpId) {
     myPrimaryConsoleView.setHelpId(helpId);
     mySecondaryConsoleView.setHelpId(helpId);
   }

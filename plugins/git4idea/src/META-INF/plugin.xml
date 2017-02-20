@@ -37,6 +37,8 @@
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
+    <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
+
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
@@ -49,7 +51,6 @@
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with Branch..." />
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
-      <reference id="Vcs.Show.Graph.History"/>
       <separator/>
       <reference id="ChangesView.Revert" />
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
@@ -94,6 +95,11 @@
 
     <group id="Git.LogContextMenu">
       <separator/>
+    </group>
+
+    <group id="Git.FileHistory.ContextMenu">
+      <reference id="Git.SelectInGitLog"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
     </group>
 
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
@@ -147,6 +153,7 @@
     <statistics.usagesCollector implementation="git4idea.GitStatisticsCollector" />
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
+    <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>

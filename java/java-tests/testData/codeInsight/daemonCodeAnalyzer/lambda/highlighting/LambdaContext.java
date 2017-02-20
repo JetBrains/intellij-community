@@ -28,3 +28,9 @@ class Test1 {
     (b ? <error descr="Lambda expression not expected here">(s) -> true</error> : ik)._("");
   }
 }
+
+class Test2 {
+  void f() {
+    final Runnable one=true ? null : true ? () -> {} : () -> {};
+  }
+}

@@ -59,9 +59,9 @@ public class DocPreviewUtil {
   }
 
   /**
-   * We shorten links text from fully qualified name to short names (e.g. from <code>'java.lang.String'</code> to <code>'String'</code>).
+   * We shorten links text from fully qualified name to short names (e.g. from {@code 'java.lang.String'} to {@code 'String'}).
    * There is a possible situation then that we have two replacements where one key is a simple name and another one is a fully qualified
-   * one. We want to apply <code>'from fully qualified name'</code> replacement first then.
+   * one. We want to apply {@code 'from fully qualified name'} replacement first then.
    */
   private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<String>() {
     @Override
@@ -152,7 +152,7 @@ public class DocPreviewUtil {
    * Example: return {@code 'String'} for a given {@code 'java.lang.String'}.
    * 
    * @param name  name to process
-   * @return      short name derived from the given full name if possible; <code>null</code> otherwise
+   * @return      short name derived from the given full name if possible; {@code null} otherwise
    */
   @Nullable
   private static String parseShortName(@NotNull String name) {
@@ -167,7 +167,7 @@ public class DocPreviewUtil {
    * 
    * @param shortName   short name to process
    * @param address     address to process
-   * @return            long name derived from the given arguments (if any); <code>null</code> otherwise
+   * @return            long name derived from the given arguments (if any); {@code null} otherwise
    */
   @Nullable
   private static String parseLongName(@NotNull String shortName, @NotNull String address) {

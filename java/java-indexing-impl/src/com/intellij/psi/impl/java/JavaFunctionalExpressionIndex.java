@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -41,6 +42,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -351,29 +353,31 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   public DataIndexer<FunctionalExpressionKey, List<FunExprOccurrence>, FileContent> getIndexer() {
     return inputData -> {
       CharSequence text = inputData.getContentAsText();
-      if (!StringUtil.contains(text, "->") && !StringUtil.contains(text, "::")) return Collections.emptyMap();
+      int[] offsets = ArrayUtil.mergeArrays(
+        new StringSearcher("->", true, true).findAllOccurrences(text),
+        new StringSearcher("::", true, true).findAllOccurrences(text));
+      if (offsets.length == 0) return Collections.emptyMap();
 
       Map<FunctionalExpressionKey, List<FunExprOccurrence>> result = new HashMap<>();
       LighterAST tree = ((FileContentImpl)inputData).getLighterASTForPsiDependentIndex();
       FileLocalResolver resolver = new FileLocalResolver(tree);
-      new RecursiveLighterASTNodeWalkingVisitor(tree) {
-        @Override
-        public void visitNode(@NotNull LighterASTNode element) {
-          if (element.getTokenType() == METHOD_REF_EXPRESSION ||
-              element.getTokenType() == LAMBDA_EXPRESSION) {
-            FunctionalExpressionKey key = new FunctionalExpressionKey(getFunExprParameterCount(tree, element),
-                                                                      calcReturnType(tree, element),
-                                                                      calcExprType(element, resolver));
-            List<FunExprOccurrence> list = result.get(key);
-            if (list == null) {
-              result.put(key, list = new SmartList<>());
-            }
-            list.add(createOccurrence(element, resolver));
-          }
 
-          super.visitNode(element);
+      for (int offset : offsets) {
+        LighterASTNode leaf = LightTreeUtil.findLeafElementAt(tree, offset);
+        LighterASTNode element = leaf == null ? null : tree.getParent(leaf);
+        if (element == null) continue;
+
+        if (element.getTokenType() == METHOD_REF_EXPRESSION || element.getTokenType() == LAMBDA_EXPRESSION) {
+          FunctionalExpressionKey key = new FunctionalExpressionKey(getFunExprParameterCount(tree, element),
+                                                                    calcReturnType(tree, element),
+                                                                    calcExprType(element, resolver));
+          List<FunExprOccurrence> list = result.get(key);
+          if (list == null) {
+            result.put(key, list = new SmartList<>());
+          }
+          list.add(createOccurrence(element, resolver));
         }
-      }.visitNode(tree.getRoot());
+      }
 
       return result;
     };
@@ -413,7 +417,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
       @Override
       public List<FunExprOccurrence> read(@NotNull DataInput in) throws IOException {
         int length = DataInputOutputUtil.readINT(in);
-        List<FunExprOccurrence> list = new SmartList<FunExprOccurrence>();
+        List<FunExprOccurrence> list = new SmartList<>();
         for (int i = 0; i < length; i++) {
           list.add(FunExprOccurrence.deserialize(in));
         }

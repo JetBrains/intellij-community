@@ -94,7 +94,7 @@ class LookupUiImpl implements LookupUi {
     myProject = project;
 
     myIconPanel.setVisible(false);
-    myIconPanel.setBackground(JBColor.LIGHT_GRAY);
+    myIconPanel.setOpaque(false);
     myIconPanel.add(myProcessIcon);
 
     JComponent adComponent = advertiser.getAdComponent();
@@ -216,7 +216,7 @@ class LookupUiImpl implements LookupUi {
   }
 
   private void updateSorting() {
-    final boolean lexi = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
+    final boolean lexi = UISettings.getInstance().getSortLookupElementsLexicographically();
     mySortingLabel.setIcon(lexi ? AllIcons.Ide.LookupAlphanumeric : AllIcons.Ide.LookupRelevance);
     mySortingLabel.setToolTipText(lexi ? "Click to sort variants by relevance" : "Click to sort variants alphabetically");
 
@@ -365,7 +365,7 @@ class LookupUiImpl implements LookupUi {
         public Dimension preferredLayoutSize(@Nullable Container parent) {
           int maxCellWidth = myLookup.myLookupTextWidth + myLookup.myCellRenderer.getTextIndent();
           int scrollBarWidth = myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width;
-          int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().MAX_LOOKUP_WIDTH2);
+          int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().getMaxLookupWidth());
 
           Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
 
@@ -385,14 +385,14 @@ class LookupUiImpl implements LookupUi {
           if (!myLookup.myResizePending) {
             Dimension preferredSize = preferredLayoutSize(null);
             if (preferredSize.width != size.width) {
-              UISettings.getInstance().MAX_LOOKUP_WIDTH2 = Math.max(500, size.width);
+              UISettings.getInstance().setMaxLookupWidth(Math.max(500, size.width));
             }
 
             int listHeight = myList.getLastVisibleIndex() - myList.getFirstVisibleIndex() + 1;
             if (listHeight != myList.getModel().getSize() &&
                 listHeight != myList.getVisibleRowCount() &&
                 preferredSize.height != size.height) {
-              UISettings.getInstance().MAX_LOOKUP_LIST_HEIGHT = Math.max(5, listHeight);
+              UISettings.getInstance().setMaxLookupListHeight(Math.max(5, listHeight));
             }
           }
 
@@ -504,21 +504,20 @@ class LookupUiImpl implements LookupUi {
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(createSortingAction(true));
       group.add(createSortingAction(false));
-      JBPopupFactory.getInstance()
-        .createActionGroupPopup("Change sorting", group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
+      JBPopupFactory.getInstance().createActionGroupPopup("Change Sorting", group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
         .showInBestPositionFor(context);
       return true;
     }
 
     private AnAction createSortingAction(boolean checked) {
-      boolean currentSetting = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
+      boolean currentSetting = UISettings.getInstance().getSortLookupElementsLexicographically();
       final boolean newSetting = checked == currentSetting;
       return new DumbAwareAction(newSetting ? "Sort lexicographically" : "Sort by relevance", null,
                                  checked ? PlatformIcons.CHECK_ICON : null) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CHANGE_SORTING);
-          UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = newSetting;
+          UISettings.getInstance().setSortLookupElementsLexicographically(newSetting);
           updateSorting();
         }
       };

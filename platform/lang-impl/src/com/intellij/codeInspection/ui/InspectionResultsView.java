@@ -781,10 +781,13 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       }
       //TODO Dmitrii Batkovich it's a hack (preview panel should be created during selection update)
       if (!hasUpdatingRequestors && mySplitter.getSecondComponent() == null) {
-        if (myTree.getSelectionModel().getSelectionPath() == null) {
-          TreeUtil.selectFirstNode(myTree);
+        final int count = myTree.getRoot().getChildCount();
+        if (count != 0) {
+          if (myTree.getSelectionCount() == 0) {
+            TreeUtil.selectFirstNode(myTree);
+          }
+          syncRightPanel();
         }
-        syncRightPanel();
       }
     };
     final Application app = ApplicationManager.getApplication();
@@ -816,18 +819,20 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         for (ScopeToolState state : myProvider.getTools(currentTools)) {
           InspectionToolWrapper toolWrapper = state.getTool();
           if (ReadAction.compute(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))) {
-            //ReadAction.run(
-            //  () ->
             addTool(toolWrapper,
                     profile.getErrorLevel(key, state.getScope(myProject), myProject),
                     isGroupedBySeverity,
-                    singleInspectionRun)
-            //)
-            ;
+                    singleInspectionRun);
           }
         }
       }
     }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myTree.getSelectionCount() == 0) {
+        TreeUtil.selectFirstNode(myTree);
+      }
+      syncRightPanel();
+    });
   }
 
 

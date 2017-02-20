@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,25 @@ import com.intellij.codeInspection.InspectionProfile
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.project.Project
 import com.intellij.profile.ProfileEx
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.xmlb.annotations.Transient
 
+const val DEFAULT_PROFILE_NAME = "Default"
+val BASE_PROFILE by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
+
 abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
   private var isProjectLevel: Boolean = false
+
+  @JvmField
+  @Transient
+  internal var schemeState: SchemeState? = null
+
+  override fun getSchemeState() = schemeState
 
   @Transient
   fun isProjectLevel() = isProjectLevel
@@ -46,4 +58,48 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       val profileManager = profileManager
       return PathMacroManager.getInstance((profileManager as? ProjectInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
     }
+
+  override fun toString() = name
+
+  override fun equals(other: Any?) = super.equals(other) && (other as NewInspectionProfile).profileManager === profileManager
+
+  /**
+   * If you need to enable multiple tools, please use [.modifyProfile]
+   */
+  @JvmOverloads
+  fun setToolEnabled(toolShortName: String, enabled: Boolean, project: Project? = null) {
+    val tools = getTools(toolShortName, project ?: (profileManager as? ProjectInspectionProfileManager)?.project)
+    if (enabled) {
+      if (tools.isEnabled && tools.defaultState.isEnabled) {
+        return
+      }
+
+      tools.isEnabled = true
+      tools.defaultState.isEnabled = true
+      schemeState = SchemeState.POSSIBLY_CHANGED
+    }
+    else {
+      tools.isEnabled = false
+      if (tools.nonDefaultTools == null) {
+        tools.defaultState.isEnabled = false
+      }
+      schemeState = SchemeState.POSSIBLY_CHANGED
+    }
+
+    profileManager.fireProfileChanged(this as InspectionProfileImpl)
+  }
+
+  fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"$name\"")
+
+  abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
+}
+
+fun createSimple(name: String, project: Project, toolWrappers: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {
+  val profile = InspectionProfileImpl(name, object : InspectionToolRegistrar() {
+    override fun createTools() = toolWrappers
+  }, InspectionProfileManager.getInstance() as BaseInspectionProfileManager)
+  for (toolWrapper in toolWrappers) {
+    profile.enableTool(toolWrapper.shortName, project)
+  }
+  return profile
 }

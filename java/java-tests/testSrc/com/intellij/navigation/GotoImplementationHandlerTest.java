@@ -249,6 +249,27 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals("A", aClass.getName());
   }
 
+  public void testMethodImplementationsOnTypeVariable() throws Exception {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "interface I {}\n" +
+                                                          "interface Im {\n" +
+                                                          "    void m();\n" +
+                                                          "}\n" +
+                                                          "class Im1 implements Im {\n" +
+                                                          "    public void m() {}\n" +
+                                                          "}\n" +
+                                                          "class Im2 implements Im {\n" +
+                                                          "    public void m() {}\n" +
+                                                          "}\n" +
+                                                          "class JavaClass<T extends K, K extends I & Im> {\n" +
+                                                          "    void  a(T t){\n" +
+                                                          "        t.<caret>m();\n" +
+                                                          "    }\n" +
+                                                          "}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    PsiElement[] targets = getTargets(file);
+    assertSize(2, targets);
+  }
+
   public void testStaticMethodReference() {
     PsiFile file = myFixture.addFileToProject("Foo.java",
                                                           "class C {\n" +
@@ -259,6 +280,18 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     final PsiElement[] impls = getTargets(file);
     assertEquals(1, impls.length);
+  }
+
+  public void testPrivateClassInheritors() {
+    PsiFile file = myFixture.addFileToProject("Foo.java",
+                                                          "class C {\n" +
+                                                          "  private static class Pr<caret>ivate {}\n" +
+                                                          "  public static class Public extends Private {}" +
+                                                          "}");
+    myFixture.addClass("class Inheritor extends C.Public {}");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    assertSize(2, getTargets(file));
   }
 
   private PsiElement[] getTargets(PsiFile file) {

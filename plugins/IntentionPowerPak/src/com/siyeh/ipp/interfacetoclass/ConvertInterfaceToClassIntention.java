@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 Bas Leijdekkers
+ * Copyright 2006-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.siyeh.ipp.interfacetoclass;
 
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -25,11 +28,8 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
@@ -37,11 +37,17 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
 
 public class ConvertInterfaceToClassIntention extends Intention {
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 
   private static void changeInterfaceToClass(PsiClass anInterface) throws IncorrectOperationException {
     final PsiIdentifier nameIdentifier = anInterface.getNameIdentifier();
@@ -105,24 +111,23 @@ public class ConvertInterfaceToClassIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiClass anInterface = (PsiClass)element.getParent();
     final SearchScope searchScope = anInterface.getUseScope();
-    final Query<PsiClass> query = ClassInheritorsSearch.search(anInterface, searchScope, false);
+    final Collection<PsiClass> inheritors = ClassInheritorsSearch.search(anInterface, searchScope, false).findAll();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    query.forEach(aClass -> {
+    inheritors.forEach(aClass -> {
       final PsiReferenceList extendsList = aClass.getExtendsList();
       if (extendsList == null) {
-        return true;
+        return;
       }
       final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
       if (referenceElements.length > 0) {
         final PsiElement target = referenceElements[0].resolve();
-        if (target != null) {
+        if (target instanceof PsiClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass)target).getQualifiedName())) {
           conflicts.putValue(aClass, IntentionPowerPackBundle.message(
             "0.already.extends.1.and.will.not.compile.after.converting.2.to.a.class",
             RefactoringUIUtil.getDescription(aClass, true), RefactoringUIUtil.getDescription(target, true),
             RefactoringUIUtil.getDescription(anInterface, false)));
         }
       }
-      return true;
     });
 
     final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(anInterface, searchScope).findFirst();
@@ -135,25 +140,31 @@ public class ConvertInterfaceToClassIntention extends Intention {
     if (conflicts.isEmpty()) {
       conflictsDialogOK = true;
     } else {
-      if (getApplication().isUnitTestMode()) {
+      final Application application = ApplicationManager.getApplication();
+      if (application.isUnitTestMode()) {
         throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
       }
-      final ConflictsDialog conflictsDialog = new ConflictsDialog(anInterface.getProject(), conflicts,
-                                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> convertInterfaceToClass(anInterface)));
+      final ConflictsDialog conflictsDialog =
+        new ConflictsDialog(anInterface.getProject(), conflicts, () -> convertInterfaceToClass(anInterface, inheritors));
       conflictsDialogOK = conflictsDialog.showAndGet();
     }
     if (conflictsDialogOK) {
-      convertInterfaceToClass(anInterface);
+      convertInterfaceToClass(anInterface, inheritors);
     }
   }
 
-  private static void convertInterfaceToClass(PsiClass anInterface) {
-    final boolean success = moveSubClassImplementsToExtends(anInterface);
-    if (!success) {
+  private static void convertInterfaceToClass(PsiClass anInterface, Collection<PsiClass> inheritors) {
+    final List<PsiClass> prepare = new ArrayList<>();
+    prepare.add(anInterface);
+    prepare.addAll(inheritors);
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(prepare)) {
       return;
     }
-    changeInterfaceToClass(anInterface);
-    moveExtendsToImplements(anInterface);
+    WriteAction.run(() -> {
+      moveSubClassImplementsToExtends(anInterface, inheritors);
+      changeInterfaceToClass(anInterface);
+      moveExtendsToImplements(anInterface);
+    });
   }
 
   @Override
@@ -177,18 +188,9 @@ public class ConvertInterfaceToClassIntention extends Intention {
     }
   }
 
-  private static boolean moveSubClassImplementsToExtends(PsiClass oldInterface) throws IncorrectOperationException {
-    final Project project = oldInterface.getProject();
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory elementFactory = psiFacade.getElementFactory();
-    final PsiJavaCodeReferenceElement oldInterfaceReference = elementFactory.createClassReferenceElement(oldInterface);
-    final SearchScope searchScope = oldInterface.getUseScope();
-    final Query<PsiClass> query = ClassInheritorsSearch.search(oldInterface, searchScope, false);
-    final Collection<PsiClass> inheritors = query.findAll();
-    final boolean success = CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, inheritors, false);
-    if (!success) {
-      return false;
-    }
+  private static void moveSubClassImplementsToExtends(PsiClass oldInterface, Collection<PsiClass> inheritors) {
+    final PsiJavaCodeReferenceElement oldInterfaceReference =
+      JavaPsiFacade.getElementFactory(oldInterface.getProject()).createClassReferenceElement(oldInterface);
     for (PsiClass inheritor : inheritors) {
       final PsiReferenceList implementsList = inheritor.getImplementsList();
       final PsiReferenceList extendsList = inheritor.getExtendsList();
@@ -196,7 +198,6 @@ public class ConvertInterfaceToClassIntention extends Intention {
         moveReference(implementsList, extendsList, oldInterfaceReference);
       }
     }
-    return true;
   }
 
   private static void moveReference(@NotNull PsiReferenceList source, @Nullable PsiReferenceList target,
@@ -207,6 +208,13 @@ public class ConvertInterfaceToClassIntention extends Intention {
       final String implementsReferenceQualifiedName = implementsReference.getQualifiedName();
       if (qualifiedName.equals(implementsReferenceQualifiedName)) {
         if (target != null) {
+          final PsiJavaCodeReferenceElement[] referenceElements = target.getReferenceElements();
+          if (referenceElements.length > 0) {
+            final PsiElement aClass = referenceElements[0].resolve();
+            if (aClass instanceof PsiClass && CommonClassNames.JAVA_LANG_OBJECT.equals(((PsiClass) aClass).getQualifiedName())) {
+              referenceElements[0].delete();
+            }
+          }
           target.add(implementsReference);
         }
         implementsReference.delete();

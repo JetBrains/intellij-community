@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
@@ -62,7 +63,7 @@ import java.util.Iterator;
 import java.util.List;
 
 class ApplyPatchViewer implements DataProvider, Disposable {
-  public static final Logger LOG = Logger.getInstance(ApplyPatchViewer.class);
+  private static final Logger LOG = Logger.getInstance(ApplyPatchViewer.class);
 
   @Nullable private final Project myProject;
   @NotNull private final DiffContext myContext;
@@ -285,10 +286,14 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   protected void initPatchViewer() {
     final Document outputDocument = myResultEditor.getDocument();
-    DiffUtil.executeWriteCommand(outputDocument, myProject, "Init merge content", () -> {
+    boolean success = DiffUtil.executeWriteCommand(outputDocument, myProject, "Init merge content", () -> {
       outputDocument.setText(myPatchRequest.getLocalContent());
       if (!isReadOnly()) DiffUtil.putNonundoableOperation(myProject, outputDocument);
     });
+    if (!success && !StringUtil.equals(outputDocument.getText(), myPatchRequest.getLocalContent())) {
+      myPanel.setErrorContent("Failed to display patch applier - local content was modified");
+      return;
+    }
 
 
     PatchChangeBuilder builder = new PatchChangeBuilder();
@@ -298,8 +303,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     Document patchDocument = myPatchEditor.getDocument();
     patchDocument.setText(builder.getPatchContent());
 
-    LineNumberConvertor convertor = builder.getLineConvertor();
-    myPatchEditor.getGutterComponentEx().setLineNumberConvertor(convertor.createConvertor1(), convertor.createConvertor2());
+    LineNumberConvertor convertor1 = builder.getLineConvertor1();
+    LineNumberConvertor convertor2 = builder.getLineConvertor2();
+    myPatchEditor.getGutterComponentEx().setLineNumberConvertor(convertor1.createConvertor(), convertor2.createConvertor());
 
     TIntArrayList lines = builder.getSeparatorLines();
     for (int i = 0; i < lines.size(); i++) {
@@ -401,9 +407,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myContentPanel.repaintDivider();
   }
 
-  public void executeCommand(@Nullable String commandName,
-                             @NotNull final Runnable task) {
-    myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, false, null, task);
+  public boolean executeCommand(@Nullable String commandName,
+                                @NotNull final Runnable task) {
+    return myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, false, null, task);
   }
 
   class MyModel extends MergeModelBase<ApplyPatchChange.State> {
@@ -741,8 +747,6 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   }
 
   private static class MyFoldingModel extends FoldingModelSupport {
-    private final MyPaintable myPaintable = new MyPaintable(0, 1);
-
     public MyFoldingModel(@NotNull EditorEx editor, @NotNull Disposable disposable) {
       super(new EditorEx[]{editor}, disposable);
     }

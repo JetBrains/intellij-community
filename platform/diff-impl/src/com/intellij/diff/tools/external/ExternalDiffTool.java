@@ -46,7 +46,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExternalDiffTool {
-  public static final Logger LOG = Logger.getInstance(ExternalDiffTool.class);
+  private static final Logger LOG = Logger.getInstance(ExternalDiffTool.class);
 
   public static boolean isDefault() {
     return ExternalDiffSettings.getInstance().isDiffEnabled() && ExternalDiffSettings.getInstance().isDiffDefault();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,7 @@ import java.util.concurrent.TimeUnit;
   name = "StatisticsApplicationUsages",
   storages = @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED)
 )
-public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence
-  implements ApplicationComponent, PersistentStateComponent<Element> {
+public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence implements ApplicationComponentAdapter, PersistentStateComponent<Element> {
   private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
 
   private static final String TOKENIZER = ",";
@@ -157,15 +156,8 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ApplicationStatisticsPersistenceComponent";
-  }
-
-  @Override
   public void initComponent() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         persistOpenedProjects();
@@ -193,9 +185,5 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       UsagesCollector.doPersistProjectUsages(project);
     }
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 }

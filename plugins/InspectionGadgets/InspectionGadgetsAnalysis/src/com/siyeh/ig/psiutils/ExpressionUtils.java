@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 Bas Leijdekkers
+ * Copyright 2005-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ConstantExpressionUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -111,6 +112,7 @@ public class ExpressionUtils {
            field.hasModifierProperty(PsiModifier.FINAL);
   }
 
+  @Contract("null -> false")
   public static boolean isEvaluatedAtCompileTime(@Nullable PsiExpression expression) {
     if (expression instanceof PsiLiteralExpression) {
       return true;
@@ -428,32 +430,6 @@ public class ExpressionUtils {
     return false;
   }
 
-  public static boolean isZeroLengthArrayConstruction(
-    @Nullable PsiExpression expression) {
-    if (!(expression instanceof PsiNewExpression)) {
-      return false;
-    }
-    final PsiNewExpression newExpression = (PsiNewExpression)expression;
-    final PsiExpression[] dimensions = newExpression.getArrayDimensions();
-    if (dimensions.length == 0) {
-      final PsiArrayInitializerExpression arrayInitializer =
-        newExpression.getArrayInitializer();
-      if (arrayInitializer == null) {
-        return false;
-      }
-      final PsiExpression[] initializers =
-        arrayInitializer.getInitializers();
-      return initializers.length == 0;
-    }
-    for (PsiExpression dimension : dimensions) {
-      final String dimensionText = dimension.getText();
-      if (!"0".equals(dimensionText)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   public static boolean isStringConcatenationOperand(PsiExpression expression) {
     final PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiPolyadicExpression)) {
@@ -611,6 +587,7 @@ public class ExpressionUtils {
     return JavaTokenType.MINUS.equals(tokenType);
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
     final PsiReferenceExpression referenceExpression = getReferenceExpressionFromNullComparison(expression, equals);
@@ -618,6 +595,7 @@ public class ExpressionUtils {
     return target instanceof PsiVariable ? (PsiVariable)target : null;
   }
 
+  @Contract("null, _ -> null")
   @Nullable
   public static PsiReferenceExpression getReferenceExpressionFromNullComparison(PsiExpression expression, boolean equals) {
     expression = ParenthesesUtils.stripParentheses(expression);
@@ -650,6 +628,24 @@ public class ExpressionUtils {
     comparedToNull = ParenthesesUtils.stripParentheses(comparedToNull);
 
     return comparedToNull instanceof PsiReferenceExpression ? (PsiReferenceExpression)comparedToNull : null;
+  }
+
+  /**
+   * Returns the expression compared with null if the supplied {@link PsiBinaryExpression} is null check (either with {@code ==}
+   * or with {@code !=}). Returns null otherwise.
+   *
+   * @param binOp binary expression to extract the value compared with null from
+   * @return value compared with null
+   */
+  @Nullable
+  public static PsiExpression getValueComparedWithNull(@NotNull PsiBinaryExpression binOp) {
+    final IElementType tokenType = binOp.getOperationTokenType();
+    if(!tokenType.equals(JavaTokenType.EQEQ) && !tokenType.equals(JavaTokenType.NE)) return null;
+    final PsiExpression left = binOp.getLOperand();
+    final PsiExpression right = binOp.getROperand();
+    if(isNullLiteral(right)) return left;
+    if(isNullLiteral(left)) return right;
+    return null;
   }
 
   public static boolean isConcatenation(PsiElement element) {
@@ -689,19 +685,22 @@ public class ExpressionUtils {
    * Returns true if the expression can be moved to earlier point in program order without possible semantic change or
    * notable performance handicap. Examples of simple expressions are:
    * - literal (number, char, string, class literal, true, false, null)
+   * - compile-time constant
    * - this
    * - variable/parameter read
    * - static field read
    * - instance field read having 'this' as qualifier
    *
-   * @param expression an expression to test
+   * @param expression an expression to test (must be valid expression)
    * @return true if the supplied expression is simple
    */
   @Contract("null -> false")
   public static boolean isSimpleExpression(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiLiteralExpression ||
         expression instanceof PsiThisExpression ||
-        expression instanceof PsiClassObjectAccessExpression) {
+        expression instanceof PsiClassObjectAccessExpression ||
+        isEvaluatedAtCompileTime(expression)) {
       return true;
     }
     if(expression instanceof PsiReferenceExpression) {
@@ -815,9 +814,151 @@ public class ExpressionUtils {
     return true;
   }
 
+  /**
+   * If any operand of supplied binary expression refers to the supplied variable, returns other operand;
+   * otherwise returns null.
+   *
+   * @param binOp {@link PsiBinaryExpression} to extract the operand from
+   * @param variable variable to check against
+   * @return operand or null
+   */
+  @Contract("null, _ -> null; !null, null -> null")
+  public static PsiExpression getOtherOperand(@Nullable PsiBinaryExpression binOp, @Nullable PsiVariable variable) {
+    if(binOp == null || variable == null) return null;
+    if(isReferenceTo(binOp.getLOperand(), variable)) return binOp.getROperand();
+    if(isReferenceTo(binOp.getROperand(), variable)) return binOp.getLOperand();
+    return null;
+  }
+
   @Contract("null, _ -> false; _, null -> false")
   public static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(variable);
+  }
+
+  /**
+   * Returns a method call expression for the supplied qualifier
+   *
+   * @param qualifier for method call
+   * @return a method call expression or null if the supplied expression is not a method call qualifier
+   */
+  @Contract(value = "null -> null", pure = true)
+  public static PsiMethodCallExpression getCallForQualifier(PsiExpression qualifier) {
+    if(qualifier == null) return null;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
+    if(parent instanceof PsiReferenceExpression) {
+      PsiReferenceExpression methodExpression = (PsiReferenceExpression)parent;
+      if(PsiTreeUtil.isAncestor(methodExpression.getQualifierExpression(), qualifier, false)) {
+        PsiElement gParent = methodExpression.getParent();
+        if (gParent instanceof PsiMethodCallExpression) {
+          return (PsiMethodCallExpression)gParent;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Returns an array expression from array length retrieval expression
+   * @param expression expression to extract an array expression from
+   * @return an array expression or null if supplied expression is not array length retrieval
+   */
+  @Nullable
+  public static PsiExpression getArrayFromLengthExpression(PsiExpression expression) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (!(expression instanceof PsiReferenceExpression)) return null;
+    final PsiReferenceExpression reference =
+      (PsiReferenceExpression)expression;
+    final String referenceName = reference.getReferenceName();
+    if (!HardcodedMethodConstants.LENGTH.equals(referenceName)) return null;
+    final PsiExpression qualifier = reference.getQualifierExpression();
+    if (qualifier == null) return null;
+    final PsiType type = qualifier.getType();
+    if (type == null || type.getArrayDimensions() <= 0) return null;
+    return qualifier;
+  }
+
+  /**
+   * Returns a qualifier for reference or creates a corresponding {@link PsiThisExpression} statement if
+   * a qualifier is null
+   *
+   * @param ref a reference expression to get a qualifier from
+   * @return a qualifier or created (non-physical) {@link PsiThisExpression}.
+   */
+  @NotNull
+  public static PsiExpression getQualifierOrThis(@NotNull PsiReferenceExpression ref) {
+    PsiExpression qualifier = ref.getQualifierExpression();
+    if (qualifier != null) return qualifier;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
+    PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+    if (member != null) {
+      PsiClass memberClass = member.getContainingClass();
+      if (memberClass != null) {
+        PsiClass containingClass = ClassUtils.getContainingClass(ref);
+        if (containingClass == null) {
+          containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
+        }
+        if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+          containingClass = ClassUtils.getContainingClass(containingClass);
+          while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+            containingClass = ClassUtils.getContainingClass(containingClass);
+          }
+          if (containingClass != null) {
+            return factory.createExpressionFromText(containingClass.getQualifiedName() + "." + PsiKeyword.THIS, ref);
+          }
+        }
+      }
+    }
+    return factory.createExpressionFromText(PsiKeyword.THIS, ref);
+  }
+
+  /**
+   * Bind a reference element to a new name. The qualifier and type arguments (if present) remain the same
+   *
+   * @param ref reference element to rename
+   * @param newName new name
+   */
+  public static void bindReferenceTo(@NotNull PsiReferenceExpression ref, @NotNull String newName) {
+    PsiElement nameElement = ref.getReferenceNameElement();
+    if(nameElement == null) {
+      throw new IllegalStateException("Name element is null: "+ref);
+    }
+    if(newName.equals(nameElement.getText())) return;
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(ref.getProject()).createIdentifier(newName);
+    nameElement.replace(identifier);
+  }
+
+  /**
+   * Bind method call to a new name. Everything else like qualifier, type arguments or call arguments remain the same.
+   *
+   * @param call to rename
+   * @param newName new name
+   */
+  public static void bindCallTo(@NotNull PsiMethodCallExpression call, @NotNull String newName) {
+    bindReferenceTo(call.getMethodExpression(), newName);
+  }
+
+  /**
+   * Returns the expression itself (probably with stripped parentheses) or the corresponding value if the expression is a local variable
+   * reference which is initialized and not used anywhere else
+   *
+   * @param expression
+   * @return a resolved expression or expression itself
+   */
+  @Contract("null -> null")
+  @Nullable
+  public static PsiExpression resolveExpression(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiReferenceExpression) {
+      PsiReferenceExpression reference = (PsiReferenceExpression)expression;
+      PsiLocalVariable variable = ObjectUtils.tryCast(reference.resolve(), PsiLocalVariable.class);
+      if (variable != null) {
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null && ReferencesSearch.search(variable).forEach(ref -> ref == reference)) {
+          return initializer;
+        }
+      }
+    }
+    return expression;
   }
 }

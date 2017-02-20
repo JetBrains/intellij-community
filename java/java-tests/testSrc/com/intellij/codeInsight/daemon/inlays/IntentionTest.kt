@@ -16,13 +16,36 @@
 package com.intellij.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
-import com.intellij.openapi.editor.Inlay
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
+import org.jdom.Element
 
-class BlackListMethodIntentionTest: InlayParameterHintsTest() {
+class BlackListMethodIntentionTest : LightCodeInsightFixtureTestCase() {
+
+  private var isParamHintsEnabledBefore = false
+  private lateinit var stateBefore: Element
+  
+  override fun setUp() {
+    super.setUp()
+
+    val settings = EditorSettingsExternalizable.getInstance()
+    isParamHintsEnabledBefore = settings.isShowParameterNameHints
+    settings.isShowParameterNameHints = true
+
+    stateBefore = ParameterNameHintsSettings.getInstance().state
+  }
+
+  override fun tearDown() {
+    EditorSettingsExternalizable.getInstance().isShowParameterNameHints = isParamHintsEnabledBefore
+    ParameterNameHintsSettings.getInstance().loadState(stateBefore)
+
+    super.tearDown()
+  }
   
   fun `test add to blacklist by alt enter`() {
-    configureFile("a.java", """
+    myFixture.configureByText("a.java", """
 class Test {
   void test() {
     check(<caret>100);
@@ -30,18 +53,21 @@ class Test {
   void check(int isShow) {}
 }
 """)
+    myFixture.doHighlighting()
 
-    val before = onLineStartingWith("check").inlays[0].getHintText()
-    assertThat(before).isNotEmpty()
+    val caretOffset = editor.caretModel.offset
+    val before = editor.inlayModel.getInlineElementsInRange(caretOffset, caretOffset)
+    assertThat(before).isNotEmpty
     
     val intention = myFixture.getAvailableIntention("Do not show hints for current method")
     myFixture.launchAction(intention!!)
     myFixture.doHighlighting()
-    
-    val after = onLineStartingWith("check").inlays[0].getHintText()
-    assertThat(after).isNull()
+
+    val after = editor.inlayModel.getInlineElementsInRange(caretOffset, caretOffset)
+    assertThat(after).hasSize(1)
+
+    val text = ParameterHintsPresentationManager.getInstance().getHintText(after[0])
+    assertThat(text).isNull()
   }
-
-  private fun Inlay.getHintText() = ParameterHintsPresentationManager.getInstance().getHintText(this)
-
+  
 }

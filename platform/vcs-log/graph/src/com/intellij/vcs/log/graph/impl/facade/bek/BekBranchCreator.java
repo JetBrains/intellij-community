@@ -34,7 +34,6 @@ class BekBranchCreator {
   @NotNull private final GraphLayoutImpl myGraphLayout;
   @NotNull private final Flags myDoneNodes;
 
-  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
   @NotNull private final BekEdgeRestrictions myEdgeRestrictions = new BekEdgeRestrictions();
 
   public BekBranchCreator(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout) {
@@ -63,7 +62,7 @@ class BekBranchCreator {
 
     final int startLayout = myGraphLayout.getLayoutIndex(headNode);
 
-    myDfsUtil.nodeDfsIterator(headNode, new DfsUtil.NextNode() {
+    DfsUtil.walk(headNode, new DfsUtil.NextNode() {
       @Override
       public int fun(int currentNode) {
         int currentLayout = myGraphLayout.getLayoutIndex(currentNode);

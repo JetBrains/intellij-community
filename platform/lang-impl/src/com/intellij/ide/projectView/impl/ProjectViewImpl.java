@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourAutoscrollFromSourceDefaults = false;
   
   private boolean myFoldersAlwaysOnTop = true;
-  
 
   private String myCurrentViewId;
   private String myCurrentViewSubId;
@@ -197,7 +196,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myFileEditorManager = fileEditorManager;
 
     myConnection = project.getMessageBus().connect();
-    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+    myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         refresh();
@@ -323,12 +322,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           StringUtil.equals(subId, mySavedPaneSubId)) {
         selectID = id;
         selectSubID = subId;
+        mySavedPaneId = null;
+        mySavedPaneSubId = null;
         break;
       }
     }
 
     // saved view not found (plugin disabled, ID changed etc.) - select first available view...
-    if (selectID == null && contents.length > 0) {
+    if (selectID == null && contents.length > 0 && myCurrentViewId == null) {
       Content content = contents[0];
       selectID = content.getUserData(ID_KEY);
       selectSubID = content.getUserData(SUB_ID_KEY);
@@ -336,8 +337,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     if (selectID != null) {
       changeView(selectID, selectSubID);
-      mySavedPaneId = null;
-      mySavedPaneSubId = null;
     }
 
     myUninitializedPanes.clear();
@@ -411,7 +410,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     myAutoScrollToSourceHandler.install(newPane.myTree);
 
-    IdeFocusManager.getInstance(myProject).requestFocus(newPane.getComponentToFocus(), false);
+    IdeFocusManager.getInstance(myProject).requestFocusInProject(newPane.getComponentToFocus(), myProject);
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null && newSubId != null) {
@@ -584,9 +583,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                                             ourAbbreviatePackagesDefaults) {
         @Override
         public boolean isSelected(AnActionEvent event) {
-          return super.isSelected(event) && isAbbreviatePackageNames(myCurrentViewId);
+          return isFlattenPackages(myCurrentViewId) && isAbbreviatePackageNames(myCurrentViewId);
         }
 
+        @Override
+        public void setSelected(AnActionEvent event, boolean flag) {
+          if (isGlobalOptions()) {
+            setAbbreviatePackageNames(flag, myCurrentViewId);
+          }
+          setPaneOption(myOptionsMap, flag, myCurrentViewId, true);
+        }
 
         @Override
         public void update(AnActionEvent e) {
@@ -772,7 +778,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
 
   private class PaneOptionAction extends ToggleAction implements DumbAware {
-    private final Map<String, Boolean> myOptionsMap;
+    final Map<String, Boolean> myOptionsMap;
     private final boolean myOptionDefaultValue;
 
     PaneOptionAction(@NotNull Map<String, Boolean> optionsMap,
@@ -842,7 +848,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public ActionCallback changeViewCB(@NotNull String viewId, String subId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
-    LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId);
+    LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId + "; project: " + myProject);
     if (!viewId.equals(getCurrentViewId())
         || subId != null && !subId.equals(pane.getSubId())) {
       for (Content content : getContentManager().getContents()) {
@@ -1376,7 +1382,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return getGlobalOptions().getAutoscrollToSource();
     }
 
-    return getPaneOptionValue(myAutoscrollToSource, paneId, UISettings.getInstance().DEFAULT_AUTOSCROLL_TO_SOURCE);
+    return getPaneOptionValue(myAutoscrollToSource, paneId, UISettings.getInstance().getDefaultAutoScrollToSource());
   }
 
   public void setAutoscrollToSource(boolean autoscrollMode, String paneId) {
@@ -1871,7 +1877,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setVisible(getCurrentProjectViewPane() != null);
+      AbstractProjectViewPane pane = getCurrentProjectViewPane();
+      presentation.setVisible(pane != null && pane.supportsSortByType());
     }
   }
 
@@ -1894,7 +1901,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public void update(final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(getCurrentProjectViewPane() != null);
+      AbstractProjectViewPane pane = getCurrentProjectViewPane();
+      presentation.setEnabledAndVisible(pane != null && pane.supportsFoldersAlwaysOnTop());
     }
   }
 
@@ -1913,7 +1921,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public Collection<String> getPaneIds() {
-    return myId2Pane.keySet();
+    return Collections.unmodifiableCollection(myId2Pane.keySet());
   }
 
   @NotNull

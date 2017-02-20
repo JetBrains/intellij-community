@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,9 @@ import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
@@ -40,14 +37,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiManager
-import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.Alarm
 import com.intellij.util.io.URLUtil
-import java.awt.GraphicsEnvironment
-import java.util.concurrent.atomic.AtomicInteger
 
 class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -133,39 +126,6 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000, { decompiler.getText(file) }).cpuBound().assertTiming()
   }
 
-  fun testCancellation() {
-    if (GraphicsEnvironment.isHeadless()) {
-      System.err.println("** skipped in headless env.")
-      return
-    }
-
-    val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JComponent.class")
-    val decompiler = ClassFileDecompilers.find(file) as IdeaDecompiler
-
-    assertNull(FileDocumentManager.getInstance().getCachedDocument(file))
-    assertNull(decompiler.getProgress(file))
-
-    val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, testRootDisposable)
-    val counter = AtomicInteger(0)
-    alarm.addRequest(object : Runnable {
-      override fun run() {
-        counter.incrementAndGet()
-        val progress = decompiler.getProgress(file)
-        when (progress) {
-          null -> alarm.addRequest(this, 100, ModalityState.any())
-          else -> progress.cancel()
-        }
-      }
-    }, 500, ModalityState.any())
-
-    try {
-      FileDocumentManager.getInstance().getDocument(file)
-      alarm.cancelAllRequests()
-      fail("should have been cancelled; alarm fired ${counter.get()} time(s)")
-    }
-    catch (ignored: ProcessCanceledException) { }
-  }
-
   fun testStructureView() {
     val file = getTestFile("StructureView.class")
     file.parent.children ; file.parent.refresh(false, true)  // inner classes
@@ -219,11 +179,11 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
         val clsFile = psiManager.findFile(file)!!
         val mirror = (clsFile as ClsFileImpl).mirror
         val decompiled = mirror.text
-        assertTrue(file.path, decompiled.startsWith("${IdeaDecompiler.BANNER}") || file.name == "package-info.class")
+        assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name == "package-info.class")
 
         // check that no mapped line number is on an empty line
         val prefix = "// "
-        decompiled.split("\n").dropLastWhile { it.isEmpty() }.toTypedArray().forEach { s ->
+        decompiled.split("\n").dropLastWhile(String::isEmpty).toTypedArray().forEach { s ->
           val pos = s.indexOf(prefix)
           if (pos == 0 && prefix.length < s.length && Character.isDigit(s[prefix.length])) {
             fail("Incorrect line mapping in file " + file.path + " line: " + s)

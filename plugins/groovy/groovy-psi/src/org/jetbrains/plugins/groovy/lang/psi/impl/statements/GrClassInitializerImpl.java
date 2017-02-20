@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -32,6 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+
+import javax.swing.*;
 
 /**
  * @author ilyas
@@ -95,5 +100,11 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
   @Override
   public PsiCodeBlock getBody() {
     return PsiImplUtil.getOrCreatePsiCodeBlock(getBlock());
+  }
+
+  @Nullable
+  @Override
+  protected Icon getElementIcon(int flags) {
+    return ElementPresentationUtil.createLayeredIcon(JetgroovyIcons.Groovy.ClassInitializer, this, false);
   }
 }

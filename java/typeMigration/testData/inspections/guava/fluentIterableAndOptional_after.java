@@ -15,7 +15,7 @@ public class Main18 {
 
   class B {
     Stream<String> getFIterable() {
-      return new ArrayList<String>().stream().filter(String.class::isInstance);
+      return new ArrayList<String>().stream().filter(String.class::isInstance).map(String.class::cast);
     }
   }
 

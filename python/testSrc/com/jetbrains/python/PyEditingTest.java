@@ -463,6 +463,31 @@ public class PyEditingTest extends PyTestCase {
     myFixture.checkResult(after);
   }
 
+  // PY-21478
+  public void testContinuationIndentForFunctionArguments() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS = true;
+    doTestEnter("func(<caret>)",
+                "func(\n" +
+                "        <caret>\n" +
+                ")");
+  }
+
+  // PY-21840
+  public void testEditInjectedRegexpFragmentWithLongUnicodeEscape() {
+    myFixture.configureByText(PythonFileType.INSTANCE,
+                              "import re\n" +
+                              "re.compile(ur'\\U00010000<caret>')");
+    doTyping("t");
+    myFixture.checkResult("import re\n" +
+                          "re.compile(ur'\\U00010000t')");
+  }
+
+  // PY-21697
+  public void testTripleQuotesInsideTripleQuotedStringLiteral() {
+    // TODO an extra quote is inserted due to PY-21993
+    doTypingTest("'");
+  }
+
   private String doTestTyping(final String text, final int offset, final char character) {
     final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
       @Override

@@ -30,8 +30,11 @@ import java.util.Set;
  */
 public class PathUtilRt {
   @NotNull
-  public static String getFileName(@NotNull String path) {
-    if (path.length() == 0) return "";
+  public static String getFileName(@Nullable String path) {
+    if (path == null || path.length() == 0) {
+      return "";
+    }
+
     char c = path.charAt(path.length() - 1);
     int end = c == '/' || c == '\\' ? path.length() - 1 : path.length();
     int start = Math.max(path.lastIndexOf('/', end - 1), path.lastIndexOf('\\', end - 1)) + 1;

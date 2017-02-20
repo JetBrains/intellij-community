@@ -79,7 +79,7 @@ public class CoreProjectLoader {
 
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
-      Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project).createTrackingSubstitutor());
+      Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project));
       Element libraryTable = DefaultStateSerializer.deserializeState(DirectoryStorageUtil.getCompositeState(data, new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
       ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
     }

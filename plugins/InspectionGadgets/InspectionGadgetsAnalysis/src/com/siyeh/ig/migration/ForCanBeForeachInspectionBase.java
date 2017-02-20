@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,11 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,39 +218,22 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     if (arguments.length != 0) {
       return false;
     }
-    final PsiExpression qualifier = initialMethodExpression.getQualifierExpression();
-    final PsiClass qualifierClass;
-    if (qualifier == null) {
-      qualifierClass = ClassUtils.getContainingClass(initialMethodExpression);
-      if (ignoreUntypedCollections) {
-        final PsiClassType type = (PsiClassType)variable.getType();
-        final PsiType[] parameters = type.getParameters();
-        if (parameters.length == 0) {
-          return false;
-        }
-      }
-    }
-    else {
-      final PsiType qualifierType = qualifier.getType();
-      if (!(qualifierType instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)qualifierType;
-      qualifierClass = classType.resolve();
-      if (ignoreUntypedCollections) {
-        final PsiClassType type = (PsiClassType)variable.getType();
-        final PsiType[] parameters = type.getParameters();
-        final PsiType[] parameters1 = classType.getParameters();
-        if (parameters.length == 0 && parameters1.length == 0) {
-          return false;
-        }
-      }
-    }
-    if (qualifierClass == null) {
+    final PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(initialMethodExpression);
+    final PsiType qualifierType = qualifier.getType();
+    if (!(qualifierType instanceof PsiClassType)) {
       return false;
     }
-    if (!InheritanceUtil.isInheritor(qualifierClass, CommonClassNames.JAVA_LANG_ITERABLE) &&
-        !InheritanceUtil.isInheritor(qualifierClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+    final PsiClassType classType = (PsiClassType)qualifierType;
+    final PsiClass qualifierClass = classType.resolve();
+    if (ignoreUntypedCollections) {
+      final PsiClassType type = (PsiClassType)variable.getType();
+      final PsiType[] parameters = type.getParameters();
+      final PsiType[] parameters1 = classType.getParameters();
+      if (parameters.length == 0 && parameters1.length == 0) {
+        return false;
+      }
+    }
+    if (!InheritanceUtil.isInheritor(qualifierClass, CommonClassNames.JAVA_LANG_ITERABLE)) {
       return false;
     }
     final PsiExpression condition = forStatement.getCondition();
@@ -288,8 +275,8 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     return visitor.isMethodCalled();
   }
 
-  private static boolean isHasNext(PsiExpression condition,
-                                   PsiVariable iterator) {
+  static boolean isHasNext(PsiExpression condition,
+                           PsiVariable iterator) {
     if (!(condition instanceof PsiMethodCallExpression)) {
       return false;
     }
@@ -347,7 +334,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     else {
       return null;
     }
-    if (!expressionIsArrayLengthLookup(referenceExpression)) {
+    if (ExpressionUtils.getArrayFromLengthExpression(referenceExpression) == null) {
       final PsiElement target = referenceExpression.resolve();
       if (secondDeclaredElement != null && !secondDeclaredElement.equals(target)) {
         return null;
@@ -366,7 +353,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
           return null;
         }
         referenceExpression = (PsiReferenceExpression)expression;
-        if (!expressionIsArrayLengthLookup(referenceExpression)) {
+        if (ExpressionUtils.getArrayFromLengthExpression(referenceExpression) == null) {
           return null;
         }
       }
@@ -503,25 +490,7 @@ public class ForCanBeForeachInspectionBase extends BaseInspection {
     return new Holder(variable);
   }
 
-  private static boolean expressionIsArrayLengthLookup(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiReferenceExpression reference =
-      (PsiReferenceExpression)expression;
-    final String referenceName = reference.getReferenceName();
-    if (!HardcodedMethodConstants.LENGTH.equals(referenceName)) {
-      return false;
-    }
-    final PsiExpression qualifier = reference.getQualifierExpression();
-    if (!(qualifier instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiType type = qualifier.getType();
-    return type != null && type.getArrayDimensions() > 0;
-  }
-
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {

@@ -43,7 +43,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.JBListWithHintProvider;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
@@ -61,7 +61,7 @@ import java.util.List;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#" + GotoTargetHandler.class.getName());
-  private static final PsiElementListCellRenderer ourDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
+  private final PsiElementListCellRenderer myDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
   private final DefaultListCellRenderer myActionElementRenderer = new ActionCellRenderer();
 
   @Override
@@ -123,12 +123,8 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     Collections.addAll(allElements, targets);
     allElements.addAll(additionalActions);
 
-    final JBListWithHintProvider list = new JBListWithHintProvider(new CollectionListModel<>(allElements)) {
-      @Override
-      protected PsiElement getPsiElementForHint(final Object selectedValue) {
-        return selectedValue instanceof PsiElement ? (PsiElement) selectedValue : null;
-      }
-    };
+    final JBList list = new JBList(new CollectionListModel<>(allElements));
+    HintUpdateSupply.installSimpleHintUpdateSupply(list);
 
     list.setFont(EditorUtil.getEditorFont());
     
@@ -188,7 +184,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
         return true;
       }).
       setCouldPin(popup1 -> {
-        usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), project));
+        usageView.set(FindUtil.showInUsageView(gotoData.source, gotoData.targets, getFindUsagesTitle(gotoData.source, name, gotoData.targets.length), gotoData.source.getProject()));
         popup1.cancel();
         return false;
       }).
@@ -213,24 +209,19 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  private static PsiElementListCellRenderer getRenderer(Object value,
-                                                        Map<Object, PsiElementListCellRenderer> targetsWithRenderers,
-                                                        GotoData gotoData) {
+  private PsiElementListCellRenderer getRenderer(Object value,
+                                                 Map<Object, PsiElementListCellRenderer> targetsWithRenderers,
+                                                 GotoData gotoData) {
     PsiElementListCellRenderer renderer = targetsWithRenderers.get(value);
     if (renderer == null) {
       renderer = gotoData.getRenderer(value);
     }
-    if (renderer != null) {
-      return renderer;
-    }
-    else {
-      return ourDefaultTargetElementRenderer;
-    }
+    return renderer != null ? renderer : myDefaultTargetElementRenderer;
   }
 
   @NotNull
-  protected static Comparator<PsiElement> createComparator(final Map<Object, PsiElementListCellRenderer> targetsWithRenderers,
-                                                           final GotoData gotoData) {
+  protected Comparator<PsiElement> createComparator(final Map<Object, PsiElementListCellRenderer> targetsWithRenderers,
+                                                    final GotoData gotoData) {
     return new Comparator<PsiElement>() {
       @Override
       public int compare(PsiElement o1, PsiElement o2) {
@@ -243,15 +234,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     };
   }
 
-  @NotNull
   public static PsiElementListCellRenderer createRenderer(@NotNull GotoData gotoData, @NotNull PsiElement eachTarget) {
     PsiElementListCellRenderer renderer = null;
     for (GotoTargetRendererProvider eachProvider : Extensions.getExtensions(GotoTargetRendererProvider.EP_NAME)) {
       renderer = eachProvider.getRenderer(eachTarget, gotoData);
       if (renderer != null) break;
-    }
-    if (renderer == null) {
-      renderer = ourDefaultTargetElementRenderer;
     }
     return renderer;
   }

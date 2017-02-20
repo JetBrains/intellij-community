@@ -20,18 +20,25 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a simple character class.
  */
-public interface RegExpSimpleClass extends RegExpAtom, RegExpClassElement, RegExpCharRange.Endpoint {
+public interface RegExpSimpleClass extends RegExpAtom, RegExpClassElement {
     enum Kind {
         /** . */  ANY,
-        /** \d */ DIGIT, /** \D */ NON_DIGIT,
-        /** \w */ WORD,  /** \W */ NON_WORD,
-        /** \s */ SPACE, /** \S */ NON_SPACE,
-        /** \h */ HORIZONTAL_SPACE, /** \H */ NON_HORIZONTAL_SPACE,
-        /** \v */ VERTICAL_SPACE,   /** \V */ NON_VERTICAL_SPACE,
-        /** \i */ XML_NAME_START,   /** \I */ NON_XML_NAME_START,
-        /** \c */ XML_NAME_PART,    /** \C */ NON_XML_NAME_PART,
+        /** \d */ DIGIT,
+        /** \D */ NON_DIGIT,
+        /** \w */ WORD,
+        /** \W */ NON_WORD,
+        /** \s */ SPACE,
+        /** \S */ NON_SPACE,
+        /** \h */ HORIZONTAL_SPACE,
+        /** \H */ NON_HORIZONTAL_SPACE,
+        /** \v */ VERTICAL_SPACE,
+        /** \V */ NON_VERTICAL_SPACE,
+        /** \i */ XML_NAME_START,
+        /** \I */ NON_XML_NAME_START,
+        /** \c */ XML_NAME_PART,
+        /** \C */ NON_XML_NAME_PART,
         /** \X */ UNICODE_GRAPHEME,
-        /** \R */ UNICODE_LINEBREAK
+        /** \R */ UNICODE_LINEBREAK,
     }
 
     @NotNull

@@ -50,6 +50,7 @@ public class TabPostFormatProcessor implements PostFormatProcessor {
     return source;
   }
 
+  @NotNull
   @Override
   public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     return doProcess(source, rangeToReformat, settings);
@@ -304,7 +305,7 @@ public class TabPostFormatProcessor implements PostFormatProcessor {
   interface Helper {
 
     /**
-     * @return    previous line indent space if current line is not the first one; <code>null</code> otherwise
+     * @return    previous line indent space if current line is not the first one; {@code null} otherwise
      */
     @Nullable CharSequence getPrevLineIndent();
     

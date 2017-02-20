@@ -60,9 +60,7 @@ public class IpnbJfxUtils {
                                                  "                }\n" +
                                                  "            });\n" +
                                                  "</script><script type=\"text/javascript\"\n" +
-                                                 " src=\"" +
-                                                 IpnbFileType.class.getResource("/MathJax/MathJax.js") +
-                                                 "?config=TeX-AMS_HTML-full\">\n" +
+                                                 " src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\">\n" +
                                                  " </script>" + ourBody;
   private static final String ourPrefix = ourStyle + ourBody;
   private static final String ourPostfix = "</div></body></html>";
@@ -102,6 +100,7 @@ public class IpnbJfxUtils {
       final BorderPane pane = new BorderPane(webView);
       final String prefix;
       if (hasMath) {
+
         prefix = String.format(ourMathJaxPrefix, width - 500, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
       }
       else {
@@ -149,7 +148,7 @@ public class IpnbJfxUtils {
     boolean single;
     int end = StringUtil.indexOf(source, "$");
     single = end + 1 >= source.length() || source.charAt(end + 1) != '$';
-    while (end > 0) {
+    while (end >= 0) {
       String substring = source.substring(start, end);
       if (start != 0) {
         result.append(escapeMath(inMath, single));

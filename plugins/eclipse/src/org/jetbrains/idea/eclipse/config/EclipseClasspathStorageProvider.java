@@ -111,7 +111,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
   }
 
   @Override
-  public void modulePathChanged(Module module, String path) {
+  public void modulePathChanged(@NotNull Module module) {
     final EclipseModuleManagerImpl moduleManager = EclipseModuleManagerImpl.getInstance(module);
     if (moduleManager != null) {
       moduleManager.setDocumentSet(null);

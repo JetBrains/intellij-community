@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.util.io.AbstractStringEnumerator;
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /*
  * @author max
  */
-public class SerializationManagerImpl extends SerializationManagerEx implements ApplicationComponent {
+public class SerializationManagerImpl extends SerializationManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.SerializationManagerImpl");
 
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean(false);
@@ -48,7 +48,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
       // we need to cache last id -> String mappings due to StringRefs and stubs indexing that initially creates stubs (doing enumerate on String)
       // and then index them (valueOf), also similar string items are expected to be enumerated during stubs processing
       myNameStorage = new PersistentStringEnumerator(myFile, true);
-      myStubSerializationHelper = new StubSerializationHelper(myNameStorage);
+      myStubSerializationHelper = new StubSerializationHelper(myNameStorage, this);
     }
     catch (IOException e) {
       nameStorageCrashed();
@@ -58,7 +58,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     }
     finally {
       registerSerializer(PsiFileStubImpl.TYPE);
-      ShutDownTracker.getInstance().registerShutdownTask(() -> performShutdown());
+      ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     }
   }
 
@@ -78,7 +78,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
 
         IOUtil.deleteAllFilesStartingWith(myFile);
         myNameStorage = new PersistentStringEnumerator(myFile, true);
-        myStubSerializationHelper = new StubSerializationHelper(myNameStorage);
+        myStubSerializationHelper = new StubSerializationHelper(myNameStorage, this);
         for (ObjectStubSerializer serializer : myAllSerializers) {
           myStubSerializationHelper.assignId(serializer);
         }
@@ -113,17 +113,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "PSI.SerializationManager";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     performShutdown();
   }
 

@@ -25,10 +25,7 @@ public interface NonCancelableSection {
   void done();
 
   @NotNull
-  NonCancelableSection EMPTY = new NonCancelableSection() {
-    @Override
-    public void done() {
-      // do nothing
-    }
+  NonCancelableSection EMPTY = () -> {
+    // do nothing
   };
 }

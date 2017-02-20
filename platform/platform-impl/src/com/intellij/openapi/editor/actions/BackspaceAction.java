@@ -31,7 +31,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class BackspaceAction extends TextComponentEditorAction {
@@ -89,7 +89,7 @@ public class BackspaceAction extends TextComponentEditorAction {
           editor.getCaretModel().moveToOffset(region.getStartOffset());
         }
         else {
-          document.deleteString(offset - 1, offset);
+          document.deleteString(DocumentUtil.getPreviousCodePointOffset(document, offset), offset);
         }
       }
     }

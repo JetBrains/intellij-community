@@ -495,6 +495,14 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void _testAssignabilityOfStandaloneExpressionsDuringApplicabilityCheck() throws Exception {
+    doTest();
+  }
+
+  public void testRecursiveTypeWithCapture() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(false);
   }

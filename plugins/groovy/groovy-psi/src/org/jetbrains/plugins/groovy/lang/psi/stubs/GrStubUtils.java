@@ -38,12 +38,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListUtil.hasMaskModifier;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -153,10 +154,10 @@ public class GrStubUtils {
       return false;
     }
     int mask = ((GrModifierListStub)type).getModifiersFlags();
-    if (GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.PRIVATE, mask)) {
+    if (hasMaskModifier(mask, PsiModifier.PRIVATE)) {
       return false;
     }
-    if (GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.STATIC, mask)) {
+    if (hasMaskModifier(mask, PsiModifier.STATIC)) {
       return true;
     }
 

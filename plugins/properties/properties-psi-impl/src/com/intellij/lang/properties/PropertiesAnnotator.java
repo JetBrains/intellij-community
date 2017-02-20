@@ -53,7 +53,7 @@ public class PropertiesAnnotator implements Annotator {
     ASTNode keyNode = ((PropertyImpl)property).getKeyNode();
     if (others.size() != 1) {
       Annotation annotation = holder.createErrorAnnotation(keyNode, PropertiesBundle.message("duplicate.property.key.error.message"));
-      annotation.registerFix(new RemovePropertyFix(property));
+      annotation.registerFix(PropertiesQuickFixFactory.getInstance().createRemovePropertyFix(property));
     }
 
     highlightTokens(property, keyNode, holder, new PropertiesHighlighter());

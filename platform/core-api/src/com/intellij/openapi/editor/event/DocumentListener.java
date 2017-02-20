@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.event;
 
+import com.intellij.util.ArrayFactory;
+
 import java.util.EventListener;
 
 /**
@@ -27,6 +29,8 @@ import java.util.EventListener;
 @SuppressWarnings("JavadocReference")
 public interface DocumentListener extends EventListener{
   DocumentListener[] EMPTY_ARRAY = new DocumentListener[0];
+  ArrayFactory<DocumentListener> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new DocumentListener[count];
+
   /**
    * Called before the text of the document is changed.
    *

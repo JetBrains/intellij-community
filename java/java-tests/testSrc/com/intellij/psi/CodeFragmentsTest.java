@@ -25,6 +25,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestCase;
+import com.intellij.util.ref.GCUtil;
 
 @PlatformTestCase.WrapInCommand
 public class CodeFragmentsTest extends PsiTestCase{
@@ -67,5 +68,14 @@ public class CodeFragmentsTest extends PsiTestCase{
 
     assertSame(fragment, PsiManager.getInstance(myProject).findFile(file));
     assertTrue(fragment.isValid());
+  }
+
+  public void testCorrectFragmentPsiAfterGc() {
+    VirtualFile file = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment("a", null, null, true).getViewProvider().getVirtualFile();
+    assertInstanceOf(file, LightVirtualFile.class);
+
+    GCUtil.tryGcSoftlyReachableObjects();
+
+    assertInstanceOf(PsiManager.getInstance(myProject).findFile(file), PsiExpressionCodeFragment.class);
   }
 }

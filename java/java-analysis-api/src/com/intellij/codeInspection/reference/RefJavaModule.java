@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiRequiresStatement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,15 +32,17 @@ public interface RefJavaModule extends RefElement {
   Map<String, List<String>> getExportedPackageNames();
 
   @NotNull
-  Map<String, Dependency> getRequiredModules();
+  List<RequiredModule> getRequiredModules();
 
-  class Dependency {
-    @NotNull public final Map<String, List<String>> packageNames;
-    public final boolean isPublic;
+  class RequiredModule {
+    @NotNull public final String moduleName;
+    @NotNull public final Map<String, List<String>> packagesExportedByModule;
+    public final boolean isTransitive;
 
-    public Dependency(@NotNull Map<String, List<String>> packageNames, boolean isPublic) {
-      this.packageNames = packageNames;
-      this.isPublic = isPublic;
+    public RequiredModule(@NotNull String moduleName, @NotNull Map<String, List<String>> packagesExportedByModule, boolean isTransitive) {
+      this.moduleName = moduleName;
+      this.packagesExportedByModule = packagesExportedByModule;
+      this.isTransitive = isTransitive;
     }
   }
 }

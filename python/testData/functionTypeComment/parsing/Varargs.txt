@@ -8,7 +8,7 @@ FunctionTypeComment:a.functionTypeComment
           PsiElement(Py:IDENTIFIER)('int')
       PsiElement(Py:COMMA)(',')
       PsiWhiteSpace(' ')
-      PyStarExpression
+      PyDoubleStarExpression
         PsiElement(Py:EXP)('**')
         PyReferenceExpression: str
           PsiElement(Py:IDENTIFIER)('str')

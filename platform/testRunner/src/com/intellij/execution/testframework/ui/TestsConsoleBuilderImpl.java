@@ -19,6 +19,7 @@ import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
@@ -33,6 +34,7 @@ public class TestsConsoleBuilderImpl extends TextConsoleBuilderImpl {
     setUsePredefinedMessageFilter(usePredefinedMessageFilter);
   }
 
+  @NotNull
   @Override
   protected ConsoleView createConsole() {
     return new TestsConsoleViewImpl(getProject(), getScope(), isViewer(), isUsePredefinedMessageFilter());

@@ -144,12 +144,12 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   void testMethodItemPresentationGenerics() {
     configure()
-    LookupElementPresentation presentation = renderElement(myItems[0])
+    LookupElementPresentation presentation = renderElement(myItems[1])
     assert "add" == presentation.itemText
     assert "(int index, String element)" == presentation.tailText
     assert "void" == presentation.typeText
 
-    presentation = renderElement(myItems[1])
+    presentation = renderElement(myItems[0])
     assert "(String o)" == presentation.tailText
     assert "boolean" == presentation.typeText
 
@@ -1707,7 +1707,8 @@ class Bar {
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText == '( "x")'
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText == '("y") {...}'
     assert !LookupElementPresentation.renderElement(myFixture.lookup.items[2]).tailText
-    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' = 42'
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailText == ' ( = 42)'
+    assert LookupElementPresentation.renderElement(myFixture.lookup.items[3]).tailFragments[0].italic
   }
 
   void testSuggestInterfaceArrayWhenObjectIsExpected() {
@@ -1733,6 +1734,28 @@ class Bar {
   void testGetClassType() {
     configure()
     assert 'Class<? extends Number>' == LookupElementPresentation.renderElement(myFixture.lookupElements[0]).typeText
+  }
+
+  void testNonImportedClassAfterNew() {
+    def uClass = myFixture.addClass('package foo; public class U {}')
+    myFixture.configureByText('a.java', 'class X {{ new U<caret>x }}')
+    myFixture.completeBasic()
+    assert myFixture.lookupElements[0].object == uClass
+  }
+
+  void testSuggestClassNamesForLambdaParameterTypes() { doTest('\n') }
+
+  void testOnlyExtendsSuperInWildcard() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+
+    configure()
+    assert myFixture.lookupElementStrings == ['extends', 'super']
+    LookupManager.getInstance(project).hideActiveLookup()
+
+    myFixture.type('n')
+    assert !myFixture.completeBasic()
+    myFixture.type('\b')
+    checkResultByFile(getTestName(false) + ".java")
   }
 
 }

@@ -135,8 +135,10 @@
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
                             order="first"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.HtmlCompletionContributor" id="html"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlNonFirstCompletionContributor" id="xmlNonFirst" order="after xml"/>
 
+    <completion.contributor language="DTD" implementationClass="com.intellij.codeInsight.completion.DtdCompletionContributor" id="dtd" />
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="before xmlNonFirst"/>
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlLocationCompletionContributor"/>
 
@@ -218,10 +220,6 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
 
     <externalAnnotator language="XML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="HTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="XHTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="JSP" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="JSPX" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
 
     <lang.parserDefinition language="DTD" implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
     <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
@@ -309,11 +307,7 @@
     <quoteHandler fileType="XML" className="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
     <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
-
-    <completionData fileType="XML" className="com.intellij.codeInsight.completion.XmlCompletionData"/>
-    <completionData fileType="HTML" className="com.intellij.codeInsight.completion.HtmlCompletionData"/>
-    <completionData fileType="XHTML" className="com.intellij.codeInsight.completion.XHtmlCompletionData"/>
-    <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
+    <selectionDequotingFilter implementation="com.intellij.codeInsight.editorActions.XmlDequotingFilter"/>
 
     <referenceProviderType key="Path References Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
@@ -446,7 +440,7 @@
                      bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
-    <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING" unfair="true"
+    <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
                      bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>

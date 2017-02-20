@@ -75,13 +75,17 @@ public class OSProcessUtil {
   }
 
   public static void killProcess(@NotNull Process process) {
+    killProcess(getProcessID(process));
+  }
+
+  public static void killProcess(int pid) {
     if (SystemInfo.isWindows) {
       try {
         if (Registry.is("disable.winp")) {
-          WinProcessManager.kill(process, false);
+          WinProcessManager.kill(pid, false);
         }
         else {
-          createWinProcess(process).kill();
+          createWinProcess(pid).kill();
         }
       }
       catch (Throwable e) {
@@ -89,7 +93,7 @@ public class OSProcessUtil {
       }
     }
     else if (SystemInfo.isUnix) {
-      UnixProcessManager.sendSignal(UnixProcessManager.getProcessPid(process), UnixProcessManager.SIGKILL);
+      UnixProcessManager.sendSignal(pid, UnixProcessManager.SIGKILL);
     }
   }
 
@@ -104,8 +108,8 @@ public class OSProcessUtil {
         }
       }
       catch (Throwable e) {
-        LOG.info("Cannot get process id", e);
-        return -1;
+        throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()
+                                        + ", OS: " + SystemInfo.OS_NAME, e);
       }
     }
     else if (SystemInfo.isUnix) {
@@ -120,7 +124,12 @@ public class OSProcessUtil {
     if (process instanceof RunnerWinProcess) process = ((RunnerWinProcess)process).getOriginalProcess();
     return new WinProcess(process);
   }
-  
+
+  @NotNull
+  private static WinProcess createWinProcess(int pid) {
+    return new WinProcess(pid);
+  }
+
   @Nullable
   public static List<String> getCommandLinesOfRunningProcesses() {
     List<String> result = new ArrayList<>();

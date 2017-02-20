@@ -18,7 +18,7 @@ package org.jetbrains.debugger
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.Value
 
-class EvaluateResult(val value: Value, val wasThrown: Boolean = false)
+data class EvaluateResult(val value: Value, val wasThrown: Boolean = false)
 
 /**
  * A context in which watch expressions may be evaluated. Typically corresponds to stack frame

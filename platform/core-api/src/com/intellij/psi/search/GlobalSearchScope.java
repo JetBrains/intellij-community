@@ -106,7 +106,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public SearchScope intersectWith(@NotNull LocalSearchScope localScope2) {
     PsiElement[] elements2 = localScope2.getScope();
-    List<PsiElement> result = new ArrayList<PsiElement>(elements2.length);
+    List<PsiElement> result = new ArrayList<>(elements2.length);
     for (final PsiElement element2 : elements2) {
       if (PsiSearchScopeUtil.isInScope(this, element2)) {
         result.add(element2);
@@ -462,12 +462,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     private UnionScope(@NotNull GlobalSearchScope[] scopes) {
-      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, new Function<GlobalSearchScope, Project>() {
-        @Override
-        public Project fun(GlobalSearchScope scope) {
-          return scope.getProject();
-        }
-      }), null));
+      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, scope -> scope.getProject()), null));
       if (scopes.length <= 1) throw new IllegalArgumentException("Too few scopes: "+ Arrays.asList(scopes));
       myScopes = scopes;
       final int[] nested = {0};
@@ -492,73 +487,45 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean contains(@NotNull final VirtualFile file) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.contains(file);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.contains(file)) != null;
     }
 
     @Override
     public boolean isSearchOutsideRootModel() {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchOutsideRootModel();
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchOutsideRootModel()) != null;
     }
 
     @Override
     public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
       final int[] result = {0};
-      ContainerUtil.process(myScopes, new Processor<GlobalSearchScope>() {
-        @Override
-        public boolean process(GlobalSearchScope scope) {
-          int res1 = scope.contains(file1) && scope.contains(file2) ? scope.compare(file1, file2) : 0;
-          if (result[0] == 0) {
-            result[0] = res1;
-            return true;
-          }
-          if (result[0] > 0 != res1 > 0) {
-            result[0] = 0;
-            return false;
-          }
+      ContainerUtil.process(myScopes, scope -> {
+        int res1 = scope.contains(file1) && scope.contains(file2) ? scope.compare(file1, file2) : 0;
+        if (result[0] == 0) {
+          result[0] = res1;
           return true;
         }
+        if (result[0] > 0 != res1 > 0) {
+          result[0] = 0;
+          return false;
+        }
+        return true;
       });
       return result[0];
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull final Module module) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInModuleContent(module);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInModuleContent(module)) != null;
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull final Module module, final boolean testSources) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInModuleContent(module, testSources);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInModuleContent(module, testSources)) != null;
     }
 
     @Override
     public boolean isSearchInLibraries() {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInLibraries();
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInLibraries()) != null;
     }
 
     @Override
@@ -568,7 +535,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
       UnionScope that = (UnionScope)o;
 
-      return new HashSet<GlobalSearchScope>(Arrays.asList(myScopes)).equals(new HashSet<GlobalSearchScope>(Arrays.asList(that.myScopes)));
+      return new HashSet<>(Arrays.asList(myScopes)).equals(new HashSet<>(Arrays.asList(that.myScopes)));
     }
 
     @Override
@@ -594,6 +561,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @NotNull
+  @Contract(pure=true)
   public static GlobalSearchScope getScopeRestrictedByFileTypes(@NotNull GlobalSearchScope scope, @NotNull FileType... fileTypes) {
     if (scope == EMPTY_SCOPE) {
       return EMPTY_SCOPE;
@@ -628,7 +596,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       if (scope instanceof FileTypeRestrictionScope) {
         FileTypeRestrictionScope restrict = (FileTypeRestrictionScope)scope;
         if (restrict.myBaseScope == myBaseScope) {
-          List<FileType> intersection = new ArrayList<FileType>(Arrays.asList(restrict.myFileTypes));
+          List<FileType> intersection = new ArrayList<>(Arrays.asList(restrict.myFileTypes));
           intersection.retainAll(Arrays.asList(myFileTypes));
           return new FileTypeRestrictionScope(myBaseScope, intersection.toArray(new FileType[intersection.size()]));
         }
@@ -668,7 +636,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public String toString() {
-      return "(" + myBaseScope + " restricted by file types: "+Arrays.asList(myFileTypes)+")";
+      return "(restricted by file types: "+Arrays.asList(myFileTypes)+" in "+ myBaseScope + ")";
     }
   }
 
@@ -751,6 +719,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       return "File :"+myVirtualFile;
     }
 
+    @NotNull
     @Override
     public Iterator<VirtualFile> iterator() {
       return Collections.singletonList(myVirtualFile).iterator();
@@ -828,10 +797,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public String toString() {
-      List<VirtualFile> files = myFiles.size() <= 20 ? new ArrayList<VirtualFile>(myFiles) : new ArrayList<VirtualFile>(myFiles).subList(0,20);
+      List<VirtualFile> files = myFiles.size() <= 20 ? new ArrayList<>(myFiles) : new ArrayList<>(myFiles).subList(0, 20);
       return "Files: ("+ files +"); search in libraries: " + (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
     }
 
+    @NotNull
     @Override
     public Iterator<VirtualFile> iterator() {
       return myFiles.iterator();

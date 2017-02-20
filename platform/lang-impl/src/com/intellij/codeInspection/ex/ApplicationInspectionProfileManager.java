@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -41,9 +40,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.*;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +50,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -118,11 +119,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     return mySchemeManager;
   }
 
-  @NotNull
-  private InspectionProfileImpl createSampleProfile(@NotNull String name, InspectionProfileImpl baseProfile) {
-    return new InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this, baseProfile, null);
-  }
-
   // It should be public to be available from Upsource
   public static void registerProvidedSeverities() {
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
@@ -159,7 +155,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     mySchemeManager.loadSchemes();
 
     if (mySchemeManager.isEmpty()) {
-      mySchemeManager.addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, InspectionProfileImpl.getBaseProfile()));
+      mySchemeManager.addScheme(new InspectionProfileImpl(InspectionProfileKt.DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this));
     }
   }
 
@@ -173,8 +169,8 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   public InspectionProfileImpl loadProfile(@NotNull String path) throws IOException, JDOMException {
-    final File file = new File(path);
-    if (file.exists()) {
+    final Path file = Paths.get(path);
+    if (Files.isRegularFile(file)) {
       try {
         return InspectionProfileLoadUtil.load(file, myRegistrar, this);
       }
@@ -236,16 +232,16 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     }
 
     // use default as base, not random custom profile
-    InspectionProfileImpl result = mySchemeManager.findSchemeByName(InspectionProfileImpl.DEFAULT_PROFILE_NAME);
+    InspectionProfileImpl result = mySchemeManager.findSchemeByName(InspectionProfileKt.DEFAULT_PROFILE_NAME);
     if (result == null) {
-      return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, null);
+      return new InspectionProfileImpl(InspectionProfileKt.DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this, null, null);
     }
     return result;
   }
 
   @NotNull
   public String getRootProfileName() {
-    return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileImpl.DEFAULT_PROFILE_NAME);
+    return ObjectUtils.chooseNotNull(mySchemeManager.getCurrentSchemeName(), InspectionProfileKt.DEFAULT_PROFILE_NAME);
   }
 
   @Override
@@ -258,17 +254,8 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   public static void onProfilesChanged() {
-    //cleanup caches blindly for all projects in case ide profile was modified
-    for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
-      //noinspection EmptySynchronizedStatement
-      synchronized (HighlightingSettingsPerFile.getInstance(project)) {
-      }
-
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (!project.isDisposed()) {
-          DaemonListeners.getInstance(project).updateStatusBar();
-        }
-      });
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      AppUIUtil.invokeLaterIfProjectAlive(project, () -> DaemonListeners.getInstance(project).updateStatusBar());
     }
   }
 }

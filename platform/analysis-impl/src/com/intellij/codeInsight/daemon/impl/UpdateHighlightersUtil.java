@@ -175,7 +175,7 @@ public class UpdateHighlightersUtil {
 
     Processor<HighlightInfo> processor = info -> {
       if (info.getGroup() == group) {
-        RangeHighlighter highlighter = info.highlighter;
+        RangeHighlighter highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
         if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd <= startOffset || hiStart >= endOffset)) {
@@ -186,7 +186,7 @@ public class UpdateHighlightersUtil {
                            (hiEnd != document.getTextLength() || priorityRange.getEndOffset() != document.getTextLength());
         if (toRemove) {
           infosToRemove.recycleHighlighter(highlighter);
-          info.highlighter = null;
+          info.setHighlighter(null);
         }
       }
       return true;
@@ -238,14 +238,14 @@ public class UpdateHighlightersUtil {
     final HighlightersRecycler infosToRemove = new HighlightersRecycler();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), info -> {
         if (info.getGroup() == group) {
-          RangeHighlighter highlighter = info.highlighter;
+          RangeHighlighter highlighter = info.getHighlighter();
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
           boolean willBeRemoved = hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()
                                 /*|| range.intersectsStrict(hiStart, hiEnd)*/ || range.containsRange(hiStart, hiEnd) /*|| hiStart <= range.getStartOffset() && hiEnd >= range.getEndOffset()*/;
           if (willBeRemoved) {
             infosToRemove.recycleHighlighter(highlighter);
-            info.highlighter = null;
+            info.setHighlighter(null);
           }
         }
         return true;
@@ -342,7 +342,7 @@ public class UpdateHighlightersUtil {
         finalHighlighter.setTextAttributes(infoAttributes);
       }
 
-      info.highlighter = finalHighlighter;
+      info.setHighlighter(finalHighlighter);
       finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine());
 
       Color color = info.getErrorStripeMarkColor(psiFile, colorsScheme);
@@ -353,7 +353,7 @@ public class UpdateHighlightersUtil {
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
-      ranges2markersCache.put(finalInfoRange, info.highlighter);
+      ranges2markersCache.put(finalInfoRange, info.getHighlighter());
       if (info.quickFixActionRanges != null) {
         List<Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker>> list =
           new ArrayList<>(info.quickFixActionRanges.size());
@@ -440,7 +440,7 @@ public class UpdateHighlightersUtil {
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, start, end, info -> {
       if (!info.needUpdateOnTyping()) return true;
 
-      RangeHighlighter highlighter = info.highlighter;
+      RangeHighlighter highlighter = info.getHighlighter();
       int highlighterStart = highlighter.getStartOffset();
       int highlighterEnd = highlighter.getEndOffset();
       if (info.isAfterEndOfLine()) {
@@ -458,8 +458,8 @@ public class UpdateHighlightersUtil {
     });
 
     for (HighlightInfo info : toRemove) {
-      if (!info.highlighter.isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
-        info.highlighter.dispose();
+      if (!info.getHighlighter().isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
+        info.getHighlighter().dispose();
       }
     }
 
@@ -476,7 +476,7 @@ public class UpdateHighlightersUtil {
     }
     Document document = markup.getDocument();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, 0, document.getTextLength(), info -> {
-      assert ((MarkupModelEx)markup).containsHighlighter(info.highlighter);
+      assert ((MarkupModelEx)markup).containsHighlighter(info.getHighlighter());
       return true;
     });
     RangeHighlighter[] allHighlighters = markup.getAllHighlighters();

@@ -75,16 +75,11 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     final ToolWindow projectViewToolWindow = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     final Runnable runnable = () -> {
       Runnable r = () -> projectView.selectCB(toSelect, virtualFile, requestFocus).notify(result);
-      if (requestFocus) {
-        projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewPane.ID), subviewId).doWhenProcessed(r);
-      }
-      else {
-        r.run();
-      }
+      projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewPane.ID), subviewId).doWhenProcessed(r);
     };
 
     if (requestFocus) {
-      projectViewToolWindow.activate(runnable, false);
+      projectViewToolWindow.activate(runnable, true);
     }
     else {
       projectViewToolWindow.show(runnable);

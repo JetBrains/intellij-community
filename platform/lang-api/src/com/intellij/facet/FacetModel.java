@@ -47,7 +47,7 @@ public interface FacetModel {
 
   /**
    * @param typeId type of facet
-   * @return first facet of the given type or <code>null</code> if the module doesn't contain facets of this type
+   * @return first facet of the given type or {@code null} if the module doesn't contain facets of this type
    */
   @Nullable
   <F extends Facet> F getFacetByType(FacetTypeId<F> typeId);
@@ -55,7 +55,7 @@ public interface FacetModel {
   /**
    * @param type type of facet
    * @param name name of facet
-   * @return first facet of the given type with the given name or <code>null</code> if not found
+   * @return first facet of the given type with the given name or {@code null} if not found
    */
   @Nullable
   <F extends Facet> F findFacet(FacetTypeId<F> type, String name);

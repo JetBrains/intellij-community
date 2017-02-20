@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.*;
@@ -103,6 +104,19 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public DfaMemoryStateImpl createCopy() {
     return new DfaMemoryStateImpl(this);
+  }
+
+  @NotNull
+  @Override
+  public DfaMemoryStateImpl createClosureState() {
+    DfaMemoryStateImpl copy = createCopy();
+    copy.flushFields();
+    Set<DfaVariableValue> vars = new HashSet<>(copy.getVariableStates().keySet());
+    for (DfaVariableValue value : vars) {
+      copy.flushDependencies(value);
+    }
+    copy.emptyStack();
+    return copy;
   }
 
   public boolean equals(Object obj) {
@@ -614,6 +628,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
+  @Override
+  public void applyIsPresentCheck(boolean present, DfaValue qualifier) {
+    if (qualifier instanceof DfaVariableValue && !isUnknownState(qualifier)) {
+      setVariableState((DfaVariableValue)qualifier, getVariableState((DfaVariableValue)qualifier).withOptionalPresense(present));
+    }
+  }
+
   static DfaValue unwrap(DfaValue value) {
     if (value instanceof DfaBoxedValue) {
       return ((DfaBoxedValue)value).getWrappedValue();
@@ -766,6 +787,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return false;
       }
     }
+    if (!isNegated && dfaRight instanceof DfaOptionalValue) {
+      applyIsPresentCheck(((DfaOptionalValue)dfaRight).isPresent(), dfaLeft);
+    }
 
     return true;
   }
@@ -905,6 +929,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (getVariableState(varValue).isNullable()) return false;
     }
     return true;
+  }
+
+  @Override
+  public ThreeState checkOptional(DfaValue value) {
+    if (value instanceof DfaVariableValue) {
+      DfaVariableValue var = (DfaVariableValue)value;
+      DfaVariableState state = getVariableState(var);
+      return state.getOptionalPresense();
+    }
+    return value instanceof DfaOptionalValue ? ThreeState.fromBoolean(((DfaOptionalValue)value).isPresent()) : ThreeState.UNSURE;
   }
 
   @Nullable
@@ -1095,7 +1129,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         @Override
         public boolean execute(int id, int[] set) {
           DfaValue value = myFactory.getValue(id);
-          s.append(value + " -> " + Arrays.toString(set) + ", ");
+          s.append(value).append(" -> ").append(Arrays.toString(set)).append(", ");
           return true;
         }
       });

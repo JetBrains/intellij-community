@@ -19,6 +19,7 @@ import com.intellij.ide.StartupProgress;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,16 +35,8 @@ import java.util.List;
 
 
 /**
- * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and find
- * section corresponding to IDE logo. It should look like:
- * <p>
- *   &lt;logo url=&quot;/idea_logo.png&quot; textcolor=&quot;919191&quot; progressColor=&quot;264db5&quot; progressY=&quot;235&quot;/&gt;
- * </p>
- * <p>where <code>url</code> is path to your splash image
- * <p><code>textColor</code> is HEX representation of text color for user name
- * <p><code>progressColor</code> is progress bar color
- * <p><code>progressY</code> is Y coordinate of the progress bar
- * <p><code>progressTailIcon</code> is a path to flame effect icon
+ * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
+ * the tag attributes in ApplicationInfo.xsd file.
  *
  * @author Konstantin Bulenkov
  */
@@ -129,6 +122,14 @@ public class Splash extends JDialog implements StartupProgress {
     }
   }
 
+  @Override
+  public void dispose() {
+    super.dispose();
+    removeAll();
+    DialogWrapper.cleanupRootPane(rootPane);
+    rootPane = null;
+  }
+
   private void paintProgress(Graphics g) {
     final Color color = getProgressColor();
     if (color == null) return;
@@ -147,7 +148,7 @@ public class Splash extends JDialog implements StartupProgress {
     g.setColor(color);
     g.fillRect(getProgressX(), getProgressY(), width, getProgressHeight());
     if (myProgressTail != null) {
-      myProgressTail.paintIcon(this, g, (int)(width - (myProgressTail.getIconWidth() / uiScale(1f) / 2f * uiScale(1f))),
+      myProgressTail.paintIcon(this, g, (int)(getProgressX() + width - (myProgressTail.getIconWidth() / uiScale(1f) / 2f * uiScale(1f))),
                                (int)(getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight()) / uiScale(1f) / 2f * uiScale(1f))); //I'll buy you a beer if you understand this line without playing with it
     }
     myProgressLastPosition = progressWidth;

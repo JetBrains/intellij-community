@@ -282,10 +282,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       try {
         extension.setConverter((Converter)converterType.newInstance());
       }
-      catch (InstantiationException e) {
-        LOG.info(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (InstantiationException | IllegalAccessException e) {
         LOG.info(e);
       }
     }

@@ -66,7 +66,13 @@ def _internal_set_trace(tracing_func):
     if TracingFunctionHolder._original_tracing:
         TracingFunctionHolder._original_tracing(tracing_func)
 
-def SetTrace(tracing_func):
+
+def SetTrace(tracing_func, frame_eval_func=None):
+    if tracing_func is not None and frame_eval_func is not None:
+        # There is no need to set tracing function if frame evaluation is available
+        frame_eval_func()
+        return
+
     if TracingFunctionHolder._original_tracing is None:
         #This may happen before replace_sys_set_trace_func is called.
         sys.settrace(tracing_func)

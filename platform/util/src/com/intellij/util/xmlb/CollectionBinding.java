@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ class CollectionBinding extends AbstractCollectionBinding  {
   }
   
   @Override
-  Object processResult(Collection result, Object target) {
-    if (myAccessor == null) {
+  @NotNull
+  Object processResult(@NotNull Collection result, @Nullable Object target) {
+    if (myAccessor == null || target == null) {
       return result;
     }
     
-    assert target != null: "Null target in " + myAccessor;
     assert target instanceof Collection : "Wrong target: " + target.getClass() + " in " + myAccessor;
     Collection c = (Collection)target;
     c.clear();
@@ -42,10 +42,13 @@ class CollectionBinding extends AbstractCollectionBinding  {
     return target;
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
   @Override
   Collection<Object> getIterable(@NotNull Object o) {
-    //noinspection unchecked
+    if (annotation != null && !annotation.sortOrderedSet() && o instanceof LinkedHashSet) {
+      return (Collection<Object>)o;
+    }
     return o instanceof Set ? new TreeSet((Set)o) : (Collection<Object>)o;
   }
 

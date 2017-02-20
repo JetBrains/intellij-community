@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.Patches.JDK_BUG_ID_8147994;
 import static java.awt.event.MouseEvent.*;
 
 /**
@@ -114,23 +115,18 @@ public final class IdeMouseEventDispatcher {
     }
 
     // search in main keymap
-    if (KeymapManagerImpl.ourKeymapManagerInitialized) {
-      final KeymapManager keymapManager = KeymapManager.getInstance();
-      if (keymapManager != null) {
-        final Keymap keymap = keymapManager.getActiveKeymap();
-        final String[] actionIds = keymap.getActionIds(mouseShortcut);
+    KeymapManager keymapManager = KeymapManagerImpl.ourKeymapManagerInitialized ? KeymapManager.getInstance() : null;
+    if (keymapManager != null) {
+      Keymap keymap = keymapManager.getActiveKeymap();
+      ActionManager actionManager = ActionManager.getInstance();
+      for (String actionId : keymap.getActionIds(mouseShortcut)) {
+        AnAction action = actionManager.getAction(actionId);
+        if (action == null || isModalContext && !action.isEnabledInModalContext()) {
+          continue;
+        }
 
-        ActionManager actionManager = ActionManager.getInstance();
-        for (String actionId : actionIds) {
-          AnAction action = actionManager.getAction(actionId);
-
-          if (action == null) continue;
-
-          if (isModalContext && !action.isEnabledInModalContext()) continue;
-
-          if (!myActions.contains(action)) {
-            myActions.add(action);
-          }
+        if (!myActions.contains(action)) {
+          myActions.add(action);
         }
       }
     }
@@ -327,7 +323,7 @@ public final class IdeMouseEventDispatcher {
   private static boolean isHorizontalScrolling(Component c, MouseEvent e) {
     if ( c != null
          && e instanceof MouseWheelEvent
-         && isDiagramViewComponent(c.getParent())) {
+         && (JDK_BUG_ID_8147994 || isDiagramViewComponent(c.getParent()))) {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL

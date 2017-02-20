@@ -172,7 +172,7 @@ public class PrivateKeyReader {
  * tagged types with an outer tag.
  * <p/>
  * <p/>This parser can only handle one layer. To parse nested constructs,
- * get a new parser for each layer using <code>Asn1Object.getParser()</code>.
+ * get a new parser for each layer using {@code Asn1Object.getParser()}.
  * <p/>
  * <p/>There are many DER decoders in JRE but using them will tie this
  * program to a specific JCE/JVM.
@@ -241,7 +241,7 @@ class DerParser {
   /**
    * Read next object. If it's constructed, the value holds
    * encoded content and it should be parsed by a new
-   * parser from <code>Asn1Object.getParser</code>.
+   * parser from {@code Asn1Object.getParser}.
    *
    * @return A object
    * @throws IOException

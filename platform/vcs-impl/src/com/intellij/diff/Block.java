@@ -46,8 +46,8 @@ public class Block {
 
   public Block(@NotNull String[] source, int start, int end) {
     mySource = source;
-    myStart = Math.min(Math.max(0, start), source.length);
-    myEnd = Math.min(Math.max(myStart, end), source.length);
+    myStart = DiffUtil.bound(start, 0, source.length);
+    myEnd = DiffUtil.bound(end, myStart, source.length);
   }
 
   @NotNull

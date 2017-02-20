@@ -77,7 +77,7 @@ public class FixDocCommentAction extends EditorAction {
 
   private static void process(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Project project, int offset) {
     PsiElement elementAtOffset = file.findElementAt(offset);
-    if (elementAtOffset == null) {
+    if (elementAtOffset == null || !FileModificationService.getInstance().preparePsiElementForWrite(elementAtOffset)) {
       return;
     }
     generateOrFixComment(elementAtOffset, project, editor);
@@ -152,7 +152,6 @@ public class FixDocCommentAction extends EditorAction {
                                       @NotNull CodeDocumentationAwareCommenter commenter,
                                       @NotNull Project project)
   {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(anchor)) return;
     Document document = editor.getDocument();
     int commentStartOffset = anchor.getTextRange().getStartOffset();
     int lineStartOffset = document.getLineStartOffset(document.getLineNumber(commentStartOffset));

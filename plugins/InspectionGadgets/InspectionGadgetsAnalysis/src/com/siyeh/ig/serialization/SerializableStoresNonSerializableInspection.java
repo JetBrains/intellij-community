@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,11 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
         return;
       }
       final LocalVariableReferenceFinder visitor = new LocalVariableReferenceFinder(aClass);
-      aClass.accept(visitor);
+      PsiElement child = aClass.getLBrace();
+      while (child != null) {
+        child.accept(visitor);
+        child = child.getNextSibling();
+      }
     }
 
     @Override
@@ -89,8 +93,7 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
       if (!SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      final LocalVariableReferenceFinder visitor = new LocalVariableReferenceFinder(lambda);
-      lambda.accept(visitor);
+      lambda.accept(new LocalVariableReferenceFinder(lambda));
     }
 
     private class LocalVariableReferenceFinder extends JavaRecursiveElementWalkingVisitor {

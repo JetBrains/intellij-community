@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ public class TypeUtils {
 
   private TypeUtils() {}
 
+  @Contract("_, null -> false")
   public static boolean typeEquals(@NonNls @NotNull String typeName, @Nullable PsiType targetType) {
     return targetType != null && targetType.equalsToText(typeName);
   }
@@ -76,10 +78,12 @@ public class TypeUtils {
     return sourcePrecision != null && targetPrecision != null && targetPrecision.intValue() < sourcePrecision.intValue();
   }
 
+  @Contract("null -> false")
   public static boolean isJavaLangObject(@Nullable PsiType targetType) {
     return typeEquals(CommonClassNames.JAVA_LANG_OBJECT, targetType);
   }
 
+  @Contract("null -> false")
   public static boolean isJavaLangString(@Nullable PsiType targetType) {
     return typeEquals(CommonClassNames.JAVA_LANG_STRING, targetType);
   }
@@ -88,6 +92,7 @@ public class TypeUtils {
     return isOptional(PsiUtil.resolveClassInClassTypeOnly(type));
   }
 
+  @Contract("null -> false")
   public static boolean isOptional(PsiClass aClass) {
     if (aClass == null) {
       return false;

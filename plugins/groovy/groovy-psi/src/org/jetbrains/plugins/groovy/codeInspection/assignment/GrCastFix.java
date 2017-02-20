@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -98,5 +99,12 @@ public class GrCastFix extends GroovyFix implements LocalQuickFix {
   @Override
   public String getName() {
     return "Cast to " + myExpectedType.getPresentableText();
+  }
+
+  @Nls
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return "Add cast";
   }
 }

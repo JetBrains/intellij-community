@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -35,13 +34,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -81,6 +80,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
     if (!application.isUnitTestMode() && !myEditor.getContentComponent().hasFocus()) return;
+    if (DumbService.isDumb(myProject)) return;
     int caretOffset = myEditor.getCaretModel().getOffset();
     importUnambiguousImports(caretOffset);
     List<HighlightInfo> visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor);

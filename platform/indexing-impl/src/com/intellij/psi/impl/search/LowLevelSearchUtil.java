@@ -218,11 +218,11 @@ public class LowLevelSearchUtil {
     if (offsetsInScope.length == 0) return true;
 
     Project project = scope.getProject();
-    TreeElement[] lastElement = {null};
+    TreeElement lastElement = null;
     for (int offset : offsetsInScope) {
       progress.checkCanceled();
-      lastElement[0] = processTreeUp(project, processor, scope, searcher, offset, processInjectedPsi, progress, lastElement[0]);
-      if (lastElement[0] == null) return false;
+      lastElement = processTreeUp(project, processor, scope, searcher, offset, processInjectedPsi, progress, lastElement);
+      if (lastElement == null) return false;
     }
     return true;
   }

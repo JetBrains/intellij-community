@@ -78,11 +78,6 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
           }
         }
       }
-
-      @Override
-      public boolean startInWriteAction(){
-        return true;
-      }
     };
   }
 

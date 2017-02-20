@@ -100,7 +100,7 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
    * @param parameterInitializer Initializer to use in method calls.
    * @param localVariable local variable that will be replaced
    * @param removeLocalVariable should local variable be removed
-   * @param declareFinal should created parameter be declared <code>final</code>
+   * @param declareFinal should created parameter be declared {@code final}
    */
   public abstract IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,
                                                                                     PsiMethod methodToSearchFor,
@@ -115,7 +115,7 @@ public abstract class JavaRefactoringFactory extends RefactoringFactory {
    * @param parameterName Name of new parameter.
    * @param parameterInitializer Initializer to use in method calls.
    * @param expressionToSearchFor expression that should be replaced with parameters
-   * @param declareFinal should created parameter be declared <code>final</code>
+   * @param declareFinal should created parameter be declared {@code final}
    * @param replaceAllOccurences should all occurences of expression be replaced
    */
   public abstract IntroduceParameterRefactoring createIntroduceParameterRefactoring(PsiMethod methodToReplaceIn,

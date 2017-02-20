@@ -59,11 +59,10 @@ class IndexConfiguration {
   }
 
   <K, V> void registerIndex(ID<K, V> name,
-                            UpdatableIndex<K, V, FileContent> index,
+                            @NotNull UpdatableIndex<K, V, FileContent> index,
                             FileBasedIndex.InputFilter inputFilter,
                             int version,
-                            @Nullable Collection<FileType> associatedFileTypes
-  ) {
+                            @Nullable Collection<FileType> associatedFileTypes) {
     assert !myFreezed;
 
     synchronized (myIndices) {
@@ -79,7 +78,10 @@ class IndexConfiguration {
         myIndicesWithoutFileTypeInfo.add(name);
       }
 
-      myIndices.put(name, new Pair<>(index, inputFilter));
+      Pair<UpdatableIndex<?, ?, FileContent>, FileBasedIndex.InputFilter> old = myIndices.put(name, new Pair<>(index, inputFilter));
+      if (old != null) {
+        throw new IllegalStateException("Index " + old.first + " already registered for the name '" + name + "'");
+      }
     }
   }
 

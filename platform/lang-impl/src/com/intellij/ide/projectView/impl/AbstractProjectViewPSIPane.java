@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,9 +115,11 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       });
     }
     myTreeStructure = createStructure();
-    setTreeBuilder(createBuilder(treeModel));
 
-    installComparator();
+    BaseProjectTreeBuilder treeBuilder = createBuilder(treeModel);
+    installComparator(treeBuilder);
+    setTreeBuilder(treeBuilder);
+
     initTree();
 
     Disposer.register(getTreeBuilder(), new UiNotifyConnector(myTree, new Activatable() {
@@ -253,12 +255,16 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     if (file != null) {
-      BaseProjectTreeBuilder builder = (BaseProjectTreeBuilder)getTreeBuilder();
-      // actually, getInitialized().doWhenDone() should be called by builder internally
-      // this will be done in 2017
-      return builder.getInitialized().doWhenDone(() -> builder.select(element, file, requestFocus));
+      beforeSelect().doWhenDone(() -> ((BaseProjectTreeBuilder)getTreeBuilder()).select(element, file, requestFocus));
     }
     return ActionCallback.DONE;
+  }
+
+  @NotNull
+  public ActionCallback beforeSelect() {
+    // actually, getInitialized().doWhenDone() should be called by builder internally
+    // this will be done in 2017
+    return getTreeBuilder().getInitialized();
   }
 
   @NotNull

@@ -47,6 +47,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.PsiTodoSearchHelperImpl;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.util.PsiUtilCore;
@@ -295,12 +296,16 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final int chunkSize = Math.max(1, (elements1.size()+elements2.size()) / 100); // one percent precision is enough
 
     boolean success = analyzeByVisitors(visitors, holder, 0, () -> {
-      runVisitors(elements1, ranges1, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors);
+      Stack<TextRange> nestedRange = new Stack<>();
+      Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
+      runVisitors(elements1, ranges1, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
+                  nestedRange, nestedInfos);
       final TextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
       if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersection != null) { // do not apply when there were no elements to highlight
         myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, insideResult, myPriorityRange, myRestrictRange, getId());
       }
-      runVisitors(elements2, ranges2, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors);
+      runVisitors(elements2, ranges2, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
+                  nestedRange, nestedInfos);
     });
     List<HighlightInfo> postInfos = new ArrayList<>(holder.size());
     // there can be extra highlights generated in PostHighlightVisitor
@@ -330,17 +335,17 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private void runVisitors(@NotNull List<PsiElement> elements,
-                          @NotNull List<ProperTextRange> ranges,
-                          int chunkSize,
-                          @NotNull ProgressIndicator progress,
-                          @NotNull Set<PsiElement> skipParentsSet,
-                          @NotNull HighlightInfoHolder holder,
-                          @NotNull List<HighlightInfo> insideResult,
-                          @NotNull List<HighlightInfo> outsideResult,
-                          boolean forceHighlightParents,
-                          @NotNull HighlightVisitor[] visitors) {
-    Stack<TextRange> nestedRange = new Stack<>();
-    Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
+                           @NotNull List<ProperTextRange> ranges,
+                           int chunkSize,
+                           @NotNull ProgressIndicator progress,
+                           @NotNull Set<PsiElement> skipParentsSet,
+                           @NotNull HighlightInfoHolder holder,
+                           @NotNull List<HighlightInfo> insideResult,
+                           @NotNull List<HighlightInfo> outsideResult,
+                           boolean forceHighlightParents,
+                           @NotNull HighlightVisitor[] visitors,
+                           @NotNull Stack<TextRange> nestedRange,
+                           @NotNull Stack<List<HighlightInfo>> nestedInfos) {
     boolean failed = false;
     int nextLimit = chunkSize;
     for (int i = 0; i < elements.size(); i++) {
@@ -436,12 +441,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
                                                   @NotNull final Project project) throws ProcessCanceledException {
     progress.cancel();
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-      Application application = ApplicationManager.getApplication();
-      if (!project.isDisposed() && !application.isDisposed() && !application.isUnitTestMode()) {
-        DaemonCodeAnalyzer.getInstance(project).restart();
-      }
-    }, RESTART_DAEMON_RANDOM.nextInt(100), TimeUnit.MILLISECONDS);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+        Application application = ApplicationManager.getApplication();
+        if (!project.isDisposed() && !application.isDisposed() && !application.isUnitTestMode()) {
+          DaemonCodeAnalyzer.getInstance(project).restart();
+        }
+      }, RESTART_DAEMON_RANDOM.nextInt(100), TimeUnit.MILLISECONDS);
+    }
     throw new ProcessCanceledException();
   }
 
@@ -470,7 +477,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                              @NotNull Collection<HighlightInfo> insideResult,
                              @NotNull Collection<HighlightInfo> outsideResult) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
-    if (helper == null) return;
+    if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
     if (todoItems.length == 0) return;
 
@@ -485,6 +492,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       builder.unescapedToolTip(StringUtil.shortenPathWithEllipsis(description, 1024));
       HighlightInfo info = builder.createUnconditionally();
       (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult).add(info);
+    }
+  }
+
+  private static boolean shouldHighlightTodos(PsiTodoSearchHelper helper, PsiFile file) {
+    if (helper instanceof PsiTodoSearchHelperImpl) {
+      PsiTodoSearchHelperImpl helperImpl = (PsiTodoSearchHelperImpl) helper;
+      return helperImpl.shouldHighlightInEditor(file);
+    } else {
+      return false;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
 
   @Override
   protected boolean canInstrument(CompiledClass compiledClass, int classFileVersion) {
-    return classFileVersion >= Opcodes.V1_5;
+    return classFileVersion >= Opcodes.V1_5 && !"module-info".equals(compiledClass.getClassName());
   }
 
   // todo: probably instrument other NotNull-like annotations defined in project settings?
@@ -90,12 +90,7 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
     catch (Throwable e) {
       LOG.error(e);
       final Collection<File> sourceFiles = compiledClass.getSourceFiles();
-      String msg = "Cannot instrument " + ContainerUtil.map(sourceFiles, new Function<File, String>() {
-        @Override
-        public String fun(File file) {
-          return file.getName();
-        }
-      }) + ": " + e.getMessage();
+      String msg = "Cannot instrument " + ContainerUtil.map(sourceFiles, file -> file.getName()) + ": " + e.getMessage();
       context.processMessage(new CompilerMessage(getPresentableName(),
                                                  BuildMessage.Kind.ERROR,
                                                  msg,

@@ -56,25 +56,15 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   @NonNls
   public static final String IGNORED_MACRO_ELEMENT = "ignoredMacro";
 
-  // predefined macros
-  @NonNls
-  public static final String APPLICATION_HOME_MACRO_NAME = PathMacroUtil.APPLICATION_HOME_DIR;
-  @NonNls
-  public static final String PROJECT_DIR_MACRO_NAME = PathMacroUtil.PROJECT_DIR_MACRO_NAME;
-  @NonNls
-  public static final String MODULE_DIR_MACRO_NAME = PathMacroUtil.MODULE_DIR_MACRO_NAME;
-  @NonNls
-  public static final String USER_HOME_MACRO_NAME = PathMacroUtil.USER_HOME_NAME;
-
   private static final Set<String> SYSTEM_MACROS = new THashSet<>();
   @NonNls public static final String EXT_FILE_NAME = "path.macros";
 
   static {
-    SYSTEM_MACROS.add(APPLICATION_HOME_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR);
     SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR);
-    SYSTEM_MACROS.add(PROJECT_DIR_MACRO_NAME);
-    SYSTEM_MACROS.add(MODULE_DIR_MACRO_NAME);
-    SYSTEM_MACROS.add(USER_HOME_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.PROJECT_DIR_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.USER_HOME_NAME);
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -116,6 +106,8 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     "ModuleFileDir",
     "ModuleFilePath",
     "ModuleName",
+    "AffectedModuleNames",
+    "IsMake",
     "ModuleSourcePath",
     "ModuleSdkPath",
     "OutputPath",

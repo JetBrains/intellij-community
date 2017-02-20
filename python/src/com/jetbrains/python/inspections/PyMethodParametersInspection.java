@@ -102,7 +102,7 @@ public class PyMethodParametersInspection extends PyInspection {
       synchronized (this) { // other threads would wait as long in resolveInRoots() anyway
         if (myPossibleZopeRef == null) {
           myPossibleZopeRef = new Ref<>();
-          ret = ResolveImportUtil.resolveModuleInRoots(QualifiedName.fromComponents("zope.interface.Interface"), foothold);
+          ret = ResolveImportUtil.resolveModuleInRoots(QualifiedName.fromDottedString("zope.interface.Interface"), foothold);
           myPossibleZopeRef.set(ret); // null is OK
         }
         else ret = myPossibleZopeRef.get();

@@ -108,7 +108,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       super.doOKAction();
       return;
     }
-    setErrorText("Couldn't create " + parent + "<br/>Check your access rights");
+    setErrorText("Couldn't create " + parent + "<br/>Check your access rights", myParentDirectory);
     setOKActionEnabled(false);
   }
 
@@ -226,7 +226,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     }
     File file = new File(myParentDirectory.getText(), myDirectoryName.getText());
     if (file.exists() && (!file.isDirectory()) || !ArrayUtil.isEmpty(file.list())) {
-      setErrorText(DvcsBundle.message("clone.destination.exists.error", file));
+      setErrorText(DvcsBundle.message("clone.destination.exists.error", file), myDirectoryName);
       setOKActionEnabled(false);
       return false;
     }
@@ -247,7 +247,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     }
     if (myTestResult != null && repository.equals(myTestURL)) {
       if (!myTestResult.booleanValue()) {
-        setErrorText(DvcsBundle.getString("clone.test.failed.error"));
+        setErrorText(DvcsBundle.getString("clone.test.failed.error"), myRepositoryURL);
         setOKActionEnabled(false);
         return false;
       }
@@ -271,7 +271,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       File file = new File(repository);
       if (file.exists()) {
         if (!file.isDirectory()) {
-          setErrorText(DvcsBundle.getString("clone.url.is.not.directory.error"));
+          setErrorText(DvcsBundle.getString("clone.url.is.not.directory.error"), myRepositoryURL);
           setOKActionEnabled(false);
         }
         return true;
@@ -280,7 +280,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     catch (Exception fileExp) {
       // do nothing
     }
-    setErrorText(DvcsBundle.getString("clone.invalid.url"));
+    setErrorText(DvcsBundle.getString("clone.invalid.url"), myRepositoryURL);
     setOKActionEnabled(false);
     return false;
   }

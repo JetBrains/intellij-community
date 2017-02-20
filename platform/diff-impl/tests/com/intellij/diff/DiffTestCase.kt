@@ -80,8 +80,8 @@ abstract class DiffTestCase : UsefulTestCase() {
   fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
     if (skipLastNewline && !ignoreSpaces) {
       assertTrue(StringUtil.equals(chunk1, chunk2) ||
-                   StringUtil.equals(stripNewline(chunk1), chunk2) ||
-                   StringUtil.equals(chunk1, stripNewline(chunk2)))
+                 StringUtil.equals(stripNewline(chunk1), chunk2) ||
+                 StringUtil.equals(chunk1, stripNewline(chunk2)))
     }
     else {
       assertTrue(isEqualsCharSequences(chunk1, chunk2, ignoreSpaces))
@@ -91,8 +91,8 @@ abstract class DiffTestCase : UsefulTestCase() {
   fun assertNotEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
     if (skipLastNewline && !ignoreSpaces) {
       assertTrue(!StringUtil.equals(chunk1, chunk2) ||
-                   !StringUtil.equals(stripNewline(chunk1), chunk2) ||
-                   !StringUtil.equals(chunk1, stripNewline(chunk2)))
+                 !StringUtil.equals(stripNewline(chunk1), chunk2) ||
+                 !StringUtil.equals(chunk1, stripNewline(chunk2)))
     }
     else {
       assertFalse(isEqualsCharSequences(chunk1, chunk2, ignoreSpaces))
@@ -153,7 +153,8 @@ abstract class DiffTestCase : UsefulTestCase() {
 
         test(debugData)
         debugData.reset()
-      } catch (e: Throwable) {
+      }
+      catch (e: Throwable) {
         println("Seed: " + seed)
         println("Runs: " + runs)
         println("I: " + i)
@@ -187,7 +188,8 @@ abstract class DiffTestCase : UsefulTestCase() {
       seedField.isAccessible = true
       val seedFieldValue = seedField.get(RNG) as AtomicLong
       return seedFieldValue.get() xor 0x5DEECE66DL
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       gotSeedException = true
       System.err.println("Can't get random seed: " + e.message)
       return -1
@@ -195,7 +197,7 @@ abstract class DiffTestCase : UsefulTestCase() {
   }
 
   private fun stripNewline(text: CharSequence): CharSequence? {
-    return when (StringUtil.endsWithChar(text, '\n') ) {
+    return when (StringUtil.endsWithChar(text, '\n')) {
       true -> CharSequenceSubSequence(text, 0, text.length - 1)
       false -> null
     }

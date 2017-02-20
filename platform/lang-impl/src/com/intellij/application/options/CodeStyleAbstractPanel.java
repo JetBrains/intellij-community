@@ -133,7 +133,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected void somethingChanged() {
     if (myModel != null) {
-      myModel.fireCurrentSettingsChanged();
+      myModel.fireBeforeCurrentSettingsChanged();
     }
   }
 
@@ -210,11 +210,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
-        try {
-          apply(mySettings);
-        }
-        catch (ConfigurationException ignore) {
-        }
+        applySettingsToModel();
         CodeStyleSettings clone = mySettings.clone();
         clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
         CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
@@ -237,6 +233,17 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         LOG.error(e);
       }
     });
+  }
+
+  private void applySettingsToModel() {
+    try {
+      apply(mySettings);
+      if (myModel != null) {
+        myModel.fireAfterCurrentSettingsChanged();
+      }
+    }
+    catch (ConfigurationException ignore) {
+    }
   }
 
   /**
@@ -308,8 +315,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    * @param targetPosition    position which belonging to target visual rectangle should be checked
    * @param startPosition     visual position of top-left corner of the target visual rectangle
    * @param endPosition       visual position of bottom-right corner of the target visual rectangle
-   * @return                  <code>true</code> if given visual position belongs to the target visual rectangle;
-   *                          <code>false</code> otherwise
+   * @return                  {@code true} if given visual position belongs to the target visual rectangle;
+   *                          {@code false} otherwise
    */
   private static boolean isWithinBounds(VisualPosition targetPosition, VisualPosition startPosition, VisualPosition endPosition) {
     return targetPosition.line >= startPosition.line && targetPosition.line <= endPosition.line
@@ -440,6 +447,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       else {
         UiNotifyConnector.doWhenFirstShown(myEditor.getComponent(), () -> addUpdatePreviewRequest());
       }
+    }
+    else {
+      applySettingsToModel();
     }
   }
 

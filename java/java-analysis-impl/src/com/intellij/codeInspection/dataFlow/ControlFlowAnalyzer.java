@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,35 +148,29 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, type);
     }
-    else if (op == JavaTokenType.ANDEQ) {
-      if (isBoolean) {
-        generateBooleanAssignmentExpression(true, lExpr, rExpr, type);
-      }
-      else {
-        generateDefaultAssignmentBinOp(lExpr, rExpr, type);
-      }
+    else if (op == JavaTokenType.ANDEQ && isBoolean) {
+      generateBooleanAssignmentExpression(true, lExpr, rExpr, type);
     }
-    else if (op == JavaTokenType.OREQ) {
-      if (isBoolean) {
-        generateBooleanAssignmentExpression(false, lExpr, rExpr, type);
-      }
-      else {
-        generateDefaultAssignmentBinOp(lExpr, rExpr, type);
-      }
+    else if (op == JavaTokenType.OREQ && isBoolean) {
+      generateBooleanAssignmentExpression(false, lExpr, rExpr, type);
     }
-    else if (op == JavaTokenType.XOREQ) {
-      if (isBoolean) {
-        generateXorExpression(expression, new PsiExpression[]{lExpr, rExpr}, type, true);
-      }
-      else {
-        generateDefaultAssignmentBinOp(lExpr, rExpr, type);
-      }
+    else if (op == JavaTokenType.XOREQ && isBoolean) {
+      generateXorExpression(expression, new PsiExpression[]{lExpr, rExpr}, type, true);
     }
     else if (op == JavaTokenType.PLUSEQ && type != null && type.equalsToText(JAVA_LANG_STRING)) {
       lExpr.accept(this);
       addInstruction(new DupInstruction());
       rExpr.accept(this);
       addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, myProject));
+    }
+    else if (isAssignmentDivision(op) && type != null && PsiType.LONG.isAssignableFrom(type)) {
+      lExpr.accept(this);
+      generateBoxingUnboxingInstructionFor(lExpr, type);
+      rExpr.accept(this);
+      generateBoxingUnboxingInstructionFor(rExpr, type);
+      checkZeroDivisor();
+      addInstruction(new PopInstruction());
+      pushUnknown();
     }
     else {
       generateDefaultAssignmentBinOp(lExpr, rExpr, type);
@@ -862,17 +856,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (condition != null) {
       condition.accept(this);
       generateBoxingUnboxingInstructionFor(condition, PsiType.BOOLEAN);
-      addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
+    } else {
+      pushUnknown();
     }
+    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, condition));
 
     PsiStatement body = statement.getBody();
     if (body != null) {
       body.accept(this);
     }
 
-    if (condition != null) {
-      addInstruction(new GotoInstruction(getStartOffset(statement)));
-    }
+    addInstruction(new GotoInstruction(getStartOffset(statement)));
 
     finishElement(statement);
   }
@@ -964,10 +958,41 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else if (op == JavaTokenType.OR && PsiType.BOOLEAN.equals(type)) {
       generateOrExpression(operands, type, false);
     }
+    else if (isBinaryDivision(op) && operands.length == 2 &&
+             type != null && PsiType.LONG.isAssignableFrom(type)) {
+      generateDivMod(expression, type, operands[0], operands[1]);
+    }
     else {
       generateOther(expression, op, operands, type);
     }
     finishElement(expression);
+  }
+
+  static boolean isBinaryDivision(IElementType binaryOp) {
+    return binaryOp == JavaTokenType.DIV || binaryOp == JavaTokenType.PERC;
+  }
+
+  static boolean isAssignmentDivision(IElementType op) {
+    return op == JavaTokenType.PERCEQ || op == JavaTokenType.DIVEQ;
+  }
+
+  private void generateDivMod(PsiPolyadicExpression expression, PsiType type, PsiExpression left, PsiExpression right) {
+    left.accept(this);
+    generateBoxingUnboxingInstructionFor(left, type);
+    right.accept(this);
+    generateBoxingUnboxingInstructionFor(right, type);
+    checkZeroDivisor();
+    addInstruction(new BinopInstruction(expression.getOperationTokenType(), expression.isPhysical() ? expression : null, myProject));
+  }
+
+  private void checkZeroDivisor() {
+    addInstruction(new DupInstruction());
+    addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(0, PsiType.LONG, null), null));
+    addInstruction(new BinopInstruction(JavaTokenType.NE, null, myProject));
+    ConditionalGotoInstruction ifNonZero = new ConditionalGotoInstruction(null, false, null);
+    addInstruction(ifNonZero);
+    throwException(JavaPsiFacade.getElementFactory(myProject).createTypeByFQClassName(ArithmeticException.class.getName()), null);
+    ifNonZero.setOffset(myCurrentFlow.getInstructionCount());
   }
 
   private void generateOther(PsiPolyadicExpression expression, IElementType op, PsiExpression[] operands, PsiType type) {
@@ -1320,7 +1345,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return !contracts.isEmpty() ? contracts : getMethodContracts(method);
   }
 
-  static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
+  public static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
     return CachedValuesManager.getCachedValue(method, () -> {
       final PsiAnnotation contractAnno = findContractAnnotation(method);
       if (contractAnno != null) {

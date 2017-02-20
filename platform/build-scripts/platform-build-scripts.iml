@@ -4,6 +4,8 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/groovy" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/icons/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/icons/tests" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -23,5 +25,16 @@
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="groovy-jps-plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="groovy_rt" scope="RUNTIME" />
+    <orderEntry type="module-library" exported="">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant-1.9.11_groovy-2.3.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project"/>
   </component>
 </module>

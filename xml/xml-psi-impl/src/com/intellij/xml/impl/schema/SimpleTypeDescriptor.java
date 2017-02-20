@@ -22,6 +22,6 @@ import com.intellij.psi.xml.XmlTag;
  */
 class SimpleTypeDescriptor extends TypeDescriptor {
   public SimpleTypeDescriptor(XmlTag tag) {
-    super();
+    super(tag);
   }
 }

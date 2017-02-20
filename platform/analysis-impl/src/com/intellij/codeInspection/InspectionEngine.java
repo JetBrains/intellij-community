@@ -120,7 +120,6 @@ public class InspectionEngine {
                                                                @NotNull final ProgressIndicator indicator) {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
-
     TextRange range = file.getTextRange();
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(file, range, range, Conditions.alwaysTrue(), new CommonProcessors.CollectProcessor<>(allDivided));
@@ -278,7 +277,11 @@ public class InspectionEngine {
     }
     Language language = Language.findLanguageByID(langId);
     Set<String> result;
-    if (language != null) {
+    if (language == null) {
+      // unknown language in plugin.xml, ignore
+      result = Collections.singleton(langId);
+    }
+    else {
       List<Language> dialects = language.getDialects();
       boolean applyToDialects = wrapper.applyToDialects();
       result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
@@ -288,10 +291,6 @@ public class InspectionEngine {
           result.add(dialect.getID());
         }
       }
-    }
-    else {
-      // unknown language in plugin.xml, ignore
-      result = Collections.singleton(langId);
     }
     return result;
   }
@@ -314,14 +313,14 @@ public class InspectionEngine {
   }
 
   private static void addDialects(@NotNull List<PsiElement> elements,
-                                  @NotNull Set<Language> processedLanguages,
-                                  @NotNull Set<String> dialectIds) {
+                                  @NotNull Set<Language> outProcessedLanguages,
+                                  @NotNull Set<String> outDialectIds) {
     for (PsiElement element : elements) {
       Language language = element.getLanguage();
-      dialectIds.add(language.getID());
-      if (processedLanguages.add(language)) {
+      outDialectIds.add(language.getID());
+      if (outProcessedLanguages.add(language)) {
         for (Language dialect : language.getDialects()) {
-          dialectIds.add(dialect.getID());
+          outDialectIds.add(dialect.getID());
         }
       }
     }

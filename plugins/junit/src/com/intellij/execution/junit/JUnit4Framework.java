@@ -147,6 +147,7 @@ public class JUnit4Framework extends JavaTestFramework {
     return new FileTemplateDescriptor("JUnit4 TearDown Method.java");
   }
 
+  @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit4 Test Method.java");
   }
@@ -168,7 +169,7 @@ public class JUnit4Framework extends JavaTestFramework {
 
   @Override
   public boolean isParameterized(PsiClass clazz) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, JUnitUtil.RUN_WITH);
+    PsiAnnotation annotation = JUnitUtil.getRunWithAnnotation(clazz);
     return annotation != null && JUnitUtil.isParameterized(annotation);
   }
 

@@ -29,49 +29,49 @@ import org.jetbrains.annotations.Nullable;
 public interface AppLifecycleListener {
   Topic<AppLifecycleListener> TOPIC = Topic.create("Application lifecycle notifications", AppLifecycleListener.class);
 
-  void appFrameCreated(final String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject);
+  default void appFrameCreated(final String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+  }
 
-  void appStarting(@Nullable Project projectFromCommandLine);
+  default void appStarting(@Nullable Project projectFromCommandLine) {
+  }
 
   /**
    * Called when a project frame is closed.
    */
-  void projectFrameClosed();
+  default void projectFrameClosed() {
+  }
 
   /**
    * Called if the project opening was cancelled or failed because of an error.
    */
-  void projectOpenFailed();
+  default void projectOpenFailed() {
+  }
 
   /**
    * Called when the welcome screen is displayed.
    */
-  void welcomeScreenDisplayed();
+  default void welcomeScreenDisplayed() {
+  }
 
   /**
    * Fired before saving settings and before final 'can exit?' check. App may end up not closing if some of the
    * {@link com.intellij.openapi.application.ApplicationListener} listeners return false from their {@code canExitApplication}
    * method.
    */
-  void appClosing();
+  default void appClosing() {
+  }
 
+
+  /**
+   * Fired after saving settings and after final 'can exit?' check.
+   */
+  default void appWillBeClosed(boolean isRestart) {
+  }
+
+  /**
+   * @deprecated Please use {@link AppLifecycleListener} directly.
+   */
+  @Deprecated
   abstract class Adapter implements AppLifecycleListener {
-    @Override
-    public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) { }
-
-    @Override
-    public void appStarting(Project projectFromCommandLine) { }
-
-    @Override
-    public void projectFrameClosed() { }
-
-    @Override
-    public void projectOpenFailed() { }
-
-    @Override
-    public void welcomeScreenDisplayed() { }
-
-    @Override
-    public void appClosing() { }
   }
 }

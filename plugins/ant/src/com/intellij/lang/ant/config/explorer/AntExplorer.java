@@ -161,7 +161,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         myBuilder.queueUpdate();
       }
     }, this);
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerAdapter() {
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
       public void beforeRunTasksChanged() {
         myBuilder.queueUpdate();
       }

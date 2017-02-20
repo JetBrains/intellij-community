@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.execution.util.ScriptFileUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -63,11 +62,14 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyRunnerPsiUtil;
+import org.jetbrains.plugins.groovy.runner.util.CommonProgramRunConfigurationParametersDelegate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+
+import static com.intellij.execution.util.ProgramParametersUtil.configureConfiguration;
 
 /**
  * @author peter
@@ -173,10 +175,10 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     final VirtualFile scriptFile = ScriptFileUtil.findScriptFileByPath(getScriptPath());
-    assert scriptFile != null;
+    if (scriptFile == null) return null;
 
     final GroovyScriptRunner scriptRunner = getScriptRunner();
-    assert scriptRunner != null;
+    if (scriptRunner == null) return null;
 
     return new JavaCommandLineState(environment) {
       @NotNull
@@ -210,7 +212,13 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
           module == null ? JavaParametersUtil.createProjectJdk(getProject(), jrePath)
                          : JavaParametersUtil.createModuleJdk(module, !tests, jrePath)
         );
-        ProgramParametersUtil.configureConfiguration(params, GroovyScriptRunConfiguration.this);
+        configureConfiguration(params, new CommonProgramRunConfigurationParametersDelegate(GroovyScriptRunConfiguration.this) {
+          @Nullable
+          @Override
+          public String getProgramParameters() {
+            return null;
+          }
+        });
         scriptRunner.configureCommandLine(params, module, tests, scriptFile, GroovyScriptRunConfiguration.this);
 
         return params;

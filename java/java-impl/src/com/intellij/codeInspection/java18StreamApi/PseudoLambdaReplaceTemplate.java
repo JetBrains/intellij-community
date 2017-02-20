@@ -126,8 +126,7 @@ public class PseudoLambdaReplaceTemplate {
               }
               final PsiClass methodReturnType = ((PsiClassType)returnType).resolve();
               if (methodReturnType == null ||
-                  (!InheritanceUtil.isInheritor(methodReturnType, CommonClassNames.JAVA_LANG_ITERABLE) &&
-                   !InheritanceUtil.isInheritor(methodReturnType, CommonClassNames.JAVA_LANG_ITERABLE))) {
+                  !InheritanceUtil.isInheritor(methodReturnType, CommonClassNames.JAVA_LANG_ITERABLE)) {
                 return null;
               }
             }

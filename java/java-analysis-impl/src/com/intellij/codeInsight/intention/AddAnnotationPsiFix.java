@@ -18,11 +18,10 @@ package com.intellij.codeInsight.intention;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -138,18 +137,19 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
       for (String fqn : myAnnotationsToRemove) {
         annotationsManager.deannotate(myModifierListOwner, fqn);
       }
-      annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file, myPairs);
+      try {
+        annotationsManager.annotateExternally(myModifierListOwner, myAnnotation, file, myPairs);
+      }
+      catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
     }
     else {
       final PsiFile containingFile = myModifierListOwner.getContainingFile();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(containingFile)) return;
-
-      WriteAction.run(() -> {
+      WriteCommandAction.runWriteCommandAction(project, null, null, () -> {
         removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
 
         PsiAnnotation inserted = addPhysicalAnnotation(myAnnotation, myPairs, modifierList);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
-      });
+      }, containingFile);
 
       if (containingFile != file) {
         UndoUtil.markPsiFileForUndo(file);

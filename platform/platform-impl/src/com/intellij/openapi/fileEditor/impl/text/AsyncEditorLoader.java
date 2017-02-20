@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,23 +91,27 @@ public class AsyncEditorLoader {
     long startStamp = myEditor.getDocument().getModificationStamp();
     return ourExecutor.submit(() -> {
       Ref<Runnable> ref = new Ref<>();
-      while (!myEditorComponent.isDisposed()) {
-        ProgressIndicatorUtils.runWithWriteActionPriority(
-          () -> ref.set(psiDocumentManager.commitAndRunReadAction(() -> myProject.isDisposed() ? EmptyRunnable.INSTANCE
-                                                                                               : myTextEditor.loadEditorInBackground())),
-          new ProgressIndicatorBase()
-        );
-        Runnable continuation = ref.get();
-        if (continuation != null) {
-          invokeLater(() -> {
-            if (startStamp == myEditor.getDocument().getModificationStamp()) loadingFinished(continuation);
-            else if (!myProject.isDisposed() && !myEditorComponent.isDisposed()) scheduleLoading();
-          });
-          return continuation;
+      try {
+        while (!myEditorComponent.isDisposed()) {
+          ProgressIndicatorUtils.runWithWriteActionPriority(
+            () -> ref.set(psiDocumentManager.commitAndRunReadAction(() -> myProject.isDisposed() ? EmptyRunnable.INSTANCE
+                                                                                                 : myTextEditor.loadEditorInBackground())),
+            new ProgressIndicatorBase()
+          );
+          Runnable continuation = ref.get();
+          if (continuation != null) {
+            invokeLater(() -> {
+              if (startStamp == myEditor.getDocument().getModificationStamp()) loadingFinished(continuation);
+              else if (!myProject.isDisposed() && !myEditorComponent.isDisposed()) scheduleLoading();
+            });
+            return continuation;
+          }
+          ProgressIndicatorUtils.yieldToPendingWriteActions();
         }
-        TimeUnit.MILLISECONDS.sleep(RETRY_TIME_MS);
       }
-      invokeLater(() -> loadingFinished(null));
+      finally {
+        if (ref.isNull()) invokeLater(() -> loadingFinished(null));
+      }
       return null;
     });
   }
@@ -163,7 +167,7 @@ public class AsyncEditorLoader {
     myEditor.getScrollingModel().enableAnimation();
 
     if (FileEditorManager.getInstance(myProject).getSelectedTextEditor() == myEditor) {
-      IdeFocusManager.getInstance(myProject).requestFocus(myTextEditor.getPreferredFocusedComponent(), true);
+      IdeFocusManager.getInstance(myProject).requestFocusInProject(myTextEditor.getPreferredFocusedComponent(), myProject);
     }
     EditorNotifications.getInstance(myProject).updateNotifications(myTextEditor.myFile);
   }

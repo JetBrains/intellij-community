@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -389,7 +389,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public String getPresentableName() {
-    if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS && !isDirectory()) {
+    if (UISettings.getInstance().getHdeKnownExtensionInTabs() && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();
       return nameWithoutExtension.isEmpty() ? getName() : nameWithoutExtension;
     }

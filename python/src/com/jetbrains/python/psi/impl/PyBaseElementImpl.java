@@ -28,12 +28,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyReferenceOwner;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +66,14 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     }
     className = StringUtil.trimEnd(className, "Impl");
     return className;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    // TODO: Limit to classes, functions, targets?
+    final PsiElement element = PyiUtil.getOriginalElement(this);
+    return element != null ? element : super.getNavigationElement();
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

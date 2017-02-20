@@ -395,6 +395,42 @@ public class PythonLexerTest extends PyLexerTestCase {
     doTest("s = f\"\"\"{x}\n\"\"\"", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
 
+  // PY-21697
+  public void testTripleSingleQuotedStringWithEscapedSlashAfterOneQuote() {
+    doTest("s = '''\n" +
+           "'\\\\'''\n" +
+           "'''\n",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+  
+  // PY-21697
+  public void testTripleSingleQuotedStringWithEscapedSlashAfterTwoQuotes() {
+    doTest("s = '''\n" +
+           "''\\\\'''\n" +
+           "'''\n",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+  
+  // PY-21697
+  public void testTripleDoubleQuotedStringWithEscapedSlashAfterOneQuote() {
+        doTest("s = \"\"\"\n" +
+           "\"\\\\\"\"\"\n" +
+           "\"\"\"\n",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+  
+  // PY-21697
+  public void testTripleDoubleQuotedStringWithEscapedSlashAfterTwoQuotes() {
+        doTest("s = \"\"\"\n" +
+           "\"\"\\\\\"\"\"\n" +
+           "\"\"\"\n",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING",
+           "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     PyLexerTestCase.doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }

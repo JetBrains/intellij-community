@@ -73,7 +73,7 @@ public class GroovyListGetCanBeKeyedAccessInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return "Replace with keyed access";
     }
 

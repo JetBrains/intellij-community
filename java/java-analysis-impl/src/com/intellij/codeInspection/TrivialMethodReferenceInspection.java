@@ -31,7 +31,7 @@ public class TrivialMethodReferenceInspection extends BaseJavaBatchLocalInspecti
       public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
-        if (qualifierExpression != null && referenceNameElement != null) {
+        if (qualifierExpression != null && referenceNameElement != null && !(qualifierExpression instanceof PsiSuperExpression)) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null) {
             final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();

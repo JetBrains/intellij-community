@@ -60,8 +60,9 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
     if (forWriting && expressionFrom != null) {
       PsiClassInitializer initializer = PsiTreeUtil.getParentOfType(expressionFrom, PsiClassInitializer.class);
-      if (initializer != null) {
-        if (initializer.getParent() instanceof PsiClass && psiFrom == initializer.getParent() && !expressionFrom.isQualified()) {
+      if (initializer != null && initializer.getParent() instanceof PsiClass && psiFrom == initializer.getParent()) {
+        PsiExpression qualifierExpression = expressionFrom.getQualifierExpression();
+        if (qualifierExpression == null || qualifierExpression instanceof PsiThisExpression && ((PsiThisExpression)qualifierExpression).getQualifier() == null) {
           referencedFromClassInitializer = true;
         }
       }
@@ -74,6 +75,8 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (forReading) {
       setUsedForReading(true);
     }
+    
+    setUsedQualifiedOutsidePackageFlag(refFrom, expressionFrom);
     getRefManager().fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting);
   }
 

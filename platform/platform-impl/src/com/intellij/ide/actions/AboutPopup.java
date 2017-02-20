@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,13 +67,13 @@ public class AboutPopup {
   private static final String COPY_URL = "copy://";
   private static JBPopup ourPopup;
 
-  public static void show(@Nullable Window window) {
+  public static void show(@Nullable Window window, boolean showDebugInfo) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
     final PopupPanel panel = new PopupPanel(new BorderLayout());
     Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
     if (appInfo.showLicenseeInfo()) {
-      final InfoSurface infoSurface = new InfoSurface(image);
+      final InfoSurface infoSurface = new InfoSurface(image, showDebugInfo);
       infoSurface.setPreferredSize(new Dimension(image.getIconWidth(), image.getIconHeight()));
       panel.setInfoSurface(infoSurface);
     }
@@ -125,6 +125,7 @@ public class AboutPopup {
     private final Color myColor;
     private final Color myLinkColor;
     private final Icon myImage;
+    private final boolean myShowDebugInfo;
     private Font myFont;
     private Font myBoldFont;
     private final List<AboutBoxLine> myLines = new ArrayList<>();
@@ -135,13 +136,14 @@ public class AboutPopup {
     private float myShowCopyAlpha;
     private Alarm myAlarm = new Alarm();
 
-    public InfoSurface(Icon image) {
+    public InfoSurface(Icon image, final boolean showDebugInfo) {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
 
       myImage = image;
       //noinspection UseJBColor
       myColor = Color.white;
       myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : UI.getColor("link.foreground");
+      myShowDebugInfo = showDebugInfo;
 
       setOpaque(false);
       setBackground(myColor);
@@ -199,7 +201,7 @@ public class AboutPopup {
           if (myActiveLink != null) {
             event.consume();
             if (COPY_URL.equals(myActiveLink.myUrl)) {
-              copyInfoToClipboard(myInfo.toString());
+              copyInfoToClipboard(getText());
               if (ourPopup != null) {
                 ourPopup.cancel();
               }
@@ -330,6 +332,12 @@ public class AboutPopup {
       final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(140) : JBUI.scale(30);
       final int copyrightY = Registry.is("ide.new.about") ? JBUI.scale(390) : JBUI.scale(284);
       g2.drawString(getCopyrightText(), copyrightX, copyrightY);
+      if (myShowDebugInfo) {
+        g2.setColor(((ApplicationInfoEx)appInfo).getAboutForeground());
+        for (Link link : myLinks) {
+          g2.drawRect(link.myRectangle.x, link.myRectangle.y, link.myRectangle.width, link.myRectangle.height);
+        }
+      }
     }
 
     @NotNull
@@ -347,7 +355,7 @@ public class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString();
+      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
     }
 
     private class TextRenderer {

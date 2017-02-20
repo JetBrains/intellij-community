@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
 
-import java.util.List;
 import java.util.Map;
 
 /**
  * author: lesya
  */
 public class SSHPasswordProviderImpl implements NamedComponent, JDOMExternalizable, SSHPasswordProvider {
-
   private final Map<String, String> myCvsRootToPasswordMap = new HashMap<>();
   private final Map<String, String> myCvsRootToStoringPasswordMap = new HashMap<>();
 
@@ -55,11 +53,13 @@ public class SSHPasswordProviderImpl implements NamedComponent, JDOMExternalizab
     return ServiceManager.getService(SSHPasswordProviderImpl.class);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "SSHPasswordProvider";
   }
 
+  @Override
   @Nullable
   public String getPasswordForCvsRoot(String cvsRoot) {
     synchronized (myLock) {
@@ -82,6 +82,7 @@ public class SSHPasswordProviderImpl implements NamedComponent, JDOMExternalizab
     }
   }
 
+  @Override
   @Nullable
   public String getPPKPasswordForCvsRoot(String cvsRoot) {
     synchronized (myLock) {
@@ -104,30 +105,37 @@ public class SSHPasswordProviderImpl implements NamedComponent, JDOMExternalizab
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    Element passwords = new Element(PASSWORDS);
-    for (final String cvsRoot : myCvsRootToStoringPasswordMap.keySet()) {
-      Element password = new Element(PASSWORD);
-      password.setAttribute(CVSROOT_ATTR, cvsRoot);
-      password.setAttribute(PASSWORD_ATTR, PServerPasswordScrambler.getInstance().scramble(myCvsRootToStoringPasswordMap.get(cvsRoot)));
-      passwords.addContent(password);
+    if (!myCvsRootToStoringPasswordMap.isEmpty()) {
+      Element passwords = new Element(PASSWORDS);
+      for (final String cvsRoot : myCvsRootToStoringPasswordMap.keySet()) {
+        Element password = new Element(PASSWORD);
+        password.setAttribute(CVSROOT_ATTR, cvsRoot);
+        password.setAttribute(PASSWORD_ATTR, PServerPasswordScrambler.getInstance().scramble(myCvsRootToStoringPasswordMap.get(cvsRoot)));
+        passwords.addContent(password);
+      }
+      element.addContent(passwords);
     }
-    element.addContent(passwords);
 
-    Element ppkPasswords = new Element(PPKPASSWORDS);
-    for (final String cvsRoot : myCvsRootToStoringPPKPasswordMap.keySet()) {
-      Element password = new Element(PASSWORD);
-      password.setAttribute(CVSROOT_ATTR, cvsRoot);
-      password.setAttribute(PASSWORD_ATTR, PServerPasswordScrambler.getInstance().scramble(myCvsRootToStoringPPKPasswordMap.get(cvsRoot)));
-      ppkPasswords.addContent(password);
+    if (!myCvsRootToStoringPPKPasswordMap.isEmpty()) {
+      Element ppkPasswords = new Element(PPKPASSWORDS);
+      for (final String cvsRoot : myCvsRootToStoringPPKPasswordMap.keySet()) {
+        Element password = new Element(PASSWORD);
+        password.setAttribute(CVSROOT_ATTR, cvsRoot);
+        password
+          .setAttribute(PASSWORD_ATTR, PServerPasswordScrambler.getInstance().scramble(myCvsRootToStoringPPKPasswordMap.get(cvsRoot)));
+        ppkPasswords.addContent(password);
+      }
+      element.addContent(ppkPasswords);
     }
-    element.addContent(ppkPasswords);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     Element passwords = element.getChild(PASSWORDS);
     if (passwords != null) {
-      for (Element passElement : (List<Element>)passwords.getChildren(PASSWORD)) {
+      for (Element passElement : passwords.getChildren(PASSWORD)) {
         String cvsRoot = passElement.getAttributeValue(CVSROOT_ATTR);
         String password = passElement.getAttributeValue(PASSWORD_ATTR);
         if ((cvsRoot != null) && (password != null)) {
@@ -138,7 +146,7 @@ public class SSHPasswordProviderImpl implements NamedComponent, JDOMExternalizab
 
     Element ppkPasswords = element.getChild(PPKPASSWORDS);
     if (ppkPasswords != null) {
-      for (Element passElement : (List<Element>)ppkPasswords.getChildren(PASSWORD)) {
+      for (Element passElement : ppkPasswords.getChildren(PASSWORD)) {
         String cvsRoot = passElement.getAttributeValue(CVSROOT_ATTR);
         String password = passElement.getAttributeValue(PASSWORD_ATTR);
         if ((cvsRoot != null) && (password != null)) {

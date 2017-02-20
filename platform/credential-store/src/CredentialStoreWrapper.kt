@@ -80,7 +80,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
 
       val appInfo = ApplicationInfoEx.getInstanceEx()
       if (appInfo.isEAP || appInfo.build.isSnapshot) {
-        setNew(CredentialAttributes("IntelliJ Platform", "${requestor.name}/$userName"))?.let { return it }
+        setNew(CredentialAttributes(SERVICE_NAME_PREFIX, "${requestor.name}/$userName"))?.let { return it }
       }
     }
     return null
