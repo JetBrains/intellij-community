@@ -46,6 +46,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -122,7 +123,11 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
             .schedule(new LowestPriorityCommand(getSuspendContext()) {
               @Override
               public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-                trackClass(ref, type, activated);
+                final XDebugProcess process = suspendContext.getDebugProcess().getXdebugProcess();
+                if (process != null) {
+                  final XDebugSession session = process.getSession();
+                  trackClass(session, ref, type, activated);
+                }
               }
             });
         }
@@ -154,14 +159,14 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
           if (classes.isEmpty()) {
             new ClassPreparedListener(className, debugSession) {
               @Override
-              public void onClassPrepared(@NotNull ReferenceType referenceType) {
-                trackClass(referenceType, type, myIsTrackersActivated.get());
+              public void onClassPrepared(@NotNull ReferenceType referenceType, @NotNull XDebugSession session) {
+                trackClass(session, referenceType, type, myIsTrackersActivated.get());
               }
             };
           }
           else {
             for (ReferenceType ref : classes) {
-              trackClass(ref, type, activated);
+              trackClass(debugSession, ref, type, activated);
             }
           }
         });
@@ -273,7 +278,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     return myConstructorTrackedClasses.getOrDefault(ref, null);
   }
 
-  private void trackClass(@NotNull ReferenceType ref,
+  private void trackClass(@NotNull XDebugSession session,
+                          @NotNull ReferenceType ref,
                           @NotNull TrackingType type,
                           boolean isTrackerEnabled) {
     LOG.assertTrue(DebuggerManager.getInstance(myProject).isDebuggerManagerThread());
@@ -283,12 +289,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         Disposer.dispose(old);
       }
 
-      final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
-      if (debugSession == null) {
-        return;
-      }
-
-      final ConstructorInstancesTracker tracker = new ConstructorInstancesTracker(ref, debugSession, myInstancesTracker);
+      final ConstructorInstancesTracker tracker = new ConstructorInstancesTracker(ref, session, myInstancesTracker);
       tracker.setBackgroundMode(!myIsActive);
       if (isTrackerEnabled) {
         tracker.enable();
