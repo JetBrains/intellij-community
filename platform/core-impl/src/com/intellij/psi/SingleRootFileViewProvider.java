@@ -114,10 +114,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
-    if (virtualFile instanceof LightVirtualFile && !isEventSystemEnabled()) {
-      virtualFile.putUserData(FREE_THREADED, true);
-    }
+    virtualFile.putUserData(FREE_THREADED, isFreeThreaded(this));
     myFileType = type;
+  }
+
+  public static boolean isFreeThreaded(@NotNull FileViewProvider provider) {
+    return provider.getVirtualFile() instanceof LightVirtualFile && !provider.isEventSystemEnabled();
   }
 
   @Override

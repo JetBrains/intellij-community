@@ -48,7 +48,6 @@ import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -63,7 +62,10 @@ import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -765,7 +767,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
                   "; viewProvider=" + viewProvider + " of " + viewProvider.getClass() +
                   "; language=" + file.getLanguage() +
                   "; vFile=" + vFile + " of " + vFile.getClass() +
-                  "; free-threaded=" + PsiDocumentManagerBase.isFreeThreaded(vFile));
+                  "; free-threaded=" + SingleRootFileViewProvider.isFreeThreaded(viewProvider));
       }
 
       doActualPsiChange(file, diffLog);
