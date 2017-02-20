@@ -68,14 +68,12 @@ final class FileTrees {
   }
 
   FileTrees withExclusiveStub(@NotNull StubTree stub) {
-    assert derefTreeElement() == null;
-    assert !useStrongRefs;
+    assert derefTreeElement() == null && !useStrongRefs : this;
     return new FileTrees(new SoftReference<>(stub), null, false, false);
   }
 
   FileTrees withGreenStub(@NotNull StubTree stub) {
-    assert derefTreeElement() != null;
-    assert astLoaded;
+    assert derefTreeElement() != null && astLoaded : this;
     return new FileTrees(new SoftReference<>(stub), myTreeElementPointer, true, useStrongRefs);
   }
 
@@ -86,8 +84,8 @@ final class FileTrees {
   @Override
   public String toString() {
     return "FileTrees{" +
-           "stub=" + derefStub() +
-           ", AST=" + derefTreeElement() +
+           "stub=" + (myStub == null ? "noRef" : derefStub()) +
+           ", AST=" + (myTreeElementPointer == null ? "noRef" : derefTreeElement()) +
            ", astLoaded=" + astLoaded +
            ", useStrongRefs=" + useStrongRefs +
            '}' ;
