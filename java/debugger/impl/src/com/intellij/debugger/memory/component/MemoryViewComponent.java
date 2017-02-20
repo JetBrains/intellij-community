@@ -19,6 +19,8 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
@@ -57,14 +59,9 @@ public class MemoryViewComponent extends AbstractProjectComponent {
       if (javaProcess instanceof DebugProcessImpl) {
         final DebugProcessImpl processImpl = (DebugProcessImpl)javaProcess;
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (project.isDisposed()) {
-            return;
-          }
-
           final InstancesTracker tracker = InstancesTracker.getInstance(project);
           final RunnerLayoutUi ui = session.getUI();
           final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, processImpl, tracker);
-          classesFilteredView.setActive(true);
           final Content memoryViewContent =
             ui.createContent(MEMORY_VIEW_CONTENT_ID, classesFilteredView, "Memory View",
                              AllIcons.Debugger.MemoryView.Active, null);
@@ -75,34 +72,38 @@ public class MemoryViewComponent extends AbstractProjectComponent {
 
           final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData(classesFilteredView);
           processImpl.putUserData(MemoryViewDebugProcessData.KEY, data);
-          ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
 
           ui.addListener(new ContentManagerAdapter() {
             @Override
-            public void selectionChanged(ContentManagerEvent event) {
-              final Content content = event.getContent();
-              if (content == memoryViewContent) {
-                if (ContentManagerEvent.ContentOperation.add.equals(event.getOperation())) {
-                  classesFilteredView.setActive(true);
-                }
-                else if (ContentManagerEvent.ContentOperation.remove.equals(event.getOperation())) {
-                  classesFilteredView.setActive(false);
-                }
+            public void contentAdded(ContentManagerEvent event) {
+              if (event.getContent() == memoryViewContent) {
+                classesFilteredView.setActive(true);
+              }
+            }
+
+            @Override
+            public void contentRemoved(ContentManagerEvent event) {
+              if (event.getContent() == memoryViewContent) {
+                classesFilteredView.setActive(false);
               }
             }
           }, classesFilteredView);
-        });
+
+          ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
+
+          processImpl.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void processTerminated(ProcessEvent event) {
+              ApplicationManager.getApplication().invokeLater(() -> memoryViewContent.setIcon(AllIcons.Debugger.MemoryView.Inactive));
+              processImpl.removeProcessListener(this);
+            }
+          });
+        }, o -> project.isDisposed());
       }
     }
 
     @Override
     public void processStopped(@NotNull XDebugProcess debugProcess) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        final Content memoryView = debugProcess.getSession().getUI().findContent(MEMORY_VIEW_CONTENT_ID);
-        if (memoryView != null) {
-          memoryView.setIcon(AllIcons.Debugger.MemoryView.Inactive);
-        }
-      });
     }
   }
 }
