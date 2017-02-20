@@ -192,7 +192,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
 
       final JsonSchemaType type = getType(value);
       if (type == null) {
-        typeError(value.getDelegate());
+        //typeError(value.getDelegate());
       } else {
         JsonSchemaType schemaType = matchSchemaType(schema, type);
         if (schemaType == null && schema.hasSpecifiedType()) {
@@ -574,7 +574,8 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       }
       if (cntCorrect == 1) return;
       if (cntCorrect > 0) {
-        error("Validates to more than one variant", value.getDelegate());
+        final JsonSchemaType type = getType(value);
+        if (type != null) error("Validates to more than one variant", value.getDelegate());
       } else {
         if (!errors.isEmpty()) {
           for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
