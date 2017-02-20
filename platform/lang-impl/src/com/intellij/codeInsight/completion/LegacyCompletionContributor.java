@@ -55,7 +55,7 @@ public class LegacyCompletionContributor extends CompletionContributor {
     final Set<CompletionVariant> keywordVariants = new HashSet<>();
     PsiFile file = parameters.getOriginalFile();
     completionData.addKeywordVariants(keywordVariants, insertedElement, file);
-    completionData.completeKeywordsBySet(lookupSet, keywordVariants, insertedElement);
+    completionData.completeKeywordsBySet(lookupSet, keywordVariants);
     result.addAllElements(lookupSet);
   }
 
