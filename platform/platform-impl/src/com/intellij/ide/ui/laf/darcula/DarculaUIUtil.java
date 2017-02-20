@@ -41,6 +41,9 @@ import static javax.swing.SwingConstants.WEST;
 public class DarculaUIUtil {
   private static final Color  GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
 
+  private static final Color  BALLOON_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
+  private static final Color  BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
+
   public static void paintFocusRing(Graphics g, Rectangle bounds) {
     MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
   }
@@ -121,9 +124,19 @@ public class DarculaUIUtil {
   }
 
   public static void showErrorTip(JComponent component) {
-    Balloon balloon = (Balloon)component.getClientProperty("JComponent.error.balloon");
-    if (balloon != null) {
-      component.putClientProperty("JComponent.error.balloon", null);
+    BalloonBuilder bb = (BalloonBuilder)component.getClientProperty("JComponent.error.balloonBuilder");
+    if (bb != null) {
+      component.putClientProperty("JComponent.error.balloonBuilder", null);
+
+      Balloon balloon = bb.setPointerSize(new JBDimension(17, 6))
+        .setCornerToPointerDistance(JBUI.scale(30))
+        .setBorderColor(BALLOON_BORDER)
+        .setFillColor(BALLOON_BACKGROUND)
+        .setHideOnFrameResize(false)
+        .setRequestFocus(false)
+        .setAnimationCycle(300)
+        .setShadow(false)
+        .createBalloon();
 
       JComponent root = component.getRootPane();
       Point componentPos = SwingUtilities.convertPoint(component, 0, 0, root);
