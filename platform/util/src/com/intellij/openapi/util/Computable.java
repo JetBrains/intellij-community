@@ -53,6 +53,17 @@ public interface Computable <T> {
       }
       return myValue;
     }
+
+    @NotNull
+    public static <T> NotNullCachedComputable<T> from(@NotNull final NotNullComputable<T> delegate) {
+      return new NotNullCachedComputable<T>() {
+        @NotNull
+        @Override
+        protected T internalCompute() {
+          return delegate.compute();
+        }
+      };
+    }
   }
 
   abstract class NullableCachedComputable<T> implements NullableComputable<T> {
@@ -71,6 +82,17 @@ public interface Computable <T> {
       }
       //noinspection unchecked
       return myValue != NULL_VALUE ? (T)myValue : null;
+    }
+
+    @NotNull
+    public static <T> NullableCachedComputable<T> from(@NotNull final NullableComputable<T> delegate) {
+      return new NullableCachedComputable<T>() {
+        @Nullable
+        @Override
+        protected T internalCompute() {
+          return delegate.compute();
+        }
+      };
     }
   }
 }
