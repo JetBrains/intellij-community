@@ -303,14 +303,14 @@ public class GitMergeProvider implements MergeProvider2 {
       return GitRevisionNumber.resolve(myProject, root, MERGE_HEAD);
     }
     catch (VcsException e) {
-      LOG.info("Couldn't resolve the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
+      LOG.info("Couldn't resolve the MERGE_HEAD in " + root + ": " + e.getMessage()); // this may be not a bug, just cherry-pick
     }
 
     try {
       return GitRevisionNumber.resolve(myProject, root, CHERRY_PICK_HEAD);
     }
     catch (VcsException e) {
-      LOG.info("Couldn't resolve the CHERRY_PICK_HEAD in " + root, e);
+      LOG.info("Couldn't resolve the CHERRY_PICK_HEAD in " + root + ": " + e.getMessage());
     }
 
     GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
