@@ -20,8 +20,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -253,13 +251,13 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
   }
 
-  private AnAction createImportExportAction(@NotNull String groupName,
-                                            @NotNull Collection<String> actionNames,
-                                            @NotNull BiFunction<String, String, AnAction> createActionByName) {
+  private static AnAction createImportExportAction(@NotNull String groupName,
+                                                   @NotNull Collection<String> actionNames,
+                                                   @NotNull BiFunction<String, String, AnAction> createActionByName) {
     if (actionNames.size() == 1) {
       return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName);
     } else {
-      return new ActionGroupPopupAction(groupName, actionNames) {
+      return new ImportExportActionGroup(groupName, actionNames) {
         @NotNull
         @Override
         protected AnAction createAction(@NotNull String actionName) {
@@ -269,28 +267,22 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
   }
 
-  private abstract class ActionGroupPopupAction extends DumbAwareAction {
+  private abstract static class ImportExportActionGroup extends ActionGroup {
     private final Collection<String> myActionNames;
 
-    public ActionGroupPopupAction(@NotNull String groupName, @NotNull Collection<String> actionNames) {
-      super(groupName);
+    public ImportExportActionGroup(@NotNull String groupName, @NotNull Collection<String> actionNames) {
+      super(groupName, true);
       myActionNames = actionNames;
     }
 
+    @NotNull
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      ListPopup listPopup =JBPopupFactory.getInstance().createActionGroupPopup(getTemplatePresentation().getText(), new ActionGroup() {
-        @NotNull
-        @Override
-        public AnAction[] getChildren(@Nullable AnActionEvent e) {
-          List<AnAction> namedActions = new ArrayList<>();
-          for (String actionName : myActionNames) {
-            namedActions.add(createAction(actionName));
-          }
-          return namedActions.toArray(new AnAction[namedActions.size()]);
-        }
-      }, e.getDataContext(), null, true);
-      listPopup.showUnderneathOf(mySchemesPanel.getToolbar());
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      List<AnAction> namedActions = new ArrayList<>();
+      for (String actionName : myActionNames) {
+        namedActions.add(createAction(actionName));
+      }
+      return namedActions.toArray(new AnAction[namedActions.size()]);
     }
 
     @NotNull
