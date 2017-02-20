@@ -46,45 +46,34 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element);
     if (walker == null) return null;
-    final JsonProperty jsonProperty = element instanceof JsonProperty ? (JsonProperty) element : PsiTreeUtil.getParentOfType(element, JsonProperty.class);
 
-    if (jsonProperty != null) {
-      if (JsonSchemaFileType.INSTANCE.equals(jsonProperty.getContainingFile().getFileType())) {
+    if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType())) {
+      final JsonProperty jsonProperty =
+        element instanceof JsonProperty ? (JsonProperty)element : PsiTreeUtil.getParentOfType(element, JsonProperty.class);
+      if (jsonProperty != null) {
         final JsonValue value = jsonProperty.getValue();
         if (value instanceof JsonObject) {
           final JsonProperty description = ((JsonObject)value).findProperty("description");
-          if (description != null && description.getValue() instanceof JsonStringLiteral)
+          if (description != null && description.getValue() instanceof JsonStringLiteral) {
             return StringUtil.unquoteString(description.getValue().getText());
+          }
         }
         return null;
       }
-
-      final Ref<String> result = Ref.create();
-      final String propertyName = jsonProperty.getName();
-      JsonSchemaWalker.findSchemasForCompletion(jsonProperty, walker, new JsonSchemaWalker.CompletionSchemesConsumer() {
-        @Override
-        public void consume(boolean isName,
-                            @NotNull JsonSchemaObject schema,
-                            @NotNull VirtualFile schemaFile,
-                            @NotNull List<JsonSchemaWalker.Step> steps) {
-          JsonSchemaPropertyProcessor.process(new JsonSchemaPropertyProcessor.PropertyProcessor() {
-            @Override
-            public boolean process(String name, JsonSchemaObject schema) {
-              if (propertyName.equals(name) && schema != null) {
-                result.set(schema.getDescription());
-                return false;
-              }
-
-              return true;
-            }
-          }, schema);
-        }
-      }, myRootSchema, mySchemaFile);
-
-      return result.get();
     }
 
-    return null;
+    final Ref<String> result = Ref.create();
+    JsonSchemaWalker.findSchemasForDocumentation(element, walker, new JsonSchemaWalker.CompletionSchemesConsumer() {
+      @Override
+      public void consume(boolean isName,
+                          @NotNull JsonSchemaObject schema,
+                          @NotNull VirtualFile schemaFile,
+                          @NotNull List<JsonSchemaWalker.Step> steps) {
+        result.set(schema.getDescription());
+      }
+    }, myRootSchema, mySchemaFile);
+
+    return result.get();
   }
 
   @Nullable
