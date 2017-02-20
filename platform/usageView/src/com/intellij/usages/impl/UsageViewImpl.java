@@ -1724,8 +1724,18 @@ public class UsageViewImpl implements UsageView {
 
       final JButton button = new JButton(UIUtil.replaceMnemonicAmpersand(text));
       DialogUtil.registerMnemonic(button);
-      DumbService.getInstance(myProject).makeDumbAware(button, UsageViewImpl.this);
-      
+      getProject().getMessageBus().connect(UsageViewImpl.this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+        @Override
+        public void enteredDumbMode() {
+          update();
+        }
+
+        @Override
+        public void exitDumbMode() {
+          update();
+        }
+      });
+
       button.setFocusable(false);
       button.addActionListener(e -> runnable.run());
 
@@ -1742,7 +1752,7 @@ public class UsageViewImpl implements UsageView {
         Component component = getComponent(i);
         if (component instanceof JButton) {
           final JButton button = (JButton)component;
-          button.setEnabled(!isSearchInProgress());
+          button.setEnabled(!isSearchInProgress() && !DumbService.isDumb(myProject));
         }
       }
     }
