@@ -195,7 +195,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         showPoint = new RelativePoint(parent, new Point((parent.getSize().width - getPreferredSize().width) / 2, height));
       }
       mySearchComponent.selectAll();
-      if (showPoint != null) {
+      if (showPoint != null && showPoint.getComponent() != null) {
         myBalloon.show(showPoint);
       } else {
         myBalloon.showCenteredInCurrentWindow(myProject);
