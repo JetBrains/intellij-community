@@ -59,27 +59,22 @@ betas.)
     +private static final boolean SKIP_UPDATE_CHANNEL_IMPORT = false;
 
 
- 5. Make sure assertions are turned off.
+ 5. Make sure assertions are turned off and `-OmitStackTraceInFastThrow` is removed.
 
-    This is controlled by `build/scripts/utils.gant`:
+    This is controlled by `platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/VmOptionsGenerator.groovy`:
 
     ```
-    binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -da " + ...
-                                                                                                   ~~~~~
+    if (isEAP) {
+      options += "... -XX:-OmitStackTraceInFastThrow -ea"
+    } else {
+      options += " -da"
+    }
+                  ~~~~~
     ```
 
     This should be set to -da in production builds.
 
- 6. Make sure `-OmitStackTraceInFastThrow` is removed.
-
-    This is controlled by `build/scripts/utils.gant`:
-
-    ```
-    binding.setVariable("common_vmoptions", "... -XX:SoftRefLRUPolicyMSPerMB=50 -ea -XX:-OmitStackTraceInFastThrow " + ...
-                                                                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ```
-
- 7. Turn off null checking.
+ 6. Turn off null checking.
 
     Edit .idea/compiler.xml and make sure null assertions are disabled by
     adding the following line:
@@ -94,7 +89,7 @@ betas.)
     remove it and then leave the .idea/compiler.xml file in an edited state
     for all developers who open the project.)
 
- 8. Turn off CLASS retention in
+ 7. Turn off CLASS retention in
     `platform/annotations/java8/src/org/jetbrains/annotations`
     (Sadly, we can't also do this in
       `platform/annotations/java5/src/org/jetbrains/annotations`
@@ -115,7 +110,7 @@ betas.)
        /**
     ```
 
- 9. Use data-binding prebuilt jar instead of depending on modules.
+ 8. Use data-binding prebuilt jar instead of depending on modules.
 
     Build Android Studio and copy the data-binding jar from
     tools/idea/out/dist.all.ce/plugins/android/lib/data-binding.jar to tools/adt/idea/android/lib.
@@ -165,7 +160,7 @@ betas.)
 --------------------------------------------------------------------------------
 For final build (post RC) :
 
-10. Ensure that the default Update channel (for new users downloading this build)
+ 9. Ensure that the default Update channel (for new users downloading this build)
     is set to stable, not something else.
 
     Edit UpdateSettings.State.UPDATE_CHANNEL_TYPE in
@@ -173,7 +168,7 @@ For final build (post RC) :
     and make sure it's set to ChannelStatus.BETA.getCode() (for beta releases)
     or ChannelStatus.RELEASE.getCode() (for final.)
 
-11. Switch the launcher icons back from the preview colors (yellow) to
+10. Switch the launcher icons back from the preview colors (yellow) to
     the stable colors (green). One way to do this is to revert the following
     CL in tools/adt/ideA:
 
