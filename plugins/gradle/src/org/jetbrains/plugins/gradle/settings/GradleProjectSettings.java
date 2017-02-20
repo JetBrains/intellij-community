@@ -19,15 +19,15 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Denis Zhdanov
@@ -41,38 +41,6 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet = true;
   @Nullable private CompositeBuild myCompositeBuild;
-  @Nullable private Set<String> myNonCompositeModules = new HashSet<>();
-
-  @OptionTag("modules")
-  @Nullable
-  public Set<String> getNonCompositeModules() {
-    Set<String> modules = getModules();
-    if (myCompositeBuild != null && !modules.isEmpty()) {
-      Set<String> compositePaths = myCompositeBuild.getCompositeParticipants().stream()
-        .flatMap(participant -> participant.getProjects().stream()).collect(Collectors.toSet());
-      return modules.stream().filter(m -> !compositePaths.contains(m)).collect(Collectors.toSet());
-    }
-    else {
-      return myNonCompositeModules;
-    }
-  }
-
-  public void setNonCompositeModules(@Nullable Set<String> modules) {
-    myNonCompositeModules = modules;
-  }
-
-  @Transient
-  @NotNull
-  @Override
-  public Set<String> getModules() {
-    return super.getModules();
-  }
-
-  @Override
-  public void setModules(@Nullable Set<String> modules) {
-    super.setModules(modules);
-    setNonCompositeModules(modules);
-  }
 
   @Nullable
   public String getGradleHome() {
