@@ -22,13 +22,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * <p>
@@ -254,15 +255,15 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
   private AnAction createImportExportAction(@NotNull String groupName,
                                             @NotNull Collection<String> actionNames,
-                                            @NotNull Function<String, AnAction> createActionByName) {
+                                            @NotNull BiFunction<String, String, AnAction> createActionByName) {
     if (actionNames.size() == 1) {
-      return createActionByName.apply(groupName);
+      return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName);
     } else {
       return new ActionGroupPopupAction(groupName, actionNames) {
         @NotNull
         @Override
         protected AnAction createAction(@NotNull String actionName) {
-          return createActionByName.apply(actionName);
+          return createActionByName.apply(actionName, actionName);
         }
       };
     }
@@ -300,8 +301,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
     private String myImporterName;
 
-    public ImportAction(@NotNull String importerName) {
-      super(importerName);
+    public ImportAction(@NotNull String importerName, @NotNull String importerText) {
+      super(importerText);
       myImporterName = importerName;
     }
 
@@ -315,8 +316,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class ExportAction extends DumbAwareAction {
     private String myExporterName;
 
-    public ExportAction(@NotNull String exporterName) {
-      super(exporterName);
+    public ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
+      super(exporterText);
       myExporterName = exporterName;
     }
 
