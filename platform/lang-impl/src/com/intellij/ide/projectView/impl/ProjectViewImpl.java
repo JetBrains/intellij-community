@@ -264,45 +264,40 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return "Project";
   }
 
-  @Override
   @NotNull
+  @Override
   public List<AnAction> getActions(boolean originalProvider) {
-    ArrayList<AnAction> result = new ArrayList<>();
+    List<AnAction> result = new ArrayList<>();
 
     DefaultActionGroup views = new DefaultActionGroup("Change View", true);
-    boolean lastHeaderHadKids = false;
+
+    ChangeViewAction lastHeader = null;
     for (int i = 0; i < myContentManager.getContentCount(); i++) {
       Content each = myContentManager.getContent(i);
-      if (each != null) {
-        if (each.getUserData(SUB_ID_KEY) == null) {
-          if (lastHeaderHadKids) {
-            views.add(new Separator());
-          } else {
-            if (i + 1 < myContentManager.getContentCount()) {
-              Content next = myContentManager.getContent(i + 1);
-              if (next != null) {
-                if (next.getUserData(SUB_ID_KEY) != null) {
-                  views.add(new Separator());
-                }
-              }
-            }
-          }
-        }
-        else {
-          lastHeaderHadKids = true;
-        }
+      if (each == null) continue;
 
-        views.add(new ChangeViewAction(each.getUserData(ID_KEY), each.getUserData(SUB_ID_KEY)));
+      String id = each.getUserData(ID_KEY);
+      String subId = each.getUserData(SUB_ID_KEY);
+      ChangeViewAction newHeader = new ChangeViewAction(id, subId);
+
+      if (lastHeader != null) {
+        boolean lastHasKids = lastHeader.mySubId != null;
+        boolean newHasKids = newHeader.mySubId != null;
+        if (lastHasKids != newHasKids ||
+            lastHasKids && lastHeader.myId != newHeader.myId) {
+          views.add(Separator.getInstance());
+        }
       }
+
+      views.add(newHeader);
+      lastHeader = newHeader;
     }
     result.add(views);
-    result.add(new Separator());
+    result.add(Separator.getInstance());
 
-
-    List<AnAction> secondary = new ArrayList<>();
     if (myActionGroup != null) {
-      AnAction[] kids = myActionGroup.getChildren(null);
-      for (AnAction each : kids) {
+      List<AnAction> secondary = new ArrayList<>();
+      for (AnAction each : myActionGroup.getChildren(null)) {
         if (myActionGroup.isPrimary(each)) {
           result.add(each);
         }
@@ -310,18 +305,19 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           secondary.add(each);
         }
       }
+
+      result.add(Separator.getInstance());
+      result.addAll(secondary);
     }
-    result.add(new Separator());
-    result.addAll(secondary);
 
     return result;
   }
 
   private class ChangeViewAction extends AnAction {
-    private final String myId;
-    private final String mySubId;
+    @NotNull private final String myId;
+    @Nullable private final String mySubId;
 
-    private ChangeViewAction(@NotNull String id, String subId) {
+    private ChangeViewAction(@NotNull String id, @Nullable String subId) {
       myId = id;
       mySubId = subId;
     }
