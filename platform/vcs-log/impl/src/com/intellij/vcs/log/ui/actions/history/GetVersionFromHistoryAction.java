@@ -22,9 +22,9 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.GetVersionAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
-import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ public class GetVersionFromHistoryAction extends FileHistorySingleCommitAction {
 
     if (detail != null) {
       VcsFileRevision fileRevision = ui.createRevision(detail);
-      if (fileRevision == null) return false;
+      if (VcsHistoryUtil.isEmpty(fileRevision)) return false;
     }
 
     return true;
@@ -50,9 +50,9 @@ public class GetVersionFromHistoryAction extends FileHistorySingleCommitAction {
                                @NotNull AnActionEvent e) {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    VcsLogFileRevision revision = ui.createRevision(detail);
+    VcsFileRevision revision = ui.createRevision(detail);
 
-    if (revision != null) {
+    if (!VcsHistoryUtil.isEmpty(revision)) {
       GetVersionAction.doGet(project, revision, e.getRequiredData(VcsDataKeys.FILE_PATH));
     }
   }

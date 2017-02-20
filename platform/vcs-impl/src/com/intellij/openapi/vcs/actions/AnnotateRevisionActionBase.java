@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -68,7 +69,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
   public static boolean isEnabled(@Nullable AbstractVcs vcs,
                                   @Nullable VirtualFile file,
                                   @Nullable VcsFileRevision fileRevision) {
-    if (fileRevision == null || file == null || vcs == null) return false;
+    if (VcsHistoryUtil.isEmpty(fileRevision) || file == null || vcs == null) return false;
 
     AnnotationProvider provider = vcs.getAnnotationProvider();
     if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;

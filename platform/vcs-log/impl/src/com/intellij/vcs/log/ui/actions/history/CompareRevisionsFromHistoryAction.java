@@ -100,8 +100,6 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
         VcsFileRevision newestRevision = ui.createRevision(details.get(0));
         VcsFileRevision olderRevision = ui.createRevision(details.get(1));
         if (olderRevision != null && newestRevision != null) {
-          // if in one of the revisions file was deleted, we can not compare
-          // to fix this later
           myDiffHandler.showDiffForTwo(project, filePath, olderRevision, newestRevision);
         }
       }
