@@ -29,7 +29,7 @@ public interface QuickActionProvider {
   @Nullable
   List<AnAction> getActions(boolean originalProvider);
 
-  boolean isCycleRoot();
+  default boolean isCycleRoot() { return false; }
 
   @Nullable
   JComponent getComponent();

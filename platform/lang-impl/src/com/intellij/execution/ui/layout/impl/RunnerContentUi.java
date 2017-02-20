@@ -621,11 +621,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public boolean isCycleRoot() {
-    return false;
-  }
-
-  @Override
   public void setManager(@NotNull final ContentManager manager) {
     assert myManager == null;
 

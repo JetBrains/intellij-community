@@ -1239,11 +1239,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public boolean isCycleRoot() {
-    return false;
-  }
-
-  @Override
   public List<AnAction> getActions(boolean originalProvider) {
     return getActions();
   }

@@ -116,10 +116,6 @@ public class SimpleToolWindowPanel extends JPanel implements QuickActionProvider
     return this;
   }
 
-  public boolean isCycleRoot() {
-    return false;
-  }
-
   public void setContent(JComponent c) {
     myContent = c;
     add(c, BorderLayout.CENTER);
