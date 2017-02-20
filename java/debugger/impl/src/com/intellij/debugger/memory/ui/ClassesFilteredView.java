@@ -395,7 +395,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
       if (!classes.isEmpty()) {
         final VirtualMachine vm = classes.get(0).virtualMachine();
-        if (!vm.canGetInstanceInfo()) {
+        if (vm.canGetInstanceInfo()) {
           final Map<ReferenceType, Long> counts = getInstancesCounts(classes, vm);
           if (isContextValid()) {
             ApplicationManager.getApplication().invokeLater(() -> myTable.updateContent(counts));
