@@ -226,7 +226,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         return true;
       })
       .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
-        Image image = getDragImage(getGutterRenderer(info.getPoint()));
+        // [tav] temp workaround for JRE-224
+        boolean inUserScale = SystemInfo.isWindows ? !UIUtil.isJreHiDPI(myEditor.getComponent()) : true;
+        Image image = ImageUtil.toBufferedImage(getDragImage(getGutterRenderer(info.getPoint())), inUserScale);
         return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
       .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
@@ -234,10 +236,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   Image getDragImage(GutterMark renderer) {
-    Image image = IconUtil.toImage(scaleIcon(renderer.getIcon()));
-    // [tav] temp workaround for JRE-224
-    boolean inUserScale = SystemInfo.isWindows ? !UIUtil.isJreHiDPI(myEditor.getComponent()) : true;
-    return ImageUtil.toBufferedImage(image, inUserScale);
+    return IconUtil.toImage(scaleIcon(renderer.getIcon()));
   }
 
   private void fireResized() {
