@@ -254,38 +254,41 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         validatedProperties.add(property.getName());
       }
 
-      final List<String> required = schema.getRequired();
-      if (required != null) {
-        for (String req : required) {
-          if (!set.contains(req)) {
-            error("Missing required property '" + req +"'", value.getDelegate());
+      if (object.shouldCheckIntegralRequirements()) {
+        final List<String> required = schema.getRequired();
+        if (required != null) {
+          for (String req : required) {
+            if (!set.contains(req)) {
+              error("Missing required property '" + req + "'", value.getDelegate());
+            }
           }
         }
-      }
-      if (schema.getMinProperties() != null && propertyList.size() < schema.getMinProperties()) {
-        error("Number of properties is less than " + schema.getMinProperties(), value.getDelegate());
-      }
-      if (schema.getMaxProperties() != null && propertyList.size() > schema.getMaxProperties()) {
-        error("Number of properties is greater than " + schema.getMaxProperties(), value.getDelegate());
-      }
-      final Map<String, List<String>> dependencies = schema.getPropertyDependencies();
-      if (dependencies != null) {
-        for (Map.Entry<String, List<String>> entry : dependencies.entrySet()) {
-          if (set.contains(entry.getKey())) {
-            final List<String> list = entry.getValue();
-            for (String s : list) {
-              if (!set.contains(s)) {
-                error("Dependency is violated: '" + s + "' must be specified, since '" + entry.getKey() + "' is specified", value.getDelegate());
+        if (schema.getMinProperties() != null && propertyList.size() < schema.getMinProperties()) {
+          error("Number of properties is less than " + schema.getMinProperties(), value.getDelegate());
+        }
+        if (schema.getMaxProperties() != null && propertyList.size() > schema.getMaxProperties()) {
+          error("Number of properties is greater than " + schema.getMaxProperties(), value.getDelegate());
+        }
+        final Map<String, List<String>> dependencies = schema.getPropertyDependencies();
+        if (dependencies != null) {
+          for (Map.Entry<String, List<String>> entry : dependencies.entrySet()) {
+            if (set.contains(entry.getKey())) {
+              final List<String> list = entry.getValue();
+              for (String s : list) {
+                if (!set.contains(s)) {
+                  error("Dependency is violated: '" + s + "' must be specified, since '" + entry.getKey() + "' is specified",
+                        value.getDelegate());
+                }
               }
             }
           }
         }
-      }
-      final Map<String, JsonSchemaObject> schemaDependencies = schema.getSchemaDependencies();
-      if (schemaDependencies != null) {
-        for (Map.Entry<String, JsonSchemaObject> entry : schemaDependencies.entrySet()) {
-          if (set.contains(entry.getKey())) {
-            checkByScheme(value, entry.getValue(), new HashSet<>());
+        final Map<String, JsonSchemaObject> schemaDependencies = schema.getSchemaDependencies();
+        if (schemaDependencies != null) {
+          for (Map.Entry<String, JsonSchemaObject> entry : schemaDependencies.entrySet()) {
+            if (set.contains(entry.getKey())) {
+              checkByScheme(value, entry.getValue(), new HashSet<>());
+            }
           }
         }
       }
