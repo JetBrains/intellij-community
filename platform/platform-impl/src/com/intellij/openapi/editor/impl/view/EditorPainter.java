@@ -34,7 +34,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
-import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -49,6 +48,7 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -479,7 +479,7 @@ class EditorPainter implements TextDrawingCallback {
                                                  myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
     }
     else if (allowBorder && (effectType == EffectType.BOXED || effectType == EffectType.ROUNDED_BOX)) {
-      drawSimpleBorder(g, xStart, xEnd, y - myView.getAscent(), effectType == EffectType.ROUNDED_BOX);
+      drawSimpleBorder(g, xFrom, xTo, y - myView.getAscent(), effectType == EffectType.ROUNDED_BOX);
     }
   }
 
@@ -638,8 +638,8 @@ class EditorPainter implements TextDrawingCallback {
       int y = myView.visualLineToY(startPosition.line);
       TFloatArrayList ranges = adjustedLogicalRangeToVisualRanges(startOffset, endOffset);
       for (int i = 0; i < ranges.size() - 1; i+= 2) {
-        int startX = (int)ranges.get(i);
-        int endX = (int)ranges.get(i + 1);
+        float startX = ranges.get(i);
+        float endX = ranges.get(i + 1);
         drawSimpleBorder(g, startX, endX + 1, y, rounded);
       }
     }
@@ -714,11 +714,23 @@ class EditorPainter implements TextDrawingCallback {
       }
     }
   }
-  
-  private void drawSimpleBorder(Graphics2D g, int xStart, int xEnd, int y, boolean rounded) {
-    RectanglePainter.DRAW.paint(g, xStart, y, xEnd - xStart, myView.getLineHeight(), rounded ? 2 : 0);
+
+  private void drawSimpleBorder(Graphics2D g, float xStart, float xEnd, float y, boolean rounded) {
+    float width = xEnd - xStart;
+    float height = myView.getLineHeight();
+    if (width > 2 && height > 2) {
+      Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+      path.append(rounded
+                  ? new RoundRectangle2D.Float(xStart, y, width, height, 2, 2)
+                  : new Rectangle2D.Float(xStart, y, width, height), false);
+      path.append(new Rectangle2D.Float(xStart + 1, y + 1, width - 2, height - 2), false);
+      Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g.fill(path);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+    }
   }
-  
+
   private static void drawLine(Graphics2D g, float x1, int y1, float x2, int y2, boolean rounded) {
     if (rounded) {
       UIUtil.drawLinePickedOut(g, (int) x1, y1, (int)x2, y2);
