@@ -19,11 +19,14 @@ final class VmOptionsGenerator {
     '-Djdk.http.auth.tunneling.disabledSchemes=""',
     '-Djdk.attach.allowAttachSelf=true',
     '-Djdk.module.illegalAccess.silent=true',
+    '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92
+    '-Djna.boot.library.path=',  // Android Studio: added by Change Ie7351d92
+    '-Didea.vendor.name=Google',  // Android Studio: added by Change Ie6d690b5
     '-Dkotlinx.coroutines.debug=off')
 
   static final List<Map.Entry<String, String>> MEMORY_OPTIONS = List.of(
-    Map.entry('-Xms', '128m'),
-    Map.entry('-Xmx', '750m'),
+    Map.entry('-Xms', '256m'),  // Android Studio: modified by Change Ie7351d92
+    Map.entry('-Xmx', '1280m'),  // Android Studio: modified by Change Ie7351d92
     Map.entry('-XX:ReservedCodeCacheSize=', '512m'))
 
   static List<String> computeVmOptions(boolean isEAP, ProductProperties productProperties) {
