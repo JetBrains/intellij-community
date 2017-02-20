@@ -556,6 +556,9 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       int cntCorrect = 0;
       boolean validatedPropertiesAdded = false;
       for (JsonSchemaObject object : oneOf) {
+        // skip it if smthg JS awaited, we do not process it currently todo: revisit
+        if (object.isShouldValidateAgainstJSType()) continue;
+
         final BySchemaChecker checker = new BySchemaChecker(myWalker);
         final HashSet<String> local = new HashSet<>();
         checker.checkByScheme(value, object, local);
