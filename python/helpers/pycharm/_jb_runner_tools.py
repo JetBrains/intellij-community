@@ -162,7 +162,14 @@ class NewTeamcityServiceMessages(_old_service_messages):
         if messageName in {"enteredTheMatrix", "testCount"}:
             _old_service_messages.message(self, messageName, **properties)
             return
-        properties["locationHint"] = "python://{0}".format(properties["name"])
+
+        try:
+            properties["locationHint"] = "python://{0}".format(properties["name"])
+        except KeyError:
+            # If message does not have name, then it is not test
+            # Simply pass it
+            _old_service_messages.message(self, messageName, **properties)
+            return
 
         # Shortcut for name
         try:
@@ -227,7 +234,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
     def testFailed(self, testName, message='', details='', flowId=None):
         testName = ".".join(self._test_to_list(testName))
         args = {"name": testName, "message": str(message),
-                     "details": details}
+                "details": details}
         self.message("testFailed", **args)
 
     def testFinished(self, testName, testDuration=None, flowId=None,  is_suite=False):
