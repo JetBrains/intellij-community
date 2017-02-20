@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCallExpression
@@ -27,7 +28,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     fun getInstance() = InlayParameterHintsExtension.forLanguage(JavaLanguage.INSTANCE) as JavaInlayParameterHintsProvider
   }
   
-  override fun getMethodInfo(element: PsiElement): MethodInfo? {
+  override fun getHintInfo(element: PsiElement): MethodInfo? {
     if (element is PsiCallExpression) {
       val resolvedElement = element.resolveMethodGenerics().element
       if (resolvedElement is PsiMethod) {

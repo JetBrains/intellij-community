@@ -32,10 +32,14 @@ interface InlayParameterHintsProvider {
   fun getParameterHints(element: PsiElement): List<InlayInfo>
 
   /**
-   * Provides fully qualified method name (e.g. "java.util.Map.put") and list of it's parameter names.
-   * Used to obtain method information when adding it to blacklist
+   * Provides hint info, for alt-enter action (can be MethodInfo or OptionInfo)
+   *
+   * MethodInfo: provides fully qualified method name (e.g. "java.util.Map.put") and list of it's parameter names.
+   * Used to match method with blacklist, and to add method into blacklist
+   * 
+   * OptionInfo: provides option to disable/enable by alt-enter
    */
-  fun getMethodInfo(element: PsiElement): MethodInfo?
+  fun getHintInfo(element: PsiElement): HintInfo?
   
   /**
    * Default list of patterns for which hints should not be shown
@@ -60,6 +64,33 @@ interface InlayParameterHintsProvider {
 
 }
 
+
+data class InlayInfo(val text: String, val offset: Int)
+
+
+sealed class HintInfo {
+
+  open class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>) : HintInfo() {
+    open fun getMethodName(): String {
+      val start = fullyQualifiedName.lastIndexOf('.') + 1
+      return fullyQualifiedName.substring(start)
+    }
+  }
+
+  open class OptionInfo(protected val option: Option) : HintInfo() {
+    
+    open fun disable() = alternate()
+    open fun enable() = alternate()
+    
+    private fun alternate() {
+      val current = option.get()
+      option.set(!current)
+    }
+    
+    open val optionName = option.name
+  }
+
+}
 
 data class Option(val id: String,
                   val name: String,

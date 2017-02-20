@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.intention.HighPriorityAction
@@ -38,8 +39,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 
 
-private fun String.capitalize() = StringUtil.capitalizeWords(this, true)  
-
 class ShowSettingsWithAddedPattern : AnAction() {
   init {
     templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
@@ -56,7 +55,8 @@ class ShowSettingsWithAddedPattern : AnAction() {
       return
     }
     
-    val info = getMethodInfoAtOffset(editor, file) ?: return
+    val offset = editor.caretModel.offset
+    val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
     val name = info.getMethodName()
     e.presentation.text = CodeInsightBundle.message("inlay.hints.show.settings", name)
   }
@@ -68,11 +68,14 @@ class ShowSettingsWithAddedPattern : AnAction() {
     val language = file.language.baseLanguage ?: file.language
     InlayParameterHintsExtension.forLanguage(language) ?: return
     
-    val info = getMethodInfoAtOffset(editor, file) ?: return
+    val offset = editor.caretModel.offset
+    val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
+    
     val dialog = ParameterNameHintsConfigurable(language, info.toPattern())
     dialog.show()
   }
 }
+
 
 class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
   companion object {
@@ -86,15 +89,93 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val language = file.language
     val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return false
-    return hintsProvider.isBlackListSupported() && hasParameterHintAtOffset(editor, file)
+    return hintsProvider.isBlackListSupported() 
+           && hasEditorParameterHintAtOffset(editor, file) 
+           && isMethodHintAtOffset(editor, file) 
+  }
+
+  private fun isMethodHintAtOffset(editor: Editor, file: PsiFile): Boolean {
+    val offset = editor.caretModel.offset
+    return getHintInfoFromProvider(offset, file) is MethodInfo
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    addMethodAtCaretToBlackList(editor, file)
+    val offset = editor.caretModel.offset
+    addMethodAtCaretToBlackList(offset, file)
   }
 
   override fun startInWriteAction() = false
 }
+
+
+class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
+  companion object {
+    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
+  }
+  
+  private var lastOptionName = ""
+  
+  override fun getText(): String = CodeInsightBundle.message("inlay.hints.disable.custom.option", lastOptionName)
+  override fun getFamilyName(): String = presentableFamilyName
+
+  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
+    InlayParameterHintsExtension.forLanguage(file.language) ?: return false
+    if (!hasEditorParameterHintAtOffset(editor, file)) return false
+    
+    val option = getOptionHintAtOffset(editor, file) ?: return false
+    lastOptionName = option.optionName
+    
+    return true 
+  }
+
+  private fun getOptionHintAtOffset(editor: Editor, file: PsiFile): HintInfo.OptionInfo? {
+    val offset = editor.caretModel.offset
+    return getHintInfoFromProvider(offset, file) as? HintInfo.OptionInfo
+  }
+
+  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    val option = getOptionHintAtOffset(editor, file) ?: return
+    option.disable()
+  }
+
+  override fun startInWriteAction() = false
+}
+
+
+class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
+  companion object {
+    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
+  }
+  
+  private var lastOptionName = ""
+  
+  override fun getText(): String = CodeInsightBundle.message("inlay.hints.enable.custom.option", lastOptionName)
+  override fun getFamilyName(): String = presentableFamilyName
+
+  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
+    InlayParameterHintsExtension.forLanguage(file.language) ?: return false
+    if (hasEditorParameterHintAtOffset(editor, file)) return false
+    
+    val option = getOptionHintAtOffset(editor, file) ?: return false
+    lastOptionName = option.optionName
+    
+    return true 
+  }
+
+  private fun getOptionHintAtOffset(editor: Editor, file: PsiFile): HintInfo.OptionInfo? {
+    val offset = editor.caretModel.offset
+    return getHintInfoFromProvider(offset, file) as? HintInfo.OptionInfo
+  }
+
+  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    val option = getOptionHintAtOffset(editor, file) ?: return
+    option.enable()
+  }
+
+  override fun startInWriteAction() = false
+}
+
+
 
 class ToggleInlineHintsAction : AnAction() {
   
@@ -139,7 +220,8 @@ class ToggleInlineHintsAction : AnAction() {
   }
 }
 
-private fun hasParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
+
+private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
   if (editor is EditorWindow) return false
   
   val offset = editor.caretModel.offset
@@ -153,6 +235,7 @@ private fun hasParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
       .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
 }
 
+
 private fun refreshAllOpenEditors() {
   ProjectManager.getInstance().openProjects.forEach {
     val psiManager = PsiManager.getInstance(it)
@@ -165,21 +248,22 @@ private fun refreshAllOpenEditors() {
   }
 }
 
-private fun getMethodInfoAtOffset(editor: Editor, file: PsiFile): MethodInfo? {
-  val offset = editor.caretModel.offset
+
+private fun getHintInfoFromProvider(offset: Int, file: PsiFile): HintInfo? {
   val element = file.findElementAt(offset)
-  
   val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
   
-  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return null
-  return hintsProvider.getMethodInfo(method)
+  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getHintInfo(e) != null }) ?: return null
+  return hintsProvider.getHintInfo(method)
 }
 
-private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
-  val info = getMethodInfoAtOffset(editor, file) ?: return
+
+private fun addMethodAtCaretToBlackList(offset: Int, file: PsiFile) {
+  val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
   ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, info.toPattern())
   refreshAllOpenEditors()
 }
+
 
 fun isPossibleHintNearOffset(file: PsiFile, offset: Int): Boolean {
   val hintProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return false
@@ -196,4 +280,8 @@ fun isPossibleHintNearOffset(file: PsiFile, offset: Int): Boolean {
   return false
 }
 
+
 fun MethodInfo.toPattern() = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
+
+
+private fun String.capitalize() = StringUtil.capitalizeWords(this, true)

@@ -27,7 +27,7 @@ class MockInlayProvider(override val defaultBlackList: Set<String>): InlayParame
 
   override fun getParameterHints(element: PsiElement) = emptyList<InlayInfo>()
 
-  override fun getMethodInfo(element: PsiElement) = null
+  override fun getHintInfo(element: PsiElement) = null
   
 }
 
