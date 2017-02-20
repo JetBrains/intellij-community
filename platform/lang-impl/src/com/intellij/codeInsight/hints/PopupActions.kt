@@ -49,8 +49,14 @@ class ShowSettingsWithAddedPattern : AnAction() {
   override fun update(e: AnActionEvent) {
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+    val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+    
+    if (!provider.isBlackListSupported()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    
     val info = getMethodInfoAtOffset(editor, file) ?: return
-
     val name = info.getMethodName()
     e.presentation.text = CodeInsightBundle.message("inlay.hints.show.settings", name)
   }
@@ -78,7 +84,9 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
   override fun getFamilyName(): String = presentableFamilyName
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-    return InlayParameterHintsExtension.hasAnyExtensions() && hasParameterHintAtOffset(editor, file)
+    val language = file.language
+    val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return false
+    return hintsProvider.isBlackListSupported() && hasParameterHintAtOffset(editor, file)
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
