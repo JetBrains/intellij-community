@@ -12,14 +12,19 @@ final class VmOptionsGenerator {
       '-XX:+UseG1GC',
       '-XX:SoftRefLRUPolicyMSPerMB=50',
       '-XX:CICompilerCount=2',
+/* Android Studio: removed by Change Ie7351d92
       '-XX:+HeapDumpOnOutOfMemoryError',
       '-XX:-OmitStackTraceInFastThrow',
       '-ea',
+Android Studio: removed by Change Ie7351d92 */
       '-Dsun.io.useCanonCaches=false',
       '-Djdk.http.auth.tunneling.disabledSchemes=""',
       '-Djdk.attach.allowAttachSelf=true',
       '-Djdk.module.illegalAccess.silent=true',
       '-Dkotlinx.coroutines.debug=off',
+      '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92
+      '-Djna.boot.library.path=',  // Android Studio: added by Change Ie7351d92
+      '-Didea.vendor.name=Google',  // Android Studio
     ]
 
   static final String defaultCodeCacheSetting = '-XX:ReservedCodeCacheSize=512m'
@@ -28,7 +33,8 @@ final class VmOptionsGenerator {
     List<String> commonVmOptions
     if (isEAP) {
       // must be consistent with `com.intellij.openapi.application.ConfigImportHelper#updateVMOptions`
-      commonVmOptions = ["-XX:MaxJavaStackTraceDepth=10000"] + COMMON_VM_OPTIONS
+      // Android Studio: modified by Change Ie7351d92
+      commonVmOptions = ["-XX:MaxJavaStackTraceDepth=10000", "-XX:+HeapDumpOnOutOfMemoryError", "-XX:-OmitStackTraceInFastThrow", "-ea"] + COMMON_VM_OPTIONS
     }
     else {
       commonVmOptions = COMMON_VM_OPTIONS
@@ -43,7 +49,7 @@ final class VmOptionsGenerator {
       // when changing, please review usages of `ProductProperties#getCustomJvmMemoryOptionsX64` and synchronize if necessary
       case JvmArchitecture.x64:
       case JvmArchitecture.aarch64:
-        return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
+        return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms256m', '-Xmx1280m', defaultCodeCacheSetting]  // Android Studio: modified by Change Ie7351d92
       default:
         throw new AssertionError(arch)
     }
