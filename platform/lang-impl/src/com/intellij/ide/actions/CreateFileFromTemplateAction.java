@@ -22,7 +22,6 @@ import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -94,8 +93,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       }
     }
     catch (ParseException e) {
-      Messages.showErrorDialog(project, "Error parsing Velocity template: " + e.getMessage(), "Create File from Template");
-      return null;
+      throw new IncorrectOperationException("Error parsing Velocity template: " + e.getMessage(), (Throwable)e);
     }
     catch (IncorrectOperationException e) {
       throw e;
