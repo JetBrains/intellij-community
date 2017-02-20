@@ -78,6 +78,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private final static int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
   private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
   private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
+  private static final String EMPTY_TABLE_CONTENT_WHEN_STOPPED = "Classes are not available";
 
   private final Project myProject;
   private final SingleAlarmWithMutableDelay mySingleAlarm;
@@ -559,7 +560,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     @Override
     public void sessionStopped() {
-      myTable.clean();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_STOPPED);
+        myTable.clean();
+      });
     }
 
     @Override
