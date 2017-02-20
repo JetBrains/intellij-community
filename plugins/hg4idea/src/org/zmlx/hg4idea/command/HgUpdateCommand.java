@@ -78,7 +78,7 @@ public class HgUpdateCommand {
     final HgPromptCommandExecutor executor = new HgPromptCommandExecutor(project);
     executor.setShowOutput(true);
     HgCommandResult result;
-    DvcsUtil.workingTreeChangeStarted(project);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       result =
         executor.executeInCurrentThread(repo, "update", arguments);
@@ -92,7 +92,7 @@ public class HgUpdateCommand {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project);
+      token.finish();
     }
 
     VfsUtil.markDirtyAndRefresh(false, true, false, repo);

@@ -143,7 +143,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     // revert files from HEAD
-    DvcsUtil.workingTreeChangeStarted(myProject);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
         listener.accept(entry.getValue());
@@ -156,7 +156,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject);
+      token.finish();
     }
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     HashSet<File> filesToRefresh = new HashSet<>();

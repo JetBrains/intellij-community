@@ -50,7 +50,7 @@ public class HgGraftCommand {
     List<String> args = new ArrayList<>();
     args.add("--log");
     args.addAll(params);
-    DvcsUtil.workingTreeChangeStarted(myProject);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       HgCommandResult result =
         new HgCommandExecutor(myProject)
@@ -59,7 +59,7 @@ public class HgGraftCommand {
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject);
+      token.finish();
     }
   }
 }
