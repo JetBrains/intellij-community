@@ -19,11 +19,14 @@ final class VmOptionsGenerator {
     '-Djdk.attach.allowAttachSelf=true',
     '-Djdk.module.illegalAccess.silent=true',
     '-Dkotlinx.coroutines.debug=off',
+    '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92
+    '-Djna.boot.library.path=',  // Android Studio: added by Change Ie7351d92
+    '-Didea.vendor.name=Google',  // Android Studio: added by Change Ie6d690b5
     )
 
   static final Map<String, String> MEMORY_OPTIONS = Map.of(
-    '-Xms', '128m',
-    '-Xmx', '750m',
+    '-Xms', '256m',  // Android Studio: modified by Change Ie7351d92
+    '-Xmx', '1280m',  // Android Studio: modified by Change Ie7351d92
     '-XX:ReservedCodeCacheSize=', '512m')
 
   static List<String> computeVmOptions(boolean isEAP, ProductProperties productProperties) {
