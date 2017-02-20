@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui.actions.history;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CompareRevisionsFromHistoryAction extends AnAction {
+public class CompareRevisionsFromHistoryAction extends AnAction implements DumbAware {
   private static final String COMPARE_TEXT = "Compare";
   private static final String COMPARE_DESCRIPTION = "Compare selected versions";
   private static final String DIFF_TEXT = "Show Diff";
@@ -57,7 +58,7 @@ public class CompareRevisionsFromHistoryAction extends AnAction {
     }
 
     e.getPresentation().setVisible(true);
-    
+
     List<VcsFullCommitDetails> details = ui.getVcsLog().getSelectedDetails();
     if (details.size() == 2) {
       VcsFullCommitDetails detail0 = details.get(0);
