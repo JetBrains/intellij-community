@@ -273,6 +273,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       String getFullNameIncludingEditionAndVendor(ApplicationInfoProperties applicationInfo) { "Android Studio" }
 
       @Override
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) { "android-studio" }
+
+      @Override
       String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
 // TODO
         "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
