@@ -643,6 +643,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       return false;
     }
+
+    boolean canReassignVariable(PsiVariable variable) {
+      return true;
+    }
   }
 
   static class FilterOp extends Operation {
@@ -771,6 +775,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Override
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       return mySource.isWriteAllowed(variable, reference);
+    }
+
+    @Override
+    boolean canReassignVariable(PsiVariable variable) {
+      return mySource.canReassignVariable(variable);
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
@@ -1052,6 +1061,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
       }
       return false;
+    }
+
+    @Override
+    boolean canReassignVariable(PsiVariable variable) {
+      return variable != myVariable;
     }
 
     @Nullable
