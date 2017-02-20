@@ -107,8 +107,7 @@ public class EduAdaptiveStepicConnector {
             }
 
             final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-            postRecommendationReaction(lessonId,
-                                       String.valueOf(user.getId()), TOO_BORING_RECOMMENDATION_REACTION);
+            postRecommendationReaction(lessonId, String.valueOf(user.getId()), TOO_BORING_RECOMMENDATION_REACTION);
             return getNextRecommendation(project, course);
           }
           else {
@@ -168,7 +167,7 @@ public class EduAdaptiveStepicConnector {
     task.setText(block.text);
     task.setTheoryTask(true);
     
-    createMockTaskFile(task);
+    createMockTaskFile(task, "# this is a theory task. You can use this editor as a playground");
     return task;    
   }
 
@@ -191,13 +190,13 @@ public class EduAdaptiveStepicConnector {
       }
     }
 
-    createMockTaskFile(task);
+    createMockTaskFile(task, "# you can experiment here, it won't be checked");
     return task;
   }
 
-  private static void createMockTaskFile(@NotNull Task task) {
+  private static void createMockTaskFile(@NotNull Task task, String editorText) {
     final TaskFile taskFile = new TaskFile();
-    taskFile.text = "# you can experiment here, it won't be checked";
+    taskFile.text = editorText;
     taskFile.name = "code";
     task.taskFiles.put("code.py", taskFile);
   }
