@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -213,6 +214,19 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
           }
           PsiElement identifier = isAnonymous ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier();
           registerDefaultConstructorProblem(superClass, identifier, isAnonymous);
+        }
+      }
+    }
+
+    @Override
+    public void visitRequiresStatement(PsiRequiresStatement statement) {
+      PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
+      if (refElement != null) {
+        PsiPolyVariantReference ref = refElement.getReference();
+        PsiElement target = ref != null ? ref.resolve() : null;
+        if (target instanceof PsiJavaModule && PsiImplUtil.isDeprecatedByAnnotation((PsiJavaModule)target)) {
+          String message = JavaErrorMessages.message("deprecated.symbol", HighlightMessageUtil.getSymbolName(target));
+          myHolder.registerProblem(refElement, message, ProblemHighlightType.LIKE_DEPRECATED);
         }
       }
     }

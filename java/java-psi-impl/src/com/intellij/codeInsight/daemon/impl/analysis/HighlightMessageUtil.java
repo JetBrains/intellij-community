@@ -69,6 +69,9 @@ public class HighlightMessageUtil {
     else if (symbol instanceof PsiDirectory) {
       symbolName = ((PsiDirectory)symbol).getName();
     }
+    else if (symbol instanceof PsiJavaModule) {
+      symbolName = ((PsiJavaModule)symbol).getName();
+    }
 
     return symbolName;
   }
