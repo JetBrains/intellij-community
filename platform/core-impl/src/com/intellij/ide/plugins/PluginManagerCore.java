@@ -1260,7 +1260,7 @@ public class PluginManagerCore {
     filterBadPlugins(result, disabledPluginNames, errors);
 
     if (!brokenPluginsList.isEmpty()) {
-      errors.add("Following plugins are incompatible with current IDE build: " + StringUtil.join(brokenPluginsList, ", "));
+      errors.add("The following plugins are incompatible with the current IDE build: " + StringUtil.join(brokenPluginsList, ", "));
     }
 
     fixDependencies(result,idToDescriptorMap);
