@@ -19,6 +19,9 @@ final class VmOptionsGenerator {
     '-Djdk.attach.allowAttachSelf=true',
     '-Djdk.module.illegalAccess.silent=true',
     '-Dkotlinx.coroutines.debug=off',
+    '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92
+    '-Djna.boot.library.path=',  // Android Studio: added by Change Ie7351d92
+    '-Didea.vendor.name=Google',  // Android Studio: added by Change Ie6d690b5
     )
 
   static final String defaultCodeCacheSetting = '-XX:ReservedCodeCacheSize=512m'
@@ -45,7 +48,7 @@ final class VmOptionsGenerator {
       // when changing, please review usages of `ProductProperties#getCustomJvmMemoryOptionsX64` and synchronize if necessary
       case JvmArchitecture.x64:
       case JvmArchitecture.aarch64:
-        return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', defaultCodeCacheSetting]
+        return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms256m', '-Xmx1280m', defaultCodeCacheSetting]  // Android Studio: modified by Change Ie7351d92
       default:
         throw new AssertionError(arch)
     }
