@@ -39,7 +39,7 @@ public interface Computable <T> {
     }
   }
 
-  abstract class NotNullCachedComputable<T> implements Computable<T> {
+  abstract class NotNullCachedComputable<T> implements NotNullComputable<T> {
     private T myValue;
 
     @NotNull
@@ -55,7 +55,7 @@ public interface Computable <T> {
     }
   }
 
-  abstract class NullableCachedComputable<T> implements Computable<T> {
+  abstract class NullableCachedComputable<T> implements NullableComputable<T> {
     private static final Object NULL_VALUE = new Object();
     private Object myValue;
 
