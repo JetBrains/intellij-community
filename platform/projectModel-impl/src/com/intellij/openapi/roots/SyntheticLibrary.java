@@ -65,20 +65,13 @@ public abstract class SyntheticLibrary {
    * changed (use some caching in {@link AdditionalLibraryRootsProvider#getAdditionalProjectLibraries(Project)}).
    */
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SyntheticLibrary library = (SyntheticLibrary)o;
-    return getSourceRoots().equals(library.getSourceRoots());
-  }
+  public abstract boolean equals(Object o);
 
   /**
    * @see #equals(Object) javadoc
    */
   @Override
-  public int hashCode() {
-    return getSourceRoots().hashCode();
-  }
+  public abstract int hashCode();
 
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots) {
@@ -87,6 +80,19 @@ public abstract class SyntheticLibrary {
       @Override
       public Collection<VirtualFile> getSourceRoots() {
         return sourceRoots;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SyntheticLibrary library = (SyntheticLibrary)o;
+        return getSourceRoots().equals(library.getSourceRoots());
+      }
+
+      @Override
+      public int hashCode() {
+        return sourceRoots.hashCode();
       }
     };
   }
