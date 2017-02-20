@@ -85,6 +85,22 @@ public class JsonSchemaWalker {
     extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, isName, position, false);
   }
 
+  public static void findSchemasForDocumentation(@NotNull final PsiElement element,
+                                              @NotNull JsonLikePsiWalker walker,
+                                              @NotNull final CompletionSchemesConsumer consumer,
+                                              @NotNull final JsonSchemaObject rootSchema,
+                                              @NotNull VirtualFile schemaFile) {
+    final PsiElement checkable = walker.goUpToCheckable(element);
+    if (checkable == null) return;
+    final List<Step> position = walker.findPosition(checkable, true, true);
+    if (position == null || position.isEmpty()) {
+      consumer.consume(true, rootSchema, schemaFile, Collections.emptyList());
+      return;
+    }
+
+    extractSchemaVariants(element.getProject(), consumer, schemaFile, rootSchema, true, position, false);
+  }
+
   public static Pair<List<Step>, String> buildSteps(@NotNull String nameInSchema) {
     final String[] chain = JsonSchemaExportedDefinitions.normalizeId(nameInSchema).replace("\\", "/").split("/");
     final List<Step> steps = Arrays.stream(chain).filter(s -> !s.isEmpty()).map(item -> new Step(StateType._unknown, new PropertyTransition(item)))
