@@ -49,6 +49,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
   protected InfoComponent myInfoComponent;
+  
+  // region Colors (probably should be standard for platform UI)
+  
+  protected final Color HINT_FOREGROUND = JBColor.GRAY;
+  @SuppressWarnings("UseJBColor")
+  protected final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
+  
+  // endregion
 
   public AbstractSchemesPanel() {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
