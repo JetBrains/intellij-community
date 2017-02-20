@@ -792,6 +792,12 @@ public class UsageViewImpl implements UsageView {
           registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
         }
       }
+
+      @Override
+      public boolean startInTransaction() {
+        return true;
+      }
+
       @Override
       public void actionPerformed(AnActionEvent e) {
         FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);

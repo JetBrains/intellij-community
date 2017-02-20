@@ -116,17 +116,20 @@ public class CompilerBackwardReferenceIndex {
 
   public void close() {
     myLowMemoryWatcher.stop();
-    final CommonProcessors.FindFirstProcessor<BuildDataCorruptedException> exceptionProc =
+    final CommonProcessors.FindFirstProcessor<Exception> exceptionProc =
       new CommonProcessors.FindFirstProcessor<>();
     close(myFilePathEnumerator, exceptionProc);
     close(myNameEnumerator, exceptionProc);
     for (InvertedIndex<?, ?, CompiledFileData> index : myIndices.values()) {
       close(index, exceptionProc);
     }
-    final BuildDataCorruptedException exception = exceptionProc.getFoundValue();
+    final Exception exception = exceptionProc.getFoundValue();
     if (exception != null) {
       removeIndexFiles(myIndicesDir);
-      throw exception;
+      if (myRebuildRequestCause == null) {
+        throw new RuntimeException(exception);
+      }
+      return;
     }
     if (myRebuildRequestCause != null) {
       removeIndexFiles(myIndicesDir);
@@ -194,16 +197,16 @@ public class CompilerBackwardReferenceIndex {
     myRebuildRequestCause = e;
   }
 
-  private static void close(InvertedIndex<?, ?, CompiledFileData> index, CommonProcessors.FindFirstProcessor<BuildDataCorruptedException> exceptionProcessor) {
+  private static void close(InvertedIndex<?, ?, CompiledFileData> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {
     try {
       index.dispose();
     }
-    catch (BuildDataCorruptedException e) {
+    catch (RuntimeException e) {
       exceptionProcessor.process(e);
     }
   }
 
-  private static void close(Closeable closeable, Processor<BuildDataCorruptedException> exceptionProcessor) {
+  private static void close(Closeable closeable, Processor<Exception> exceptionProcessor) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (closeable) {
       try {

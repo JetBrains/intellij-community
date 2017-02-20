@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   protected void initThemes(Collection<ThemeInfo> result) {
     if (SystemInfo.isMac) {
-      result.add(LafManagerImpl.useIntelliJInsteadOfAqua() ? INTELLIJ : AQUA);
+      result.add(getDefaultLafOnMac());
       result.add(DARCULA);
     }
     else if (SystemInfo.isWindows) {
@@ -148,6 +148,11 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       result.add(DARCULA);
       result.add(GTK);
     }
+  }
+
+  @NotNull
+  protected static ThemeInfo getDefaultLafOnMac() {
+    return LafManagerImpl.useIntelliJInsteadOfAqua() ? INTELLIJ : AQUA;
   }
 
   @NotNull
