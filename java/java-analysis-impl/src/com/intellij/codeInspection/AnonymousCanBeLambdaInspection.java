@@ -100,19 +100,32 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
           final PsiElement lBrace = aClass.getLBrace();
           LOG.assertTrue(lBrace != null);
           final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-          ProblemHighlightType problemHighlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+          ProblemHighlightType type = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
           if (isOnTheFly && !reportNotAnnotatedInterfaces) {
             final PsiClass baseClass = aClass.getBaseClassType().resolve();
             LOG.assertTrue(baseClass != null);
             if (!AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) {
-              problemHighlightType = ProblemHighlightType.INFORMATION;
+              type = ProblemHighlightType.INFORMATION;
             }
           }
-          holder.registerProblem(parent, "Anonymous #ref #loc can be replaced with lambda",
-                                 problemHighlightType, rangeInElement, new ReplaceWithLambdaFix());
+          ProblemDescriptorBase descriptor = new ProblemDescriptorBase(parent, parent, "Anonymous #ref #loc can be replaced with lambda",
+                                                                 new LocalQuickFix[]{new ReplaceWithLambdaFix()},
+                                                                 type, false, rangeInElement,
+                                                                 type != ProblemHighlightType.INFORMATION, true);
+          holder.registerProblem(descriptor);
         }
       }
     };
+  }
+
+  interface R { void run(); }
+  void f(R r) {
+    f(new R() {
+      @Override
+      public void run() {
+        System.out.println();
+      }
+    });
   }
 
   static boolean hasRuntimeAnnotations(PsiMethod method, @NotNull Set<String> runtimeAnnotationsToIgnore) {
