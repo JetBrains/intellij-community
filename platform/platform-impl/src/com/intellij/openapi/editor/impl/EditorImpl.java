@@ -4135,59 +4135,51 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private static class ExplosionPainter extends AbstractPainter {
     private final Point myExplosionLocation;
-    private static final long TIME_PER_FRAME = 50;
-    private long lastRepaintTime = System.currentTimeMillis();
-    private int spriteIndex;
-    private static final int SPRITE_SIZE = 64;
-    private static final int SPRITES_IN_ROW = 4;
+    private final Image myImage;
 
-    private final Image [] sprites = new Image [16];
+    private static final long TIME_PER_FRAME = 30;
+    private final int myWidth;
+    private final int myHeight;
+    private long lastRepaintTime = System.currentTimeMillis();
+    private int frameIndex;
+    private static final int TOTAL_FRAMES = 8;
+
     private final AtomicBoolean nrp = new AtomicBoolean(true);
 
-    ExplosionPainter(final Point explosionLocation) {
+    ExplosionPainter(final Point explosionLocation, Image image) {
       myExplosionLocation = new Point(explosionLocation.x, explosionLocation.y);
-      Image explosionImage = ImageLoader.loadFromResource("/debugger/explosion.png");
-
-      for (int i = 0; i < sprites.length; i ++) {
-        sprites[i] = initSprites(i, explosionImage);
-      }
-    }
-
-    private static BufferedImage initSprites(int index, Image explosionImage) {
-      BufferedImage spriteImage =  UIUtil.createImage(SPRITE_SIZE, SPRITE_SIZE, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D spriteGraphics = (Graphics2D)spriteImage.getGraphics();
-      int sourceX = SPRITE_SIZE * (index % SPRITES_IN_ROW);
-      int sourceY = SPRITE_SIZE * (index / SPRITES_IN_ROW);
-      spriteGraphics.drawImage(explosionImage,
-                               0, 0, SPRITE_SIZE, SPRITE_SIZE,
-                               sourceX, sourceY, sourceX + 64, sourceY + 64,
-                               null);
-      return spriteImage;
+      myImage = image;
+      myWidth = myImage.getWidth(null);
+      myHeight = myImage.getHeight(null);
     }
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
-
       if (!nrp.get()) return;
 
-      int x = myExplosionLocation.x - 32;
-      int y = myExplosionLocation.y - 32;
-
       long currentTimeMillis = System.currentTimeMillis();
+
+      float alpha = 1 - (float)frameIndex / TOTAL_FRAMES;
+      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+      Image scaledImage = ImageUtil.scaleImage(myImage, alpha);
+
+      int x = myExplosionLocation.x - scaledImage.getWidth(null) / 2;
+      int y = myExplosionLocation.y - scaledImage.getHeight(null) / 2;
+
       if (currentTimeMillis - lastRepaintTime < TIME_PER_FRAME) {
-        UIUtil.drawImage(g, sprites[spriteIndex], x, y, null);
-        JobScheduler.getScheduler().schedule(() -> component.repaint(x, y, 12, 64), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
+        UIUtil.drawImage(g, scaledImage, x, y, null);
+        JobScheduler.getScheduler().schedule(() -> component.repaint(x, y, myWidth, myHeight), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
         return;
       }
       lastRepaintTime = currentTimeMillis;
-
-      UIUtil.drawImage(g, sprites[spriteIndex++], x, y, null);
-      if (spriteIndex == sprites.length) {
+      frameIndex++;
+      UIUtil.drawImage(g, scaledImage, x, y, null);
+      if (frameIndex == TOTAL_FRAMES) {
         nrp.set(false);
         ApplicationManager.getApplication().invokeLater(() -> IdeGlassPaneUtil.find(component).removePainter(this));
-        component.repaint(x, y, SPRITE_SIZE, SPRITE_SIZE);
+        component.repaint(x, y, myWidth, myHeight);
       }
-      component.repaint(x, y, SPRITE_SIZE, SPRITE_SIZE);
+      component.repaint(x, y, myWidth, myHeight);
     }
 
     @Override
@@ -4217,7 +4209,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   new Point(
                     mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
                     mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
-                  )
+                  ), editor.getGutterComponentEx().getDragImage((GutterIconRenderer)attachedObject)
                 ),
                 editor.getDisposable()
               );
