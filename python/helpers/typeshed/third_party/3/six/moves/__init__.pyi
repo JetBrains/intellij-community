@@ -27,6 +27,8 @@ import six.moves.cPickle as cPickle
 import html.parser as html_parser
 import html.entities as html_entities
 import http.client as http_client
+import configparser as configparser
+import builtins as builtins
 
 import six.moves.urllib_parse as urllib_parse
 import six.moves.urllib_error as urllib_error

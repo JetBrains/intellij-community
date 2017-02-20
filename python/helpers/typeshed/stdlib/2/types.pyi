@@ -103,7 +103,7 @@ class ModuleType:
     __name__ = ...  # type: str
     __package__ = ...  # type: Optional[str]
     __path__ = ...  # type: Optional[Iterable[str]]
-    def __init__(self, name: str, doc: str) -> None: ...
+    def __init__(self, name: str, doc: Optional[str] = ...) -> None: ...
 FileType = file
 XRangeType = xrange
 
