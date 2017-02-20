@@ -779,7 +779,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   private static void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {
     Charset charset = EncodingManager.getInstance().getEncoding(vFile, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
-    int contentSize = (int)(FileUtilRt.getLargeFilePreviewSize() / bytesPerChar);
+    int contentSize = (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
     String substring = content.substring(0, contentSize);
     assertEquals(substring, document.getText());
   }

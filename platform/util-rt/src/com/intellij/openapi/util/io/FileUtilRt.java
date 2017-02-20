@@ -47,6 +47,7 @@ public class FileUtilRt {
 
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
   public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, Math.max(getUserFileSizeLimit(), getUserContentLoadLimit()));
+  public static final int LARGE_FILE_PREVIEW_SIZE = Math.min(getLargeFilePreviewSize(), LARGE_FOR_CONTENT_LOADING);
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
@@ -893,7 +894,7 @@ public class FileUtilRt {
     }
   }
 
-  public static int getLargeFilePreviewSize() {
+  private static int getLargeFilePreviewSize() {
     try {
       return Integer.parseInt(System.getProperty("idea.max.content.load.large.preview.size")) * KILOBYTE;
     }

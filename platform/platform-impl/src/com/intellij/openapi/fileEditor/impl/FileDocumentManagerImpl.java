@@ -83,7 +83,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
-  private static final int PREVIEW_SIZE = FileUtilRt.getLargeFilePreviewSize();
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
 
@@ -743,7 +742,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private static int getPreviewCharCount(@NotNull VirtualFile file) {
     Charset charset = EncodingManager.getInstance().getEncoding(file, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
-    return (int)(PREVIEW_SIZE / bytesPerChar);
+    return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
   }
 
   private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
