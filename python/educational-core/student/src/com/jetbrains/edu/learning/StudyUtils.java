@@ -501,7 +501,7 @@ public class StudyUtils {
 
     if (text == null) return null;
     text = convertToHtml(text);
-    if (course.isAdaptive() && !task.isChoiceTask() && !task.isTheoryTask()) text = wrapAdaptiveCourseText(text);
+    if (course.isAdaptive()) text = wrapAdaptiveCourseText(task, text);
 
     return wrapTextToDisplayLatex(text);
   }
@@ -516,8 +516,15 @@ public class StudyUtils {
     return addExtension(fileNameWithoutExtension, defaultName);
   }
 
-  private static String wrapAdaptiveCourseText(@NotNull String text) {
-    return text + "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+  private static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
+    if (task.isTheoryTask()) {
+      return text + "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
+             "Please, read it and press \"Check\" to go further.";
+    }
+    else if (!task.isChoiceTask()) {
+      return text + "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+    }
+    return text;
   }
 
   @NotNull
