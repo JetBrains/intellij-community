@@ -20,7 +20,6 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -33,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlEventsTest extends LightCodeInsightTestCase {
@@ -125,10 +125,10 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
         final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-        ((DocumentEx)document).setInBulkUpdate(true);
-        document.insertString(0, " ");
-        commitDocument(document);
-        ((DocumentEx)document).setInBulkUpdate(false);
+        DocumentUtil.executeInBulk(document, true, ()-> {
+          document.insertString(0, " ");
+          commitDocument(document);
+        });
       }
     }.execute();
     assertEquals("(Xml document changed)", listener.getEventString().trim());
