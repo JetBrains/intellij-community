@@ -1,21 +1,12 @@
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.codeInsight.completion.CompletionTestCase;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.EditorTestUtil;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Irina.Chernushina on 10/1/2015.
  */
-public class JsonBySchemaCompletionTest extends CompletionTestCase {
+public class JsonBySchemaCompletionTest extends JsonBySchemaCompletionBaseTest {
   public void testTopLevel() throws Exception {
     testImpl("{\"properties\": {\"prima\": {}, \"proto\": {}, \"primus\": {}}}", "{<caret>}", "\"prima\"", "\"primus\"", "\"proto\"");
   }
@@ -201,24 +192,9 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
                           "}";
   }
 
+  @SuppressWarnings("TestMethodWithIncorrectSignature")
   private void testImpl(@NotNull final String schema, final @NotNull String text,
                         final @NotNull String... variants) throws Exception {
-    final int position = EditorTestUtil.getCaretPosition(text);
-    Assert.assertTrue(position > 0);
-    final String completionText = text.replace("<caret>", "IntelliJIDEARulezzz");
-
-    final PsiFile file = createFile(myModule, "tslint.json", completionText);
-    final PsiElement element = file.findElementAt(position);
-    Assert.assertNotNull(element);
-
-    final PsiFile schemaFile = createFile(myModule, "testSchema.json", schema);
-    final JsonSchemaObject schemaObject = JsonSchemaReader.create(myProject, schemaFile.getVirtualFile()).read();
-    Assert.assertNotNull(schemaObject);
-
-    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element, element,
-                                                                                                            file.getVirtualFile());
-    Collections.sort(foundVariants, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
-    myItems = foundVariants.toArray(new LookupElement[foundVariants.size()]);
-    assertStringItems(variants);
+    testBySchema(schema, text, ".json", variants);
   }
 }
