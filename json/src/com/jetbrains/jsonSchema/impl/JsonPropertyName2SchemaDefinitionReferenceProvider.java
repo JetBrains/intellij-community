@@ -66,7 +66,7 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
       if (pairs != null && ! pairs.isEmpty()) {
         for (Pair<VirtualFile, String> pair : pairs) {
           final VirtualFile schemaFile = pair.getFirst();
-          final List<JsonSchemaWalker.Step> steps = JsonSchemaWalker.findPosition(getElement(), true, true);
+          final List<JsonSchemaWalker.Step> steps = JsonOriginalPsiWalker.INSTANCE.findPosition(getElement(), true, true);
           if (steps == null) continue;
           final PsiElement element =
             new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, reference, steps).resolveInSchemaRecursively();

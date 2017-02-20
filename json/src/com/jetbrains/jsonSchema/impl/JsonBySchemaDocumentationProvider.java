@@ -44,6 +44,8 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
   @Nullable
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element);
+    if (walker == null) return null;
     final JsonProperty jsonProperty = element instanceof JsonProperty ? (JsonProperty) element : PsiTreeUtil.getParentOfType(element, JsonProperty.class);
 
     if (jsonProperty != null) {
@@ -59,7 +61,7 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
 
       final Ref<String> result = Ref.create();
       final String propertyName = jsonProperty.getName();
-      JsonSchemaWalker.findSchemasForCompletion(jsonProperty, new JsonSchemaWalker.CompletionSchemesConsumer() {
+      JsonSchemaWalker.findSchemasForCompletion(jsonProperty, walker, new JsonSchemaWalker.CompletionSchemesConsumer() {
         @Override
         public void consume(boolean isName,
                             @NotNull JsonSchemaObject schema,
