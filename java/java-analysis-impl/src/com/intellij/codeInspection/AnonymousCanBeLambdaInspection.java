@@ -118,16 +118,6 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     };
   }
 
-  interface R { void run(); }
-  void f(R r) {
-    f(new R() {
-      @Override
-      public void run() {
-        System.out.println();
-      }
-    });
-  }
-
   static boolean hasRuntimeAnnotations(PsiMethod method, @NotNull Set<String> runtimeAnnotationsToIgnore) {
     PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
     for (PsiAnnotation annotation : annotations) {
