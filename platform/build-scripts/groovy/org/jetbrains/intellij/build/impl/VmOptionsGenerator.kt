@@ -27,11 +27,14 @@ object VmOptionsGenerator {
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",
+    "-Djna.nosys=true",  // Android Studio: added by Change Ie7351d92
+    "-Djna.boot.library.path=",  // Android Studio: added by Change Ie7351d92
+    "-Didea.vendor.name=Google",  // Android Studio: added by Change Ie6d690b5
     "-Dkotlinx.coroutines.debug=off")
 
   private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
-    "-Xms" to "128m",
-    "-Xmx" to "750m",
+    "-Xms" to "256m",  // Android Studio: modified by Change Ie7351d92
+    "-Xmx" to "1280m",  // Android Studio: modified by Change Ie7351d92
     "-XX:ReservedCodeCacheSize=" to "512m")
 
   @JvmStatic
