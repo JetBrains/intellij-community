@@ -62,10 +62,10 @@ public class ProblemDescriptorImpl extends ProblemDescriptorBase {
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
-                               final boolean tooltip,
+                               final boolean showTooltip,
                                @Nullable HintAction hintAction,
                                boolean onTheFly) {
-    super(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, tooltip, onTheFly);
+    super(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, showTooltip, onTheFly);
     myHintAction = hintAction;
   }
 
