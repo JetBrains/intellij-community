@@ -334,12 +334,12 @@ public abstract class DumbService {
     /**
      * The event arrives on EDT
      */
-    void enteredDumbMode();
+    default void enteredDumbMode() {}
 
     /**
      * The event arrives on EDT
      */
-    void exitDumbMode();
+    default void exitDumbMode() {}
 
   }
 
