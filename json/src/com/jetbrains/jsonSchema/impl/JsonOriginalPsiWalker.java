@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -137,5 +138,23 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
       return object.getPropertyList().stream().map(p -> StringUtil.unquoteString(p.getName())).collect(Collectors.toSet());
     }
     return Collections.emptySet();
+  }
+
+  @Override
+  public JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element) {
+    final JsonProperty property = PsiTreeUtil.getParentOfType(element, JsonProperty.class, false);
+    if (property == null) return null;
+    return new JsonJsonPropertyAdapter(property);
+  }
+
+  @Override
+  public boolean isTopJsonElement(@NotNull PsiElement element) {
+    return element instanceof PsiFile;
+  }
+
+  @Nullable
+  @Override
+  public JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
+    return element instanceof JsonValue ? JsonJsonPropertyAdapter.createAdapterByType((JsonValue)element) : null;
   }
 }

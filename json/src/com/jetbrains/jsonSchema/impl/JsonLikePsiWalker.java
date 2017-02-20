@@ -18,6 +18,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -35,4 +36,7 @@ public interface JsonLikePsiWalker {
   boolean isNameQuoted();
   boolean hasPropertiesBehind(@NotNull PsiElement element);
   Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element);
+  @Nullable JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element);
+  boolean isTopJsonElement(@NotNull PsiElement element);
+  @Nullable JsonValueAdapter createValueAdapter(@NotNull PsiElement element);
 }
