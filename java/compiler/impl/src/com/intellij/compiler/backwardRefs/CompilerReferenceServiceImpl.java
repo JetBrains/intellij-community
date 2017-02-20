@@ -50,6 +50,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +98,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
           if (project == myProject) {
             myDirtyScopeHolder.compilerActivityStarted();
-            closeReaderIfNeed();
+            closeReaderIfNeed(false);
           }
         }
       });
@@ -156,7 +157,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @Override
   public void projectClosed() {
-    closeReaderIfNeed();
+    closeReaderIfNeed(false);
   }
 
   @Nullable
@@ -173,9 +174,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (Exception e) {
-      LOG.error("an exception during scope without code references calculation", e);
-      return null;
+    catch (RuntimeException e) {
+      return onException(e, "scope without code references");
     }
   }
 
@@ -231,9 +231,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (Exception e) {
-      LOG.error("an exception during hierarchy calculation", e);
-      return null;
+    catch (RuntimeException e) {
+      return onException(e, "hierarchy");
     }
   }
 
@@ -345,11 +344,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     }
   }
 
-  private void closeReaderIfNeed() {
+  private void closeReaderIfNeed(boolean removeIndex) {
     myOpenCloseLock.lock();
     try {
       if (myReader != null) {
-        myReader.close();
+        myReader.close(removeIndex);
         myReader = null;
       }
     } finally {
@@ -532,5 +531,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     } finally {
       myReadDataLock.unlock();
     }
+  }
+
+  @Nullable
+  private <T> T onException(@NotNull RuntimeException e, @NotNull String actionName) {
+    final Throwable cause = e.getCause();
+    if (cause instanceof PersistentEnumeratorBase.CorruptedException || cause instanceof StorageException) {
+      closeReaderIfNeed(true);
+    }
+    LOG.error("an exception during " + actionName + " calculation", e);
+    return null;
   }
 }
