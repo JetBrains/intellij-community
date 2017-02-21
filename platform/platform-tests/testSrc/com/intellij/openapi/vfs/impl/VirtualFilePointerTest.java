@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -927,14 +928,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       VirtualFilePointer bc = VirtualFilePointerManager.getInstance().create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
 
       run = false;
-      threads.forEach(thread -> {
-        try {
-          thread.join();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      ConcurrencyUtil.joinAll(threads);
       if (exception !=null) throw exception;
       Disposer.dispose(disposable);
     }

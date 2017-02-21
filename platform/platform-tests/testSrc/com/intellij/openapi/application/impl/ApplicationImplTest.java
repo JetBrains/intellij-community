@@ -33,6 +33,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -156,9 +157,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           }
           //System.out.println("write end");
         }
-        for (Thread thread : threads) {
-          thread.join();
-        }
+        ConcurrencyUtil.joinAll(threads);
         threads.clear();
       }).cpuBound().assertTiming();
     }
@@ -405,9 +404,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       LOG.append("\nfinished write action");
     });
     main.join();
-    for (Thread thread : readThreads) {
-      thread.join();
-    }
+    ConcurrencyUtil.joinAll(readThreads);
 
     if (exception != null) {
       System.err.println(LOG);
@@ -528,9 +525,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         thread.start();
         threads.add(thread);
       }
-      for (Thread thread : threads) {
-        thread.join();
-      }
+      ConcurrencyUtil.joinAll(threads);
     }).cpuBound().usesAllCPUCores().assertTiming();
   }
 
