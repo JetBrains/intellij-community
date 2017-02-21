@@ -995,9 +995,6 @@
                             order="last"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionManager"
                     serviceImplementation="com.intellij.execution.impl.ExecutionManagerImpl"/>
-    <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager"
-                    serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
-
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager"
                     serviceImplementation="com.intellij.execution.dashboard.RunDashboardManagerImpl"/>
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.ConfigurationTypeDashboardGroupingRule"/>
