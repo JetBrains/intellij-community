@@ -105,6 +105,13 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  public void testStaticImportClassConflictingWithPackageName() throws Exception {
+    myFixture.addClass("package p.P1; class Unrelated {}");
+    myFixture.addClass("package p; public class P1 {public static final int FOO = 1;}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";
