@@ -123,10 +123,10 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         }
       }
       if (!changes.isEmpty()) {
+        // file was deleted
         return VcsFileRevision.NULL;
       }
     }
-    // this is ok, file was deleted here
     return null;
   }
 
