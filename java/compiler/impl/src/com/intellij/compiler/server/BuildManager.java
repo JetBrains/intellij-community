@@ -492,12 +492,29 @@ public class BuildManager implements Disposable {
 
   public void scheduleAutoMake() {
     if (!IS_UNIT_TEST_MODE && !PowerSaveMode.isEnabled()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Automake scheduled:\n" + getThreadTrace(Thread.currentThread(), 10));
+      }
       myAutoMakeTask.schedule();
     }
+  }
+   
+  @NotNull
+  private static String getThreadTrace(Thread thread, final int depth) { // debugging
+    final StringBuilder buf = new StringBuilder();
+    final StackTraceElement[] trace = thread.getStackTrace();
+    for (int i = 0; i < depth && i < trace.length; i++) {
+      final StackTraceElement element = trace[i];
+      buf.append("\tat ").append(element.toString()).append("\n");
+    }
+    return buf.toString();
   }
 
   private void scheduleProjectSave() {
     if (!IS_UNIT_TEST_MODE && !PowerSaveMode.isEnabled()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Automake canceled; reason: project save scheduled");
+      }
       myAutoMakeTask.cancelPendingExecution();
       myDocumentSaveTask.schedule();
     }
@@ -602,6 +619,9 @@ public class BuildManager implements Disposable {
           futures.add(future);
         }
       }
+    }
+    if (LOG.isDebugEnabled() && !futures.isEmpty()) {
+      LOG.debug("Automake cancel (all tasks):\n" + getThreadTrace(Thread.currentThread(), 10));
     }
     return futures;
   }
