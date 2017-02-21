@@ -148,7 +148,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     add(myScrollPane, "ay top, growx, pushx");
     //TODO combine icons/info modes
     if (myInfoMode) {
-      add(myInfoLabel);
+      add(myInfoLabel, "gapright " + JBUI.scale(4));
     }
     else {
       add(myIconsPanel, myHelper.getIconsPanelConstraints());
