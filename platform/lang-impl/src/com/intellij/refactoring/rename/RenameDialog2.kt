@@ -102,19 +102,25 @@ fun createRenameDialog2(psiElement: PsiElement,
     invokeRefactoring(renameProcessor, isPreview, callback)
   }
 
+  val saveSettings: (String) -> Unit = { newName ->
+    processor.setToSearchInComments(psiElement, searchInComments.value)
+    processor.setToSearchForTextOccurrences(psiElement, searchTextOccurrences.value)
+    if (searchForReferences != null) {
+      processor.setToSearchForReferences(psiElement, searchForReferences.value)
+    }
+    factoriesFlags.forEach { factory, b -> factory.isEnabled = b }
+    suggestedNameInfo?.nameChosen(newName)
+  }
+  val initialSelection = when {
+    psiElement is PsiFile && editor == null -> NameSuggesterSelection.NameWithoutExtension
+    editor == null || editor.settings.isPreselectRename -> NameSuggesterSelection.All
+    else -> NameSuggesterSelection.None
+  }
   return RenameDialog2(project = psiElement.project,
                        psiElement = psiElement,
                        editor = editor,
                        hasHelp = true,
-                       saveSettings = { newName ->
-                         processor.setToSearchInComments(psiElement, searchInComments.value)
-                         processor.setToSearchForTextOccurrences(psiElement, searchTextOccurrences.value)
-                         if (searchForReferences != null) {
-                           processor.setToSearchForReferences(psiElement, searchForReferences.value)
-                         }
-                         factoriesFlags.forEach { factory, b -> factory.isEnabled = b }
-                         suggestedNameInfo?.nameChosen(newName)
-                       },
+                       saveSettings = saveSettings,
                        suggestedNames = suggestedNames,
                        suggestedNameInfo = suggestedNameInfo,
                        validate = { validate(project, psiElement, it) },
@@ -124,11 +130,7 @@ fun createRenameDialog2(psiElement: PsiElement,
                        factoriesFlags = factoriesFlags,
                        performRename = performRename,
                        beforeCheckboxHook = {},
-                       initialSelection = when {
-                         psiElement is PsiFile && editor == null -> NameSuggesterSelection.NameWithoutExtension
-                         editor == null || editor.settings.isPreselectRename -> NameSuggesterSelection.All
-                         else -> NameSuggesterSelection.None
-                       })
+                       initialSelection = initialSelection)
 }
 
 fun createRenameDialog2(psiElement: PsiElement,
@@ -168,8 +170,6 @@ data class RenameDialog2(var project: Project,
 fun RenameDialog2.show() {
   PsiUtilCore.ensureValid(psiElement)
   val nameLabel = XmlStringUtil.wrapInHtml(XmlTagUtilBase.escapeString(getLabelText(getFullName(psiElement)), false))
-
-
   val oldName = UsageViewUtil.getShortName(psiElement)
   val newName = cell(suggestedNames.filterNotNull().firstOrNull() ?: "")
   val validation = cell { validate(newName.value) }

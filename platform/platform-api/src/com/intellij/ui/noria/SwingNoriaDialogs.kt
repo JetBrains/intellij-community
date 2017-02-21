@@ -60,7 +60,6 @@ class SwingNoriaDialogs : NoriaDialogs {
         Disposer.register(myDisposable, disposable)
         track(disposable) {
           setErrorText(props.errorText.value)
-          println("track error text")
         }
       }
 
@@ -96,7 +95,6 @@ class SwingNoriaDialogs : NoriaDialogs {
           putValue(Action.MNEMONIC_KEY, a.mnemonic?.toInt())
           track(myDisposable) {
             isEnabled = a.enabled.value
-            println("track action ${a.name}")
           }
         }
 
