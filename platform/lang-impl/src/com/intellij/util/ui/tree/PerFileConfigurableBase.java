@@ -432,7 +432,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       renderValue(null, t, text);
       maxValueWidth = Math.max(metrics.stringWidth(text.toString()), maxValueWidth);
     }
-    if (maxValueWidth < 60) {
+    if (maxValueWidth < 300) {
       myTable.getColumnModel().getColumn(1).setMinWidth(maxValueWidth);
       myTable.getColumnModel().getColumn(1).setMaxWidth(2 * maxValueWidth);
     }
