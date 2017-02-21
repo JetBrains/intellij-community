@@ -7,13 +7,9 @@ import com.intellij.openapi.application.ApplicationManager
 import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 
-class CompletionTypingTest : LightFixtureCompletionTestCase() {
-    lateinit var mockLogger: CompletionLogger
-    lateinit var realLoggerProvider: CompletionLoggerProvider
-    lateinit var mockLoggerProvider: CompletionLoggerProvider
-    lateinit var container: MutablePicoContainer
-    
-    val text = """
+
+val runnableInterface = "interface Runnable { void run();  void notify(); void wait(); void notifyAll(); }"
+val testText = """
 class Test {
     public void run() {
         Runnable r = new Runnable() {
@@ -23,8 +19,14 @@ class Test {
     }
 }
 """
+
+
+class CompletionTypingTest : LightFixtureCompletionTestCase() {
     
-    private val runnable = "interface Runnable { void run();  void notify(); void wait(); void notifyAll(); }"
+    lateinit var mockLogger: CompletionLogger
+    lateinit var realLoggerProvider: CompletionLoggerProvider
+    lateinit var mockLoggerProvider: CompletionLoggerProvider
+    lateinit var container: MutablePicoContainer
     
     override fun setUp() {
         super.setUp()
@@ -39,8 +41,8 @@ class Test {
         container.unregisterComponent(name)
         container.registerComponentInstance(name, mockLoggerProvider)
         
-        myFixture.addClass(runnable)
-        myFixture.configureByText(JavaFileType.INSTANCE, text)
+        myFixture.addClass(runnableInterface)
+        myFixture.configureByText(JavaFileType.INSTANCE, testText)
     }
 
     override fun tearDown() {
