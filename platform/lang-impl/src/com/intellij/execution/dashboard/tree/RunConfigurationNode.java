@@ -43,9 +43,8 @@ import java.util.Collections;
  */
 class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>>
   implements DashboardRunConfigurationNode {
-  public RunConfigurationNode(Project project, @NotNull RunnerAndConfigurationSettings configurationSettings,
-                                 @Nullable RunContentDescriptor descriptor) {
-    super(project, Pair.create(configurationSettings, descriptor));
+  public RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
+    super(project, value);
   }
 
   @Override
@@ -69,20 +68,24 @@ class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfiguration
     presentation.addText(configurationSettings.getName(),
                          isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     RunDashboardContributor contributor = RunDashboardContributor.getContributor(configurationSettings.getType());
-    assert contributor != null;
     Icon icon = null;
-    DashboardRunConfigurationStatus status = contributor.getStatus(this);
-    if (DashboardRunConfigurationStatus.STARTED.equals(status)) {
-      icon = getExecutorIcon();
-    } else if (DashboardRunConfigurationStatus.FAILED.equals(status)) {
-      icon = status.getIcon();
+    if (contributor != null) {
+      DashboardRunConfigurationStatus status = contributor.getStatus(this);
+      if (DashboardRunConfigurationStatus.STARTED.equals(status)) {
+        icon = getExecutorIcon();
+      }
+      else if (DashboardRunConfigurationStatus.FAILED.equals(status)) {
+        icon = status.getIcon();
+      }
     }
     if (icon == null) {
       icon = RunManagerEx.getInstanceEx(getProject()).getConfigurationIcon(configurationSettings);
     }
     presentation.setIcon(isStored ? icon : IconLoader.getDisabledIcon(icon));
 
-    contributor.updatePresentation(presentation, this);
+    if (contributor != null) {
+      contributor.updatePresentation(presentation, this);
+    }
   }
 
   @NotNull

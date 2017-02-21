@@ -15,20 +15,14 @@
  */
 package com.intellij.execution.dashboard.tree;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.DashboardGroup;
 import com.intellij.execution.dashboard.DashboardGroupingRule;
-import com.intellij.execution.dashboard.RunDashboardContributor;
-import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,36 +72,8 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode> getChildren() {
-      List<RunConfigurationNode> nodes = new ArrayList<>();
-
-      List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-        .filter(runConfiguration -> RunDashboardContributor.isShowInDashboard(runConfiguration.getType()))
-        .collect(Collectors.toList());
-
-      //noinspection ConstantConditions ???
-      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
-      configurations.forEach(configurationSettings -> {
-        List<RunContentDescriptor> descriptors = executionManager.getDescriptors(settings ->
-          Comparing.equal(settings.getConfiguration(), configurationSettings.getConfiguration()));
-        if (descriptors.isEmpty()) {
-          nodes.add(new RunConfigurationNode(myProject, configurationSettings, null));
-        } else {
-          descriptors.forEach(descriptor -> nodes.add(new RunConfigurationNode(myProject, configurationSettings, descriptor)));
-        }
-      });
-
-      // It is possible that run configuration was deleted, but there is running content descriptor for such run configuration.
-      // It should be shown in he dashboard tree.
-      List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
-        .collect(Collectors.toList());
-      List<RunContentDescriptor> notStoredDescriptors = executionManager.getRunningDescriptors(settings -> {
-        RunConfiguration configuration = settings.getConfiguration();
-        return RunDashboardContributor.isShowInDashboard(settings.getType()) && !storedConfigurations.contains(configuration);
-      });
-      notStoredDescriptors.forEach(descriptor -> {
-        Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
-        settings.forEach(setting -> nodes.add(new RunConfigurationNode(myProject, setting, descriptor)));
-      });
+      List<RunConfigurationNode> nodes = RunDashboardManager.getInstance(myProject).getRunConfigurations().stream()
+        .map(value -> new RunConfigurationNode(myProject, value)).collect(Collectors.toList());
 
       return group(myProject,
                    this,
