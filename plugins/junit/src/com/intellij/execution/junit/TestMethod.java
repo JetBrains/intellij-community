@@ -118,7 +118,7 @@ class TestMethod extends TestObject {
     }*/
     return
       Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(testClass), data.getMainClassName()) &&
-      Comparing.equal(testMethod.getName(), data.getMethodName());
+      Comparing.equal(JUnitConfiguration.Data.getMethodPresentation(testMethod), data.getMethodNameWithSignature());
   }
 
   @Override
