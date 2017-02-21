@@ -159,17 +159,15 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   public void apply() throws ConfigurationException {
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
     boolean customShelfDir = myUseCustomShelfDirectory.isSelected();
-    String myPrevShelfPath = myVcsConfiguration.CUSTOM_SHELF_PATH;
-    boolean wasCustom = myVcsConfiguration.USE_CUSTOM_SHELF_PATH;
+    String prevShelfPath = myVcsConfiguration.CUSTOM_SHELF_PATH;
     myVcsConfiguration.USE_CUSTOM_SHELF_PATH = customShelfDir;
     myVcsConfiguration.CUSTOM_SHELF_PATH = customShelfDir ? myShelfDirectoryPath.getText() : null;
     if (!myProject.isDefault()) {
       myProject.save();
-      if (wasCustom) {
+      if (prevShelfPath != null) {
         ApplicationManager.getApplication().saveSettings();
       }
-      ShelveChangesManager.getInstance(myProject)
-        .checkAndMigrateUnderProgress(myPrevShelfPath, myVcsConfiguration.CUSTOM_SHELF_PATH, wasCustom);
+      ShelveChangesManager.getInstance(myProject).checkAndMigrateUnderProgress(prevShelfPath, myVcsConfiguration.CUSTOM_SHELF_PATH);
     }
   }
 }

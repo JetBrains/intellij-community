@@ -52,7 +52,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -80,6 +79,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.components.StoragePathMacros.PROJECT_CONFIG_DIR;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class ShelveChangesManager extends AbstractProjectComponent implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
@@ -108,17 +108,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NotNull
   public static String getDefaultShelfPresentationPath(@NotNull Project project) {
     //noinspection deprecation
-    return project.isDefault() ? PROJECT_CONFIG_DIR : getProjectShelfPath(project);
+    String projectConfig = project.isDefault() ? PROJECT_CONFIG_DIR : getConfigDirPath(project);
+    return Paths.get(projectConfig, SHELVE_MANAGER_DIR_PATH).toString();
   }
 
-  @NotNull
-  static String getProjectShelfPath(@NotNull Project project) {
-    return Paths.get(getConfigDirPath(project), SHELVE_MANAGER_DIR_PATH).toString();
-  }
-
-  private static String getConfigDirPath(Project project) {
+  //returns system-dependant path
+  private static String getConfigDirPath(@NotNull Project project) {
     VirtualFile projectStoreDirectory = ProjectKt.getProjectStoreDirectory(project.getBaseDir());
-    return projectStoreDirectory != null ? projectStoreDirectory.getPath() : project.getBasePath();
+    return PathUtil.getLocalPath(chooseNotNull(projectStoreDirectory, project.getBaseDir()));
   }
 
   private final MessageBus myBus;
@@ -132,8 +129,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     super(project);
     myPathMacroSubstitutor = PathMacroManager.getInstance(myProject);
     myBus = bus;
-    mySchemeManager =
-      createShelveSchemeManager(project, myPathMacroSubstitutor.expandPath(VcsConfiguration.getInstance(project).CUSTOM_SHELF_PATH));
+    mySchemeManager = createShelveSchemeManager(project, VcsConfiguration.getInstance(project).CUSTOM_SHELF_PATH);
 
     myCleaningFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> cleanSystemUnshelvedOlderOneWeek(), 1, 1, TimeUnit.DAYS);
     Disposer.register(project, new Disposable() {
@@ -161,7 +157,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   @NotNull
   private SchemeManager<ShelvedChangeList> createShelveSchemeManager(@NotNull Project project,
                                                                      @Nullable String customPath) {
-    FilePath customShelfFilePath = customPath != null ? VcsUtil.getFilePath(customPath) : null;
+    FilePath customShelfFilePath = customPath != null ? VcsUtil.getFilePath(myPathMacroSubstitutor.expandPath(customPath)) : null;
     //don't collapse custom paths
     final boolean shouldCollapsePath = !VcsConfiguration.getInstance(myProject).USE_CUSTOM_SHELF_PATH;
     return SchemeManagerFactory.getInstance(project)
@@ -210,16 +206,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
 
-  public void checkAndMigrateUnderProgress(@Nullable String fromDirPath,
-                                           @Nullable String toDirPath, boolean wasCustom) throws ConfigurationException {
-    final SchemeManager<ShelvedChangeList> newSchemeManager =
-      createShelveSchemeManager(myProject, myPathMacroSubstitutor.expandPath(toDirPath));
+  public void checkAndMigrateUnderProgress(@Nullable String fromDirPath, @Nullable String toDirPath) throws ConfigurationException {
+    final SchemeManager<ShelvedChangeList> newSchemeManager = createShelveSchemeManager(myProject, toDirPath);
     File fromFile = new File(getShelfPath(fromDirPath));
     File toFile = new File(getShelfPath(toDirPath));
-    if (!fromFile.exists()) return; //previous shelf directory may do not exist at all
+    if (!fromFile.exists() || FileUtil.filesEqual(fromFile, toFile)) return; //previous shelf directory may do not exist at all
     String validationError = validateDestinationDirectory(toFile);
     if (validationError != null) throw new ConfigurationException(validationError);
-    new Task.Modal(myProject, "Moving shelves from " + fromFile + " to " + toFile, true) {
+    new Task.Modal(myProject, "Moving Shelves to the New Directory...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         newSchemeManager.loadSchemes();
@@ -239,15 +233,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       @Override
       public void onSuccess() {
         super.onSuccess();
-        updateShelveSchemaManager();
-      }
-
-      void updateShelveSchemaManager() {
-        myProject.save();
-        ApplicationManager.getApplication().saveSettings();
-        SchemeManagerFactory.getInstance(myProject).dispose(mySchemeManager);
-        mySchemeManager = newSchemeManager;
-        notifyStateChanged();
+        updateShelveSchemaManager(newSchemeManager);
       }
 
       @Override
@@ -263,11 +249,11 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
                                         "&Use New",
                                         "&Revert",
                                         UIUtil.getWarningIcon()) == Messages.OK) {
-          updateShelveSchemaManager();
+          updateShelveSchemaManager(newSchemeManager);
         }
         else {
           VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-          vcsConfiguration.USE_CUSTOM_SHELF_PATH = wasCustom;
+          vcsConfiguration.USE_CUSTOM_SHELF_PATH = fromDirPath != null;
           vcsConfiguration.CUSTOM_SHELF_PATH = fromDirPath;
         }
       }
@@ -280,6 +266,14 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }.queue();
   }
 
+  private void updateShelveSchemaManager(SchemeManager<ShelvedChangeList> newSchemeManager) {
+    myProject.save();
+    ApplicationManager.getApplication().saveSettings();
+    SchemeManagerFactory.getInstance(myProject).dispose(mySchemeManager);
+    mySchemeManager = newSchemeManager;
+    notifyStateChanged();
+  }
+
   @Nullable
   private static String validateDestinationDirectory(@NotNull File destinationDir) {
     if (!destinationDir.exists() && !destinationDir.mkdirs()) return "Destination shelf directory doesn't exist and failed to be created";
@@ -289,8 +283,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   @NotNull
+  //returns system-dependant path
   private String getShelfPath(@Nullable String path) {
-    return ObjectUtils.chooseNotNull(path, getDefaultShelfPresentationPath(myProject));
+    return chooseNotNull(path, getDefaultShelfPresentationPath(myProject));
   }                          
 
   @NotNull
