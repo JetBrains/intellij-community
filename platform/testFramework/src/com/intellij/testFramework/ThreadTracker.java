@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
  * @author cdr
  */
 public class ThreadTracker {
+  private static final Logger LOG = Logger.getInstance(ThreadTracker.class);
   private final Collection<Thread> before;
   private final boolean myDefaultProjectInitialized;
 
@@ -186,7 +188,7 @@ public class ThreadTracker {
       }
       try {
         long timeLeft = start + unit.toMillis(timeout) - System.currentTimeMillis();
-        System.out.println("Waiting for the "+jdiThread+" for " + timeLeft+"ms");
+        LOG.debug("Waiting for the "+jdiThread+" for " + timeLeft+"ms");
         jdiThread.join(timeLeft);
       }
       catch (InterruptedException e) {
