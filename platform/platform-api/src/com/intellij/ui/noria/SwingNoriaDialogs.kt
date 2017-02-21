@@ -17,6 +17,7 @@ package com.intellij.ui.noria
 
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
@@ -102,6 +103,9 @@ class SwingNoriaDialogs : NoriaDialogs {
         var actions = dialogProps.actions.map { makeAction(it) }
         if (dialogProps.hasHelp) {
           actions += helpAction
+        }
+        if (SystemInfo.isMac) {
+          actions = actions.reversed()
         }
         return actions.toTypedArray()
       }
