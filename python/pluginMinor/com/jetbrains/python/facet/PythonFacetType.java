@@ -93,7 +93,9 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetType.Pyth
       String sdkName = element.getAttributeValue(SDK_NAME);
       mySdk = StringUtil.isEmpty(sdkName) ? null : ProjectJdkTable.getInstance().findJdk(sdkName, PythonSdkType.getInstance().getName());
 
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkAdded(mySdk);
+      if (mySdk != null) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectJdkTable.JDK_TABLE_TOPIC).jdkAdded(mySdk);
+      }
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
