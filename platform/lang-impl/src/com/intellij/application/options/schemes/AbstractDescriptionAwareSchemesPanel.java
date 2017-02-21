@@ -94,7 +94,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   }
 
   @Override
-  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
+  public final void showMessage(@Nullable String message, @NotNull MessageType messageType) {
     myWarningLabel.setText(message);
     myWarningLabel.setForeground(messageType.getTitleForeground());
     myLayout.show(myInfoComponent, ERROR_CARD);
@@ -109,7 +109,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   }
 
   @Override
-  public final void clearInfo() {
+  public final void clearMessage() {
     myLayout.show(myInfoComponent, SHOW_DESCRIPTION_CARD);
   }
 
