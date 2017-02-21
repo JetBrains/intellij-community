@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+
 public class ShelfFileProcessorUtil {
   public static void savePatchFile(@Nullable Project project,
                                    @NotNull File patchFile,
@@ -35,7 +37,7 @@ public class ShelfFileProcessorUtil {
                                    @NotNull CommitContext context) throws IOException {
     try (Writer writer = new OutputStreamWriter(new FileOutputStream(patchFile), CharsetToolkit.UTF8_CHARSET)) {
       UnifiedDiffWriter
-        .write(project, patches, writer, "\n", extensions != null ? extensions : UnifiedDiffWriter.getPatchExtensions(project),
+        .write(project, patches, writer, "\n", chooseNotNull(extensions, UnifiedDiffWriter.getPatchExtensions(project)),
                context);
     }
   }
