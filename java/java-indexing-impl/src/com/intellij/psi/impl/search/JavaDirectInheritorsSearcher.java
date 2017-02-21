@@ -62,10 +62,9 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     final PsiClass baseClass = parameters.getClassToProcess();
     assert parameters.isCheckInheritance();
 
-    SearchScope useScope = ReadAction.compute(baseClass::getUseScope);
-
     final Project project = PsiUtilCore.getProjectInReadAction(baseClass);
     if (JavaClassInheritorsSearcher.isJavaLangObject(baseClass)) {
+      SearchScope useScope = ReadAction.compute(baseClass::getUseScope);
       return AllClassesSearch.search(useScope, project).forEach(psiClass -> {
         ProgressManager.checkCanceled();
         if (psiClass.isInterface()) {
@@ -76,13 +75,17 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       });
     }
 
-    SearchScope scope = parameters.getScope();
-
-    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, scope, project);
-    if (info != null) {
+    SearchScope scope;
+    SearchScope useScope;
+    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, parameters.getScope(), project);
+    if (info == null) {
+      scope = parameters.getScope();
+      useScope = ReadAction.compute(baseClass::getUseScope);
+    }
+    else {
       if (!processInheritorCandidates(info.getHierarchyChildren(), consumer, parameters.includeAnonymous())) return false;
-      scope = scope.intersectWith(info.getDirtyScope());
-      useScope = useScope.intersectWith(info.getDirtyScope());
+      scope = ReadAction.compute(() -> parameters.getScope().intersectWith(info.getDirtyScope()));
+      useScope = ReadAction.compute(() -> baseClass.getUseScope().intersectWith(info.getDirtyScope()));
     }
 
     PsiClass[] cache = getOrCalculateDirectSubClasses(project, baseClass, useScope);

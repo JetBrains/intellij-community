@@ -49,7 +49,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
+public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable, ImportsLayoutSettings {
   public static final int MAX_RIGHT_MARGIN = 1000;
   
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
@@ -278,8 +278,78 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+  
+  @Override
+  public boolean isLayoutStaticImportsSeparately() {
+    return LAYOUT_STATIC_IMPORTS_SEPARATELY;
+  }
 
-// endregion
+  @Override
+  public void setLayoutStaticImportsSeparately(boolean value) {
+    LAYOUT_STATIC_IMPORTS_SEPARATELY = value;
+  }
+  
+  @Override
+  public int getNamesCountToUseImportOnDemand() {
+    return NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
+  }
+  
+  @Override
+  public void setNamesCountToUseImportOnDemand(int value) {
+    NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = value;
+  }
+
+  @Override
+  public int getClassCountToUseImportOnDemand() {
+    return CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
+  }
+
+  @Override
+  public void setClassCountToUseImportOnDemand(int value) {
+    CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = value;
+  }
+
+  @Override
+  public boolean isInsertInnerClassImports() {
+    return INSERT_INNER_CLASS_IMPORTS;
+  }
+
+  @Override
+  public void setInsertInnerClassImports(boolean value) {
+    INSERT_INNER_CLASS_IMPORTS = value;
+  }
+
+  @Override
+  public boolean isUseSingleClassImports() {
+    return USE_SINGLE_CLASS_IMPORTS;
+  }
+
+  @Override
+  public void setUseSingleClassImports(boolean value) {
+    USE_SINGLE_CLASS_IMPORTS = value;
+  }
+  
+  @Override
+  public boolean isUseFqClassNames() {
+    return USE_FQ_CLASS_NAMES;
+  }
+
+  @Override
+  public void setUseFqClassNames(boolean value) {
+    USE_FQ_CLASS_NAMES = value;
+  }
+
+  @Override
+  public PackageEntryTable getImportLayoutTable() {
+    return IMPORT_LAYOUT_TABLE;
+  }
+  
+  @Override
+  public PackageEntryTable getPackagesToUseImportOnDemand() {
+    return PACKAGES_TO_USE_IMPORT_ON_DEMAND;
+  }
+
+  // endregion
 
 // region ORDER OF MEMBERS
 

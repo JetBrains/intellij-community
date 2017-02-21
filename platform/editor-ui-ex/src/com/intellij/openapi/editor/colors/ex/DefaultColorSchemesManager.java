@@ -61,6 +61,7 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
         for (DefaultColorsScheme oldScheme : mySchemes) {
           if (StringUtil.equals(nameAttr.getValue(), oldScheme.getName())) {
             oldScheme.readExternal(schemeElement);
+            schemes.add(oldScheme);
             isUpdated = true;
           }
         }

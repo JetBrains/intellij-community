@@ -74,7 +74,7 @@ public class PsiPolyExpressionUtil {
   }
 
   public static boolean isMethodCallTypeDependsOnInference(PsiExpression expression, PsiMethod method) {
-    final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
+    final Set<PsiTypeParameter> typeParameters = new HashSet<>(Arrays.asList(method.getTypeParameters()));
     if (!typeParameters.isEmpty()) {
       final PsiType returnType = method.getReturnType();
       if (returnType != null) {

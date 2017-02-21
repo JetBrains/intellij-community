@@ -108,8 +108,10 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       public Insets getBorderInsets(Component c) {
         int bottom = (StringUtil.getLineBreakCount(myTextArea.getText()) > 0) ? 2 : UIUtil.isUnderDarcula() ? 1 : 0;
         int top = myTextArea.getFontMetrics(myTextArea.getFont()).getHeight() <= 16 ? 2 : 1;
-        if (JBUI.isHiDPI(c)) bottom = 2;
-        if (JBUI.isHiDPI(c)) top = 2;
+        if (JBUI.isUsrHiDPI()) {
+          bottom = 2;
+          top = 2;
+        }
         return new JBInsets(top, 0, bottom, 0);
       }
 
@@ -146,7 +148,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     add(myScrollPane, "ay top, growx, pushx");
     //TODO combine icons/info modes
     if (myInfoMode) {
-      add(myInfoLabel);
+      add(myInfoLabel, "gapright " + JBUI.scale(4));
     }
     else {
       add(myIconsPanel, myHelper.getIconsPanelConstraints());
@@ -357,13 +359,13 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     String getHistoryButtonConstraints() {
       int extraGap = getExtraGap();
-      return "ay top, gaptop " + extraGap + ", gapleft" + (JBUI.isHiDPI(myTextArea) ? 4 : 0);
+      return "ay top, gaptop " + extraGap + ", gapleft" + (JBUI.isUsrHiDPI() ? 4 : 0);
     }
 
     private int getExtraGap() {
       int height = UIUtil.getLineHeight(myTextArea);
       Insets insets = myTextArea.getInsets();
-      return Math.max(JBUI.isHiDPI(myTextArea) ? 0 : 1, (height + insets.top + insets.bottom - JBUI.scale(16)) / 2);
+      return Math.max(JBUI.isUsrHiDPI() ? 0 : 1, (height + insets.top + insets.bottom - JBUI.scale(16)) / 2);
     }
 
 

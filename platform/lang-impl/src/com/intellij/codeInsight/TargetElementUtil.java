@@ -457,7 +457,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
   public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = getElementEvaluatorsEx2(element.getLanguage());
     SearchScope result = evaluator != null ? evaluator.getSearchScope(editor, element) : null;
-    return result != null ? result : PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(element);
+    if (result != null) return result;
+
+    PsiFile file = element.getContainingFile();
+    return PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(file != null ? file : element);
   }
 
   protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =

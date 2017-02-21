@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>Executes various operations on Git branches: checkout, create new branch, merge, delete, compare.</p>
@@ -29,7 +30,7 @@ import java.util.List;
  * <p>It also takes care of analyzing results and notifying the user.</p>
  * <p>All operations can be called for multiple repositories at once.</p>
  *
- * @author Kirill Likhodedov
+ * @see GitBranchWorker
  */
 public interface GitBrancher {
   static GitBrancher getInstance(@NotNull Project project) {
@@ -47,6 +48,15 @@ public interface GitBrancher {
    * @param repositories  repositories to operate on.
    */
   void checkoutNewBranch(@NotNull String name, @NotNull List<GitRepository> repositories);
+
+  /**
+   * Creates new branch without checking it out.
+   *
+   * @param name name of the new branch.
+   * @param startPoints position (commit hash) where the branch should be created, for each repository.
+   *                    Such position can be indicated by any valid Git reference (commit hash, branch name, etc.)
+   */
+  void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints);
 
   /**
    * <p>Creates new tag on the selected reference.</p>

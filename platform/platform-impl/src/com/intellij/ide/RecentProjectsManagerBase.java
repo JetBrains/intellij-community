@@ -271,7 +271,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
         // [tav] todo: the icon is created in def screen scale
-        if (UIUtil.isJDKManagedHiDPIScreen()) {
+        if (UIUtil.isJreHiDPI()) {
           final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
           float s = JBUI.sysScale();
           newG.scale(1/s, 1/s);
@@ -286,12 +286,12 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
       @Override
       public int getIconWidth() {
-        return UIUtil.isJDKManagedHiDPIScreen() ? (int)(image.getWidth() / JBUI.sysScale()) : image.getWidth();
+        return UIUtil.isJreHiDPI() ? (int)(image.getWidth() / JBUI.sysScale()) : image.getWidth();
       }
 
       @Override
       public int getIconHeight() {
-        return UIUtil.isJDKManagedHiDPIScreen() ? (int)(image.getHeight() / JBUI.sysScale()) : image.getHeight();
+        return UIUtil.isJreHiDPI() ? (int)(image.getHeight() / JBUI.sysScale()) : image.getHeight();
       }
     };
   }

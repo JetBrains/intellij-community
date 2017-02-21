@@ -104,7 +104,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
                        repository, currentRev, beforeLabel);
         }
         finally {
-          DvcsUtil.workingTreeChangeFinished(project, token);
+          token.finish();
         }
       }
 

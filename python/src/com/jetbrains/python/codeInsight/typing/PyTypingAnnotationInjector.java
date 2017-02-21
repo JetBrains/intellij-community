@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import com.jetbrains.python.psi.PyAnnotation;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,8 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
   @Override
   protected PyInjectionUtil.InjectionResult registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final PyInjectionUtil.InjectionResult result = super.registerInjection(registrar, context);
-    if (result == PyInjectionUtil.InjectionResult.EMPTY && context instanceof PsiComment && context instanceof PsiLanguageInjectionHost) {
+    if (result == PyInjectionUtil.InjectionResult.EMPTY && context.getContainingFile() instanceof PyFile && 
+        context instanceof PsiComment && context instanceof PsiLanguageInjectionHost) {
       return registerCommentInjection(registrar, (PsiLanguageInjectionHost)context);
     }
     return result;

@@ -27,7 +27,6 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +82,6 @@ public class PsiDiamondTypeUtil {
                   return areTypeArgumentsRedundant(typeArguments, expression, true, method, typeParameters);
                 }
               }
-              return true;
             }
           }
         }
@@ -116,12 +114,7 @@ public class PsiDiamondTypeUtil {
     text.append('<');
     final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
     final PsiDiamondType.DiamondInferenceResult result = PsiDiamondTypeImpl.resolveInferredTypesNoCheck(newExpression, newExpression);
-    text.append(StringUtil.join(result.getInferredTypes(), new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getCanonicalText();
-      }
-    }, ","));
+    text.append(StringUtil.join(result.getInferredTypes(), psiType -> psiType.getCanonicalText(), ","));
     text.append('>');
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
     final PsiJavaCodeReferenceElement newReference = elementFactory.createReferenceFromText(text.toString(), element);

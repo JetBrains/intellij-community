@@ -393,14 +393,18 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     @NotNull private final String myToCollapseText;
     @NotNull private final String myToExpandText;
 
-    public MoreAction(@NotNull Project project, int numberOfHiddenNodes, @Nullable String settingName, boolean defaultExpandValue) {
+    public MoreAction(@NotNull Project project,
+                      int numberOfHiddenNodes,
+                      @Nullable String settingName,
+                      boolean defaultExpandValue,
+                      boolean hasFavorites) {
       super();
       myProject = project;
       mySettingName = settingName;
       myDefaultExpandValue = defaultExpandValue;
       assert numberOfHiddenNodes > 0;
       myToExpandText = "Show " + numberOfHiddenNodes + " More...";
-      myToCollapseText = "Show Only Favorites";
+      myToCollapseText = "Show " + (hasFavorites ? "Only Favorites" : "Less");
       setExpanded(
         settingName != null ? PropertiesComponent.getInstance(project).getBoolean(settingName, defaultExpandValue) : defaultExpandValue);
     }
@@ -466,7 +470,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                                 @NotNull DefaultActionGroup parentGroup, @NotNull List<? extends ActionGroup> actionList,
                                                 int maxIndex, @Nullable String settingName, boolean defaultExpandValue) {
     if (actionList.size() > maxIndex) {
-      MoreAction moreAction = new MoreAction(project, actionList.size() - maxIndex, settingName, defaultExpandValue);
+      boolean hasFavorites =
+        actionList.stream().anyMatch(action -> action instanceof BranchActionGroup && ((BranchActionGroup)action).isFavorite());
+      MoreAction moreAction = new MoreAction(project, actionList.size() - maxIndex, settingName, defaultExpandValue, hasFavorites);
       for (int i = 0; i < actionList.size(); i++) {
         parentGroup.add(i < maxIndex ? actionList.get(i) : new HideableActionGroup(actionList.get(i), moreAction));
       }

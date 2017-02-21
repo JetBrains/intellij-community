@@ -24,6 +24,7 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.MergeConflictType;
 import com.intellij.diff.util.ThreeSide;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +41,9 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
   private static final HighlightPolicy[] HIGHLIGHT_POLICIES = {BY_LINE, BY_WORD};
 
   public SimpleThreesideTextDiffProvider(@NotNull TextDiffSettings settings,
-                                         @NotNull Runnable rediff) {
-    super(settings, rediff, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
+                                         @NotNull Runnable rediff,
+                                         @NotNull Disposable disposable) {
+    super(settings, rediff, disposable, IGNORE_POLICIES, HIGHLIGHT_POLICIES);
   }
 
   @NotNull

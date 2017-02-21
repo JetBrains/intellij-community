@@ -21,6 +21,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -42,7 +43,7 @@ public class ContractInference {
   public static final int MAX_CONTRACT_COUNT = 10;
 
   @NotNull
-  public static List<MethodContract> inferContracts(@NotNull final PsiMethod method) {
+  public static List<MethodContract> inferContracts(@NotNull PsiMethodImpl method) {
     if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
       return Collections.emptyList();
     }
@@ -57,7 +58,7 @@ public class ContractInference {
   }
 
   @NotNull
-  private static List<MethodContract> postProcessContracts(@NotNull PsiMethod method, MethodData data, List<PreContract> rawContracts) {
+  private static List<MethodContract> postProcessContracts(@NotNull PsiMethodImpl method, MethodData data, List<PreContract> rawContracts) {
     List<MethodContract> contracts = ContainerUtil.concat(rawContracts, c -> c.toContracts(method, data.methodBody(method)));
     if (contracts.isEmpty()) return Collections.emptyList();
     

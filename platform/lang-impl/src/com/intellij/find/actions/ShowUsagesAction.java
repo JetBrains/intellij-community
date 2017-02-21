@@ -30,6 +30,7 @@ import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -639,6 +640,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final Runnable itemChoseCallback,
                                    @NotNull final UsageViewPresentation presentation,
                                    @NotNull final AsyncProcessIcon processIcon) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     PopupChooserBuilder builder = new PopupChooserBuilder(table);
     final String title = presentation.getTabText();
@@ -661,6 +663,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
           cancel(popup[0]);
           showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
         }
+
+        @Override
+        public boolean startInTransaction() {
+          return true;
+        }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
     shortcut = getShowUsagesShortcut();
@@ -670,6 +677,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         public void actionPerformed(@NotNull AnActionEvent e) {
           cancel(popup[0]);
           searchEverywhere(options, handler, editor, popupPosition, maxUsages);
+        }
+
+        @Override
+        public boolean startInTransaction() {
+          return true;
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
@@ -1059,7 +1071,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                 @NotNull FindUsagesHandler handler,
                                 int maxUsages,
                                 @NotNull FindUsagesOptions options) {
-    showElementUsages(editor, popupPosition, handler, maxUsages+USAGES_PAGE_SIZE, options);
+    TransactionGuard.submitTransaction(handler.getProject(), () ->
+      showElementUsages(editor, popupPosition, handler, maxUsages + USAGES_PAGE_SIZE, options));
   }
 
   private static void addUsageNodes(@NotNull GroupNode root, @NotNull final UsageViewImpl usageView, @NotNull List<UsageNode> outNodes) {

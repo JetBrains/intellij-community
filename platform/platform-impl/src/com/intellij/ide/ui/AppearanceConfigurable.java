@@ -152,15 +152,15 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   public void apply() {
     initComponent();
     UISettings settings = UISettings.getInstance();
-    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
+    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.getFontSize());
     int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.getPresentationModeFontSize());
     boolean update = false;
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
-    if (_fontSize != settings.FONT_SIZE || !Comparing.equal(settings.FONT_FACE, _fontFace)) {
-      settings.FONT_SIZE = _fontSize;
-      settings.FONT_FACE = _fontFace;
+    if (_fontSize != settings.getFontSize() || !Comparing.equal(settings.getFontFace(), _fontFace)) {
+      settings.setFontSize(_fontSize);
+      settings.setFontFace(_fontFace);
       shouldUpdateUI = true;
       update = true;
     }
@@ -227,8 +227,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     ColorBlindness blindness = myComponent.myColorBlindnessPanel.getColorBlindness();
     boolean updateEditorScheme = false;
-    if (settings.COLOR_BLINDNESS != blindness) {
-      settings.COLOR_BLINDNESS = blindness;
+    if (settings.getColorBlindness() != blindness) {
+      settings.setColorBlindness(blindness);
       update = true;
       ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
       updateEditorScheme = true;
@@ -314,7 +314,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     if (settings.getOverrideLafFonts()) {
-      myComponent.myFontCombo.setFontName(settings.FONT_FACE);
+      myComponent.myFontCombo.setFontName(settings.getFontFace());
     } else {
       myComponent.myFontCombo.setFontName(UIUtil.getLabelFont().getFamily());
     }
@@ -325,7 +325,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInIDE.setSelectedItem(settings.getIdeAAType());
     myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
 
-    myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
+    myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.getFontSize()));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.getPresentationModeFontSize()));
     myComponent.myAnimateWindowsCheckBox.setSelected(settings.getAnimateWindows());
     myComponent.myWindowShortcutsCheckBox.setSelected(settings.getShowToolWindowsNumbers());
@@ -348,7 +348,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.getNavigateToPreview());
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
-    myComponent.myColorBlindnessPanel.setColorBlindness(settings.COLOR_BLINDNESS);
+    myComponent.myColorBlindnessPanel.setColorBlindness(settings.getColorBlindness());
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.getDisableMnemonicsInControls());
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -388,8 +388,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     boolean isModified = false;
-    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE) && myComponent.myOverrideLAFFonts.isSelected();
-    isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
+    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.getFontFace()) && myComponent.myOverrideLAFFonts.isSelected();
+    isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.getFontSize()));
 
     isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType();
     isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType();
@@ -412,7 +412,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
-    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.COLOR_BLINDNESS;
+    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
 

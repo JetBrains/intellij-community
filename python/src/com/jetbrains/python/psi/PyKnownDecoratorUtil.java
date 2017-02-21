@@ -22,6 +22,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.Convertor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +76,11 @@ public class PyKnownDecoratorUtil {
 
     TYPING_OVERLOAD("typing.overload"),
 
-    REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr");
+    REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr"),
+
+    PYRAMID_DECORATOR_REIFY("pyramid.decorator.reify"),
+    DJANGO_UTILS_FUNCTIONAL_CACHED_PROPERTY("django.utils.functional.cached_property"),
+    KOMBU_UTILS_CACHED_PROPERTY("kombu.utils.cached_property");
 
     private final QualifiedName myQualifiedName;
 
@@ -101,6 +106,12 @@ public class PyKnownDecoratorUtil {
                                                                             ABC_ABSTRACTSTATICMETHOD,
                                                                             ABC_ABSTRACTCLASSMETHOD);
 
+  private static final Set<KnownDecorator> PROPERTY_DECORATORS = EnumSet.of(PROPERTY,
+                                                                            ABC_ABSTRACTPROPERTY,
+                                                                            PYRAMID_DECORATOR_REIFY,
+                                                                            DJANGO_UTILS_FUNCTIONAL_CACHED_PROPERTY,
+                                                                            KOMBU_UTILS_CACHED_PROPERTY);
+
   private static final Map<String, KnownDecorator> ourByShortName = newMapFromValues(Iterators.forArray(values()),
                                                                                      new Convertor<KnownDecorator, String>() {
                                                                                        @Override
@@ -110,7 +121,7 @@ public class PyKnownDecoratorUtil {
                                                                                      });
 
   /**
-   * Map decorators of element to {@link com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator}.
+   * Map decorators of element to {@link PyKnownDecoratorUtil.KnownDecorator}.
    *
    * @param element decoratable element to check
    * @param context type evaluation context. If it doesn't allow switch to AST, decorators will be compared by the text of the last component
@@ -123,34 +134,41 @@ public class PyKnownDecoratorUtil {
     if (decoratorList == null) {
       return Collections.emptyList();
     }
-    final List<KnownDecorator> result = new ArrayList<>();
-    final boolean allowResolve = context.maySwitchToAST((PsiElement)element);
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      final QualifiedName qualifiedName = decorator.getQualifiedName();
-      if (qualifiedName == null) {
-        continue;
+
+    return StreamEx
+      .of(decoratorList.getDecorators())
+      .map(decorator -> asKnownDecorator(decorator, context))
+      .nonNull()
+      .toList();
+  }
+
+  @Nullable
+  public static KnownDecorator asKnownDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
+    final QualifiedName qualifiedName = decorator.getQualifiedName();
+    if (qualifiedName == null) {
+      return null;
+    }
+
+    if (context.maySwitchToAST(decorator)) {
+      PyQualifiedNameOwner resolved = as(resolveDecorator(decorator), PyQualifiedNameOwner.class);
+      if (resolved instanceof PyFunction && PyNames.INIT.equals(resolved.getName())) {
+        resolved = ((PyFunction)resolved).getContainingClass();
       }
 
-      final KnownDecorator knownDecorator = ourByShortName.get(qualifiedName.getLastComponent());
-      if (knownDecorator != null) {
-        if (allowResolve) {
-          PyQualifiedNameOwner resolved = as(resolveDecorator(decorator), PyQualifiedNameOwner.class);
-          if (resolved instanceof PyFunction && PyNames.INIT.equals(resolved.getName())) {
-            resolved = ((PyFunction)resolved).getContainingClass();
-          }
-          if (resolved != null && resolved.getQualifiedName() != null) {
-            final QualifiedName resolvedName = QualifiedName.fromDottedString(resolved.getQualifiedName());
-            if (resolvedName.equals(knownDecorator.getQualifiedName())) {
-              result.add(knownDecorator);
-            }
-          }
-        }
-        else {
-          result.add(knownDecorator);
+      if (resolved != null && resolved.getQualifiedName() != null) {
+        final QualifiedName resolvedName = QualifiedName.fromDottedString(resolved.getQualifiedName());
+        final KnownDecorator knownDecorator = ourByShortName.get(resolvedName.getLastComponent());
+
+        if (knownDecorator != null && resolvedName.equals(knownDecorator.getQualifiedName())) {
+          return knownDecorator;
         }
       }
     }
-    return result;
+    else {
+      return ourByShortName.get(qualifiedName.getLastComponent());
+    }
+
+    return null;
   }
 
   @Nullable
@@ -210,6 +228,10 @@ public class PyKnownDecoratorUtil {
     }
     knownDecorators.retainAll(ABSTRACT_DECORATORS);
     return !knownDecorators.isEmpty();
+  }
+
+  public static boolean isPropertyDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
+    return PROPERTY_DECORATORS.contains(asKnownDecorator(decorator, context));
   }
 
   private static boolean allDecoratorsAreKnown(@NotNull PyDecoratable element, @NotNull List<KnownDecorator> decorators) {

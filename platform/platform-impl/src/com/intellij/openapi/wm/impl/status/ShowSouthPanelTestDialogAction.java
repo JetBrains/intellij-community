@@ -75,7 +75,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       myAllowMergeButtons.setSelected(ORIGINAL_ALLOW_MERGE_BUTTONS);
       myAllowMergeButtons.addActionListener(e -> UISettings.getShadowInstance().setAllowMergeButtons(myAllowMergeButtons.isSelected()));
 
-      myErrorText.addActionListener(e -> setErrorText(myErrorText.isSelected() ? "Error text" : null));
+      myErrorText.addActionListener(e -> setErrorText(myErrorText.isSelected() ? "Error text" : null, myErrorText));
 
       panel.add(myRefresh);
       panel.add(myHasOKAction);

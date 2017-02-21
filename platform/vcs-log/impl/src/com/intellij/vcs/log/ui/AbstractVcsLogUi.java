@@ -30,7 +30,6 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -53,6 +52,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
   @NotNull protected final Project myProject;
+  @NotNull protected final VcsLogData myLogData;
   @NotNull protected final VcsLogColorManager myColorManager;
   @NotNull protected final VcsLog myLog;
   @NotNull protected final VisiblePackRefresher myRefresher;
@@ -67,6 +67,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
                           @NotNull VcsLogColorManager manager,
                           @NotNull VisiblePackRefresher refresher) {
     myProject = project;
+    myLogData = logData;
     myRefresher = refresher;
     myColorManager = manager;
 
@@ -120,10 +121,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   public abstract boolean isShowRootNames();
 
-  public abstract boolean isCompactReferencesView();
-
-  public abstract boolean isShowTagNames();
-
   @Override
   public boolean areGraphActionsEnabled() {
     return getTable().getRowCount() > 0;
@@ -147,6 +144,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public VcsLog getVcsLog() {
     return myLog;
+  }
+
+  @NotNull
+  public VcsLogData getLogData() {
+    return myLogData;
   }
 
   @Override

@@ -21,6 +21,38 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
+
+  /**
+   * Checks tests are resolved when launched from subfolder
+   */
+  @Test
+  public void testTestsInSubFolderResolvable() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs") {
+        @NotNull
+        @Override
+        protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+          return new PyNoseTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+  /**
+   * Ensures test output works
+   */
+  @Test
+  public void testOutput() throws Exception {
+    runPythonTest(
+      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs") {
+        @NotNull
+        @Override
+        protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+          return new PyNoseTestProcessRunner("tests", 0);
+        }
+      });
+  }
+
+
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Exception {
 

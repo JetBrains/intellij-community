@@ -47,6 +47,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.ExternalChangeAction;
@@ -70,6 +71,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 
@@ -155,13 +157,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     ApplicationManager.getApplication().assertReadAccessAllowed();
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
-      if (!file.isValid() || file.isDirectory() ||
-          SingleRootFileViewProvider.isTooLargeForContentLoading(file) ||
-          isBinaryWithoutDecompiler(file)) {
-        return null;
-      }
+      if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
 
-      final CharSequence text = LoadTextUtil.loadText(file);
+      boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+      if (file.getFileType().isBinary() && tooLarge) return null;
+
+      final CharSequence text = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
       synchronized (lock) {
         document = (DocumentEx)getCachedDocument(file);
         if (document != null) return document; // Double checking
@@ -169,7 +170,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         document = (DocumentEx)createDocument(text, file);
         document.setModificationStamp(file.getModificationStamp());
         final FileType fileType = file.getFileType();
-        document.setReadOnly(!file.isWritable() || fileType.isBinary());
+        document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
         if (file instanceof LightVirtualFile) {
           registerDocument(document, file);
         }
@@ -610,7 +611,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
               file.setCharset(null, null, false);
               boolean wasWritable = document.isWritable();
               document.setReadOnly(false);
-              CharSequence reloaded = LoadTextUtil.loadText(file);
+              boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+              CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
               isReloadable[0] = isReloadable(file, document, project);
               if (isReloadable[0]) {
                 DocumentEx documentEx = (DocumentEx)document;
@@ -634,7 +636,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private static boolean isReloadable(@NotNull VirtualFile file, @NotNull Document document, @Nullable Project project) {
     PsiFile cachedPsiFile = project == null ? null : PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
-    return file.getLength() <= FileUtilRt.LARGE_FOR_CONTENT_LOADING &&
+    return !(FileUtilRt.isTooLarge(file.getLength()) && file.getFileType().isBinary()) &&
            (cachedPsiFile == null || cachedPsiFile instanceof PsiFileImpl || isBinaryWithDecompiler(file));
   }
 
@@ -735,6 +737,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   @NotNull
   private static FileDocumentManagerListener[] getListeners() {
     return FileDocumentManagerListener.EP_NAME.getExtensions();
+  }
+
+  private static int getPreviewCharCount(@NotNull VirtualFile file) {
+    Charset charset = EncodingManager.getInstance().getEncoding(file, false);
+    float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
+    return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
   }
 
   private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {

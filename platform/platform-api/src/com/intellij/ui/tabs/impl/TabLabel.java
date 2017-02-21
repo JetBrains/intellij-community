@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -234,7 +233,7 @@ public class TabLabel extends JPanel implements Accessible {
   protected void setPlaceholderContent(boolean toCenter, JComponent component) {
     myLabelPlaceholder.removeAll();
 
-    if (toCenter && !Registry.is("ide.new.editor.tabs.selection")) {
+    if (toCenter /*&& !Registry.is("ide.new.editor.tabs.selection")*/) {
       final Centerizer center = new Centerizer(component);
       myLabelPlaceholder.setContent(center);
     }

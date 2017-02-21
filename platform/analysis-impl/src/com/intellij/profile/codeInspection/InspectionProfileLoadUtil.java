@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,18 @@ package com.intellij.profile.codeInspection;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public class InspectionProfileLoadUtil {
-  private static String getProfileName(@NotNull File file, @NotNull Element element) {
+  private static String getProfileName(@NotNull Path file, @NotNull Element element) {
     String name = null;
     for (Element option : element.getChildren("option")) {
       if ("myName".equals(option.getAttributeValue("name"))) {
@@ -39,14 +40,25 @@ public class InspectionProfileLoadUtil {
       //noinspection deprecation
       name = element.getAttributeValue("profile_name");
     }
-    return name != null ? name : FileUtil.getNameWithoutExtension(file);
+    return name != null ? name : FileUtilRt.getNameWithoutExtension(file.getFileName().toString());
   }
 
+  /**
+   * @deprecated Please use load(file: Path, ...)
+   */
   @NotNull
+  @Deprecated
   public static InspectionProfileImpl load(@NotNull File file,
                                            @NotNull InspectionToolRegistrar registrar,
                                            @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
-    Element element = JDOMUtil.load(file);
+    return load(file.toPath(), registrar, profileManager);
+  }
+
+  @NotNull
+  public static InspectionProfileImpl load(@NotNull Path file,
+                                           @NotNull InspectionToolRegistrar registrar,
+                                           @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
+    Element element = JdomKt.loadElement(file);
     InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file, element), registrar,
                                                               (BaseInspectionProfileManager)profileManager);
     final Element profileElement = element.getChild("profile");

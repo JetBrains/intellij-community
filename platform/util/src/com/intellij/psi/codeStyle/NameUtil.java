@@ -376,6 +376,7 @@ public class NameUtil {
   /**
    * @deprecated use com.intellij.util.text.Matcher
    */
+  @Deprecated
   public interface Matcher {
     boolean matches(@NotNull String name);
   }

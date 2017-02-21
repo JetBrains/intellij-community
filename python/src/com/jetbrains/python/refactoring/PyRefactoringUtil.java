@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
@@ -204,16 +203,35 @@ public class PyRefactoringUtil {
 
   @NotNull
   public static PsiElement[] findStatementsInRange(@NotNull final PsiFile file, int startOffset, int endOffset) {
+    ArrayList<PsiElement> array = new ArrayList<>();
+
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(endOffset - 1);
+    PsiElement endComment = null;
+
+    boolean startsWithWhitespace = false;
+    boolean endsWithWhitespace = false;
     if (element1 instanceof PsiWhiteSpace) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);
+      startsWithWhitespace = true;
     }
     if (element2 instanceof PsiWhiteSpace) {
-      endOffset = element2.getTextRange().getStartOffset();
-      element2 = file.findElementAt(endOffset - 1);
+      element2 = PsiTreeUtil.skipSiblingsBackward(element2, PsiWhiteSpace.class);
+      endsWithWhitespace = true;
     }
+    while (element2 instanceof PsiComment) {
+      endComment = element2;
+      element2 = PsiTreeUtil.skipSiblingsBackward(element2, PsiWhiteSpace.class, PsiComment.class);
+      endsWithWhitespace = true;
+    }
+
+    while (element1 instanceof PsiComment) {
+      array.add(element1);
+      element1 = PsiTreeUtil.skipSiblingsForward(element1, PsiWhiteSpace.class);
+      startsWithWhitespace = true;
+    }
+
     if (element1 == null || element2 == null) {
       return PsiElement.EMPTY_ARRAY;
     }
@@ -242,7 +260,7 @@ public class PyRefactoringUtil {
         element1 = element1.getParent();
       }
     }
-    if (startOffset != element1.getTextRange().getStartOffset()) {
+    if (startOffset != element1.getTextRange().getStartOffset() && !startsWithWhitespace) {
       return PsiElement.EMPTY_ARRAY;
     }
 
@@ -251,7 +269,7 @@ public class PyRefactoringUtil {
         element2 = element2.getParent();
       }
     }
-    if (endOffset != element2.getTextRange().getEndOffset()) {
+    if (endOffset != element2.getTextRange().getEndOffset() && !endsWithWhitespace) {
       return PsiElement.EMPTY_ARRAY;
     }
 
@@ -263,7 +281,7 @@ public class PyRefactoringUtil {
     }
 
     PsiElement[] children = parent.getChildren();
-    ArrayList<PsiElement> array = new ArrayList<>();
+
     boolean flag = false;
     for (PsiElement child : children) {
       if (child.equals(element1)) {
@@ -275,6 +293,11 @@ public class PyRefactoringUtil {
       if (child.equals(element2)) {
         break;
       }
+    }
+
+    while (endComment instanceof PsiComment) {
+      array.add(endComment);
+      endComment = PsiTreeUtil.skipSiblingsForward(endComment, PsiWhiteSpace.class);
     }
 
     for (PsiElement element : array) {

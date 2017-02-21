@@ -33,6 +33,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RepeatedSpaceInspection extends LocalInspectionTool {
 
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "Consecutive spaces";
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

@@ -57,9 +57,12 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
 
     void registerProblem(ProblemsHolder holder, PsiExpression condition, OptionalIsPresentCase scenario) {
       if(this != NONE) {
-        holder.registerProblem(condition, "Can be replaced with single expression in functional style",
-                               this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               new OptionalIsPresentFix(scenario));
+        holder.registerProblem(holder.getManager().createProblemDescriptor(condition,
+                                                                           "Can be replaced with single expression in functional style",
+                                                                           this != INFO,
+                                                                           this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                           true,
+                                                                           new OptionalIsPresentFix(scenario)));
       }
     }
   }

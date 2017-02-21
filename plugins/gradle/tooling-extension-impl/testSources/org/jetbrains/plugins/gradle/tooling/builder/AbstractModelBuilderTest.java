@@ -70,7 +70,7 @@ public abstract class AbstractModelBuilderTest {
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
     {"1.9"}, /*{"1.10"}, {"1.11"},*/ {"1.12"},
     {"2.0"}, /*{"2.1"}, {"2.2"} , {"2.3"}, {"2.4"}, */{"2.5"}, /*{"2.6"}, {"2.7"}, {"2.8"},*/ {"2.9"}, /*{"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
-    {"3.0"}, /*{"3.1"}, {"3.2"},*/ {"3.3"}, {"3.4-rc-1"}
+    {"3.0"}, /*{"3.1"}, {"3.2"},*/ {"3.3"}, {"3.4"}
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
@@ -136,7 +136,8 @@ public abstract class AbstractModelBuilderTest {
 
     GradleConnector connector = GradleConnector.newConnector();
 
-    final URI distributionUri = new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion));
+    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
+    final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
     connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
     int daemonMaxIdleTime = 10;
@@ -149,7 +150,10 @@ public abstract class AbstractModelBuilderTest {
     ProjectConnection connection = connector.connect();
 
     try {
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false);
+      boolean isGradleProjectDirSupported = _gradleVersion.compareTo(GradleVersion.version("2.4")) >= 0;
+      boolean isCompositeBuildsSupported = isGradleProjectDirSupported && _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isGradleProjectDirSupported,
+                                                                              isCompositeBuildsSupported);
       projectImportAction.addExtraProjectModelClasses(getModels());
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());

@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -54,13 +55,17 @@ public class GroovyImportUtil {
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        super.visitElement(element);
+        if (!(element instanceof GrImportStatement) && !(element instanceof GrPackageDefinition)) {
+          super.visitElement(element);
+        }
         if (element instanceof GrReferenceElement) {
           visitRefElement((GrReferenceElement)element);
         }
       }
 
       private void visitRefElement(GrReferenceElement refElement) {
+        if (refElement.isQualified()) return;
+
         final String refName = refElement.getReferenceName();
 
         if ("super".equals(refName)) return;

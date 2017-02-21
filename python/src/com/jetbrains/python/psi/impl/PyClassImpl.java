@@ -764,7 +764,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                   decoName = knownName;
                 }
               }
-              if (PyNames.PROPERTY.equals(decoName)) {
+              if (PyNames.PROPERTY.equals(decoName) ||
+                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject()))) {
                 getter = new Maybe<>(method);
               }
               else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.GETTER)) {
@@ -993,10 +994,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @NotNull
     @Override
     protected Maybe<PyCallable> translate(@Nullable PyExpression expr) {
-      if (expr == null) {
+      if (expr == null || expr instanceof PyNoneLiteralExpression) {
         return NONE;
       }
-      if (PyNames.NONE.equals(expr.getName())) return NONE; // short-circuit a common case
       if (expr instanceof PyCallable) {
         return new Maybe<>((PyCallable)expr);
       }

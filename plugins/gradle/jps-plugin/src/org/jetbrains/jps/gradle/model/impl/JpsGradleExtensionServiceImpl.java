@@ -48,7 +48,7 @@ public class JpsGradleExtensionServiceImpl extends JpsGradleExtensionService {
   private static final Logger LOG = Logger.getInstance(JpsGradleExtensionServiceImpl.class);
   private static final JpsElementChildRole<JpsSimpleElement<Boolean>> PRODUCTION_ON_TEST_ROLE = JpsElementChildRoleBase.create("production on test");
   private final Map<File, GradleProjectConfiguration> myLoadedConfigs =
-    new THashMap<File, GradleProjectConfiguration>(FileUtil.FILE_HASHING_STRATEGY);
+    new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
   private final FactoryMap<File, Boolean> myConfigFileExists = new ConcurrentFactoryMap<File, Boolean>() {
     @Nullable
     @Override

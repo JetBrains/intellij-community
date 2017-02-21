@@ -697,6 +697,12 @@
       <className>com.intellij.codeInsight.hints.BlacklistCurrentMethodIntention</className>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.hints.DisableCustomHintsOption</className>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.hints.EnableCustomHintsOption</className>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
       <category>Language Injection</category>
     </intentionAction>
@@ -974,11 +980,20 @@
     <schemeExporter
       name="Intellij IDEA code style XML"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
-      implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeCopyExporter"/>
+      implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
     <schemeImporter
       name="Intellij IDEA code style XML"
       schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
       implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
+
+    <schemeExporter
+      name="Intellij IDEA inspection profile XML"
+      schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
+      implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
+    <schemeImporter
+      name="Intellij IDEA inspection profile XML"
+      schemeClass="com.intellij.codeInspection.ex.InspectionProfileModifiableModel"
+      implementationClass="com.intellij.profile.codeInspection.ui.InspectionProfileImporter"/>
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>

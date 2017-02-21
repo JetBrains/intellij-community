@@ -1162,14 +1162,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       String elementName = e.getDescription().substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
 
-      final PsiElement targetElement = myProvider.getDocumentationElementForLink(PsiManager.getInstance(myProject), elementName, myContext);
-      if (targetElement != null) {
-        LightweightHint hint = myHint;
-        if (hint != null) {
-          hint.hide(true);
+      DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
+        PsiElement targetElement = myProvider.getDocumentationElementForLink(PsiManager.getInstance(myProject), elementName, myContext);
+        if (targetElement != null) {
+          LightweightHint hint = myHint;
+          if (hint != null) {
+            hint.hide(true);
+          }
+          myDocumentationManager.showJavaDocInfo(targetElement, myContext, null);
         }
-        myDocumentationManager.showJavaDocInfo(targetElement, myContext, null);
-      }
+      });
     }
   }
 }

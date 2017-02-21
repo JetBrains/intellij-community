@@ -35,6 +35,10 @@ public class DuplicateAlternationBranchInspectionTest extends RegExpInspectionTe
     highlightTest("<warning descr=\"Duplicate branch in alternation\">[abc]</warning>|<warning descr=\"Duplicate branch in alternation\">[cba]</warning>");
   }
 
+  public void testEmptyBranches() {
+    highlightTest("|||");
+  }
+
   @NotNull
   @Override
   protected LocalInspectionTool getInspection() {

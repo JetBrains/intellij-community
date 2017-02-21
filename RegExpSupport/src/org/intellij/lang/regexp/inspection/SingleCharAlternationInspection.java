@@ -33,6 +33,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SingleCharAlternationInspection extends LocalInspectionTool {
 
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "Single character alternation";
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

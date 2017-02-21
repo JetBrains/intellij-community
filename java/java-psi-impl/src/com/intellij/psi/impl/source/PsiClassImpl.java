@@ -106,14 +106,10 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiElement getOriginalElement() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiClass>() {
-      @Nullable
-      @Override
-      public Result<PsiClass> compute() {
-        final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
-        final PsiClass result = helper != null ? helper.getOriginalClass(PsiClassImpl.this) : PsiClassImpl.this;
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
+    return CachedValuesManager.getCachedValue(this, () -> {
+      final JavaPsiImplementationHelper helper = JavaPsiImplementationHelper.getInstance(getProject());
+      final PsiClass result = helper != null ? helper.getOriginalClass(PsiClassImpl.this) : PsiClassImpl.this;
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 

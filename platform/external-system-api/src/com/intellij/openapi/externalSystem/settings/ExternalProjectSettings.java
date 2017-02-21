@@ -101,7 +101,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   protected void copyTo(@NotNull ExternalProjectSettings receiver) {
     receiver.myExternalProjectPath = myExternalProjectPath;
-    receiver.myModules = new HashSet<>(myModules);
+    receiver.myModules = myModules != null ? new HashSet<>(myModules) : new HashSet<>();
     receiver.myUseAutoImport = myUseAutoImport;
     receiver.myCreateEmptyContentRootDirectories = myCreateEmptyContentRootDirectories;
   }

@@ -22,9 +22,10 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +44,7 @@ public interface LanguageLightRefAdapter  {
    * @return
    */
   @Nullable
-  LightRef asLightUsage(@NotNull PsiElement element, @NotNull NameEnumerator names);
+  LightRef asLightUsage(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException;
 
   /**
    * @return "hierarchy" of given element inside the libraries scope.
@@ -52,7 +53,7 @@ public interface LanguageLightRefAdapter  {
   List<LightRef> getHierarchyRestrictedToLibraryScope(@NotNull LightRef baseRef,
                                                       @NotNull PsiElement basePsi,
                                                       @NotNull NameEnumerator names,
-                                                      @NotNull GlobalSearchScope libraryScope);
+                                                      @NotNull GlobalSearchScope libraryScope) throws IOException;
 
   /**
    * class in java, class or object in some other jvm languages. used in direct inheritor search. This class object will be used to filter

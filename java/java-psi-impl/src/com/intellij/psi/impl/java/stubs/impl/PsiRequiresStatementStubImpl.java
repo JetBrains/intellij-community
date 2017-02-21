@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,14 @@ import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class PsiRequiresStatementStubImpl extends StubBase<PsiRequiresStatement> implements PsiRequiresStatementStub {
-  private static final byte PUBLIC = 0x01;
-  private static final byte STATIC = 0x02;
-
   private final String myModuleName;
-  private final byte myFlags;
 
-  public PsiRequiresStatementStubImpl(StubElement parent, String refText, boolean isPublic, boolean isStatic) {
-    this(parent, refText, (byte)((isPublic ? PUBLIC : 0) | (isStatic ? STATIC : 0)));
-  }
-
-  public PsiRequiresStatementStubImpl(StubElement parent, String refText, byte flags) {
+  public PsiRequiresStatementStubImpl(StubElement parent, String refText) {
     super(parent, JavaStubElementTypes.REQUIRES_STATEMENT);
-    myModuleName = refText;
-    myFlags = flags;
+    myModuleName = notNull(refText, "");
   }
 
   @Override
@@ -44,22 +37,7 @@ public class PsiRequiresStatementStubImpl extends StubBase<PsiRequiresStatement>
   }
 
   @Override
-  public byte getFlags() {
-    return myFlags;
-  }
-
-  @Override
-  public boolean isPublic() {
-    return (myFlags & PUBLIC) != 0;
-  }
-
-  @Override
-  public boolean isStatic() {
-    return (myFlags & STATIC) != 0;
-  }
-
-  @Override
   public String toString() {
-    return "PsiRequiresStatementStub:" + myFlags + ":" + myModuleName;
+    return "PsiRequiresStatementStub:" + myModuleName;
   }
 }

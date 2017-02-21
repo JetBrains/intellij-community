@@ -31,16 +31,16 @@ public class ObjectObjectPersistentMultiMapletTest extends UsefulTestCase {
   private static final CollectionFactory<IntValueStreamable> COLLECTION_FACTORY = new CollectionFactory<IntValueStreamable>() {
     @Override
     public Collection<IntValueStreamable> create() {
-      return new ArrayList<IntValueStreamable>();
+      return new ArrayList<>();
     }
   };
 
   public void testReplaceWithEqualButNotSameKey() throws IOException {
     File file = FileUtil.createTempFile(getTestDirectoryName(), null);
     ObjectObjectPersistentMultiMaplet<String, IntValueStreamable> maplet =
-      new ObjectObjectPersistentMultiMaplet<String, IntValueStreamable>(file, new CaseInsensitiveEnumeratorStringDescriptor(),
-                                                                        new IntValueExternalizer(),
-                                                                        COLLECTION_FACTORY);
+      new ObjectObjectPersistentMultiMaplet<>(file, new CaseInsensitiveEnumeratorStringDescriptor(),
+                                              new IntValueExternalizer(),
+                                              COLLECTION_FACTORY);
     try {
       maplet.put("a", new IntValueStreamable(1));
       assertEquals(1, assertOneElement(maplet.get("a")).value);

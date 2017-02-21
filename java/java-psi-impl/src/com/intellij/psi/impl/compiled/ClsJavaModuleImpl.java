@@ -19,22 +19,24 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
-  private PsiJavaModuleReferenceElement myReference;
+  private final PsiJavaModuleReferenceElement myReference;
 
   public ClsJavaModuleImpl(PsiJavaModuleStub stub) {
     super(stub);
@@ -62,45 +64,57 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   @NotNull
   @Override
   public Iterable<PsiUsesStatement> getUses() {
-    return Collections.emptyList();
+    return JBIterable.of(getStub().getChildrenByType(JavaElementType.USES_STATEMENT, PsiUsesStatement.EMPTY_ARRAY));
   }
 
   @NotNull
   @Override
   public Iterable<PsiProvidesStatement> getProvides() {
-    return Collections.emptyList();
+    return JBIterable.of(getStub().getChildrenByType(JavaElementType.PROVIDES_STATEMENT, PsiProvidesStatement.EMPTY_ARRAY));
   }
 
   @Override
   public void appendMirrorText(int indentLevel, @NotNull StringBuilder buffer) {
+    appendText(getModifierList(), indentLevel, buffer);
     buffer.append("module ").append(getName()).append(" {\n");
 
-    int newIndentLevel = indentLevel + getIndentSize();
+    int newIndentLevel = indentLevel + getIndentSize(), start = buffer.length();
+    appendChildren(getRequires(), buffer, newIndentLevel, start);
+    appendChildren(getExports(), buffer, newIndentLevel, start);
+    appendChildren(getOpens(), buffer, newIndentLevel, start);
+    appendChildren(getUses(), buffer, newIndentLevel, start);
+    appendChildren(getProvides(), buffer, newIndentLevel, start);
 
-    int position = buffer.length();
-    for (PsiRequiresStatement statement : getRequires()) appendText(statement, newIndentLevel, buffer);
+    StringUtil.repeatSymbol(buffer, ' ', indentLevel);
+    buffer.append('}');
+  }
 
-    if (buffer.length() > position) buffer.append('\n');
-    position = buffer.length();
-    for (PsiPackageAccessibilityStatement statement : getExports()) appendText(statement, newIndentLevel, buffer);
-
-    if (buffer.length() > position) buffer.append('\n');
-    StringUtil.repeatSymbol(buffer, ' ', newIndentLevel);
-    buffer.append("/* ... */\n}");
+  private static void appendChildren(Iterable<? extends PsiElement> children, StringBuilder buffer, int indentLevel, int start) {
+    List<PsiElement> statements = newArrayList(children);
+    if (!statements.isEmpty()) {
+      if (buffer.length() > start) buffer.append('\n');
+      for (PsiElement statement : statements) appendText(statement, indentLevel, buffer);
+    }
   }
 
   @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+    setMirrorCheckingType(element, JavaElementType.MODULE);
+
     PsiJavaModule mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
 
-    setMirrorCheckingType(element, JavaElementType.MODULE);
     setMirror(getNameIdentifier(), mirror.getNameIdentifier());
+    setMirror(getModifierList(), mirror.getModifierList());
 
-    setMirrors(newArrayList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY)),
-               newArrayList(mirror.getRequires()));
+    setMirrors(getRequires(), mirror.getRequires());
+    setMirrors(getExports(), mirror.getExports());
+    setMirrors(getOpens(), mirror.getOpens());
+    setMirrors(getUses(), mirror.getUses());
+    setMirrors(getProvides(), mirror.getProvides());
+  }
 
-    setMirrors(newArrayList(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY)),
-               newArrayList(mirror.getExports()));
+  private static <T extends PsiElement> void setMirrors(Iterable<T> stubs, Iterable<T> mirrors) {
+    setMirrors(newArrayList(stubs), newArrayList(mirrors));
   }
 
   @NotNull
@@ -118,6 +132,18 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw cannotModifyException(this);
+  }
+
+  @Override
+  public PsiModifierList getModifierList() {
+    StubElement<PsiModifierList> childStub = getStub().findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    return childStub != null ? childStub.getPsi() : null;
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    PsiModifierList modifierList = getModifierList();
+    return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
   @Nullable

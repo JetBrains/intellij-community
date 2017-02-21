@@ -44,7 +44,7 @@ public class Task implements StudyItem {
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
-  @Expose @SerializedName("choice_parameters") private ChoiceParameters myChoiceParameters;
+  @Expose @SerializedName("choice_parameters") private AdaptiveTaskParameters myAdaptiveTaskParameters;
   private int myActiveSubtaskIndex = 0;
   @SerializedName("last_subtask_index")
   @Expose private int myLastSubtaskIndex = 0;
@@ -57,7 +57,7 @@ public class Task implements StudyItem {
   
   public static Task createChoiceTask(@NotNull String name) {
     final Task task = new Task(name);
-    task.setChoiceParameters(new ChoiceParameters());
+    task.setAdaptiveTaskParameters(new AdaptiveTaskParameters());
     return task;
   }
 
@@ -307,48 +307,59 @@ public class Task implements StudyItem {
   @Transient
   @NotNull
   public List<String> getChoiceVariants() {
-    return myChoiceParameters.getChoiceVariants();
+    return myAdaptiveTaskParameters.getChoiceVariants();
   }
 
   @Transient
   public void setChoiceVariants(List<String> choiceVariants) {
-    myChoiceParameters.setChoiceVariants(choiceVariants);
+    myAdaptiveTaskParameters.setChoiceVariants(choiceVariants);
   }
 
   @Transient
   public boolean isMultipleChoice() {
-    return myChoiceParameters.isMultipleChoice();
+    return myAdaptiveTaskParameters.isMultipleChoice();
   }
 
   @Transient
   public void setMultipleChoice(boolean multipleChoice) {
-    myChoiceParameters.setMultipleChoice(multipleChoice);
+    myAdaptiveTaskParameters.setMultipleChoice(multipleChoice);
   }
 
   @Transient
   public List<Integer> getSelectedVariants() {
-    return myChoiceParameters.getSelectedVariants();
+    return myAdaptiveTaskParameters.getSelectedVariants();
   }
 
   @Transient
   public void setSelectedVariants(List<Integer> selectedVariants) {
-    myChoiceParameters.setSelectedVariants(selectedVariants);
+    myAdaptiveTaskParameters.setSelectedVariants(selectedVariants);
   }
   
   public boolean isChoiceTask() {
-    return myChoiceParameters != null;
+    return myAdaptiveTaskParameters != null && !myAdaptiveTaskParameters.getChoiceVariants().isEmpty();
+  }
+  
+  public boolean isTheoryTask() {
+    return myAdaptiveTaskParameters != null && myAdaptiveTaskParameters.isTheoryTask();
+  }
+  
+  public void setTheoryTask(boolean isTheoryTask) {
+    if (myAdaptiveTaskParameters == null) {
+      myAdaptiveTaskParameters = new AdaptiveTaskParameters();
+    }
+    myAdaptiveTaskParameters.setTheoryTask(isTheoryTask);
   }
 
   // used for serialization
   @SuppressWarnings("unused")
-  public ChoiceParameters getChoiceParameters() {
-    return myChoiceParameters;
+  public AdaptiveTaskParameters getAdaptiveTaskParameters() {
+    return myAdaptiveTaskParameters;
   }
 
   // used for serialization
   @SuppressWarnings("unused")
-  public void setChoiceParameters(ChoiceParameters choiceParameters) {
-    myChoiceParameters = choiceParameters;
+  public void setAdaptiveTaskParameters(AdaptiveTaskParameters adaptiveTaskParameters) {
+    myAdaptiveTaskParameters = adaptiveTaskParameters;
   }
 
   public void copyParametersOf(@NotNull Task task) {
@@ -357,12 +368,14 @@ public class Task implements StudyItem {
     setText(task.getText());
     getTestsText().clear();
     setStatus(StudyStatus.Unchecked);
-    if (task.isChoiceTask()) {
+    setTheoryTask(task.isTheoryTask());
+    if (task.isChoiceTask() || task.isTheoryTask()) {
       setChoiceVariants(task.getChoiceVariants());
       setMultipleChoice(task.isMultipleChoice());
+      setTheoryTask(task.isTheoryTask());
     }
     else {
-      setChoiceParameters(null);
+      setAdaptiveTaskParameters(null);
     }
     final Map<String, String> testsText = task.getTestsText();
     for (String testName : testsText.keySet()) {

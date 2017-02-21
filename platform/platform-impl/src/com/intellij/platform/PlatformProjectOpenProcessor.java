@@ -16,6 +16,7 @@
 package com.intellij.platform;
 
 import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -179,6 +180,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
             return null;
           }
         }
+        // process all pending events that can interrupt focus flow
+        // todo this can be removed after taming the focus beast
+        IdeEventQueue.getInstance().flushQueue();
       }
       else {
         int exitCode = ProjectUtil.confirmOpenNewProject(false);

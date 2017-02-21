@@ -152,6 +152,7 @@ public class InstalledPackagesPanel extends JPanel {
                                     new PackageManagementService.Listener() {
                                       @Override
                                       public void operationStarted(String packageName) {
+                                        myNotificationArea.hide();
                                         myPackagesTable.setPaintBusy(true);
                                       }
 

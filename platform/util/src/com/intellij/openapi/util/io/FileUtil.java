@@ -249,10 +249,14 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static byte[] loadFirst(@NotNull InputStream stream, int maxLength) throws IOException {
+  public static byte[] loadFirstAndClose(@NotNull InputStream stream, int maxLength) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    copy(stream, maxLength, buffer);
-    buffer.close();
+    try {
+      copy(stream, maxLength, buffer);
+    }
+    finally {
+      stream.close();
+    }
     return buffer.toByteArray();
   }
 

@@ -46,7 +46,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class IndexInfrastructure {
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private static final String STUB_VERSIONS = ".versions";
@@ -154,7 +154,7 @@ public class IndexInfrastructure {
     return ourGenesisExecutor.submit(action);
   }
 
-  public static abstract class DataInitialization<T> implements Callable<T> {
+  public abstract static class DataInitialization<T> implements Callable<T> {
     private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<>();
 
     @Override
@@ -191,12 +191,13 @@ public class IndexInfrastructure {
                                                                    CacheUpdateRunner.indexingThreadCount());
 
         for (ThrowableRunnable callable : myNestedInitializationTasks) {
-          taskExecutor.submit(() -> executeNestedInitializationTask(callable, proceedLatch));
+          taskExecutor.execute(() -> executeNestedInitializationTask(callable, proceedLatch));
         }
 
         proceedLatch.await();
         taskExecutor.shutdown();
-      } else {
+      }
+      else {
         for (ThrowableRunnable callable : myNestedInitializationTasks) {
           executeNestedInitializationTask(callable, proceedLatch);
         }
@@ -205,13 +206,14 @@ public class IndexInfrastructure {
 
     private void executeNestedInitializationTask(ThrowableRunnable callable, CountDownLatch proceedLatch) {
       Application app = ApplicationManager.getApplication();
-      if (app.isDisposed() || app.isDisposeInProgress()) return;
-
       try {
+        if (app.isDisposed() || app.isDisposeInProgress()) return;
         callable.run();
-      } catch(Throwable t) {
+      }
+      catch (Throwable t) {
         onThrowable(t);
-      } finally {
+      }
+      finally {
         proceedLatch.countDown();
       }
     }

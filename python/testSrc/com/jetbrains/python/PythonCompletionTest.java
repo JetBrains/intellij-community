@@ -730,11 +730,17 @@ public class PythonCompletionTest extends PyTestCase {
 
   // PY-9342
   public void testBoundMethodSpecialAttributes() {
-    List<String>  suggested = doTestByText("{}.update.im_<caret>");
+    List<String>  suggested = doTestByText("class C(object):\n" +
+                                           "  def f(self): pass\n" +
+                                           "\n" +
+                                           "C().f.im_<caret>");
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.LEGACY_METHOD_SPECIAL_ATTRIBUTES);
 
-    suggested = doTestByText("{}.update.__<caret>");
+    suggested = doTestByText("class C(object):\n" +
+                             "  def f(self): pass\n" +
+                             "\n" +
+                             "C().f.__<caret>");
     assertNotNull(suggested);
     assertContainsElements(suggested, PyNames.METHOD_SPECIAL_ATTRIBUTES);
     assertDoesntContain(suggested, PyNames.FUNCTION_SPECIAL_ATTRIBUTES);

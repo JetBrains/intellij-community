@@ -62,16 +62,22 @@ class JavaModuleCompletion {
         addProvidesStatementKeywords(position, result);
       }
       else if (context instanceof PsiJavaModuleReferenceElement) {
+        addRequiresStatementKeywords(context, position, result);
         addModuleReferences(context, result);
       }
       else if (context instanceof PsiJavaCodeReferenceElement) {
-        addCodeReferences(context, result, resultSet);
+        addClassOrPackageReferences(context, result, resultSet);
       }
     }
   }
 
   private static void addFileHeaderKeywords(PsiElement position, Consumer<LookupElement> result) {
-    if (PsiTreeUtil.prevVisibleLeaf(position) == null) {
+    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    if (prev == null) {
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.OPEN), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+    else if (PsiUtil.isJavaToken(prev, JavaTokenType.OPEN_KEYWORD)) {
       result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
@@ -79,12 +85,20 @@ class JavaModuleCompletion {
   private static void addModuleStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
   }
 
   private static void addProvidesStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
     result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.WITH), TailType.HUMBLE_SPACE_BEFORE_WORD));
+  }
+
+  private static void addRequiresStatementKeywords(PsiElement context, PsiElement position, Consumer<LookupElement> result) {
+    if (context.getParent() instanceof PsiRequiresStatement) {
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
   }
 
   private static void addModuleReferences(PsiElement context, Consumer<LookupElement> result) {
@@ -106,30 +120,33 @@ class JavaModuleCompletion {
     }
   }
 
-  private static void addCodeReferences(PsiElement context, Consumer<LookupElement> result, CompletionResultSet resultSet) {
-    PsiElement statement = context.getParent();
-    if (statement instanceof PsiPackageAccessibilityStatement) {
+  private static void addClassOrPackageReferences(PsiElement context, Consumer<LookupElement> result, CompletionResultSet resultSet) {
+    PsiElement refOwner = context.getParent();
+    if (refOwner instanceof PsiPackageAccessibilityStatement) {
       Module module = ModuleUtilCore.findModuleForPsiElement(context);
       PsiPackage topPackage = JavaPsiFacade.getInstance(context.getProject()).findPackage("");
       if (module != null && topPackage != null) {
         processPackage(topPackage, module.getModuleScope(false), result);
       }
     }
-    else if (statement instanceof PsiUsesStatement) {
+    else if (refOwner instanceof PsiUsesStatement) {
       processClasses(context.getProject(), null, resultSet, SERVICE_FILTER, TailType.SEMICOLON);
     }
-    else if (statement instanceof PsiProvidesStatement) {
-      PsiJavaCodeReferenceElement intRef = ((PsiProvidesStatement)statement).getInterfaceReference();
-      if (context == intRef) {
-        processClasses(context.getProject(), null, resultSet, SERVICE_FILTER, TailType.HUMBLE_SPACE_BEFORE_WORD);
-      }
-      else if (context == ((PsiProvidesStatement)statement).getImplementationReference() && intRef != null) {
-        PsiElement service = intRef.resolve();
-        Module module = ModuleUtilCore.findModuleForPsiElement(context);
-        if (service instanceof PsiClass && module != null) {
-          Predicate<PsiClass> filter = psiClass -> !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                                                   InheritanceUtil.isInheritorOrSelf(psiClass, (PsiClass)service, true);
-          processClasses(context.getProject(), module.getModuleScope(false), resultSet, filter, TailType.SEMICOLON);
+    else if (refOwner instanceof PsiProvidesStatement) {
+      processClasses(context.getProject(), null, resultSet, SERVICE_FILTER, TailType.HUMBLE_SPACE_BEFORE_WORD);
+    }
+    else if (refOwner instanceof PsiReferenceList) {
+      PsiElement statement = refOwner.getParent();
+      if (statement instanceof PsiProvidesStatement) {
+        PsiJavaCodeReferenceElement intRef = ((PsiProvidesStatement)statement).getInterfaceReference();
+        if (intRef != null) {
+          PsiElement service = intRef.resolve();
+          Module module = ModuleUtilCore.findModuleForPsiElement(context);
+          if (service instanceof PsiClass && module != null) {
+            Predicate<PsiClass> filter = psiClass -> !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                                                     InheritanceUtil.isInheritorOrSelf(psiClass, (PsiClass)service, true);
+            processClasses(context.getProject(), module.getModuleScope(false), resultSet, filter, TailType.SEMICOLON);
+          }
         }
       }
     }

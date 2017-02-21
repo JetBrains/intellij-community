@@ -25,7 +25,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestCase;
-import com.intellij.util.GCUtil;
+import com.intellij.util.ref.GCUtil;
 
 @PlatformTestCase.WrapInCommand
 public class CodeFragmentsTest extends PsiTestCase{

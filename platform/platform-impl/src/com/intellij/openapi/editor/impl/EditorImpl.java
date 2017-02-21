@@ -29,6 +29,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -57,6 +58,8 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -231,10 +234,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT})
   private int         myScrollBarOrientation;
   private boolean     myMousePressedInsideSelection;
-  private FontMetrics myPlainFontMetrics;
-  private FontMetrics myBoldFontMetrics;
-  private FontMetrics myItalicFontMetrics;
-  private FontMetrics myBoldItalicFontMetrics;
 
   private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
@@ -758,7 +757,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void reinitSettings() {
     assertIsDispatchThread();
-    clearSettingsCache();
 
     for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
       if (scheme instanceof MyColorSchemeDelegate) {
@@ -805,10 +803,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void clearSettingsCache() {
-    myPlainFontMetrics = null;
-  }
-
   /**
    * To be called when editor was not disposed while it should
    */
@@ -832,7 +826,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myTraceableDisposable.kill(null);
 
     isReleased = true;
-    clearSettingsCache();
     mySizeAdjustmentStrategy.cancelAllRequests();
 
     myFoldingModel.dispose();
@@ -1525,7 +1518,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         finally {
           updatingSize = false;
         }
-      }, __->isDisposed());
+      }, ModalityState.any(), __->isDisposed());
     }
   }
 
@@ -1846,22 +1839,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   public FontMetrics getFontMetrics(@JdkConstants.FontStyle int fontType) {
-    if (myPlainFontMetrics == null) {
-      assertIsDispatchThread();
-      myPlainFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
-      myBoldFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.BOLD));
-      myItalicFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.ITALIC));
-      myBoldItalicFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.BOLD_ITALIC));
+    EditorFontType ft;
+    if (fontType == Font.PLAIN) ft = EditorFontType.PLAIN;
+    else if (fontType == Font.BOLD) ft = EditorFontType.BOLD;
+    else if (fontType == Font.ITALIC) ft = EditorFontType.ITALIC;
+    else if (fontType == (Font.BOLD | Font.ITALIC)) ft = EditorFontType.BOLD_ITALIC;
+    else {
+      LOG.error("Unknown font type: " + fontType);
+      ft = EditorFontType.PLAIN;
     }
 
-    if (fontType == Font.PLAIN) return myPlainFontMetrics;
-    if (fontType == Font.BOLD) return myBoldFontMetrics;
-    if (fontType == Font.ITALIC) return myItalicFontMetrics;
-    if (fontType == (Font.BOLD | Font.ITALIC)) return myBoldItalicFontMetrics;
-
-    LOG.error("Unknown font type: " + fontType);
-
-    return myPlainFontMetrics;
+    return myEditorComponent.getFontMetrics(myScheme.getFont(ft));
   }
 
   public int getPreferredHeight() {
@@ -1870,7 +1858,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public Dimension getPreferredSize() {
     return isReleased ? new Dimension()
-                      : SystemProperties.isTrueSmoothScrollingEnabled() && ComponentSettings.getInstance().areDynamicScrollbarsEnabled()
+                      : Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")
                         ? new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight())
                         : myView.getPreferredSize();
   }
@@ -3751,15 +3739,35 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static boolean isToggleCaretEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET) || isAddRectangularSelectionEvent(e);
   }
 
   private static boolean isAddRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG);
   }
 
   private static boolean isCreateRectangularSelectionEvent(@NotNull MouseEvent e) {
-    return KeymapUtil.isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+    return isMouseActionEvent(e, IdeActions.ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION);
+  }
+
+  private static boolean isMouseActionEvent(@NotNull MouseEvent e, String actionId) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null) return false;
+    Keymap keymap = keymapManager.getActiveKeymap();
+    if (keymap == null) return false;
+    MouseShortcut mouseShortcut = KeymapUtil.createMouseShortcut(e);
+    String[] mappedActions = keymap.getActionIds(mouseShortcut);
+    if (!ArrayUtil.contains(actionId, mappedActions)) return false;
+    if (mappedActions.length < 2) return true;
+    ActionManager actionManager = ActionManager.getInstance();
+    for (String mappedActionId : mappedActions) {
+      if (actionId.equals(mappedActionId)) continue;
+      AnAction action = actionManager.getAction(mappedActionId);
+      AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, ActionPlaces.MAIN_MENU,
+                                                                   DataManager.getInstance().getDataContext(e.getComponent()));
+      if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, false)) return false;
+    }
+    return true;
   }
 
   private void selectWordAtCaret(boolean honorCamelCase) {
@@ -4111,7 +4119,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int globalFontSize = getDelegate().getEditorFontSize();
       myMaxFontSize = Math.max(EditorFontsConstants.getMaxEditorFontSize(), globalFontSize);
       reinitFonts();
-      clearSettingsCache();
     }
 
     @Override
@@ -4128,59 +4135,51 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private static class ExplosionPainter extends AbstractPainter {
     private final Point myExplosionLocation;
-    private static final long TIME_PER_FRAME = 50;
-    private long lastRepaintTime = System.currentTimeMillis();
-    private int spriteIndex;
-    private static final int SPRITE_SIZE = 64;
-    private static final int SPRITES_IN_ROW = 4;
+    private final Image myImage;
 
-    private final Image [] sprites = new Image [16];
+    private static final long TIME_PER_FRAME = 30;
+    private final int myWidth;
+    private final int myHeight;
+    private long lastRepaintTime = System.currentTimeMillis();
+    private int frameIndex;
+    private static final int TOTAL_FRAMES = 8;
+
     private final AtomicBoolean nrp = new AtomicBoolean(true);
 
-    ExplosionPainter(final Point explosionLocation) {
+    ExplosionPainter(final Point explosionLocation, Image image) {
       myExplosionLocation = new Point(explosionLocation.x, explosionLocation.y);
-      Image explosionImage = ImageLoader.loadFromResource("/debugger/explosion.png");
-
-      for (int i = 0; i < sprites.length; i ++) {
-        sprites[i] = initSprites(i, explosionImage);
-      }
-    }
-
-    private static BufferedImage initSprites(int index, Image explosionImage) {
-      BufferedImage spriteImage =  UIUtil.createImage(SPRITE_SIZE, SPRITE_SIZE, BufferedImage.TYPE_INT_ARGB);
-      Graphics2D spriteGraphics = (Graphics2D)spriteImage.getGraphics();
-      int sourceX = SPRITE_SIZE * (index % SPRITES_IN_ROW);
-      int sourceY = SPRITE_SIZE * (index / SPRITES_IN_ROW);
-      spriteGraphics.drawImage(explosionImage,
-                               0, 0, SPRITE_SIZE, SPRITE_SIZE,
-                               sourceX, sourceY, sourceX + 64, sourceY + 64,
-                               null);
-      return spriteImage;
+      myImage = image;
+      myWidth = myImage.getWidth(null);
+      myHeight = myImage.getHeight(null);
     }
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
-
       if (!nrp.get()) return;
 
-      int x = myExplosionLocation.x - 32;
-      int y = myExplosionLocation.y - 32;
-
       long currentTimeMillis = System.currentTimeMillis();
+
+      float alpha = 1 - (float)frameIndex / TOTAL_FRAMES;
+      g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+      Image scaledImage = ImageUtil.scaleImage(myImage, alpha);
+
+      int x = myExplosionLocation.x - scaledImage.getWidth(null) / 2;
+      int y = myExplosionLocation.y - scaledImage.getHeight(null) / 2;
+
       if (currentTimeMillis - lastRepaintTime < TIME_PER_FRAME) {
-        UIUtil.drawImage(g, sprites[spriteIndex], x, y, null);
-        JobScheduler.getScheduler().schedule(() -> component.repaint(x, y, 12, 64), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
+        UIUtil.drawImage(g, scaledImage, x, y, null);
+        JobScheduler.getScheduler().schedule(() -> component.repaint(x, y, myWidth, myHeight), TIME_PER_FRAME, TimeUnit.MILLISECONDS);
         return;
       }
       lastRepaintTime = currentTimeMillis;
-
-      UIUtil.drawImage(g, sprites[spriteIndex++], x, y, null);
-      if (spriteIndex == sprites.length) {
+      frameIndex++;
+      UIUtil.drawImage(g, scaledImage, x, y, null);
+      if (frameIndex == TOTAL_FRAMES) {
         nrp.set(false);
         ApplicationManager.getApplication().invokeLater(() -> IdeGlassPaneUtil.find(component).removePainter(this));
-        component.repaint(x, y, SPRITE_SIZE, SPRITE_SIZE);
+        component.repaint(x, y, myWidth, myHeight);
       }
-      component.repaint(x, y, SPRITE_SIZE, SPRITE_SIZE);
+      component.repaint(x, y, myWidth, myHeight);
     }
 
     @Override
@@ -4210,7 +4209,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   new Point(
                     mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
                     mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
-                  )
+                  ), editor.getGutterComponentEx().getDragImage((GutterIconRenderer)attachedObject)
                 ),
                 editor.getDisposable()
               );

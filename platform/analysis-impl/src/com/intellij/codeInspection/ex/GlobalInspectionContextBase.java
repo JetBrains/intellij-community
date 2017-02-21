@@ -23,7 +23,6 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
@@ -202,7 +201,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   @NotNull
   public RefManager getRefManager() {
     if (myRefManager == null) {
-      myRefManager = ReadAction.compute(() -> new RefManagerImpl(myProject, myCurrentScope, this));
+      myRefManager = DumbService.getInstance(myProject).runReadActionInSmartMode(() -> new RefManagerImpl(myProject, myCurrentScope, this));
     }
     return myRefManager;
   }

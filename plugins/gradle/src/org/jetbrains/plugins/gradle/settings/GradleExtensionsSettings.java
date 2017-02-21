@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -40,14 +37,13 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 
 /**
  * @author Vladislav.Soroka
  * @since 11/16/2016
  */
-@State(name = "GradleExtensions", storages = @Storage("gradle_extensions.xml"))
+@State(name = "GradleExtensions", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class GradleExtensionsSettings implements PersistentStateComponent<GradleExtensionsSettings.Settings> {
 
   private static final Logger LOG = Logger.getInstance(GradleExtensionsSettings.class);

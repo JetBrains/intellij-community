@@ -49,7 +49,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   public SimpleThreesideDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
-    myTextDiffProvider = new SimpleThreesideTextDiffProvider(getTextSettings(), this::rediff);
+    myTextDiffProvider = new SimpleThreesideTextDiffProvider(getTextSettings(), this::rediff, this);
   }
 
   @NotNull

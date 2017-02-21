@@ -6,7 +6,7 @@ from .bucketlistresultset import BucketListResultSet
 from .connection import S3Connection
 from .key import Key
 
-from typing import Any, Dict, Optional, Text, Type
+from typing import Any, Dict, Optional, Text, Type, List
 
 class S3WebsiteEndpointTranslate:
     trans_region = ...  # type: Dict[str, str]

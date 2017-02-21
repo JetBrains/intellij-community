@@ -18,5 +18,6 @@ package com.intellij.openapi.project;
 /**
  * @author peter
  */
+@FunctionalInterface
 public interface DumbAwareRunnable extends Runnable, DumbAware {
 }

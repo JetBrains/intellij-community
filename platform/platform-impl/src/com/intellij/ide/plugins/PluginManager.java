@@ -246,7 +246,7 @@ public class PluginManager extends PluginManagerCore {
     }
 
     if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-      throw new StartupAbortedException(new PluginException(t, pluginId));
+      throw new StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
     }
     else {
       throw new StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);

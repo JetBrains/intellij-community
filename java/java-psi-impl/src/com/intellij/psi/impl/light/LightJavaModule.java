@@ -103,6 +103,16 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   }
 
   @Override
+  public PsiModifierList getModifierList() {
+    return null;
+  }
+
+  @Override
+  public boolean hasModifierProperty(@NotNull String name) {
+    return false;
+  }
+
+  @Override
   public ItemPresentation getPresentation() {
     return ItemPresentationProviders.getItemPresentation(this);
   }
@@ -158,12 +168,9 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   public static LightJavaModule getModule(@NotNull final PsiManager manager, @NotNull final VirtualFile jarRoot) {
     final PsiDirectory directory = manager.findDirectory(jarRoot);
     assert directory != null : jarRoot;
-    return CachedValuesManager.getCachedValue(directory, new CachedValueProvider<LightJavaModule>() {
-      @Override
-      public Result<LightJavaModule> compute() {
-        LightJavaModule module = new LightJavaModule(manager, jarRoot);
-        return Result.create(module, directory);
-      }
+    return CachedValuesManager.getCachedValue(directory, () -> {
+      LightJavaModule module = new LightJavaModule(manager, jarRoot);
+      return CachedValueProvider.Result.create(module, directory);
     });
   }
 

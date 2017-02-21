@@ -64,7 +64,7 @@ public class HgRebaseCommand {
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
   }
 }

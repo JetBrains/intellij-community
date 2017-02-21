@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,9 @@ public class JavaModuleRenameValidator implements RenameInputValidator {
 
   @Override
   public boolean isInputValid(@NotNull String newName, @NotNull PsiElement element, @NotNull ProcessingContext context) {
+    if (StringUtil.isEmptyOrSpaces(newName)) return false;
+
     PsiNameHelper helper = PsiNameHelper.getInstance(element.getProject());
-    return StringUtil.isEmptyOrSpaces(newName) || StringUtil.split(newName, ".").stream().allMatch(helper::isIdentifier);
+    return StringUtil.split(newName, ".", true, false).stream().allMatch(helper::isIdentifier);
   }
 }

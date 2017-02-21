@@ -88,7 +88,7 @@ public class CharsetToolkit {
   private final byte[] buffer;
   @NotNull
   private final Charset defaultCharset;
-  private boolean enforce8Bit = false;
+  private boolean enforce8Bit;
 
   public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf};
   public static final byte[] UTF16LE_BOM = {-1, -2, };
@@ -129,7 +129,7 @@ public class CharsetToolkit {
   @NotNull
   public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
     if (!stream.markSupported()) {
-      return stream;
+      stream = new BufferedInputStream(stream);
     }
 
     stream.mark(4);

@@ -18,11 +18,11 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.find.FindSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -63,7 +63,7 @@ class FindUIHelper implements Disposable {
   }
 
   protected FindUI getOrCreateUI() {
-    if (Registry.is("ide.find.as.popup") && ApplicationManager.getApplication().isInternal()) {
+    if (Registry.is("ide.find.as.popup")) {
       return myUI != null ? myUI : new FindPopupPanel(this);
     }
     else {
@@ -139,6 +139,63 @@ class FindUIHelper implements Disposable {
   public void dispose() {
     myUI = null;
     //todo
+  }
+  void updateFindSettings() {
+    FindSettings findSettings = FindSettings.getInstance();
+    findSettings.setCaseSensitive(myModel.isCaseSensitive());
+    if (myModel.isReplaceState()) {
+      findSettings.setPreserveCase(myModel.isPreserveCase());
+    }
+
+    findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
+    boolean saveContextBetweenRestarts = false;
+    findSettings.setInStringLiteralsOnly(saveContextBetweenRestarts && myModel.isInStringLiteralsOnly());
+    findSettings.setInCommentsOnly(saveContextBetweenRestarts && myModel.isInCommentsOnly());
+    findSettings.setExceptComments(saveContextBetweenRestarts && myModel.isExceptComments());
+    findSettings.setExceptStringLiterals(saveContextBetweenRestarts && myModel.isExceptStringLiterals());
+    findSettings.setExceptCommentsAndLiterals(saveContextBetweenRestarts && myModel.isExceptCommentsAndStringLiterals());
+
+    findSettings.setRegularExpressions(myModel.isRegularExpressions());
+    if (!myModel.isMultipleFiles()){
+      findSettings.setForward(myModel.isForward());
+      findSettings.setFromCursor(myModel.isFromCursor());
+
+      findSettings.setGlobal(myModel.isGlobal());
+    } else{
+      String directoryName = myModel.getDirectoryName();
+      if (directoryName != null && !directoryName.isEmpty()) {
+        findSettings.setWithSubdirectories(myModel.isWithSubdirectories());
+      }
+      else if (!StringUtil.isEmpty(myModel.getModuleName())) {
+        //do nothing here
+      }
+      else if (myModel.getCustomScopeName() != null) {
+        findSettings.setCustomScope(myModel.getCustomScopeName());
+      }
+    }
+
+    findSettings.setFileMask(myModel.getFileFilter());
+  }
+
+  boolean isUseSeparateView() {
+    return FindSettings.getInstance().isShowResultsInSeparateView();
+  }
+
+  boolean isSkipResultsWithOneUsage() {
+    return FindSettings.getInstance().isSkipResultsWithOneUsage();
+  }
+
+  void setUseSeparateView(boolean separateView) {
+    if (myModel.isOpenInNewTabEnabled()) {
+      myModel.setOpenInNewTab(separateView);
+    }
+    FindSettings.getInstance().setShowResultsInSeparateView(separateView);
+  }
+
+  void setSkipResultsWithOneUsage(boolean skip) {
+    if (!isReplaceState()) {
+      FindSettings.getInstance().setSkipResultsWithOneUsage(skip);
+    }
   }
 
   String getTitle() {

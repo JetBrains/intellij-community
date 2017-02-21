@@ -28,7 +28,7 @@ DictType = DictionaryType = dict
 class _Cell:
     cell_contents = ...  # type: Any
 
-class FunctionType(object):
+class FunctionType:
     func_closure = ...  # type: Optional[Tuple[_Cell, ...]]
     func_code = ...  # type: CodeType
     func_defaults = ...  # type: Optional[Tuple[Any, ...]]
@@ -39,6 +39,7 @@ class FunctionType(object):
     __closure__ = func_closure
     __code__ = func_code
     __defaults__ = func_defaults
+    __dict__ = func_dict
     __globals__ = func_globals
     __name__ = func_name
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
@@ -102,7 +103,7 @@ class ModuleType:
     __name__ = ...  # type: str
     __package__ = ...  # type: Optional[str]
     __path__ = ...  # type: Optional[Iterable[str]]
-    def __init__(self, name: str, doc: str) -> None: ...
+    def __init__(self, name: str, doc: Optional[str] = ...) -> None: ...
 FileType = file
 XRangeType = xrange
 

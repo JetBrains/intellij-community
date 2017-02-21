@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.tree.java.*;
 
+/**
+ * @author max
+ */
 public class SourceStubPsiFactory extends StubPsiFactory {
   public static final SourceStubPsiFactory INSTANCE = new SourceStubPsiFactory();
 
   @Override
   public PsiClass createClass(PsiClassStub stub) {
-    if (stub.isEnumConstantInitializer()) {
-      return new PsiEnumConstantInitializerImpl(stub);
-    }
-    if (stub.isAnonymous()) {
-      return new PsiAnonymousClassImpl(stub);
-    }
+    if (stub.isEnumConstantInitializer()) return new PsiEnumConstantInitializerImpl(stub);
+    if (stub.isAnonymous()) return new PsiAnonymousClassImpl(stub);
     return new PsiClassImpl(stub);
   }
 
@@ -49,7 +44,7 @@ public class SourceStubPsiFactory extends StubPsiFactory {
 
   @Override
   public PsiReferenceList createClassReferenceList(PsiClassReferenceListStub stub) {
-    return new PsiReferenceListImpl(stub, stub.getStubType());
+    return new PsiReferenceListImpl(stub);
   }
 
   @Override
@@ -64,12 +59,7 @@ public class SourceStubPsiFactory extends StubPsiFactory {
 
   @Override
   public PsiImportStatementBase createImportStatement(PsiImportStatementStub stub) {
-    if (stub.isStatic()) {
-      return new PsiImportStaticStatementImpl(stub);
-    }
-    else {
-      return new PsiImportStatementImpl(stub);
-    }
+    return stub.isStatic()? new PsiImportStaticStatementImpl(stub) : new PsiImportStatementImpl(stub);
   }
 
   @Override
@@ -125,5 +115,15 @@ public class SourceStubPsiFactory extends StubPsiFactory {
   @Override
   public PsiPackageAccessibilityStatement createPackageAccessibilityStatement(PsiPackageAccessibilityStatementStub stub) {
     return new PsiPackageAccessibilityStatementImpl(stub);
+  }
+
+  @Override
+  public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
+    return new PsiUsesStatementImpl(stub);
+  }
+
+  @Override
+  public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
+    return new PsiProvidesStatementImpl(stub);
   }
 }

@@ -57,6 +57,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -705,6 +706,18 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createEnableOptimizeImportsOnTheFlyFix() {
     return new EnableOptimizeImportsOnTheFlyFix();
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element) {
+    return new DeleteElementFix(element);
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element, @Nls @NotNull String text) {
+    return new DeleteElementFix(element, text);
   }
 
   @NotNull

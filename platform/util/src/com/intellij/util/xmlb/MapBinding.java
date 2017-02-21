@@ -59,15 +59,15 @@ class MapBinding extends Binding implements MultiNodeBinding {
   }
 
   @Override
-  public void init(@NotNull Type originalType) {
+  public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     ParameterizedType type = (ParameterizedType)originalType;
     Type[] typeArguments = type.getActualTypeArguments();
 
     keyClass = XmlSerializerImpl.typeToClass(typeArguments[0]);
     valueClass = XmlSerializerImpl.typeToClass(typeArguments[1]);
 
-    keyBinding = XmlSerializerImpl.getClassBinding(keyClass, typeArguments[0], null);
-    valueBinding = XmlSerializerImpl.getClassBinding(valueClass, typeArguments[1], null);
+    keyBinding = serializer.getBinding(keyClass, typeArguments[0]);
+    valueBinding = serializer.getBinding(valueClass, typeArguments[1]);
   }
 
   @Override

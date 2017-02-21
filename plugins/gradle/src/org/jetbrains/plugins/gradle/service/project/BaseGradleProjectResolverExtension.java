@@ -76,6 +76,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -539,7 +540,17 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final String moduleConfigPath = ideModule.getData().getLinkedExternalProjectPath();
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
-    final String rootProjectPath = ideProject.getData().getLinkedExternalProjectPath();
+    String rootProjectPath = ideProject.getData().getLinkedExternalProjectPath();
+    try {
+      GradleBuild build = resolverCtx.getExtraProject(gradleModule, GradleBuild.class);
+      if (build != null) {
+        rootProjectPath = ExternalSystemApiUtil.toCanonicalPath(build.getRootProject().getProjectDirectory().getCanonicalPath());
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("construction of the canonical path for the module fails", e);
+    }
+
     final boolean isFlatProject = !FileUtil.isAncestor(rootProjectPath, moduleConfigPath, false);
     if (externalProject != null) {
       for (ExternalTask task : externalProject.getTasks().values()) {

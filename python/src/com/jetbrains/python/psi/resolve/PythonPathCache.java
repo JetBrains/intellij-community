@@ -41,8 +41,11 @@ public abstract class PythonPathCache {
     myQNameCache.clear();
   }
 
+  /***
+   * @return null if nothing found in cache. If path resolves to nothing you get empty list
+   */
   @Nullable
-  public List<PsiElement> get(QualifiedName qualifiedName) {
+  public List<PsiElement> get(@NotNull final QualifiedName qualifiedName) {
     final List<SoftReference<PsiElement>> references = myCache.get(qualifiedName);
     if (references == null) {
       return null;
@@ -52,7 +55,7 @@ public abstract class PythonPathCache {
     if (staleElementRemoved) {
       Logger.getInstance(PythonPathCache.class).warn("Removing invalid element from cache");
     }
-    return (!result.isEmpty() ? result : null);
+    return result;
   }
 
   public void put(QualifiedName qualifiedName, List<PsiElement> results) {

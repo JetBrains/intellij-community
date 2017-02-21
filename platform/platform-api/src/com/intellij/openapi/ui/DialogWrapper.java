@@ -31,6 +31,8 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.BalloonBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -59,6 +61,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -169,6 +172,10 @@ public abstract class DialogWrapper {
 
   protected JComponent myPreferredFocusedComponent;
   private Computable<Point> myInitialLocationCallback;
+
+  private Dimension  myActualSize = null;
+  private String     myLastErrorText = null;
+  private JComponent myLastComponent = null;
 
   @NotNull
   protected final Disposable myDisposable = new Disposable() {
@@ -341,16 +348,8 @@ public abstract class DialogWrapper {
 
   private void reportProblem(@NotNull final ValidationInfo info) {
     installErrorPainter();
-
     myErrorPainter.setValidationInfo(info);
-    if (!myErrorText.isTextSet(info.message)) {
-      SwingUtilities.invokeLater(() -> {
-        if (myDisposed) return;
-        setErrorText(info.message);
-        myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(false);
-      });
-    }
+    updateErrorMessage(info);
   }
 
   private void installErrorPainter() {
@@ -361,12 +360,21 @@ public abstract class DialogWrapper {
 
   private void clearProblems() {
     myErrorPainter.setValidationInfo(null);
-    if (!myErrorText.isTextSet(null)) {
+    updateErrorMessage(null);
+  }
+
+  protected void updateErrorMessage(@Nullable ValidationInfo info) {
+    String msg = (info == null) ? null : info.message;
+    JComponent errorComponent = (info == null) ? null : info.component;
+    boolean updateNeeded = Registry.is("ide.inplace.errors.balloon") ?
+                           !StringUtil.equals(msg, myLastErrorText) : !myErrorText.isTextSet(msg);
+
+    if (updateNeeded) {
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
-        setErrorText(null);
+        setErrorText(msg, errorComponent);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(true);
+        getOKAction().setEnabled(msg == null);
       });
     }
   }
@@ -1857,7 +1865,11 @@ public abstract class DialogWrapper {
         if (info.component != null && info.component.isVisible()) {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
-        DialogEarthquakeShaker.shake(getPeer().getWindow());
+
+        if (!Registry.is("ide.inplace.errors.balloon")) {
+          DialogEarthquakeShaker.shake(getPeer().getWindow());
+        }
+
         startTrackingValidation();
         return;
       }
@@ -1916,22 +1928,62 @@ public abstract class DialogWrapper {
     }
   }
 
-  private Dimension myActualSize = null;
-  private String myLastErrorText = null;
-
+  /**
+   * Don't override this method. It is not final for the API compatibility.
+   * It will not be called by the DialogWrapper's validator.
+   * Use this method only in circumstances when the exact invalid component is hard to
+   * detect or the valid status is based on several fields. In other cases use
+   * <code>{@link #setErrorText(String, JComponent)}</code> method.
+   * @param text the error text to display
+   */
   protected void setErrorText(@Nullable final String text) {
-    if (Comparing.equal(myLastErrorText, text)) {
+    setErrorText(text, null);
+  }
+
+  protected void setErrorText(@Nullable final String text, @Nullable final JComponent component) {
+    if (Comparing.equal(myLastErrorText, text) && Comparing.equal(myLastComponent, component)) {
       return;
     }
-    myLastErrorText = text;
+
     myErrorTextAlarm.cancelAllRequests();
-    myErrorTextAlarm.addRequest(() -> {
-      final String text1 = myLastErrorText;
-      if (myActualSize == null && !myErrorText.isVisible()) {
-        myActualSize = getSize();
-      }
-      myErrorText.setError(text1);
-    }, 300, null);
+
+    if (Registry.is("ide.inplace.errors.outline") && myLastComponent != null) {
+      myLastComponent.putClientProperty("JComponent.error.outline", Boolean.FALSE);
+    }
+
+    myLastErrorText = text;
+    myLastComponent = component;
+
+    Boolean outline = Boolean.valueOf(text != null && !text.isEmpty());
+    if (Registry.is("ide.inplace.errors.outline") && component != null) {
+      component.putClientProperty("JComponent.error.outline", outline);
+    }
+
+    if (Registry.is("ide.inplace.errors.balloon") && component != null && outline) {
+      JLabel label = new JLabel();
+
+      Insets insets = UIManager.getInsets("Balloon.error.textInsets");
+      int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
+      int textWidth = component.getWidth() - JBUI.scale(30) - insets.left - insets.right;
+      if (textWidth > oneLineWidth) textWidth = oneLineWidth;
+
+      String htmlText = String.format("<html><div width=%d>%s</div></html>", textWidth, text);
+      label.setText(htmlText);
+      label.setHorizontalAlignment(SwingConstants.LEADING);
+
+      BalloonBuilder bb = JBPopupFactory.getInstance().createBalloonBuilder(label)
+        .setDisposable(getDisposable())
+        .setBorderInsets(insets);
+
+      component.putClientProperty("JComponent.error.balloonBuilder", bb);
+    } else {
+      myErrorTextAlarm.addRequest(() -> {
+        myErrorText.setError(myLastErrorText);
+        if (myActualSize == null && !myErrorText.isVisible()) {
+          myActualSize = getSize();
+        }
+      }, 300, null);
+    }
   }
 
   @Nullable
@@ -2128,7 +2180,7 @@ public abstract class DialogWrapper {
 
     @Override
     public void executePaint(Component component, Graphics2D g) {
-      if (myInfo != null && myInfo.component != null) {
+      if (myInfo != null && myInfo.component != null && !Registry.is("ide.inplace.errors.outline")) {
         final JComponent comp = myInfo.component;
         final int w = comp.getWidth();
         final int h = comp.getHeight();

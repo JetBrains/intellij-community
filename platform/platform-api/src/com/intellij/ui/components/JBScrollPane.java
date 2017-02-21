@@ -46,7 +46,6 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.lang.reflect.Field;
 
-import static com.intellij.util.SystemProperties.isTrueSmoothScrollingEnabled;
 import static com.intellij.util.ui.JBUI.emptyInsets;
 
 public class JBScrollPane extends JScrollPane {
@@ -562,14 +561,32 @@ public class JBScrollPane extends JScrollPane {
       // Set the bounds of the row header.
       rowHeadBounds.y = bounds.y - insets.top;
       rowHeadBounds.height = bounds.height + insets.top + insets.bottom;
+      boolean fillLowerCorner = false;
       if (rowHead != null) {
+        if (hsbOpaque) {
+          Component corner = hsbOnTop ? (vsbOnLeft ? upperRight : upperLeft) : (vsbOnLeft ? lowerRight : lowerLeft);
+          fillLowerCorner = corner == null && UIManager.getBoolean("ScrollPane.fillLowerCorner");
+          if (!fillLowerCorner && Registry.is("ide.scroll.layout.header.over.corner")) {
+            if (hsbOnTop) rowHeadBounds.y -= hsbBounds.height;
+            rowHeadBounds.height += hsbBounds.height;
+          }
+        }
         rowHead.setBounds(rowHeadBounds);
         rowHead.putClientProperty(Alignment.class, vsbOnLeft ? Alignment.RIGHT : Alignment.LEFT);
       }
       // Set the bounds of the column header.
       colHeadBounds.x = bounds.x - insets.left;
       colHeadBounds.width = bounds.width + insets.left + insets.right;
+      boolean fillUpperCorner = false;
       if (colHead != null) {
+        if (vsbOpaque) {
+          Component corner = vsbOnLeft ? (hsbOnTop ? lowerLeft : upperLeft) : (hsbOnTop ? lowerRight : upperRight);
+          fillUpperCorner = corner == null && UIManager.getBoolean("ScrollPane.fillUpperCorner");
+          if (!fillUpperCorner && Registry.is("ide.scroll.layout.header.over.corner")) {
+            if (vsbOnLeft) colHeadBounds.x -= vsbBounds.width;
+            colHeadBounds.width += vsbBounds.width;
+          }
+        }
         colHead.setBounds(colHeadBounds);
         colHead.putClientProperty(Alignment.class, hsbOnTop ? Alignment.BOTTOM : Alignment.TOP);
       }
@@ -586,15 +603,13 @@ public class JBScrollPane extends JScrollPane {
       if (vsb != null) {
         vsb.setVisible(vsbNeeded);
         if (vsbNeeded) {
-          if (vsbOpaque && colHead != null && UIManager.getBoolean("ScrollPane.fillUpperCorner")) {
-            if ((vsbOnLeft ? upperLeft : upperRight) == null) {
-              // This is used primarily for GTK L&F, which needs to extend
-              // the vertical scrollbar to fill the upper corner near the column header.
-              // Note that we skip this step (and use the default behavior)
-              // if the user has set a custom corner component.
-              if (!hsbOnTop) vsbBounds.y -= colHeadBounds.height;
-              vsbBounds.height += colHeadBounds.height;
-            }
+          if (fillUpperCorner) {
+            // This is used primarily for GTK L&F, which needs to extend
+            // the vertical scrollbar to fill the upper corner near the column header.
+            // Note that we skip this step (and use the default behavior)
+            // if the user has set a custom corner component.
+            if (!hsbOnTop) vsbBounds.y -= colHeadBounds.height;
+            vsbBounds.height += colHeadBounds.height;
           }
           int overlapY = !hsbOnTop ? 0 : overlapHeight;
           vsb.setBounds(vsbBounds.x, vsbBounds.y + overlapY, vsbBounds.width, vsbBounds.height - overlapHeight);
@@ -612,15 +627,13 @@ public class JBScrollPane extends JScrollPane {
       if (hsb != null) {
         hsb.setVisible(hsbNeeded);
         if (hsbNeeded) {
-          if (hsbOpaque && rowHead != null && UIManager.getBoolean("ScrollPane.fillLowerCorner")) {
-            if ((vsbOnLeft ? lowerRight : lowerLeft) == null) {
-              // This is used primarily for GTK L&F, which needs to extend
-              // the horizontal scrollbar to fill the lower corner near the row header.
-              // Note that we skip this step (and use the default behavior)
-              // if the user has set a custom corner component.
-              if (!vsbOnLeft) hsbBounds.x -= rowHeadBounds.width;
-              hsbBounds.width += rowHeadBounds.width;
-            }
+          if (fillLowerCorner) {
+            // This is used primarily for GTK L&F, which needs to extend
+            // the horizontal scrollbar to fill the lower corner near the row header.
+            // Note that we skip this step (and use the default behavior)
+            // if the user has set a custom corner component.
+            if (!vsbOnLeft) hsbBounds.x -= rowHeadBounds.width;
+            hsbBounds.width += rowHeadBounds.width;
           }
           int overlapX = !vsbOnLeft ? 0 : overlapWidth;
           hsb.setBounds(hsbBounds.x + overlapX, hsbBounds.y, hsbBounds.width - overlapWidth, hsbBounds.height);
@@ -633,34 +646,41 @@ public class JBScrollPane extends JScrollPane {
         }
       }
       // Set the bounds of the corners.
+      Rectangle left = vsbOnLeft ? vsbBounds : rowHeadBounds;
+      Rectangle right = vsbOnLeft ? rowHeadBounds : vsbBounds;
+      Rectangle upper = hsbOnTop ? hsbBounds : colHeadBounds;
+      Rectangle lower = hsbOnTop ? colHeadBounds : hsbBounds;
       if (lowerLeft != null) {
-        lowerLeft.setBounds(vsbOnLeft ? vsbBounds.x : rowHeadBounds.x,
-                            hsbOnTop ? colHeadBounds.y : hsbBounds.y,
-                            vsbOnLeft ? vsbBounds.width : rowHeadBounds.width,
-                            hsbOnTop ? colHeadBounds.height : hsbBounds.height);
+        Rectangle lowerLeftBounds = new Rectangle(left.x, left.y + left.height, 0, 0);
+        if (left.width > 0 && lower.height > 0) updateCornerBounds(lowerLeftBounds, lower.x, lower.y + lower.height);
+        lowerLeft.setBounds(lowerLeftBounds);
       }
       if (lowerRight != null) {
-        lowerRight.setBounds(vsbOnLeft ? rowHeadBounds.x : vsbBounds.x,
-                             hsbOnTop ? colHeadBounds.y : hsbBounds.y,
-                             vsbOnLeft ? rowHeadBounds.width : vsbBounds.width,
-                             hsbOnTop ? colHeadBounds.height : hsbBounds.height);
+        Rectangle lowerRightBounds = new Rectangle(lower.x + lower.width, right.y + right.height, 0, 0);
+        if (right.width > 0 && lower.height > 0) updateCornerBounds(lowerRightBounds, right.x + right.width, lower.y + lower.height);
+        lowerRight.setBounds(lowerRightBounds);
       }
       if (upperLeft != null) {
-        upperLeft.setBounds(vsbOnLeft ? vsbBounds.x : rowHeadBounds.x,
-                            hsbOnTop ? hsbBounds.y : colHeadBounds.y,
-                            vsbOnLeft ? vsbBounds.width : rowHeadBounds.width,
-                            hsbOnTop ? hsbBounds.height : colHeadBounds.height);
+        Rectangle upperLeftBounds = new Rectangle(left.x, upper.y, 0, 0);
+        if (left.width > 0 && upper.height > 0) updateCornerBounds(upperLeftBounds, upper.x, left.y);
+        upperLeft.setBounds(upperLeftBounds);
       }
       if (upperRight != null) {
-        upperRight.setBounds(vsbOnLeft ? rowHeadBounds.x : vsbBounds.x,
-                             hsbOnTop ? hsbBounds.y : colHeadBounds.y,
-                             vsbOnLeft ? rowHeadBounds.width : vsbBounds.width,
-                             hsbOnTop ? hsbBounds.height : colHeadBounds.height);
+        Rectangle upperRightBounds = new Rectangle(upper.x + upper.width, upper.y, 0, 0);
+        if (right.width > 0 && upper.height > 0) updateCornerBounds(upperRightBounds, right.x + right.width, right.y);
+        upperRight.setBounds(upperRightBounds);
       }
       if (!vsbOpaque && vsbNeeded || !hsbOpaque && hsbNeeded) {
         fixComponentZOrder(vsb, 0);
         fixComponentZOrder(viewport, -1);
       }
+    }
+
+    private static void updateCornerBounds(Rectangle bounds, int x, int y) {
+      bounds.width = Math.abs(bounds.x - x);
+      bounds.height = Math.abs(bounds.y - y);
+      bounds.x = Math.min(bounds.x, x);
+      bounds.y = Math.min(bounds.y, y);
     }
 
     private static void fixComponentZOrder(Component component, int index) {

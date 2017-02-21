@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -33,38 +33,66 @@ import java.util.Collection;
  *   {@link ProjectFileIndex#isInLibrarySource(VirtualFile)} returns {@code true} for them.
  *   <br>
  *   Generally, {@link #getSourceRoots()} are handled similarly to {@code library.getFiles(OrderRootType.SOURCES)}.
- *   <li>An item in "External Libraries" in Project view if {@link #getName()} is not-null</li>
+ *   <li>An item in "External Libraries" in Project view if library is instance of {@link ItemPresentation}</li>.
  * </ul>
  * <p/>
  * To decorate a child node of "External Libraries" node in Project view consider implementing corresponding interfaces:
  * <ul>
- *   <li>{@link com.intellij.navigation.ItemPresentation} or {@link com.intellij.navigation.ColoredItemPresentation}</li>
+ *   <li>{@link ItemPresentation} or {@link com.intellij.navigation.ColoredItemPresentation}</li>
  *   <li>{@link com.intellij.navigation.LocationPresentation}</li>
  *   <li>{@link com.intellij.pom.Navigatable} or {@link com.intellij.pom.NavigatableWithText}</li>
  * </ul>
  * @see AdditionalLibraryRootsProvider
  */
+@SuppressWarnings("JavadocReference")
 @ApiStatus.Experimental
 public abstract class SyntheticLibrary {
-  @Nullable
-  public abstract String getName();
 
   @NotNull
   public abstract Collection<VirtualFile> getSourceRoots();
 
-  @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@Nullable String name, @NotNull Collection<VirtualFile> sourceRoots) {
-    return new SyntheticLibrary() {
-      @Nullable
-      @Override
-      public String getName() {
-        return name;
-      }
+  /**
+   * This method is vital if this library is shown under "External Libraries" (the library should implement ItemPresentation for that).
+   * In this case, each {@link com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode#getChildren()} invocation will create a new
+   * {@link com.intellij.ide.projectView.impl.nodes.SyntheticLibraryElementNode} instance passing this library as a value.
+   * In order to figure out if "External Library" children are updated or not, AbstractTreeUi uses
+   * node's equals/hashCode methods which in turn depend on this library's equals/hashCode methods:
+   * see {@link com.intellij.ide.util.treeView.AbstractTreeNode#hashCode()}.
+   *
+   * Please make sure that two SyntheticLibrary instances are equal if they reference the same state. Otherwise, constant UI updates
+   * will degrade performance.
+   * Consider implementing a better equals/hashCode if needed or instantiate {@link SyntheticLibrary} only if state
+   * changed (use some caching in {@link AdditionalLibraryRootsProvider#getAdditionalProjectLibraries(Project)}).
+   */
+  @Override
+  public abstract boolean equals(Object o);
 
+  /**
+   * @see #equals(Object) javadoc
+   */
+  @Override
+  public abstract int hashCode();
+
+  @NotNull
+  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots) {
+    return new SyntheticLibrary() {
       @NotNull
       @Override
       public Collection<VirtualFile> getSourceRoots() {
         return sourceRoots;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SyntheticLibrary library = (SyntheticLibrary)o;
+        return getSourceRoots().equals(library.getSourceRoots());
+      }
+
+      @Override
+      public int hashCode() {
+        return sourceRoots.hashCode();
       }
     };
   }

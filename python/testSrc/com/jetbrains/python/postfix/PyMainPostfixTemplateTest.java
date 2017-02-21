@@ -25,6 +25,10 @@ public class PyMainPostfixTemplateTest extends PyPostfixTemplateTestCase {
     doTest();
   }
 
+  public void testComment() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataDir() {
     return "main/";

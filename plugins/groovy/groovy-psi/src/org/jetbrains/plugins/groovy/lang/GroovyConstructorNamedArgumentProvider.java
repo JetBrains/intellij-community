@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,11 +53,12 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
 
   @Override
   public void getNamedArguments(@NotNull GrCall call,
-                                @Nullable PsiElement resolve,
+                                @NotNull GroovyResolveResult resolveResult,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
     if (!(call instanceof GrNewExpression)) return;
+    PsiElement resolve = resolveResult.getElement();
 
     if (resolve != null) {
       if (!(resolve instanceof PsiMethod)) return;
@@ -75,8 +76,8 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
       return;
     }
 
-    for (GroovyResolveResult resolveResult : newCall.multiResolveClass()) {
-      PsiElement element = resolveResult.getElement();
+    for (GroovyResolveResult newResult : newCall.multiResolveClass()) {
+      PsiElement element = newResult.getElement();
       if (!(element instanceof PsiClass)) continue;
 
       PsiClass aClass = (PsiClass)element;

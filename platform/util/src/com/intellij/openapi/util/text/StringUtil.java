@@ -1511,6 +1511,14 @@ public class StringUtil extends StringUtilRt {
                                 @NotNull Function<? super T, String> f,
                                 @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
+    join(items, f, separator, result);
+    return result.toString();
+  }
+
+  public static <T> void join(@NotNull Iterable<? extends T> items,
+                              @NotNull Function<? super T, String> f,
+                              @NotNull @NonNls String separator,
+                              @NotNull StringBuilder result) {
     for (T item : items) {
       String string = f.fun(item);
       if (string != null && !string.isEmpty()) {
@@ -1518,7 +1526,6 @@ public class StringUtil extends StringUtilRt {
         result.append(string);
       }
     }
-    return result.toString();
   }
 
   @NotNull

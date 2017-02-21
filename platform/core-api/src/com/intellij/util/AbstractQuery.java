@@ -36,7 +36,7 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   @NotNull
   public Collection<Result> findAll() {
     assertNotProcessing();
-    List<Result> result = new ArrayList<Result>();
+    List<Result> result = new ArrayList<>();
     Processor<Result> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
     return result;
@@ -45,14 +45,14 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   @Override
   public Iterator<Result> iterator() {
     assertNotProcessing();
-    return new UnmodifiableIterator<Result>(findAll().iterator());
+    return new UnmodifiableIterator<>(findAll().iterator());
   }
 
   @Override
   @Nullable
   public Result findFirst() {
     assertNotProcessing();
-    final CommonProcessors.FindFirstProcessor<Result> processor = new CommonProcessors.FindFirstProcessor<Result>();
+    final CommonProcessors.FindFirstProcessor<Result> processor = new CommonProcessors.FindFirstProcessor<>();
     forEach(processor);
     return processor.getFoundValue();
   }

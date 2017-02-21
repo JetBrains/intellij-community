@@ -1,4 +1,4 @@
-from typing import Any, AnyStr
+from typing import Any, AnyStr, Set
 
 from .base import SchemaEventTarget, DialectKWArgs
 from .base import ColumnCollection

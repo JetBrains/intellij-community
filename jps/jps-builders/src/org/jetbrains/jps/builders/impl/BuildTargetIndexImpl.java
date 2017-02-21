@@ -42,7 +42,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   public BuildTargetIndexImpl(BuildTargetRegistry targetRegistry, BuildRootIndexImpl buildRootIndex) {
     myRegistry = targetRegistry;
     myBuildRootIndex = buildRootIndex;
-    myDependencies = new THashMap<BuildTarget<?>, Collection<BuildTarget<?>>>();
+    myDependencies = new THashMap<>();
   }
 
   @Override
@@ -59,8 +59,8 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
 
     List<BuildTarget<?>> allTargets = getAllTargets();
     TargetOutputIndex outputIndex = new TargetOutputIndexImpl(allTargets, context);
-    Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies = new HashMap<BuildTarget<?>, Collection<BuildTarget<?>>>();
-    final List<BuildTarget<?>> realTargets = new ArrayList<BuildTarget<?>>(allTargets.size());
+    Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies = new HashMap<>();
+    final List<BuildTarget<?>> realTargets = new ArrayList<>(allTargets.size());
     for (BuildTarget<?> target : allTargets) {
       if (isDummy(target)) {
         dummyTargetDependencies.put(target, target.computeDependencies(myRegistry, outputIndex));
@@ -94,9 +94,9 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
       }
     });
 
-    DFSTBuilder<BuildTarget<?>> builder = new DFSTBuilder<BuildTarget<?>>(graph);
+    DFSTBuilder<BuildTarget<?>> builder = new DFSTBuilder<>(graph);
     Collection<Collection<BuildTarget<?>>> components = builder.getComponents();
-    myTargetChunks = new ArrayList<BuildTargetChunk>(components.size());
+    myTargetChunks = new ArrayList<>(components.size());
     for (Collection<BuildTarget<?>> component : components) {
       myTargetChunks.add(new BuildTargetChunk(ContainerUtil.newLinkedHashSet(component)));
     }
@@ -104,9 +104,9 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
 
   private static Collection<BuildTarget<?>> includeTransitiveDependenciesOfDummyTargets(Collection<BuildTarget<?>> dependencies,
                                                                                         Map<BuildTarget<?>, Collection<BuildTarget<?>>> dummyTargetDependencies) {
-    ArrayList<BuildTarget<?>> realDependencies = new ArrayList<BuildTarget<?>>(dependencies.size());
-    Set<BuildTarget<?>> processed = new HashSet<BuildTarget<?>>(dependencies);
-    Queue<BuildTarget<?>> toProcess = new ArrayDeque<BuildTarget<?>>(dependencies);
+    ArrayList<BuildTarget<?>> realDependencies = new ArrayList<>(dependencies.size());
+    Set<BuildTarget<?>> processed = new HashSet<>(dependencies);
+    Queue<BuildTarget<?>> toProcess = new ArrayDeque<>(dependencies);
     while (!toProcess.isEmpty()) {
       BuildTarget<?> dep = toProcess.poll();
       Collection<BuildTarget<?>> toInclude = dummyTargetDependencies.get(dep);
@@ -134,7 +134,7 @@ public class BuildTargetIndexImpl implements BuildTargetIndex {
   @Override
   public Set<BuildTarget<?>> getDependenciesRecursively(@NotNull BuildTarget<?> target, @NotNull CompileContext context) {
     initializeChunks(context);
-    LinkedHashSet<BuildTarget<?>> result = new LinkedHashSet<BuildTarget<?>>();
+    LinkedHashSet<BuildTarget<?>> result = new LinkedHashSet<>();
     for (BuildTarget<?> dep : myDependencies.get(target)) {
       collectDependenciesRecursively(dep, result);
     }

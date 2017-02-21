@@ -33,14 +33,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,8 +160,10 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
         .setTitle(handlerItems.first.size() == 1 ? "Confirm process stop" : "Stop process")
         .setFilteringEnabled(o -> ((HandlerItem)o).displayName)
         .setItemChoosenCallback(() -> {
-          HandlerItem item = (HandlerItem)list.getSelectedValue();
-          if (item != null) item.stop();
+          List valuesList = list.getSelectedValuesList();
+          for (Object o : valuesList) {
+            if (o instanceof HandlerItem) ((HandlerItem)o).stop();
+          }
         })
         .setRequestFocus(true)
         .createPopup();
@@ -189,12 +186,13 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
 
   @NotNull
   private static List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
-    IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
-    StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
-    if (statusBar == null) return Collections.emptyList();
-
-    return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
-                                 pair -> pair.first.isCancellable() && !pair.second.isCanceled());
+    return Collections.emptyList();//Don't confuse users with 'Stop Everything' toolbar button
+    //IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
+    //StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
+    //if (statusBar == null) return Collections.emptyList();
+    //
+    //return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
+    //                             pair -> pair.first.isCancellable() && !pair.second.isCanceled());
   }
 
   @Nullable

@@ -25,9 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +40,7 @@ import java.util.Map;
  */
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard ourOverloadGuard = RecursionManager.createGuard("overload.guard");
-  public static final ThreadLocal<Map<PsiElement,  CurrentCandidateProperties>> CURRENT_CANDIDATE = new ThreadLocal<Map<PsiElement, CurrentCandidateProperties>>();
+  public static final ThreadLocal<Map<PsiElement,  CurrentCandidateProperties>> CURRENT_CANDIDATE = new ThreadLocal<>();
   @ApplicabilityLevelConstant private int myApplicabilityLevel; // benign race
   @ApplicabilityLevelConstant private int myPertinentApplicabilityLevel;
   private final PsiElement myArgumentList;
@@ -129,54 +127,34 @@ public class MethodCandidateInfo extends CandidateInfo{
     final PsiMethod method = getElement();
     
     if (isToInferApplicability()) {
-      //ensure applicability check
-      PsiSubstitutor applicabilitySubstitutor = getSubstitutor(false);
+      if (!isOverloadCheck()) {
+        //ensure applicability check is performed
+        getSubstitutor(false);
+      }
 
       //already performed checks, so if inference failed, error message should be saved  
       if (myInferenceError != null || isPotentiallyCompatible() != ThreeState.YES) {
         return ApplicabilityLevel.NOT_APPLICABLE;
       }
-
-      if (myArgumentList instanceof PsiExpressionList) {
-        PsiParameter[] parameters = getElement().getParameterList().getParameters();
-        PsiExpression[] expressions = ((PsiExpressionList)myArgumentList).getExpressions();
-        for (int i = 0; i < expressions.length; i++) {
-          if (!PsiPolyExpressionUtil.isPolyExpression(expressions[i])) {
-            PsiType expressionType = expressions[i].getType();
-            PsiType parameterType = applicabilitySubstitutor.substitute(PsiTypesUtil.getParameterType(parameters, i, isVarargs()));
-            if (expressionType != null && parameterType != null && !parameterType.isAssignableFrom(expressionType)) {
-              return ApplicabilityLevel.NOT_APPLICABLE;
-            }
-          }
-        }
-      }
       return isVarargs() ? ApplicabilityLevel.VARARGS : ApplicabilityLevel.FIXED_ARITY;
     }
 
     final PsiSubstitutor substitutor = getSubstitutor(false);
-    @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        //arg types are calculated here without additional constraints:
-        //non-pertinent to applicability arguments of arguments would be skipped 
-        PsiType[] argumentTypes = getArgumentTypes();
-        if (argumentTypes == null) {
-          return ApplicabilityLevel.NOT_APPLICABLE;
-        }
+    @ApplicabilityLevelConstant int level = computeForOverloadedCandidate(() -> {
+      //arg types are calculated here without additional constraints:
+      //non-pertinent to applicability arguments of arguments would be skipped
+      PsiType[] argumentTypes = getArgumentTypes();
+      if (argumentTypes == null) {
+        return ApplicabilityLevel.NOT_APPLICABLE;
+      }
 
-        int level = PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, myLanguageLevel);
-        if (!isVarargs() && level < ApplicabilityLevel.FIXED_ARITY) {
-          return ApplicabilityLevel.NOT_APPLICABLE;
-        }
-        return level;
+      int level1 = PsiUtil.getApplicabilityLevel(method, substitutor, argumentTypes, myLanguageLevel);
+      if (!isVarargs() && level1 < ApplicabilityLevel.FIXED_ARITY) {
+        return ApplicabilityLevel.NOT_APPLICABLE;
       }
+      return level1;
     }, substitutor, isVarargs(), true);
-    if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(new Computable<PsiSubstitutor>() {
-      @Override
-      public PsiSubstitutor compute() {
-        return substitutor;
-      }
-    })) {
+    if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable(() -> substitutor)) {
       level = ApplicabilityLevel.NOT_APPLICABLE;
     }
     return level;
@@ -355,12 +333,7 @@ public class MethodCandidateInfo extends CandidateInfo{
 
 
   public boolean isTypeArgumentsApplicable() {
-    return isTypeArgumentsApplicable(new Computable<PsiSubstitutor>() {
-      @Override
-      public PsiSubstitutor compute() {
-        return getSubstitutor(false);
-      }
-    });
+    return isTypeArgumentsApplicable(() -> getSubstitutor(false));
   }
 
   private boolean isTypeArgumentsApplicable(Computable<PsiSubstitutor> computable) {
@@ -410,24 +383,21 @@ public class MethodCandidateInfo extends CandidateInfo{
   public PsiSubstitutor inferTypeArguments(@NotNull final ParameterTypeInferencePolicy policy,
                                            @NotNull final PsiExpression[] arguments,
                                            boolean includeReturnConstraint) {
-    return computeForOverloadedCandidate(new Computable<PsiSubstitutor>() {
-      @Override
-      public PsiSubstitutor compute() {
-        final PsiMethod method = MethodCandidateInfo.this.getElement();
-        PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    return computeForOverloadedCandidate(() -> {
+      final PsiMethod method = MethodCandidateInfo.this.getElement();
+      PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-        if (MethodCandidateInfo.this.isRawSubstitution()) {
-          return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
-        }
-
-        final PsiElement parent = MethodCandidateInfo.this.getParent();
-        if (parent == null) return PsiSubstitutor.EMPTY;
-        Project project = method.getProject();
-        JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
-        return javaPsiFacade.getResolveHelper()
-          .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy,
-                              myLanguageLevel);
+      if (MethodCandidateInfo.this.isRawSubstitution()) {
+        return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
       }
+
+      final PsiElement parent = MethodCandidateInfo.this.getParent();
+      if (parent == null) return PsiSubstitutor.EMPTY;
+      Project project = method.getProject();
+      JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
+      return javaPsiFacade.getResolveHelper()
+        .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy,
+                            myLanguageLevel);
     }, super.getSubstitutor(), policy.isVarargsIgnored() || isVarargs(), !includeReturnConstraint);
   }
 

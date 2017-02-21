@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -209,12 +208,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
 
       boolean is15OrHigher = languageLevel.compareTo(LanguageLevel.JDK_1_5) >= 0;
       final PsiType getClassReturnType = PsiTypesUtil.patchMethodGetClassReturnType(call, methodExpression, method,
-                                                                                    new Condition<IElementType>() {
-                                                                                      @Override
-                                                                                      public boolean value(IElementType type) {
-                                                                                        return type != JavaElementType.CLASS;
-                                                                                      }
-                                                                                    }, languageLevel);
+                                                                                    type -> type != JavaElementType.CLASS, languageLevel);
 
       if (getClassReturnType != null) {
         return getClassReturnType;
@@ -255,7 +249,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     // If unchecked conversion was necessary for the method to be applicable, 
     // the parameter types of the invocation type are the parameter types of the method's type,
     // and the return type and thrown types are given by the erasures of the return type and thrown types of the method's type.
-    if ((!languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && method.hasTypeParameters() ||
+    if (((!languageLevel.isAtLeast(LanguageLevel.JDK_1_8) || call.getTypeArguments().length > 0) && method.hasTypeParameters() ||
          !method.hasTypeParameters() && JavaVersionService.getInstance().isAtLeast(call, JavaSdkVersion.JDK_1_8)) &&
         result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isApplicable()) {
       final PsiType[] args = call.getArgumentList().getExpressionTypes();

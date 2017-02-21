@@ -173,7 +173,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
           }
         });
         try {
-          JDOMUtil.writeDocument(new Document(rootElement), wrapper.getFile(), "\n");
+          JDOMUtil.write(rootElement, wrapper.getFile());
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();
@@ -204,7 +204,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
     public static final int INSERT_KEY_EXPR = 6;
 
     static final String[] COLUMN_NAMES =
-      new String[]{"", "Class name", "Method name", "Param index", "Insert class name", "Insert method name", "Insert key expression"};
+      new String[]{"", "Class name", "Method name", "Key expression", "Insert class name", "Insert method name", "Insert key expression"};
     List<CapturePoint> myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
 
     public String getColumnName(int column) {
@@ -229,7 +229,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
         case METHOD_COLUMN:
           return point.myMethodName;
         case PARAM_COLUMN:
-          return point.myParamNo;
+          return point.myCaptureKeyExpression;
         case INSERT_CLASS_COLUMN:
           return point.myInsertClassName;
         case INSERT_METHOD_COLUMN:
@@ -257,7 +257,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
           point.myMethodName = (String)value;
           break;
         case PARAM_COLUMN:
-          point.myParamNo = (int)value;
+          point.myCaptureKeyExpression = (String)value;
           break;
         case INSERT_CLASS_COLUMN:
           point.myInsertClassName = (String)value;
@@ -276,8 +276,6 @@ public class CaptureConfigurable implements SearchableConfigurable {
       switch (columnIndex) {
         case ENABLED_COLUMN:
           return Boolean.class;
-        case PARAM_COLUMN:
-          return Integer.class;
       }
       return String.class;
     }

@@ -29,13 +29,7 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner {
    */
   PsiField[] EMPTY_ARRAY = new PsiField[0];
 
-  ArrayFactory<PsiField> ARRAY_FACTORY = new ArrayFactory<PsiField>() {
-    @NotNull
-    @Override
-    public PsiField[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiField[count];
-    }
-  };
+  ArrayFactory<PsiField> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiField[count];
 
   /**
    * Adds initializer to the field declaration or, if {@code initializer} parameter is null,

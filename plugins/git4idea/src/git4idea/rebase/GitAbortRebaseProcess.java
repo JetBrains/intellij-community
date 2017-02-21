@@ -187,7 +187,7 @@ class GitAbortRebaseProcess {
         }
         finally {
           refresh(repositoriesToRefresh);
-          DvcsUtil.workingTreeChangeFinished(myProject, token);
+          token.finish();
         }
       }
     }).execute();

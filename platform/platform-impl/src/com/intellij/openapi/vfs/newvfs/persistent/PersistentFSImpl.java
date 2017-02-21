@@ -544,7 +544,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
     synchronized (myInputLock) {
       InputStream contentStream;
-      if (mustReloadContent(file) || (contentStream = readContent(file)) == null) {
+      if (mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
         NewVirtualFileSystem delegate = getDelegate(file);
         long len = reloadLengthFromDelegate(file, delegate);
         InputStream nativeStream = delegate.getInputStream(file);

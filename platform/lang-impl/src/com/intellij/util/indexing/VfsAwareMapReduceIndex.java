@@ -107,6 +107,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
             return new CollectionInputDataDiffBuilder<>(inputId, keys);
           }
         }
+
+        if (mySnapshotInputMappings != null) {
+          return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
+        }
       }
       if (myForwardIndex != null) {
         return getKeysDiffBuilder(inputId);

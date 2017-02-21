@@ -643,6 +643,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       return false;
     }
+
+    boolean canReassignVariable(PsiVariable variable) {
+      return true;
+    }
   }
 
   static class FilterOp extends Operation {
@@ -771,6 +775,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Override
     boolean isWriteAllowed(PsiVariable variable, PsiExpression reference) {
       return mySource.isWriteAllowed(variable, reference);
+    }
+
+    @Override
+    boolean canReassignVariable(PsiVariable variable) {
+      return mySource.canReassignVariable(variable);
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
@@ -932,7 +941,32 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     String createReplacement() {
-      return "java.util.Arrays.stream("+myExpression.getText() + ")";
+      if (myExpression instanceof PsiNewExpression) {
+        PsiArrayInitializerExpression initializer = ((PsiNewExpression)myExpression).getArrayInitializer();
+        if (initializer != null) {
+          PsiElement[] children = initializer.getChildren();
+          if (children.length > 2) {
+            String initializerText = StreamEx.of(children, 1, children.length - 1).map(PsiElement::getText).joining();
+            PsiType type = myExpression.getType();
+            if (type instanceof PsiArrayType) {
+              PsiType componentType = ((PsiArrayType)type).getComponentType();
+              if (componentType.equals(PsiType.INT)) {
+                return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM + ".of(" + initializerText + ")";
+              }
+              else if (componentType.equals(PsiType.LONG)) {
+                return CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM + ".of(" + initializerText + ")";
+              }
+              else if (componentType.equals(PsiType.DOUBLE)) {
+                return CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM + ".of(" + initializerText + ")";
+              }
+              else if (componentType instanceof PsiClassType) {
+                return CommonClassNames.JAVA_UTIL_STREAM_STREAM + ".<" + componentType.getCanonicalText() + ">of(" + initializerText + ")";
+              }
+            }
+          }
+        }
+      }
+      return CommonClassNames.JAVA_UTIL_ARRAYS + ".stream(" + myExpression.getText() + ")";
     }
 
     @Nullable
@@ -1027,6 +1061,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
       }
       return false;
+    }
+
+    @Override
+    boolean canReassignVariable(PsiVariable variable) {
+      return variable != myVariable;
     }
 
     @Nullable

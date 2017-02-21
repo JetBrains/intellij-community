@@ -137,19 +137,15 @@ public abstract class CachedValuesManager {
       return value.getValue();
     }
 
-    return getManager(psi.getProject()).getCachedValue(psi, key, new CachedValueProvider<T>() {
-      @Nullable
-      @Override
-      public Result<T> compute() {
-        Result<T> result = provider.compute();
-        if (result != null && !psi.isPhysical()) {
-          PsiFile file = psi.getContainingFile();
-          if (file != null) {
-            return Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));
-          }
+    return getManager(psi.getProject()).getCachedValue(psi, key, () -> {
+      CachedValueProvider.Result<T> result = provider.compute();
+      if (result != null && !psi.isPhysical()) {
+        PsiFile file = psi.getContainingFile();
+        if (file != null) {
+          return CachedValueProvider.Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));
         }
-        return result;
       }
+      return result;
     }, false);
   }
 

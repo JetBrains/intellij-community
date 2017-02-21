@@ -44,7 +44,7 @@ public final class ElementPatternCondition<T> {
 
   private ElementPatternCondition(ElementPatternCondition<T> original, PatternCondition<? super T> condition) {
     myInitialCondition = original.getInitialCondition();
-    myConditions = new SmartList<PatternCondition<? super T>>(original.getConditions());
+    myConditions = new SmartList<>(original.getConditions());
     myConditions.add(condition);
   }
 
@@ -86,6 +86,6 @@ public final class ElementPatternCondition<T> {
   }
 
   public ElementPatternCondition<T> append(PatternCondition<? super T> condition) {
-    return new ElementPatternCondition<T>(this, condition);
+    return new ElementPatternCondition<>(this, condition);
   }
 }

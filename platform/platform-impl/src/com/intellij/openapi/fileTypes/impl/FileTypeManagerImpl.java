@@ -756,11 +756,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private static boolean isDetectable(@NotNull final VirtualFile file) {
-    if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL)) {
-      return false;
-    }
-    long length = file.getLength();
-    if (length == 0 || length >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+    if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL) || file.getLength() == 0) {
       // for empty file there is still hope its type will change
       return false;
     }

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -935,5 +936,29 @@ public class ExpressionUtils {
    */
   public static void bindCallTo(@NotNull PsiMethodCallExpression call, @NotNull String newName) {
     bindReferenceTo(call.getMethodExpression(), newName);
+  }
+
+  /**
+   * Returns the expression itself (probably with stripped parentheses) or the corresponding value if the expression is a local variable
+   * reference which is initialized and not used anywhere else
+   *
+   * @param expression
+   * @return a resolved expression or expression itself
+   */
+  @Contract("null -> null")
+  @Nullable
+  public static PsiExpression resolveExpression(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiReferenceExpression) {
+      PsiReferenceExpression reference = (PsiReferenceExpression)expression;
+      PsiLocalVariable variable = ObjectUtils.tryCast(reference.resolve(), PsiLocalVariable.class);
+      if (variable != null) {
+        PsiExpression initializer = variable.getInitializer();
+        if (initializer != null && ReferencesSearch.search(variable).forEach(ref -> ref == reference)) {
+          return initializer;
+        }
+      }
+    }
+    return expression;
   }
 }

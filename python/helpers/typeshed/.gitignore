@@ -60,3 +60,4 @@ analyze.py
 *~
 .*.sw?
 .vscode/
+.idea/

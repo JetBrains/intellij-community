@@ -35,7 +35,7 @@ public abstract class GitLogSingleCommitAction extends VcsLogSingleCommitAction<
   @Override
   @Nullable
   protected GitRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) {
-    return getRepositoryManager(project).getRepositoryForRoot(root);
+    return getRepositoryManager(project).getRepositoryForRootQuick(root);
   }
 
 }

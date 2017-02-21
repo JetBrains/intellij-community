@@ -36,7 +36,7 @@ import java.util.*;
 public class CachingConstructorInjectionComponentAdapter extends InstantiatingComponentAdapter {
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Set<CachingConstructorInjectionComponentAdapter>> ourGuard =
-    new ThreadLocal<Set<CachingConstructorInjectionComponentAdapter>>();
+    new ThreadLocal<>();
   private Object myInstance;
 
   public CachingConstructorInjectionComponentAdapter(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters, boolean allowNonPublicClasses, ComponentMonitor monitor, LifecycleStrategy lifecycleStrategy) throws AssignabilityRegistrationException, NotConcreteRegistrationException {
@@ -133,8 +133,8 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   protected Constructor getGreediestSatisfiableConstructor(PicoContainer container) throws
                                                                                     PicoIntrospectionException,
                                                                                     AssignabilityRegistrationException, NotConcreteRegistrationException {
-    final Set<Constructor> conflicts = new HashSet<Constructor>();
-    final Set<List<Class>> unsatisfiableDependencyTypes = new HashSet<List<Class>>();
+    final Set<Constructor> conflicts = new HashSet<>();
+    final Set<List<Class>> unsatisfiableDependencyTypes = new HashSet<>();
     List<Constructor> sortedMatchingConstructors = getSortedMatchingConstructors();
     Constructor greediestConstructor = null;
     int lastSatisfiableConstructorSize = -1;
@@ -189,7 +189,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
   }
 
   private List<Constructor> getSortedMatchingConstructors() {
-    List<Constructor> matchingConstructors = new ArrayList<Constructor>();
+    List<Constructor> matchingConstructors = new ArrayList<>();
     // filter out all constructors that will definitely not match
     for (Constructor constructor : getConstructors()) {
       if ((parameters == null || constructor.getParameterTypes().length == parameters.length) &&
@@ -199,11 +199,7 @@ public class CachingConstructorInjectionComponentAdapter extends InstantiatingCo
     }
     // optimize list of constructors moving the longest at the beginning
     if (parameters == null) {
-      Collections.sort(matchingConstructors, new Comparator<Constructor>() {
-        public int compare(Constructor arg0, Constructor arg1) {
-          return arg1.getParameterTypes().length - arg0.getParameterTypes().length;
-        }
-      });
+      matchingConstructors.sort((arg0, arg1) -> arg1.getParameterTypes().length - arg0.getParameterTypes().length);
     }
     return matchingConstructors;
   }

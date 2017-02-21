@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -158,9 +159,11 @@ public abstract class LocalToFieldHandler {
         field.getInitializer().replace(initializer);
       }
 
-      for (PsiAnnotation annotation : local.getModifierList().getAnnotations()) {
-        field.getModifierList().add(annotation.copy());
-      }
+      PsiModifierList sourceModifierList = local.getModifierList();
+      LOG.assertTrue(sourceModifierList != null);
+      PsiModifierList fieldModifierList = field.getModifierList();
+      LOG.assertTrue(fieldModifierList != null);
+      GenerateMembersUtil.copyAnnotations(sourceModifierList, fieldModifierList);
       return field;
     }
     catch (IncorrectOperationException e) {

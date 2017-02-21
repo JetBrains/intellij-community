@@ -92,7 +92,7 @@ public class HgUpdateCommand {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
 
     VfsUtil.markDirtyAndRefresh(false, true, false, repo);

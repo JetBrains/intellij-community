@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.usageView.impl.UsageViewManagerImpl;
+import com.intellij.util.JdomKt;
 
 import java.util.Arrays;
 
@@ -41,7 +41,7 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
 
   public void testHiddenButton() throws Exception {
     DesktopLayout layout = myManager.getLayout();
-    layout.readExternal(JDOMUtil.loadDocument(LAYOUT).getRootElement());
+    layout.readExternal(JdomKt.loadElement(LAYOUT));
     for (String ID : IDS) {
       assertFalse(layout.isToolWindowRegistered(ID));
       assertTrue(layout.isToolWindowUnregistered(ID));

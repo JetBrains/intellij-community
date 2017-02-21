@@ -88,6 +88,7 @@ public class PyCharmInitialConfigurator {
     }
 
     Registry.get("ide.scratch.enabled").setValue(true);
+    Registry.get("ide.ssh.one.time.password").setValue(true);
   }
 
   private static void showInitialConfigurationDialog() {

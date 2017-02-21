@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,6 +47,8 @@ import java.nio.charset.UnsupportedCharsetException;
 public final class LoadTextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
   @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
+
+  private static final int UNLIMITED = -1;
 
   private LoadTextUtil() { }
 
@@ -328,17 +331,9 @@ public final class LoadTextUtil {
 
   @NotNull
   public static CharSequence loadText(@NotNull final VirtualFile file) {
-    if (file instanceof LightVirtualFile) {
-      return ((LightVirtualFile)file).getContent();
-    }
-
-    if (file.isDirectory()) {
-      throw new AssertionError("'" + file.getPresentableUrl() + "' is a directory");
-    }
-
-    FileType fileType = file.getFileType();
-    if (fileType.isBinary()) {
-      final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType);
+    FileType type = file.getFileType();
+    if (type.isBinary()) {
+      final BinaryFileDecompiler decompiler = BinaryFileTypeDecompilers.INSTANCE.forFileType(type);
       if (decompiler != null) {
         CharSequence text = decompiler.decompile(file);
         try {
@@ -351,16 +346,46 @@ public final class LoadTextUtil {
       }
 
       throw new IllegalArgumentException("Attempt to load text for binary file which doesn't have a decompiler plugged in: " +
-                                         file.getPresentableUrl() + ". File type: " + fileType.getName());
+                                         file.getPresentableUrl() + ". File type: " + type.getName());
+    }
+    return loadText(file, UNLIMITED);
+  }
+
+  /**
+   * Loads content of given virtual file. If limit is {@value UNLIMITED} then full CharSequence will be returned. Else CharSequence
+   * will be truncated by limit if it has bigger length.
+   * @param file Virtual file for content loading
+   * @param limit Maximum characters count or {@value UNLIMITED}
+   * @throws IllegalArgumentException for binary files
+   * @return Full or truncated CharSequence with file content
+   */
+  @NotNull
+  public static CharSequence loadText(@NotNull final VirtualFile file, int limit) {
+    FileType type = file.getFileType();
+    if (type.isBinary()) throw new IllegalArgumentException(
+      "Attempt to load truncated text for binary file: " + file.getPresentableUrl() + ". File type: " + type.getName()
+    );
+
+    if (file instanceof LightVirtualFile) {
+      return limitCharSequence(((LightVirtualFile)file).getContent(), limit);
     }
 
+    if (file.isDirectory()) {
+      throw new AssertionError("'" + file.getPresentableUrl() + "' is a directory");
+    }
     try {
-      byte[] bytes = file.contentsToByteArray();
+      byte[] bytes = limit == UNLIMITED ? file.contentsToByteArray() :
+                     FileUtil.loadFirstAndClose(file.getInputStream(), limit);
       return getTextByBinaryPresentation(bytes, file);
     }
     catch (IOException e) {
       return ArrayUtil.EMPTY_CHAR_SEQUENCE;
     }
+  }
+
+  @NotNull
+  private static CharSequence limitCharSequence(@NotNull CharSequence sequence, int limit) {
+    return limit == UNLIMITED ? sequence : sequence.subSequence(0, Math.min(limit, sequence.length()));
   }
 
   @NotNull

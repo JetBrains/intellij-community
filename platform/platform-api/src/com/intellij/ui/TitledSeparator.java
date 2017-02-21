@@ -71,7 +71,7 @@ public class TitledSeparator extends JPanel {
 
   public void setText(String text) {
     originalText = text;
-    myLabel.setText(UIUtil.replaceMnemonicAmpersand(originalText));
+    myLabel.setText(text != null && text.startsWith("<html>") ? text : UIUtil.replaceMnemonicAmpersand(originalText));
   }
   public void setTitleFont(Font font) {
     myLabel.setFont(font);

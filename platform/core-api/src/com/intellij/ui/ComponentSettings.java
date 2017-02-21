@@ -47,8 +47,6 @@ public class ComponentSettings {
   private static final RegistryValue PRECISION_TOUCHPAD_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad.delay");
   private static final RegistryValue OTHER_SOURCES_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.other.delay");
 
-  private static final RegistryValue DYNAMIC_SCROLLBARS = Registry.get("idea.true.smooth.scrolling.dynamic.scrollbars");
-
   private boolean mySmoothScrollingEnabled = true;
   private boolean myRemoteDesktopConnected;
   private boolean myPowerSaveModeEnabled;
@@ -119,11 +117,6 @@ public class ComponentSettings {
       default:
         return OTHER_SOURCES_DELAY.asInteger();
     }
-  }
-
-  // Returns whether dymaics scrollbars are enabled (currently applies only to editor's horizontal scrollbar)
-  public boolean areDynamicScrollbarsEnabled() {
-    return DYNAMIC_SCROLLBARS.asBoolean();
   }
 
   /* A heuristics that disables scrolling interpolation in diff / merge windows.

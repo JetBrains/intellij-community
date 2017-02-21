@@ -42,10 +42,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
-import com.intellij.util.Consumer;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -91,16 +88,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  private final Disposable myTestRootDisposable = new Disposable() {
-    @Override
-    public void dispose() { }
-
-    @Override
-    public String toString() {
-      String testName = getTestName(false);
-      return UsefulTestCase.this.getClass() + (StringUtil.isEmpty(testName) ? "" : ".test" + testName);
-    }
-  };
+  private final Disposable myTestRootDisposable = new TestDisposable();
 
   static String ourPathToKeep;
   private final List<String> myPathsToKeep = new ArrayList<>();
@@ -310,7 +298,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  public final Disposable getTestRootDisposable() {
+  public Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }
 
@@ -430,6 +418,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected boolean runInDispatchThread() {
     return true;
+  }
+
+  /**
+   * If you want a more shorter name than runInEdtAndWait.
+   */
+  protected void edt(@NotNull ThrowableRunnable<Throwable> runnable) {
+    EdtTestUtil.runInEdtAndWait(runnable);
   }
 
   public static String toString(@NotNull Iterable<?> collection) {
@@ -996,4 +991,23 @@ public abstract class UsefulTestCase extends TestCase {
   @Deprecated
   public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.roots.IdeaModifiableModelsProvider";
   //</editor-fold>
+
+  public class TestDisposable implements Disposable {
+    private volatile boolean myDisposed;
+
+    @Override
+    public void dispose() {
+      myDisposed = true;
+    }
+
+    public boolean isDisposed() {
+      return myDisposed;
+    }
+
+    @Override
+    public String toString() {
+      String testName = getTestName(false);
+      return UsefulTestCase.this.getClass() + (StringUtil.isEmpty(testName) ? "" : ".test" + testName);
+    }
+  }
 }

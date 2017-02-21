@@ -53,7 +53,7 @@ public abstract class AdditionalLibraryRootsProvider {
     if (roots.isEmpty()) {
       return Collections.emptyList();
     }
-    return Collections.singletonList(SyntheticLibrary.newImmutableLibrary(null, roots));
+    return Collections.singletonList(SyntheticLibrary.newImmutableLibrary(roots));
   }
 
   /**

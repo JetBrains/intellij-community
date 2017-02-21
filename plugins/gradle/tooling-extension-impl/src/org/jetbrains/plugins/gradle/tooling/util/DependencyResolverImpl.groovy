@@ -242,6 +242,9 @@ class DependencyResolverImpl implements DependencyResolver {
         dependencies.each {((AbstractExternalDependency)it).scope = compileScope}
       }
       else {
+        if(dependencies) {
+          ((AbstractExternalDependency)it).scope = compileScope
+        }
         resolvedRuntimeMap.put(resolve(it), it)
       }
     }

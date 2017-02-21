@@ -65,7 +65,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean CHECK_COMMIT_MESSAGE_SPELLING = true;
   public String DEFAULT_PATCH_EXTENSION = PATCH;
   // asked only for non-DVCS
-  public boolean INCLUDE_TEXT_INTO_SHELF = false;
+  public boolean INCLUDE_TEXT_INTO_SHELF = true;
   public Boolean SHOW_PATCH_IN_EXPLORER = null;
   public boolean SHOW_FILE_HISTORY_DETAILS = true;
   public boolean SHOW_DIRTY_RECURSIVELY = false;

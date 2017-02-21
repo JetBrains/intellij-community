@@ -85,21 +85,25 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
     final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
-    if (writer != null && dirtyFilesHolder.hasRemovedFiles()) {
-      for (ModuleBuildTarget target : chunk.getTargets()) {
-        final Collection<String> files = dirtyFilesHolder.getRemovedFiles(target);
-        writer.processDeletedFiles(files);
-      }
-    }
-
     if (writer != null) {
+      final Exception cause = writer.getRebuildRequestCause();
+      if (cause != null) {
+        throw new RebuildRequestedException(cause);
+      }
+
+      if (dirtyFilesHolder.hasRemovedFiles()) {
+        for (ModuleBuildTarget target : chunk.getTargets()) {
+          final Collection<String> files = dirtyFilesHolder.getRemovedFiles(target);
+          writer.processDeletedFiles(files);
+        }
+      }
+
       for (ModuleBuildTarget target : chunk.getTargets()) {
         if (context.getScope().isWholeTargetAffected(target)) {
           myCompiledTargets.add(target);
         }
       }
     }
-
     return null;
   }
 }

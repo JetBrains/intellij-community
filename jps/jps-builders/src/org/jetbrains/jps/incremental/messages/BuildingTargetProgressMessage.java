@@ -25,13 +25,7 @@ public class BuildingTargetProgressMessage extends BuildMessage {
   }
 
   private static String composeMessageText(Collection<? extends BuildTarget<?>> targets, Event event) {
-    String targetsString = StringUtil.join(targets, new NotNullFunction<BuildTarget<?>, String>() {
-      @NotNull
-      @Override
-      public String fun(BuildTarget<?> dom) {
-        return dom.getPresentableName();
-      }
-    }, ", ");
+    String targetsString = StringUtil.join(targets, (NotNullFunction<BuildTarget<?>, String>)dom -> dom.getPresentableName(), ", ");
     return (event == Event.STARTED ? "Started" : "Finished") + " building " + targetsString;
   }
 

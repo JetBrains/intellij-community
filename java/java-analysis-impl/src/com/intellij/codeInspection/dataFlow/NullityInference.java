@@ -18,8 +18,12 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
+import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -38,7 +42,7 @@ import static com.intellij.psi.impl.source.tree.JavaElementType.*;
  */
 public class NullityInference {
 
-  public static Nullness inferNullity(final PsiMethod method) {
+  public static Nullness inferNullity(PsiMethodImpl method) {
     if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
       return Nullness.UNKNOWN;
     }

@@ -110,7 +110,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
       if (result == null) {
         PsiAnnotation anno = JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText("@F(" + text + ")", this);
         ((LightVirtualFile)anno.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
-        myDetachedValue = new SoftReference<PsiAnnotationMemberValue>(result = anno.findAttributeValue(null));
+        myDetachedValue = new SoftReference<>(result = anno.findAttributeValue(null));
       }
       return result;
     }

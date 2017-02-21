@@ -31,6 +31,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -73,14 +74,14 @@ public class JavaPackageAccessibilityStatementElementType extends JavaStubElemen
 
   @Override
   public void serialize(@NotNull PsiPackageAccessibilityStatementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    dataStream.writeUTFFast(stub.getPackageName());
+    dataStream.writeName(stub.getPackageName());
     dataStream.writeUTFFast(StringUtil.join(stub.getTargets(), "/"));
   }
 
   @NotNull
   @Override
   public PsiPackageAccessibilityStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    String packageName = dataStream.readUTFFast();
+    String packageName = StringRef.toString(dataStream.readName());
     List<String> targets = StringUtil.split(dataStream.readUTFFast(), "/");
     return new PsiPackageAccessibilityStatementStubImpl(parentStub, this, packageName, targets);
   }

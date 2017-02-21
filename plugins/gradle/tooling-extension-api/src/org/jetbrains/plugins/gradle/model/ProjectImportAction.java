@@ -21,9 +21,11 @@ import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
 import org.gradle.tooling.model.build.BuildEnvironment;
+import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +41,17 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   private final Set<Class> myExtraProjectModelClasses = new HashSet<Class>();
   private final boolean myIsPreviewMode;
+  private final boolean myIsGradleProjectDirSupported;
+  private final boolean myIsCompositeBuildsSupported;
 
   public ProjectImportAction(boolean isPreviewMode) {
+    this(isPreviewMode, false, false);
+  }
+
+  public ProjectImportAction(boolean isPreviewMode, boolean isGradleProjectDirSupported, boolean isCompositeBuildsSupported) {
     myIsPreviewMode = isPreviewMode;
+    myIsGradleProjectDirSupported= isGradleProjectDirSupported;
+    myIsCompositeBuildsSupported = isCompositeBuildsSupported;
   }
 
   public void addExtraProjectModelClasses(@NotNull Set<Class> projectModelClasses) {
@@ -60,9 +70,23 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
 
     AllModels allModels = new AllModels(ideaProject);
+    allModels.setGradleProjectDirSupported(myIsGradleProjectDirSupported);
+    BuildEnvironment buildEnvironment = controller.findModel(BuildEnvironment.class);
+    allModels.setBuildEnvironment(buildEnvironment);
     addExtraProject(controller, allModels, null);
     for (IdeaModule module : ideaProject.getModules()) {
       addExtraProject(controller, allModels, module);
+    }
+
+    if (myIsCompositeBuildsSupported) {
+      GradleBuild gradleBuild = controller.getModel(GradleBuild.class);
+      for (GradleBuild build : gradleBuild.getIncludedBuilds()) {
+        IdeaProject ideaIncludedProject = controller.findModel(build, IdeaProject.class);
+        allModels.getIncludedBuilds().add(ideaIncludedProject);
+        for (IdeaModule module : ideaIncludedProject.getModules()) {
+          addExtraProject(controller, allModels, module);
+        }
+      }
     }
 
     return allModels;
@@ -111,6 +135,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   public static class AllModels extends ModelsHolder<IdeaProject, IdeaModule> {
 
+    private List<IdeaProject> includedBuilds = new ArrayList<IdeaProject>();
+    private boolean isGradleProjectDirSupported;
+
     public AllModels(@NotNull IdeaProject ideaProject) {
       super(ideaProject);
     }
@@ -118,6 +145,11 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     @NotNull
     public IdeaProject getIdeaProject() {
       return getRootModel();
+    }
+
+
+    public List<IdeaProject> getIncludedBuilds() {
+      return includedBuilds;
     }
 
     @Nullable
@@ -131,11 +163,22 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       }
     }
 
+    public void setGradleProjectDirSupported(boolean gradleProjectDirSupported) {
+      isGradleProjectDirSupported = gradleProjectDirSupported;
+    }
+
     @NotNull
     @Override
     protected String extractMapKey(Class modelClazz, @Nullable IdeaModule module) {
-      return modelClazz.getName() + '@' +
-             (module != null ? module.getGradleProject().getPath() : "root" + getRootModel().getName().hashCode());
+      if (module != null) {
+        String id = isGradleProjectDirSupported ?
+                    module.getGradleProject().getProjectDirectory().getPath() :
+                    module.getGradleProject().getPath();
+        return modelClazz.getName() + '@' + id;
+      }
+      else {
+        return modelClazz.getName() + '@' + ("root" + getRootModel().getName().hashCode());
+      }
     }
   }
 }

@@ -186,23 +186,23 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
       final String[] content = destFile.list();
       if (content != null && content.length != 0) {
         setOKActionEnabled(false);
-        setErrorText(PyBundle.message("sdk.create.venv.dialog.error.not.empty.directory"));
+        setErrorText(PyBundle.message("sdk.create.venv.dialog.error.not.empty.directory"), myDestination);
         return;
       }
     }
     if (StringUtil.isEmptyOrSpaces(projectName)) {
       setOKActionEnabled(false);
-      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.empty.venv.name"));
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.empty.venv.name"), myName);
       return;
     }
     if (!PathUtil.isValidFileName(projectName)) {
       setOKActionEnabled(false);
-      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.invalid.directory.name"));
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.invalid.directory.name"), myName);
       return;
     }
     if (StringUtil.isEmptyOrSpaces(myDestination.getText())) {
       setOKActionEnabled(false);
-      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.empty.venv.location"));
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.empty.venv.location"), myDestination);
       return;
     }
 
