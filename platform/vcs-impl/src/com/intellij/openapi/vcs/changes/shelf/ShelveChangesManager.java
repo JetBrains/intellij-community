@@ -213,57 +213,62 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     if (!fromFile.exists() || FileUtil.filesEqual(fromFile, toFile)) return; //previous shelf directory may do not exist at all
     String validationError = validateDestinationDirectory(toFile);
     if (validationError != null) throw new ConfigurationException(validationError);
-    new Task.Modal(myProject, "Moving Shelves to the New Directory...", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        newSchemeManager.loadSchemes();
-        for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
-          if (!list.isValid()) continue;
-          ShelvedChangeList migratedList = ShelvedChangeList.copy(list);
-          //find new name;
-          File newTargetDirectory = suggestPatchName(myProject, migratedList.DESCRIPTION, toFile, "");
-          migrateResourcesTo(migratedList, newTargetDirectory, false);
-          newSchemeManager.addNewScheme(migratedList, false);
-          // migrate resources and scheme path
-          indicator.checkCanceled();
+    newSchemeManager.loadSchemes();
+    if (VcsConfiguration.getInstance(myProject).MOVE_SHELVES) {
+      new Task.Modal(myProject, "Moving Shelves to the New Directory...", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
+            if (!list.isValid()) continue;
+            ShelvedChangeList migratedList = ShelvedChangeList.copy(list);
+            //find new name;
+            File newTargetDirectory = suggestPatchName(myProject, migratedList.DESCRIPTION, toFile, "");
+            migrateResourcesTo(migratedList, newTargetDirectory, false);
+            newSchemeManager.addNewScheme(migratedList, false);
+            // migrate resources and scheme path
+            indicator.checkCanceled();
+          }
+          clearShelvedLists(mySchemeManager.getAllSchemes(), false);
         }
-        clearShelvedLists(mySchemeManager.getAllSchemes(), false);
-      }
 
-      @Override
-      public void onSuccess() {
-        super.onSuccess();
-        updateShelveSchemaManager(newSchemeManager);
-      }
-
-      @Override
-      public void onCancel() {
-        super.onCancel();
-        suggestToCancelMigrationOrRevertPathToPrevious();
-      }
-
-      private void suggestToCancelMigrationOrRevertPathToPrevious() {
-        if (Messages.showOkCancelDialog(myProject,
-                                        "Shelves moving failed. <br/>Would you like to use new shelf directory path or revert it to previous?",
-                                        "Shelf Error",
-                                        "&Use New",
-                                        "&Revert",
-                                        UIUtil.getWarningIcon()) == Messages.OK) {
+        @Override
+        public void onSuccess() {
+          super.onSuccess();
           updateShelveSchemaManager(newSchemeManager);
         }
-        else {
-          VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-          vcsConfiguration.USE_CUSTOM_SHELF_PATH = fromDirPath != null;
-          vcsConfiguration.CUSTOM_SHELF_PATH = fromDirPath;
-        }
-      }
 
-      @Override
-      public void onThrowable(@NotNull Throwable error) {
-        super.onThrowable(error);
-        suggestToCancelMigrationOrRevertPathToPrevious();
-      }
-    }.queue();
+        @Override
+        public void onCancel() {
+          super.onCancel();
+          suggestToCancelMigrationOrRevertPathToPrevious();
+        }
+
+        private void suggestToCancelMigrationOrRevertPathToPrevious() {
+          if (Messages.showOkCancelDialog(myProject,
+                                          "Shelves moving failed. <br/>Would you like to use new shelf directory path or revert it to previous?",
+                                          "Shelf Error",
+                                          "&Use New",
+                                          "&Revert",
+                                          UIUtil.getWarningIcon()) == Messages.OK) {
+            updateShelveSchemaManager(newSchemeManager);
+          }
+          else {
+            VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
+            vcsConfiguration.USE_CUSTOM_SHELF_PATH = fromDirPath != null;
+            vcsConfiguration.CUSTOM_SHELF_PATH = fromDirPath;
+          }
+        }
+
+        @Override
+        public void onThrowable(@NotNull Throwable error) {
+          super.onThrowable(error);
+          suggestToCancelMigrationOrRevertPathToPrevious();
+        }
+      }.queue();
+    }
+    else {
+      updateShelveSchemaManager(newSchemeManager);
+    }
   }
 
   private void updateShelveSchemaManager(SchemeManager<ShelvedChangeList> newSchemeManager) {
