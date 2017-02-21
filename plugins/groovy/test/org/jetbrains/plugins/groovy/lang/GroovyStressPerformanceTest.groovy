@@ -33,8 +33,10 @@ import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.util.Slow
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -547,5 +549,17 @@ def a = new Node()
       def reference = (PsiReference)file.statements.last()
       assert reference.resolve() != null
     }
+  }
+
+  void "test do not resolve LHS and RHS of assignment when name doesn't match"() {
+    def text = new StringBuilder("a0 = 1\n")
+    def n = 1000
+    for (i in 1..n) {
+      text.append "a$i = a${i - 1}\n"
+    }
+    text.append "a$n"
+    def file = (GroovyFile)fixture.configureByText('_.groovy', text.toString())
+    def last = (GrReferenceExpression)file.statements.last()
+    assert last.resolve() instanceof GrBindingVariable
   }
 }
