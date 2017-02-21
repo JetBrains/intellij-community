@@ -16,6 +16,8 @@ class CompressedAppendableFileTest() : TestCase() {
       val byteArray: ByteArray = ByteArray(1)
       appendableFile.append(byteArray, 1)
       appendableFile.force();
+      FileUtil.delete(randomTemporaryPath.parentFile);
+      appendableFile.append(byteArray, 1)
       appendableFile.dispose()
     } finally {
       FileUtil.delete(randomTemporaryPath.parentFile)
