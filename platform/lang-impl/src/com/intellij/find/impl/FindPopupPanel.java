@@ -430,13 +430,17 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         FileChooser.chooseFiles(descriptor, myProject, FindPopupPanel.this, null, new FileChooser.FileChooserConsumer() {
           @Override
           public void consume(List<VirtualFile> files) {
-            tmp.setDirectoryName(files.get(0).getPresentableUrl());
-            FindManager.getInstance(myProject).showFindDialog(tmp, myHelper.getOkHandler());
+            ApplicationManager.getApplication().invokeLater(() -> {
+              tmp.setDirectoryName(files.get(0).getPresentableUrl());
+              FindManager.getInstance(myProject).showFindDialog(tmp, myHelper.getOkHandler());
+            });
           }
 
           @Override
           public void cancelled() {
-            FindManager.getInstance(myProject).showFindDialog(tmp, myHelper.getOkHandler());
+            ApplicationManager.getApplication().invokeLater(() -> {
+              FindManager.getInstance(myProject).showFindDialog(tmp, myHelper.getOkHandler());
+            });
           }
         });
       }
