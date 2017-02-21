@@ -294,7 +294,7 @@ fun RenameDialog2.show() {
     },
     actions = listOf(
       NoriaAction(name = RefactoringBundle.message("refactor.button"),
-                  isDefault = true,
+                  role = ActionRole.Default,
                   enabled = isEnabled,
                   lambda = {
                     saveSettings(newName.value)
@@ -307,6 +307,7 @@ fun RenameDialog2.show() {
                     performRename(newName.value, true, { it.close(DialogWrapper.OK_EXIT_CODE) })
                   }),
       NoriaAction(name = CommonBundle.getCancelButtonText(),
+                  role = ActionRole.Cancel,
                   enabled = cell { true },
                   lambda = { it.close(DialogWrapper.CANCEL_EXIT_CODE) }))))
 }

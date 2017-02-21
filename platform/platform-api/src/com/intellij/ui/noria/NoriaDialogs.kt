@@ -28,9 +28,13 @@ data class DialogProps(val north: Element? = null,
                        val helpId: String? = null,
                        val title: String)
 
+enum class ActionRole {
+  Default, Cancel, None
+}
+
 data class NoriaAction(val enabled: Cell<Boolean>,
                        val name: String,
-                       val isDefault: Boolean = false,
+                       val role: ActionRole = ActionRole.None,
                        val focused: Boolean = false,
                        val mnemonic: Char? = null,
                        val lambda: (h: NoriaDialogHandle) -> Unit,

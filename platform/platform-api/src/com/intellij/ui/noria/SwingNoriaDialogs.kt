@@ -95,7 +95,7 @@ class SwingNoriaDialogs : NoriaDialogs {
             }
           }.apply { putValue(Action.NAME, a.name) }
         }.apply {
-          putValue(DEFAULT_ACTION, if (a.isDefault) true else null)
+          putValue(DEFAULT_ACTION, if (a.role == ActionRole.Default) true else null)
           putValue(FOCUSED_ACTION, a.focused)
           putValue(Action.MNEMONIC_KEY, a.mnemonic?.toInt())
           track(myDisposable) {
