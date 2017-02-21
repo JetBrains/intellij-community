@@ -24,6 +24,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -158,6 +159,7 @@ public class AddImportAction implements QuestionAction {
         };
       }
     };
+    NavigationUtil.hidePopupIfDumbModeStarts(popup, myProject);
     popup.showInBestPositionFor(myEditor);
   }
 

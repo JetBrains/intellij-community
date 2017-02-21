@@ -144,7 +144,12 @@ public final class NavigationUtil {
     builder.getScrollPane().setBorder(null);
     builder.getScrollPane().setViewportBorder(null);
 
-    Project project = elements[0].getProject();
+    hidePopupIfDumbModeStarts(popup, elements[0].getProject());
+
+    return popup;
+  }
+
+  public static void hidePopupIfDumbModeStarts(@NotNull JBPopup popup, @NotNull Project project) {
     if (!DumbService.isDumb(project)) {
       project.getMessageBus().connect(popup).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
@@ -153,8 +158,6 @@ public final class NavigationUtil {
         }
       });
     }
-
-    return popup;
   }
 
   public static boolean activateFileWithPsiElement(@NotNull PsiElement elt) {
