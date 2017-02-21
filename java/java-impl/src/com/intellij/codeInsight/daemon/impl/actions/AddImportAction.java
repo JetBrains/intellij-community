@@ -159,8 +159,8 @@ public class AddImportAction implements QuestionAction {
         };
       }
     };
-    popup.showInBestPositionFor(myEditor);
     NavigationUtil.hidePopupIfDumbModeStarts(popup, myProject);
+    popup.showInBestPositionFor(myEditor);
   }
 
   @Nullable

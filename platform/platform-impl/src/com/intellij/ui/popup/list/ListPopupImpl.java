@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -646,6 +647,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   public void showInBestPositionFor(@NotNull Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       handleSelect(true);
+      if (!Disposer.isDisposed(this)) {
+        Disposer.dispose(this);
+      }
     }
     else {
       super.showInBestPositionFor(editor);
