@@ -123,6 +123,7 @@ class FindUIHelper implements Disposable {
 
   public void setModel(@NotNull FindModel model) {
     myModel = model;
+    myUI.initByModel();
     myUI.updateReplaceVisibility();
   }
 

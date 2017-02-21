@@ -25,6 +25,8 @@ public interface FindUI {
 
   String getFileTypeMask();
 
+  void initByModel();
+
   void updateReplaceVisibility();
 
   @NotNull
