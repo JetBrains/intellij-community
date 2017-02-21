@@ -4068,7 +4068,7 @@ public class AbstractTreeUi {
 
     Object anchor = TreeAnchorizer.getService().createAnchor(element);
     Object o = myElementToNodeMap.get(anchor);
-    TreeAnchorizer.getService().freeAnchor(element);
+    TreeAnchorizer.getService().freeAnchor(anchor);
 
     if (o instanceof List) {
       final TreePath[] paths = getTree().getSelectionPaths();
