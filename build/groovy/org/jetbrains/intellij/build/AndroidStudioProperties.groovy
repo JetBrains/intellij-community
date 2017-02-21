@@ -88,6 +88,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       androidPluginInStudio([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
+    productLayout.pluginModulesToPublish = ["blaze-aswb-google3"]
+    additionalModulesToCompile.add("blaze-testing")  // blaze-testing is a Test dependency, not included by default in the build.
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
   }
 
