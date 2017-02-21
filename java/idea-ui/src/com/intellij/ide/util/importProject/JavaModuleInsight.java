@@ -303,13 +303,15 @@ public class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitExportsStatement(PsiPackageAccessibilityStatement statement) {
-      super.visitExportsStatement(statement);
-      PsiJavaCodeReferenceElement reference = statement.getPackageReference();
-      if (reference != null) {
-        String qualifiedName = reference.getQualifiedName();
-        if (qualifiedName != null) {
-          myInfo.exportsPackages.add(qualifiedName);
+    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+      super.visitPackageAccessibilityStatement(statement);
+      if (statement.getRole() == PsiPackageAccessibilityStatement.Role.EXPORTS) {
+        PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+        if (reference != null) {
+          String qualifiedName = reference.getQualifiedName();
+          if (qualifiedName != null) {
+            myInfo.exportsPackages.add(qualifiedName);
+          }
         }
       }
     }
