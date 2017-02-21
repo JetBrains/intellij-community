@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   private String format(PsiVariable variable, PsiModifierList modifierList) {
     String name = null;
-    PsiElement parent = variable == null ? modifierList == null ? null : modifierList.getParent() : variable;
+    PsiElement parent = variable != null ? variable : modifierList != null ? modifierList.getParent() : null;
     if (parent instanceof PsiClass) {
       name = ((PsiClass)parent).getName();
     }

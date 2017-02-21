@@ -101,8 +101,7 @@ public class JavaModuleInsight extends ModuleInsight {
 
       addModules(StreamEx.of(moduleInfos.values()).map(info -> info.descriptor).toList());
     }
-    catch (ProcessCanceledException ignored) {
-    }
+    catch (ProcessCanceledException ignored) { }
     finally {
       myProgress.popState();
     }
@@ -249,8 +248,7 @@ public class JavaModuleInsight extends ModuleInsight {
 
   @Override
   protected void scanLibraryForDeclaredPackages(File file, Consumer<String> result) throws IOException {
-    final ZipFile zip = new ZipFile(file);
-    try {
+    try (ZipFile zip = new ZipFile(file)) {
       final Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {
         final String entryName = entries.nextElement().getName();
@@ -263,9 +261,6 @@ public class JavaModuleInsight extends ModuleInsight {
         }
       }
     }
-    finally {
-      zip.close();
-    }
   }
 
   protected ModuleDescriptor createModuleDescriptor(final File moduleContentRoot, final Collection<DetectedSourceRoot> sourceRoots) {
@@ -277,20 +272,24 @@ public class JavaModuleInsight extends ModuleInsight {
   }
 
   private static class ModuleInfo {
-    @NotNull final String name;
+    final String name;
     final Set<String> requiresModules = new HashSet<>();
     final Set<String> exportsPackages = new HashSet<>();
 
     File directory;
     ModuleDescriptor descriptor;
 
-    private ModuleInfo(@NotNull String name) {this.name = name;}
+    private ModuleInfo(@NotNull String name) {
+      this.name = name;
+    }
   }
 
   private static class ModuleInfoVisitor extends JavaRecursiveElementVisitor {
     private final ModuleInfo myInfo;
 
-    public ModuleInfoVisitor(ModuleInfo info) {myInfo = info;}
+    public ModuleInfoVisitor(ModuleInfo info) {
+      myInfo = info;
+    }
 
     @Override
     public void visitRequiresStatement(PsiRequiresStatement statement) {
