@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.Consumer;
@@ -70,8 +71,13 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
   }
 
   public void addAllElements(@NotNull final Iterable<? extends LookupElement> elements) {
+    int seldomCounter = 0;
     for (LookupElement element : elements) {
+      seldomCounter++;
       addElement(element);
+      if (seldomCounter % 1000 == 0) {
+        ProgressManager.checkCanceled();
+      }
     }
   }
 
