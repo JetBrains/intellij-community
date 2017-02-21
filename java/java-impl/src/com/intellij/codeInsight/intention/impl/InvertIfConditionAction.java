@@ -241,11 +241,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       PsiElement parent = ifStatement.getParent();
       if (parent != null) {
         if (!(parent instanceof PsiCodeBlock)) {
-          PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{}", ifStatement);
-          codeBlock = (PsiCodeBlock)codeStyle.reformat(codeBlock);
-          codeBlock.add(ifStatement);
-          codeBlock = (PsiCodeBlock)ifStatement.replace(codeBlock);
-          ifStatement = (PsiIfStatement)codeBlock.getStatements()[0];
+          ifStatement = (PsiIfStatement)wrapWithCodeBlock(ifStatement);
           parent = ifStatement.getParent();
           thenBranch = ifStatement.getThenBranch();
         }
@@ -320,24 +316,25 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     ifStatement.setElseBranch(thenBranch);
   }
 
-  private static PsiIfStatement addAfterWithinCodeBlock(PsiIfStatement ifStatement, PsiStatement branch) {
+  private static PsiStatement wrapWithCodeBlock(@NotNull PsiStatement statement) {
+    final Project project = statement.getProject();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final CodeStyleManager codeStyle = CodeStyleManager.getInstance(project);
+    PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{}", statement);
+    codeBlock = (PsiCodeBlock)codeStyle.reformat(codeBlock);
+    codeBlock.add(statement);
+    codeBlock = (PsiCodeBlock)statement.replace(codeBlock);
+    return codeBlock.getStatements()[0];
+  }
+
+  private static PsiIfStatement addAfterWithinCodeBlock(@NotNull PsiIfStatement ifStatement, @NotNull PsiStatement branch) {
     final PsiElement parent = ifStatement.getParent();
     if (parent != null && !(parent instanceof PsiCodeBlock)) {
-      final Project project = ifStatement.getProject();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      final CodeStyleManager codeStyle = CodeStyleManager.getInstance(project);
-      PsiCodeBlock codeBlock = factory.createCodeBlockFromText("{}", ifStatement);
-      codeBlock = (PsiCodeBlock)codeStyle.reformat(codeBlock);
-      final PsiIfStatement wrappedIfStatement = (PsiIfStatement)codeBlock.add(ifStatement);
-
-      addAfter(wrappedIfStatement, branch);
-      codeBlock = (PsiCodeBlock)ifStatement.replace(codeBlock);
-      return (PsiIfStatement)codeBlock.getStatements()[0];
+      branch = (PsiStatement)branch.copy();
+      ifStatement = (PsiIfStatement)wrapWithCodeBlock(ifStatement);
     }
-    else {
-      addAfter(ifStatement, branch);
-      return ifStatement;
-    }
+    addAfter(ifStatement, branch);
+    return ifStatement;
   }
 
   static void addAfter(PsiIfStatement ifStatement, PsiStatement branch) throws IncorrectOperationException {
