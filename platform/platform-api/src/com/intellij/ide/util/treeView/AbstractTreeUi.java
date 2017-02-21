@@ -988,7 +988,7 @@ public class AbstractTreeUi {
       final ActionCallback result = new ActionCallback();
       Object eachParent = element;
       while(eachParent != null) {
-        DefaultMutableTreeNode node = getNodeForElement(element, false);
+        DefaultMutableTreeNode node = getNodeForElement(eachParent, false);
         if (node != null) {
           addSubtreeToUpdate(node, updateStructure);
           break;
