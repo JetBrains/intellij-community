@@ -39,7 +39,7 @@ import java.util.List;
  * @author yole
  */
 public class FormSpellCheckingInspection extends StringDescriptorInspection {
-  public static final String SHORT_NAME = "SpellCheckingInspection";
+  private static final String SHORT_NAME = "SpellCheckingInspection";
 
   public FormSpellCheckingInspection() {
     super(SHORT_NAME);
@@ -60,7 +60,7 @@ public class FormSpellCheckingInspection extends StringDescriptorInspection {
       final String word = textRange.substring(value);
       if (manager.hasProblem(word)) {
         final List<String> suggestions = manager.getSuggestions(word);
-        if (suggestions.size() > 0 && prop instanceof IntroStringProperty) {
+        if (!suggestions.isEmpty() && prop instanceof IntroStringProperty) {
           EditorQuickFixProvider changeToProvider = new EditorQuickFixProvider() {
             @Override
             public QuickFix createQuickFix(final GuiEditor editor, final RadComponent component1) {

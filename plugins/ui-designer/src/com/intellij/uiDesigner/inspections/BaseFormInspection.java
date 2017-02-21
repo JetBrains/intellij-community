@@ -49,16 +49,19 @@ public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool imp
     myInspectionKey = inspectionKey;
   }
 
+  @Override
   @Nls @NotNull
   public String getDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return UIDesignerBundle.message("form.inspections.group");
   }
 
+  @Override
   @NotNull @NonNls public String getShortName() {
     return myInspectionKey;
   }
@@ -67,56 +70,63 @@ public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool imp
     return true;
   }
 
+  @Override
   public boolean isActive(PsiElement psiRoot) {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiRoot.getProject()).getCurrentProfile();
     HighlightDisplayKey key = HighlightDisplayKey.find(myInspectionKey);
     return key != null && profile.isToolEnabled(key, psiRoot);
   }
 
-  @Nullable public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile == null) {
-        return null;
-      }
-      final Module module = ModuleUtil.findModuleForFile(virtualFile, file.getProject());
-      if (module == null) {
-        return null;
-      }
-
-      final LwRootContainer rootContainer;
-      try {
-        rootContainer = Utils.getRootContainer(file.getText(), new PsiPropertiesProvider(module));
-      }
-      catch (Exception e) {
-        return null;
-      }
-
-      if (rootContainer.isInspectionSuppressed(getShortName(), null)) {
-        return null;
-      }
-      final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager, isOnTheFly);
-      startCheckForm(rootContainer);
-      FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
-        public boolean visit(final IComponent component) {
-          if (!rootContainer.isInspectionSuppressed(getShortName(), component.getId())) {
-            checkComponentProperties(module, component, collector);
-          }
-          return true;
-        }
-      });
-      doneCheckForm(rootContainer);
-      return collector.result();
+  @Override
+  @Nullable
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (!file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+      return null;
     }
-    return null;
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return null;
+    }
+    final Module module = ModuleUtil.findModuleForFile(virtualFile, file.getProject());
+    if (module == null) {
+      return null;
+    }
+
+    final LwRootContainer rootContainer;
+    try {
+      rootContainer = Utils.getRootContainer(file.getText(), new PsiPropertiesProvider(module));
+    }
+    catch (Exception e) {
+      return null;
+    }
+
+    if (rootContainer.isInspectionSuppressed(getShortName(), null)) {
+      return null;
+    }
+    final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager, isOnTheFly);
+    startCheckForm(rootContainer);
+    FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
+      @Override
+      public boolean visit(final IComponent component) {
+        if (!rootContainer.isInspectionSuppressed(getShortName(), component.getId())) {
+          checkComponentProperties(module, component, collector);
+        }
+        return true;
+      }
+    });
+    doneCheckForm(rootContainer);
+    return collector.result();
   }
 
+  @Override
   public void startCheckForm(IRootContainer rootContainer) {
   }
 
+  @Override
   public void doneCheckForm(IRootContainer rootContainer) {
   }
 
+  @Override
   @Nullable
   public ErrorInfo[] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component) {
     FormEditorErrorCollector collector = new FormEditorErrorCollector(editor, component);
