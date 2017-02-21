@@ -538,7 +538,7 @@ public class InjectedLanguageUtil {
     return result.get().booleanValue();
   }
 
-  public static String getUnescapedText(PsiFile file, @Nullable final PsiElement startElement, @Nullable final PsiElement endElement) {
+  public static String getUnescapedText(@NotNull PsiFile file, @Nullable final PsiElement startElement, @Nullable final PsiElement endElement) {
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     if (manager.getInjectionHost(file) == null) {
       return file.getText().substring(startElement == null ? 0 : startElement.getTextRange().getStartOffset(),
