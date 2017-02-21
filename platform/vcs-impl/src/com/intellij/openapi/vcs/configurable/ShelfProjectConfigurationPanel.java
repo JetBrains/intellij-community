@@ -71,9 +71,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
           errorMessage = "Shelf directory should have read and write access";
         }
         if (errorMessage != null && myShelfDirectoryPath.isShowing()) {
-          PopupUtil
-            .showBalloonForComponent(myShelfDirectoryPath, errorMessage, MessageType.WARNING, false,
-                                     myProject);
+          PopupUtil.showBalloonForComponent(myShelfDirectoryPath, errorMessage, MessageType.WARNING, false, myProject);
         }
         return errorMessage != null;
       }
