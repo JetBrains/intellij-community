@@ -58,6 +58,7 @@ class CompletionRerankingTest : LightFixtureCompletionTestCase() {
         val contributorEP = point.extensions[pointIndex]
         contributorEP.implementationClass = MLCompletionContributor::class.java.canonicalName
         //todo this will fail, since implementation will be cached
+        //todo reuse reflection and set extension directly into myExtensionsCache
         
         super.tearDown()
     }
