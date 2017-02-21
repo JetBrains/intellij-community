@@ -18,11 +18,11 @@ package com.intellij.execution.testframework.sm;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -39,7 +39,6 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public class FileUrlProvider implements SMTestLocator, DumbAware {
-  private static final Logger LOG = Logger.getInstance(FileUrlProvider.class.getName());
 
   public static final FileUrlProvider INSTANCE = new FileUrlProvider();
 
@@ -58,19 +57,10 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
     final int lineNumber;
     // if line is specified
     if (lineNoSeparatorIndex > 3) {   // on Windows, paths start with /C: and that colon is not a line number separator 
-      final String lineNumStr = normalizedPath.substring(lineNoSeparatorIndex + 1);
-      int lineNum = 0;
-      try {
-        lineNum = Integer.parseInt(lineNumStr);
-      } catch (NumberFormatException e) {
-        LOG.warn(protocol + ": Malformed location path: " + path, e);
-      }
-
+      lineNumber = StringUtil.parseInt(normalizedPath.substring(lineNoSeparatorIndex + 1), -1);
       filePath = normalizedPath.substring(0, lineNoSeparatorIndex);
-      lineNumber = lineNum;
     } else {
-      // unknown line
-      lineNumber = 1;
+      lineNumber = -1;
       filePath = normalizedPath;
     }
     // Now we should search file with most suitable path
@@ -81,24 +71,28 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
       return Collections.emptyList();
     }
 
-    if (lineNumber < 0) {
-      LOG.warn("Tests location provider: line number should be >= 1. Path: " + path);
-    }
-
     final List<Location> locations = new ArrayList<>(2);
     for (VirtualFile file : virtualFiles) {
-      locations.add(createLocationFor(project, file, lineNumber < 1 ? 1 : lineNumber));
+      locations.add(createLocationFor(project, file, lineNumber));
     }
     return locations;
   }
 
+  /**
+   * @param project     Project instance
+   * @param virtualFile VirtualFile instance to locate
+   * @param lineNum     one-based line number to locate inside {@code virtualFile},
+   *                    a non-positive line number doesn't change text caret position inside the file
+   * @return Location instance, or null if not found
+   */
   @Nullable
-  public static Location createLocationFor(Project project, @NotNull VirtualFile virtualFile, int lineNum) {
-    assert lineNum > 0;
-
+  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (psiFile == null) {
       return null;
+    }
+    if (lineNum <= 0) {
+      return PsiLocation.fromPsiElement(psiFile);
     }
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
