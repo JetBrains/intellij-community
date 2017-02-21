@@ -96,7 +96,7 @@ public class GitUtil {
   public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   public static final String MERGE_HEAD = "MERGE_HEAD";
 
-  private static final String SUBMODULE_REPO_PATH_PREFIX = "gitdir:";
+  private static final String REPO_PATH_LINK_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
   private static final String HEAD_FILE = "HEAD";
 
@@ -109,7 +109,7 @@ public class GitUtil {
 
   /**
    * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
-   * Able to find the real repository root of a submodule.
+   * Able to find the real repository root of a submodule or of a working tree.
    * @see #findGitDir(VirtualFile) 
    */
   @Nullable
@@ -124,16 +124,16 @@ public class GitUtil {
     String content = DvcsUtil.tryLoadFileOrReturn(dotGit, null, CharsetToolkit.UTF8);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
-    return findSubmoduleRepositoryDir(rootDir.getPath(), pathToDir);
+    return findRealRepositoryDir(rootDir.getPath(), pathToDir);
   }
 
   /**
    * Returns the Git repository location for the given repository root directory, or null if nothing can be found.
-   * Able to find the real repository root of a submodule.
+   * Able to find the real repository root of a submodule or of a working tree.
    * <p/>
    * More precisely: checks if there is {@code .git} directory or file directly under rootDir. <br/>
    * If there is a directory, performs a quick check that it looks like a Git repository;<br/>
-   * if it is a file, follows the path written inside this file to find the submodule repo dir.
+   * if it is a file, follows the path written inside this file to find the actual repo dir.
    */
   @Nullable
   public static VirtualFile findGitDir(@NotNull VirtualFile rootDir) {
@@ -146,17 +146,17 @@ public class GitUtil {
       return headExists ? dotGit : null;
     }
 
-    // if .git is a file with some specific content, it indicates a submodule with a link to the real repository path
+    // if .git is a file with some specific content, it indicates a submodule or a working tree, with a link to the real repository path
     String content = readContent(dotGit);
     if (content == null) return null;
     String pathToDir = parsePathToRepository(content);
-    File file = findSubmoduleRepositoryDir(rootDir.getPath(), pathToDir);
+    File file = findRealRepositoryDir(rootDir.getPath(), pathToDir);
     if (file == null) return null;
     return VcsUtil.getVirtualFileWithRefresh(file);
   }
 
   @Nullable
-  private static File findSubmoduleRepositoryDir(@NotNull String rootPath, @NotNull String path) {
+  private static File findRealRepositoryDir(@NotNull String rootPath, @NotNull String path) {
     if (!FileUtil.isAbsolute(path)) {
       String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath, path), true);
       if (canonicalPath == null) {
@@ -171,7 +171,7 @@ public class GitUtil {
   @NotNull
   private static String parsePathToRepository(@NotNull String content) {
     content = content.trim();
-    return content.startsWith(SUBMODULE_REPO_PATH_PREFIX) ? content.substring(SUBMODULE_REPO_PATH_PREFIX.length()).trim() : content;
+    return content.startsWith(REPO_PATH_LINK_PREFIX) ? content.substring(REPO_PATH_LINK_PREFIX.length()).trim() : content;
   }
 
   @Nullable
@@ -231,7 +231,8 @@ public class GitUtil {
     throws VcsException {
     Map<VirtualFile, List<VirtualFile>> result = new HashMap<>();
     for (VirtualFile file : virtualFiles) {
-      // directory is reported only when it is a submodule => it should be treated in the context of super-root
+      // directory is reported only when it is a submodule or a mistakenly non-ignored nested root
+      // => it should be treated in the context of super-root
       final VirtualFile vcsRoot = gitRootOrNull(file.isDirectory() ? file.getParent() : file);
       if (vcsRoot == null) {
         if (ignoreNonGit) {
