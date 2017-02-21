@@ -52,6 +52,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.lang.ant.config.AntBuildListener.STATE.ABORTED;
+import static com.intellij.lang.ant.config.AntBuildListener.STATE.FAILED_TO_RUN;
+
 public final class ExecutionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.ExecutionHandler");
 
@@ -120,23 +123,24 @@ public final class ExecutionHandler {
       messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
       commandLine = builder.getCommandLine().toCommandLine();
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
+      antBuildListener.beforeBuildStart(messageView);
     }
     catch (RunCanceledException e) {
       e.showMessage(project, AntBundle.message("run.ant.error.dialog.title"));
-      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      antBuildListener.buildFinished(project, FAILED_TO_RUN, 0);
       return null;
     }
     catch (CantRunException e) {
       ExecutionErrorDialog.show(e, AntBundle.message("cant.run.ant.error.dialog.title"), project);
-      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      antBuildListener.buildFinished(project, FAILED_TO_RUN, 0);
       return null;
     }
     catch (Macro.ExecutionCancelledException e) {
-      antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
+      antBuildListener.buildFinished(project, ABORTED, 0);
       return null;
     }
     catch (Throwable e) {
-      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      antBuildListener.buildFinished(project, FAILED_TO_RUN, 0);
       LOG.error(e);
       return null;
     }
@@ -148,7 +152,7 @@ public final class ExecutionHandler {
       }
 
       public void onCancel() {
-        antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
+        antBuildListener.buildFinished(myProject, ABORTED, 0);
       }
 
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -161,7 +165,7 @@ public final class ExecutionHandler {
         }
         catch (Throwable e) {
           LOG.error(e);
-          antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+          antBuildListener.buildFinished(myProject, FAILED_TO_RUN, 0);
         }
       }
     }.queue();
@@ -185,7 +189,7 @@ public final class ExecutionHandler {
     catch (final ExecutionException e) {
       ApplicationManager.getApplication().invokeLater(
         () -> ExecutionErrorDialog.show(e, AntBundle.message("could.not.start.process.error.dialog.title"), project));
-      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      antBuildListener.buildFinished(project, FAILED_TO_RUN, 0);
       return null;
     }
 

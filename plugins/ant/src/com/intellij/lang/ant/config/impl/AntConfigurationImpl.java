@@ -68,6 +68,8 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.intellij.lang.ant.config.AntBuildListener.STATE.FINISHED_SUCCESSFULLY;
+
 @State(name = "AntConfiguration", storages = @Storage("ant.xml"))
 public class AntConfigurationImpl extends AntConfigurationBase implements PersistentStateComponent<Element> {
   public static final ValueProperty<AntReference> DEFAULT_ANT = new ValueProperty<>("defaultAnt", AntReference.BUNDLED_ANT);
@@ -748,8 +750,8 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         else {
           target.run(dataContext, additionalProperties, new AntBuildListener() {
             @Override
-            public void buildFinished(int state, int errorCount) {
-              result.set((state == AntBuildListener.FINISHED_SUCCESSFULLY) && (errorCount == 0));
+            public void onBuildFinished(STATE state, int errorCount) {
+              result.set((state == FINISHED_SUCCESSFULLY) && (errorCount == 0));
               targetDone.up();
             }
           });

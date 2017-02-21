@@ -903,6 +903,8 @@
     <extensionPoint name="sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider"/>
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
 
+    <extensionPoint name="lang.antExecutionListener" interface="com.intellij.lang.ant.config.execution.AntExecutionListener"/>
+
     <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin"
                     interface="org.jetbrains.uast.UastLanguagePlugin"/>

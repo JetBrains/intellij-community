@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.lang.ant.config.AntBuildListener.STATE.FAILED_TO_RUN;
+
 public class AntBuildTargetImpl implements AntBuildTargetBase {
 
   private final AntBuildModelBase myModel;
@@ -167,12 +169,12 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
   public void run(DataContext dataContext, List<BuildFileProperty> additionalProperties, AntBuildListener buildListener) {
     AntBuildModel model = getModel();
     if (model == null) {
-      buildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      buildListener.buildFinished(myProject, FAILED_TO_RUN, 0);
       throw new IllegalStateException("Target '" + getName() + "' is invalid: model is null");
     }
     AntBuildFile buildFile = model.getBuildFile();
     if (buildFile == null) {
-      buildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      buildListener.buildFinished(myProject, FAILED_TO_RUN, 0);
       throw new IllegalStateException("Target '" + getName() + "' is invalid: build file is null");
     }
 
