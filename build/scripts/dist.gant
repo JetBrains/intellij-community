@@ -38,7 +38,7 @@ target(compile: "Compile project") {
 target('default': 'The default target') {
   def options = new BuildOptions()
   options.outputRootPath = out
-  options.buildNumber = null //we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
+  options.buildNumber = System.getProperty("buildNumber")
   new AndroidStudioBuilder(home, binding, options).buildDistributions()
 }
 
