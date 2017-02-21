@@ -28,7 +28,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +96,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
    * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
    */
   @Deprecated
-  public static final HostnameVerifier HOSTNAME_VERIFIER = SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
+  public static final HostnameVerifier HOSTNAME_VERIFIER = new BrowserCompatHostnameVerifier();
   
   /**
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
