@@ -635,7 +635,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myScopeSelectionToolbar.updateActionsImmediately();
   }
 
-  private void initByModel() {
+  @Override
+  public void initByModel() {
     FindModel myModel = myHelper.getModel();
     myCbCaseSensitive.setSelected(myModel.isCaseSensitive());
     myCbWholeWordsOnly.setSelected(myModel.isWholeWordsOnly());
