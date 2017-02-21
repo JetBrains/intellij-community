@@ -71,9 +71,9 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   // return not null in case of String[], int[], double[][]
   @Nullable
   private PsiType inferArrayType() {
-    PsiType arrayTypeBase = getClassReferenceFromExpression(this.getInvokedExpression());
+    PsiType arrayTypeBase = getClassReferenceFromExpression(this);
     if (arrayTypeBase == null) return null;
-    return TypesUtil.createJavaLangClassType(arrayTypeBase.createArrayType(), this.getProject(), this.getResolveScope());
+    return TypesUtil.createJavaLangClassType(arrayTypeBase, this.getProject(), this.getResolveScope());
   }
 
   private PsiType inferType(@Nullable Boolean isSetter) {
@@ -96,28 +96,6 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
     final PsiManager manager = getManager();
     final GlobalSearchScope resolveScope = getResolveScope();
-
-    if (argTypes.length == 0) {
-      PsiType arrType = null;
-      if (selected instanceof GrBuiltinTypeClassExpression) {
-        arrType = ((GrBuiltinTypeClassExpression)selected).getPrimitiveType();
-      }
-
-      if (selected instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)selected).resolve();
-        if (resolved instanceof PsiClass) {
-          String qname = ((PsiClass)resolved).getQualifiedName();
-          if (qname != null) {
-            arrType = TypesUtil.createTypeByFQClassName(qname, this);
-          }
-        }
-      }
-
-      if (arrType != null) {
-        final PsiArrayType param = arrType.createArrayType();
-        return TypesUtil.createJavaLangClassType(param, getProject(), resolveScope);
-      }
-    }
 
     if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, this, isSetter != null ? isSetter.booleanValue() : PsiUtil.isLValue(this))) {
       return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), manager, resolveScope);

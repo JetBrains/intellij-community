@@ -713,6 +713,13 @@ def foo(List list) {
     doExprTest 'double[][][].class', 'java.lang.Class<double[][][]>'
   }
 
+  void testClassExpressionsWithArguments() {
+    doExprTest 'String[1]', 'java.lang.Object'
+    doExprTest 'String[1][]', 'java.lang.Object'
+    doExprTest 'String[1][].class', 'java.lang.Class<java.lang.Object>'
+    doExprTest 'int[][1].class', 'java.lang.Class<java.lang.Object>'
+  }
+
   void 'test list literal type'() {
     doExprTest '[]', 'java.util.List'
     doExprTest '[null]', 'java.util.List'
