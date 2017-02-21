@@ -693,6 +693,26 @@ def foo(List list) {
 ''', 'java.util.List<java.util.List>')
   }
 
+
+  void testClassExpressions() {
+    doExprTest 'String[]', 'java.lang.Class<java.lang.String[]>'
+    doExprTest 'Class[]', 'java.lang.Class<java.lang.Class[]>'
+    doExprTest 'int[]', 'java.lang.Class<int[]>'
+    doExprTest 'float[][]', 'java.lang.Class<float[][]>'
+    doExprTest 'Integer[][]', 'java.lang.Class<java.lang.Integer[][]>'
+    doExprTest 'boolean[][][]', 'java.lang.Class<boolean[][][]>'
+
+    doExprTest 'String.class', 'java.lang.Class<java.lang.String>'
+    doExprTest 'byte.class', 'java.lang.Class<byte>'
+
+    doExprTest 'String[].class', 'java.lang.Class<java.lang.String[]>'
+    doExprTest 'Class[].class', 'java.lang.Class<java.lang.Class[]>'
+    doExprTest 'int[].class', 'java.lang.Class<int[]>'
+    doExprTest 'float[][]', 'java.lang.Class<float[][]>'
+    doExprTest 'Integer[][].class', 'java.lang.Class<java.lang.Integer[][]>'
+    doExprTest 'double[][][].class', 'java.lang.Class<double[][][]>'
+  }
+
   void 'test list literal type'() {
     doExprTest '[]', 'java.util.List'
     doExprTest '[null]', 'java.util.List'

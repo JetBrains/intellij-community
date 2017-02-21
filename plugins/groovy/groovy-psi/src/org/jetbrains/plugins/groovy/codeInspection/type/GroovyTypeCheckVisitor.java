@@ -264,6 +264,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (!checkCannotInferArgumentTypes(info)) return;
 
     final PsiType type = info.getQualifierInstanceType();
+
+    if (ResolveUtil.getClassReferenceFromExpression(info.getCall()) != null) {
+      return;
+    }
+
     final PsiType[] types = info.getArgumentTypes();
 
     if (checkSimpleArrayAccess(info, type, types)) return;
