@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 @State(
   name = "RunManager",
@@ -66,7 +67,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<>();
 
-  private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new TreeMap<>();
+  private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new ConcurrentSkipListMap<>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<>(); // template configurations are not included here
   private final Map<String, Boolean> mySharedConfigurations = new ConcurrentHashMap<>();
