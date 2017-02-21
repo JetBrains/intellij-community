@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.actions;
+package com.intellij.vcs.log.impl;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty;
 
-public class ShowDetailsAction extends BooleanPropertyToggleAction {
-
-  public ShowDetailsAction() {
-    super("Show Details", "Display details panel", AllIcons.Actions.Preview);
-  }
-
-  @Override
-  protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return CommonUiProperties.SHOW_DETAILS;
-  }
+public class CommonUiProperties {
+  public static final VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>("Window.ShowDetails");
 }

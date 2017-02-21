@@ -29,7 +29,7 @@ import java.util.*;
 public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, MainVcsLogUiProperties {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
   private static final Set<VcsLogUiProperties.VcsLogUiProperty> SUPPORTED_PROPERTIES =
-    ContainerUtil.newHashSet(MainVcsLogUiProperties.SHOW_DETAILS,
+    ContainerUtil.newHashSet(CommonUiProperties.SHOW_DETAILS,
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
                              MainVcsLogUiProperties.BEK_SORT_TYPE,
                              MainVcsLogUiProperties.SHOW_ROOT_NAMES,
@@ -61,7 +61,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    if (SHOW_DETAILS.equals(property)) {
+    if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_DETAILS_IN_CHANGES);
     }
     else if (SHOW_LONG_EDGES.equals(property)) {
@@ -95,7 +95,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @Override
   public <T> void set(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property, @NotNull T value) {
-    if (SHOW_DETAILS.equals(property)) {
+    if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
       getState().SHOW_DETAILS_IN_CHANGES = (Boolean)value;
     }
     else if (SHOW_LONG_EDGES.equals(property)) {
@@ -253,7 +253,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-      if (SHOW_DETAILS.equals(property)) {
+      if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
         onShowDetailsChanged();
       }
       else if (SHOW_LONG_EDGES.equals(property)) {
