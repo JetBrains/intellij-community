@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -61,8 +62,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   protected final @Nullable PsiType myThisType;
   protected final @NotNull PsiType[] myTypeArguments;
-  private final @Nullable PsiType[] myArgumentTypesNonErased;
-  protected final @Nullable PsiType[] myArgumentTypes;
+  private final @NotNull NullableLazyValue<PsiType[]> myArgumentTypesNonErased;
+  protected final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
 
   private final NotNullLazyValue<SubstitutorComputer> myPropertySubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
     @NotNull
@@ -75,7 +76,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     @NotNull
     @Override
     protected SubstitutorComputer compute() {
-      return new SubstitutorComputer(myThisType, myArgumentTypesNonErased, myTypeArguments, myRef, myRef.getParent());
+      return new SubstitutorComputer(myThisType, myArgumentTypesNonErased.getValue(), myTypeArguments, myRef, myRef.getParent());
     }
   };
   private final List<PsiScopeProcessor> myAccessorProcessors;
@@ -98,11 +99,11 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     myThisType = PsiImplUtil.getQualifierType(ref);
     myTypeArguments = ref.getTypeArguments();
     if (kinds.contains(GroovyResolveKind.METHOD) || myIsLValue) {
-      myArgumentTypesNonErased = PsiUtil.getArgumentTypes(ref, false, myUpToArgument);
-      myArgumentTypes = eraseTypes(myArgumentTypesNonErased);
+      myArgumentTypesNonErased = NullableLazyValue.createValue(() -> PsiUtil.getArgumentTypes(ref, false, myUpToArgument));
+      myArgumentTypes = NullableLazyValue.createValue(() -> eraseTypes(myArgumentTypesNonErased.getValue()));
     }
     else {
-      myArgumentTypes = myArgumentTypesNonErased = null;
+      myArgumentTypes = myArgumentTypesNonErased = NullableLazyValue.createValue(() -> null);
     }
 
     myAccessorProcessors = calcAccessorProcessors();
@@ -172,7 +173,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       if (kind == GroovyResolveKind.METHOD || kind == GroovyResolveKind.PROPERTY) {
         final PsiMethod method = (PsiMethod)namedElement;
         final boolean isApplicable = kind == GroovyResolveKind.PROPERTY && !myIsLValue
-                                     || isApplicable(myArgumentTypes, method, substitutor, myRef, true);
+                                     || isApplicable(myArgumentTypes.getValue(), method, substitutor, myRef, true);
 
         final NotNullComputable<PsiSubstitutor> substitutorComputer;
         if (kind == GroovyResolveKind.METHOD) {
