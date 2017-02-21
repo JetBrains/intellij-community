@@ -23,11 +23,11 @@ import java.util.Map;
 
 public class CompiledFileData {
   private final Map<LightRef, Collection<LightRef>> myBackwardHierarchyMap;
-  private final Map<LightRef, Void> myReferences;
+  private final Map<LightRef, Integer> myReferences;
   private final Map<LightRef, Void> myDefinitions;
 
   public CompiledFileData(@NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
-                          @NotNull Map<LightRef, Void> references,
+                          @NotNull Map<LightRef, Integer> references,
                           @NotNull Map<LightRef, Void> definitions) {
     myBackwardHierarchyMap = backwardHierarchyMap;
     myReferences = references;
@@ -40,7 +40,7 @@ public class CompiledFileData {
   }
 
   @NotNull
-  public Map<LightRef, Void> getReferences() {
+  public Map<LightRef, Integer> getReferences() {
     return myReferences;
   }
 

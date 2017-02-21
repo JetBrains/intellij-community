@@ -38,9 +38,9 @@ import java.util.Map;
 
 public class CompilerIndices {
   //TODO manage version separately
-  public final static int VERSION = 2;
+  public final static int VERSION = 3;
 
-  public final static ID<LightRef, Void> BACK_USAGES = ID.create("back.refs");
+  public final static ID<LightRef, Integer> BACK_USAGES = ID.create("back.refs");
   public final static ID<LightRef, Collection<LightRef>> BACK_HIERARCHY = ID.create("back.hierarchy");
   public final static ID<LightRef, Void> BACK_CLASS_DEF = ID.create("back.class.def");
 
@@ -48,24 +48,24 @@ public class CompilerIndices {
     return ContainerUtil.list(createBackwardClassDefinitionExtension(), createBackwardUsagesExtension(), createBackwardHierarchyExtension());
   }
 
-  private static IndexExtension<LightRef, Void, CompiledFileData> createBackwardUsagesExtension() {
-    return new IndexExtension<LightRef, Void, CompiledFileData>() {
+  private static IndexExtension<LightRef, Integer, CompiledFileData> createBackwardUsagesExtension() {
+    return new IndexExtension<LightRef, Integer, CompiledFileData>() {
       @Override
       public int getVersion() {
         return VERSION;
       }
 
       @NotNull
-      public ID<LightRef, Void> getName() {
+      public ID<LightRef, Integer> getName() {
         return BACK_USAGES;
       }
 
       @NotNull
-      public DataIndexer<LightRef, Void, CompiledFileData> getIndexer() {
-        return new DataIndexer<LightRef, Void, CompiledFileData>() {
+      public DataIndexer<LightRef, Integer, CompiledFileData> getIndexer() {
+        return new DataIndexer<LightRef, Integer, CompiledFileData>() {
           @NotNull
           @Override
-          public Map<LightRef, Void> map(@NotNull CompiledFileData inputData) {
+          public Map<LightRef, Integer> map(@NotNull CompiledFileData inputData) {
             return inputData.getReferences();
           }
         };
@@ -77,10 +77,26 @@ public class CompilerIndices {
       }
 
       @NotNull
-      public DataExternalizer<Void> getValueExternalizer() {
-        return VoidDataExternalizer.INSTANCE;
+      public DataExternalizer<Integer> getValueExternalizer() {
+        return new UnsignedByteExternalizer();
       }
     };
+  }
+
+  private static class UnsignedByteExternalizer implements DataExternalizer<Integer> {
+    @Override
+    public void save(@NotNull DataOutput out, Integer value) throws IOException {
+      int v = value;
+      if (v > 255) {
+        v = 255;
+      }
+      out.writeByte(v);
+    }
+
+    @Override
+    public Integer read(@NotNull DataInput in) throws IOException {
+      return in.readByte() & 0xFF;
+    }
   }
 
   private static IndexExtension<LightRef, Collection<LightRef>, CompiledFileData> createBackwardHierarchyExtension() {

@@ -258,8 +258,8 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
   }
 
-  private static Set<JavacRef> createReferenceHolder() {
-    return new HashSet<JavacRef>();
+  private static Collection<JavacRef> createReferenceHolder() {
+    return new ArrayList<JavacRef>();
   }
 
   private static List<JavacDef> createDefinitionHolder() {

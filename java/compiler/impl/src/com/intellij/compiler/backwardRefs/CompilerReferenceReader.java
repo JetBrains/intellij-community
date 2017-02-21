@@ -130,9 +130,9 @@ class CompilerReferenceReader {
 
   private void addUsages(LightRef usage, TIntHashSet sink) throws StorageException {
     myIndex.get(CompilerIndices.BACK_USAGES).getData(usage).forEach(
-      new ValueContainer.ContainerAction<Void>() {
+      new ValueContainer.ContainerAction<Integer>() {
         @Override
-        public boolean perform(int id, Void value) {
+        public boolean perform(int id, Integer value) {
           final VirtualFile file = findFile(id);
           if (file != null) {
             sink.add(((VirtualFileWithId)file).getId());

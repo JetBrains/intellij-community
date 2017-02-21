@@ -18,6 +18,8 @@ package org.jetbrains.jps.backwardRefs;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
@@ -63,11 +65,17 @@ public class BackwardReferenceIndexUtil {
       }
     }
 
-    Map<LightRef, Void> convertedRefs = new HashMap<>(refs.size());
+    Map<LightRef, Integer> convertedRefs = new FactoryMap<LightRef, Integer>() {
+      @Nullable
+      @Override
+      protected Integer create(LightRef key) {
+        return 0;
+      }
+    };
     for (JavacRef ref : refs) {
       LightRef key = writer.enumerateNames(ref);
       if (key != null) {
-        convertedRefs.put(key, null);
+        convertedRefs.put(key, convertedRefs.get(key) + 1);
       }
     }
     writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
