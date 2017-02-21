@@ -111,7 +111,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private static final KeyStroke MOVE_CARET_DOWN_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke MOVE_CARET_UP_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke NEW_LINE_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
-  protected static final String SIZE_KEY = "find.popup";
+  private static final String SERVICE_KEY = "find.popup";
+  private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";
   private final FindUIHelper myHelper;
 
   private JComponent myCodePreviewComponent;
@@ -128,7 +129,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   @NotNull private final Disposable myDisposable;
 
   private Alarm mySearchRescheduleOnCancellationsAlarm;
-  private Alarm myUpdateResultsPopupBoundsAlarm;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
 
@@ -174,8 +174,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         .setModalContext(false)
         .setRequestFocus(true)
         .setCancelCallback(() -> {
-          DimensionService.getInstance().setSize(SIZE_KEY, myBalloon.getSize(), myHelper.getProject() );
-          DimensionService.getInstance().setLocation(SIZE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
+          DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
+          DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
           return Boolean.TRUE;
         })
         .createPopup();
@@ -184,7 +184,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       final Window window = WindowManager.getInstance().suggestParentWindow(myProject);
       Component parent = UIUtil.findUltimateParent(window);
       RelativePoint showPoint = null;
-      Point screenPoint = DimensionService.getInstance().getLocation(SIZE_KEY);
+      Point screenPoint = DimensionService.getInstance().getLocation(SERVICE_KEY);
       if (screenPoint != null) {
         showPoint = new RelativePoint(screenPoint);
       }
@@ -196,23 +196,23 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         showPoint = new RelativePoint(parent, new Point((parent.getSize().width - getPreferredSize().width) / 2, height));
       }
       mySearchComponent.selectAll();
+      WindowMoveListener windowListener = new WindowMoveListener(this);
+      myTitleLabel.addMouseListener(windowListener);
+      myTitleLabel.addMouseMotionListener(windowListener);
+      Dimension panelSize = getPreferredSize();
+      Dimension prev = DimensionService.getInstance().getSize(SERVICE_KEY);
+      if (!myCbPreserveCase.isVisible()) {
+        panelSize.width += myCbPreserveCase.getPreferredSize().width + 4;
+      }
+      if (prev == null) panelSize.height *= 2;
+      myBalloon.setMinimumSize(panelSize);
+      myBalloon.setSize(prev != null ? prev : panelSize);
+
       if (showPoint != null && showPoint.getComponent() != null) {
         myBalloon.show(showPoint);
       } else {
         myBalloon.showCenteredInCurrentWindow(myProject);
       }
-      WindowMoveListener windowListener = new WindowMoveListener(this);
-      myTitleLabel.addMouseListener(windowListener);
-      myTitleLabel.addMouseMotionListener(windowListener);
-      myBalloon.pack(true, true);
-      Dimension panelSize = getPreferredSize();
-      Dimension prev = DimensionService.getInstance().getSize(SIZE_KEY);
-      if (!myCbPreserveCase.isVisible()) {
-        panelSize.width += myCbPreserveCase.getPreferredSize().width + 4;
-      }
-      myBalloon.setMinimumSize(panelSize);
-      int width = prev != null && prev.width > panelSize.width ? prev.width : panelSize.width;
-      myBalloon.setSize(new Dimension(width, panelSize.height));
     }
   }
 
@@ -225,7 +225,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       public void dispose() {
         FindPopupPanel.this.finishPreviousPreviewSearch();
         if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
-        if (myUpdateResultsPopupBoundsAlarm != null) Disposer.dispose(myUpdateResultsPopupBoundsAlarm);
         if (myUsagePreviewPanel != null) Disposer.dispose(myUsagePreviewPanel);
       }
     });
@@ -384,18 +383,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        int searchRows1 = mySearchComponent.getRows();
-        int searchRows2 = Math.max(1, Math.min(3, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1));
-        mySearchComponent.setRows(searchRows2);
-        int replaceRows1 = myReplaceComponent.getRows();
-        int replaceRows2 = Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1));
-        myReplaceComponent.setRows(replaceRows2);
+        mySearchComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1)));
+        myReplaceComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
 
         if (myBalloon == null) return;
 
-        if (searchRows1 != searchRows2 || replaceRows1 != replaceRows2) {
-          adjustPopup();
-        }
         scheduleResultsUpdate();
       }
     };
@@ -513,7 +505,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myResultsPreviewTable = new JBTable() {
       @Override
       public Dimension getPreferredScrollableViewportSize() {
-        return new Dimension(getWidth(), 1 + getRowHeight() * Math.min(9, Math.max(4, getRowCount())));
+        return new Dimension(getWidth(), 1 + getRowHeight() * 4);
       }
     };
     myResultsPreviewTable.getEmptyText().setShowAboveCenter(false);
@@ -563,16 +555,16 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
     });
     mySearchRescheduleOnCancellationsAlarm = new Alarm();
-    myUpdateResultsPopupBoundsAlarm = new Alarm();
 
-    Splitter splitter = new JBSplitter(true, .33F);
-    splitter.setDividerWidth(1);
+    JBSplitter splitter = new JBSplitter(true, .33f);
+    splitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
+    splitter.setDividerWidth(JBUI.scale(2));
     splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
     JBScrollPane scrollPane = new JBScrollPane(myResultsPreviewTable) {
       @Override
       public Dimension getMinimumSize() {
         Dimension size = super.getMinimumSize();
-        size.height = Math.max(size.height, myResultsPreviewTable.getPreferredScrollableViewportSize().height);
+        size.height = myResultsPreviewTable.getPreferredScrollableViewportSize().height;
         return size;
       }
     };
@@ -617,11 +609,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     return toolbar;
   }
 
-  private void adjustPopup() {
-    if (myBalloon == null || !myBalloon.isVisible()) return;
-    myBalloon.pack(false, true);
-  }
-
   private void registerCloseAction(JBPopup popup) {
     final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction closeAction = new DumbAwareAction() {
@@ -641,15 +628,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     ApplicationManager.getApplication().invokeLater(() -> ScrollingUtil.ensureSelectionExists(myResultsPreviewTable), ModalityState.any());
     myScopeSelectionToolbar.updateActionsImmediately();
   }
-
-  private void scheduleUpdateResultsPopupBounds() {
-    if (myUpdateResultsPopupBoundsAlarm == null || myUpdateResultsPopupBoundsAlarm.isDisposed()) return;
-    boolean later = myUpdateResultsPopupBoundsAlarm.getActiveRequestCount() > 0;
-
-    myUpdateResultsPopupBoundsAlarm.cancelAllRequests();
-    myUpdateResultsPopupBoundsAlarm.addRequest(() -> adjustPopup(), later ? 50 : 0);
-  }
-
 
   private void initByModel() {
     FindModel myModel = myHelper.getModel();
@@ -773,7 +751,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myTitleLabel.setText(myHelper.getTitle());
     myReplaceTextArea.setVisible(isReplaceState);
     myCbPreserveCase.setVisible(isReplaceState);
-    adjustPopup();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -859,13 +836,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     if (result != null) {
       myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow") + " ("+result.message+")");
-      adjustPopup();
       return;
     }
 
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false));
     myResultsPreviewTable.getEmptyText().setText("Searching...");
-    adjustPopup();//It wouldn't be called later if there are no usages at all, so let's call it now.
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
@@ -898,9 +873,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
-            scheduleUpdateResultsPopupBounds();
           }, state);
-          if (resultsCount.get() < 10) ApplicationManager.getApplication().invokeLater(() -> {adjustPopup();});
           return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
         }, processPresentation, filesToScanInitially);
 
