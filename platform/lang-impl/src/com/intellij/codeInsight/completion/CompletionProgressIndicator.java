@@ -114,6 +114,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       finishCompletionProcess(true);
     }
   };
+
+  private volatile boolean myIsUpdateSuppressed = false;
   private static int ourInsertSingleItemTimeSpan = 300;
 
   //temp external setters to make Rider autopopup more reactive
@@ -129,6 +131,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<>();
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
+  private CompletionThreadingBase myStrategy;
 
   public CompletionProgressIndicator(final Editor editor,
                                      @NotNull Caret caret,
@@ -321,9 +324,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myLookup;
   }
 
+  public void withSingleUpdate(Runnable action) {
+    try {
+      myIsUpdateSuppressed = true;
+      action.run();
+    } finally {
+      myIsUpdateSuppressed = false;
+      myQueue.queue(myUpdate);
+    }
+  }
+
   private boolean updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isOutdated() || !shouldShowLookup()) return false;
+    if (isOutdated() || !shouldShowLookup() || myIsUpdateSuppressed) return false;
 
     while (true) {
       Runnable action = myAdvertiserChanges.poll();
@@ -748,12 +761,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
+
   void startCompletion(final CompletionInitializationContext initContext) {
     boolean sync = ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup;
-    final CompletionThreading strategy = sync ? new SyncCompletion() : new AsyncCompletion();
-
-    strategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
-    final WeighingDelegate weigher = strategy.delegateWeighing(this);
+    myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
+    myStrategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
+    final WeighingDelegate weigher = myStrategy.delegateWeighing(this);
 
     class CalculateItems implements Runnable {
       @Override
@@ -770,7 +783,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     }
-    strategy.startThread(this, new CalculateItems());
+    myStrategy.startThread(this, new CalculateItems());
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {
@@ -782,6 +795,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     weigher.waitFor();
     ProgressManager.checkCanceled();
+  }
+
+  @Nullable
+  CompletionThreadingBase getCompletionThreading() {
+    return myStrategy;
   }
 
   public void addAdvertisement(@NotNull final String text, @Nullable final Color bgColor) {
