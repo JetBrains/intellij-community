@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 @State(name = "MemoryViewSettings", storages = @Storage("memory.view.xml"))
 public class MemoryViewManager extends ApplicationComponent.Adapter
   implements PersistentStateComponent<MemoryViewManagerState> {
+  public static final String MEMORY_VIEW_CONTENT = "MemoryView";
+
   private final EventDispatcher<MemoryViewManagerListener> myDispatcher =
     EventDispatcher.create(MemoryViewManagerListener.class);
   private MemoryViewManagerState myState = new MemoryViewManagerState();
