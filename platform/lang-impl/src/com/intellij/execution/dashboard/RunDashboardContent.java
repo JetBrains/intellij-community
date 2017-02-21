@@ -15,11 +15,9 @@
  */
 package com.intellij.execution.dashboard;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.tree.DashboardGrouper;
 import com.intellij.execution.dashboard.tree.RunDashboardTreeStructure;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -30,7 +28,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
@@ -40,10 +37,8 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -231,59 +226,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     };
     myBuilder.initRootNode();
     Disposer.register(this, myBuilder);
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
-      @Override
-      public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
-        updateTreeIfNeeded(settings);
-      }
-
-      @Override
-      public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
-        updateTreeIfNeeded(settings);
-      }
-
-      @Override
-      public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
-        updateTreeIfNeeded(settings);
-      }
-    });
-    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-    connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
-      @Override
-      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, final @NotNull ProcessHandler handler) {
-        updateTreeIfNeeded(env.getRunnerAndConfigurationSettings());
-      }
-
-      @Override
-      public void processTerminated(@NotNull String executorId,
-                                    @NotNull ExecutionEnvironment env,
-                                    @NotNull ProcessHandler handler,
-                                    int exitCode) {
-        updateTreeIfNeeded(env.getRunnerAndConfigurationSettings());
-      }
-    });
-    connection.subscribe(RunDashboardManager.DASHBOARD_TOPIC, new DashboardListener() {
-      @Override
-      public void contentChanged(boolean withStructure) {
-        updateTree(withStructure);
-      }
-    });
-    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-      }
-
-      @Override
-      public void exitDumbMode() {
-        updateTree(false);
-      }
-    });
-  }
-
-  private void updateTreeIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null && RunDashboardContributor.isShowInDashboard(settings.getType())) {
-      updateTree(true);
-    }
   }
 
   private JComponent createToolbar() {
@@ -330,8 +272,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   public void dispose() {
   }
 
-  public void updateTree(boolean withStructure) {
+  public void updateContent(boolean withStructure) {
     ApplicationManager.getApplication().invokeLater(() -> myBuilder.queueUpdate(withStructure).doWhenDone(() -> {
+      if (!withStructure) {
+        return;
+      }
       // Remove nodes not presented in the tree from collapsed node values set.
       // Children retrieving is quick since grouping and run configuration nodes are already constructed.
       Set<Object> nodes = new HashSet<>();
@@ -378,7 +323,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
-      updateTree(true);
+      updateContent(true);
     }
   }
 }

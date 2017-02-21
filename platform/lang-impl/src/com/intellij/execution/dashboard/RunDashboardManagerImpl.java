@@ -15,15 +15,23 @@
  */
 package com.intellij.execution.dashboard;
 
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.tree.DashboardGrouper;
+import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -33,6 +41,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentUI;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +49,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -50,35 +60,81 @@ import java.util.stream.Collectors;
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
+  @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
-  private List<DashboardGrouper> myGroupers = new ArrayList<>();
+  @NotNull private final List<DashboardGrouper> myGroupers;
+
+  private RunDashboardContent myDashboardContent;
 
   public RunDashboardManagerImpl(@NotNull final Project project) {
+    myProject = project;
+
     ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
     ContentUI contentUI = new PanelContentUI();
     myContentManager = contentFactory.createContentManager(contentUI, false, project);
 
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(getToolWindowId(), false, ToolWindowAnchor.BOTTOM,
-                                                                 project, true);
-    toolWindow.setIcon(getToolWindowIcon());
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myGroupers = Arrays.stream(DashboardGroupingRule.EP_NAME.getExtensions())
-        .sorted(DashboardGroupingRule.PRIORITY_COMPARATOR)
-        .map(DashboardGrouper::new)
-        .collect(Collectors.toList());
+    myGroupers = Arrays.stream(DashboardGroupingRule.EP_NAME.getExtensions())
+      .sorted(DashboardGroupingRule.PRIORITY_COMPARATOR)
+      .map(DashboardGrouper::new)
+      .collect(Collectors.toList());
 
-      RunDashboardContent dashboardContent = new RunDashboardContent(project, myContentManager, myGroupers);
-      Content content = contentFactory.createContent(dashboardContent, null, false);
-      Disposer.register(content, dashboardContent);
-      toolWindow.getContentManager().addContent(content);
+    if (isDashboardEnabled()) {
+      initToolWindowListeners();
     }
+  }
 
-    if (!Registry.is("ide.run.dashboard")) {
-      toolWindow.setAvailable(false, null);
-    }
+  private static boolean isDashboardEnabled() {
+    return Registry.is("ide.run.dashboard") && RunDashboardContributor.EP_NAME.getExtensions().length > 0;
+  }
 
-    // TODO [konstantin.aleev] control tool window availability and visibility.
+  private void initToolWindowListeners() {
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
+      @Override
+      public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+        updateDashboardIfNeeded(settings);
+      }
+
+      @Override
+      public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
+        updateDashboardIfNeeded(settings);
+      }
+
+      @Override
+      public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+        updateDashboardIfNeeded(settings);
+      }
+    });
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+      @Override
+      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, final @NotNull ProcessHandler handler) {
+        updateDashboardIfNeeded(env.getRunnerAndConfigurationSettings());
+      }
+
+      @Override
+      public void processTerminated(@NotNull String executorId,
+                                    @NotNull ExecutionEnvironment env,
+                                    @NotNull ProcessHandler handler,
+                                    int exitCode) {
+        updateDashboardIfNeeded(env.getRunnerAndConfigurationSettings());
+      }
+    });
+    connection.subscribe(RunDashboardManager.DASHBOARD_TOPIC, new DashboardListener() {
+      @Override
+      public void contentChanged(boolean withStructure) {
+        updateDashboard(withStructure);
+      }
+    });
+    connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+      }
+
+      @Override
+      public void exitDumbMode() {
+        updateDashboard(false);
+      }
+    });
   }
 
   @Override
@@ -94,6 +150,105 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   public Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowRun; // TODO [konstantin.aleev] provide new icon
+  }
+
+  @Override
+  public boolean isToolWindowAvailable() {
+    return isDashboardEnabled() && hasContent();
+  }
+
+  @Override
+  public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
+    myDashboardContent = new RunDashboardContent(myProject, myContentManager, myGroupers);
+    ContentManager contentManager = toolWindow.getContentManager();
+    Content content = contentManager.getFactory().createContent(myDashboardContent, null, false);
+    Disposer.register(content, myDashboardContent);
+    Disposer.register(content, () -> myDashboardContent = null);
+    toolWindow.getContentManager().addContent(content);
+  }
+
+  @Override
+  public List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations() {
+    List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
+
+    List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
+      .filter(runConfiguration -> RunDashboardContributor.isShowInDashboard(runConfiguration.getType()))
+      .collect(Collectors.toList());
+
+    //noinspection ConstantConditions ???
+    ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
+    configurations.forEach(configurationSettings -> {
+      List<RunContentDescriptor> descriptors = executionManager.getDescriptors(
+          settings -> Comparing.equal(settings.getConfiguration(), configurationSettings.getConfiguration()));
+      if (descriptors.isEmpty()) {
+        result.add(Pair.create(configurationSettings, null));
+      } else {
+        descriptors.forEach(descriptor -> result.add(Pair.create(configurationSettings, descriptor)));
+      }
+    });
+
+    // It is possible that run configuration was deleted, but there is running content descriptor for such run configuration.
+    // It should be shown in he dashboard tree.
+    List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
+      .collect(Collectors.toList());
+    List<RunContentDescriptor> notStoredDescriptors = executionManager.getRunningDescriptors(settings -> {
+      RunConfiguration configuration = settings.getConfiguration();
+      return RunDashboardContributor.isShowInDashboard(settings.getType()) && !storedConfigurations.contains(configuration);
+    });
+    notStoredDescriptors.forEach(descriptor -> {
+      Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
+      settings.forEach(setting -> result.add(Pair.create(setting, descriptor)));
+    });
+
+    return result;
+  }
+
+  private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
+    if (settings != null && RunDashboardContributor.isShowInDashboard(settings.getType())) {
+      updateDashboard(true);
+    }
+  }
+
+  private void updateDashboard(final boolean withStructure) {
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    toolWindowManager.invokeLater(() -> {
+      if (myProject.isDisposed()) {
+        return;
+      }
+
+      if (withStructure) {
+        boolean available = hasContent();
+        ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
+        if (toolWindow == null) {
+          if (available) {
+            createToolWindow();
+          }
+          return;
+        }
+
+        boolean doShow = !toolWindow.isAvailable() && available;
+        toolWindow.setAvailable(available, null);
+        if (doShow) {
+          toolWindow.show(null);
+        }
+      }
+
+      if (myDashboardContent != null) {
+        myDashboardContent.updateContent(withStructure);
+      }
+    });
+  }
+
+  private void createToolWindow() {
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    ToolWindow toolWindow = toolWindowManager.registerToolWindow(getToolWindowId(), false, ToolWindowAnchor.BOTTOM,
+                                                                 myProject, true);
+    toolWindow.setIcon(getToolWindowIcon());
+    createToolWindowContent(toolWindow);
+  }
+
+  private boolean hasContent() {
+    return !getRunConfigurations().isEmpty();
   }
 
   @Nullable
