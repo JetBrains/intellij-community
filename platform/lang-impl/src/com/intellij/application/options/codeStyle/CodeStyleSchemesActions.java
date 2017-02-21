@@ -128,7 +128,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
   private CodeStyleScheme importExternalCodeStyle(final SchemeImporter<CodeStyleScheme> importer, @NotNull CodeStyleScheme currentScheme)
     throws SchemeImportException {
     final VirtualFile selectedFile = SchemeImportUtil
-      .selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
+      .selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), CodeStyleSchemesUIConfiguration.Util.getRecentImportFile(), null);
     if (selectedFile != null) {
       CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
       final SchemeCreator schemeCreator = new SchemeCreator();
