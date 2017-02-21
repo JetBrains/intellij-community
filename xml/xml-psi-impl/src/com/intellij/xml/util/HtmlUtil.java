@@ -23,6 +23,7 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -38,6 +39,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
@@ -756,5 +758,35 @@ public class HtmlUtil {
       child = child.getNextSibling();
     }
     return false;
+  }
+
+  public static List<String> getIncludedPaths(@NotNull final XmlFile file) {
+    final List<String> result = new ArrayList<>();
+    file.acceptChildren(new XmlRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitXmlTag(XmlTag tag) {
+        if ("link".equalsIgnoreCase(tag.getName())) {
+          String href = tag.getAttributeValue("href");
+          if (!StringUtil.isEmpty(href)) {
+            result.add(href);
+          }
+        }
+        else if ("script".equalsIgnoreCase(tag.getName()) || "img".equalsIgnoreCase(tag.getName())) {
+          String src = tag.getAttributeValue("src");
+          if (!StringUtil.isEmpty(src)) {
+            result.add(src);
+          }
+        }
+        super.visitXmlTag(tag);
+      }
+
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element.getLanguage() instanceof XMLLanguage) {
+          super.visitElement(element);
+        }
+      }
+    });
+    return result.isEmpty() ? Collections.emptyList() : result;
   }
 }
