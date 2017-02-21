@@ -88,7 +88,10 @@ public class FacetDependentToolWindowManager extends AbstractProjectComponent {
   private void ensureToolWindowExists(FacetDependentToolWindow extension) {
     ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
     if (toolWindow == null) {
-      myToolWindowManager.initToolWindow(extension);
+      Condition<Project> condition = extension.getCondition();
+      if (condition == null || condition.value(myProject)) {
+        myToolWindowManager.initToolWindow(extension);
+      }
     }
   }
 
