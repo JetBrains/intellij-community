@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.palette.impl.PaletteToolWindowManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.uiDesigner.CutCopyPasteSupport;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.SimpleTransferable;
@@ -223,7 +224,9 @@ class DesignDropTargetListener implements DropTargetListener {
             PaletteToolWindowManager.getInstance(myEditor).clearActiveItem();
             myEditor.getActiveDecorationLayer().removeFeedback();
             myEditor.getLayeredPane().setCursor(null);
-            myEditor.getGlassLayer().requestFocus();
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getGlassLayer(), true);
+            });
             myEditor.getMainProcessor().setInsertFeedbackEnabled(true);
           });
         }

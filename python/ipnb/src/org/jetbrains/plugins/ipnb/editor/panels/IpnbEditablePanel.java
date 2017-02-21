@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -164,7 +165,9 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
           parent.repaint();
           if (parent instanceof IpnbFilePanel) {
             ((IpnbFilePanel)parent).setSelectedCellPanel(IpnbEditablePanel.this);
-            textArea.requestFocus();
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(textArea, true);
+            });
           }
         }
       }

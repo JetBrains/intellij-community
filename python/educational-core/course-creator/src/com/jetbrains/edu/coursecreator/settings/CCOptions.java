@@ -1,6 +1,7 @@
 package com.jetbrains.edu.coursecreator.settings;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,11 +17,15 @@ public class CCOptions implements StudyOptionsProvider {
   public JComponent createComponent() {
     if (CCSettings.getInstance().useHtmlAsDefaultTaskFormat()) {
       myHtmlRadioButton.setSelected(true);
-      myHtmlRadioButton.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myHtmlRadioButton, true);
+      });
     }
     else {
       myMarkdownRadioButton.setSelected(true);
-      myMarkdownRadioButton.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myMarkdownRadioButton, true);
+      });
     }
     return myPanel;
   }

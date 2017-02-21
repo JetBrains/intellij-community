@@ -81,6 +81,8 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
@@ -993,7 +995,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   public void requestFocus() {
     if (fromQuickSearch()) {
-      myPreviouslyFocused.getParent().requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        getGlobalInstance().requestFocus(myPreviouslyFocused.getParent(), true);
+      });
     }
   }
 

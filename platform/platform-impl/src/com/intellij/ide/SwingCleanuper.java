@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.Alarm;
@@ -82,7 +83,11 @@ public final class SwingCleanuper {
                 final Application app = ApplicationManager.getApplication();
                 if (app != null && app.isActive()) {
                   StatusBar statusBar = frame.getStatusBar();
-                  if (statusBar != null) ((JComponent)statusBar).requestFocus();
+                  if (statusBar != null) {
+                    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                      IdeFocusManager.getGlobalInstance().requestFocus((JComponent)statusBar, true);
+                    });
+                  }
                 }
               }
 

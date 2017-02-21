@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
@@ -40,6 +40,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager.getInstance;
 
 /**
  * @author Anton Katilin
@@ -64,10 +66,11 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
       public void actionPerformed(final AnActionEvent e) {
         if (!myCbx.isPopupVisible()) {
           fireEditingCancelled();
-          SwingUtilities.invokeLater(
-            () -> DesignerToolWindowManager.getInstance(DesignerToolWindowManager.getInstance(project).getActiveFormEditor())
-              .getPropertyInspector().requestFocus()
-          );
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance()
+              .requestFocus(getInstance(getInstance(project).getActiveFormEditor())
+                              .getPropertyInspector(), true);
+          });
         }
       }
     }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myCbx);

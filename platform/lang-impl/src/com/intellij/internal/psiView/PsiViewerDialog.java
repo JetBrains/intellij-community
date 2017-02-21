@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,8 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
  * @author Konstantin Bulenkov
@@ -225,7 +227,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       doOKAction();
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        myEditor.getContentComponent().requestFocus();
+        getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
+        });
         myEditor.getCaretModel().moveToOffset(selectedEditor.getCaretModel().getOffset());
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         //myEditor.getSelectionModel().setSelection(selectedEditor.getSelectionModel().getSelectionStart(),

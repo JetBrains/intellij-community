@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
@@ -129,7 +130,9 @@ class TableToolbarDecorator extends ToolbarDecorator {
           if (editorComponent != null) {
             final Rectangle bounds = editorComponent.getBounds();
             table.scrollRectToVisible(bounds);
-            editorComponent.requestFocus();
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(editorComponent, true);
+            });
           }
         });
 
@@ -142,7 +145,9 @@ class TableToolbarDecorator extends ToolbarDecorator {
       public void run(AnActionButton button) {
         if (TableUtil.doRemoveSelectedItems(table, tableModel, null)) {
           updateButtons();
-          table.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+          });
           TableUtil.updateScroller(table);
         }
       }
@@ -175,7 +180,9 @@ class TableToolbarDecorator extends ToolbarDecorator {
           idx[i] += delta;
         }
         TableUtil.selectRows(table, idx);
-        table.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+        });
         if (row > 0 && col != -1) {
           table.editCellAt(row - 1, col);
         }

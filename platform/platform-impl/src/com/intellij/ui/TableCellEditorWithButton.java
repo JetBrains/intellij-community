@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -141,7 +142,9 @@ public class TableCellEditorWithButton extends AbstractCellEditor implements Tab
     }
 
     public boolean requestDefaultFocus() {
-      myTextField.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myTextField, true);
+      });
       return true;
     }
   }

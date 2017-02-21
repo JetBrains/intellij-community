@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.containers.Convertor;
 import gnu.trove.TIntHashSet;
@@ -459,7 +460,9 @@ public class MergePanel2 implements DiffViewer {
       Editor centerEditor = getEditor(1);
       JComponent centerComponent = centerEditor.getContentComponent();
       if (centerComponent.isShowing()) {
-        centerComponent.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(centerComponent, true);
+        });
       }
       int[] toLeft = getPrimaryBeginnings(myDividers[0].getPaint());
       int[] toRight = getPrimaryBeginnings(myDividers[1].getPaint());

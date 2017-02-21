@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,7 @@ import java.util.List;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
 import static com.intellij.openapi.ui.LabeledComponent.create;
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
@@ -361,7 +362,9 @@ class RunConfigurable extends BaseConfigurable {
     textField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        myTree.requestFocus();
+        getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          getGlobalInstance().requestFocus(myTree, true);
+        });
       }
     });
     p.add(new JLabel("Folder name:"), "gapright 5");
@@ -373,7 +376,9 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.repaint();
     if (isFolderCreating) {
       textField.selectAll();
-      textField.requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        getGlobalInstance().requestFocus(textField, true);
+      });
     }
   }
 

@@ -64,6 +64,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+
 public class AbstractPopup implements JBPopup {
   public static final String SHOW_HINTS = "ShowHints";
 
@@ -1205,7 +1207,9 @@ public class AbstractPopup implements JBPopup {
     if (!myFocusable) return;
 
     if (myPreferredFocusedComponent != null) {
-      myPreferredFocusedComponent.requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        getGlobalInstance().requestFocus(myPreferredFocusedComponent, true);
+      });
     }
   }
 

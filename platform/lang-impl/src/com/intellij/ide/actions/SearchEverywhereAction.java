@@ -132,6 +132,8 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -293,7 +295,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final int i = myList.locationToIndex(e.getPoint());
         if (i != -1) {
           mySkipFocusGain = true;
-          getField().requestFocus();
+          getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            getGlobalInstance().requestFocus(getField(), true);
+          });
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             myList.setSelectedIndex(i);
@@ -402,7 +406,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         if (myNonProjectCheckBox == e.getOppositeComponent()) {
           mySkipFocusGain = true;
-          editor.requestFocus();
+          getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            getGlobalInstance().requestFocus(editor, true);
+          });
           return;
         }
         onFocusLost();
@@ -497,7 +503,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       option.setOptionState(!option.isOptionEnabled());
       myList.revalidate();
       myList.repaint();
-      getField().requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        getGlobalInstance().requestFocus(getField(), true);
+      });
       return;
     }
 

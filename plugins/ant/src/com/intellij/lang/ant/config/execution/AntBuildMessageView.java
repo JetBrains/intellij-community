@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.AntBuildMessageView");
@@ -218,7 +220,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     myCardLayout.show(myContentPanel, newView.getId());
 
     JComponent component = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myMessagePanel);
-    component.requestFocus();
+    getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      getGlobalInstance().requestFocus(component, true);
+    });
     repaint();
   }
 

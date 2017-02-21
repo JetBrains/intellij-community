@@ -211,7 +211,6 @@ interface ii {}
                 }
             }
         }
-        ;
  }
 
  void cf8() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -41,7 +42,9 @@ public abstract class EnableDisableAction extends AbstractAction {
       applyValue(rows, valueToBeSet);
 //          myMyTableModel.fireTableRowsUpdated(rows[0], rows[rows.length - 1]);
     }
-    getTable().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getTable(), true);
+    });
   }
 
   protected abstract JTable getTable();
