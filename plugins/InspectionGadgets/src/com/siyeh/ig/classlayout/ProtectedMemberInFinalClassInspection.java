@@ -17,25 +17,25 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.PsiModifier.PRIVATE;
 
@@ -56,6 +56,16 @@ public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFina
   }
 
   private static class MakePrivateFix extends InspectionGadgetsFix {
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return currentFile;
+    }
 
     @Override
     @NotNull
@@ -76,7 +86,7 @@ public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFina
       if (modifierList == null) {
         return;
       }
-      final MultiMap<PsiElement, String> conflicts = new MultiMap();
+      final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
       if (member instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)member;
         SuperMethodsSearch.search(method, method.getContainingClass(), true, false).forEach(
@@ -97,7 +107,7 @@ public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFina
       });
       }
       final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-      modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
+      modifierListCopy.setModifierProperty(PRIVATE, true);
       final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
       search.forEach(reference -> {
         final PsiElement element1 = reference.getElement();
@@ -106,7 +116,7 @@ public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFina
             PsiTreeUtil.getParentOfType(element1, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
           conflicts.putValue(element1, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
                                                                  RefactoringUIUtil.getDescription(member, false),
-                                                                 PsiBundle.visibilityPresentation(PsiModifier.PRIVATE),
+                                                                 PsiBundle.visibilityPresentation(PRIVATE),
                                                                  RefactoringUIUtil.getDescription(context, true)));
         }
         return true;
@@ -123,7 +133,7 @@ public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFina
         conflictsDialogOK = conflictsDialog.showAndGet();
       }
       if (conflictsDialogOK) {
-        modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+        WriteAction.run(() -> modifierList.setModifierProperty(PRIVATE, true));
       }
     }
   }
