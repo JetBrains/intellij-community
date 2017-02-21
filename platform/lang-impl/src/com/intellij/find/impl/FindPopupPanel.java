@@ -52,6 +52,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -545,7 +546,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
           myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
           VirtualFile file = usageInfo.getVirtualFile();
-          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? "  "+file.getPath() : "", false, new JBInsets(0, 0, 0, 0)));
+          String path = "";
+          if (file != null) {
+            String relativePath = VfsUtilCore.getRelativePath(file, myProject.getBaseDir());
+            if (relativePath == null) relativePath = file.getPath();
+            path = "<html><body>&nbsp;&nbsp;&nbsp;" +
+                   relativePath
+                     .replace(file.getName(), "<b>" + file.getName() + "</b>") + "</body></html>";
+          }
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(path, false, new JBInsets(8, 0, -14, 0)));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
@@ -590,7 +599,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(myCbFileFilter);
     add(myFileMaskField);
     add(myFilterContextButton, "wrap");
-    add(mySearchTextArea, "pushx, growx, sx 10, wrap");
+    add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(myReplaceTextArea, "pushx, growx, sx 10, wrap");
     add(myScopeSelectionToolbar.getComponent(), "gaptop 4");
     add(myScopeDetailsPanel, "sx 9, pushx, growx, wrap");
