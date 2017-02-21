@@ -407,14 +407,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitModuleStatement(statement);
   }
 
-  public void visitExportsStatement(PsiPackageAccessibilityStatement statement) {
-    visitPackageAccessibilityStatement(statement);
-  }
-
-  public void visitOpensStatement(PsiPackageAccessibilityStatement statement) {
-    visitPackageAccessibilityStatement(statement);
-  }
-
   public void visitUsesStatement(PsiUsesStatement statement) {
     visitModuleStatement(statement);
   }
