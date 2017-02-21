@@ -146,7 +146,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (myInheritedCompilerOutput) {
       final VirtualFile projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutput();
       if (projectOutputPath == null) return null;
-      return projectOutputPath.findFileByRelativePath(PRODUCTION + "/" + getModule().getName());
+      return projectOutputPath.findFileByRelativePath(PRODUCTION + "/" + getSanitizedModuleName());
     }
     return myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getFile();
   }
@@ -157,7 +157,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (myInheritedCompilerOutput) {
       final VirtualFile projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutput();
       if (projectOutputPath == null) return null;
-      return projectOutputPath.findFileByRelativePath(TEST + "/" + getModule().getName());
+      return projectOutputPath.findFileByRelativePath(TEST + "/" + getSanitizedModuleName());
     }
     return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getFile();
   }
@@ -168,7 +168,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (myInheritedCompilerOutput) {
       final String projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutputUrl();
       if (projectOutputPath == null) return null;
-      return projectOutputPath + "/" + PRODUCTION + "/" + getModule().getName();
+      return projectOutputPath + "/" + PRODUCTION + "/" + getSanitizedModuleName();
     }
     return myCompilerOutputPointer == null ? null : myCompilerOutputPointer.getUrl();
   }
@@ -179,9 +179,15 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
     if (myInheritedCompilerOutput) {
       final String projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutputUrl();
       if (projectOutputPath == null) return null;
-      return projectOutputPath + "/" + TEST + "/" + getModule().getName();
+      return projectOutputPath + "/" + TEST + "/" + getSanitizedModuleName();
     }
     return myCompilerOutputPathForTestsPointer == null ? null : myCompilerOutputPathForTestsPointer.getUrl();
+  }
+
+  private String getSanitizedModuleName() {
+    Module module = getModule();
+    VirtualFile file = module.getModuleFile();
+    return file != null ? file.getNameWithoutExtension() : module.getName();
   }
 
   @Override
