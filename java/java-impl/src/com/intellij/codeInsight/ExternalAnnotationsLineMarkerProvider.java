@@ -143,11 +143,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
   }
 
   private static boolean isVisibleAnnotation(@NotNull PsiAnnotation annotation) {
-    PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-    if (ref == null) return true;
-
-    PsiElement target = ref.resolve();
-    return !(target instanceof PsiClass) || JavaDocInfoGenerator.isDocumentedAnnotationType(target);
+    return !"org.intellij.lang.annotations.Flow".equals(annotation.getQualifiedName());
   }
 
   @Override
