@@ -31,11 +31,10 @@ public class ShelfProjectConfigurable implements SearchableConfigurable {
   public static final String DISPLAY_NAME = VcsBundle.message("shelf.tab");
   public static final String HELP_ID = "project.propVCSSupport.Shelf";
 
-  private final Project myProject;
-  private ShelfProjectConfigurationPanel myShelfConfigPanel;
+  @NotNull private final Project myProject;
+  @Nullable private ShelfProjectConfigurationPanel myShelfConfigPanel;
 
-
-  public ShelfProjectConfigurable(Project project) {
+  public ShelfProjectConfigurable(@NotNull Project project) {
     myProject = project;
   }
 
