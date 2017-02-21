@@ -80,8 +80,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     myProperties.myClassPattern = myCapturePoint.myClassName;
     myProperties.myMethodName = myCapturePoint.myMethodName;
 
-    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression);
-    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression);
+    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression, !StringUtil.isEmpty(myCapturePoint.myClassName));
+    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression, !StringUtil.isEmpty(myCapturePoint.myInsertClassName));
   }
 
   @NotNull
@@ -231,14 +231,16 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   private static class MyEvaluator {
     private final String myExpression;
+    private final boolean myCached;
     ExpressionEvaluator myEvaluator;
 
-    public MyEvaluator(String expression) {
+    public MyEvaluator(String expression, boolean cached) {
       myExpression = expression;
+      myCached = cached;
     }
 
     Value evaluate(final EvaluationContext context) throws EvaluateException {
-      if (myEvaluator == null) {
+      if (!myCached || myEvaluator == null) {
         myEvaluator = ApplicationManager.getApplication().runReadAction(
           (ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);
