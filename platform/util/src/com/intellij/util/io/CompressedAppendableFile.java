@@ -418,7 +418,19 @@ public class CompressedAppendableFile {
             }
           }
         }
-      } catch (IOException ex) {
+      } catch (FileNotFoundException ex) {
+        File parentFile = incompleteChunkFile.getParentFile();
+        if (!parentFile.exists()) {
+          if(parentFile.mkdirs()) {
+            saveIncompleteChunk();
+            return;
+          } else {
+            throw new RuntimeException("Failed to write:"+incompleteChunkFile, ex);
+          }
+        }
+        throw new RuntimeException(ex);
+      }
+      catch (IOException ex) {
         throw new RuntimeException(ex);
       }
       myDirty = false;
