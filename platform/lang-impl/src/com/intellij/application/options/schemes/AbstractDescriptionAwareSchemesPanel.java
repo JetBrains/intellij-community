@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
@@ -122,7 +123,9 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   public void editDescription(@Nullable String startValue) {
     myLayout.show(myInfoComponent, EDIT_DESCRIPTION_CARD);
     myDescriptionTextField.setText(StringUtil.notNullize(startValue));
-    myDescriptionTextField.requestFocus();
+
+    final IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
+    fm.doWhenFocusSettlesDown(() -> fm.requestFocus(myDescriptionTextField, true));
   }
 
   @NotNull
