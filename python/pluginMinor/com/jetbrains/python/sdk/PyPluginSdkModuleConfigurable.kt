@@ -25,6 +25,7 @@ import com.jetbrains.python.configuration.PyActiveSdkConfigurable
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
 import com.jetbrains.python.facet.PythonFacet
 import com.jetbrains.python.facet.PythonFacetType
+import com.jetbrains.python.facet.PythonFacetUtil
 
 /**
  * @author traff
@@ -36,14 +37,14 @@ class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkModuleConfig
     return object : PyActiveSdkConfigurable(module) {
       override fun setSdk(item: Sdk?) {
         val facetManager = FacetManager.getInstance(module)
-        var facet = facetManager.getFacetByType(PythonFacet.ID)
+        val facet = facetManager.getFacetByType(PythonFacet.ID)
         if (facet == null) {
           ApplicationManager.getApplication().runWriteAction {
-            facetManager.addFacet(PythonFacetType.getInstance(), "Python facet", null).configuration.sdk = item
+            addFacet(facetManager, item, module)
           }
         }
         else {
-          facet.configuration.sdk = item
+          setFacetSdk(facet, item, module)
         }
 
       }
@@ -54,5 +55,19 @@ class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkModuleConfig
         return facet?.configuration?.sdk
       }
     }
+  }
+
+  private fun setFacetSdk(facet: PythonFacet,
+                          item: Sdk?,
+                          module: Module) {
+    facet.configuration.sdk = item
+    PythonFacetUtil.updateLibrary(module, facet.configuration)
+  }
+
+  private fun addFacet(facetManager: FacetManager,
+                       sdk: Sdk?,
+                       module: Module) {
+    val facet = facetManager.addFacet(PythonFacetType.getInstance(), "Python facet", null)
+    setFacetSdk(facet, sdk, module)
   }
 }
