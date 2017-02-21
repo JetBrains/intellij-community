@@ -526,7 +526,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return Comparing.equal(TEST_OBJECT, second.TEST_OBJECT) &&
              Comparing.equal(getMainClassName(), second.getMainClassName()) &&
              Comparing.equal(getPackageName(), second.getPackageName()) &&
-             Comparing.equal(getMethodName(), second.getMethodName()) &&
+             Comparing.equal(getMethodNameWithSignature(), second.getMethodNameWithSignature()) &&
              Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
              Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
              Comparing.equal(PARAMETERS, second.PARAMETERS) &&
@@ -542,7 +542,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return Comparing.hashcode(TEST_OBJECT) ^
              Comparing.hashcode(getMainClassName()) ^
              Comparing.hashcode(getPackageName()) ^
-             Comparing.hashcode(getMethodName()) ^
+             Comparing.hashcode(getMethodNameWithSignature()) ^
              Comparing.hashcode(getWorkingDirectory()) ^
              Comparing.hashcode(VM_PARAMETERS) ^
              Comparing.hashcode(PARAMETERS) ^
@@ -662,6 +662,12 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public String getMethodName() {
+      String signature = getMethodNameWithSignature();
+      int paramsIdx = signature.lastIndexOf("(");
+      return paramsIdx > -1 ? signature.substring(0, paramsIdx) : signature;
+    }
+
+    public String getMethodNameWithSignature() {
       return METHOD_NAME != null ? METHOD_NAME : "";
     }
 
