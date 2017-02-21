@@ -15,6 +15,9 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -34,6 +37,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -286,19 +290,19 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     }
     catch (URISyntaxException e) {
       if (showNotification) {
-        showWarning(codePanel.getFileEditor(),
+        showMessage(codePanel.getFileEditor(),
                     "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
-                    new IpnbSettingsAdapter());
+                    new IpnbSettingsAdapter(), MessageType.WARNING);
         LOG.warn("Jupyter Notebook connection refused: " + e.getMessage());
       }
       return false;
     }
     catch (UnsupportedOperationException e) {
-      showWarning(codePanel.getFileEditor(), e.getMessage(), new IpnbSettingsAdapter());
+      showMessage(codePanel.getFileEditor(), e.getMessage(), new IpnbSettingsAdapter(), MessageType.WARNING);
     }
     catch (UnknownHostException e) {
-      showWarning(codePanel.getFileEditor(), "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
-                  new IpnbSettingsAdapter());
+      showMessage(codePanel.getFileEditor(), "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
+                  new IpnbSettingsAdapter(), MessageType.WARNING);
     }
     catch (IOException e) {
       if (IpnbConnection.AUTHENTICATION_NEEDED.equals(e.getMessage())) {
@@ -310,11 +314,12 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
       if (showNotification) {
         final String message = e.getMessage();
         if (message.startsWith(IpnbConnection.UNABLE_LOGIN_MESSAGE)) {
-          showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: login failed", new IpnbSettingsAdapter());
+          showMessage(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: login failed", new IpnbSettingsAdapter(),
+                      MessageType.WARNING);
         }
         else if (message.startsWith(CONNECTION_REFUSED) || message.startsWith(IpnbConnection.CANNOT_START_JUPYTER)) {
-          showWarning(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: cannot connect to Jupyter server", 
-                      new IpnbSettingsAdapter());
+          showMessage(codePanel.getFileEditor(), "Cannot connect to Jupyter Notebook: cannot connect to Jupyter server",
+                      new IpnbSettingsAdapter(), MessageType.WARNING);
         }
         
         LOG.warn("Jupyter Notebook connection refused: " + message);
@@ -371,13 +376,13 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     }
   }
 
-  private static void showWarning(@NotNull final IpnbFileEditor fileEditor,
+  private static void showMessage(@NotNull final IpnbFileEditor fileEditor,
                                   @NotNull final String message,
-                                  @Nullable final HyperlinkAdapter listener) {
+                                  @Nullable final HyperlinkAdapter listener, MessageType messageType) {
     ApplicationManager.getApplication().invokeLater(() -> {
       BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
-        message, null, MessageType.WARNING.getPopupBackground(), listener);
-      final Balloon balloon = balloonBuilder.createBalloon();
+        message, null, messageType.getPopupBackground(), listener);
+      final Balloon balloon = balloonBuilder.setHideOnLinkClick(true).createBalloon();
       ApplicationManager.getApplication().invokeLater(() -> balloon.showInCenterOf(fileEditor.getRunCellButton()));
     });
   }
@@ -387,14 +392,36 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     if (module == null) return false;
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     if (sdk == null) {
-      showWarning(fileEditor, "Please check Python Interpreter in Settings->Python Interpreter", null);
+      showMessage(fileEditor, "Please check Python Interpreter in Settings->Python Interpreter", null, MessageType.WARNING);
       return false;
     }
     final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
     final PyPackage ipythonPackage = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
     final PyPackage jupyterPackage = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
     if (ipythonPackage == null && jupyterPackage == null) {
-      showWarning(fileEditor, "Add Jupyter to the interpreter of the current project.", null);
+      showMessage(fileEditor, "<a href=\"\">Add Jupyter</a> to the interpreter of the current project.",
+                  new HyperlinkAdapter() {
+
+                    @Override
+                    protected void hyperlinkActivated(HyperlinkEvent e) {
+
+                      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Installing Jupyter", false) {
+                        @Override
+                        public void run(@NotNull ProgressIndicator indicator) {
+                          try {
+                            PyPackageManager.getInstance(sdk).install("ipython");
+                            PyPackageManager.getInstance(sdk).install("jupyter");
+                            showMessage(fileEditor, "Jupyter successfully installed", null, MessageType.INFO);
+                          }
+                          catch (ExecutionException e1) {
+                            showMessage(fileEditor,
+                                        "Failed to install Jupyter. Please, install it manually in <a href=\"\">Settings->Python Interpreter</a>",
+                                        new InterpreterSettingsAdapter(), MessageType.WARNING);
+                          }
+                        }
+                      });
+                    }
+                  }, MessageType.WARNING);
       return false;
     }
 
@@ -405,13 +432,14 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
 
     final Pair<String, String> hostPort = getHostPortFromUrl(url);
     if (hostPort == null) {
-      showWarning(fileEditor, "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
-                  new IpnbSettingsAdapter());
+      showMessage(fileEditor, "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
+                  new IpnbSettingsAdapter(), MessageType.WARNING);
       return false;
     }
     final String homePath = sdk.getHomePath();
     if (homePath == null) {
-      showWarning(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null);
+      showMessage(fileEditor, "Python Sdk is invalid, please check Python Interpreter in Settings->Python Interpreter", null,
+                  MessageType.WARNING);
       return false;
     }
     Map<String, String> env = null;
@@ -575,6 +603,13 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
     @Override
     protected void hyperlinkActivated(HyperlinkEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(myProject, "Jupyter Notebook");
+    }
+  }
+
+  class InterpreterSettingsAdapter extends HyperlinkAdapter {
+    @Override
+    protected void hyperlinkActivated(HyperlinkEvent e) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(myProject, PyBundle.message("active.sdk.dialog.project.interpreter"));
     }
   }
 }
