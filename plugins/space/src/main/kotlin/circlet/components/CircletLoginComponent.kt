@@ -7,6 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import klogging.*
 import runtime.*
+import runtime.async.*
 import runtime.kdata.*
 
 private val log = KLoggers.logger("app-idea/CircletLoginComponent.kt")
@@ -41,9 +42,9 @@ class CircletLoginComponent() :
     val credentialsUpdated = Signal.create<Boolean>()
     val enabled = Property.createMutable(false)
 
-    fun getAccessToken(login : String, pass : String) : Promise<AuthenticationResponse> {
+    fun getAccessToken(login : String, pass : String) = asyncPromise<AuthenticationResponse> {
         log.info( "Checking credentials for ${login}" )
-        return CircletAuthentication(authEndpoint).authenticate(login, pass)
+        CircletAuthentication(authEndpoint).authenticate(login, pass)
     }
 
     fun setCredentials(login: String, pass: String, token: String) {
