@@ -83,7 +83,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       }
       else {
         final boolean dark = UIUtil.isUnderDarcula();
-        final Color pushed = UIUtil.isUnderWin10LookAndFeel() ? Gray.xE6 : Gray.xD0;
+        final Color pushed = UIUtil.isUnderWin10LookAndFeel() ? Gray.xE6 : dark? ColorUtil.shift(bg,  1.428D) : Gray.xD0;
         final Color dark_normal = Gray._255.withAlpha(40);
         g.setColor(state == ActionButtonComponent.PUSHED ? pushed : dark ? dark_normal : Gray.xD9);
         ((Graphics2D)g).fill(getShape(size));
