@@ -193,11 +193,9 @@ public class FindManagerImpl extends FindManager {
           }
         });
     }
-    else if (myHelper.getModel().isReplaceState() != model.isReplaceState() ||
-             !Comparing.equal(myHelper.getModel().getStringToFind(), model.getStringToFind())) {
+    else {
       myHelper.setModel(model);
       myHelper.setOkHandler(okHandler);
-      return;
     }
     myHelper.showUI();
   }
