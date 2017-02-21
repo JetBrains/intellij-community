@@ -52,7 +52,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 
-public class RenameDialog extends RefactoringDialog implements RenameDialogViewModel {
+public class RenameDialog extends RefactoringDialog {
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
   private SuggestedNameInfo mySuggestedNameInfo;
   private JLabel myNameLabel;
@@ -302,7 +302,6 @@ public class RenameDialog extends RefactoringDialog implements RenameDialogViewM
     performRename(newName);
   }
 
-  @Override
   public void performRename(@NotNull final String newName) {
     final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
     elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
