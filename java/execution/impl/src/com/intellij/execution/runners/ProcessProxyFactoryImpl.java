@@ -24,6 +24,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMainV2;
 
@@ -39,7 +40,7 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
 
     if (ourMayUseLauncher && mainClass != null) {
       String rtJarPath = JavaSdkUtil.getIdeaRtJarPath();
-      boolean runtimeJarFile = new File(rtJarPath).isFile();
+      boolean runtimeJarFile = new File(rtJarPath).isFile() && FileUtil.isAncestor(PathManager.getHomePath(), rtJarPath, true);
 
       if (runtimeJarFile || javaParameters.getModuleName() == null) {
         try {
