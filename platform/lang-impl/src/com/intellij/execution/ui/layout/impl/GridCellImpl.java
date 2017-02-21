@@ -47,6 +47,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 public class GridCellImpl implements GridCell {
@@ -75,6 +77,7 @@ public class GridCellImpl implements GridCell {
         //noinspection UseJBColor
         myDarkPainter.setDefaultTabColor(new Color(0x424D5F));
       }
+
       @Override
       public boolean useSmallLabels() {
         return true;
@@ -342,15 +345,21 @@ public class GridCellImpl implements GridCell {
 
     restoreProportions();
 
-    Content[] contents = getContents();
+    final Content[] contents = getContents();
+    final List<Content> toMinimize = new ArrayList<>();
+
     int window = 0;
     for (Content each : contents) {
       final View view = myContainer.getStateFor(each);
       if (view.isMinimizedInGrid()) {
-        minimize(each);
+        toMinimize.add(each);
       }
+
       window = view.getWindow();
     }
+
+    minimize(toMinimize.toArray(new Content[toMinimize.size()]));
+
     final Tab tab = myContainer.getTab();
     final boolean detached = (tab != null && tab.isDetached(myPlaceInGrid)) || window != myContext.getWindow();
     if (detached && contents.length > 0) {
