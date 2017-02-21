@@ -87,7 +87,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
   private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;
   private static final int ROOT_NAME_MAX_WIDTH = 200;
-  private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
+  private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
   @NotNull private final AbstractVcsLogUi myUi;
