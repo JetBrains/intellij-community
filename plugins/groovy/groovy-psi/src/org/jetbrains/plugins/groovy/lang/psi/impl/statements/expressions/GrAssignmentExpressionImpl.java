@@ -130,9 +130,9 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
                                        @NotNull GroovyFileImpl file,
                                        @NotNull GrExpression lValue) {
     if (!(lValue instanceof GrReferenceExpression)) return true;
+
     final GrReferenceExpression lReference = (GrReferenceExpression)lValue;
     if (lReference.isQualified()) return true;
-    if (lReference != place && lReference.resolve() != null && !(lReference.resolve() instanceof GrBindingVariable)) return true;
 
     final String name = lReference.getReferenceName();
     if (name == null) return true;
@@ -140,6 +140,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     String hintName = ResolveUtil.getNameHint(processor);
     if (hintName != null && !name.equals(hintName)) return true;
 
+    if (lReference != place && lReference.resolve() != null && !(lReference.resolve() instanceof GrBindingVariable)) return true;
     final ConcurrentMap<String, GrBindingVariable> bindings = file.getBindings();
     GrBindingVariable variable = bindings.get(name);
     if (variable == null) {
