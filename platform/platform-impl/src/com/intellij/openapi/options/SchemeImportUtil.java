@@ -19,17 +19,10 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileElement;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,22 +32,27 @@ public class SchemeImportUtil {
   @Nullable
   public static VirtualFile selectImportSource(@NotNull final String[] sourceExtensions,
                                                @NotNull Component parent,
-                                               @Nullable VirtualFile preselect) {
+                                               @Nullable VirtualFile preselect,
+                                               @Nullable String description) {
     final Set<String> extensions = new HashSet<>(Arrays.asList(sourceExtensions));
-    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-      .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
-        @Override
-        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          return 
-            (file.isDirectory() || extensions.contains(file.getExtension())) && 
-            (showHiddenFiles || !FileElement.isFileHidden(file));
-        }
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        return
+          (file.isDirectory() || extensions.contains(file.getExtension())) &&
+          (showHiddenFiles || !FileElement.isFileHidden(file));
+      }
 
-        @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          return !file.isDirectory() && extensions.contains(file.getExtension());
-        }
-      }, null, parent);
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        return !file.isDirectory() && extensions.contains(file.getExtension());
+      }
+    };
+    if (description != null) {
+      descriptor.setDescription(description);
+    }
+    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
+      .createFileChooser(descriptor, null, parent);
     final VirtualFile[] preselectFiles;
     if (preselect != null) {
       preselectFiles = new VirtualFile[1];
