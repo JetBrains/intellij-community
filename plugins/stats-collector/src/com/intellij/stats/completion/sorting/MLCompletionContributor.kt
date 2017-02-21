@@ -94,7 +94,8 @@ class MLClassifier(next: Classifier<LookupElement>,
 
 class MLClassifierFactory(
         private val lookupArranger: LookupArranger,
-        private val lookup: LookupImpl) : ClassifierFactory<LookupElement>("MLClassifierFactory") {
+        private val lookup: LookupImpl
+) : ClassifierFactory<LookupElement>("MLClassifierFactory") {
   
   private val ranker = MLRanker.getInstance()
   
@@ -104,14 +105,19 @@ class MLClassifierFactory(
 }
 
 
-class MLCompletionContributor : CompletionContributor() {
+open class MLCompletionContributor : CompletionContributor() {
 
+  open fun newClassifierFactory(lookupArranger: LookupArranger, lookup: LookupImpl): ClassifierFactory<LookupElement> {
+    return MLClassifierFactory(lookupArranger, lookup)
+  }
+  
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val oldSorter = getSorter(result)
     val lookupArranger = getLookupArranger(parameters)
-
     val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl
-    val newSorter = oldSorter.withClassifier("templates", true, MLClassifierFactory(lookupArranger, lookup))
+
+    val classifierFactory = newClassifierFactory(lookupArranger, lookup)
+    val newSorter = oldSorter.withClassifier("templates", true, classifierFactory)
     val newResult = result.withRelevanceSorter(newSorter)
     
     newResult.runRemainingContributors(parameters, {
@@ -123,14 +129,14 @@ class MLCompletionContributor : CompletionContributor() {
 
 
 fun getSorter(result: CompletionResultSet): CompletionSorterImpl {
-  val field = result.javaClass.getDeclaredField("mySorter")
+  val field = result::class.java.getDeclaredField("mySorter")
   field.isAccessible = true
   return field.get(result) as CompletionSorterImpl
 }
 
 fun getLookupArranger(parameters: CompletionParameters): LookupArranger {
   val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl
-  val arrangerField = lookup.javaClass.getDeclaredField("myArranger")
+  val arrangerField = lookup::class.java.getDeclaredField("myArranger")
   arrangerField.isAccessible = true
   val arranger = arrangerField.get(lookup) as LookupArranger
   return arranger
