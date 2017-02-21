@@ -24,9 +24,9 @@ import org.jetbrains.intellij.build.ProductProperties
  */
 @CompileStatic
 class VmOptionsGenerator {
-  private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
+  private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 " +
                                           "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
-                                          "-XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow"
+                                          "-Djna.nosys=true -Djna.boot.library.path= "
 
   static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties, String yourkitSessionName = null) {
     String options = vmOptionsForArch(arch, productProperties) + " " + computeCommonVmOptions(isEAP)
@@ -39,7 +39,9 @@ class VmOptionsGenerator {
   static String computeCommonVmOptions(boolean isEAP) {
     String options = COMMON_VM_OPTIONS
     if (isEAP) {
-      options += " -XX:MaxJavaStackTraceDepth=-1"
+      options += " -XX:MaxJavaStackTraceDepth=-1 -XX:+HeapDumpOnOutOfMemoryError -XX:-OmitStackTraceInFastThrow -ea"
+    } else {
+      options += " -da"
     }
     return options
   }
@@ -47,8 +49,8 @@ class VmOptionsGenerator {
   static String vmOptionsForArch(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
       // NOTE: when changing, please review usages of ProductProperties.getCustomJvmMemoryOptionsX64 and synchronize if necessary  
-      case JvmArchitecture.x32: return "-server -Xms128m -Xmx512m -XX:ReservedCodeCacheSize=240m"
-      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m"
+      case JvmArchitecture.x32: return "-server -Xms256m -Xmx768m -XX:ReservedCodeCacheSize=240m"
+      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64 ?: "-Xms256m -Xmx1280m -XX:ReservedCodeCacheSize=240m"
     }
     throw new AssertionError(arch)
   }
