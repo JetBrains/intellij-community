@@ -280,8 +280,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   @Nullable
-  private static String validateDestinationDirectory(@NotNull File destinationDir) {
-    if (!destinationDir.exists() && !destinationDir.mkdirs()) return "Destination shelf directory doesn't exist and failed to be created";
+  public static String validateDestinationDirectory(@NotNull File destinationDir) {
+    if (!destinationDir.exists() && !destinationDir.mkdirs()) return "Can't find or create new shelf directory";
     if (!destinationDir.canRead()) return "Destination shelf directory should have read access";
     if (!destinationDir.canWrite()) return "Destination shelf directory should have write access";
     return null;

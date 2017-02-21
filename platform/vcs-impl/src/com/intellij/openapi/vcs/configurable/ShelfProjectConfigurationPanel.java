@@ -63,13 +63,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
       @Override
       public boolean verify(JComponent input) {
         File file = new File(myShelfDirectoryPath.getText());
-        String errorMessage = null;
-        if (!file.exists() && !file.mkdirs()) {
-          errorMessage = "Can't find or create new shelf directory";
-        }
-        else if (!file.canWrite() || !file.canRead()) {
-          errorMessage = "Shelf directory should have read and write access";
-        }
+        String errorMessage = ShelveChangesManager.validateDestinationDirectory(file);
         if (errorMessage != null && myShelfDirectoryPath.isShowing()) {
           PopupUtil.showBalloonForComponent(myShelfDirectoryPath, errorMessage, MessageType.WARNING, false, myProject);
         }
