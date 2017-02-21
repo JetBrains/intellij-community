@@ -80,6 +80,9 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (parent instanceof PsiClass) {
       name = ((PsiClass)parent).getName();
     }
+    else if (parent instanceof PsiJavaModule) {
+      name = ((PsiJavaModule)parent).getName();
+    }
     else {
       int options = PsiFormatUtilBase.SHOW_NAME | (myShowContainingClass ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS : 0);
       if (parent instanceof PsiMethod) {

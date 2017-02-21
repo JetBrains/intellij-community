@@ -261,7 +261,9 @@ public class ModuleHighlightUtil {
         (parent = statement.getParent()) instanceof PsiJavaModule &&
         ((PsiJavaModule)parent).hasModifierProperty(PsiModifier.OPEN)) {
       String message = JavaErrorMessages.message("module.opens.in.weak.module");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+      QuickFixAction.registerQuickFixAction(info, factory().createModifierListFix((PsiModifierListOwner)parent, PsiModifier.OPEN, false, false));
+      return info;
     }
 
     return null;
