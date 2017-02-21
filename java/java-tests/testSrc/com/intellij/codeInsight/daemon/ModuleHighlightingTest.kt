@@ -121,6 +121,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testWeakModule() {
+    highlight("""open module M { <error descr="'opens' only allowed in strong modules">opens pkg.missing;</error> }""")
+  }
+
   fun testUses() {
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { void m(); }")
     addFile("pkg/main/O.java", "package pkg.main;\npublic class O {\n public class I { void m(); }\n}")
