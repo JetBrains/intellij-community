@@ -90,8 +90,7 @@ echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"/
 cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
-# Not sure where this has gone: temporarily disable to make builds green
-#cp -Rfv "$OUT"/studio-aswb-plugin.zip "$DIST/android-studio-aswb-$BRANCH_PREFIX$BNUM.zip"
+cp -Rfv "$OUT"/studio-aswb-plugin.zip "$DIST/android-studio-aswb-$BRANCH_PREFIX$BNUM.zip"
 cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
 # write the version number into the windows installer dir
 echo $BRANCH_PREFIX$BNUM > ../adt/idea/native/installer/win/version
