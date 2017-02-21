@@ -103,15 +103,15 @@ public class IpnbConnection {
       throw new UnsupportedOperationException("Only https urls are supported for remote notebooks");
     }
     
-    initXSRF(myURI.toString());
-    
     if (IpnbSettings.getInstance(project).isRemote(project.getLocationHash())) {
       String loginUrl = getLoginUrl();
+      initXSRF(myURI.toString() + loginUrl);
       myIsHubServer = isHubServer(loginUrl);
       myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
       mySessionId = myHeaders.get(SM.COOKIE);
     }
     else {
+      initXSRF(myURI.toString());
       if (myToken != null) {
         myHeaders.put(HttpHeaders.AUTHORIZATION, "token " + myToken);
       }
