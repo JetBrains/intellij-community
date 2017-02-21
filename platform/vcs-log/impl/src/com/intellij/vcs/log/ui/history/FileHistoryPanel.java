@@ -27,7 +27,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -73,7 +73,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     myDetailsSplitter.setFirstComponent(VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
                                                                      logData, this));
-    myDetailsSplitter.setSecondComponent(myUi.getProperties().get(MainVcsLogUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
+    myDetailsSplitter.setSecondComponent(myUi.getProperties().get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
     VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);

@@ -36,7 +36,7 @@ import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -247,8 +247,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   private class MyPropertiesChangeListener implements VcsLogUiProperties.PropertiesChangeListener {
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-      if (property == MainVcsLogUiProperties.SHOW_DETAILS) {
-        myFileHistoryPanel.showDetails(myUiProperties.get(MainVcsLogUiProperties.SHOW_DETAILS));
+      if (property == CommonUiProperties.SHOW_DETAILS) {
+        myFileHistoryPanel.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
       }
       else if (property == FileHistoryUiProperties.SHOW_ALL_BRANCHES) {
         updateFilter();

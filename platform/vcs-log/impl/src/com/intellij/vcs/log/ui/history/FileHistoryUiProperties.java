@@ -21,7 +21,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperty<T> property) {
-    if (MainVcsLogUiProperties.SHOW_DETAILS.equals(property)) {
+    if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_DETAILS);
     }
     else if (SHOW_ALL_BRANCHES.equals(property)) {
@@ -54,7 +54,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   @Override
   public <T> void set(@NotNull VcsLogUiProperty<T> property, @NotNull T value) {
-    if (MainVcsLogUiProperties.SHOW_DETAILS.equals(property)) {
+    if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
       myState.SHOW_DETAILS = (Boolean)value;
     }
     else if (SHOW_ALL_BRANCHES.equals(property)) {
@@ -68,7 +68,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    return MainVcsLogUiProperties.SHOW_DETAILS.equals(property) || SHOW_ALL_BRANCHES.equals(property);
+    return CommonUiProperties.SHOW_DETAILS.equals(property) || SHOW_ALL_BRANCHES.equals(property);
   }
 
   @Nullable

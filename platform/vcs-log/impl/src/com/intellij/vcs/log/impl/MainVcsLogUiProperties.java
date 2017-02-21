@@ -17,7 +17,6 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +25,6 @@ import java.util.Map;
 
 public interface MainVcsLogUiProperties extends VcsLogUiProperties {
 
-  VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>("Window.ShowDetails");
   VcsLogUiProperty<Boolean> SHOW_LONG_EDGES = new VcsLogUiProperty<>("Graph.ShowLongEdges");
   VcsLogUiProperty<PermanentGraph.SortType> BEK_SORT_TYPE = new VcsLogUiProperty<>("Graph.BekSortType");
   VcsLogUiProperty<Boolean> SHOW_ROOT_NAMES = new VcsLogUiProperty<>("Table.ShowRootNames");

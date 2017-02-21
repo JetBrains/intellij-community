@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -50,7 +51,7 @@ public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector 
         MainVcsLogUiProperties properties = ui.getProperties();
 
         Set<UsageDescriptor> usages = ContainerUtil.newHashSet();
-        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", properties.get(SHOW_DETAILS)));
+        usages.add(StatisticsUtilKt.getBooleanUsage("ui.details", properties.get(CommonUiProperties.SHOW_DETAILS)));
         usages.add(StatisticsUtilKt.getBooleanUsage("ui.long.edges", properties.get(SHOW_LONG_EDGES)));
 
         PermanentGraph.SortType sortType = properties.get(BEK_SORT_TYPE);
