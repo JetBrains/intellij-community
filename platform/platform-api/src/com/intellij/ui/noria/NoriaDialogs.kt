@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 
 data class DialogProps(val north: Element? = null,
-                       val hasHelp: Boolean = true,
                        val center: Element? = null,
                        val errorText: Cell<String?> = cell(null as String?),
                        val actions: List<NoriaAction>,

@@ -76,6 +76,10 @@ class SwingNoriaDialogs : NoriaDialogs {
         return northPanel
       }
 
+      override fun getHelpId(): String? {
+        return dialogProps.helpId
+      }
+
       fun makeAction(a: NoriaAction): Action =
         if (a.isExclusive) {
           object : DialogWrapperAction(a.name) {
@@ -101,7 +105,7 @@ class SwingNoriaDialogs : NoriaDialogs {
 
       override fun createActions(): Array<out Action> {
         var actions = dialogProps.actions.map { makeAction(it) }
-        if (dialogProps.hasHelp) {
+        if (dialogProps.helpId != null) {
           actions += helpAction
         }
         if (SystemInfo.isMac) {
