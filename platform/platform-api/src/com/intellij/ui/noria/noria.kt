@@ -248,19 +248,22 @@ fun <Node> firstDescendant(c: Component<Node>, pred: (Element) -> Boolean): Comp
 fun<Node> mount(parentDisposable: Disposable,
                 element: Element,
                 root: Node,
-                r: Toolkit<Node>): NoriaHandle<Node> {
+                toolkit: Toolkit<Node>): NoriaHandle<Node> {
   var rootC: Component<Node>? = null
   fun reconciler() {
-    val (c, updates) = rootC!!.reconcile(element, r, ::reconciler)
-    rootC = c
-    r.performUpdates(updates)
+    toolkit.scheduleReconcile {
+      val (c, updates) = rootC!!.reconcile(element, toolkit, ::reconciler)
+      rootC = c
+      toolkit.performUpdates(updates)
+    }
   }
-  val reconciliation = buildComponent(root, element, r, ::reconciler)
+  val reconciliation = buildComponent(root, element, toolkit, ::reconciler)
   rootC = reconciliation.first
   val updates = reconciliation.second
-  r.performUpdates(updates)
+  toolkit.performUpdates(updates)
+
   Disposer.register(parentDisposable, Disposable {
-    r.performUpdates(listOf(RemoveChild(parent = root, child = rootC!!.node)))
+    toolkit.performUpdates(listOf(RemoveChild(parent = root, child = rootC!!.node)))
   })
   return object: NoriaHandle<Node> {
     override fun getPreferredFocusedNode(): Node? = firstDescendant(rootC!!, {it.props is Focusable && it.props.autoFocus})?.node

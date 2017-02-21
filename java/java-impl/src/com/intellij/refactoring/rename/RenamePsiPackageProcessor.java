@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -65,8 +66,11 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
     Function3<String, Boolean, Function0<Unit>, Unit> superPerformRename = d.getPerformRename();
     Function1<String, Pair<Boolean, String>> superValidate = d.getValidate();
     final String oldName = ((PsiPackage)element).getQualifiedName();
-    d.setValidate(s -> superValidate.invoke(
-      Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(s)) ? StringUtil.getShortName(s) : s));
+    d.setValidate(s -> {
+      if (Objects.equals(s, oldName))
+        return new Pair<>(false, null);
+      return superValidate
+        .invoke(Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(s)) ? StringUtil.getShortName(s) : s);});
     d.setPerformRename((newName, isPreview, cb) -> {
       final PsiPackage psiPackage = (PsiPackage)element;
       if (Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {

@@ -43,7 +43,7 @@ data class NameSuggester(val suggestedNames: List<String>,
 
 val nameSuggester = primitiveComponent<NameSuggester>("nameSuggester")
 
-class NameSuggesterComponentType : BasicUIComponentType<NameSuggestionsField, NameSuggester> {
+class NameSuggesterComponentType : PrimitiveComponentType<NameSuggestionsField, NameSuggester> {
   override val type: String = "nameSuggester"
 
   override fun createNode(e: NameSuggester): NameSuggestionsField {

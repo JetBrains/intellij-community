@@ -15,45 +15,28 @@
  */
 package com.intellij.ui.noria
 
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.ui.NonFocusableCheckBox
 import java.awt.event.ActionListener
 import javax.swing.*
 import kotlin.reflect.KProperty1
 
-data class UpdateInfo<out C : JComponent, out T : Any>(val c: C, val old: T, val new: T)
+data class UpdateInfo<out C : Any, out T : Any>(val c: C, val old: T, val new: T)
 
-fun <C : JComponent, T : Any, R> UpdateInfo<C, T>.updateProp(p: KProperty1<T, R>, setter: C.(R) -> Unit) {
+fun <C: Any, T : Any, R> UpdateInfo<C, T>.updateProp(p: KProperty1<T, R>, setter: C.(R) -> Unit) {
   if (p.get(old) != p.get(new)) {
     c.setter(p.get(new))
   }
 }
 
-interface BasicUIComponentType<C : JComponent, in T : BaseProps> {
-  companion object {
-    val EP_NAME: ExtensionPointName<BasicUIComponentType<*, *>> = ExtensionPointName.create<BasicUIComponentType<*, *>>(
-      "com.intellij.openapi.ui.noria.BasicUIComponentTypeEP")
-
-    private fun getTypes() = Extensions.getExtensions(EP_NAME)
-    fun getComponents(): Map<String, BasicUIComponentType<*, *>> = getTypes().map { it.type to it }.toMap()
-  }
-
-  val type: String
-  fun createNode(e: T): C
-  fun update(info: UpdateInfo<C, T>)
-  fun disposeNode(node: C) {}
-}
-
 @Suppress("UNCHECKED_CAST")
 class SwingToolkit : Toolkit<JComponent> {
-  val registry = BasicUIComponentType.getComponents()
+  val registry = PrimitiveComponentType.getComponents()
   override fun isPrimitive(e: ElementType): Boolean = registry.containsKey(e.type)
 
   override fun createNode(e: Element): JComponent {
-    val type: BasicUIComponentType<*, *> = registry[e.type.type] ?: throw IllegalStateException(
+    val type: PrimitiveComponentType<*, *> = registry[e.type.type] ?: throw IllegalStateException(
       "can't find component for type ${e.type.type}")
-    type as BasicUIComponentType<JComponent, BaseProps>
+    type as PrimitiveComponentType<JComponent, BaseProps>
     return type.createNode(e.props as BaseProps)
   }
 
@@ -64,13 +47,13 @@ class SwingToolkit : Toolkit<JComponent> {
           update.parent.add(update.child, (update.childProps as BaseProps).constraints, update.index)
         is UpdateProps -> {
           val type = registry[update.type.type] ?: throw IllegalStateException("can't find component for type ${update.type.type}")
-          type as BasicUIComponentType<JComponent, BaseProps>
+          type as PrimitiveComponentType<JComponent, BaseProps>
           type.update(UpdateInfo(update.node, update.oldProps as BaseProps, update.newProps as BaseProps))
         }
         is RemoveChild -> update.parent.remove(update.child)
         is DestroyNode -> {
           val type = registry[update.type.type] ?: throw IllegalStateException("can't find component for type ${update.type.type}")
-          type as BasicUIComponentType<JComponent, BaseProps>
+          type as PrimitiveComponentType<JComponent, BaseProps>
           type.disposeNode(update.node)
         }
       }
@@ -78,7 +61,7 @@ class SwingToolkit : Toolkit<JComponent> {
   }
 }
 
-class PanelComponentType : BasicUIComponentType<JPanel, Panel> {
+class PanelComponentType : PrimitiveComponentType<JPanel, Panel> {
   override val type: String = "panel"
   override fun createNode(e: Panel): JPanel =
     JPanel().apply {
@@ -88,7 +71,7 @@ class PanelComponentType : BasicUIComponentType<JPanel, Panel> {
   }
 }
 
-class LabelComponentType : BasicUIComponentType<JLabel, Label> {
+class LabelComponentType : PrimitiveComponentType<JLabel, Label> {
   override val type: String = "label"
   override fun createNode(e: Label): JLabel = JLabel(e.text)
   override fun update(info: UpdateInfo<JLabel, Label>) {
@@ -98,7 +81,7 @@ class LabelComponentType : BasicUIComponentType<JLabel, Label> {
 
 val LISTENER = "noria.listener"
 
-class ButtonComponentType : BasicUIComponentType<JButton, Button> {
+class ButtonComponentType : PrimitiveComponentType<JButton, Button> {
   override val type: String = "button"
   override fun createNode(e: Button): JButton {
     val b = JButton(e.text)
@@ -128,7 +111,7 @@ private fun <T : BaseProps> updateListener(info: UpdateInfo<AbstractButton, T>,
   }
 }
 
-class CheckboxComponentType : BasicUIComponentType<JCheckBox, Checkbox> {
+class CheckboxComponentType : PrimitiveComponentType<JCheckBox, Checkbox> {
   override val type: String = "checkbox"
   override fun createNode(e: Checkbox): JCheckBox {
     val c = if (e.focusable) JCheckBox() else NonFocusableCheckBox()

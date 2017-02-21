@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.noria
 
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.Extensions
 import java.awt.FlowLayout
 import java.awt.LayoutManager
 
@@ -22,6 +24,9 @@ interface Toolkit<Node> {
   fun isPrimitive(e: ElementType): Boolean
   fun createNode(e: Element): Node
   fun performUpdates(l: List<Update<Node>>)
+  fun scheduleReconcile(function: () -> Unit) {
+    function()
+  }
 }
 
 interface BaseProps {
@@ -47,8 +52,23 @@ data class Label(var text: String = "") : BaseProps by BasePropsData()
 
 val label = primitiveComponent<Label>("label")
 
-
 data class Panel(val layout: LayoutManager = FlowLayout()) : BaseProps by BasePropsData()
 
 val panel = primitiveComponent<Panel>("panel")
 
+
+interface PrimitiveComponentType<C : Any, in T : BaseProps> {
+  companion object {
+    val EP_NAME: ExtensionPointName<PrimitiveComponentType<*, *>> = ExtensionPointName.create<PrimitiveComponentType<*, *>>(
+        "com.intellij.openapi.ui.noria.BasicUIComponentTypeEP")
+
+    private fun getTypes() = Extensions.getExtensions(EP_NAME)
+    fun getComponents(): Map<String, PrimitiveComponentType<*, *>> = getTypes().map { it.type to it }.toMap()
+  }
+
+  val type: String
+  fun createNode(e: T): C
+  fun update(info: UpdateInfo<C, T>)
+  fun disposeNode(node: C) {
+  }
+}

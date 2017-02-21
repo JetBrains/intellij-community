@@ -43,7 +43,7 @@ interface NoriaDialogs {
       get() = ServiceManager.getService(NoriaDialogs::class.java)
   }
 
-  fun show(props: DialogProps) : NoriaDialogHandle
+  fun show(dialogProps: DialogProps) : NoriaDialogHandle
 }
 
 interface NoriaDialogHandle {

@@ -28,7 +28,7 @@ class SwingNoriaDialogs : NoriaDialogs {
     val toolkit = SwingToolkit()
   }
 
-  override fun show(props: DialogProps): NoriaDialogHandle {
+  override fun show(dialogProps: DialogProps): NoriaDialogHandle {
     val roots = arrayListOf<NoriaHandle<JComponent>>()
     val disposable = Disposer.newDisposable()
 
@@ -40,10 +40,10 @@ class SwingNoriaDialogs : NoriaDialogs {
       return root
     }
 
-    val northPanel = jPanel(props.north)
-    val centerPanel = jPanel(props.center)
+    val northPanel = jPanel(dialogProps.north)
+    val centerPanel = jPanel(dialogProps.center)
 
-    val dw = object : DialogWrapper(props.project, props.canBeParent) {
+    val dw = object : DialogWrapper(dialogProps.project, dialogProps.canBeParent) {
       fun closeImpl(exitCode: Int) = close(exitCode)
 
       val handle = object : NoriaDialogHandle {
@@ -59,7 +59,7 @@ class SwingNoriaDialogs : NoriaDialogs {
         init()
         Disposer.register(myDisposable, disposable)
         track(disposable) {
-          setErrorText(props.errorText.value)
+          setErrorText(dialogProps.errorText.value)
         }
       }
 
@@ -99,15 +99,15 @@ class SwingNoriaDialogs : NoriaDialogs {
         }
 
       override fun createActions(): Array<out Action> {
-        var actions = props.actions.map { makeAction(it) }
-        if (props.hasHelp) {
+        var actions = dialogProps.actions.map { makeAction(it) }
+        if (dialogProps.hasHelp) {
           actions += helpAction
         }
         return actions.toTypedArray()
       }
 
       override fun createLeftSideActions(): Array<out Action> {
-        return props.leftSideActions.map { makeAction(it) }.toTypedArray()
+        return dialogProps.leftSideActions.map { makeAction(it) }.toTypedArray()
       }
     }
 
