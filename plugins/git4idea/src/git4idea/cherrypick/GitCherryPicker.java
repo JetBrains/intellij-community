@@ -19,6 +19,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.cherrypick.VcsCherryPicker;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -98,7 +99,7 @@ public class GitCherryPicker extends VcsCherryPicker {
     LOG.info("Cherry-picking commits: " + toString(commitsInRoots));
     List<GitCommitWrapper> successfulCommits = ContainerUtil.newArrayList();
     List<GitCommitWrapper> alreadyPicked = ContainerUtil.newArrayList();
-    DvcsUtil.workingTreeChangeStarted(myProject);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       for (Map.Entry<GitRepository, List<VcsFullCommitDetails>> entry : commitsInRoots.entrySet()) {
         GitRepository repository = entry.getKey();
@@ -111,7 +112,7 @@ public class GitCherryPicker extends VcsCherryPicker {
       notifyResult(successfulCommits, alreadyPicked);
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject);
+      token.finish();
     }
   }
 

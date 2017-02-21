@@ -1691,6 +1691,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
     super.visitPackageAccessibilityStatement(statement);
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
+      if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkHostModuleStrength(statement));
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageReference(statement));
       if (!myHolder.hasErrorResults()) myHolder.addAll(ModuleHighlightUtil.checkPackageAccessTargets(statement));
     }

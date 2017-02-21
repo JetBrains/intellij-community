@@ -33,12 +33,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,11 +186,13 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
 
   @NotNull
   private static List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
-    StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(project);
-    if (statusBar == null) return Collections.emptyList();
-
-    return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
-                                 pair -> pair.first.isCancellable() && !pair.second.isCanceled());
+    return Collections.emptyList();//Don't confuse users with 'Stop Everything' toolbar button
+    //IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
+    //StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
+    //if (statusBar == null) return Collections.emptyList();
+    //
+    //return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
+    //                             pair -> pair.first.isCancellable() && !pair.second.isCanceled());
   }
 
   @Nullable

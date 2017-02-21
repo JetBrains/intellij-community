@@ -86,9 +86,7 @@ public class PsiPackageAccessibilityStatementImpl extends JavaStubPsiElement<Psi
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      Role role = getRole();
-      if (role == Role.EXPORTS) ((JavaElementVisitor)visitor).visitExportsStatement(this);
-      else if (role == Role.OPENS) ((JavaElementVisitor)visitor).visitOpensStatement(this);
+      ((JavaElementVisitor)visitor).visitPackageAccessibilityStatement(this);
     }
     else {
       visitor.visitElement(this);

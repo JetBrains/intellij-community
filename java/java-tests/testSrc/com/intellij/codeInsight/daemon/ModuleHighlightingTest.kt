@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
+import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
@@ -120,6 +121,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testWeakModule() {
+    highlight("""open module M { <error descr="'opens' only allowed in strong modules">opens pkg.missing;</error> }""")
+  }
+
   fun testUses() {
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { void m(); }")
     addFile("pkg/main/O.java", "package pkg.main;\npublic class O {\n public class I { void m(); }\n}")
@@ -213,6 +218,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M6 { requires M7; }", M6)
     addFile("module-info.java", "module M7 { }", M7)
     highlight("module M { requires M6; }")
+  }
+
+  fun testDeprecations() {
+    myFixture.enableInspections(DeprecationInspection())
+    addFile("module-info.java", "@Deprecated module M2 { }", M2)
+    highlight("""module M { requires <warning descr="'M2' is deprecated">M2</warning>; }""")
   }
 
   //<editor-fold desc="Helpers.">

@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -1043,10 +1044,36 @@ public class ResolveUtil {
     if (!(expression instanceof GrReferenceExpression)) return false;
     GrReferenceExpression ref = (GrReferenceExpression)expression;
     GrExpression qualifier = ref.getQualifier();
-    return "class".equals(ref.getReferenceName()) &&
-           qualifier instanceof GrReferenceExpression &&
-           ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass &&
-           !org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isThisReference(qualifier);
+    if (!"class".equals(ref.getReferenceName())) return false;
+    return qualifier != null && getClassReferenceFromExpression(qualifier) != null;
+  }
+
+
+  @Nullable
+  public static PsiType getClassReferenceFromExpression(@NotNull PsiElement expression) {
+
+    if (expression instanceof GrReferenceExpression) {
+      if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isThisReference(expression)) return null;
+
+      PsiElement resolved = ((GrReferenceExpression)expression).resolve();
+      if (resolved instanceof PsiClass) {
+        return TypesUtil.createType((PsiClass)resolved);
+      }
+      if (resolved instanceof PsiPrimitiveType) {
+        return (PsiType)resolved;
+      }
+    }
+
+    if (expression instanceof GrBuiltinTypeClassExpression) {
+      return ((GrBuiltinTypeClassExpression)expression).getPrimitiveType();
+    }
+
+    if (expression instanceof GrIndexProperty) {
+      PsiType arrayTypeBase = getClassReferenceFromExpression(((GrIndexProperty)expression).getInvokedExpression());
+
+      return arrayTypeBase == null ? null : arrayTypeBase.createArrayType();
+    }
+    return null;
   }
 
   @Nullable

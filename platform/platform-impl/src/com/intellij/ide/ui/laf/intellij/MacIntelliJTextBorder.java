@@ -55,6 +55,7 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       try {
         g2.translate(x, y);
         DarculaUIUtil.paintErrorRing(g2, width, height, c.hasFocus());
+        g2.translate(-x, -y);
       } finally {
         g2.dispose();
       }

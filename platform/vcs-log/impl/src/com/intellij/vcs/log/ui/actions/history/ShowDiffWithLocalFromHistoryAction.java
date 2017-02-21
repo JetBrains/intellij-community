@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
-import com.intellij.vcs.log.ui.history.VcsLogFileRevision;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +57,7 @@ public class ShowDiffWithLocalFromHistoryAction extends FileHistorySingleCommitA
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     FilePath path = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    VcsLogFileRevision revision = ui.createRevision(detail);
+    VcsFileRevision revision = ui.createRevision(detail);
 
     if (revision != null) {
       StandardDiffFromHistoryHandler handler = new StandardDiffFromHistoryHandler();

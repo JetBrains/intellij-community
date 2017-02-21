@@ -89,11 +89,6 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
     });
   }
 
-  @Override
-  public void init(ToolWindow window) {
-    window.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, null);
-  }
-
   private static class ColoredByDefaultAction extends ToggleAction {
     public ColoredByDefaultAction() {
       super("Colored by Default");

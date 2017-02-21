@@ -48,6 +48,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.getClassReferenceFromExpression;
+
 /**
  * @author ilyas
  */
@@ -66,14 +68,26 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   private final MyReference myReference = new MyReference();
 
+  // return not null in case of String[], int[], double[][]
+  @Nullable
+  private PsiType inferArrayType() {
+    PsiType arrayTypeBase = getClassReferenceFromExpression(this.getInvokedExpression());
+    if (arrayTypeBase == null) return null;
+    return TypesUtil.createJavaLangClassType(arrayTypeBase.createArrayType(), this.getProject(), this.getResolveScope());
+  }
+
   private PsiType inferType(@Nullable Boolean isSetter) {
+    PsiType arrayType = inferArrayType();
+    if (arrayType != null) {
+      return arrayType;
+    }
+
     GrExpression selected = getInvokedExpression();
     PsiType thisType = selected.getType();
 
     if (thisType == null) {
       thisType = TypesUtil.getJavaLangObject(this);
     }
-
 
     GrArgumentList argList = getArgumentList();
 

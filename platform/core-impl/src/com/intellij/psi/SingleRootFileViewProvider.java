@@ -20,6 +20,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoConstants;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -39,7 +40,8 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
-import com.intellij.psi.impl.file.PsiLargeFileImpl;
+import com.intellij.psi.impl.file.PsiLargeBinaryFileImpl;
+import com.intellij.psi.impl.file.PsiLargeTextFileImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
@@ -113,10 +115,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
-    if (virtualFile instanceof LightVirtualFile && !isEventSystemEnabled()) {
-      virtualFile.putUserData(FREE_THREADED, true);
-    }
+    virtualFile.putUserData(FREE_THREADED, isFreeThreaded(this));
     myFileType = type;
+  }
+
+  public static boolean isFreeThreaded(@NotNull FileViewProvider provider) {
+    return provider.getVirtualFile() instanceof LightVirtualFile && !provider.isEventSystemEnabled();
   }
 
   @Override
@@ -340,7 +344,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @Nullable
   protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
     if (fileType.isBinary() || file.is(VFileProperty.SPECIAL)) {
-      return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
+      return isTooLargeForContentLoading(file) ?
+             new PsiLargeBinaryFileImpl(((PsiManagerImpl)getManager()), this) :
+             new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
     if (!isTooLargeForIntelligence(file)) {
       final PsiFile psiFile = createFile(getBaseLanguage());
@@ -348,7 +354,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
 
     if (isTooLargeForContentLoading(file)) {
-      return new PsiLargeFileImpl((PsiManagerImpl)getManager(), this);
+      return new PsiLargeTextFileImpl(this);
     }
 
     return new PsiPlainTextFileImpl(this);
@@ -548,8 +554,14 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       int nodeLength = fileElement.getTextLength();
       if (nodeLength != fileLength) {
         PsiUtilCore.ensureValid(fileElement.getPsi());
+        List<Attachment> attachments = ContainerUtil.newArrayList(new Attachment(myVirtualFile.getNameWithoutExtension() + ".tree.txt", fileElement.getText()),
+                                                                  new Attachment(myVirtualFile.getNameWithoutExtension() + ".file.txt", myContent.toString()));
+        if (document != null) {
+          attachments.add(new Attachment(myVirtualFile.getNameWithoutExtension() + ".document.txt", document.getText()));
+        }
         // exceptions here should be assigned to peter
-        LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength);
+        LOG.error("Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength,
+                  attachments.toArray(Attachment.EMPTY_ARRAY));
       }
     }
   }

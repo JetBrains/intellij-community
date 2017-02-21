@@ -83,7 +83,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
           new GitUntrackedFilesOverwrittenByOperationDetector(selectedRoot);
         final GitSimpleEventDetector mergeConflict = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT);
 
-        DvcsUtil.workingTreeChangeStarted(project);
+        AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
         try {
           GitCommandResult result = git.runCommand(() -> {
             GitLineHandler handler = handlerProvider.compute();
@@ -104,7 +104,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
                        repository, currentRev, beforeLabel);
         }
         finally {
-          DvcsUtil.workingTreeChangeFinished(project);
+          token.finish();
         }
       }
 

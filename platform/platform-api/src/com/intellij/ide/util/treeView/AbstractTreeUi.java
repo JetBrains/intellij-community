@@ -995,6 +995,7 @@ public class AbstractTreeUi {
         }
 
         eachParent = getTreeStructure().getParentElement(eachParent);
+        updateStructure = true; // always update children if element does not exist
       }
 
       if (eachParent == null) {
@@ -1757,7 +1758,7 @@ public class AbstractTreeUi {
               @Override
               public void perform() {
                 if (!pass.isExpired()) {
-                  getUpdater().requeue(pass);
+                  queueUpdate(node);
                 }
               }
             });

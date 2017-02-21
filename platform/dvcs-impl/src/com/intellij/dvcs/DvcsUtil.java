@@ -21,6 +21,7 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -194,12 +195,23 @@ public class DvcsUtil {
     return DateFormatUtil.formatPrettyDateTime(commit.getTimestamp()) + " ";
   }
 
-  public static void workingTreeChangeStarted(@NotNull Project project) {
+  @NotNull
+  public static AccessToken workingTreeChangeStarted(@NotNull Project project) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
+      }
+    };
   }
 
-  public static void workingTreeChangeFinished(@NotNull Project project) {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
+  /**
+   * @deprecated Call {@link AccessToken#finish()} directly from the AccessToken received by {@link #workingTreeChangeStarted(Project)}
+   */
+  @Deprecated
+  public static void workingTreeChangeFinished(@NotNull Project project, @NotNull AccessToken token) {
+    token.finish();
   }
 
   public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);

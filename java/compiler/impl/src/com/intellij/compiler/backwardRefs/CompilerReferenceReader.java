@@ -45,9 +45,11 @@ class CompilerReferenceReader {
   private final static Logger LOG = Logger.getInstance(CompilerReferenceReader.class);
 
   private final CompilerBackwardReferenceIndex myIndex;
+  private final File myBuildDir;
 
   private CompilerReferenceReader(File buildDir) {
     myIndex = new CompilerBackwardReferenceIndex(buildDir);
+    myBuildDir = buildDir;
   }
 
   @Nullable
@@ -100,8 +102,11 @@ class CompilerReferenceReader {
     return myIndex.getByteSeqEum();
   }
 
-  void close() {
+  void close(boolean removeIndex) {
     myIndex.close();
+    if (removeIndex) {
+      CompilerBackwardReferenceIndex.removeIndexFiles(myBuildDir);
+    }
   }
 
   static boolean exists(Project project) {

@@ -29,7 +29,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +45,8 @@ import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * created at Nov 13, 2001
@@ -174,30 +174,27 @@ public class PsiElementRenameHandler implements RenameHandler {
     PsiElement substituted = processor.substituteElementToRename(element, editor);
     if (substituted == null || !canRename(project, editor, substituted)) return;
 
-    RenameDialogViewModel dialog = RenameDialogFactory.SERVICE.getInstance().createRenameDialog(project, substituted, nameSuggestionContext,
-                                                                                                         editor, processor);
+    RenameDialog2 dialog = processor.createRenameDialog2(project, substituted, nameSuggestionContext, editor);
 
     if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
-      String[] strings = dialog.getSuggestedNames();
-      if (strings != null && strings.length > 0) {
-        Arrays.sort(strings);
-        defaultName = strings[0];
-      } else {
-        defaultName = "undefined"; // need to avoid show dialog in test
-      }
+      List<String> strings = dialog.getSuggestedNames();
+      Collections.sort(strings);
+      defaultName = strings.isEmpty() ? "undefined" : strings.get(0);
     }
 
-    if (defaultName != null) {
-      try {
-        dialog.performRename(defaultName);
-      }
-      finally {
-        dialog.close(DialogWrapper.CANCEL_EXIT_CODE); // to avoid dialog leak
-      }
-    }
-    else {
-      dialog.show();
-    }
+    //if (defaultName != null) {
+    //  try {
+    //    dialog.performRename(defaultName);
+    //  }
+    //  finally {
+    //    dialog.close(DialogWrapper.CANCEL_EXIT_CODE); // to avoid dialog leak
+    //  }
+    //}
+    //else {
+    //  dialog.show();
+    //}
+
+    RenameDialog2Kt.show(dialog);
   }
 
   @Override

@@ -88,11 +88,12 @@ class WinInstallerBuilder {
     ant.mkdir(dir: "$box/nsiconf")
 
     if (winJDKZipPath != null) {
-      ant.unzip(dest: "$box", src: winJDKZipPath)
+      ant.mkdir(dir: "$box/jre")
+      ant.unzip(dest: "$box/jre", src: winJDKZipPath)
 
       ant.copy(todir: "$box/bin") {
-        fileset(dir: "$box/jre/bin") {
-          include(name: "msvcr120.dll")
+        fileset(dir: "$box/jre/jre/bin") {
+          include(name: "msvcr71.dll")
         }
       }
     }

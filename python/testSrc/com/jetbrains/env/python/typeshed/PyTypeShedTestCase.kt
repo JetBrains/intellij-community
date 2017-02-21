@@ -23,11 +23,13 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.env.PyEnvTaskRunner
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.python.psi.LanguageLevel
@@ -89,6 +91,8 @@ abstract class PyTypeShedTestCase(protected val path: String, protected val sdkP
     }
     EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
       modificator.commitChanges()
+      val index = FileBasedIndex.getInstance()
+      index.requestRebuild(StubUpdatingIndex.INDEX_ID)
     })
     return sdk
   }

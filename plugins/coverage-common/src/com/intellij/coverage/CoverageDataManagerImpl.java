@@ -157,6 +157,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
         if (coverageRunner.acceptsCoverageEngine(engine)) {
           suite = engine.createEmptyCoverageSuite(coverageRunner);
           if (suite != null) {
+            if (suite instanceof BaseCoverageSuite) {
+              ((BaseCoverageSuite)suite).setProject(myProject);
+            }
             break;
           }
         }

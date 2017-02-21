@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -28,6 +27,7 @@ import com.intellij.psi.impl.beanProperties.BeanProperty;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +65,15 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     }
 
     if (PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
-      new PropertyRenameDialog(property, editor).show();
+      RenameDialog2 d = RenameDialog2Kt.createRenameDialog2(element,
+                                                            editor,
+                                                            null);
+      d.setPerformRename((newName, isPreview, callback) -> {
+        doRename(property, newName, d.getSearchInComments().getValue(), isPreview);
+        callback.invoke();
+        return Unit.INSTANCE;
+      });
+      RenameDialog2Kt.show(d);
     }
   }
 
@@ -100,21 +108,4 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
   @Nullable
   protected abstract BeanProperty getProperty(DataContext context);
-
-  private static class PropertyRenameDialog extends RenameDialog {
-
-    private final BeanProperty myProperty;
-
-    protected PropertyRenameDialog(BeanProperty property, final Editor editor) {
-      super(property.getMethod().getProject(), property.getPsiElement(), null, editor);
-      myProperty = property;
-    }
-
-    protected void doAction() {
-      final String newName = getNewName();
-      final boolean searchInComments = isSearchInComments();
-      doRename(myProperty, newName, searchInComments, isPreviewUsages());
-      close(DialogWrapper.OK_EXIT_CODE);
-    }
-  }
 }

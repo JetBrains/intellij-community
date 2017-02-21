@@ -148,7 +148,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         Point point = event.getPoint();
         int row = rowAtPoint(point);
         int col = columnAtPoint(point);
-        if (row != -1 && col == 1) return getToolTipFor((T)getValueAt(convertRowIndexToModel(row), col));
+        if (row != -1 && col == 1) {
+          return getToolTipFor((T)getValueAt(convertRowIndexToModel(row), col));
+        }
         return super.getToolTipText(event);
       }
     };
@@ -268,7 +270,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @Nullable
-  public T getNewMapping(VirtualFile file) {
+  public T getNewMapping(@Nullable VirtualFile file) {
     for (Pair<Object, T> p : ContainerUtil.reverse(myModel.data)) {
       if (keyMatches(p.first, file, false) && p.second != null) return p.second;
     }
@@ -281,7 +283,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return myMappings.getDefaultMapping(file);
   }
 
-  private boolean keyMatches(Object key, VirtualFile file, boolean strict) {
+  private boolean keyMatches(@Nullable Object key, @Nullable VirtualFile file, boolean strict) {
+    if (file == null) return key == null;
     if (key instanceof VirtualFile) return VfsUtilCore.isAncestor((VirtualFile)key, file, strict);
     // todo also patterns
     if (key == null) return true;
@@ -429,8 +432,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       renderValue(null, t, text);
       maxValueWidth = Math.max(metrics.stringWidth(text.toString()), maxValueWidth);
     }
-    myTable.getColumnModel().getColumn(1).setMinWidth(maxValueWidth);
-    myTable.getColumnModel().getColumn(1).setMaxWidth(2 * maxValueWidth);
+    if (maxValueWidth < 300) {
+      myTable.getColumnModel().getColumn(1).setMinWidth(maxValueWidth);
+      myTable.getColumnModel().getColumn(1).setMaxWidth(2 * maxValueWidth);
+    }
     myTable.getColumnModel().getColumn(0).setCellRenderer(new ColoredTableCellRenderer() {
       @Override
       public void acquireState(JTable table, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -618,7 +623,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected final AnAction createValueAction(@Nullable Object target, Producer<T> value, @NotNull Consumer<T> consumer) {
     return new ComboBoxAction() {
       void updateText() {
-        getTemplatePresentation().setText(StringUtil.shortenTextWithEllipsis(renderValue(value.produce(), getNullValueText(target)), 40, 0));
+        String text = renderValue(value.produce(), StringUtil.notNullize(getNullValueText(target)));
+        getTemplatePresentation().setText(StringUtil.shortenTextWithEllipsis(text, 40, 0));
       }
 
       @Override
@@ -647,7 +653,8 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
           @Nullable
           @Override
           public String getToolTipText() {
-            return getToolTipFor(value.produce());
+            boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
+            return cellEditor ? null : getToolTipFor(value.produce());
           }
         };
       }

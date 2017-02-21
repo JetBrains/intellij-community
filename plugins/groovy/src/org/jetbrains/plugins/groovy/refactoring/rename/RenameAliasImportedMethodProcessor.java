@@ -23,12 +23,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.rename.RenameDialog;
-import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
-import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
+import com.intellij.refactoring.rename.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -58,14 +56,12 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     return RenameAliasedUsagesUtil.filterAliasedRefs(super.findReferences(element), element);
   }
 
+
   @Override
-  public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-    return new RenameDialog(project, element, nameSuggestionContext, editor) {
-      @Override
-      protected boolean areButtonsValid() {
-        return true;
-      }
-    };
+  public RenameDialog2 createRenameDialog2(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    RenameDialog2 d = super.createRenameDialog2(project, element, nameSuggestionContext, editor);
+    d.setValidate(s -> new Pair<>(true, null));
+    return d;
   }
 
   @Override

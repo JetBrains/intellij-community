@@ -3959,12 +3959,4 @@ public class UIUtil {
       }
     });
   }
-
-  /**
-   * @param key a key in UIDefaults table
-   * @return the property value from the specified component or {@code null}
-   */
-  public static <T> T getUIResource(@NotNull Object key, @NotNull Class<T> type) {
-    return ObjectUtils.tryCast(UIManager.get(key), type);
-  }
 }

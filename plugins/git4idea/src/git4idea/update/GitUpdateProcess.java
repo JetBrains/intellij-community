@@ -129,13 +129,13 @@ public class GitUpdateProcess {
       return GitUpdateResult.NOT_READY;
     }
 
-    DvcsUtil.workingTreeChangeStarted(myProject);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     GitUpdateResult result;
     try {
       result = updateImpl(updateMethod);
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject);
+      token.finish();
     }
     myProgressIndicator.setText(oldText);
     return result;

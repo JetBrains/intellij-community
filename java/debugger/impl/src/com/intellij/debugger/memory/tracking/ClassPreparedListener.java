@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
@@ -38,14 +39,18 @@ public abstract class ClassPreparedListener {
     }
   }
 
-  public abstract void onClassPrepared(@NotNull ReferenceType referenceType);
+  public abstract void onClassPrepared(@NotNull ReferenceType referenceType, @NotNull XDebugSession session);
 
   private final class MyClassPreparedRequest implements ClassPrepareRequestor {
     @Override
-    public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-      if (debuggerProcess instanceof DebugProcessImpl) {
-        ((DebugProcessImpl)debuggerProcess).getRequestsManager().deleteRequest(this);
-        onClassPrepared(referenceType);
+    public void processClassPrepare(DebugProcess debugProcess, ReferenceType referenceType) {
+      if (debugProcess instanceof DebugProcessImpl) {
+        final DebugProcessImpl processImpl = (DebugProcessImpl)debugProcess;
+        processImpl.getRequestsManager().deleteRequest(this);
+        final XDebugProcess process = processImpl.getXdebugProcess();
+        if (process != null) {
+          onClassPrepared(referenceType, process.getSession());
+        }
       }
     }
   }

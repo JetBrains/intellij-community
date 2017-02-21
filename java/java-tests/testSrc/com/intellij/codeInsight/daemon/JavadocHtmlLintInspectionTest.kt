@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,19 @@
 package com.intellij.codeInsight.daemon
 
 import com.intellij.codeInspection.javaDoc.JavadocHtmlLintInspection
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.PathUtil
 
 class JavadocHtmlLintInspectionTest : LightCodeInsightFixtureTestCase() {
+  override fun setUp() {
+    super.setUp()
+
+    val javaHome = System.getProperty("java.home")
+    val jdkHome = if (javaHome.endsWith("jre")) PathUtil.getParentPath(javaHome) else javaHome
+    VfsRootAccess.allowRootAccess(testRootDisposable, jdkHome)
+  }
+
   fun testNoComment() = doTest("class C { }")
   fun testEmptyComment() = doTest("/** */\nclass C { }")
 

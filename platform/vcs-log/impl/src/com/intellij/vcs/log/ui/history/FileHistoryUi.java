@@ -21,6 +21,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -92,22 +94,25 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Nullable
   public VirtualFile createVcsVirtualFile(@NotNull VcsFullCommitDetails details) {
-    VcsLogFileRevision revision = createRevision(details);
+    VcsFileRevision revision = createRevision(details);
     return createVcsVirtualFile(revision);
   }
 
   @Nullable
-  public VirtualFile createVcsVirtualFile(@Nullable VcsLogFileRevision revision) {
-    if (revision != null) {
-      return revision.getPath().isDirectory()
-             ? new VcsVirtualFolder(revision.getPath().getPath(), null, VcsFileSystem.getInstance())
-             : new VcsVirtualFile(revision.getPath().getPath(), revision, VcsFileSystem.getInstance());
+  public VirtualFile createVcsVirtualFile(@Nullable VcsFileRevision revision) {
+    if (revision != null && !VcsFileRevision.NULL.equals(revision)) {
+      if (revision instanceof VcsFileRevisionEx) {
+        FilePath path = ((VcsFileRevisionEx)revision).getPath();
+        return path.isDirectory()
+               ? new VcsVirtualFolder(path.getPath(), null, VcsFileSystem.getInstance())
+               : new VcsVirtualFile(path.getPath(), revision, VcsFileSystem.getInstance());
+      }
     }
     return null;
   }
 
   @Nullable
-  public VcsLogFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
+  public VcsFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
     if (details != null && !(details instanceof LoadingDetails)) {
       List<Change> changes = collectRelevantChanges(details);
       for (Change change : changes) {
@@ -115,6 +120,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         if (revision != null) {
           return new VcsLogFileRevision(details, change.getAfterRevision(), revision.getFile());
         }
+      }
+      if (!changes.isEmpty()) {
+        return VcsFileRevision.NULL;
       }
     }
     // this is ok, file was deleted here

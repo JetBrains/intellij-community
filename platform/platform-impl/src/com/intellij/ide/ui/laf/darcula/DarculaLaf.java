@@ -40,7 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
 import javax.swing.*;
-import javax.swing.plaf.*;
+import javax.swing.plaf.BorderUIResource;
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -422,11 +425,10 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   private static Insets parseInsets(String value) {
     final List<String> numbers = StringUtil.split(value, ",");
-    JBInsets insets = new JBInsets(Integer.parseInt(numbers.get(0)),
-                                   Integer.parseInt(numbers.get(1)),
-                                   Integer.parseInt(numbers.get(2)),
-                                   Integer.parseInt(numbers.get(3)));
-    return insets.asUIResource();
+    return new JBInsets(Integer.parseInt(numbers.get(0)),
+                        Integer.parseInt(numbers.get(1)),
+                        Integer.parseInt(numbers.get(2)),
+                        Integer.parseInt(numbers.get(3))).asUIResource();
   }
 
   @SuppressWarnings("UseJBColor")
@@ -455,8 +457,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   private static Dimension parseSize(String value) {
     final List<String> numbers = StringUtil.split(value, ",");
-    JBDimension dimension = new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1)));
-    return dimension.asUIResource();
+    return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
   }
 
   @Override

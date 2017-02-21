@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * Basic implementation of {@link AbstractSchemesPanel} that provides simple informational label as right side of the panel.
@@ -36,13 +37,17 @@ public abstract class SimpleSchemesPanel<T extends Scheme> extends AbstractSchem
   }
 
   @Override
-  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
+  public final void showMessage(@Nullable String message, @NotNull MessageType messageType) {
     myInfoComponent.setText(message);
-    myInfoComponent.setForeground(messageType.getTitleForeground());
+    Color foreground = 
+      messageType == MessageType.INFO ? HINT_FOREGROUND : 
+      messageType == MessageType.ERROR ? ERROR_MESSAGE_FOREGROUND :
+      messageType.getTitleForeground();
+    myInfoComponent.setForeground(foreground);
   }
 
   @Override
-  public final void clearInfo() {
+  public final void clearMessage() {
     myInfoComponent.setText(null);
   }
 }

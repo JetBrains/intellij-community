@@ -302,11 +302,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   private boolean isEventSystemEnabled(Document document) {
-    VirtualFile vFile = getVirtualFile(document);
-    if (vFile == null || isFreeThreaded(vFile)) return false;
-
     FileViewProvider viewProvider = getCachedViewProvider(document);
-    return viewProvider != null && viewProvider.isEventSystemEnabled();
+    return viewProvider != null && viewProvider.isEventSystemEnabled() && !SingleRootFileViewProvider.isFreeThreaded(viewProvider);
   }
 
   // public for Upsource
@@ -448,16 +445,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       assert !isInUncommittedSet(document) : "Document :" + document;
     };
 
-    if (isFreeThreaded(psiFile.getViewProvider().getVirtualFile())) {
+    if (SingleRootFileViewProvider.isFreeThreaded(psiFile.getViewProvider())) {
       runnable.run();
     }
     else {
       ApplicationManager.getApplication().runWriteAction(runnable);
     }
-  }
-
-  static boolean isFreeThreaded(@NotNull VirtualFile file) {
-    return Boolean.TRUE.equals(file.getUserData(SingleRootFileViewProvider.FREE_THREADED));
   }
 
   // true if the PSI is being modified and events being sent

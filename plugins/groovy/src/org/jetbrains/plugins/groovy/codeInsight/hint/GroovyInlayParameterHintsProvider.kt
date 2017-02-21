@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
+import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
-import com.intellij.codeInsight.hints.MethodInfo
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -73,7 +73,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
     }
   }
 
-  override fun getMethodInfo(element: PsiElement): MethodInfo? {
+  override fun getHintInfo(element: PsiElement): MethodInfo? {
     val call = element as? GrCall
     val resolved = call?.resolveMethod()
     val method = (resolved as? PsiMirrorElement)?.prototype as? PsiMethod ?: resolved

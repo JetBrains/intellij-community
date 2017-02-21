@@ -49,6 +49,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
   protected InfoComponent myInfoComponent;
+  
+  // region Colors (probably should be standard for platform UI)
+  
+  protected final Color HINT_FOREGROUND = JBColor.GRAY;
+  @SuppressWarnings("UseJBColor")
+  protected final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
+  
+  // endregion
 
   public AbstractSchemesPanel() {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
@@ -65,6 +73,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     controlsPanel.add(mySchemesCombo.getComponent());
     myToolbar = createToolbar();
     controlsPanel.add(myToolbar);
+    controlsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
@@ -121,9 +130,19 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.cancelEdit();
   }
 
-  public abstract void showInfo(@Nullable String message, @NotNull MessageType messageType);
+  public final void showInfo(@Nullable String message, @NotNull MessageType messageType) {
+    myToolbar.setVisible(false);
+    showMessage(message, messageType);
+  }
 
-  public abstract void clearInfo();
+  protected abstract void showMessage(@Nullable String message, @NotNull MessageType messageType);
+
+  public final void clearInfo() {
+    myToolbar.setVisible(true);
+    clearMessage();
+  }
+
+  protected abstract void clearMessage();
 
   public final AbstractSchemeActions<T> getActions() {
     return myActions;
@@ -165,7 +184,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
                                     messageType.getPopupBackground(), null);
     balloonBuilder.setFadeoutTime(5000);
     final Balloon balloon = balloonBuilder.createBalloon();
-    balloon.showInCenterOf(myToolbar);
+    Point pointOnComponent = new Point(myToolbar.getWidth() / 4, myToolbar.getHeight() / 4);
+    balloon.show(new RelativePoint(myToolbar, pointOnComponent), Balloon.Position.above);
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
   }
 

@@ -17,7 +17,6 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -52,8 +51,9 @@ public class StandardPatterns {
   }
 
   @NotNull
+  @SafeVarargs
   public static <T> ElementPattern<T> instanceOf(@NotNull Class<T>... classes) {
-    ElementPattern[] patterns = ContainerUtil.map(classes, aClass -> instanceOf(aClass), new ElementPattern[0]);
+    ElementPattern[] patterns = ContainerUtil.map(classes, StandardPatterns::instanceOf, new ElementPattern[0]);
     return or(patterns);
   }
 
@@ -109,6 +109,7 @@ public class StandardPatterns {
   }
 
   @NotNull
+  @SafeVarargs
   public static <E> ElementPattern<E> or(@NotNull final ElementPattern<? extends E>... patterns) {
     return new ObjectPattern.Capture<>(new InitialPatternConditionPlus(Object.class) {
       @Override
@@ -133,12 +134,13 @@ public class StandardPatterns {
 
       @Override
       public List<ElementPattern<?>> getPatterns() {
-        return Arrays.<ElementPattern<?>>asList(patterns);
+        return Arrays.asList(patterns);
       }
     });
   }
 
   @NotNull
+  @SafeVarargs
   public static <E> ElementPattern<E> and(final ElementPattern<? extends E>... patterns) {
     final List<InitialPatternCondition> initial = ContainerUtil.newSmartList();
     for (ElementPattern<?> pattern : patterns) {
@@ -194,7 +196,7 @@ public class StandardPatterns {
 
       @Override
       public List<ElementPattern<?>> getPatterns() {
-        return Collections.<ElementPattern<?>>singletonList(pattern);
+        return Collections.singletonList(pattern);
       }
     });
   }

@@ -255,6 +255,21 @@ public class ModuleHighlightUtil {
   }
 
   @Nullable
+  static HighlightInfo checkHostModuleStrength(@NotNull PsiPackageAccessibilityStatement statement) {
+    PsiElement parent;
+    if (statement.getRole() == Role.OPENS &&
+        (parent = statement.getParent()) instanceof PsiJavaModule &&
+        ((PsiJavaModule)parent).hasModifierProperty(PsiModifier.OPEN)) {
+      String message = JavaErrorMessages.message("module.opens.in.weak.module");
+      HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+      QuickFixAction.registerQuickFixAction(info, factory().createModifierListFix((PsiModifierListOwner)parent, PsiModifier.OPEN, false, false));
+      return info;
+    }
+
+    return null;
+  }
+
+  @Nullable
   static HighlightInfo checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement) {
     PsiJavaCodeReferenceElement refElement = statement.getPackageReference();
     if (refElement != null) {

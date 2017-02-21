@@ -48,12 +48,12 @@ public class GitStash extends GitRepositoryAction {
     }
     VirtualFile root = d.getGitRoot();
     final GitLineHandler h = d.handler();
-    DvcsUtil.workingTreeChangeStarted(project);
+    AccessToken token = DvcsUtil.workingTreeChangeStarted(project);
     try {
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("stashing.title"), h.printableCommandLine());
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project);
+      token.finish();
     }
     VfsUtil.markDirtyAndRefresh(false, true, false, root);
     if(!h.errors().isEmpty()) {

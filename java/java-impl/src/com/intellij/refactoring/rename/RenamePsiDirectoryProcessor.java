@@ -15,8 +15,6 @@
  */
 package com.intellij.refactoring.rename;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.HelpID;
@@ -38,16 +36,18 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-    return new RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor) {
-      protected boolean getSearchForReferences() {
-        return RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
-      }
+  public boolean isToSearchForReferencesEnabled(PsiElement element) {
+    return true;
+  }
 
-      protected void setSearchForReferences(boolean value) {
-        RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
-      }
-    };
+  @Override
+  public boolean isToSearchForReferences(PsiElement element) {
+    return RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY;
+  }
+
+  @Override
+  public void setToSearchForReferences(PsiElement element, boolean value) {
+    RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
   }
 
   public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {

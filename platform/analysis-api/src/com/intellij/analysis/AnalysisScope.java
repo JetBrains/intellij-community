@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -507,6 +507,31 @@ public class AnalysisScope {
     }
 
     return "";
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Nullable
+  public Module getModule() {
+    return myModule;
+  }
+
+  @NotNull
+  public List<Module> getModules() {
+    return myModules == null ? Collections.emptyList() : Collections.unmodifiableList(myModules);
+  }
+
+  @Nullable
+  public PsiElement getElement() {
+    return myElement;
+  }
+
+  @NotNull
+  public Set<VirtualFile> getFiles() {
+    return myVFiles == null ? Collections.emptySet() : Collections.unmodifiableSet(myVFiles);
   }
 
   @Nullable

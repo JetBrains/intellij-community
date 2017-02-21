@@ -49,7 +49,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
 
-  private final PyDebugValue myDebugValue;
+  private PyDebugValue myDebugValue;
   private final DataViewStrategy myStrategy;
   private LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
     new CacheLoader<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>>() {
@@ -255,5 +255,13 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   public void invalidateCache() {
     myChunkCache.invalidateAll();
+  }
+
+  public PyDebugValue getDebugValue() {
+    return myDebugValue;
+  }
+
+  public void setDebugValue(PyDebugValue debugValue) {
+    myDebugValue = debugValue;
   }
 }

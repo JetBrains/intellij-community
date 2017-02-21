@@ -26,6 +26,7 @@ import java.util.Collection;
  * A computation (typically an anonymous class) to used in {@link CachedValue} to cache some computation result.
  * @param <T> the type of the cached value
  */
+@FunctionalInterface
 public interface CachedValueProvider<T> {
 
   /**

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -33,10 +34,16 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClas
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import kotlin.Pair;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
+import kotlin.jvm.functions.Function1;
+import kotlin.jvm.functions.Function3;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -50,44 +57,32 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   }
 
   @Override
-  public RenameDialog createRenameDialog(final Project project, final PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
-
-    return new RenameDialog(project, element, nameSuggestionContext, editor) {
-      @Override
-      protected void createNewNameComponent() {
-        super.createNewNameComponent();
-        final String qualifiedName = ((PsiPackage)element).getQualifiedName();
-        final String packageName = StringUtil.getPackageName(qualifiedName);
-        preselectExtension(packageName.isEmpty() ? 0 : packageName.length() + 1, qualifiedName.length());
+  public RenameDialog2 createRenameDialog2(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+    RenameDialog2 d = super.createRenameDialog2(project, element, nameSuggestionContext, editor);
+    final String qualifiedName = ((PsiPackage)element).getQualifiedName();
+    final String packageName = StringUtil.getPackageName(qualifiedName);
+    d.setInitialSelection(s -> TextRange.create(packageName.isEmpty() ? 0 : packageName.length() + 1, qualifiedName.length()));
+    Function3<String, Boolean, Function0<Unit>, Unit> superPerformRename = d.getPerformRename();
+    Function1<String, Pair<Boolean, String>> superValidate = d.getValidate();
+    final String oldName = ((PsiPackage)element).getQualifiedName();
+    d.setValidate(s -> superValidate.invoke(
+      Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(s)) ? StringUtil.getShortName(s) : s));
+    d.setPerformRename((newName, isPreview, cb) -> {
+      final PsiPackage psiPackage = (PsiPackage)element;
+      if (Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {
+        return superPerformRename.invoke(StringUtil.getShortName(newName), isPreview, cb);
       }
-
-      @Override
-      public String[] getSuggestedNames() {
-        return new String[]{((PsiPackage)element).getQualifiedName()};
+      else {
+        RenameDialog2Kt.invokeRefactoring(createRenameMoveProcessor(newName,
+                                                                    psiPackage,
+                                                                    d.getSearchInComments().getValue(),
+                                                                    d.getSearchTextOccurrences().getValue()), isPreview, cb);
+        return Unit.INSTANCE;
       }
+    });
+    d.setSuggestedNames(Collections.singletonList(((PsiPackage)element).getQualifiedName()));
 
-      @Override
-      public String getNewName() {
-        final PsiPackage psiPackage = (PsiPackage)element;
-        final String oldName = psiPackage.getQualifiedName();
-        final String newName = super.getNewName();
-        if (!Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {
-          return newName;
-        }
-        return StringUtil.getShortName(newName);
-      }
-
-      protected void doAction() {
-        final PsiPackage psiPackage = (PsiPackage)element;
-        final String oldName = psiPackage.getQualifiedName();
-        final String newName = super.getNewName();
-        if (!Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(newName))) {
-          invokeRefactoring(createRenameMoveProcessor(newName, psiPackage, isSearchInComments(), isSearchInNonJavaFiles()));
-        } else {
-          super.doAction();
-        }
-      }
-    };
+    return d;
   }
 
   public static MoveDirectoryWithClassesProcessor createRenameMoveProcessor(final String newName,

@@ -45,6 +45,10 @@ public class BackwardReferenceIndexWriter {
     myIndex = index;
   }
 
+  Exception getRebuildRequestCause() {
+    return myIndex.getRebuildRequestCause();
+  }
+
   public static void closeIfNeed() {
     if (ourInstance != null) {
       try {
@@ -153,12 +157,18 @@ public class BackwardReferenceIndexWriter {
     return ref.getModifiers().contains(Modifier.PRIVATE);
   }
 
-  private static int id(JavacRef ref, NameEnumerator nameEnumerator) {
+  private int id(JavacRef ref, NameEnumerator nameEnumerator) {
     return id(ref.getName(), nameEnumerator);
   }
 
-  private static int id(String name, NameEnumerator nameEnumerator) {
-    return nameEnumerator.enumerate(name);
+  private int id(String name, NameEnumerator nameEnumerator) {
+    try {
+      return nameEnumerator.enumerate(name);
+    }
+    catch (IOException ex) {
+      myIndex.setRebuildRequestCause(ex);
+      return 0;
+    }
   }
 
   private static boolean isRebuildInAllJavaModules(CompileContext context) {

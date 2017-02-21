@@ -1059,6 +1059,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (tree != null) {
       return tree;
     }
+    assert myFileElementBeingLoaded.get() == null : "non-empty thread-local";
     FileElement fileElement = calcTreeElement();
     synchronized (myStubFromTreeLock) {
       tree = derefStub();
