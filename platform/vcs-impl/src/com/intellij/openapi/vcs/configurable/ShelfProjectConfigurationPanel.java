@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
@@ -55,6 +54,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     myVcsConfiguration = VcsConfiguration.getInstance(project);
     myUseCustomShelfDirectory = new JBCheckBox("Use custom shelf storage directory");
     myShelfDirectoryLabel = new JBLabel("Shelf directory:");
+    myShelfDirectoryLabel.setFocusable(false);
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
     myShelfDirectoryPath.addBrowseFolderListener("Shelf", "Select a directory to store shelves in", myProject,
                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
@@ -64,18 +64,17 @@ public class ShelfProjectConfigurationPanel extends JPanel {
         File file = new File(myShelfDirectoryPath.getText());
         String errorMessage = null;
         if (!file.exists() && !file.mkdirs()) {
-          errorMessage = "Shelf directory doesn't exist and can't be created";
+          errorMessage = "Can't find or create new shelf directory";
         }
         else if (!file.canWrite() || !file.canRead()) {
           errorMessage = "Shelf directory should have read and write access";
         }
         if (errorMessage != null && myShelfDirectoryPath.isShowing()) {
           PopupUtil
-            .showBalloonForComponent(myShelfDirectoryPath, "Shelf directory should have read and write access", MessageType.WARNING, false,
+            .showBalloonForComponent(myShelfDirectoryPath, errorMessage, MessageType.WARNING, false,
                                      myProject);
-          return false;
         }
-        return true;
+        return errorMessage != null;
       }
     });
     myBaseRevisionTexts = new JCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
@@ -91,9 +90,6 @@ public class ShelfProjectConfigurationPanel extends JPanel {
     setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected());
     myUseCustomShelfDirectory.addActionListener(e -> {
       boolean useCustomDir = myUseCustomShelfDirectory.isSelected();
-      if (useCustomDir) {
-        IdeFocusManager.findInstance().requestFocus(myShelfDirectoryPath, true);
-      }
       setEnabledCustomShelfDirectoryComponents(useCustomDir);
     });
   }
@@ -113,7 +109,7 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   private void layoutComponents() {
     JPanel contentPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, NORTHWEST, NONE,
-                                                         JBUI.insets(0), 0, 0);
+                                                         JBUI.emptyInsets(), 0, 0);
     contentPanel.add(myUseCustomShelfDirectory, gb);
     gb.gridy++;
     gb.fill = HORIZONTAL;
