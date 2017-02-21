@@ -6,6 +6,7 @@ class Test {
                          newMethod(variable);
                      }
                  }
+         ;
      }
 
     private <T> void newMethod(T variable) {

@@ -6,5 +6,6 @@ class Test {
                          <selection>System.out.println(variable);</selection>
                      }
                  }
+         ;
      }
 }

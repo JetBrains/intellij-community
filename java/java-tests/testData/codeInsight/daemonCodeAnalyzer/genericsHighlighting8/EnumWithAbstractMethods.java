@@ -5,6 +5,7 @@
   C {
     void foo() {}
   }
+  ;
 
   abstract void foo();
 }
