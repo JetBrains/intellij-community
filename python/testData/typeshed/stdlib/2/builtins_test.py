@@ -6,3 +6,10 @@ def test_map():
 def test_filter():
     assert filter(lambda x: x % 2 == 0, [1, 2, 3]) + [4, 5, 6] == [2, 4, 5, 6]
     assert filter(lambda x: x != 'f', 'foo') + 'bar' == 'oobar'
+
+
+def test_open(tmpdir):
+    path = tmpdir.join('foo')
+    path.write('test')
+    with open(str(path), 'r') as fd:
+        assert '\n'.join(fd.xreadlines()) == 'test'
