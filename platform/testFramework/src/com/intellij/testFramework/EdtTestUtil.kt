@@ -59,7 +59,7 @@ fun runInEdtAndWait(runnable: () -> Unit) {
   }
   else {
     try {
-      SwingUtilities.invokeAndWait(runnable)
+      SwingUtilities.invokeAndWait({ runnable() })
     }
     catch (e: InvocationTargetException) {
       throw e.cause ?: e
