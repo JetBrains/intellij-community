@@ -82,6 +82,7 @@ public class AsyncHighlighterUpdater extends ReadTask {
   @TestOnly
   public static void completeAsyncTasks() {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
+    UIUtil.dispatchAllInvocationEvents();
     for (Future<?> future : ourHighlighterFutures) {
       try {
         future.get();
