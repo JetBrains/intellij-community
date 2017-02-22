@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -291,9 +291,15 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                Component component,
                                                @Nullable AnActionEvent e) {
     if (element instanceof OptionDescription) {
-      final String configurableId = ((OptionDescription)element).getConfigurableId();
-      TransactionGuard.getInstance().submitTransactionLater(project != null ? project : ApplicationManager.getApplication(), () ->
-        ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText));
+      OptionDescription optionDescription = (OptionDescription)element;
+      final String configurableId = optionDescription.getConfigurableId();
+      Disposable disposable = project != null ? project : ApplicationManager.getApplication();
+      TransactionGuard guard = TransactionGuard.getInstance();
+      if (optionDescription.hasExternalEditor()) {
+        guard.submitTransactionLater(disposable, () -> optionDescription.invokeInternalEditor());
+      } else {
+        guard.submitTransactionLater(disposable, () -> ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText));
+      }
     }
     else {
       ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(

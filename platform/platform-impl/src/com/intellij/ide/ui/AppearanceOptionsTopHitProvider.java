@@ -16,6 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +32,7 @@ import java.util.Collection;
 public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
   public static final String ID = "appearance";
 
-  private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
+  private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
     appearance2("UI: " + messageIde("checkboox.cyclic.scrolling.in.lists"), "cycleScrolling"),
     appearance("UI: " + messageIde("checkbox.show.icons.in.quick.navigation"), "SHOW_ICONS_IN_QUICK_NAVIGATION"),
     appearance("UI: " + messageIde("checkbox.position.cursor.on.default.button"), "MOVE_MOUSE_ON_DEFAULT_BUTTON"),
@@ -54,7 +55,7 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions(@Nullable Project project) {
     return ourOptions;
   }
 
@@ -105,7 +106,7 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
   }
 
   public static class Ex extends OptionsTopHitProvider implements CoveredByToggleActions {
-    private static final Collection<BooleanOptionDescription> ourOptions = ContainerUtil.immutableList(
+    private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
       appearance("Window: " + "Hide Tool Window Bars", "HIDE_TOOL_STRIPES"),
       appearance("View: Show Main Toolbar", "SHOW_MAIN_TOOLBAR"),
       appearance("View: Show Status Bar", "SHOW_STATUS_BAR"),
@@ -114,7 +115,7 @@ public class AppearanceOptionsTopHitProvider extends OptionsTopHitProvider {
 
     @NotNull
     @Override
-    public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+    public Collection<OptionDescription> getOptions(@Nullable Project project) {
       return ourOptions;
     }
 

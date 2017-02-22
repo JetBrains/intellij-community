@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
-import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.project.Project;
@@ -37,7 +37,7 @@ import java.util.List;
  */
 public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
   @NotNull
-  public abstract Collection<BooleanOptionDescription> getOptions(@Nullable Project project);
+  public abstract Collection<OptionDescription> getOptions(@Nullable Project project);
 
   @Override
   public final void consumeTopHits(@NonNls String pattern, Consumer<Object> collector, Project project) {
@@ -57,7 +57,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
         pattern = pattern.substring(id.length()).trim().toLowerCase();
       }
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-      for (BooleanOptionDescription option : getOptions(project)) {
+      for (OptionDescription option : getOptions(project)) {
         if (matcher.matches(option.getOption())) {
           collector.consume(option);
         }

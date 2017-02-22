@@ -1225,9 +1225,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
           append(text, attrs);
           final String id = ((OptionDescription)value).getConfigurableId();
-          final String name1 = myConfigurables.get(id);
-          if (name1 != null) {
-            setLocationString(name1);
+          String location = myConfigurables.get(id);
+          if (location == null) location = ((OptionDescription)value).getValue();
+          if (location != null) {
+            setLocationString(location);
           }
         }
         else if (value instanceof OptionsTopHitProvider) {
