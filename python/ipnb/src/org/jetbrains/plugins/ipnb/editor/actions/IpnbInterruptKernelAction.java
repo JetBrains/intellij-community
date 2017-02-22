@@ -1,27 +1,25 @@
 package org.jetbrains.plugins.ipnb.editor.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 
 public class IpnbInterruptKernelAction extends AnAction {
-  public IpnbInterruptKernelAction() {
-    super();
+
+  private final IpnbFileEditor myFileEditor;
+
+  public IpnbInterruptKernelAction(IpnbFileEditor fileEditor) {
+    super("Interrupt kernel", "Interrupt kernel", AllIcons.Actions.Suspend);
+    myFileEditor = fileEditor;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
-    if (editor instanceof IpnbFileEditor) {
-      interruptKernel(((IpnbFileEditor)editor));
-    }
+    interruptKernel(myFileEditor);
   }
 
   public static void interruptKernel(@NotNull final IpnbFileEditor editor) {

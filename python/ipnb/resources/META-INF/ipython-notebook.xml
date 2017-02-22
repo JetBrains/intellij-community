@@ -23,29 +23,13 @@
     <unresolvedReferenceSkipper implementation="org.jetbrains.plugins.ipnb.psi.IpnbUnresolvedReferenceSkipper"/>
   </extensions>
   <actions>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction" id="IpnbRunCellInplaceAction"
-            text="Run Cell Inplace">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl ENTER"/>
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellAction" id="IpnbRunCellAction" text="Run Cell">
-      <keyboard-shortcut keymap="$default" first-keystroke="shift ENTER"/>
-    </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunAllCellsAction" id="IpnbRunAllCellsAction" text="Run All Cells"
     use-shortcut-of="Run">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbSaveAction" id="IpnbSaveAction" text="Save and Checkpoint">
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellBelowAction" id="IpnbAddCellBelowAction" text="Insert Cell Below">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl EQUALS"/>
-    </action>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAboveAction" id="IpnbAddCellAboveAction" text="Insert Cell Above">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift EQUALS"/>
     </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction" id="IpnbCutCellAction" text="Cut Cell"/>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCopyCellAction" id="IpnbCopyCellAction" text="Copy Cell"/>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction" id="IpnbPasteCellAction" text="Paste Cell Below"/>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbDeleteCellAction" id="IpnbDeleteCellAction" text="Delete Cell"/>
 
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbConvertToPythonAction" id="IpnbConvertToPythonAction"
             text="Convert to Python Script"/>

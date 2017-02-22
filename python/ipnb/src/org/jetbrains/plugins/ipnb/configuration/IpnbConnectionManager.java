@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -383,7 +384,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
       BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
         message, null, messageType.getPopupBackground(), listener);
       final Balloon balloon = balloonBuilder.setHideOnLinkClick(true).createBalloon();
-      ApplicationManager.getApplication().invokeLater(() -> balloon.showInCenterOf(fileEditor.getRunCellButton()));
+      ApplicationManager.getApplication().invokeLater(() -> balloon.show(RelativePoint.getNorthWestOf(fileEditor.getRunPanel()), Balloon.Position.above));
     });
   }
 

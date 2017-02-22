@@ -2,10 +2,8 @@ package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
@@ -56,9 +54,9 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
   private static final String rawNBCellType = "Raw NBConvert";
   private final static String[] ourCellTypes = new String[]{codeCellType, markdownCellType, /*rawNBCellType, */headingCellType + "1",
     headingCellType + "2", headingCellType + "3", headingCellType + "4", headingCellType + "5", headingCellType + "6"};
-  private JButton myRunCellButton;
   private final JScrollPane myScrollPane;
   public static final DataKey<IpnbFileEditor> DATA_KEY = DataKey.create(IpnbFileEditor.class.getName());
+  private JComponent myRunPanel;
 
   public IpnbFileEditor(Project project, final VirtualFile vFile) {
     myDocument = FileDocumentManager.getInstance().getDocument(vFile);
@@ -115,32 +113,26 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
 
-    final JPanel savePanel = new JPanel(new GridBagLayout());
-    savePanel.setBackground(IpnbEditorUtil.getBackground());
-    addConvertButton(savePanel);
-    addSaveButton(savePanel);
-    controlPanel.add(savePanel);
+    final DefaultActionGroup saveGroup = new DefaultActionGroup();
+    saveGroup.add(new IpnbSaveAction(this), new IpnbConvertToPythonAction());
+    controlPanel.add(createToolbar(saveGroup));
 
-    final JPanel addPanel = new JPanel(new GridBagLayout());
-    addPanel.setBackground(IpnbEditorUtil.getBackground());
-    addAddButton(addPanel);
-    controlPanel.add(addPanel);
+    final DefaultActionGroup addGroup = new DefaultActionGroup();
+    addGroup.add(new IpnbAddCellBelowAction(this));
+    controlPanel.add(createToolbar(addGroup));
 
-    final JPanel editorPanel = new JPanel(new GridBagLayout());
-    editorPanel.setBackground(IpnbEditorUtil.getBackground());
-    addCutButton(editorPanel);
-    addCopyButton(editorPanel);
-    addPasteButton(editorPanel);
-    controlPanel.add(editorPanel);
 
-    final JPanel runPanel = new JPanel(new GridBagLayout());
-    runPanel.setBackground(IpnbEditorUtil.getBackground());
-    addRunButton(runPanel);
-    controlPanel.add(runPanel);
+    final DefaultActionGroup editorGroup = new DefaultActionGroup();
+    editorGroup.addAll(new IpnbCutCellAction(this), new IpnbCopyCellAction(this), new IpnbPasteCellAction(this));
+    controlPanel.add(createToolbar(editorGroup));
 
-    addInterruptKernelButton(runPanel);
-    addReloadKernelButton(runPanel);
+    final DefaultActionGroup runGroup = new DefaultActionGroup();
+    runGroup.addAll(new IpnbRunCellAction(this), new IpnbInterruptKernelAction(this), new IpnbReloadKernelAction(this));
+    myRunPanel = createToolbar(runGroup);
+    controlPanel.add(myRunPanel);
+
     myCellTypeCombo = new ComboBox(ourCellTypes);
+    myCellTypeCombo.setBorder(null);
 
     myCellTypeCombo.addActionListener(new ActionListener() {
       @Override
@@ -162,108 +154,15 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     return controlPanel;
   }
 
-  private void addRunButton(@NotNull final JPanel controlPanel) {
-    myRunCellButton = new JButton();
-    myRunCellButton.setBackground(IpnbEditorUtil.getBackground());
-    myRunCellButton.setPreferredSize(new Dimension(30, 30));
-    myRunCellButton.setIcon(AllIcons.Toolwindows.ToolWindowRun);
-    myRunCellButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbRunCellBaseAction.runCell(myIpnbFilePanel, true);
-      }
-    });
-    myRunCellButton.setToolTipText("Run Cell");
-    controlPanel.add(myRunCellButton);
+  @NotNull
+  private static JComponent createToolbar(@NotNull DefaultActionGroup group) {
+    final JComponent savePanel = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    savePanel.setBackground(IpnbEditorUtil.getBackground());
+    return savePanel;
   }
 
-  private void addInterruptKernelButton(@NotNull final JPanel controlPanel) {
-    addButton(controlPanel, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbInterruptKernelAction.interruptKernel(IpnbFileEditor.this);
-      }
-    }, AllIcons.Actions.Suspend, "Interrupt kernel");
-  }
-
-  private void addReloadKernelButton(@NotNull final JPanel controlPanel) {
-    addButton(controlPanel, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbReloadKernelAction.reloadKernel(IpnbFileEditor.this);
-      }
-    }, AllIcons.Actions.Refresh, "Restart Kernel");
-  }
-
-  private void addConvertButton(@NotNull final JPanel controlPanel) {
-    addButton(controlPanel, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbConvertToPythonAction.convertToPythonScript(IpnbFileEditor.this);
-      }
-    }, PythonIcons.Python.Python, "Convert to Python Script");
-  }
-
-  private void addSaveButton(@NotNull final JPanel controlPanel) {
-    addButton(controlPanel, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbSaveAction.saveAndCheckpoint(IpnbFileEditor.this);
-      }
-    }, AllIcons.Actions.Menu_saveall, "Save and Checkpoint");
-  }
-
-  private void addCutButton(@NotNull final JPanel controlPanel) {
-    addButton(controlPanel, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbCutCellAction.cutCell(myIpnbFilePanel);
-      }
-    }, AllIcons.Actions.Menu_cut, "Cut Cell");
-  }
-
-  private void addCopyButton(@NotNull final JPanel controlPanel) {
-    addButton(controlPanel, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbCopyCellAction.copyCell(myIpnbFilePanel);
-      }
-    }, AllIcons.Actions.Copy, "Copy Cell");
-  }
-
-  private void addPasteButton(@NotNull final JPanel controlPanel) {
-    addButton(controlPanel, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbPasteCellAction.pasteCell(myIpnbFilePanel);
-      }
-    }, AllIcons.Actions.Menu_paste, "Paste Cell Below");
-  }
-
-  private static void addButton(@NotNull final JPanel controlPanel,
-                                @NotNull final ActionListener listener,
-                                @NotNull final Icon icon,
-                                @NotNull final String tooltip) {
-    final JButton button = new JButton();
-    button.setBackground(IpnbEditorUtil.getBackground());
-    button.setPreferredSize(new Dimension(30, 30));
-    button.setIcon(icon);
-    button.addActionListener(listener);
-    button.setToolTipText(tooltip);
-    controlPanel.add(button);
-  }
-
-  private void addAddButton(@NotNull final JPanel controlPanel) {
-    addButton(controlPanel, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        IpnbAddCellBelowAction.addCell(myIpnbFilePanel);
-      }
-    }, AllIcons.General.Add, "Insert Cell Below");
-  }
-
-  public JButton getRunCellButton() {
-    return myRunCellButton;
+  public JComponent getRunPanel() {
+    return myRunPanel;
   }
 
   private void updateCellType(@NotNull final String selectedItem, @NotNull final IpnbEditablePanel selectedCell) {
