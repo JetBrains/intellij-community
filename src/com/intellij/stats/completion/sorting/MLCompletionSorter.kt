@@ -37,7 +37,7 @@ interface Ranker {
 class FeatureTransformerProvider: ApplicationComponent.Adapter() {
 
     lateinit var featureTransformer: FeatureTransformer
-        get
+        private set
     
     override fun initComponent() {
         val binary = readBinaryFeaturesInfo()
