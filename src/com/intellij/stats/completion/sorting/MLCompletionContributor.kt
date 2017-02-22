@@ -63,21 +63,31 @@ class MLClassifier(next: Classifier<LookupElement>,
     var position = 0
     val pairs = mutableListOf<Pair<LookupElement, Double>>()
     items.forEach {
-      val weight = -777.666
+      val weight = getCachedWeight(it) ?: -777.666
       pairs.add(Pair.create(it, weight))
       position++
     }
     return pairs
   }
 
-  fun getWeight(element: LookupElement, position: Int, relevance: RelevanceObjects): Double {
+  private fun getCachedWeight(element: LookupElement): Double? {
     val currentPrefix = lookup.additionalPrefix
-    
+
     val cached = cachedScore[element]
-    if (cached != null && currentPrefix == cached.prefix)  {
+    if (cached != null && currentPrefix == cached.prefix) {
       return cached.weight
     }
 
+    return null
+  }
+
+  fun getWeight(element: LookupElement, position: Int, relevance: RelevanceObjects): Double {
+    val cachedWeight = getCachedWeight(element)
+    if (cachedWeight != null) {
+      return cachedWeight
+    }
+    
+    val currentPrefix = lookup.additionalPrefix
     val elementLength = element.lookupString.length
     val prefixLength = currentPrefix.length
     
