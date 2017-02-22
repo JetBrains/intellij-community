@@ -120,7 +120,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     });
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
 
-    if (myProject != null) {
+    if (myProject != null && !myProject.isDisposed()) {
       Disposer.register(myProject, this);
     }
   }
