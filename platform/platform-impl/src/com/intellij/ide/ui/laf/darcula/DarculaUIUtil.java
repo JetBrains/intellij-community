@@ -39,10 +39,26 @@ import static javax.swing.SwingConstants.WEST;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  private static final Color  GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
+  private static final Color GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
 
-  private static final Color  BALLOON_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
-  private static final Color  BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
+  private static final Color ACTIVE_ERROR_COLOR = new JBColor(() -> {
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      return new Color(0x80ff0f0f, true);
+    } else {
+      return (UIUtil.isUnderDarcula()) ? new Color(0x8b3c3c) : new Color(0xe53e4d);
+    }
+  });
+
+  private static final Color INACTIVE_ERROR_COLOR = new JBColor(() -> {
+    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      return new Color(0x80f2aaaa, true);
+    } else {
+      return (UIUtil.isUnderDarcula()) ? new Color(0x725252) : new Color(0xebbcbc);
+    }
+  });
+
+  private static final Color BALLOON_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
+  private static final Color BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
 
   public static void paintFocusRing(Graphics g, Rectangle bounds) {
     MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
@@ -103,17 +119,14 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
-  public static void paintErrorRing(Graphics2D g, int width, int height, boolean hasFocus) {
-    int lw = JBUI.scale(UIManager.getInt("TextField.darcula.error.borderWidth"));
-    Shape shape = SystemInfo.isWindows ? new Rectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2) :
-                                         new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
-    Color color = hasFocus ? UIManager.getColor("TextField.darcula.error.active") :
-                             UIManager.getColor("TextField.darcula.error.inactive");
+  public static void paintErrorBorder(Graphics2D g, int width, int height, boolean hasFocus) {
+    int lw = SystemInfo.isMac && UIUtil.isUnderIntelliJLaF() ? JBUI.scale(3) : JBUI.scale(2);
+    Shape shape = new RoundRectangle2D.Double(lw, lw, width - lw * 2, height - lw * 2, lw, lw);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    g.setPaint(color);
+    g.setPaint(hasFocus ? ACTIVE_ERROR_COLOR : INACTIVE_ERROR_COLOR);
     g.setStroke(new OuterStroke(lw));
     g.draw(shape);
   }
