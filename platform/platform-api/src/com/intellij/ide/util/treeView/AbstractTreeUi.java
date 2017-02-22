@@ -2959,8 +2959,10 @@ public class AbstractTreeUi {
     }
     final Object oldElement = getElementFromDescriptor(childDescriptor);
     if (oldElement == null) {
-      pass.expire();
-      return Promises.<Void>rejectedPromise();
+      // if a tree node with removed element was not properly removed from a tree model
+      // we must not ignore this situation and should remove a wrong node
+      removeNodeFromParent(childNode, true);
+      return Promises.<Void>resolvedPromise();
     }
 
     Promise<Boolean> update;
