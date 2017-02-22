@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class RegistryValue {
     final String s = get(myKey, null, true);
     if (s != null) {
       Color color = ColorUtil.fromHex(s, null);
-      if (color != null) {
+      if (color != null && myKey.contains("color")) {
         return color;
       }
       final String[] rgb = s.split(",");
