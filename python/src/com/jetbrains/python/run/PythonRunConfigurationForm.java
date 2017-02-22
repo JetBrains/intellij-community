@@ -83,6 +83,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
       myEmulateTerminalCheckbox.setVisible(false);
     }
 
+    myEmulateTerminalCheckbox.setSelected(false);
+
     myEmulateTerminalCheckbox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
