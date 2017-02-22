@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.jediterm.terminal.HyperlinkStyle;
+import com.jediterm.terminal.TerminalKeyEncoder;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
@@ -48,6 +49,12 @@ public class TerminalExecutionConsole implements ConsoleView {
   private Project myProject;
   private final AppendableTerminalDataStream myDataStream;
 
+  private final TerminalKeyEncoder myKeyEncoder = new TerminalKeyEncoder();
+
+  {
+    myKeyEncoder.setAutoNewLine(true);
+  }
+
   public TerminalExecutionConsole(@NotNull Project project, @NotNull ProcessHandler processHandler) {
     myProject = project;
     final JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase() {
@@ -63,7 +70,16 @@ public class TerminalExecutionConsole implements ConsoleView {
     myTerminalWidget = new JBTerminalWidget(project, 200, 24, provider, this) {
       @Override
       protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
-        return new TerminalStarter(terminal, connector, myDataStream);
+        return new TerminalStarter(terminal, connector, myDataStream) {
+          @Override
+          public byte[] getCode(int key, int modifiers) {
+            if (key == 10) {
+              return myKeyEncoder.getCode(key, modifiers);
+            } else {
+              return super.getCode(key, modifiers);
+            }
+          }
+        };
       }
     };
 
@@ -102,7 +118,7 @@ public class TerminalExecutionConsole implements ConsoleView {
       }
     });
   }
-  
+
   private void printText(@NotNull String text, @Nullable ConsoleViewContentType contentType) throws IOException {
     if (contentType != null) {
       myDataStream.append(encodeColor(contentType.getAttributes().getForegroundColor()));

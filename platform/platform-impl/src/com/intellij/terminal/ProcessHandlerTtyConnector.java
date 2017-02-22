@@ -51,7 +51,6 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     myCharset = charset;
   }
 
-
   @Override
   public boolean init(Questioner q) {
     return true;
@@ -85,6 +84,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   @Override
   public void write(byte[] bytes) throws IOException {
     myProcessHandler.getProcessInput().write(bytes);
+    myProcessHandler.getProcessInput().flush();
   }
 
   @Override
@@ -95,6 +95,7 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
   @Override
   public void write(String string) throws IOException {
     myProcessHandler.getProcessInput().write(string.getBytes(myCharset));
+    myProcessHandler.getProcessInput().flush();
   }
 
   @Override
