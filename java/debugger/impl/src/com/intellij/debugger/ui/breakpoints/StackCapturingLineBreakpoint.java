@@ -80,8 +80,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     myProperties.myClassPattern = myCapturePoint.myClassName;
     myProperties.myMethodName = myCapturePoint.myMethodName;
 
-    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression, !StringUtil.isEmpty(myCapturePoint.myClassName));
-    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression, !StringUtil.isEmpty(myCapturePoint.myInsertClassName));
+    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression, false);
+    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression, false);
   }
 
   @NotNull
