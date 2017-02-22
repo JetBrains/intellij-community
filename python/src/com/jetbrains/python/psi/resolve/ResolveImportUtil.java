@@ -401,7 +401,8 @@ public class ResolveImportUtil {
                                                              boolean checkForPackage,
                                                              boolean withoutStubs) {
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
-    if (subdir != null && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
+    // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
+    if (subdir != null && (!checkForPackage || PyUtil.isPackage(subdir, containingFile)) && subdir.getName().equals(referencedName)) {
       return ResolveResultList.to(subdir);
     }
 
