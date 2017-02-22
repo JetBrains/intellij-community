@@ -69,7 +69,7 @@ class MPSProperties extends ProductProperties {
                 withoutProjectLibrary("Gradle")
                 withoutProjectLibrary("com.twelvemonkeys.imageio:imageio-tiff:3.2.1")
                 excludeFromModule("resources", "META-INF/IdeaPlugin.xml")
-                excludeFromModule("resources", "componentSets")
+                excludeFromModule("resources", "componentSets/*")
                 excludeFromModule("resources", "ProductivityFeaturesRegistry.xml")
 //                excludeFromModule("community-resources", "idea")
 //                excludeFromModule("community-resources", "lafs")
