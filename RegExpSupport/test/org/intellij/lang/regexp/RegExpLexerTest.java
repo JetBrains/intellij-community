@@ -471,6 +471,19 @@ public class RegExpLexerTest extends LexerTestCase {
                                         "CHARACTER (''')\n" +
                                         "INVALID_CHARACTER_ESCAPE_TOKEN ('\\R')\n" +
                                         "CLASS_END (']')", lexer);
+
+    doTest("\\{\\*\\+\\?\\$[\\{\\*\\+\\?\\$]", "ESC_CHARACTER ('\\{')\n" +
+                                               "ESC_CHARACTER ('\\*')\n" +
+                                               "ESC_CHARACTER ('\\+')\n" +
+                                               "ESC_CHARACTER ('\\?')\n" +
+                                               "ESC_CHARACTER ('\\$')\n" +
+                                               "CLASS_BEGIN ('[')\n" +
+                                               "REDUNDANT_ESCAPE ('\\{')\n" +
+                                               "REDUNDANT_ESCAPE ('\\*')\n" +
+                                               "REDUNDANT_ESCAPE ('\\+')\n" +
+                                               "REDUNDANT_ESCAPE ('\\?')\n" +
+                                               "REDUNDANT_ESCAPE ('\\$')\n" +
+                                               "CLASS_END (']')", lexer);
   }
 
   public void testUnicode() {
@@ -511,7 +524,7 @@ public class RegExpLexerTest extends LexerTestCase {
   }
 
   public void testQuantifier() {
-    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS));
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS, OMIT_NUMBERS_IN_QUANTIFIERS));
     doTest("a{,10}", "CHARACTER ('a')\n" +
                      "LBRACE ('{')\n" +
                      "COMMA (',')\n" +
@@ -549,6 +562,46 @@ public class RegExpLexerTest extends LexerTestCase {
                       "CHARACTER ('2')\n" +
                       "CHARACTER ('}')\n" +
                       "CLASS_END (']')", lexer);
+
+    doTest("[x\\{9}]", "CLASS_BEGIN ('[')\n" +
+                       "CHARACTER ('x')\n" +
+                       "REDUNDANT_ESCAPE ('\\{')\n" +
+                       "CHARACTER ('9')\n" +
+                       "CHARACTER ('}')\n" +
+                       "CLASS_END (']')", lexer);
+
+    doTest("x\\{}", "CHARACTER ('x')\n" +
+                    "REDUNDANT_ESCAPE ('\\{')\n" +
+                    "CHARACTER ('}')", lexer);
+
+    doTest("x{,}", "CHARACTER ('x')\n" +
+                   "CHARACTER ('{')\n" +
+                   "CHARACTER (',')\n" +
+                   "CHARACTER ('}')", lexer);
+
+    doTest("x\\{,}", "CHARACTER ('x')\n" +
+                     "REDUNDANT_ESCAPE ('\\{')\n" +
+                     "CHARACTER (',')\n" +
+                     "CHARACTER ('}')", lexer);
+  }
+
+  public void testQuantifier2() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS));
+    doTest("a{,10}", "CHARACTER ('a')\n" +
+                     "CHARACTER ('{')\n" +
+                     "CHARACTER (',')\n" +
+                     "CHARACTER ('1')\n" +
+                     "CHARACTER ('0')\n" +
+                     "CHARACTER ('}')", lexer);
+  }
+
+  public void testQuantifier3() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.of(DANGLING_METACHARACTERS, OMIT_NUMBERS_IN_QUANTIFIERS,
+                                                         OMIT_BOTH_NUMBERS_IN_QUANTIFIERS));
+    doTest("a{,}", "CHARACTER ('a')\n" +
+                   "LBRACE ('{')\n" +
+                   "COMMA (',')\n" +
+                   "RBRACE ('}')", lexer);
   }
 
   public void testControlCharacters() {
