@@ -760,23 +760,19 @@ public class HtmlUtil {
     return false;
   }
 
-  public static List<String> getIncludedPaths(@NotNull final XmlFile file) {
-    final List<String> result = new ArrayList<>();
+  public static List<XmlAttributeValue> getIncludedPathsElements(@NotNull final XmlFile file) {
+    final List<XmlAttributeValue> result = new ArrayList<>();
     file.acceptChildren(new XmlRecursiveElementWalkingVisitor() {
       @Override
       public void visitXmlTag(XmlTag tag) {
+        XmlAttribute attribute = null;
         if ("link".equalsIgnoreCase(tag.getName())) {
-          String href = tag.getAttributeValue("href");
-          if (!StringUtil.isEmpty(href)) {
-            result.add(href);
-          }
+          attribute = tag.getAttribute("href");
         }
         else if ("script".equalsIgnoreCase(tag.getName()) || "img".equalsIgnoreCase(tag.getName())) {
-          String src = tag.getAttributeValue("src");
-          if (!StringUtil.isEmpty(src)) {
-            result.add(src);
-          }
+          attribute = tag.getAttribute("src");
         }
+        if (attribute != null) result.add(attribute.getValueElement());
         super.visitXmlTag(tag);
       }
 
