@@ -21,7 +21,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -106,7 +105,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           // crazy things happen when running tests, like starting write action in one thread but firing its end in the other
           enable("Write action finished: " + action);
         }
-      }, DocumentCommitThread.this);
+      }, this);
 
       enable("Listener installed, started");
     });
@@ -506,7 +505,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
       Lock lock = getDocumentLock(document);
       if (!lock.tryLock()) {
-        task.cancel("Can't obtain document lock", DocumentCommitThread.this);
+        task.cancel("Can't obtain document lock", this);
         return;
       }
 
@@ -547,7 +546,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       finally {
         lock.unlock();
         if (canceled) {
-          task.cancel("Task invalidated", DocumentCommitThread.this);
+          task.cancel("Task invalidated", this);
         }
       }
     };
@@ -885,9 +884,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       boolean sameText = Comparing.equal(fileText, documentText);
       LOG.error("commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
                 "; node.length=" + oldFileNode.getTextLength() +
-                "; doc.text" + (sameText ? "==" : "!=") + "file.text",
-                new Attachment("file psi text", fileText),
-                new Attachment("old text", documentText));
+                "; doc.text" + (sameText ? "==" : "!=") + "file.text" +
+                "; file name:" + file.getName()+
+                "; type:"+file.getFileType()+
+                "; lang:"+file.getLanguage()
+                );
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {
