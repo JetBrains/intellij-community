@@ -227,10 +227,18 @@ HEX_CHAR=[0-9a-fA-F]
                               }
 
 {ESCAPE}  "-"                 { return (yystate() == CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
-{ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != Boolean.TRUE && yystate() != CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
-{ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == Boolean.FALSE && yystate() != CLASS2) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+
+<YYINITIAL> {
+  {ESCAPE}  {LBRACE} / [:digit:]+ {RBRACE}                { return RegExpTT.ESC_CHARACTER; }
+  {ESCAPE}  {LBRACE} / [:digit:]+ "," [:digit:]* {RBRACE} { return RegExpTT.ESC_CHARACTER; }
+  {ESCAPE}  {LBRACE} / "," [:digit:]+ {RBRACE}            { return allowOmitNumbersInQuantifiers ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {LBRACE} / "," {RBRACE}                       { return allowOmitBothNumbersInQuantifiers ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+
+  {ESCAPE}  {LBRACE}            { return (allowDanglingMetacharacters != Boolean.TRUE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {RBRACE}            { return (allowDanglingMetacharacters == Boolean.FALSE) ? RegExpTT.ESC_CHARACTER : RegExpTT.REDUNDANT_ESCAPE; }
+  {ESCAPE}  {META2}             { return RegExpTT.ESC_CHARACTER; }
+}
 {ESCAPE}  {META1}             { return RegExpTT.ESC_CHARACTER; }
-{ESCAPE}  {META2}             { return (yystate() == CLASS2) ? RegExpTT.REDUNDANT_ESCAPE : RegExpTT.ESC_CHARACTER; }
 {ESCAPE}  {CLASS}             { return RegExpTT.CHAR_CLASS;    }
 {ESCAPE}  {PROP}              { yypushstate(PROP); return RegExpTT.PROPERTY;      }
 {ESCAPE}  {CONTROL}           { return RegExpTT.ESC_CTRL_CHARACTER; }

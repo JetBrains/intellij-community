@@ -563,6 +563,11 @@ public class RegExpLexerTest extends LexerTestCase {
                       "CHARACTER ('}')\n" +
                       "CLASS_END (']')", lexer);
 
+    doTest("x\\{9}", "CHARACTER ('x')\n" +
+                     "ESC_CHARACTER ('\\{')\n" +
+                     "CHARACTER ('9')\n" +
+                     "CHARACTER ('}')", lexer);
+
     doTest("[x\\{9}]", "CLASS_BEGIN ('[')\n" +
                        "CHARACTER ('x')\n" +
                        "REDUNDANT_ESCAPE ('\\{')\n" +
@@ -602,6 +607,11 @@ public class RegExpLexerTest extends LexerTestCase {
                    "LBRACE ('{')\n" +
                    "COMMA (',')\n" +
                    "RBRACE ('}')", lexer);
+
+    doTest("x\\{,}", "CHARACTER ('x')\n" +
+                     "ESC_CHARACTER ('\\{')\n" +
+                     "CHARACTER (',')\n" +
+                     "CHARACTER ('}')", lexer);
   }
 
   public void testControlCharacters() {
