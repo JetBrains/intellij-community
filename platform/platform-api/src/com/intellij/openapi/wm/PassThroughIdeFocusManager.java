@@ -36,9 +36,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
 
   @NotNull
   public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
-    getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      getGlobalInstance().requestFocus(c, true);
-    });
+    c.requestFocus();
     return ActionCallback.DONE;
   }
 
