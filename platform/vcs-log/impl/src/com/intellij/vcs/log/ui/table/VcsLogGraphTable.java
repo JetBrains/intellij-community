@@ -153,6 +153,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     VcsLogGraphTable.Selection previousSelection = getSelection();
+    boolean filtersChanged = !getModel().getVisiblePack().getFilters().equals(visiblePack.getFilters());
+
     getModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true, permGraphChanged);
     for (VcsLogHighlighter highlighter : myHighlighters) {
@@ -160,17 +162,21 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     setPaintBusy(false);
-    doLayout();
+    reLayout(filtersChanged);
   }
 
-  @Override
-  public void doLayout() {
-    if (!myColumnsSizeInitialized) {
+  public void reLayout(boolean recalculatePreferredSize) {
+    if (!myColumnsSizeInitialized || recalculatePreferredSize) {
       myColumnsSizeInitialized = initFixedColumnsPreferredSize();
     }
     updateCommitColumnWidth();
 
     super.doLayout();
+  }
+
+  @Override
+  public void doLayout() {
+    reLayout(false);
   }
 
   private boolean initFixedColumnsPreferredSize() {

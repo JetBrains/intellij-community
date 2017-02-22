@@ -68,7 +68,7 @@ public class VcsLogUiUtil {
                                              @NotNull VcsLogData logData,
                                              @NotNull Disposable disposableParent) {
     Runnable miniDetailsLoadedListener = () -> {
-      graphTable.doLayout();
+      graphTable.reLayout(false);
       graphTable.repaint();
     };
     Runnable containingBranchesListener = () -> {
