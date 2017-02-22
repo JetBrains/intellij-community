@@ -253,8 +253,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       myCached = cached;
     }
 
+    @Nullable
     Value evaluate(final EvaluationContext context) throws EvaluateException {
-      if (!myCached || myEvaluator == null) {
+      if ((!myCached || myEvaluator == null) && !StringUtil.isEmpty(myExpression)) {
         myEvaluator = ApplicationManager.getApplication().runReadAction(
           (ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);
@@ -263,9 +264,12 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
               new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myExpression), contextElement, sourcePosition, context.getProject());
           });
       }
-      Value value = myEvaluator.evaluate(context);
-      DebuggerUtilsEx.keep(value, context);
-      return value;
+      if (myEvaluator != null) {
+        Value value = myEvaluator.evaluate(context);
+        DebuggerUtilsEx.keep(value, context);
+        return value;
+      }
+      return null;
     }
   }
 }
