@@ -53,6 +53,9 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
+    myCommonOptionsForm.addInterpreterModeListener((isRemoteInterpreter) -> {
+      emulateTerminalEnabled(!isRemoteInterpreter);
+    });
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel(), BorderLayout.CENTER);
 
     myProject = configuration.getProject();
@@ -80,7 +83,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     if (SystemInfo.isWindows) {
       //TODO: enable it on Windows when it works there
-      myEmulateTerminalCheckbox.setVisible(false);
+      emulateTerminalEnabled(false);
     }
 
     myEmulateTerminalCheckbox.setSelected(false);
@@ -88,11 +91,20 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myEmulateTerminalCheckbox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
-        myShowCommandLineCheckbox.setEnabled(!myEmulateTerminalCheckbox.isSelected());
+        updateShowCommandLineEnabled();
       }
     });
 
     setAnchor(myCommonOptionsForm.getAnchor());
+  }
+
+  private void updateShowCommandLineEnabled() {
+    myShowCommandLineCheckbox.setEnabled(!myEmulateTerminalCheckbox.isVisible() || !myEmulateTerminalCheckbox.isSelected());
+  }
+
+  private void emulateTerminalEnabled(boolean flag) {
+    myEmulateTerminalCheckbox.setVisible(flag);
+    updateShowCommandLineEnabled();
   }
 
   public JComponent getPanel() {
