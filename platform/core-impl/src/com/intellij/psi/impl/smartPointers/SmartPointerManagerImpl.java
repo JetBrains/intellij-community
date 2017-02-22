@@ -114,9 +114,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
                                                           @NotNull TextRange range,
                                                           boolean forInjected) {
-    if (!file.isValid()) {
-      LOG.error("Invalid element:" + file);
-    }
+    PsiUtilCore.ensureValid(file);
     SmartPointerTracker.processQueue();
     SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range), forInjected);
     trackPointer(pointer, file.getViewProvider().getVirtualFile());

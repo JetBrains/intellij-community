@@ -23,6 +23,7 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +65,7 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   public Object getCurrentEditorElement() {
     final Object editorElement = super.getCurrentEditorElement();
     if (editorElement instanceof XmlTag) {
+      PsiUtilCore.ensureValid((XmlTag)editorElement);
       for (StructureViewExtension extension : StructureViewFactoryEx.getInstanceEx(getPsiFile().getProject()).getAllExtensions(XmlTag.class)) {
         final Object element = extension.getCurrentEditorElement(getEditor(), (PsiElement)editorElement);
         if (element != null) return element;
