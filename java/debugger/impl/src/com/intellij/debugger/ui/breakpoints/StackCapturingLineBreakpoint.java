@@ -21,10 +21,13 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.expression.Evaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
@@ -236,6 +239,17 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
     public MyEvaluator(String expression, boolean cached) {
       myExpression = expression;
+      int paramId = DecompiledLocalVariable.getParamId(myExpression);
+      if (paramId > -1) {
+        myEvaluator = new ExpressionEvaluatorImpl(new Evaluator() {
+          @Override
+          public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+            StackFrameProxyImpl frame = context.getFrameProxy();
+            return frame != null ? ContainerUtil.getOrElse(frame.getArgumentValues(), paramId, null) : null;
+          }
+        });
+        cached = true;
+      }
       myCached = cached;
     }
 
