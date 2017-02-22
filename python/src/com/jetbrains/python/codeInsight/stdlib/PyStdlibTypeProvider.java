@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight.stdlib;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
@@ -29,18 +28,19 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -48,8 +48,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("__builtin__.open", "io.open", "os.fdopen",
-                                                                    "pathlib.Path.open");
+  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("open", "io.open", "os.fdopen",
+                                                                    "pathlib.Path.open", "_io.open", "_io.fdopen");
 
   private static final String PY2K_FILE_TYPE = "file";
   private static final String PY3K_BINARY_FILE_TYPE = "io.FileIO[bytes]";
@@ -145,18 +145,18 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    final String qname = getQualifiedName(function, callSite);
+    final String qname = function.getQualifiedName();
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
         return getOpenFunctionType(qname, PyCallExpressionHelper.mapArguments(callSite, function, context), callSite);
       }
-      else if ("__builtin__.tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
+      else if ("tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
       }
-      else if ("__builtin__.tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
+      else if ("tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleConcatenationResultType((PyBinaryExpression)callSite, context);
       }
-      else if ("__builtin__.tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
+      else if ("tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleMultiplicationResultType((PyBinaryExpression)callSite, context);
       }
     }
@@ -297,7 +297,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    if (LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) || "io.open".equals(callQName)) {
+    if (LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) || "io.open".equals(callQName) || "_io.open".equals(callQName)) {
       if (mode.contains("b")) {
         return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE));
       }
@@ -307,29 +307,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
 
     return Ref.create(PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE));
-  }
-
-  @Nullable
-  private static String getQualifiedName(@NotNull PyFunction f, @Nullable PsiElement callSite) {
-    PyPsiUtils.assertValid(f);
-    String result = f.getName();
-    final PyClass c = f.getContainingClass();
-    final VirtualFile vfile = f.getContainingFile().getVirtualFile();
-    if (vfile != null) {
-      String module = QualifiedNameFinder.findShortestImportableName(callSite != null ? callSite : f, vfile);
-      if ("builtins".equals(module)) {
-        module = "__builtin__";
-      }
-      result = String.format("%s.%s%s",
-                             module,
-                             c != null ? c.getName() + "." : "",
-                             result);
-      final QualifiedName qname = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(QualifiedName.fromDottedString(result));
-      if (qname != null) {
-        return qname.toString();
-      }
-    }
-    return result;
   }
 
   @Nullable
