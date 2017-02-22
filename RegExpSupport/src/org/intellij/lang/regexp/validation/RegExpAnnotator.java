@@ -362,7 +362,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       final RegExpNumber maxElement = quantifier.getMax();
       final String max = maxElement == null ? "" : maxElement.getText();
       if (!max.isEmpty() && max.equals(min)) {
-        if ("1".equals(max)) { // TODO: is this safe when reluctant or possessive modifier is present?
+        if ("1".equals(max)) {
           final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Single repetition");
           registerFix(a, new SimplifyQuantifierAction(quantifier, null));
         }
@@ -374,11 +374,11 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
           }
         }
       }
-      else if ("0".equals(min) && "1".equals(max)) {
+      else if (("0".equals(min) || min.isEmpty()) && "1".equals(max)) {
         final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '?'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "?"));
       }
-      else if ("0".equals(min) && max.isEmpty()) {
+      else if (("0".equals(min) || min.isEmpty()) && max.isEmpty()) {
         final Annotation a = myHolder.createWeakWarningAnnotation(quantifier, "Repetition range replaceable by '*'");
         registerFix(a, new SimplifyQuantifierAction(quantifier, "*"));
       }

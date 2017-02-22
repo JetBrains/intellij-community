@@ -8,6 +8,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.IntArrayList;
 import java.util.EnumSet;
 
+import static org.intellij.lang.regexp.RegExpCapability.*;
+
 @SuppressWarnings("ALL")
 %%
 
@@ -28,6 +30,8 @@ import java.util.EnumSet;
     int capturingGroupCount = 0;
 
     private Boolean allowDanglingMetacharacters;
+    private boolean allowOmitNumbersInQuantifiers;
+    private boolean allowOmitBothNumbersInQuantifiers;
     private boolean allowNestedCharacterClasses;
     private boolean allowOctalNoLeadingZero;
     private boolean allowHexDigitClass;
@@ -42,31 +46,33 @@ import java.util.EnumSet;
 
     _RegExLexer(EnumSet<RegExpCapability> capabilities) {
       this((java.io.Reader)null);
-      this.xmlSchemaMode = capabilities.contains(RegExpCapability.XML_SCHEMA_MODE);
-      if (capabilities.contains(RegExpCapability.DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.TRUE;
-      if (capabilities.contains(RegExpCapability.NO_DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.FALSE;
-      this.allowNestedCharacterClasses = capabilities.contains(RegExpCapability.NESTED_CHARACTER_CLASSES);
-      this.allowOctalNoLeadingZero = capabilities.contains(RegExpCapability.OCTAL_NO_LEADING_ZERO);
-      this.commentMode = capabilities.contains(RegExpCapability.COMMENT_MODE);
-      this.allowHexDigitClass = capabilities.contains(RegExpCapability.ALLOW_HEX_DIGIT_CLASS);
-      this.allowHorizontalWhitespaceClass = capabilities.contains(RegExpCapability.ALLOW_HORIZONTAL_WHITESPACE_CLASS);
-      this.allowEmptyCharacterClass = capabilities.contains(RegExpCapability.ALLOW_EMPTY_CHARACTER_CLASS);
-      this.allowPosixBracketExpressions = capabilities.contains(RegExpCapability.POSIX_BRACKET_EXPRESSIONS);
-      this.allowTransformationEscapes = capabilities.contains(RegExpCapability.TRANSFORMATION_ESCAPES);
-      if (capabilities.contains(RegExpCapability.MAX_OCTAL_177)) {
+      this.xmlSchemaMode = capabilities.contains(XML_SCHEMA_MODE);
+      if (capabilities.contains(DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.TRUE;
+      if (capabilities.contains(NO_DANGLING_METACHARACTERS)) this.allowDanglingMetacharacters = Boolean.FALSE;
+      this.allowOmitNumbersInQuantifiers = capabilities.contains(OMIT_NUMBERS_IN_QUANTIFIERS);
+      this.allowOmitBothNumbersInQuantifiers = capabilities.contains(OMIT_BOTH_NUMBERS_IN_QUANTIFIERS);
+      this.allowNestedCharacterClasses = capabilities.contains(NESTED_CHARACTER_CLASSES);
+      this.allowOctalNoLeadingZero = capabilities.contains(OCTAL_NO_LEADING_ZERO);
+      this.commentMode = capabilities.contains(COMMENT_MODE);
+      this.allowHexDigitClass = capabilities.contains(ALLOW_HEX_DIGIT_CLASS);
+      this.allowHorizontalWhitespaceClass = capabilities.contains(ALLOW_HORIZONTAL_WHITESPACE_CLASS);
+      this.allowEmptyCharacterClass = capabilities.contains(ALLOW_EMPTY_CHARACTER_CLASS);
+      this.allowPosixBracketExpressions = capabilities.contains(POSIX_BRACKET_EXPRESSIONS);
+      this.allowTransformationEscapes = capabilities.contains(TRANSFORMATION_ESCAPES);
+      if (capabilities.contains(MAX_OCTAL_177)) {
         maxOctal = 0177;
       }
-      else if (capabilities.contains(RegExpCapability.MAX_OCTAL_377)) {
+      else if (capabilities.contains(MAX_OCTAL_377)) {
         maxOctal = 0377;
       }
-      if (capabilities.contains(RegExpCapability.MIN_OCTAL_2_DIGITS)) {
+      if (capabilities.contains(MIN_OCTAL_2_DIGITS)) {
         minOctalDigits = 2;
       }
-      else if (capabilities.contains(RegExpCapability.MIN_OCTAL_3_DIGITS)) {
+      else if (capabilities.contains(MIN_OCTAL_3_DIGITS)) {
         minOctalDigits = 3;
       }
-      this.allowExtendedUnicodeCharacter = capabilities.contains(RegExpCapability.EXTENDED_UNICODE_CHARACTER);
-      this.allowOneHexCharEscape = capabilities.contains(RegExpCapability.ONE_HEX_CHAR_ESCAPE);
+      this.allowExtendedUnicodeCharacter = capabilities.contains(EXTENDED_UNICODE_CHARACTER);
+      this.allowOneHexCharEscape = capabilities.contains(ONE_HEX_CHAR_ESCAPE);
     }
 
     private void yypushstate(int state) {
@@ -269,7 +275,8 @@ HEX_CHAR=[0-9a-fA-F]
   /* "}" outside counted quantifier is treated as regular character */
   {LBRACE} / [:digit:]+ {RBRACE}                { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
   {LBRACE} / [:digit:]+ "," [:digit:]* {RBRACE} { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
-  {LBRACE} / "," [:digit:]+ {RBRACE}            { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; }
+  {LBRACE} / "," [:digit:]+ {RBRACE}            { if (allowOmitNumbersInQuantifiers || allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
+  {LBRACE} / "," {RBRACE}                       { if (allowOmitBothNumbersInQuantifiers || allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } else return RegExpTT.CHARACTER; }
   {LBRACE}  { if (allowDanglingMetacharacters != Boolean.TRUE) { yypushstate(QUANTIFIER); return RegExpTT.LBRACE; } return RegExpTT.CHARACTER;  }
 }
 
