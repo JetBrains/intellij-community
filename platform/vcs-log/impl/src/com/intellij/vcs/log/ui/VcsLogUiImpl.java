@@ -185,6 +185,11 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     }
 
     @Override
+    public void onColumnWidthChanged() {
+      myMainFrame.getGraphTable().onColumnWidthSettingChanged();
+    }
+
+    @Override
     public void onTextFilterSettingsChanged() {
       applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
     }

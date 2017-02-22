@@ -253,6 +253,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       else if (property == FileHistoryUiProperties.SHOW_ALL_BRANCHES) {
         updateFilter();
       }
+      else if (property instanceof CommonUiProperties.TableColumnProperty) {
+        getTable().onColumnWidthSettingChanged();
+      }
     }
   }
 }
