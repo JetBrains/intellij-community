@@ -2,7 +2,7 @@
 class Test {
   {
       int i;
-      for (i<caret>=0; i<10; i++) {
+      for (i = 0; i<10; i++) {
           System.out.println();
       }
   }
