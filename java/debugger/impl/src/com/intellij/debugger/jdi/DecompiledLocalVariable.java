@@ -79,13 +79,15 @@ public class DecompiledLocalVariable{
     return getDisplayName() + " (slot " + mySlot + ", " + mySignature + ")";
   }
 
-  public static int getParamId(String name) {
-    String idString = StringUtil.substringAfter(name, PARAM_PREFIX);
-    if (idString != null) {
-      try {
-        return Integer.parseInt(idString);
-      }
-      catch (NumberFormatException ignored) {
+  public static int getParamId(@Nullable String name) {
+    if (!StringUtil.isEmpty(name)) {
+      String idString = StringUtil.substringAfter(name, PARAM_PREFIX);
+      if (idString != null) {
+        try {
+          return Integer.parseInt(idString);
+        }
+        catch (NumberFormatException ignored) {
+        }
       }
     }
     return -1;
