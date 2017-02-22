@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.memory.component.InstancesTracker;
@@ -112,6 +113,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     myProject = debugSession.getProject();
 
+    final DebuggerManagerThreadImpl managerThread = debugProcess.getManagerThread();
     myInstancesTracker = tracker;
     final InstancesTrackerListener instancesTrackerListener = new InstancesTrackerListener() {
       @Override
@@ -119,17 +121,16 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         ReferenceType ref = myTable.getClassByName(name);
         if (ref != null) {
           final boolean activated = myIsTrackersActivated.get();
-          debugProcess.getManagerThread()
-            .schedule(new LowestPriorityCommand(getSuspendContext()) {
-              @Override
-              public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-                final XDebugProcess process = suspendContext.getDebugProcess().getXdebugProcess();
-                if (process != null) {
-                  final XDebugSession session = process.getSession();
-                  trackClass(session, ref, type, activated);
-                }
+          managerThread.schedule(new LowestPriorityCommand(getSuspendContext()) {
+            @Override
+            public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+              final XDebugProcess process = suspendContext.getDebugProcess().getXdebugProcess();
+              if (process != null) {
+                final XDebugSession session = process.getSession();
+                trackClass(session, ref, type, activated);
               }
-            });
+            }
+          });
         }
         myTable.repaint();
       }
@@ -145,7 +146,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
     };
 
-    debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+    managerThread.schedule(new DebuggerCommandImpl() {
       @Override
       public Priority getPriority() {
         return Priority.LOWEST;
@@ -244,8 +245,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       myLastSuspendContext = getSuspendContext();
       if (myLastSuspendContext != null) {
         ApplicationManager.getApplication().invokeLater(() -> myTable.setBusy(true));
-        debugProcess.getManagerThread()
-          .schedule(new MyUpdateClassesCommand(myLastSuspendContext));
+        managerThread.schedule(new MyUpdateClassesCommand(myLastSuspendContext));
       }
     }, this);
 
@@ -343,28 +343,24 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     myConstructorTrackedClasses.clear();
   }
 
-  public void setActive(boolean active) {
+  public void setActive(boolean active, @NotNull DebuggerManagerThreadImpl managerThread) {
     if (myIsActive == active) {
       return;
     }
 
     myIsActive = active;
-    final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
-    if (debugSession != null) {
-      final DebugProcessImpl debugProcess =
-        (DebugProcessImpl)DebuggerManager.getInstance(myProject).getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
-      debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-        @Override
-        protected void action() throws Exception {
-          if (active) {
-            doActivate();
-          }
-          else {
-            doPause();
-          }
+
+    managerThread.schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        if (active) {
+          doActivate();
         }
-      });
-    }
+        else {
+          doPause();
+        }
+      }
+    });
   }
 
   private void doActivate() {
