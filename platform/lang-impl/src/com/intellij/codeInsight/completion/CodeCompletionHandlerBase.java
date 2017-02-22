@@ -69,6 +69,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private static final Key<Boolean> CARET_PROCESSED = Key.create("CodeCompletionHandlerBase.caretProcessed");
@@ -284,12 +285,11 @@ public class CodeCompletionHandlerBase {
   private void doComplete(CompletionInitializationContext initContext,
                           boolean hasModifiers,
                           int invocationCount,
-                          PsiFile hostCopy,
-                          OffsetMap hostMap, OffsetTranslator translator) {
+                          OffsetTranslator translator, OffsetsInFile hostOffsets, OffsetsInFile hostCopyOffsets) {
     final Editor editor = initContext.getEditor();
     CompletionAssertions.checkEditorValid(editor);
 
-    CompletionContext context = createCompletionContext(hostCopy, hostMap.getOffset(CompletionInitializationContext.START_OFFSET), hostMap, initContext.getFile());
+    CompletionContext context = createCompletionContext(initContext.getFile(), hostCopyOffsets);
     LookupImpl lookup = obtainLookup(editor, initContext.getProject());
     CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
@@ -307,8 +307,8 @@ public class CodeCompletionHandlerBase {
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
                                                                                   parameters, this, freezeSemaphore,
-                                                                                  initContext.getOffsetMap(), hasModifiers, lookup);
-    Disposer.register(indicator, hostMap);
+                                                                                  initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
+    Disposer.register(indicator, hostCopyOffsets.getOffsets());
     Disposer.register(indicator, context.getOffsetMap());
     Disposer.register(indicator, translator);
 
@@ -465,15 +465,15 @@ public class CodeCompletionHandlerBase {
                                      final int invocationCount) {
     CompletionAssertions.checkEditorValid(initContext.getEditor());
 
-    final PsiFile originalFile = initContext.getFile();
-    final PsiFile hostFile = InjectedLanguageManager.getInstance(originalFile.getProject()).getTopLevelFile(originalFile);
-    final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
-    final OffsetMap hostMap = translateOffsetMapToHost(originalFile, hostFile, hostEditor, initContext.getOffsetMap());
+    Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
+    OffsetsInFile topLevelOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
+    OffsetMap hostMap = topLevelOffsets.getOffsets();
 
-    final PsiFile hostCopy = createFileCopy(hostFile);
-    final Document copyDocument = hostCopy.getViewProvider().getDocument();
+    PsiFile hostCopy = createFileCopy(topLevelOffsets.getFile());
+    Document copyDocument = hostCopy.getViewProvider().getDocument();
     assert copyDocument != null : "no document";
-    final OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument);
+    OffsetsInFile copyOffsets = topLevelOffsets.toFileCopy(hostCopy);
+    OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument);
 
     CompletionAssertions.checkEditorValid(initContext.getEditor());
     String dummyIdentifier = initContext.getDummyIdentifier();
@@ -484,7 +484,7 @@ public class CodeCompletionHandlerBase {
     }
     CompletionAssertions.checkEditorValid(initContext.getEditor());
 
-    final Project project = originalFile.getProject();
+    Project project = initContext.getProject();
 
     if (!synchronous) {
       if (CompletionServiceImpl.isPhase(CompletionPhase.NoCompletion.getClass()) ||
@@ -502,58 +502,35 @@ public class CodeCompletionHandlerBase {
           Disposer.dispose(translator);
           return;
         }
-        doComplete(initContext, hasModifiers, invocationCount, hostCopy, hostMap, translator);
+        doComplete(initContext, hasModifiers, invocationCount, translator, topLevelOffsets, copyOffsets);
       });
     }
     else {
       PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
 
-      doComplete(initContext, hasModifiers, invocationCount, hostCopy, hostMap, translator);
+      doComplete(initContext, hasModifiers, invocationCount, translator, topLevelOffsets, copyOffsets);
     }
   }
 
-  private static OffsetMap translateOffsetMapToHost(PsiFile originalFile, PsiFile hostFile, Editor hostEditor, OffsetMap map) {
-    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());
-    final OffsetMap hostMap = new OffsetMap(hostEditor.getDocument());
-    for (final OffsetKey key : map.getAllOffsets()) {
-      hostMap.addOffset(key, injectedLanguageManager.injectedToHost(originalFile, map.getOffset(key)));
-    }
-    return hostMap;
-  }
+  private static CompletionContext createCompletionContext(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
+    CompletionAssertions.assertHostInfo(hostCopyOffsets.getFile(), hostCopyOffsets.getOffsets());
 
-  private static CompletionContext createCompletionContext(PsiFile hostCopy,
-                                                           int hostStartOffset,
-                                                           OffsetMap hostMap, PsiFile originalFile) {
-    CompletionAssertions.assertHostInfo(hostCopy, hostMap);
+    int hostStartOffset = hostCopyOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
+    OffsetsInFile translatedOffsets = hostCopyOffsets.toInjectedIfAny(hostStartOffset);
 
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostCopy.getProject());
-    CompletionContext context;
-    PsiFile injected = InjectedLanguageUtil.findInjectedPsiNoCommit(hostCopy, hostStartOffset);
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(originalFile.getProject());
+    PsiFile injected = translatedOffsets == hostCopyOffsets ? null : translatedOffsets.getFile();
     if (injected != null) {
       if (injected instanceof PsiFileImpl) {
         ((PsiFileImpl)injected).setOriginalFile(originalFile);
       }
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injected);
       CompletionAssertions.assertInjectedOffsets(hostStartOffset, injectedLanguageManager, injected, documentWindow);
-
-      context = new CompletionContext(injected, translateOffsetMapToInjected(hostMap, documentWindow));
-    } else {
-      context = new CompletionContext(hostCopy, hostMap);
     }
 
+    CompletionContext context = new CompletionContext(translatedOffsets.getFile(), translatedOffsets.getOffsets());
     CompletionAssertions.assertFinalOffsets(originalFile, context, injected);
-
     return context;
-  }
-
-  private static OffsetMap translateOffsetMapToInjected(OffsetMap hostMap, Document injectedDocument) {
-    if (!(injectedDocument instanceof DocumentWindow)) return hostMap;
-    
-    final OffsetMap map = new OffsetMap(injectedDocument);
-    for (final OffsetKey key : hostMap.getAllOffsets()) {
-      map.addOffset(key, ((DocumentWindow)injectedDocument).hostToInjected(hostMap.getOffset(key)));
-    }
-    return map;
   }
 
   protected void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,
@@ -589,28 +566,25 @@ public class CodeCompletionHandlerBase {
 
     CompletionAssertions.WatchingInsertionContext context;
     if (editor.getCaretModel().supportsMultipleCarets()) {
-      final List<CompletionAssertions.WatchingInsertionContext> contexts = new ArrayList<>();
-      final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
-      final PsiFile originalFile = indicator.getParameters().getOriginalFile();
-      final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(originalFile);
-      assert hostFile != null;
-      final OffsetMap hostMap = translateOffsetMapToHost(originalFile, hostFile, hostEditor, indicator.getOffsetMap());
+      List<CompletionAssertions.WatchingInsertionContext> contexts = new ArrayList<>();
+      Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+      OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
       hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          PsiDocumentManager.getInstance(hostFile.getProject()).commitDocument(hostEditor.getDocument());
-          PsiFile targetFile = InjectedLanguageUtil.findInjectedPsiNoCommit(hostFile, caret.getOffset());
+          PsiDocumentManager.getInstance(indicator.getProject()).commitDocument(hostEditor.getDocument());
+          OffsetsInFile targetOffsets = topLevelOffsets.toInjectedIfAny(caret.getOffset());
+          PsiFile targetFile = targetOffsets.getFile();
           Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
           int targetCaretOffset = targetEditor.getCaretModel().getOffset();
-          OffsetMap injectedMap = translateOffsetMapToInjected(hostMap, targetEditor.getDocument());
           int idEnd = targetCaretOffset + idEndOffsetDelta;
           if (idEnd > targetEditor.getDocument().getTextLength()) {
             idEnd = targetCaretOffset; // no replacement by Tab when offsets gone wrong for some reason
           }
           CompletionAssertions.WatchingInsertionContext currentContext = insertItem(indicator, item, completionChar, items, update,
-                                                                                    targetEditor, targetFile == null ? hostFile : targetFile,
+                                                                                    targetEditor, targetFile,
                                                                                     targetCaretOffset, idEnd,
-                                                                                    injectedMap);
+                                                                                    targetOffsets.getOffsets());
           contexts.add(currentContext);
         }
       });

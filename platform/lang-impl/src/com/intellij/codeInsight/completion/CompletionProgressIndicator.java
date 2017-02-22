@@ -88,6 +88,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Please don't use this class directly from plugins
  */
+@SuppressWarnings("deprecation")
 @Deprecated
 public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
@@ -96,6 +97,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Caret myCaret;
   private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
+  private final OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
   private final Update myUpdate = new Update("update") {
@@ -136,6 +138,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                      CodeCompletionHandlerBase handler,
                                      Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap,
+                                     OffsetsInFile hostOffsets,
                                      boolean hasModifiers,
                                      LookupImpl lookup) {
     myEditor = editor;
@@ -144,6 +147,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler = handler;
     myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
+    myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
 
@@ -165,7 +169,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Disposer.register(this, offsetMap);
 
     if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
@@ -182,11 +185,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
-  public OffsetMap getOffsetMap() {
+  OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
-  public int getSelectionEndOffset() {
+  OffsetsInFile getHostOffsets() {
+    return myHostOffsets;
+  }
+
+  private int getSelectionEndOffset() {
     return getOffsetMap().getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
@@ -234,6 +241,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                       "; doc committed=" + PsiDocumentManager.getInstance(getProject()).isCommitted(document));
           } else {
             initContext.setReplacementOffset(replacementOffset);
+            if (document instanceof DocumentWindow) {
+              myHostOffsets.getOffsets().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, ((DocumentWindow)document).injectedToHost(replacementOffset));
+            }
           }
         }
       }
@@ -374,11 +384,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
-  final boolean isInsideIdentifier() {
+  private boolean isInsideIdentifier() {
     return getIdentifierEndOffset() != getSelectionEndOffset();
   }
 
-  public int getIdentifierEndOffset() {
+  int getIdentifierEndOffset() {
     return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
