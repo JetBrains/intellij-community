@@ -197,25 +197,6 @@ public class Py3CompletionTest extends PyTestCase {
                           "    print(__cl)");
   }
 
-  // PY-20770
-  public void testAsyncGenerator() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> {
-        final String asyncGenerator = "async def asyncgen():\n" +
-                                      "    yield 42\n";
-
-        assertContainsElements(doTestByText(asyncGenerator +
-                                            "asyncgen().__a<caret>\n"),
-                               PyNames.AITER, PyNames.ANEXT);
-
-        assertContainsElements(doTestByText(asyncGenerator +
-                                            "asyncgen().a<caret>\n"),
-                               "ag_await", "ag_frame", "ag_running", "ag_code", "aclose", "asend", "athrow");
-      }
-    );
-  }
-
   // PY-11208
   public void testMockPatchObject1() {
     doMultiFileTest();
