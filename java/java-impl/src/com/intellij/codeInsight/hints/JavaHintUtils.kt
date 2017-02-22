@@ -83,11 +83,15 @@ object JavaInlayHintsProvider {
     if (params.size == 1) {
       val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
       
-      if (isSetterNamed(method)) return false
-      if (isBuilderLike(callExpression, method) && hintsProvider.isDoNotShowForBuilderLikeMethods.get()) return false
+      if (hintsProvider.isDoNotShowForBuilderLikeMethods.get() 
+          && isBuilderLike(callExpression, method)) {
+        return false
+      }
       
       if (hintsProvider.isDoNotShowIfMethodNameContainsParameterName.get()
-          && isParamNameContainedInMethodName(params[0], method)) return false
+          && isParamNameContainedInMethodName(params[0], method)) {
+        return false
+      }
     }
     return true
   }
@@ -115,16 +119,7 @@ object JavaInlayHintsProvider {
 
     return returnType.equalsToText(calledMethodClassFqn)
   }
-
-  private fun isSetterNamed(method: PsiMethod): Boolean {
-    val methodName = method.name
-    if (methodName.startsWith("set")
-        && (methodName.length == 3 || methodName.length > 3 && methodName[3].isUpperCase())) {
-      return true
-    }
-    return false
-  }
-
+  
   private fun isParamNameContainedInMethodName(parameter: PsiParameter, method: PsiMethod): Boolean {
     val parameterName = parameter.name ?: return false
     if (parameterName.length > 1) {

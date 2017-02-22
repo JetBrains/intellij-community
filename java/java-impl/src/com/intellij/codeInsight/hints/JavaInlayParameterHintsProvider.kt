@@ -69,6 +69,7 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       
       "*Exception",
 
+      "*.set*(*)",
       "*.add(*)",
       "*.set(*,*)",
       "*.get(*)",
