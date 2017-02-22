@@ -16,11 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -50,6 +48,7 @@ import java.util.List;
  * @author max
  */
 public class SearchTextField extends JPanel {
+  public static final DataKey<SearchTextField> KEY = DataKey.create("search.text.field");
 
   private int myHistorySize = 5;
   private final MyModel myModel;
@@ -496,6 +495,17 @@ public class SearchTextField extends JPanel {
   public void setSearchIcon(final Icon icon) {
     if (! isSearchControlUISupported()) {
       myToggleHistoryLabel.setIcon(icon);
+    }
+  }
+
+  public static final class FindAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(AnActionEvent event) {
+      SearchTextField search = event.getData(KEY);
+      if (search != null) {
+        search.selectText();
+        search.requestFocus();
+      }
     }
   }
 }
