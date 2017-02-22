@@ -159,6 +159,11 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if ("tuple.__mul__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleMultiplicationResultType((PyBinaryExpression)callSite, context);
       }
+      else if ("object.__new__".equals(qname) && callSite instanceof PyCallExpression) {
+        final PyExpression firstArgument = ((PyCallExpression)callSite).getArgument(0, PyExpression.class);
+        final PyClassLikeType classLikeType = as(firstArgument != null ? context.getType(firstArgument) : null, PyClassLikeType.class);
+        return classLikeType != null ?  Ref.create(classLikeType.toInstance()) : null;
+      }
     }
 
     return null;
