@@ -382,15 +382,27 @@ public class JavaDebugProcess extends XDebugProcess {
         ui.addListener(new ContentManagerAdapter() {
           @Override
           public void contentAdded(ContentManagerEvent event) {
-            if (event.getContent() == memoryViewContent) {
-              classesFilteredView.setActive(true);
-            }
+            changeMemoryViewMode(event);
           }
 
           @Override
           public void contentRemoved(ContentManagerEvent event) {
-            if (event.getContent() == memoryViewContent) {
-              classesFilteredView.setActive(false);
+            changeMemoryViewMode(event);
+          }
+
+          @Override
+          public void selectionChanged(ContentManagerEvent event) {
+            changeMemoryViewMode(event);
+          }
+
+          private void changeMemoryViewMode(@Nullable ContentManagerEvent event) {
+            if (event != null && event.getContent() == memoryViewContent) {
+              final ContentManagerEvent.ContentOperation operation = event.getOperation();
+              final boolean isAddOperation = operation.equals(ContentManagerEvent.ContentOperation.add);
+
+              if (isAddOperation || operation.equals(ContentManagerEvent.ContentOperation.remove)) {
+                classesFilteredView.setActive(isAddOperation, process.getManagerThread());
+              }
             }
           }
         }, classesFilteredView);
