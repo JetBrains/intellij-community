@@ -28,6 +28,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -68,6 +69,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -77,6 +80,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected final AtomicInteger myRestart = new AtomicInteger();
   private static final int MAX_RESTARTS = 3;
   private volatile TestDisposable myTestRootDisposable;
+  private final List<Runnable> myTearDownRunnables = new ArrayList<>();
 
   @Override
   protected void initApplication() throws Exception {
@@ -156,6 +160,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         myDebugProcess.stop(true);
         myDebugProcess.waitFor();
       }
+      myTearDownRunnables.forEach(Runnable::run);
+      myTearDownRunnables.clear();
     }
     finally {
       super.tearDown();
@@ -589,5 +595,21 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException { }
+  }
+
+  protected void disableRenderer(NodeRenderer renderer) {
+    setRendererEnabled(renderer, false);
+  }
+
+  protected void enableRenderer(NodeRenderer renderer) {
+    setRendererEnabled(renderer, true);
+  }
+
+  private void setRendererEnabled(NodeRenderer renderer, boolean state) {
+    boolean oldValue = renderer.isEnabled();
+    if (oldValue != state) {
+      myTearDownRunnables.add(() -> renderer.setEnabled(oldValue));
+      renderer.setEnabled(state);
+    }
   }
 }
