@@ -81,8 +81,11 @@ object JavaInlayHintsProvider {
     val params = method.parameterList.parameters
     if (params.isEmpty()) return false
     if (params.size == 1) {
-      if (isBuilderLike(callExpression, method) || isSetterNamed(method)) return false
       val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+      
+      if (isSetterNamed(method)) return false
+      if (isBuilderLike(callExpression, method) && hintsProvider.isDoNotShowForBuilderLikeMethods.get()) return false
+      
       if (hintsProvider.isDoNotShowIfMethodNameContainsParameterName.get()
           && isParamNameContainedInMethodName(params[0], method)) return false
     }

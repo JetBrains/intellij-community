@@ -53,7 +53,9 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return MethodInfo(fullMethodName, paramNames)
   }
 
-  override val defaultBlackList = setOf(
+  override fun getDefaultBlackList() = defaultBlackList
+
+  private val defaultBlackList = setOf(
       "(begin*, end*)",
       "(start*, end*)",
       "(first*, last*)",
@@ -96,10 +98,15 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
                                            "Show for non-literals in case of multiple params with the same type", 
                                            false)
   
+  val isDoNotShowForBuilderLikeMethods = Option("java.build.like.method",
+                                                "Do not show for builder-like methods",
+                                                true)
+  
   override fun getSupportedOptions(): List<Option> {
     return listOf(
       isDoNotShowIfMethodNameContainsParameterName, 
-      isShowForParamsWithSameType
+      isShowForParamsWithSameType,
+      isDoNotShowForBuilderLikeMethods
     )
   }
 }

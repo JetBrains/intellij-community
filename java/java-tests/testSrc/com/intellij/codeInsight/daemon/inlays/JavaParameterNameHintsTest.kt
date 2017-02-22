@@ -98,6 +98,24 @@ class Stream<T> {
   public Stream<T> skip(int n) {}
 }
 """)
+
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    check("""
+class Foo {
+  void test() {
+    new IntStream().skip(<hint text="n"/>10);
+    new Stream<Integer>().skip(<hint text="n"/>10);
+  }
+}
+
+class IntStream {
+  public IntStream skip(int n) {}
+}
+
+class Stream<T> {
+  public Stream<T> skip(int n) {}
+}
+""")
   }
 
 
@@ -473,8 +491,28 @@ class Test {
 
 }
 """)
+    
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    check("""
+class Builder {
+  void await(boolean value) {}
+  Builder bwait(boolean xvalue) {}
+  Builder timeWait(int millis) {}
+}
+
+class Test {
+
+  public void test() {
+    Builder builder = new Builder();
+    builder.await(<hint text="value"/>true);
+    builder.bwait(<hint text="xvalue"/>false).timeWait(<hint text="millis"/>100);
   }
 
+}
+""")
+  }
+
+  
   fun `test builder method only method with one param`() {
     check("""
 class Builder {
@@ -491,7 +529,26 @@ class Test {
   }
 }
 """)
+
+    JavaInlayParameterHintsProvider.getInstance().isDoNotShowForBuilderLikeMethods.set(false)
+    check("""
+class Builder {
+  Builder qwit(boolean value, String sValue) {}
+  Builder trew(boolean value) {}
+}
+
+class Test {
+  public void test() {
+    Builder builder = new Builder();
+    builder
+    .trew(<hint text="value"/>false)
+    .qwit(<hint text="value"/>true, <hint text="sValue"/>"value");
   }
+}
+""")
+  
+  }
+  
 
   fun `test do not show single parameter hint if it is string literal`() {
     check("""
