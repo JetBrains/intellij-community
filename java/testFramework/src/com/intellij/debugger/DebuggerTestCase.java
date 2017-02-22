@@ -59,10 +59,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -611,5 +608,27 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       myTearDownRunnables.add(() -> renderer.setEnabled(oldValue));
       renderer.setEnabled(state);
     }
+  }
+
+  protected void doWhenXSessionPausedThenResume(ThrowableRunnable runnable) {
+    XDebugSession session = getDebuggerSession().getXDebugSession();
+    assertNotNull(session);
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            runnable.run();
+          }
+          catch (Throwable e) {
+            addException(e);
+          }
+          finally {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(session::resume);
+          }
+        });
+      }
+    });
   }
 }
