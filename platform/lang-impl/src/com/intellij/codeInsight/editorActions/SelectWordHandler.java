@@ -68,7 +68,7 @@ public class SelectWordHandler extends EditorActionHandler {
       }
       return;
     }
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
     TextRange range = selectWord(caret, project);
     if (editor instanceof EditorWindow) {

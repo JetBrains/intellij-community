@@ -58,7 +58,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
       return;
     }
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     doAction(editor, file);
   }
 
