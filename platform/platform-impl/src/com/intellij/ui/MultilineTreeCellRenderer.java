@@ -55,6 +55,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   private boolean myHasFocus;
 
   private Icon myIcon;
+  private boolean myUseAnsiColor = false;
   private String[] myLines = ArrayUtil.EMPTY_STRING_ARRAY;
   private String myPrefix;
   private int myTextLength;
@@ -85,6 +86,14 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
   @Override
   public void updateUI() {
     UISettings.setupComponentAntialiasing(this);
+  }
+
+  public boolean isUseAnsiColor() {
+    return myUseAnsiColor;
+  }
+
+  public void setUseAnsiColor(boolean useAnsiColor) {
+    this.myUseAnsiColor = useAnsiColor;
   }
 
   protected void setMinHeight(int height) {

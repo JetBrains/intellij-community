@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -91,6 +92,13 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   public JComponent getComponent() {
     return myPanel;
+  }
+
+  public void setUseAnsiColor(boolean useAnsiColor) {
+    final TreeCellRenderer renderer = myTree.getCellRenderer();
+    if (renderer instanceof MultilineTreeCellRenderer) {
+      ((MultilineTreeCellRenderer)renderer).setUseAnsiColor(useAnsiColor);
+    }
   }
 
   private JPanel createPanel() {
