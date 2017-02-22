@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.template.emmet.completion.EmmetAbbreviationCompletionProvider;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.CaretModel;
@@ -37,7 +36,6 @@ import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -322,8 +320,6 @@ public class XmlCompletionContributor extends CompletionContributor {
 
     if (descriptorFile != null && containingFile != null) {
       final boolean acceptSystemEntities = containingFile.getFileType() == StdFileTypes.XML;
-      final boolean caseInsensitive = (tag != null && tag.getDescriptor() instanceof HtmlElementDescriptorImpl) ||
-                                      containingFile.getLanguage().isKindOf(HTMLLanguage.INSTANCE);
 
       final PsiElementProcessor processor = new PsiElementProcessor() {
         @Override
@@ -333,7 +329,7 @@ public class XmlCompletionContributor extends CompletionContributor {
             if (xmlEntityDecl.isInternalReference() || acceptSystemEntities) {
               final LookupElementBuilder _item = buildEntityLookupItem(xmlEntityDecl);
               if (_item != null) {
-                resultSet.addElement(_item.withCaseSensitivity(!caseInsensitive));
+                resultSet.addElement(_item);
                 resultSet.stopHere();
               }
             }
