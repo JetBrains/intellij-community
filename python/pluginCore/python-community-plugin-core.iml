@@ -10,5 +10,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="python-community" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

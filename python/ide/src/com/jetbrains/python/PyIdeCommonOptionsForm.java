@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.google.common.collect.Lists;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.PathMappingsComponent;
@@ -52,6 +53,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author yole
@@ -77,6 +79,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private List<Sdk> myPythonSdks;
   private boolean myInterpreterRemote;
   private final HideableDecorator myDecorator;
+
+  private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = Lists.newArrayList();
+
 
   public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {
     myProject = data.getProject();
@@ -116,11 +121,11 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     }
 
     addInterpreterComboBoxActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        updateRemoteInterpreterMode();
-      }
-    }
+                                           @Override
+                                           public void actionPerformed(ActionEvent event) {
+                                             updateRemoteInterpreterMode();
+                                           }
+                                         }
     );
 
     updateRemoteInterpreterMode();
@@ -137,12 +142,18 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
         super.off();
         storeState();
       }
+
       private void storeState() {
         PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
       }
     };
     myDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
     myDecorator.setContentComponent(myMainPanel);
+
+
+    addInterpreterModeListener((b) ->
+                                 myPathMappingsComponent.setVisible(b)
+    );
   }
 
   @Override
@@ -301,11 +312,13 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   private void setRemoteInterpreterMode(boolean isInterpreterRemote) {
     myInterpreterRemote = isInterpreterRemote;
-    myPathMappingsComponent.setVisible(isInterpreterRemote);
   }
 
   private void updateRemoteInterpreterMode() {
     setRemoteInterpreterMode(PySdkUtil.isRemote(getSdkSelected()));
+    for (Consumer<Boolean> f : myRemoteInterpreterModeListeners) {
+      f.accept(myInterpreterRemote);
+    }
   }
 
   @Nullable
@@ -368,6 +381,11 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   @Override
   public String getModuleName() {
     Module module = getModule();
-    return module != null? module.getName() : null;
+    return module != null ? module.getName() : null;
+  }
+
+  @Override
+  public void addInterpreterModeListener(Consumer<Boolean> listener) {
+    myRemoteInterpreterModeListeners.add(listener);
   }
 }
