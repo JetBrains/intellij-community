@@ -103,10 +103,6 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
-  public void testBuiltinFunctions() {
-    doTest();
-  }
-
   public void testUnionReturnTypes() {
     doTest();
   }
