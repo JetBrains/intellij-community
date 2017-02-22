@@ -38,7 +38,6 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -254,6 +253,9 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
       else if (property == FileHistoryUiProperties.SHOW_ALL_BRANCHES) {
         updateFilter();
+      }
+      else if (property instanceof CommonUiProperties.TableColumnProperty) {
+        getTable().onColumnWidthSettingChanged();
       }
     }
   }

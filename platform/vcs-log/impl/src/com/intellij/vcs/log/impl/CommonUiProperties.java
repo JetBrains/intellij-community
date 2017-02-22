@@ -15,8 +15,50 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 public class CommonUiProperties {
   public static final VcsLogUiProperty<Boolean> SHOW_DETAILS = new VcsLogUiProperty<>("Window.ShowDetails");
+  public static final Map<Integer, VcsLogUiProperty<Integer>> COLUMN_WIDTH = ContainerUtil.newHashMap();
+
+  static {
+    COLUMN_WIDTH.put(GraphTableModel.AUTHOR_COLUMN, new TableColumnProperty("Author", GraphTableModel.AUTHOR_COLUMN));
+    COLUMN_WIDTH.put(GraphTableModel.DATE_COLUMN, new TableColumnProperty("Date", GraphTableModel.DATE_COLUMN));
+  }
+
+  public static void saveColumnWidth(@NotNull VcsLogUiProperties properties, int column, int width) {
+    if (properties.exists(COLUMN_WIDTH.get(column))) {
+      if (properties.get(COLUMN_WIDTH.get(column)) != width) {
+        properties.set(COLUMN_WIDTH.get(column), width);
+      }
+    }
+  }
+
+  public static int getColumnWidth(@NotNull VcsLogUiProperties properties, int column, int defaultWidth) {
+    if (properties.exists(COLUMN_WIDTH.get(column))) {
+      Integer savedWidth = properties.get(COLUMN_WIDTH.get(column));
+      if (savedWidth > defaultWidth) {
+        return savedWidth;
+      }
+    }
+    return defaultWidth;
+  }
+
+  public static class TableColumnProperty extends VcsLogUiProperty<Integer> {
+    private final int myColumn;
+
+    public TableColumnProperty(@NotNull String name, int column) {
+      super("Table." + name + "ColumnWidth");
+      myColumn = column;
+    }
+
+    public int getColumn() {
+      return myColumn;
+    }
+  }
 }

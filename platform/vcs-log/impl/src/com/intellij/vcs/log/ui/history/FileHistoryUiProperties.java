@@ -22,12 +22,13 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.CommonUiProperties.TableColumnProperty;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Map;
 
 @State(name = "Vcs.Log.History.Properties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {
@@ -38,6 +39,7 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
   public static class State {
     public boolean SHOW_DETAILS = false;
     public boolean SHOW_OTHER_BRANCHES = false;
+    public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
   }
 
   @SuppressWarnings("unchecked")
@@ -50,6 +52,11 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_ALL_BRANCHES.equals(property)) {
       return (T)Boolean.valueOf(myState.SHOW_OTHER_BRANCHES);
     }
+    else if (property instanceof TableColumnProperty) {
+      Integer savedWidth = myState.COLUMN_WIDTH.get(((TableColumnProperty)property).getColumn());
+      if (savedWidth == null) return (T)Integer.valueOf(-1);
+      return (T)savedWidth;
+    }
     throw new UnsupportedOperationException("Unknown property " + property);
   }
 
@@ -61,6 +68,9 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
     else if (SHOW_ALL_BRANCHES.equals(property)) {
       myState.SHOW_OTHER_BRANCHES = (Boolean)value;
     }
+    else if (property instanceof TableColumnProperty) {
+      myState.COLUMN_WIDTH.put(((TableColumnProperty)property).getColumn(), (Integer)value);
+    }
     else {
       throw new UnsupportedOperationException("Unknown property " + property);
     }
@@ -69,7 +79,9 @@ public class FileHistoryUiProperties implements VcsLogUiProperties, PersistentSt
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperty<T> property) {
-    return CommonUiProperties.SHOW_DETAILS.equals(property) || SHOW_ALL_BRANCHES.equals(property);
+    return CommonUiProperties.SHOW_DETAILS.equals(property) ||
+           SHOW_ALL_BRANCHES.equals(property) ||
+           property instanceof TableColumnProperty;
   }
 
   @Nullable

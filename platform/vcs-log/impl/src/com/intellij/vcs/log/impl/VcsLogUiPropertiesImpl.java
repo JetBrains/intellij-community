@@ -51,6 +51,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
+    public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
   }
 
   @NotNull
@@ -90,6 +91,11 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       if (result == null) return (T)Boolean.TRUE;
       return (T)result;
     }
+    else if (property instanceof CommonUiProperties.TableColumnProperty) {
+      Integer savedWidth = getState().COLUMN_WIDTH.get(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      if (savedWidth == null) return (T)Integer.valueOf(-1);
+      return (T)savedWidth;
+    }
     throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
 
@@ -122,6 +128,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (property instanceof VcsLogHighlighterProperty) {
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
     }
+    else if (property instanceof CommonUiProperties.TableColumnProperty) {
+      getState().COLUMN_WIDTH.put(((CommonUiProperties.TableColumnProperty)property).getColumn(), (Integer)value);
+    }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
@@ -130,7 +139,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    if (SUPPORTED_PROPERTIES.contains(property) || property instanceof VcsLogHighlighterProperty) {
+    if (SUPPORTED_PROPERTIES.contains(property) ||
+        property instanceof VcsLogHighlighterProperty ||
+        property instanceof CommonUiProperties.TableColumnProperty) {
       return true;
     }
     return false;
@@ -251,6 +262,8 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
     public abstract void onHighlighterChanged();
 
+    public abstract void onColumnWidthChanged();
+
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
       if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
@@ -276,6 +289,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       }
       else if (property instanceof VcsLogHighlighterProperty) {
         onHighlighterChanged();
+      }
+      else if (property instanceof CommonUiProperties.TableColumnProperty) {
+        onColumnWidthChanged();
       }
       else {
         throw new UnsupportedOperationException("Property " + property + " does not exist");
