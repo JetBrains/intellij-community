@@ -139,6 +139,11 @@ public class PsiPrimitiveType extends PsiType.Stub {
     return unboxed.annotate(type.getAnnotationProvider());
   }
 
+  @Nullable
+  public static PsiPrimitiveType getOptionallyUnboxedType(PsiType type) {
+    return type instanceof PsiPrimitiveType ? (PsiPrimitiveType)type : getUnboxedType(type);
+  }
+
   public String getBoxedTypeName() {
     return ourUnboxedToQName.get(this);
   }

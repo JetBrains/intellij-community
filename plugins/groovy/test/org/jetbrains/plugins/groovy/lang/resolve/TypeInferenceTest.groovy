@@ -597,6 +597,22 @@ class Any {
 ''', 'java.lang.Object')
   }
 
+  void testRange() {
+    doTest('''\
+        def m = new int[3]
+        for (ii in 0..<m.length) {
+         print i<caret>i
+        }
+''', 'java.lang.Integer')
+
+    doTest('''\
+        def m = new int[3]
+        for (ii in m.size()..< m[0]) {
+         print i<caret>i
+        }
+''', 'java.lang.Integer')
+  }
+
   void testUnary() {
     doExprTest('~/abc/', 'java.util.regex.Pattern')
   }

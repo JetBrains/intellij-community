@@ -558,14 +558,14 @@ public class TypesUtil implements TypeConstants {
 
   @Nullable
   private static PsiType getNumericLUB(@Nullable PsiType type1, @Nullable PsiType type2) {
-    PsiPrimitiveType unboxedType1 = PsiPrimitiveType.getUnboxedType(type1);
-    PsiPrimitiveType unboxedType2 = PsiPrimitiveType.getUnboxedType(type2);
+    PsiPrimitiveType unboxedType1 = PsiPrimitiveType.getOptionallyUnboxedType(type1);
+    PsiPrimitiveType unboxedType2 = PsiPrimitiveType.getOptionallyUnboxedType(type2);
     if (unboxedType1 != null && unboxedType2 != null) {
       int i1 = LUB_NUMERIC_TYPES.indexOf(unboxedType1);
       int i2 = LUB_NUMERIC_TYPES.indexOf(unboxedType2);
       if (i1 >= 0 && i2 >= 0) {
         if (i1 > i2) return type1;
-        if (i2 > i1) return type2;
+        if (i2 >= i1) return type2;
       }
     }
     return null;
