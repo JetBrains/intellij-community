@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
@@ -325,7 +326,14 @@ class LookupUi {
           if (myList.getModel().getSize() > myList.getVisibleRowCount() && myList.getVisibleRowCount() >= 5) {
             panelHeight -= myList.getFixedCellHeight() / 2;
           }
-          return new Dimension(Math.max(listWidth, adSize.width), Math.min(panelHeight, myMaximumHeight));
+          int width = Math.max(listWidth, adSize.width);
+          int height = Math.min(panelHeight, myMaximumHeight);
+
+          if (Registry.is("ide.completion.width.constant")) {
+            return new Dimension(Registry.intValue("ide.completion.max.width"), height);
+          }
+
+          return new Dimension(width, height);
         }
 
         @Override
