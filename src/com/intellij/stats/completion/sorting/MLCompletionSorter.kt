@@ -15,17 +15,29 @@
  */
 package com.intellij.stats.completion.sorting
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.jetbrains.completion.ranker.CompletionRanker
 import com.jetbrains.completion.ranker.features.*
 
 
-class MLRanker : ApplicationComponent.Adapter() {
+interface Ranker {
 
-    private lateinit var featureTransformer: FeatureTransformer
-    private lateinit var ranker: CompletionRanker
+    /**
+     * Items are sorted by descending order, so item with the highest rank will be on top
+     */
+    fun rank(state: CompletionState, lookupRelevance: Map<String, Any>): Double
+
+    companion object {
+        fun getInstance(): Ranker = ServiceManager.getService(Ranker::class.java)
+    }
+}
+
+
+class FeatureTransformerProvider: ApplicationComponent.Adapter() {
+
+    lateinit var featureTransformer: FeatureTransformer
+        get
     
     override fun initComponent() {
         val binary = readBinaryFeaturesInfo()
@@ -36,10 +48,18 @@ class MLRanker : ApplicationComponent.Adapter() {
         val featureProvider = FeatureProvider(allFeatures)
         
         featureTransformer = FeatureTransformer(binary, double, categorical, order, featureProvider)
-        ranker = CompletionRanker()
     }
     
-    fun rank(state: CompletionState, lookupRelevance: Map<String, Any>): Double {
+}
+
+
+
+class MLRanker(val provider: FeatureTransformerProvider): Ranker {
+
+    private val featureTransformer = provider.featureTransformer
+    private val ranker = CompletionRanker()
+    
+    override fun rank(state: CompletionState, lookupRelevance: Map<String, Any>): Double {
         val featureArray = featureTransformer.toFeatureArray(state, lookupRelevance)
         if (featureArray != null) {
             return ranker.rank(featureArray)  
@@ -47,7 +67,4 @@ class MLRanker : ApplicationComponent.Adapter() {
         throw IllegalStateException("No feature array created $lookupRelevance")
     }
     
-    companion object {
-        fun getInstance(): MLRanker = ApplicationManager.getApplication().getComponent(MLRanker::class.java)
-    }
 }

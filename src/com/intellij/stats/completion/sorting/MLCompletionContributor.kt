@@ -33,7 +33,7 @@ class PrefixCachedLookupWeight(val weight: Double, val prefix: String)
 class MLClassifier(next: Classifier<LookupElement>,
                    private val lookupArranger: LookupArranger,
                    private val lookup: LookupImpl,
-                   private val ranker: MLRanker) : Classifier<LookupElement>(next, "MLClassifier") {
+                   private val ranker: Ranker) : Classifier<LookupElement>(next, "MLClassifier") {
 
   private val cachedScore = mutableMapOf<LookupElement, PrefixCachedLookupWeight>()
 
@@ -97,11 +97,11 @@ class MLClassifierFactory(
         private val lookup: LookupImpl
 ) : ClassifierFactory<LookupElement>("MLClassifierFactory") {
   
-  private val ranker = MLRanker.getInstance()
-  
   override fun createClassifier(next: Classifier<LookupElement>): Classifier<LookupElement> {
+    val ranker = Ranker.getInstance()
     return MLClassifier(next, lookupArranger, lookup, ranker)
   }
+  
 }
 
 
