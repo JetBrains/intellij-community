@@ -208,7 +208,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (!addTaskToQueue(task)) return;
 
     if (myState.get() == State.SMART || myState.get() == State.WAITING_FOR_FINISH) {
-      WriteAction.run(() -> enterDumbMode(contextTransaction, trace));
+      enterDumbMode(contextTransaction, trace);
       ApplicationManager.getApplication().invokeLater(this::startBackgroundProcess, myProject.getDisposed());
     }
   }
@@ -230,12 +230,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void enterDumbMode(@Nullable TransactionId contextTransaction, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
-    synchronized (myRunWhenSmartQueue) {
-      myState.set(State.SCHEDULED_TASKS);
-    }
-    myDumbStart = trace;
-    myDumbStartTransaction = contextTransaction;
-    myModificationCount++;
+    WriteAction.run(() -> {
+      synchronized (myRunWhenSmartQueue) {
+        myState.set(State.SCHEDULED_TASKS);
+      }
+      myDumbStart = trace;
+      myDumbStartTransaction = contextTransaction;
+      myModificationCount++;
+    });
     if (wasSmart) {
       try {
         myPublisher.enteredDumbMode();
@@ -263,27 +265,26 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void queueUpdateFinished() {
     if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, () ->
-          WriteAction.run(this::updateFinished)));
+        () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, this::updateFinished));
     }
   }
 
-  private void updateFinished() {
+  private boolean switchToSmartMode() {
     synchronized (myRunWhenSmartQueue) {
       if (!myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART)) {
-        return;
+        return false;
       }
     }
     myDumbStart = null;
     myModificationCount++;
-    if (myProject.isDisposed()) return;
+    return !myProject.isDisposed();
+  }
+
+  private void updateFinished() {
+    if (!WriteAction.compute(this::switchToSmartMode)) return;
 
     if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
 
-    notifyUpdateFinished();
-  }
-
-  private void notifyUpdateFinished() {
     try {
       myPublisher.exitDumbMode();
       FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
@@ -402,7 +403,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     finally {
       if (myState.get() != State.SMART) {
         if (myState.get() != State.WAITING_FOR_FINISH) throw new AssertionError(myState.get());
-        WriteAction.run(this::updateFinished);
+        updateFinished();
       }
     }
   }
