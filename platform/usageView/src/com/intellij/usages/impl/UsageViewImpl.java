@@ -847,7 +847,9 @@ public class UsageViewImpl implements UsageView {
     }
 
     final List<UsageState> states = new ArrayList<>();
-    captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
+    if (myTree != null) {
+      captureUsagesExpandState(new TreePath(myTree.getModel().getRoot()), states);
+    }
     final List<Usage> allUsages = new ArrayList<>(myUsageNodes.keySet());
     Collections.sort(allUsages, USAGE_COMPARATOR);
     final Set<Usage> excludedUsages = getExcludedUsages();
@@ -865,18 +867,22 @@ public class UsageViewImpl implements UsageView {
         appendUsage(usage);
       }
     });
-    excludeUsages(excludedUsages.toArray(new Usage[excludedUsages.size()]));
+    if (myTree != null) {
+      excludeUsages(excludedUsages.toArray(new Usage[excludedUsages.size()]));
+    }
     if (myCentralPanel != null) {
       setupCentralPanel();
     }
     SwingUtilities.invokeLater(() -> {
       if (isDisposed) return;
-      restoreUsageExpandState(states);
-      updateImmediately();
+      if (myTree != null) {
+        restoreUsageExpandState(states);
+        updateImmediately();
+      }
     });
   }
 
-  private void captureUsagesExpandState(TreePath pathFrom, final Collection<UsageState> states) {
+  private void captureUsagesExpandState(@NotNull TreePath pathFrom, @NotNull Collection<UsageState> states) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myTree.isExpanded(pathFrom)) {
       return;
