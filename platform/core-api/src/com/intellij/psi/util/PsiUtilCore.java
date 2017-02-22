@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -515,7 +515,7 @@ public class PsiUtilCore {
       append(" length=").append(file.getLength());
     sb.append("\nproject=").append(project.getName()).
       append(" default=").append(project.isDefault()).
-      append(" open=").append(project.isOpen());;
+      append(" open=").append(project.isOpen());
     sb.append("\nfileType=").append(fileType.getName()).append("/").append(fileType.getClass().getName());
     sb.append("\nisIgnored=").append(ignored);
     sb.append(" underIgnored=").append(indexFacade.isUnderIgnored(file));

@@ -6,6 +6,6 @@ class Test {
         public void run() {
           
         }
-    }.getClass();;
+    }.getClass();
   }
 }

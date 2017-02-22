@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     assertNotNull(myTemplateManager.getTemplate("foo.txt"));
 
     File foo = PlatformTestCase.createTempDir("foo");
-    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());;
+    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
     try {
       assertNotNull(project);
       assertNotNull(FileTemplateManager.getInstance(project).getTemplate("foo.txt"));
@@ -143,7 +143,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
 
   public void testAddRemoveShared() throws Exception {
     File foo = PlatformTestCase.createTempDir("foo");
-    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());;
+    final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
     try {
       assertNotNull(project);
       FileTemplateManager manager = FileTemplateManager.getInstance(project);

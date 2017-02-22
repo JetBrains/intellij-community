@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ final class ValidationResultImpl extends CommandLineVisitor implements Validatio
         myOptions.put(optionName, option);
       }
     }
-    myUnusedOptions.putAll(myOptions);;
+    myUnusedOptions.putAll(myOptions);
     myCommand = command;
   }
 
