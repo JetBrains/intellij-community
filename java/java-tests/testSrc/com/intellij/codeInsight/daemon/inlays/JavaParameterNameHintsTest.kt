@@ -593,9 +593,13 @@ class Test {
 
   void main() {
     set(10);
+    setWindow(100);
+    setWindow(<hint text="height"/>100, <hint text="weight">);
   }
 
   void set(int newValue) {}
+  void setWindow(int newValue) {}
+  void setWindow(int height, int weight) {}
 
 }
 """)
