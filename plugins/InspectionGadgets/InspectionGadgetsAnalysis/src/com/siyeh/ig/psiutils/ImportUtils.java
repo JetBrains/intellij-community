@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,8 @@ public final class ImportUtils {
     importList.add(importStatement);
   }
 
-  private static boolean hasAccessibleMemberWithName(PsiClass containingClass, @NotNull String memberName, @NotNull PsiElement context) {
+  private static boolean hasAccessibleMemberWithName(@NotNull PsiClass containingClass,
+                                                     @NotNull String memberName, @NotNull PsiElement context) {
     final PsiField field = containingClass.findFieldByName(memberName, true);
     if (field != null && PsiUtil.isAccessible(field, context, null)) {
       return true;
@@ -365,13 +366,18 @@ public final class ImportUtils {
     return false;
   }
 
+  /**
+   * @return true, if a static import was created or already present. False, if a static import is not possible.
+   */
   public static boolean addStaticImport(@NotNull String qualifierClass, @NonNls @NotNull String memberName, @NotNull PsiElement context) {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    if (InheritanceUtil.isInheritor(containingClass, qualifierClass)) {
-      return true;
-    }
-    if (hasAccessibleMemberWithName(containingClass, memberName, context)) {
-      return false;
+    if (containingClass != null) {
+      if (InheritanceUtil.isInheritor(containingClass, qualifierClass)) {
+        return true;
+      }
+      if (hasAccessibleMemberWithName(containingClass, memberName, context)) {
+        return false;
+      }
     }
     final PsiFile contextFile = context.getContainingFile();
     if (!(contextFile instanceof PsiJavaFile)) {
