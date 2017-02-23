@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public abstract class RunManager {
    * @param isShared true if the configuration is marked as shared (stored in the versioned part of the project files), false if it's local
    *                 (stored in the workspace file).
    */
-  public abstract void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared);
+  public abstract void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared);
 
   /**
    * Marks the specified run configuration as recently used (the temporary run configurations are deleted in LRU order).

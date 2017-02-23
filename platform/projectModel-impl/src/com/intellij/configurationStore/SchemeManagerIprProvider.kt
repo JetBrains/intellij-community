@@ -16,13 +16,16 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.loadElement
+import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.toByteArray
 import org.jdom.Element
 import java.io.InputStream
+import java.util.*
 
 class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProvider {
   private val nameToData = ContainerUtil.newConcurrentMap<String, ByteArray>()
@@ -61,6 +64,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProv
       return
     }
 
+    val nameGenerator = UniqueNameGenerator()
     for (child in state.getChildren(subStateTagName)) {
       var name = nameGetter?.invoke(child) ?: child.getAttributeValue("name")
       if (name == null) {
@@ -75,13 +79,18 @@ class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProv
         continue
       }
 
-      nameToData.put("$name.xml", child.toByteArray())
+      nameToData.put(nameGenerator.generateUniqueName(FileUtil.sanitizeFileName("$name.xml", false)), child.toByteArray())
     }
   }
 
-  fun writeState(state: Element) {
+  fun writeState(state: Element, comparator: Comparator<String>? = null) {
     val names = nameToData.keys.toTypedArray()
-    names.sort()
+    if (comparator == null) {
+      names.sort()
+    }
+    else {
+      names.sortWith(comparator)
+    }
     for (name in names) {
       nameToData.get(name)?.let { state.addContent(loadElement(it.inputStream())) }
     }

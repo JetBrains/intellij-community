@@ -16,6 +16,9 @@
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.*
+import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.UnknownRunConfiguration
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -23,6 +26,7 @@ import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import org.jdom.Element
+import java.util.*
 import java.util.function.Function
 
 internal class WorkspaceRunManager(project: Project, propertiesComponent: PropertiesComponent) : RunManagerImpl(project, propertiesComponent) {
@@ -40,7 +44,7 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
           LOG.error(e)
         }
 
-        val factory = settings.factory ?: return UnknownRunConfigurationScheme(name, dataHolder)
+        val factory = settings.factory ?: return UnknownRunConfigurationScheme(name)
         doLoadConfiguration(element, false, settings, factory)
         return settings
       }
@@ -77,33 +81,59 @@ internal class WorkspaceRunManager(project: Project, propertiesComponent: Proper
     }
     schemeManager.reload()
 
-//    val children = parentNode.getChildren(CONFIGURATION)
-//    val sortedElements = children.toTypedArray()
-//    // ensure templates are loaded first
-//    Arrays.sort(sortedElements) { a, b ->
-//      val aDefault = java.lang.Boolean.valueOf(a.getAttributeValue("default", "false"))!!
-//      val bDefault = java.lang.Boolean.valueOf(b.getAttributeValue("default", "false"))!!
-//      if (aDefault == bDefault) 0 else if (aDefault) -1 else 1
-//    }
-
     super.loadState(parentNode)
   }
 
-  override fun writeContext(parentNode: Element) {
+  override fun getState(): Element {
+    val element = Element("state")
+
     schemeManager.save()
-    schemeManagerProvider.writeState(parentNode)
+
+    // template rc in the end
+    schemeManagerProvider.writeState(element, Comparator { n1, n2 ->
+      val w1 = if (n1.startsWith("<template> of ")) 1 else 0
+      val w2 = if (n2.startsWith("<template> of ")) 1 else 0
+      if (w1 != w2) {
+        w1 - w2
+      }
+      else {
+        n1.compareTo(n2)
+      }
+    })
+
+    super.getState(element)
+
+    return element
   }
 
-  override fun getState(): Element {
-    val parentNode = Element("state")
-    super.getState(parentNode)
-    return parentNode
+  override fun runConfigurationAdded(settings: RunnerAndConfigurationSettings) {
+    if (settings.isTemporary) {
+      schemeManager.addScheme(settings as RunConfigurationScheme)
+    }
+    super.runConfigurationAdded(settings)
+  }
+
+  override fun getConfigurationTemplate(factory: ConfigurationFactory): RunnerAndConfigurationSettings {
+    val key = "${factory.type.id}.${factory.name}"
+    var template = myTemplateConfigurationsMap.get(key)
+    if (template == null) {
+      template = RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(myProject, this), true)
+      template.isSingleton = factory.isConfigurationSingletonByDefault
+      (template.configuration as? UnknownRunConfiguration)?.let {
+        it.isDoNotStore = true
+      }
+
+      schemeManager.addScheme(template)
+
+      myTemplateConfigurationsMap.put(key, template)
+    }
+    return template
   }
 }
 
 interface RunConfigurationScheme : Scheme
 
-private class UnknownRunConfigurationScheme(private val name: String, private val dataHolder: SchemeDataHolder<RunConfigurationScheme>) : RunConfigurationScheme, SerializableScheme {
+private class UnknownRunConfigurationScheme(private val name: String) : RunConfigurationScheme, SerializableScheme {
   override fun getSchemeState() = SchemeState.UNCHANGED
 
   override fun writeScheme() = throw AssertionError("Must be not called")

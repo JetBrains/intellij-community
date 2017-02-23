@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param runConfiguration the run configuration being serialized.
    * @param element          the element into which the settings should be persisted,
    */
-  protected void writeExternal(@NotNull final T runConfiguration,
-                               @NotNull final Element element) throws WriteExternalException {
+  protected void writeExternal(@NotNull T runConfiguration, @NotNull Element element) {
     throw new WriteExternalException();
   }
 

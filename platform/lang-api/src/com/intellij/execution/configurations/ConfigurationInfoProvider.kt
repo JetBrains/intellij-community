@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.configurations;
+package com.intellij.execution.configurations
 
-import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ProgramRunner
 
-public interface ConfigurationInfoProvider {
-  ProgramRunner getRunner();
+interface ConfigurationInfoProvider {
+  val runner: ProgramRunner<*>
 
-  RunConfiguration getConfiguration();
+  val configuration: RunConfiguration
 
-  RunnerSettings getRunnerSettings();
+  val runnerSettings: RunnerSettings
 
-  ConfigurationPerRunnerSettings getConfigurationSettings();
+  val configurationSettings: ConfigurationPerRunnerSettings
 }

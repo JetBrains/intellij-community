@@ -25,6 +25,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionException
+import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SmartList
@@ -39,7 +40,6 @@ private val RUNNER_ID = "RunnerId"
 private val CONFIGURATION_TYPE_ATTRIBUTE = "type"
 private val FACTORY_NAME_ATTRIBUTE = "factoryName"
 private val FOLDER_NAME = "folderName"
-internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
 val NAME_ATTR = "name"
 val DUMMY_ELEMENT_NAME = "dummy"
 private val TEMPORARY_ATTRIBUTE = "temporary"
@@ -52,26 +52,29 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
   companion object {
     @JvmField
     val SINGLETON = "singleton"
+
+    @JvmField
+    internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
   }
 
   private val manager: RunManagerImpl
-  private var myConfiguration: RunConfiguration? = null
-  private var myIsTemplate: Boolean = false
+  private var configuration: RunConfiguration? = null
+  private var isTemplate: Boolean = false
 
-  private val myRunnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
+  private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
 
-  private val myConfigurationPerRunnerSettings = object : RunnerItem<ConfigurationPerRunnerSettings>("ConfigurationWrapper") {
-    override fun createSettings(runner: ProgramRunner<*>) = myConfiguration!!.createRunnerSettings(InfoProvider(runner))
+  private val configurationPerRunnerSettings = object : RunnerItem<ConfigurationPerRunnerSettings>("ConfigurationWrapper") {
+    override fun createSettings(runner: ProgramRunner<*>) = configuration!!.createRunnerSettings(InfoProvider(runner))
   }
 
-  private var myTemporary: Boolean = false
-  private var myEditBeforeRun: Boolean = false
-  private var myActivateToolWindowBeforeRun = true
-  private var mySingleton: Boolean = false
-  private var myWasSingletonSpecifiedExplicitly: Boolean = false
-  private var myFolderName: String? = null
+  private var isTemporary: Boolean = false
+  private var isEditBeforeRun: Boolean = false
+  private var isActivateToolWindowBeforeRun = true
+  private var singleton: Boolean = false
+  private var wasSingletonSpecifiedExplicitly: Boolean = false
+  private var folderName: String? = null
 
   constructor(manager: RunManagerImpl) {
     this.manager = manager
@@ -79,93 +82,99 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
 
   constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean) {
     this.manager = manager
-    myConfiguration = configuration
-    myIsTemplate = isTemplate
+    this.configuration = configuration
+    this.isTemplate = isTemplate
   }
 
-  override fun getFactory() = myConfiguration?.factory
+  override fun getFactory() = configuration?.factory
 
-  override fun isTemplate() = myIsTemplate
+  override fun isTemplate() = isTemplate
 
-  override fun isTemporary() = myTemporary
+  override fun isTemporary() = isTemporary
 
   override fun setTemporary(temporary: Boolean) {
-    myTemporary = temporary
+    isTemporary = temporary
   }
 
-  override fun getConfiguration(): RunConfiguration = myConfiguration!!
+  override fun getConfiguration(): RunConfiguration = configuration!!
 
   override fun createFactory() = Factory<RunnerAndConfigurationSettings> {
-    val configuration = myConfiguration!!
+    val configuration = configuration!!
     RunnerAndConfigurationSettingsImpl(manager, configuration.factory.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration), false)
   }
 
   override fun setName(name: String) {
-    myConfiguration!!.name = name
+    configuration!!.name = name
   }
 
-  override fun getName() = myConfiguration!!.name
+  override fun getName(): String {
+    val configuration = configuration!!
+    if (isTemplate) {
+      return "<template> of ${configuration.factory.name}"
+    }
+    return configuration.name
+  }
 
   override fun getUniqueID(): String {
-    val configuration = myConfiguration!!
+    val configuration = configuration!!
     return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
   }
 
   override fun setEditBeforeRun(b: Boolean) {
-    myEditBeforeRun = b
+    isEditBeforeRun = b
   }
 
-  override fun isEditBeforeRun() = myEditBeforeRun
+  override fun isEditBeforeRun() = isEditBeforeRun
 
   override fun setActivateToolWindowBeforeRun(activate: Boolean) {
-    myActivateToolWindowBeforeRun = activate
+    isActivateToolWindowBeforeRun = activate
   }
 
-  override fun isActivateToolWindowBeforeRun() = myActivateToolWindowBeforeRun
+  override fun isActivateToolWindowBeforeRun() = isActivateToolWindowBeforeRun
 
   override fun setSingleton(singleton: Boolean) {
-    mySingleton = singleton
+    this.singleton = singleton
   }
 
-  override fun isSingleton() = mySingleton
+  override fun isSingleton() = singleton
 
   override fun setFolderName(folderName: String?) {
-    myFolderName = folderName
+    this.folderName = folderName
   }
 
-  override fun getFolderName() = myFolderName
+  override fun getFolderName() = folderName
 
   private fun getFactory(element: Element): ConfigurationFactory? {
     val typeName = element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE)
     val factoryName = element.getAttributeValue(FACTORY_NAME_ATTRIBUTE)
-    return manager.getFactory(typeName, factoryName, !myIsTemplate)
+    return manager.getFactory(typeName, factoryName, !isTemplate)
   }
 
   fun readExternal(element: Element) {
-    myIsTemplate = java.lang.Boolean.parseBoolean(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE))
-    myTemporary = java.lang.Boolean.parseBoolean(element.getAttributeValue(TEMPORARY_ATTRIBUTE)) || TEMP_CONFIGURATION == element.name
-    myEditBeforeRun = java.lang.Boolean.parseBoolean(element.getAttributeValue(EDIT_BEFORE_RUN))
+    isTemplate = java.lang.Boolean.parseBoolean(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE))
+    isTemporary = java.lang.Boolean.parseBoolean(element.getAttributeValue(TEMPORARY_ATTRIBUTE)) || TEMP_CONFIGURATION == element.name
+    isEditBeforeRun = java.lang.Boolean.parseBoolean(element.getAttributeValue(EDIT_BEFORE_RUN))
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
-    myActivateToolWindowBeforeRun = value == null || java.lang.Boolean.parseBoolean(value)
-    myFolderName = element.getAttributeValue(FOLDER_NAME)
+    isActivateToolWindowBeforeRun = value == null || java.lang.Boolean.parseBoolean(value)
+    folderName = element.getAttributeValue(FOLDER_NAME)
     val factory = getFactory(element) ?: return
 
-    myWasSingletonSpecifiedExplicitly = false
-    if (myIsTemplate) {
-      mySingleton = factory.isConfigurationSingletonByDefault
+    wasSingletonSpecifiedExplicitly = false
+    if (isTemplate) {
+      singleton = factory.isConfigurationSingletonByDefault
     }
     else {
       val singletonStr = element.getAttributeValue(SINGLETON)
       if (StringUtil.isEmpty(singletonStr)) {
-        mySingleton = factory.isConfigurationSingletonByDefault
+        singleton = factory.isConfigurationSingletonByDefault
       }
       else {
-        myWasSingletonSpecifiedExplicitly = true
-        mySingleton = java.lang.Boolean.parseBoolean(singletonStr)
+        wasSingletonSpecifiedExplicitly = true
+        singleton = java.lang.Boolean.parseBoolean(singletonStr)
       }
     }
 
-    myConfiguration = if (myIsTemplate) {
+    val configuration = if (isTemplate) {
       manager.getConfigurationTemplate(factory).configuration
     }
     else {
@@ -174,29 +183,31 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
       manager.doCreateConfiguration(element.getAttributeValue(NAME_ATTR), factory, false)
     }
 
-    PathMacroManager.getInstance(myConfiguration!!.project).expandPaths(element)
-    if (myConfiguration is ModuleBasedConfiguration<*>) {
-      (myConfiguration as ModuleBasedConfiguration<*>).configurationModule.module?.let {
+    this.configuration = configuration
+
+    PathMacroManager.getInstance(configuration.project).expandPaths(element)
+    if (configuration is ModuleBasedConfiguration<*>) {
+      configuration.configurationModule.module?.let {
         PathMacroManager.getInstance(it).expandPaths(element)
       }
     }
 
-    if (myConfiguration is PersistentStateComponent<*>) {
-      (myConfiguration as PersistentStateComponent<*>).deserializeAndLoadState(element)
+    if (configuration is PersistentStateComponent<*>) {
+      configuration.deserializeAndLoadState(element)
     }
     else {
-      myConfiguration!!.readExternal(element)
+      configuration.readExternal(element)
     }
 
-    myRunnerSettings.loadState(element)
-    myConfigurationPerRunnerSettings.loadState(element)
+    runnerSettings.loadState(element)
+    configurationPerRunnerSettings.loadState(element)
   }
 
   fun writeExternal(element: Element) {
-    val configuration = myConfiguration
+    val configuration = configuration
     val factory = configuration!!.factory
     if (configuration !is UnknownRunConfiguration) {
-      if (myIsTemplate) {
+      if (isTemplate) {
         element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true")
       }
       else {
@@ -205,8 +216,8 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
 
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
       element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.name)
-      if (myFolderName != null) {
-        element.setAttribute(FOLDER_NAME, myFolderName!!)
+      if (folderName != null) {
+        element.setAttribute(FOLDER_NAME, folderName!!)
       }
 
       if (isEditBeforeRun) {
@@ -215,24 +226,28 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
-      if (myWasSingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault) {
-        element.setAttribute(SINGLETON, mySingleton.toString())
+      if (wasSingletonSpecifiedExplicitly || singleton != factory.isConfigurationSingletonByDefault) {
+        element.setAttribute(SINGLETON, singleton.toString())
       }
-      if (myTemporary) {
+      if (isTemporary) {
         element.setAttribute(TEMPORARY_ATTRIBUTE, "true")
       }
     }
 
+    serializeConfigurationInto(configuration, element)
+
+    if (configuration !is UnknownRunConfiguration) {
+      runnerSettings.getState(element)
+      configurationPerRunnerSettings.getState(element)
+    }
+  }
+
+  private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
     if (configuration is PersistentStateComponent<*>) {
-      configuration.state!!.serializeInto<Any>(element)
+      configuration.state!!.serializeInto(element)
     }
     else {
       configuration.writeExternal(element)
-    }
-
-    if (configuration !is UnknownRunConfiguration) {
-      myRunnerSettings.getState(element)
-      myConfigurationPerRunnerSettings.getState(element)
     }
   }
 
@@ -248,19 +263,19 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
   }
 
   override fun checkSettings(executor: Executor?) {
-    val configuration = myConfiguration!!
+    val configuration = configuration!!
     configuration.checkConfiguration()
     if (configuration !is RunConfigurationBase) {
       return
     }
 
     val runners = THashSet<ProgramRunner<*>>()
-    runners.addAll(myRunnerSettings.settings.keys)
-    runners.addAll(myConfigurationPerRunnerSettings.settings.keys)
+    runners.addAll(runnerSettings.settings.keys)
+    runners.addAll(configurationPerRunnerSettings.settings.keys)
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
-        configuration.checkRunnerSettings(runner, myRunnerSettings.settings[runner],
-          myConfigurationPerRunnerSettings.settings[runner])
+        configuration.checkRunnerSettings(runner, runnerSettings.settings[runner],
+          configurationPerRunnerSettings.settings[runner])
       }
     }
     if (executor != null) {
@@ -269,25 +284,25 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
   }
 
   override fun canRunOn(target: ExecutionTarget): Boolean {
-    val configuration = myConfiguration
+    val configuration = configuration
     return if (configuration is TargetAwareRunProfile) configuration.canRunOn(target) else true
   }
 
-  override fun getRunnerSettings(runner: ProgramRunner<*>) = myRunnerSettings.getOrCreateSettings(runner)
+  override fun getRunnerSettings(runner: ProgramRunner<*>) = runnerSettings.getOrCreateSettings(runner)
 
-  override fun getConfigurationSettings(runner: ProgramRunner<*>) = myConfigurationPerRunnerSettings.getOrCreateSettings(runner)
+  override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
-  override fun getType() = myConfiguration?.type
+  override fun getType() = configuration?.type
 
   public override fun clone(): RunnerAndConfigurationSettings {
-    val copy = RunnerAndConfigurationSettingsImpl(manager, myConfiguration!!.clone(), false)
+    val copy = RunnerAndConfigurationSettingsImpl(manager, configuration!!.clone(), false)
     copy.importRunnerAndConfigurationSettings(this)
     return copy
   }
 
   fun importRunnerAndConfigurationSettings(template: RunnerAndConfigurationSettingsImpl) {
-    importFromTemplate(template.myRunnerSettings, myRunnerSettings)
-    importFromTemplate(template.myConfigurationPerRunnerSettings, myConfigurationPerRunnerSettings)
+    importFromTemplate(template.runnerSettings, runnerSettings)
+    importFromTemplate(template.configurationPerRunnerSettings, configurationPerRunnerSettings)
 
     isSingleton = template.isSingleton
     isEditBeforeRun = template.isEditBeforeRun
@@ -326,14 +341,36 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
     return "${if (type == null) "" else "${type.displayName}: "}${if (isTemplate) "<template>" else name}"
   }
 
-  private inner class InfoProvider(private val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
-    override fun getRunner() = runner
+  private inner class InfoProvider(override val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
+    override val configuration: RunConfiguration
+      get() = RunnerAndConfigurationSettingsImpl@this.configuration
 
-    override fun getConfiguration() = myConfiguration
+    override val runnerSettings: RunnerSettings
+      get() = this@RunnerAndConfigurationSettingsImpl.getRunnerSettings(runner)
 
-    override fun getRunnerSettings() = this@RunnerAndConfigurationSettingsImpl.getRunnerSettings(runner)
+    override val configurationSettings: ConfigurationPerRunnerSettings
+      get() = this@RunnerAndConfigurationSettingsImpl.getConfigurationSettings(runner)
+  }
 
-    override fun getConfigurationSettings() = this@RunnerAndConfigurationSettingsImpl.getConfigurationSettings(runner)
+  override fun getSchemeState(): SchemeState? {
+    val configuration = configuration
+    if (configuration is UnknownRunConfiguration) {
+      return if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+    }
+    
+    if (isTemplate && configuration != null) {
+      val templateConfiguration = configuration.factory.createTemplateConfiguration(manager.myProject, manager)
+
+      val templateState = Element("state")
+      serializeConfigurationInto(templateConfiguration, templateState)
+
+      val state = Element("state")
+      serializeConfigurationInto(configuration, state)
+      if (JDOMUtil.areElementsEqual(state, templateState)) {
+        return SchemeState.NON_PERSISTENT
+      }
+    }
+    return null
   }
 
   private abstract inner class RunnerItem<T>(private val childTagName: String) {
@@ -372,7 +409,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
       else {
         LOG.error("More than one runner found for ID: $runnerId")
         for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
-          runnersById.firstOrNull { it.canRun(executor.id, myConfiguration!!)  }?.let {
+          runnersById.firstOrNull { it.canRun(executor.id, configuration!!)  }?.let {
             return it
           }
         }
@@ -383,7 +420,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
     fun getState(element: Element) {
       val runnerSettings = SmartList<Element>()
       for (runner in settings.keys) {
-        val settings = this.settings[runner]
+        val settings = this.settings.get(runner)
         val wasLoaded = loadedIds.contains(runner.runnerId)
         if (settings == null && !wasLoaded) {
           continue
@@ -441,7 +478,7 @@ class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSett
           settings.put(runner, result)
         }
         catch (ignored: AbstractMethodError) {
-          LOG.error("Update failed for: ${myConfiguration!!.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
+          LOG.error("Update failed for: ${configuration!!.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
         }
 
       }

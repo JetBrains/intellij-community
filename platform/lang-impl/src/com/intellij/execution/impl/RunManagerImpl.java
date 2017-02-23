@@ -62,11 +62,11 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public abstract class RunManagerImpl extends RunManagerEx implements PersistentStateComponent<Element>, NamedComponent, Disposable {
   protected static final Logger LOG = Logger.getInstance(RunManagerImpl.class);
 
-  private final Project myProject;
+  final Project myProject;
 
   private final Map<String, ConfigurationType> myTypesByName = new LinkedHashMap<>();
 
-  private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new ConcurrentSkipListMap<>();
+  protected final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap = new ConcurrentSkipListMap<>();
   private final Map<String, RunnerAndConfigurationSettings> myConfigurations =
     new LinkedHashMap<>(); // template configurations are not included here
   private final Map<String, Boolean> mySharedConfigurations = new ConcurrentHashMap<>();
@@ -114,6 +114,10 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
         }
       }
     });
+  }
+
+  public static RunManagerImpl getInstanceImpl(@NotNull Project project) {
+    return (RunManagerImpl)RunManager.getInstance(project);
   }
 
   // separate method needed for tests
@@ -326,15 +330,14 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       if (template.getConfiguration() instanceof UnknownRunConfiguration) {
         ((UnknownRunConfiguration)template.getConfiguration()).setDoNotStore(true);
       }
+
       myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), template);
     }
     return template;
   }
 
   @Override
-  public void addConfiguration(RunnerAndConfigurationSettings settings,
-                               boolean shared,
-                               List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
+  public void addConfiguration(RunnerAndConfigurationSettings settings, boolean shared, List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent) {
     String existingId = findExistingConfigurationId(settings);
     String newId = settings.getUniqueID();
     RunnerAndConfigurationSettings existingSettings = null;
@@ -365,8 +368,12 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       myDispatcher.getMulticaster().runConfigurationChanged(settings, existingId);
     }
     else {
-      myDispatcher.getMulticaster().runConfigurationAdded(settings);
+      runConfigurationAdded(settings);
     }
+  }
+
+  protected void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+    myDispatcher.getMulticaster().runConfigurationAdded(settings);
   }
 
   @Override
@@ -568,35 +575,21 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
 
   @Nullable
   public Element getState(@NotNull Element parentNode) {
-    // writes temporary configurations here
-    writeContext(parentNode);
+    if (myConfigurations.size() > 1) {
+      JDOMExternalizableStringList order = null;
+      for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
+        if (each.getType() instanceof UnknownConfigurationType) {
+          continue;
+        }
 
-    for (RunnerAndConfigurationSettings configuration : myTemplateConfigurationsMap.values()) {
-      if (configuration.getConfiguration() instanceof UnknownRunConfiguration &&
-          ((UnknownRunConfiguration)configuration.getConfiguration()).isDoNotStore()) {
-        continue;
+        if (order == null) {
+          order = new JDOMExternalizableStringList();
+        }
+        order.add(each.getUniqueID());
       }
-
-      addConfigurationElement(parentNode, configuration);
-    }
-
-    for (RunnerAndConfigurationSettings configuration : getStableConfigurations(false)) {
-      addConfigurationElement(parentNode, configuration);
-    }
-
-    JDOMExternalizableStringList order = null;
-    for (RunnerAndConfigurationSettings each : myConfigurations.values()) {
-      if (each.getType() instanceof UnknownConfigurationType) {
-        continue;
+      if (order != null) {
+        order.writeExternal(parentNode);
       }
-
-      if (order == null) {
-        order = new JDOMExternalizableStringList();
-      }
-      order.add(each.getUniqueID());
-    }
-    if (order != null) {
-      order.writeExternal(parentNode);
     }
 
     final JDOMExternalizableStringList recentList = new JDOMExternalizableStringList();
@@ -624,10 +617,17 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
     return parentNode;
   }
 
-  public void writeContext(@NotNull Element parentNode) {
+  public void writeContext(@NotNull Element element) {
+    Collection<RunnerAndConfigurationSettings> values = new ArrayList<>(myConfigurations.values());
+    for (RunnerAndConfigurationSettings configurationSettings : values) {
+      if (configurationSettings.isTemporary()) {
+        addConfigurationElement(element, configurationSettings, CONFIGURATION);
+      }
+    }
+
     RunnerAndConfigurationSettings selected = getSelectedConfiguration();
     if (selected != null) {
-      parentNode.setAttribute(SELECTED_ATTR, selected.getUniqueID());
+      element.setAttribute(SELECTED_ATTR, selected.getUniqueID());
     }
   }
 
@@ -671,7 +671,7 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       }
     }
 
-    Element methodsElement = new Element(METHOD);
+    Element methodsElement = null;
     for (int i = 0, size = tasks.size(); i < size; i++) {
       BeforeRunTask task = tasks.get(i);
       int j = 0;
@@ -690,9 +690,16 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
       Element child = new Element(OPTION);
       child.setAttribute(NAME_ATTR, task.getProviderId().toString());
       task.writeExternal(child);
+
+      if (methodsElement == null) {
+        methodsElement = new Element(METHOD);
+      }
       methodsElement.addContent(child);
     }
-    configurationElement.addContent(methodsElement);
+
+    if (methodsElement != null) {
+      configurationElement.addContent(methodsElement);
+    }
   }
 
   @Override
@@ -844,7 +851,7 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
     else {
       addConfiguration(settings, isShared, tasks, true);
       if (Boolean.parseBoolean(element.getAttributeValue(SELECTED_ATTR))) {
-        //to support old style
+        // to support old style
         setSelectedConfiguration(settings);
       }
     }
@@ -1237,12 +1244,8 @@ public abstract class RunManagerImpl extends RunManagerEx implements PersistentS
   }
 
   @Override
-  public void addConfiguration(final RunnerAndConfigurationSettings settings, final boolean isShared) {
+  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, boolean isShared) {
     addConfiguration(settings, isShared, getTemplateBeforeRunTasks(settings.getConfiguration()), false);
-  }
-
-  public static RunManagerImpl getInstanceImpl(final Project project) {
-    return (RunManagerImpl)RunManager.getInstance(project);
   }
 
   void removeNotExistingSharedConfigurations(@NotNull Set<String> existing) {
