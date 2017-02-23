@@ -19,11 +19,9 @@ package git4idea.repo;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -39,7 +37,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
+  import static java.util.Arrays.asList;
+  import static java.util.Collections.emptyList;
+
+  /**
  * Reads information from the {@code .git/config} file, and parses it to actual objects.
  * <p/>
  * Currently doesn't read all the information: just general information about remotes and branch tracking.
@@ -81,13 +82,7 @@ public class GitConfig {
   @NotNull
   Collection<GitRemote> parseRemotes() {
     // populate GitRemotes with substituting urls when needed
-    return ContainerUtil.map(myRemotes, new Function<Remote, GitRemote>() {
-      @Override
-      public GitRemote fun(@Nullable Remote remote) {
-        assert remote != null;
-        return convertRemoteToGitRemote(myUrls, remote);
-      }
-    });
+    return ContainerUtil.map(myRemotes, remote -> convertRemoteToGitRemote(myUrls, remote));
   }
 
   @NotNull
@@ -103,15 +98,8 @@ public class GitConfig {
   @NotNull
   Collection<GitBranchTrackInfo> parseTrackInfos(@NotNull final Collection<GitLocalBranch> localBranches,
                                                  @NotNull final Collection<GitRemoteBranch> remoteBranches) {
-    return ContainerUtil.mapNotNull(myTrackedInfos, new Function<BranchConfig, GitBranchTrackInfo>() {
-      @Override
-      public GitBranchTrackInfo fun(BranchConfig config) {
-        if (config != null) {
-          return convertBranchConfig(config, localBranches, remoteBranches);
-        }
-        return null;
-      }
-    });
+    return ContainerUtil.mapNotNull(myTrackedInfos, config -> config != null ?
+                                                              convertBranchConfig(config, localBranches, remoteBranches) : null);
   }
 
   /**
@@ -121,8 +109,7 @@ public class GitConfig {
    */
   @NotNull
   static GitConfig read(@NotNull File configFile) {
-    GitConfig emptyConfig = new GitConfig(Collections.<Remote>emptyList(), Collections.<Url>emptyList(),
-                                          Collections.<BranchConfig>emptyList());
+    GitConfig emptyConfig = new GitConfig(emptyList(), emptyList(), emptyList());
     if (!configFile.exists()) {
       LOG.info("No .git/config file at " + configFile.getPath());
       return emptyConfig;
@@ -203,29 +190,22 @@ public class GitConfig {
   @Nullable
   private static GitLocalBranch findLocalBranch(@NotNull String branchName, @NotNull Collection<GitLocalBranch> localBranches) {
     final String name = GitBranchUtil.stripRefsPrefix(branchName);
-    return ContainerUtil.find(localBranches, new Condition<GitLocalBranch>() {
-      @Override
-      public boolean value(@Nullable GitLocalBranch input) {
-        assert input != null;
-        return input.getName().equals(name);
-      }
-    });
+    return ContainerUtil.find(localBranches, input -> input.getName().equals(name));
   }
 
   @Nullable
-  public static GitRemoteBranch findRemoteBranch(@NotNull String remoteBranchName, @NotNull final String remoteName,
-                                                 @NotNull final Collection<GitRemoteBranch> remoteBranches) {
+  public static GitRemoteBranch findRemoteBranch(@NotNull String remoteBranchName,
+                                                 @NotNull String remoteName,
+                                                 @NotNull Collection<GitRemoteBranch> remoteBranches) {
     final String branchName = GitBranchUtil.stripRefsPrefix(remoteBranchName);
-    return ContainerUtil.find(remoteBranches, new Condition<GitRemoteBranch>() {
-      @Override
-      public boolean value(GitRemoteBranch branch) {
-        return branch.getNameForRemoteOperations().equals(branchName) && branch.getRemote().getName().equals(remoteName);
-      }
-    });
+    return ContainerUtil.find(remoteBranches, branch -> branch.getNameForRemoteOperations().equals(branchName) &&
+                                                        branch.getRemote().getName().equals(remoteName));
   }
 
   @Nullable
-  private static BranchConfig parseBranchSection(String sectionName, Profile.Section section, @NotNull ClassLoader classLoader) {
+  private static BranchConfig parseBranchSection(@NotNull String sectionName,
+                                                 @NotNull Profile.Section section,
+                                                 @NotNull ClassLoader classLoader) {
     BranchBean branchBean = section.as(BranchBean.class, classLoader);
     Matcher matcher = BRANCH_INFO_SECTION.matcher(sectionName);
     if (matcher.matches()) {
@@ -410,12 +390,12 @@ public class GitConfig {
     @NotNull
     private List<String> getPushSpec() {
       String[] push = myRemoteBean.getPush();
-      return push == null ? Collections.<String>emptyList() : Arrays.asList(push);
+      return push == null ? emptyList() : asList(push);
     }
 
     @NotNull
     private List<String> getFetchSpecs() {
-      return Arrays.asList(notNull(myRemoteBean.getFetch()));
+      return asList(notNull(myRemoteBean.getFetch()));
     }
     
   }
@@ -485,7 +465,7 @@ public class GitConfig {
 
   @NotNull
   private static Collection<String> nonNullCollection(@Nullable String[] array) {
-    return array == null ? Collections.<String>emptyList() : new ArrayList<>(Arrays.asList(array));
+    return array == null ? emptyList() : new ArrayList<>(asList(array));
   }
 
 }
