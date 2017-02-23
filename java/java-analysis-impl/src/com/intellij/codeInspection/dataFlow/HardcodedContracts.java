@@ -80,19 +80,21 @@ public class HardcodedContracts {
         return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
       }
     }
-    else if ("junit.framework.Assert".equals(className) ||
-             "org.junit.Assert".equals(className) ||
-             "org.junit.Assume".equals(className) ||
-             "junit.framework.TestCase".equals(className) ||
-             "com.google.common.truth.Truth".equals(className) ||
-             "com.google.common.truth.TestVerb".equals(className) ||
-             className.startsWith("org.assertj.core.api.") ||
-             "org.testng.Assert".equals(className) ||
-             "org.testng.AssertJUnit".equals(className)) {
+    else if (isJunit(className) || isTestng(className) ||
+             className.startsWith("com.google.common.truth.") ||
+             className.startsWith("org.assertj.core.api.")) {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
 
     return Collections.emptyList();
+  }
+
+  private static boolean isJunit(String className) {
+    return className.startsWith("junit.framework.") || className.startsWith("org.junit.");
+  }
+
+  private static boolean isTestng(String className) {
+    return className.startsWith("org.testng.");
   }
 
   private static boolean isNotNullMatcher(PsiExpression expr) {
@@ -122,16 +124,11 @@ public class HardcodedContracts {
       return handleAssertThat(paramCount, call);
     }
 
-    if (!"junit.framework.Assert".equals(className) &&
-        !"junit.framework.TestCase".equals(className) &&
-        !"org.junit.Assert".equals(className) &&
-        !"org.junit.Assume".equals(className) &&
-        !"org.testng.Assert".equals(className) &&
-        !"org.testng.AssertJUnit".equals(className)) {
+    if (!isJunit(className) && !isTestng(className)) {
       return Collections.emptyList();
     }
 
-    boolean testng = className.startsWith("org.testng.");
+    boolean testng = isTestng(className);
     if ("fail".equals(methodName)) {
       return Collections.singletonList(new MethodContract(createConstraintArray(paramCount), THROW_EXCEPTION));
     }
