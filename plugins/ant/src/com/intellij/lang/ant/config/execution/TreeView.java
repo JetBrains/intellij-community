@@ -20,10 +20,11 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildModelBase;
 import com.intellij.lang.ant.config.AntBuildTargetBase;
 import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,14 +63,14 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   private String myCurrentTaskName;
 
   private final Project myProject;
-  private final AntBuildFile myBuildFile;
+  private final AntBuildFileBase myBuildFile;
   private DefaultMutableTreeNode myStatusNode;
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private OccurenceNavigatorSupport myOccurenceNavigatorSupport;
   @NonNls public static final String ROOT_TREE_USER_OBJECT = "root";
   @NonNls public static final String JUNIT_TASK_NAME = "junit";
 
-  public TreeView(final Project project, final AntBuildFile buildFile) {
+  public TreeView(final Project project, final AntBuildFileBase buildFile) {
     myProject = project;
     myBuildFile = buildFile;
     myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
@@ -343,10 +344,12 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private void collapseTargets() {
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
-    for (int i = 0; i < root.getChildCount(); i++) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)root.getChildAt(i);
-      myTree.collapsePath(new TreePath(node.getPath()));
+    if (AntBuildFileImpl.TREE_VIEW_COLLAPSE_TARGETS.value(myBuildFile.getAllOptions())) {
+      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
+      for (int i = 0; i < root.getChildCount(); i++) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)root.getChildAt(i);
+        myTree.collapsePath(new TreePath(node.getPath()));
+      }
     }
   }
 

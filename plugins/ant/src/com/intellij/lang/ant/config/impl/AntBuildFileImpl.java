@@ -117,6 +117,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public static final IntProperty MAX_STACK_SIZE = new IntProperty("maximumStackSize", 2);
   public static final BooleanProperty VERBOSE = new BooleanProperty("verbose", true);
   public static final BooleanProperty TREE_VIEW = new BooleanProperty("treeView", true);
+  public static final BooleanProperty TREE_VIEW_COLLAPSE_TARGETS = new BooleanProperty("treeViewCollapseTarget", true);
   public static final BooleanProperty CLOSE_ON_NO_ERRORS = new BooleanProperty("viewClosedWhenNoErrors", false);
   public static final StringProperty CUSTOM_JDK_NAME = new StringProperty("customJdkName", "");
   public static final ListProperty<TargetFilter> TARGET_FILTERS = ListProperty.create("targetFilters");
@@ -162,6 +163,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myWorkspaceOptions.registerProperty(RUN_IN_BACKGROUND);
     myWorkspaceOptions.registerProperty(CLOSE_ON_NO_ERRORS);
     myWorkspaceOptions.registerProperty(TREE_VIEW);
+    myWorkspaceOptions.registerProperty(TREE_VIEW_COLLAPSE_TARGETS);
     myWorkspaceOptions.registerProperty(VERBOSE);
     myWorkspaceOptions.registerProperty(TARGET_FILTERS, "filter", NewInstanceFactory.fromClass(TargetFilter.class));
 
