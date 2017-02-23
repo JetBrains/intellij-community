@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="python-community-ide-resources" />
     <orderEntry type="module" module-name="python-community" />
     <orderEntry type="module" module-name="IntelliLang-xml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="python-community-configure" />
   </component>
 </module>
