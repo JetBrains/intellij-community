@@ -17,6 +17,7 @@ package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
@@ -28,7 +29,7 @@ import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel {
+public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel implements StructureViewModel.ElementInfoProvider {
   private static final Class[] CLASSES =
     {XmlTag.class, XmlFile.class, XmlEntityDecl.class, XmlElementDecl.class, XmlAttlistDecl.class, XmlConditionalSection.class};
   private static final Sorter[] SORTERS = {Sorter.ALPHA_SORTER};
@@ -78,5 +79,15 @@ public class XmlStructureViewTreeModel extends TextEditorBasedStructureViewModel
   @NotNull
   public Sorter[] getSorters() {
     return SORTERS;
+  }
+
+  @Override
+  public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
+    return false;
+  }
+
+  @Override
+  public boolean isAlwaysLeaf(StructureViewTreeElement element) {
+    return false;
   }
 }
