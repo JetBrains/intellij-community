@@ -453,8 +453,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return mySelection;
   }
 
-  public void handleAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange) {
-    myController.handleGraphAnswer(answer, dataCouldChange, null, null);
+  public void handleAnswer(@Nullable GraphAnswer<Integer> answer) {
+    myController.handleGraphAnswer(answer, true, null, null);
   }
 
   public void showTooltip(int row) {
