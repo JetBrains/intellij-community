@@ -53,7 +53,9 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return MethodInfo(fullMethodName, paramNames)
   }
 
-  override val defaultBlackList = setOf(
+  override fun getDefaultBlackList() = defaultBlackList
+
+  private val defaultBlackList = setOf(
       "(begin*, end*)",
       "(start*, end*)",
       "(first*, last*)",

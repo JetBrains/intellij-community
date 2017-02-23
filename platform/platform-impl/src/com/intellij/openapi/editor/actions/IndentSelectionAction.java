@@ -28,12 +28,12 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,12 +119,10 @@ public class IndentSelectionAction extends EditorAction {
 
   static void doIndent(final int endIndex, final int startIndex, final Document document, final Project project, final Editor editor,
                                final int blockIndent) {
-    int caretOffset = editor.getCaretModel().getOffset();
+    final int[] caretOffset = {editor.getCaretModel().getOffset()};
     
     boolean bulkMode = endIndex - startIndex > 50;
-    if (bulkMode) ((DocumentEx)document).setInBulkUpdate(true);
-
-    try {
+    DocumentUtil.executeInBulk(document, bulkMode, ()-> {
       List<Integer> nonModifiableLines = new ArrayList<>();
       if (project != null) {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -139,15 +137,12 @@ public class IndentSelectionAction extends EditorAction {
       }
       for(int i=startIndex; i<=endIndex; i++) {
         if (!nonModifiableLines.contains(i)) {
-          caretOffset = EditorActionUtil.indentLine(project, editor, i, blockIndent, caretOffset);
+          caretOffset[0] = EditorActionUtil.indentLine(project, editor, i, blockIndent, caretOffset[0]);
         }
       }
-    }
-    finally {
-      if (bulkMode) ((DocumentEx)document).setInBulkUpdate(false);
-    }
-    
-    editor.getCaretModel().moveToOffset(caretOffset);
+    });
+
+    editor.getCaretModel().moveToOffset(caretOffset[0]);
   }
 
   static boolean canIndent(Document document, PsiFile file, int line, @NotNull IndentStrategy indentStrategy) {

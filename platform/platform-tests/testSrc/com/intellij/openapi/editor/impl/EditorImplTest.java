@@ -113,13 +113,9 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("something");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
     runWriteCommand(() -> {
-      document.setInBulkUpdate(true);
-      try {
+      DocumentUtil.executeInBulk(document, true, ()-> {
         document.setText("something\telse");
-      }
-      finally {
-        document.setInBulkUpdate(false);
-      }
+      });
     });
 
     checkResultByText("something\telse");
@@ -130,15 +126,11 @@ public class EditorImplTest extends AbstractEditorTest {
              "a<selection>bcdef<caret></selection>g");
     runWriteCommand(() -> {
       DocumentEx document = (DocumentEx)myEditor.getDocument();
-      document.setInBulkUpdate(true);
-      try {
+      DocumentUtil.executeInBulk(document, true, ()-> {
         // delete selected text
         document.deleteString(1, 6);
         document.deleteString(4, 9);
-      }
-      finally {
-        document.setInBulkUpdate(false);
-      }
+      });
     });
 
     checkResultByText("a<caret>g\n" +
@@ -190,9 +182,9 @@ public class EditorImplTest extends AbstractEditorTest {
     configureSoftWraps(12);
     DocumentEx document = (DocumentEx)myEditor.getDocument();
     runWriteCommand(() -> {
-      document.setInBulkUpdate(true);
-      document.replaceString(4, 5, "-");
-      document.setInBulkUpdate(false);
+      DocumentUtil.executeInBulk(document, true, ()-> {
+        document.replaceString(4, 5, "-");
+      });
     });
 
     assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getVisualPosition());
@@ -203,15 +195,15 @@ public class EditorImplTest extends AbstractEditorTest {
     DocumentEx document = (DocumentEx)myEditor.getDocument();
 
     runWriteCommand(() -> {
-      document.setInBulkUpdate(true);
-      document.replaceString(4, 5, "-");
-      document.setInBulkUpdate(false);
+      DocumentUtil.executeInBulk(document, true, ()-> {
+        document.replaceString(4, 5, "-");
+      });
 
       myEditor.getCaretModel().moveToOffset(9);
 
-      document.setInBulkUpdate(true);
-      document.replaceString(4, 5, "+");
-      document.setInBulkUpdate(false);
+      DocumentUtil.executeInBulk(document, true, ()-> {
+        document.replaceString(4, 5, "+");
+      });
     });
 
 
@@ -258,9 +250,9 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("a<caret>bc");
     runWriteCommand(() -> {
       DocumentEx document = (DocumentEx)myEditor.getDocument();
-      document.setInBulkUpdate(true);
-      document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
-      document.setInBulkUpdate(false);
+      DocumentUtil.executeInBulk(document, true, ()-> {
+        document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
+      });
     });
 
     checkResultByText("\n a<caret>bc");
@@ -340,9 +332,9 @@ public class EditorImplTest extends AbstractEditorTest {
     initText("abcdef");
     DocumentEx document = (DocumentEx)myEditor.getDocument();
     runWriteCommand(() -> {
-      document.setInBulkUpdate(true);
-      document.insertString(3, "\n\n");
-      document.setInBulkUpdate(false);
+      DocumentUtil.executeInBulk(document, true, ()-> {
+        document.insertString(3, "\n\n");
+      });
     });
     RangeHighlighter[] highlighters = myEditor.getMarkupModel().getAllHighlighters();
     assertEquals(1, highlighters.length);

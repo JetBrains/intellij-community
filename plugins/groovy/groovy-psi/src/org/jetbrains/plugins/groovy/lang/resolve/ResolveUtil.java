@@ -1069,8 +1069,8 @@ public class ResolveUtil {
     }
 
     if (expression instanceof GrIndexProperty) {
+      if (((GrIndexProperty)expression).getExpressionArguments().length != 0) return null;
       PsiType arrayTypeBase = getClassReferenceFromExpression(((GrIndexProperty)expression).getInvokedExpression());
-
       return arrayTypeBase == null ? null : arrayTypeBase.createArrayType();
     }
     return null;
