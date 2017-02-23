@@ -16,6 +16,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -183,14 +184,18 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     waitFor(f1::isDone);
     waitFor(f2::isDone);
     waitFor(f3::isDone);
-    assertEquals(1, service.getBackendPoolExecutorSize());
+    try {
+      assertEquals(1, service.getBackendPoolExecutorSize());
 
-    assertEquals(3, log.size());
-    Set<Thread> usedThreads = new HashSet<>(Arrays.asList(log.get(0).currentThread, log.get(1).currentThread, log.get(2).currentThread));
-    if (usedThreads.size() != 1) {
-      System.err.println(ThreadDumper.dumpThreadsToString());
+      assertEquals(3, log.size());
+      Set<Thread> usedThreads = new HashSet<>(Arrays.asList(log.get(0).currentThread, log.get(1).currentThread, log.get(2).currentThread));
+      assertEquals(usedThreads.toString(), 1, usedThreads.size()); // must be executed in same thread
     }
-    assertEquals(usedThreads.toString(), 1, usedThreads.size()); // must be executed in same thread
+    catch (AssertionError e) {
+      System.err.println("ThreadDump: "+ThreadDumper.dumpThreadsToString());
+      System.err.println("Process List: "+LogUtil.getProcessList());
+      throw e;
+    }
   }
 
   public void testDelayedTasksThatFiredAtTheSameTimeAreExecutedConcurrently() throws InterruptedException, ExecutionException {
@@ -252,6 +257,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + 60000) {
       if (runnable.getAsBoolean()) return;
+      TimeoutUtil.sleep(1);
     }
     throw new TimeoutException();
   }
