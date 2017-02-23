@@ -193,7 +193,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
             @Override
             public void documentChanged(DocumentEvent e) {
               final Document document = e.getDocument();
-              myUnsavedDocuments.add(document);
+              if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
+                myUnsavedDocuments.add(document);
+              }
               final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
               Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
               String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
