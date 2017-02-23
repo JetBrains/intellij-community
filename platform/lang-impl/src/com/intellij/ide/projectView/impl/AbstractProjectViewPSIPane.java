@@ -277,7 +277,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     };
   }
 
-  public abstract ProjectAbstractTreeStructureBase createStructure();
+  protected abstract ProjectAbstractTreeStructureBase createStructure();
 
   protected abstract ProjectViewTree createTree(DefaultTreeModel treeModel);
 
