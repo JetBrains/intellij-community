@@ -13,557 +13,439 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.impl;
+package com.intellij.execution.impl
 
-import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.Scheme;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.configurationStore.SerializableScheme
+import com.intellij.configurationStore.deserializeAndLoadState
+import com.intellij.configurationStore.serializeInto
+import com.intellij.execution.*
+import com.intellij.execution.configurations.*
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionException
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SmartList
+import gnu.trove.THashMap
+import gnu.trove.THashSet
+import org.jdom.Element
 
-import java.util.*;
+private val LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings")
 
-/**
- * @author dyoma
- */
-public class RunnerAndConfigurationSettingsImpl implements Cloneable, RunnerAndConfigurationSettings, Comparable, Scheme {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunnerAndConfigurationSettings");
+private val RUNNER_ID = "RunnerId"
 
-  @NonNls
-  private static final String RUNNER_ID = "RunnerId";
+private val CONFIGURATION_TYPE_ATTRIBUTE = "type"
+private val FACTORY_NAME_ATTRIBUTE = "factoryName"
+private val FOLDER_NAME = "folderName"
+internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
+val NAME_ATTR = "name"
+val DUMMY_ELEMENT_NAME = "dummy"
+private val TEMPORARY_ATTRIBUTE = "temporary"
+private val EDIT_BEFORE_RUN = "editBeforeRun"
+private val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
 
-  private static final Comparator<Element> RUNNER_COMPARATOR = (o1, o2) -> {
-    String attributeValue1 = o1.getAttributeValue(RUNNER_ID);
-    if (attributeValue1 == null) {
-      return 1;
-    }
-    return StringUtil.compare(attributeValue1, o2.getAttributeValue(RUNNER_ID), false);
-  };
+private val TEMP_CONFIGURATION = "tempConfiguration"
 
-  @NonNls
-  private static final String CONFIGURATION_TYPE_ATTRIBUTE = "type";
-  @NonNls
-  private static final String FACTORY_NAME_ATTRIBUTE = "factoryName";
-  @NonNls
-  private static final String FOLDER_NAME = "folderName";
-  @NonNls
-  static final String TEMPLATE_FLAG_ATTRIBUTE = "default";
-  @NonNls
-  public static final String NAME_ATTR = "name";
-  //@NonNls
-  //public static final String UNIQUE_ID = "id";
-  @NonNls
-  protected static final String DUMMY_ELEMENT_NAME = "dummy";
-  @NonNls
-  private static final String TEMPORARY_ATTRIBUTE = "temporary";
-  @NonNls
-  private static final String EDIT_BEFORE_RUN = "editBeforeRun";
-  @NonNls
-  private static final String ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun";
-  @NonNls
-  public static final String SINGLETON = "singleton";
-
-  /** for compatibility */
-  @NonNls
-  private static final String TEMP_CONFIGURATION = "tempConfiguration";
-
-  private final RunManagerImpl myManager;
-  private RunConfiguration myConfiguration;
-  private boolean myIsTemplate;
-
-  private final RunnerItem<RunnerSettings> myRunnerSettings = new RunnerItem<RunnerSettings>("RunnerSettings") {
-    @Override
-    protected RunnerSettings createSettings(@NotNull ProgramRunner runner) {
-      return runner.createConfigurationData(new InfoProvider(runner));
-    }
-  };
-
-  private final RunnerItem<ConfigurationPerRunnerSettings> myConfigurationPerRunnerSettings = new RunnerItem<ConfigurationPerRunnerSettings>("ConfigurationWrapper") {
-    @Override
-    protected ConfigurationPerRunnerSettings createSettings(@NotNull ProgramRunner runner) {
-      return myConfiguration.createRunnerSettings(new InfoProvider(runner));
-    }
-  };
-
-  private boolean myTemporary;
-  private boolean myEditBeforeRun;
-  private boolean myActivateToolWindowBeforeRun = true;
-  private boolean mySingleton;
-  private boolean myWasSingletonSpecifiedExplicitly;
-  private String myFolderName;
-  //private String myID = null;
-
-  public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager) {
-    myManager = manager;
+class RunnerAndConfigurationSettingsImpl : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, RunConfigurationScheme, SerializableScheme {
+  companion object {
+    @JvmField
+    val SINGLETON = "singleton"
   }
 
-  @SuppressWarnings("deprecation")
-  private abstract class RunnerItem<T> {
-    private final Map<ProgramRunner, T> settings = new THashMap<>();
+  private val manager: RunManagerImpl
+  private var myConfiguration: RunConfiguration? = null
+  private var myIsTemplate: Boolean = false
 
-    private List<Element> unloadedSettings;
-    // to avoid changed files
-    private final Set<String> loadedIds = new THashSet<>();
-
-    private final String childTagName;
-
-    RunnerItem(@NotNull String childTagName) {
-      this.childTagName = childTagName;
-    }
-
-    public void loadState(@NotNull Element element) throws InvalidDataException {
-      settings.clear();
-      if (unloadedSettings != null) {
-        unloadedSettings.clear();
-      }
-      loadedIds.clear();
-
-      for (Iterator<Element> iterator = element.getChildren(childTagName).iterator(); iterator.hasNext(); ) {
-        Element state = iterator.next();
-        ProgramRunner runner = findRunner(state.getAttributeValue(RUNNER_ID));
-        if (runner == null) {
-          iterator.remove();
-        }
-        add(state, runner, runner == null ? null : createSettings(runner));
-      }
-    }
-
-    private ProgramRunner findRunner(final String runnerId) {
-      List<ProgramRunner> runnersById
-        = ContainerUtil.filter(ProgramRunner.PROGRAM_RUNNER_EP.getExtensions(), runner -> Comparing.equal(runnerId, runner.getRunnerId()));
-
-      int runnersByIdCount = runnersById.size();
-      if (runnersByIdCount == 0) {
-        return null;
-      }
-      else if (runnersByIdCount == 1) {
-        return ContainerUtil.getFirstItem(runnersById);
-      }
-      else {
-        LOG.error("More than one runner found for ID: " + runnerId);
-        for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-          for (ProgramRunner runner : runnersById) {
-            if (runner.canRun(executor.getId(), myConfiguration)) {
-              return runner;
-            }
-          }
-        }
-        return null;
-      }
-    }
-
-    public void getState(@NotNull Element element) throws WriteExternalException {
-      List<Element> runnerSettings = new SmartList<>();
-      for (ProgramRunner runner : settings.keySet()) {
-        T settings = this.settings.get(runner);
-        boolean wasLoaded = loadedIds.contains(runner.getRunnerId());
-        if (settings == null && !wasLoaded) {
-          continue;
-        }
-
-        Element state = new Element(childTagName);
-        if (settings != null) {
-          ((JDOMExternalizable)settings).writeExternal(state);
-        }
-        if (wasLoaded || !JDOMUtil.isEmpty(state)) {
-          state.setAttribute(RUNNER_ID, runner.getRunnerId());
-          runnerSettings.add(state);
-        }
-      }
-      if (unloadedSettings != null) {
-        for (Element unloadedSetting : unloadedSettings) {
-          runnerSettings.add(unloadedSetting.clone());
-        }
-      }
-      Collections.sort(runnerSettings, RUNNER_COMPARATOR);
-      for (Element runnerSetting : runnerSettings) {
-        element.addContent(runnerSetting);
-      }
-    }
-
-    protected abstract T createSettings(@NotNull ProgramRunner runner);
-
-    private void add(@NotNull Element state, @Nullable ProgramRunner runner, @Nullable T data) throws InvalidDataException {
-      if (runner == null) {
-        if (unloadedSettings == null) {
-          unloadedSettings = new SmartList<>();
-        }
-        unloadedSettings.add(state);
-        return;
-      }
-
-      if (data != null) {
-        ((JDOMExternalizable)data).readExternal(state);
-      }
-
-      settings.put(runner, data);
-      loadedIds.add(runner.getRunnerId());
-    }
-
-    public T getOrCreateSettings(@NotNull ProgramRunner runner) {
-      T result = settings.get(runner);
-      if (result == null) {
-        try {
-          result = createSettings(runner);
-          settings.put(runner, result);
-        }
-        catch (AbstractMethodError ignored) {
-          LOG.error("Update failed for: " + myConfiguration.getType().getDisplayName() + ", runner: " + runner.getRunnerId(), new ExtensionException(runner.getClass()));
-        }
-      }
-      return result;
-    }
+  private val myRunnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
+    override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
 
-  public RunnerAndConfigurationSettingsImpl(RunManagerImpl manager, @NotNull RunConfiguration configuration, boolean isTemplate) {
-    myManager = manager;
-    myConfiguration = configuration;
-    myIsTemplate = isTemplate;
+  private val myConfigurationPerRunnerSettings = object : RunnerItem<ConfigurationPerRunnerSettings>("ConfigurationWrapper") {
+    override fun createSettings(runner: ProgramRunner<*>) = myConfiguration!!.createRunnerSettings(InfoProvider(runner))
   }
 
-  @Override
-  @Nullable
-  public ConfigurationFactory getFactory() {
-    return myConfiguration == null ? null : myConfiguration.getFactory();
+  private var myTemporary: Boolean = false
+  private var myEditBeforeRun: Boolean = false
+  private var myActivateToolWindowBeforeRun = true
+  private var mySingleton: Boolean = false
+  private var myWasSingletonSpecifiedExplicitly: Boolean = false
+  private var myFolderName: String? = null
+
+  constructor(manager: RunManagerImpl) {
+    this.manager = manager
   }
 
-  @Override
-  public boolean isTemplate() {
-    return myIsTemplate;
+  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean) {
+    this.manager = manager
+    myConfiguration = configuration
+    myIsTemplate = isTemplate
   }
 
-  @Override
-  public boolean isTemporary() {
-    return myTemporary;
+  override fun getFactory() = myConfiguration?.factory
+
+  override fun isTemplate() = myIsTemplate
+
+  override fun isTemporary() = myTemporary
+
+  override fun setTemporary(temporary: Boolean) {
+    myTemporary = temporary
   }
 
-  @Override
-  public void setTemporary(boolean temporary) {
-    myTemporary = temporary;
+  override fun getConfiguration(): RunConfiguration = myConfiguration!!
+
+  override fun createFactory() = Factory<RunnerAndConfigurationSettings> {
+    val configuration = myConfiguration!!
+    RunnerAndConfigurationSettingsImpl(manager, configuration.factory.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration), false)
   }
 
-  @Override
-  public RunConfiguration getConfiguration() {
-    return myConfiguration;
+  override fun setName(name: String) {
+    myConfiguration!!.name = name
   }
 
-  @Override
-  public Factory<RunnerAndConfigurationSettings> createFactory() {
-    return () -> {
-      RunConfiguration configuration = myConfiguration.getFactory().createConfiguration(ExecutionBundle.message("default.run.configuration.name"), myConfiguration);
-      return new RunnerAndConfigurationSettingsImpl(myManager, configuration, false);
-    };
+  override fun getName() = myConfiguration!!.name
+
+  override fun getUniqueID(): String {
+    val configuration = myConfiguration!!
+    return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
   }
 
-  @Override
-  public void setName(String name) {
-    myConfiguration.setName(name);
+  override fun setEditBeforeRun(b: Boolean) {
+    myEditBeforeRun = b
   }
 
-  @NotNull
-  @Override
-  public String getName() {
-    return myConfiguration.getName();
+  override fun isEditBeforeRun() = myEditBeforeRun
+
+  override fun setActivateToolWindowBeforeRun(activate: Boolean) {
+    myActivateToolWindowBeforeRun = activate
   }
 
-  @Override
-  public String getUniqueID() {
-    //noinspection deprecation
-    return myConfiguration.getType().getDisplayName() + "." + myConfiguration.getName() +
-           (myConfiguration instanceof UnknownRunConfiguration ? myConfiguration.getUniqueID() : "");
-    //if (myID == null) {
-    //  myID = UUID.randomUUID().toString();
-    //}
-    //return myID;
+  override fun isActivateToolWindowBeforeRun() = myActivateToolWindowBeforeRun
+
+  override fun setSingleton(singleton: Boolean) {
+    mySingleton = singleton
   }
 
-  @Override
-  public void setEditBeforeRun(boolean b) {
-    myEditBeforeRun = b;
+  override fun isSingleton() = mySingleton
+
+  override fun setFolderName(folderName: String?) {
+    myFolderName = folderName
   }
 
-  @Override
-  public boolean isEditBeforeRun() {
-    return myEditBeforeRun;
+  override fun getFolderName() = myFolderName
+
+  private fun getFactory(element: Element): ConfigurationFactory? {
+    val typeName = element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE)
+    val factoryName = element.getAttributeValue(FACTORY_NAME_ATTRIBUTE)
+    return manager.getFactory(typeName, factoryName, !myIsTemplate)
   }
 
-  @Override
-  public void setActivateToolWindowBeforeRun(boolean activate) {
-    myActivateToolWindowBeforeRun = activate;
-  }
+  fun readExternal(element: Element) {
+    myIsTemplate = java.lang.Boolean.parseBoolean(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE))
+    myTemporary = java.lang.Boolean.parseBoolean(element.getAttributeValue(TEMPORARY_ATTRIBUTE)) || TEMP_CONFIGURATION == element.name
+    myEditBeforeRun = java.lang.Boolean.parseBoolean(element.getAttributeValue(EDIT_BEFORE_RUN))
+    val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
+    myActivateToolWindowBeforeRun = value == null || java.lang.Boolean.parseBoolean(value)
+    myFolderName = element.getAttributeValue(FOLDER_NAME)
+    val factory = getFactory(element) ?: return
 
-  @Override
-  public boolean isActivateToolWindowBeforeRun() {
-    return myActivateToolWindowBeforeRun;
-  }
-
-  @Override
-  public void setSingleton(boolean singleton) {
-    mySingleton = singleton;
-  }
-
-  @Override
-  public boolean isSingleton() {
-    return mySingleton;
-  }
-
-  @Override
-  public void setFolderName(@Nullable String folderName) {
-    myFolderName = folderName;
-  }
-
-  @Nullable
-  @Override
-  public String getFolderName() {
-    return myFolderName;
-  }
-
-  @Nullable
-  private ConfigurationFactory getFactory(final Element element) {
-    final String typeName = element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE);
-    String factoryName = element.getAttributeValue(FACTORY_NAME_ATTRIBUTE);
-    return myManager.getFactory(typeName, factoryName, !myIsTemplate);
-  }
-
-  public void readExternal(Element element) {
-    myIsTemplate = Boolean.parseBoolean(element.getAttributeValue(TEMPLATE_FLAG_ATTRIBUTE));
-    myTemporary = Boolean.parseBoolean(element.getAttributeValue(TEMPORARY_ATTRIBUTE)) || TEMP_CONFIGURATION.equals(element.getName());
-    myEditBeforeRun = Boolean.parseBoolean(element.getAttributeValue(EDIT_BEFORE_RUN));
-    String value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN);
-    myActivateToolWindowBeforeRun = value == null || Boolean.valueOf(value).booleanValue();
-    myFolderName = element.getAttributeValue(FOLDER_NAME);
-    //assert myID == null: "myId must be null at readExternal() stage";
-    //myID = element.getAttributeValue(UNIQUE_ID, UUID.randomUUID().toString());
-    final ConfigurationFactory factory = getFactory(element);
-    if (factory == null) return;
-
-    myWasSingletonSpecifiedExplicitly = false;
+    myWasSingletonSpecifiedExplicitly = false
     if (myIsTemplate) {
-      mySingleton = factory.isConfigurationSingletonByDefault();
+      mySingleton = factory.isConfigurationSingletonByDefault
     }
     else {
-      String singletonStr = element.getAttributeValue(SINGLETON);
+      val singletonStr = element.getAttributeValue(SINGLETON)
       if (StringUtil.isEmpty(singletonStr)) {
-        mySingleton = factory.isConfigurationSingletonByDefault();
+        mySingleton = factory.isConfigurationSingletonByDefault
       }
       else {
-        myWasSingletonSpecifiedExplicitly = true;
-        mySingleton = Boolean.parseBoolean(singletonStr);
+        myWasSingletonSpecifiedExplicitly = true
+        mySingleton = java.lang.Boolean.parseBoolean(singletonStr)
       }
     }
 
-    if (myIsTemplate) {
-      myConfiguration = myManager.getConfigurationTemplate(factory).getConfiguration();
+    myConfiguration = if (myIsTemplate) {
+      manager.getConfigurationTemplate(factory).configuration
     }
     else {
       // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
       // may not be loaded yet. This creates initialization order issue.
-      myConfiguration = myManager.doCreateConfiguration(element.getAttributeValue(NAME_ATTR), factory, false);
+      manager.doCreateConfiguration(element.getAttributeValue(NAME_ATTR), factory, false)
     }
 
-    PathMacroManager.getInstance(myConfiguration.getProject()).expandPaths(element);
-    if (myConfiguration instanceof ModuleBasedConfiguration) {
-      Module module = ((ModuleBasedConfiguration)myConfiguration).getConfigurationModule().getModule();
-      if (module != null) {
-        PathMacroManager.getInstance(module).expandPaths(element);
+    PathMacroManager.getInstance(myConfiguration!!.project).expandPaths(element)
+    if (myConfiguration is ModuleBasedConfiguration<*>) {
+      (myConfiguration as ModuleBasedConfiguration<*>).configurationModule.module?.let {
+        PathMacroManager.getInstance(it).expandPaths(element)
       }
     }
 
-    if (myConfiguration instanceof PersistentStateComponent) {
-      XmlSerializer.deserializeAndLoadState((PersistentStateComponent)myConfiguration, element);
+    if (myConfiguration is PersistentStateComponent<*>) {
+      (myConfiguration as PersistentStateComponent<*>).deserializeAndLoadState(element)
     }
     else {
-      myConfiguration.readExternal(element);
+      myConfiguration!!.readExternal(element)
     }
 
-    myRunnerSettings.loadState(element);
-    myConfigurationPerRunnerSettings.loadState(element);
+    myRunnerSettings.loadState(element)
+    myConfigurationPerRunnerSettings.loadState(element)
   }
 
-  public void writeExternal(@NotNull Element element) {
-    final ConfigurationFactory factory = myConfiguration.getFactory();
-    if (!(myConfiguration instanceof UnknownRunConfiguration)) {
+  fun writeExternal(element: Element) {
+    val configuration = myConfiguration
+    val factory = configuration!!.factory
+    if (configuration !is UnknownRunConfiguration) {
       if (myIsTemplate) {
-        element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true");
+        element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true")
       }
       else {
-        element.setAttribute(NAME_ATTR, myConfiguration.getName());
+        element.setAttribute(NAME_ATTR, configuration.name)
       }
 
-      element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.getType().getId());
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.getName());
+      element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
+      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.name)
       if (myFolderName != null) {
-        element.setAttribute(FOLDER_NAME, myFolderName);
+        element.setAttribute(FOLDER_NAME, myFolderName!!)
       }
 
-      if (isEditBeforeRun()) {
-        element.setAttribute(EDIT_BEFORE_RUN, "true");
+      if (isEditBeforeRun) {
+        element.setAttribute(EDIT_BEFORE_RUN, "true")
       }
-      if (!isActivateToolWindowBeforeRun()) {
-        element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false");
+      if (!isActivateToolWindowBeforeRun) {
+        element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
-      if (myWasSingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault()) {
-        element.setAttribute(SINGLETON, String.valueOf(mySingleton));
+      if (myWasSingletonSpecifiedExplicitly || mySingleton != factory.isConfigurationSingletonByDefault) {
+        element.setAttribute(SINGLETON, mySingleton.toString())
       }
       if (myTemporary) {
-        element.setAttribute(TEMPORARY_ATTRIBUTE, "true");
+        element.setAttribute(TEMPORARY_ATTRIBUTE, "true")
       }
     }
 
-    if (myConfiguration instanceof PersistentStateComponent) {
-      //noinspection ConstantConditions
-      XmlSerializer.serializeInto(((PersistentStateComponent)myConfiguration).getState(), element);
+    if (configuration is PersistentStateComponent<*>) {
+      configuration.state!!.serializeInto<Any>(element)
     }
     else {
-      myConfiguration.writeExternal(element);
+      configuration.writeExternal(element)
     }
 
-    if (!(myConfiguration instanceof UnknownRunConfiguration)) {
-      myRunnerSettings.getState(element);
-      myConfigurationPerRunnerSettings.getState(element);
+    if (configuration !is UnknownRunConfiguration) {
+      myRunnerSettings.getState(element)
+      myConfigurationPerRunnerSettings.getState(element)
     }
   }
 
-  @Override
-  public void checkSettings() throws RuntimeConfigurationException {
-    checkSettings(null);
+  override fun writeScheme(): Element {
+    val element = Element("configuration")
+    writeExternal(element)
+
+    if (configuration !is UnknownRunConfiguration) {
+      manager.doWriteConfiguration(this, element)
+    }
+
+    return element
   }
 
-  @Override
-  public void checkSettings(@Nullable Executor executor) throws RuntimeConfigurationException {
-    myConfiguration.checkConfiguration();
-    if (myConfiguration instanceof RunConfigurationBase) {
-      final RunConfigurationBase runConfigurationBase = (RunConfigurationBase) myConfiguration;
-      Set<ProgramRunner> runners = new THashSet<>();
-      runners.addAll(myRunnerSettings.settings.keySet());
-      runners.addAll(myConfigurationPerRunnerSettings.settings.keySet());
-      for (ProgramRunner runner : runners) {
-        if (executor == null || runner.canRun(executor.getId(), myConfiguration)) {
-          runConfigurationBase.checkRunnerSettings(runner, myRunnerSettings.settings.get(runner), myConfigurationPerRunnerSettings.settings.get(runner));
+  override fun checkSettings(executor: Executor?) {
+    val configuration = myConfiguration!!
+    configuration.checkConfiguration()
+    if (configuration !is RunConfigurationBase) {
+      return
+    }
+
+    val runners = THashSet<ProgramRunner<*>>()
+    runners.addAll(myRunnerSettings.settings.keys)
+    runners.addAll(myConfigurationPerRunnerSettings.settings.keys)
+    for (runner in runners) {
+      if (executor == null || runner.canRun(executor.id, configuration)) {
+        configuration.checkRunnerSettings(runner, myRunnerSettings.settings[runner],
+          myConfigurationPerRunnerSettings.settings[runner])
+      }
+    }
+    if (executor != null) {
+      configuration.checkSettingsBeforeRun()
+    }
+  }
+
+  override fun canRunOn(target: ExecutionTarget): Boolean {
+    val configuration = myConfiguration
+    return if (configuration is TargetAwareRunProfile) configuration.canRunOn(target) else true
+  }
+
+  override fun getRunnerSettings(runner: ProgramRunner<*>) = myRunnerSettings.getOrCreateSettings(runner)
+
+  override fun getConfigurationSettings(runner: ProgramRunner<*>) = myConfigurationPerRunnerSettings.getOrCreateSettings(runner)
+
+  override fun getType() = myConfiguration?.type
+
+  public override fun clone(): RunnerAndConfigurationSettings {
+    val copy = RunnerAndConfigurationSettingsImpl(manager, myConfiguration!!.clone(), false)
+    copy.importRunnerAndConfigurationSettings(this)
+    return copy
+  }
+
+  fun importRunnerAndConfigurationSettings(template: RunnerAndConfigurationSettingsImpl) {
+    importFromTemplate(template.myRunnerSettings, myRunnerSettings)
+    importFromTemplate(template.myConfigurationPerRunnerSettings, myConfigurationPerRunnerSettings)
+
+    isSingleton = template.isSingleton
+    isEditBeforeRun = template.isEditBeforeRun
+    isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
+  }
+
+  private fun <T> importFromTemplate(templateItem: RunnerItem<T>, item: RunnerItem<T>) {
+    for (runner in templateItem.settings.keys) {
+      val data = item.createSettings(runner)
+      item.settings.put(runner, data)
+      if (data == null) {
+        continue
+      }
+
+      val temp = Element(DUMMY_ELEMENT_NAME)
+      val templateSettings = templateItem.settings.get(runner) ?: continue
+      try {
+        @Suppress("DEPRECATION")
+        (templateSettings as JDOMExternalizable).writeExternal(temp)
+        @Suppress("DEPRECATION")
+        (data as JDOMExternalizable).readExternal(temp)
+      }
+      catch (e: WriteExternalException) {
+        LOG.error(e)
+      }
+      catch (e: InvalidDataException) {
+        LOG.error(e)
+      }
+    }
+  }
+
+  override fun compareTo(other: Any) = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
+
+  override fun toString(): String {
+    val type = type
+    return "${if (type == null) "" else "${type.displayName}: "}${if (isTemplate) "<template>" else name}"
+  }
+
+  private inner class InfoProvider(private val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
+    override fun getRunner() = runner
+
+    override fun getConfiguration() = myConfiguration
+
+    override fun getRunnerSettings() = this@RunnerAndConfigurationSettingsImpl.getRunnerSettings(runner)
+
+    override fun getConfigurationSettings() = this@RunnerAndConfigurationSettingsImpl.getConfigurationSettings(runner)
+  }
+
+  private abstract inner class RunnerItem<T>(private val childTagName: String) {
+    val settings = THashMap<ProgramRunner<*>, T>()
+
+    private var unloadedSettings: MutableList<Element>? = null
+    // to avoid changed files
+    private val loadedIds = THashSet<String>()
+
+    fun loadState(element: Element) {
+      settings.clear()
+      if (unloadedSettings != null) {
+        unloadedSettings!!.clear()
+      }
+      loadedIds.clear()
+
+      val iterator = element.getChildren(childTagName).iterator()
+      while (iterator.hasNext()) {
+        val state = iterator.next()
+        val runner = findRunner(state.getAttributeValue(RUNNER_ID))
+        if (runner == null) {
+          iterator.remove()
+        }
+        add(state, runner, if (runner == null) null else createSettings(runner))
+      }
+    }
+
+    private fun findRunner(runnerId: String): ProgramRunner<*>? {
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensions.filter { runnerId == it.runnerId }
+      return if (runnersById.isEmpty()) {
+        null
+      }
+      else if (runnersById.size == 1) {
+        runnersById.firstOrNull()
+      }
+      else {
+        LOG.error("More than one runner found for ID: $runnerId")
+        for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
+          runnersById.firstOrNull { it.canRun(executor.id, myConfiguration!!)  }?.let {
+            return it
+          }
+        }
+        null
+      }
+    }
+
+    fun getState(element: Element) {
+      val runnerSettings = SmartList<Element>()
+      for (runner in settings.keys) {
+        val settings = this.settings[runner]
+        val wasLoaded = loadedIds.contains(runner.runnerId)
+        if (settings == null && !wasLoaded) {
+          continue
+        }
+
+        val state = Element(childTagName)
+        if (settings != null) {
+          @Suppress("DEPRECATION")
+          (settings as JDOMExternalizable).writeExternal(state)
+        }
+        if (wasLoaded || !JDOMUtil.isEmpty(state)) {
+          state.setAttribute(RUNNER_ID, runner.runnerId)
+          runnerSettings.add(state)
         }
       }
-      if (executor != null) {
-        runConfigurationBase.checkSettingsBeforeRun();
+      if (unloadedSettings != null) {
+        for (unloadedSetting in unloadedSettings!!) {
+          runnerSettings.add(unloadedSetting.clone())
+        }
+      }
+      runnerSettings.sort { o1, o2 ->
+        val attributeValue1 = o1.getAttributeValue(RUNNER_ID)
+        if (attributeValue1 == null) 1 else StringUtil.compare(attributeValue1, o2.getAttributeValue(RUNNER_ID), false)
+      }
+      for (runnerSetting in runnerSettings) {
+        element.addContent(runnerSetting)
       }
     }
-  }
 
-  @Override
-  public boolean canRunOn(@NotNull ExecutionTarget target) {
-    if (myConfiguration instanceof TargetAwareRunProfile) {
-      return ((TargetAwareRunProfile)myConfiguration).canRunOn(target);
-    }
-    return true;
-  }
+    abstract fun createSettings(runner: ProgramRunner<*>): T?
 
-  @Override
-  public RunnerSettings getRunnerSettings(@NotNull ProgramRunner runner) {
-    return myRunnerSettings.getOrCreateSettings(runner);
-  }
+    private fun add(state: Element, runner: ProgramRunner<*>?, data: T?) {
+      if (runner == null) {
+        if (unloadedSettings == null) {
+          unloadedSettings = SmartList<Element>()
+        }
+        unloadedSettings!!.add(state)
+        return
+      }
 
-  @Override
-  @Nullable
-  public ConfigurationPerRunnerSettings getConfigurationSettings(@NotNull ProgramRunner runner) {
-    return myConfigurationPerRunnerSettings.getOrCreateSettings(runner);
-  }
-
-  @Override
-  @Nullable
-  public ConfigurationType getType() {
-    return myConfiguration == null ? null : myConfiguration.getType();
-  }
-
-  @Override
-  public RunnerAndConfigurationSettings clone() {
-    RunnerAndConfigurationSettingsImpl copy = new RunnerAndConfigurationSettingsImpl(myManager, myConfiguration.clone(), false);
-    copy.importRunnerAndConfigurationSettings(this);
-    return copy;
-  }
-
-  public void importRunnerAndConfigurationSettings(RunnerAndConfigurationSettingsImpl template) {
-    importFromTemplate(template.myRunnerSettings, myRunnerSettings);
-    importFromTemplate(template.myConfigurationPerRunnerSettings, myConfigurationPerRunnerSettings);
-
-    setSingleton(template.isSingleton());
-    setEditBeforeRun(template.isEditBeforeRun());
-    setActivateToolWindowBeforeRun(template.isActivateToolWindowBeforeRun());
-  }
-
-  @SuppressWarnings("deprecation")
-  private <T> void importFromTemplate(@NotNull RunnerItem<T> templateItem, @NotNull RunnerItem<T> item) {
-    for (ProgramRunner runner : templateItem.settings.keySet()) {
-      T data = item.createSettings(runner);
-      item.settings.put(runner, data);
       if (data != null) {
-        Element temp = new Element(DUMMY_ELEMENT_NAME);
-        T templateSettings = templateItem.settings.get(runner);
-        if (templateSettings != null) {
-          try {
-            ((JDOMExternalizable)templateSettings).writeExternal(temp);
-            ((JDOMExternalizable)data).readExternal(temp);
-          }
-          catch (WriteExternalException | InvalidDataException e) {
-            LOG.error(e);
-          }
-        }
+        @Suppress("DEPRECATION")
+        (data as JDOMExternalizable).readExternal(state)
       }
-    }
-  }
 
-  @Override
-  public int compareTo(@NotNull final Object o) {
-    if (o instanceof RunnerAndConfigurationSettings) {
-      return getName().compareTo(((RunnerAndConfigurationSettings) o).getName());
-    }
-    return 0;
-  }
-
-  @Override
-  public String toString() {
-    ConfigurationType type = getType();
-    return (type != null ? type.getDisplayName() + ": " : "") + (isTemplate() ? "<template>" : getName());
-  }
-
-  private class InfoProvider implements ConfigurationInfoProvider {
-    private final ProgramRunner myRunner;
-
-    public InfoProvider(ProgramRunner runner) {
-      myRunner = runner;
+      settings.put(runner, data)
+      loadedIds.add(runner.runnerId)
     }
 
-    @Override
-    public ProgramRunner getRunner() {
-      return myRunner;
-    }
+    fun getOrCreateSettings(runner: ProgramRunner<*>): T {
+      var result: T? = settings[runner]
+      if (result == null) {
+        try {
+          result = createSettings(runner)
+          settings.put(runner, result)
+        }
+        catch (ignored: AbstractMethodError) {
+          LOG.error("Update failed for: ${myConfiguration!!.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
+        }
 
-    @Override
-    public RunConfiguration getConfiguration() {
-      return myConfiguration;
-    }
-
-    @Override
-    public RunnerSettings getRunnerSettings() {
-      return RunnerAndConfigurationSettingsImpl.this.getRunnerSettings(myRunner);
-    }
-
-    @Override
-    public ConfigurationPerRunnerSettings getConfigurationSettings() {
-      return RunnerAndConfigurationSettingsImpl.this.getConfigurationSettings(myRunner);
+      }
+      return result!!
     }
   }
 }
