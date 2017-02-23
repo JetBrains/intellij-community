@@ -327,11 +327,8 @@ class LookupUi {
             panelHeight -= myList.getFixedCellHeight() / 2;
           }
           int width = Math.max(listWidth, adSize.width);
+          width = Math.min(width, Registry.intValue("ide.completion.max.width"));
           int height = Math.min(panelHeight, myMaximumHeight);
-
-          if (Registry.is("ide.completion.width.constant")) {
-            return new Dimension(Registry.intValue("ide.completion.max.width"), height);
-          }
 
           return new Dimension(width, height);
         }
