@@ -30,10 +30,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestCase;
@@ -48,6 +45,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileDocumentManagerImplTest extends PlatformTestCase {
@@ -605,6 +603,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     assertFalse(manager.isDocumentUnsaved(document));
 
     AtomicInteger invoked = new AtomicInteger();
+    AtomicBoolean expectUnsaved = new AtomicBoolean(true);
     DocumentListener listener = new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
@@ -614,7 +613,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
       @Override
       public void documentChanged(DocumentEvent event) {
         invoked.incrementAndGet();
-        assertTrue(manager.isDocumentUnsaved(document));
+        assertEquals(expectUnsaved.get(), manager.isDocumentUnsaved(document));
       }
     };
     document.addDocumentListener(listener, getTestRootDisposable());
@@ -624,5 +623,14 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     assertTrue(manager.isDocumentUnsaved(document));
     assertEquals(2, invoked.get());
+
+    expectUnsaved.set(false);
+    FileDocumentManager.getInstance().saveAllDocuments();
+    FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), "something");
+    file.refresh(false, false);
+    
+    assertEquals("something", document.getText());
+    assertFalse(manager.isDocumentUnsaved(document));
+    assertEquals(4, invoked.get());
   }
 }
