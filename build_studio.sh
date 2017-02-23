@@ -20,6 +20,12 @@ function die() {
 
 function set_java_home() {
     case `uname -s` in
+        MINGW64_NT-10.0)
+            export JAVA_HOME=../../prebuilts/studio/jdk/win64
+            ;;
+        CYGWIN_NT-10.0)
+            export JAVA_HOME=../../prebuilts/studio/jdk/win64
+            ;;
         Darwin)
             export JAVA_HOME=../../prebuilts/studio/jdk/mac/Contents/Home
             ;;
