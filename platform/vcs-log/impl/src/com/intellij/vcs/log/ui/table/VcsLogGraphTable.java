@@ -804,9 +804,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     public InvisibleResizableHeader() {
       myHeaderUI = new MyBasicTableHeaderUI(this);
-      // need a header to resize columns, so use header that is not visible
+      // need a header to resize/drag columns, so use header that is not visible
       setDefaultRenderer(new EmptyTableCellRenderer());
-      setReorderingAllowed(false);
+      setReorderingAllowed(true);
     }
 
     @Override
@@ -890,13 +890,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
-      if (isOnBorder(e)) return;
+      if (isOnBorder(e) || isOnRootColumn(e)) return;
       mouseInputListener.mousePressed(convertMouseEvent(e));
     }
 
     @Override
     public void mouseReleased(@NotNull MouseEvent e) {
-      if (isOnBorder(e)) return;
+      if (isOnBorder(e) || isOnRootColumn(e)) return;
       mouseInputListener.mouseReleased(convertMouseEvent(e));
     }
 
@@ -910,7 +910,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
-      if (isOnBorder(e)) return;
+      if (isOnBorder(e) || isOnRootColumn(e)) return;
       mouseInputListener.mouseDragged(convertMouseEvent(e));
     }
 
@@ -922,6 +922,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     public boolean isOnBorder(@NotNull MouseEvent e) {
       return Math.abs(header.getTable().getWidth() - e.getPoint().x) <= JBUI.scale(3);
+    }
+
+    public boolean isOnRootColumn(@NotNull MouseEvent e) {
+      return header.getTable().getColumnModel().getColumnIndexAtX(e.getX()) == ROOT_COLUMN;
     }
   }
 
@@ -972,6 +976,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         }
       }
       super.propertyChange(evt);
+    }
+
+    @Override
+    public void moveColumn(int columnIndex, int newIndex) {
+      if (columnIndex == ROOT_COLUMN || newIndex == ROOT_COLUMN) return;
+      super.moveColumn(columnIndex, newIndex);
     }
   }
 }
