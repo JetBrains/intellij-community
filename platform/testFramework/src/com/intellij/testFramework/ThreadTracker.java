@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
@@ -94,10 +95,14 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
 
-    longRunningThreadCreated(ApplicationManager.getApplication(),
-                             "Periodic tasks thread",
-                             "ApplicationImpl pooled thread ",
-                             ProcessIOExecutorService.POOLED_THREAD_PREFIX);
+    Application application = ApplicationManager.getApplication();
+    // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).    
+    if (!application.isDisposed()) {
+      longRunningThreadCreated(application,
+                               "Periodic tasks thread",
+                               "ApplicationImpl pooled thread ",
+                               ProcessIOExecutorService.POOLED_THREAD_PREFIX);
+    }
   }
 
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
