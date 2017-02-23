@@ -97,7 +97,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Caret myCaret;
   private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
-  private final OffsetsInFile myHostOffsets;
+  private OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
   private final Update myUpdate = new Update("update") {
@@ -227,13 +227,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ProgressManager.checkCanceled();
 
+    Document document = initContext.getEditor().getDocument();
     if (!initContext.getOffsetMap().wasModified(CompletionInitializationContext.IDENTIFIER_END_OFFSET)) {
       try {
         final int selectionEndOffset = initContext.getSelectionEndOffset();
         final PsiReference reference = TargetElementUtil.findReference(myEditor, selectionEndOffset);
         if (reference != null) {
           final int replacementOffset = findReplacementOffset(selectionEndOffset, reference);
-          final Document document = initContext.getEditor().getDocument();
           if (replacementOffset > document.getTextLength()) {
             LOG.error("Invalid replacementOffset: " + replacementOffset + " returned by reference " + reference + " of " + reference.getClass() + 
                       "; doc=" + document + 
@@ -241,9 +241,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                       "; doc committed=" + PsiDocumentManager.getInstance(getProject()).isCommitted(document));
           } else {
             initContext.setReplacementOffset(replacementOffset);
-            if (document instanceof DocumentWindow) {
-              myHostOffsets.getOffsets().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, ((DocumentWindow)document).injectedToHost(replacementOffset));
-            }
           }
         }
       }
@@ -258,6 +255,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       contributor.duringCompletion(initContext);
+    }
+    if (document instanceof DocumentWindow) {
+      myHostOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     }
   }
 
