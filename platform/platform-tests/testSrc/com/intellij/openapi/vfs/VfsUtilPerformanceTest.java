@@ -17,16 +17,16 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -36,7 +36,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -177,22 +176,19 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       }
     });
 
-    VirtualFile file = new WriteAction<VirtualFile>(){
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile dir = fixture.getFile("");
-        for (int i = 0; i < 50; i++) {
-          dir = dir.createChildDirectory(this, "xxx");
-        }
-        result.setResult(dir.createChildData(this, "fff.txt"));
-      }
-    }.execute().getResultObject();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      String path = "unitTest_testGetPathPerformance_6542623412414351229/" +
+                    "junit6921058097194294088/" +
+                    StringUtil.repeat("xxx/", 50) +
+                    "fff.txt";
+      VirtualFile file = fixture.findOrCreateDir(path);
 
-    PlatformTestUtil.startPerformanceTest("VF.getPath() performance failed", 4000, () -> {
-      for (int i = 0; i < 1000000; ++i) {
-        file.getPath();
-      }
-    }).cpuBound().useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("VF.getPath() performance failed", 4000, () -> {
+        for (int i = 0; i < 1000000; ++i) {
+          file.getPath();
+        }
+      }).cpuBound().useLegacyScaling().assertTiming();
+    });
   }
 
   @Test
