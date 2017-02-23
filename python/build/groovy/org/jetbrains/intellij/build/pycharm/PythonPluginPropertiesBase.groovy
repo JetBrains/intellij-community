@@ -31,6 +31,7 @@ abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
     "python-openapi",
     "python-community-plugin-core",
     "python-community-plugin-java",
+    "python-community-configure",
     "python-psi-api",
     "python-pydev",
     "python-community",
