@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 
@@ -23,6 +24,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
  * @author peter
  */
 class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
+  constructor(file: PsiFile) : this(file, OffsetMap(file.viewProvider.document!!))
+
   fun toTopLevelFile(): OffsetsInFile {
     val manager = InjectedLanguageManager.getInstance(file.project)
     val hostFile = manager.getTopLevelFile(file)
@@ -37,7 +40,7 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
 
   fun toFileCopy(copyFile: PsiFile): OffsetsInFile {
     assert(copyFile.originalFile == file)
-    assert(copyFile.viewProvider.document!!.textLength == file.textLength)
+    assert(copyFile.viewProvider.document!!.textLength == file.viewProvider.document!!.textLength)
     return mapOffsets(copyFile) { it }
   }
 
@@ -48,4 +51,18 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
     }
     return OffsetsInFile(newFile, map)
   }
+
+  fun copyWithReplacement(startOffset: Int, endOffset: Int, replacement: String): OffsetsInFile {
+    val fileCopy = file.copy() as PsiFile
+    val document = fileCopy.viewProvider.document!!
+    document.setText(file.viewProvider.document!!.immutableCharSequence) // original file might be uncommitted
+
+    val result = toFileCopy(fileCopy)
+    document.replaceString(startOffset, endOffset, replacement)
+
+    PsiDocumentManager.getInstance(file.project).commitDocument(document)
+
+    return result
+  }
+
 }
