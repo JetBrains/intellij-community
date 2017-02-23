@@ -197,7 +197,7 @@ public class RunConfigurableTest extends LightIdeaTestCase {
 
   private static RunManagerImpl createRunManager(Element element) {
     Project project = getProject();
-    RunManagerImpl runManager = new RunManagerImpl(project, PropertiesComponent.getInstance(project));
+    RunManagerImpl runManager = new WorkspaceRunManager(project, PropertiesComponent.getInstance(project));
     runManager.initializeConfigurationTypes(new ConfigurationType[]{ApplicationConfigurationType.getInstance(),
       JUnitConfigurationType.getInstance(), UnknownConfigurationType.INSTANCE});
     runManager.loadState(element);

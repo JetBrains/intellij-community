@@ -27,7 +27,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -60,8 +59,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
   defaultStateAsResource = true,
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-public class RunManagerImpl extends RunManagerEx implements PersistentStateComponent<Element>, NamedComponent, Disposable {
-  private static final Logger LOG = Logger.getInstance(RunManagerImpl.class);
+public abstract class RunManagerImpl extends RunManagerEx implements PersistentStateComponent<Element>, NamedComponent, Disposable {
+  protected static final Logger LOG = Logger.getInstance(RunManagerImpl.class);
 
   private final Project myProject;
 
@@ -119,7 +118,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   // separate method needed for tests
   public final void initializeConfigurationTypes(@NotNull final ConfigurationType[] factories) {
-    Arrays.sort(factories, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
+    Arrays.sort(factories, Comparator.comparing(ConfigurationType::getDisplayName));
 
     final ArrayList<ConfigurationType> types = new ArrayList<>(Arrays.asList(factories));
     types.add(UnknownConfigurationType.INSTANCE);
@@ -568,9 +567,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   @Nullable
-  @Override
-  public Element getState() {
-    Element parentNode = new Element("state");
+  public Element getState(@NotNull Element parentNode) {
     // writes temporary configurations here
     writeContext(parentNode);
 
@@ -628,12 +625,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
   }
 
   public void writeContext(@NotNull Element parentNode) {
-    for (RunnerAndConfigurationSettings configurationSettings : new ArrayList<>(myConfigurations.values())) {
-      if (configurationSettings.isTemporary()) {
-        addConfigurationElement(parentNode, configurationSettings, CONFIGURATION);
-      }
-    }
-
     RunnerAndConfigurationSettings selected = getSelectedConfiguration();
     if (selected != null) {
       parentNode.setAttribute(SELECTED_ATTR, selected.getUniqueID());
@@ -653,6 +644,10 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       return;
     }
 
+    doWriteConfiguration(settings, configurationElement);
+  }
+
+  void doWriteConfiguration(@NotNull RunnerAndConfigurationSettings settings, @NotNull Element configurationElement) {
     List<BeforeRunTask> tasks = new ArrayList<>(getBeforeRunTasks(settings.getConfiguration()));
     Map<Key<BeforeRunTask>, BeforeRunTask> templateTasks = new THashMap<>();
     List<BeforeRunTask> beforeRunTasks = settings.isTemplate()
@@ -702,37 +697,6 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
   @Override
   public void loadState(@NotNull Element parentNode) {
-    clear(false);
-
-    List<Element> children = parentNode.getChildren(CONFIGURATION);
-    Element[] sortedElements = children.toArray(new Element[children.size()]);
-    // ensure templates are loaded first
-    Arrays.sort(sortedElements, (a, b) -> {
-      final boolean aDefault = Boolean.valueOf(a.getAttributeValue("default", "false"));
-      final boolean bDefault = Boolean.valueOf(b.getAttributeValue("default", "false"));
-      return aDefault == bDefault ? 0 : aDefault ? -1 : 1;
-    });
-
-    for (Element element : sortedElements) {
-      RunnerAndConfigurationSettings configurationSettings;
-      try {
-        configurationSettings = loadConfiguration(element, false);
-      }
-      catch (ProcessCanceledException e) {
-        configurationSettings = null;
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-        continue;
-      }
-      if (configurationSettings == null) {
-        if (myUnknownElements == null) {
-          myUnknownElements = new SmartList<>();
-        }
-        myUnknownElements.add((Element)element.detach());
-      }
-    }
-
     myOrder.readExternal(parentNode);
 
     // migration (old ids to UUIDs)
@@ -811,7 +775,7 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     initializeConfigurationTypes(new ConfigurationType[0]);
   }
 
-  private void clear(boolean allConfigurations) {
+  protected void clear(boolean allConfigurations) {
     List<RunnerAndConfigurationSettings> configurations;
     if (allConfigurations) {
       myConfigurations.clear();
@@ -864,6 +828,14 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
       return null;
     }
 
+    doLoadConfiguration(element, isShared, settings, factory);
+    return settings;
+  }
+
+  protected void doLoadConfiguration(@NotNull Element element,
+                                     boolean isShared,
+                                     RunnerAndConfigurationSettingsImpl settings,
+                                     ConfigurationFactory factory) {
     List<BeforeRunTask> tasks = readStepsBeforeRun(element.getChild(METHOD), settings);
     if (settings.isTemplate()) {
       myTemplateConfigurationsMap.put(factory.getType().getId() + "." + factory.getName(), settings);
@@ -871,11 +843,11 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
     }
     else {
       addConfiguration(settings, isShared, tasks, true);
-      if (Boolean.valueOf(element.getAttributeValue(SELECTED_ATTR)).booleanValue()) { //to support old style
+      if (Boolean.parseBoolean(element.getAttributeValue(SELECTED_ATTR))) {
+        //to support old style
         setSelectedConfiguration(settings);
       }
     }
-    return settings;
   }
 
   @NotNull

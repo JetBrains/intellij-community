@@ -122,7 +122,9 @@ public interface RunnerAndConfigurationSettings {
    * @throws RuntimeConfigurationError if the configuration settings contain a fatal problem which makes it impossible to execute the run
    * configuration.
    */
-  void checkSettings() throws RuntimeConfigurationException;
+  default void checkSettings() throws RuntimeConfigurationException {
+    checkSettings(null);
+  }
 
   /**
    * Checks whether the run configuration settings are valid for execution with the specified executor.

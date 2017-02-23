@@ -52,7 +52,8 @@ abstract class SchemeManagerFactory {
                                                                  roamingType: RoamingType = RoamingType.DEFAULT,
                                                                  isUseOldFileNameSanitize: Boolean = false,
                                                                  streamProvider: StreamProvider? = null,
-                                                                 directoryPath: Path? = null): SchemeManager<SCHEME>
+                                                                 directoryPath: Path? = null,
+                                                                 autoSave: Boolean = true): SchemeManager<SCHEME>
   open fun dispose(schemeManager: SchemeManager<*>) {
   }
 }

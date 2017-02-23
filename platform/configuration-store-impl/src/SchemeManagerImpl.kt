@@ -499,7 +499,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     return null
   }
 
-  fun save(errors: MutableList<Throwable>) {
+  override fun save(errors: MutableList<Throwable>) {
     if (isLoadingSchemes.get()) {
       LOG.warn("Skip save - schemes are loading")
     }

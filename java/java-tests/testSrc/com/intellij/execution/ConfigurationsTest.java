@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.WorkspaceRunManager;
 import com.intellij.execution.junit.*;
 import com.intellij.execution.junit2.configuration.JUnitConfigurable;
 import com.intellij.execution.junit2.configuration.JUnitConfigurationModel;
@@ -261,7 +262,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     JUnitConfiguration oldRc = createConfiguration(findTestA(module));
     oldRc.setWorkingDirectory(module.getModuleFilePath());
 
-    RunManagerImpl runManager = new RunManagerImpl(myProject, new AppPropertiesComponentImpl());
+    RunManagerImpl runManager = new WorkspaceRunManager(myProject, new AppPropertiesComponentImpl());
     Element element = new Element("configuration");
     new RunnerAndConfigurationSettingsImpl(runManager, oldRc, false).writeExternal(element);
 

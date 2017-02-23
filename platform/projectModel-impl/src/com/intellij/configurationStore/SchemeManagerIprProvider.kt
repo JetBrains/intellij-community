@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,18 +54,20 @@ class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProv
     nameToData.put(name, ArrayUtil.realloc(content, size))
   }
 
-  fun load(state: Element?) {
+  fun load(state: Element?, nameGetter: ((Element) -> String)? = null) {
     nameToData.clear()
 
     if (state == null) {
       return
     }
 
-    for (profileElement in state.getChildren(subStateTagName)) {
-      var name: String? = null
-      for (optionElement in profileElement.getChildren("option")) {
-        if (optionElement.getAttributeValue("name") == "myName") {
-          name = optionElement.getAttributeValue("value")
+    for (child in state.getChildren(subStateTagName)) {
+      var name = nameGetter?.invoke(child) ?: child.getAttributeValue("name")
+      if (name == null) {
+        for (optionElement in child.getChildren("option")) {
+          if (optionElement.getAttributeValue("name") == "myName") {
+            name = optionElement.getAttributeValue("value")
+          }
         }
       }
 
@@ -73,7 +75,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProv
         continue
       }
 
-      nameToData.put("$name.xml", profileElement.toByteArray())
+      nameToData.put("$name.xml", child.toByteArray())
     }
   }
 
