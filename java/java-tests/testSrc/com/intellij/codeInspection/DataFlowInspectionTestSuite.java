@@ -29,6 +29,7 @@ public class DataFlowInspectionTestSuite {
 
     suite.addTestSuite(DataFlowInspectionTest.class);
     suite.addTestSuite(DataFlowInspection8Test.class);
+    suite.addTestSuite(DataFlowInspectionHeavyTest.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(ContractCheckTest.class);
     suite.addTestSuite(HardcodedContractsTest.class);
