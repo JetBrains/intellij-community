@@ -42,7 +42,7 @@ import java.lang.ref.Reference;
  * @author Dmitry Avdeev
  *         Date: 7/27/12
  */
-public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStub> implements PsiNameValuePair.Detachable {
+public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStub> implements PsiNameValuePair {
 
   public PsiNameValuePairImpl(@NotNull PsiNameValuePairStub stub) {
     super(stub, JavaStubElementTypes.NAME_VALUE_PAIR);
@@ -103,7 +103,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
   @Override
   @Nullable
   public PsiAnnotationMemberValue getDetachedValue() {
-    PsiNameValuePairStub stub = getGreenStub();
+    PsiNameValuePairStub stub = getStub();
     if (stub != null) {
       String text = stub.getValue();
       PsiAnnotationMemberValue result = SoftReference.dereference(myDetachedValue);
