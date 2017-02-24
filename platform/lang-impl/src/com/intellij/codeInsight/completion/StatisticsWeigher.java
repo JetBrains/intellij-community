@@ -28,7 +28,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,18 +95,12 @@ public class StatisticsWeigher extends CompletionWeigher {
     }
 
     private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<LookupElement> source) {
-      MultiMap<String, LookupElement> byName = buildMapByLookupString(source);
+      MapByLookupString byName = new MapByLookupString(source);
 
       Set<List<LookupElement>> toSort = ContainerUtil.newIdentityTroveSet();
       TreeMap<Integer, List<LookupElement>> map = new TreeMap<>();
       for (LookupElement element : source) {
-        Collection<LookupElement> sameNamedGroup = byName.get(element.getLookupString());
-        int weight = getMaxWeight(sameNamedGroup);
-        List<LookupElement> list = ContainerUtil.getOrCreate(map, weight, (Factory<List<LookupElement>>)() -> new SmartList<>());
-        list.add(element);
-        if (sameNamedGroup.size() > 1 && weight != getScalarWeight(element)) {
-          toSort.add(list);
-        }
+        byName.processElementWeight(element, map, toSort);
       }
       for (List<LookupElement> group : toSort) {
         Collections.sort(group, Comparator.comparing(this::getScalarWeight).reversed());
@@ -114,17 +108,47 @@ public class StatisticsWeigher extends CompletionWeigher {
       return map;
     }
 
-    @NotNull
-    private static MultiMap<String, LookupElement> buildMapByLookupString(Iterable<LookupElement> elements) {
-      MultiMap<String, LookupElement> byName = new MultiMap<>();
-      for (LookupElement element : elements) {
-        byName.putValue(element.getLookupString(), element);
+    private class MapByLookupString extends THashMap<String, Object> {
+      MapByLookupString(Iterable<LookupElement> elements) {
+        for (LookupElement element : elements) {
+          putValue(element.getLookupString(), element);
+        }
       }
-      return byName;
-    }
 
-    private int getMaxWeight(Collection<LookupElement> group) {
-      return group.stream().mapToInt(this::getScalarWeight).max().orElse(0);
+      private void putValue(String key, LookupElement element) {
+        Object prev = get(key);
+        if (prev == null) {
+          put(key, element);
+        }
+        else if (prev instanceof LookupElement) {
+          put(key, ContainerUtil.newSmartList((LookupElement)prev, element));
+        }
+        else {
+          //noinspection unchecked
+          ((List<LookupElement>)prev).add(element);
+        }
+      }
+
+      void processElementWeight(LookupElement element, TreeMap<Integer, List<LookupElement>> mapByWeight, Set<List<LookupElement>> toSort) {
+        Object sameNamedGroup = get(element.getLookupString());
+        boolean singleton = sameNamedGroup instanceof LookupElement;
+        //noinspection unchecked
+        int weight = singleton ? getScalarWeight((LookupElement)sameNamedGroup) : getMaxWeight((List<LookupElement>)sameNamedGroup);
+        List<LookupElement> list = ContainerUtil.getOrCreate(mapByWeight, weight, (Factory<List<LookupElement>>)SmartList::new);
+        list.add(element);
+        if (!singleton && weight != getScalarWeight(element)) {
+          toSort.add(list);
+        }
+      }
+
+      private int getMaxWeight(List<LookupElement> group) {
+        int max = 0;
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < group.size(); i++) {
+          max = Math.max(max, getScalarWeight(group.get(i)));
+        }
+        return max;
+      }
     }
 
     private int getScalarWeight(LookupElement e) {
