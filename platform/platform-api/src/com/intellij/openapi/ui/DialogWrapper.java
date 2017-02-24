@@ -78,7 +78,7 @@ import java.util.List;
  * In case when the dialog must be created from other threads use
  * {@link EventQueue#invokeLater(Runnable)} or {@link EventQueue#invokeAndWait(Runnable)}.
  * <p/>
- * See also http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+DialogWrapper.
+ * See also http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/dialog_wrapper.html.
  */
 @SuppressWarnings({"SSBasedInspection", "MethodMayBeStatic"})
 public abstract class DialogWrapper {
