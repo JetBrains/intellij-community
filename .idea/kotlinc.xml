@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Kotlin2JsCompilerArguments">
+    <option name="moduleKind" value="plain" />
+  </component>
+  <component name="Kotlin2JvmCompilerArguments">
+    <option name="jvmTarget" value="1.6" />
+  </component>
+  <component name="KotlinCommonCompilerArguments">
+    <option name="languageVersion" value="1.0" />
+    <option name="apiVersion" value="1.0" />
+    <option name="coroutinesError" value="true" />
+  </component>
+</project>
