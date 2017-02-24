@@ -153,7 +153,7 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     @NotNull
     @Override
     public GraphAnswer<CommitId> performAction(@NotNull GraphAction graphAction) {
-      myPrintElementManager.setSelectedElements(Collections.<Integer>emptySet());
+      myPrintElementManager.setSelectedElements(Collections.emptySet());
 
       LinearGraphAction action = convert(graphAction);
       GraphAnswer<CommitId> graphAnswer = performArrowAction(action);

@@ -181,7 +181,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       textFilter = new VcsLogTextFilterImpl(text, isRegexAllowed, matchesCase);
       hashFilter = null;
     }
-    return Pair.<VcsLogTextFilter, VcsLogHashFilter>create(textFilter, hashFilter);
+    return Pair.create(textFilter, hashFilter);
   }
 
   @Override

@@ -43,6 +43,6 @@ public class PermanentGraphBuilderImpl<CommitId> implements PermanentGraphBuilde
   @NotNull
   @Override
   public PermanentGraph<CommitId> build(@NotNull List<GraphCommit<CommitId>> commits) {
-    return PermanentGraphImpl.newInstance(commits, STUB_COLOR_MANAGER, Collections.<CommitId>emptySet());
+    return PermanentGraphImpl.newInstance(commits, STUB_COLOR_MANAGER, Collections.emptySet());
   }
 }

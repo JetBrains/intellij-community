@@ -107,7 +107,7 @@ public class FragmentGenerator {
 
   @NotNull
   public GreenFragment getGreenFragmentForCollapse(int startNode, int maxWalkSize) {
-    if (myRedNodes.value(startNode)) return new GreenFragment(null, null, Collections.<Integer>emptySet());
+    if (myRedNodes.value(startNode)) return new GreenFragment(null, null, Collections.emptySet());
     Integer upRedNode = getNearRedNode(startNode, maxWalkSize, true);
     Integer downRedNode = getNearRedNode(startNode, maxWalkSize, false);
 

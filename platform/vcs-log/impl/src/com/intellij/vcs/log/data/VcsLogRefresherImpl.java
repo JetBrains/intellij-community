@@ -368,7 +368,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   }
 
   private static class RefreshRequest {
-    private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.<VirtualFile>emptyList()) {
+    private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.emptyList()) {
       @Override
       public String toString() {
         return "RELOAD_ALL";
