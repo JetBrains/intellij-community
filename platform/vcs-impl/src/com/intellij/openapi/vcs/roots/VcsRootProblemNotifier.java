@@ -95,10 +95,10 @@ public class VcsRootProblemNotifier {
       VcsRootError singleUnregRoot = notNull(getFirstItem(importantUnregisteredRoots));
       String mappingPath = singleUnregRoot.getMapping();
       VirtualFile projectDir = guessProjectDir(myProject);
-      if (!myVcsManager.hasAnyMappings()
-          && !myReportedUnregisteredRoots.contains(mappingPath)
-          && projectDir != null && FileUtil.isAncestor(projectDir.getPath(), mappingPath, false)
-          && Registry.is("vcs.auto.add.single.root")) {
+      if (!myVcsManager.hasAnyMappings() &&
+          !myReportedUnregisteredRoots.contains(mappingPath) &&
+          FileUtil.isAncestor(projectDir.getPath(), mappingPath, false) &&
+          Registry.is("vcs.auto.add.single.root")) {
         VcsDirectoryMapping mapping = new VcsDirectoryMapping(mappingPath, singleUnregRoot.getVcsKey().getName());
         myVcsManager.setDirectoryMappings(Collections.singletonList(mapping));
         LOG.info("Added " + mapping.getVcs() + " root " + mapping + " as the only auto-detected root.");
