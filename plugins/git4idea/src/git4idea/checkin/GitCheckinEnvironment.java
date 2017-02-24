@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -421,17 +422,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       final List<FilePath> files = new ArrayList<>();
       files.addAll(realAdded);
       files.addAll(realRemoved);
-      final Ref<Boolean> mergeAll = new Ref<>();
+      Ref<Boolean> mergeAll = new Ref<>();
       try {
-        GuiUtils.runOrInvokeAndWait(new Runnable() {
-          public void run() {
-            String message = GitBundle.message("commit.partial.merge.message", partialOperation.getName());
-            SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message,
-                                                                     null, "Commit All Files", CommonBundle.getCancelButtonText(), false);
-            dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
-            dialog.show();
-            mergeAll.set(dialog.isOK());
-          }
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          String message = GitBundle.message("commit.partial.merge.message", partialOperation.getName());
+          SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message,
+                                                                   null, "Commit All Files", CommonBundle.getCancelButtonText(), false);
+          dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
+          dialog.show();
+          mergeAll.set(dialog.isOK());
         });
       }
       catch (RuntimeException ex) {
@@ -842,7 +841,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return myPanel;
     }
   }
-
 
   public void setNextCommitIsPushed(Boolean nextCommitIsPushed) {
     myNextCommitIsPushed = nextCommitIsPushed;
