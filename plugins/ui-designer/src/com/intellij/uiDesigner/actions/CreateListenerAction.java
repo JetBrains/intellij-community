@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -240,14 +241,14 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
               if (brace != null) {
                 editor.getCaretModel().moveToOffset(brace.getTextOffset());
               }
-              CommandProcessor.getInstance().executeCommand(myClass.getProject(), () -> {
+              CommandProcessor.getInstance().executeCommand(myClass.getProject(), () -> TransactionGuard.getInstance().submitTransactionAndWait(() -> {
                 if (!OverrideImplementExploreUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {
                   OverrideImplementUtil.chooseAndImplementMethods(newClass.getProject(), editor, newClass);
                 }
                 else {
                   OverrideImplementUtil.chooseAndOverrideMethods(newClass.getProject(), editor, newClass);
                 }
-              }, "", null);
+              }), "", null);
             }
           }
 
