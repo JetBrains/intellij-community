@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
-  private VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
+  private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
   public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {

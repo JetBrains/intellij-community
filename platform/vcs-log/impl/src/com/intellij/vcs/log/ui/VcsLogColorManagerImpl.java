@@ -18,7 +18,7 @@ import java.util.List;
 public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Logger LOG = Logger.getInstance(VcsLogColorManagerImpl.class);
 
-  private static Color[] ROOT_COLORS =
+  private static final Color[] ROOT_COLORS =
     {JBColor.RED, JBColor.GREEN, JBColor.BLUE, JBColor.ORANGE, JBColor.CYAN, JBColor.YELLOW, JBColor.MAGENTA, JBColor.PINK};
 
   @NotNull private final List<VirtualFile> myRoots;

@@ -46,12 +46,12 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
   @NotNull private final VcsLogFilterer myVisiblePackBuilder;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogIndex.IndexingFinishedListener myIndexingFinishedListener;
+  @NotNull private final List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private VcsLogFilterCollection myFilters;
   @NotNull private PermanentGraph.SortType mySortType;
   @NotNull private CommitCountStage myCommitCount = CommitCountStage.INITIAL;
   @NotNull private List<MoreCommitsRequest> myRequestsToRun = ContainerUtil.newArrayList();
-  @NotNull private List<VisiblePackChangeListener> myVisiblePackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   @NotNull private volatile VisiblePack myVisiblePack = VisiblePack.EMPTY;
   private volatile boolean myIsValid = true;
 

@@ -26,7 +26,7 @@ import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryUi> {
-  @NotNull private FilePath myFilePath;
+  @NotNull private final FilePath myFilePath;
 
   public FileHistoryUiFactory(@NotNull FilePath path) {
     myFilePath = path;

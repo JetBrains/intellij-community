@@ -60,7 +60,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private long myCurrentTaskIndex = 0;
 
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<>();
-  @NotNull private VcsLogIndex myIndex;
+  @NotNull private final VcsLogIndex myIndex;
 
   AbstractDataGetter(@NotNull VcsLogStorage storage,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
