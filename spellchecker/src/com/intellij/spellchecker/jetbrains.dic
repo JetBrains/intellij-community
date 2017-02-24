@@ -32,6 +32,7 @@ autoincrement
 autorelease
 autorotate
 backend
+backref
 backtrace
 barcode
 basedir
@@ -208,6 +209,7 @@ giud
 gists
 globals
 google
+grapheme
 gruntfile
 gruntfiles
 gulpfile
@@ -321,6 +323,7 @@ logout
 longblob
 longtext
 lookahead
+lookbehind
 lookup
 lossy
 lucene
@@ -342,6 +345,8 @@ maxvalue
 mediumblob
 mediumint
 mediumtext
+metacharacter
+metacharacters
 metadata
 metas
 metaspace
