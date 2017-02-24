@@ -586,7 +586,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   private static void waitForFuture(Future<?> future) {
     try {
-      future.get(1000, TimeUnit.MILLISECONDS);
+      future.get(10000, TimeUnit.MILLISECONDS);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
