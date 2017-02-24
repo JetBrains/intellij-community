@@ -119,7 +119,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       for (Change change : changes) {
         ContentRevision revision = change.getAfterRevision();
         if (revision != null) {
-          return new VcsLogFileRevision(details, change.getAfterRevision(), revision.getFile());
+          return new VcsLogFileRevision(details, revision, revision.getFile());
         }
       }
       if (!changes.isEmpty()) {
