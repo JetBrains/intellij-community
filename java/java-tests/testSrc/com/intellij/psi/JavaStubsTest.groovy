@@ -154,4 +154,9 @@ import java.lang.annotation.*;
     assert !((PsiFileImpl) cls.containingFile).contentsLoaded
   }
 
+  void "test parameter list count"() {
+    def list = myFixture.addClass('class Cls { void foo(a) {} }').methods[0].parameterList
+    assert list.parametersCount == list.parameters.size()
+  }
+
 }
