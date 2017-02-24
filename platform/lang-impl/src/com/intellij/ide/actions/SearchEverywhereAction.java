@@ -1037,6 +1037,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       private Accessible myAccessible;
       public MyAccessibleComponent(LayoutManager layout) {
         super(layout);
+        setOpaque(false);
       }
       void setAccessible(Accessible comp) {
         myAccessible = comp;
