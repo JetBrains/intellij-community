@@ -19,6 +19,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
