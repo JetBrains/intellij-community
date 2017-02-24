@@ -34,14 +34,19 @@ public class NullityAnnotationModifier extends TypeAnnotationModifier {
   public TypeAnnotationProvider boundAppeared(@NotNull PsiType inferenceVariableType, @NotNull PsiType boundType) {
     PsiAnnotation[] annotations = inferenceVariableType.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
-      String qName = annotation.getQualifiedName();
-      if (qName != null && (NullableNotNullManager.isNullableAnnotation(annotation) || NullableNotNullManager
-        .isNotNullAnnotation(annotation)) && boundType.findAnnotation(qName) != null) {
+      if (isMatchingNullityAnnotation(boundType, annotation)) {
         return removeAnnotation(annotations, annotation);
       }
     }
 
     return null;
+  }
+
+  private static boolean isMatchingNullityAnnotation(@NotNull PsiType boundType, PsiAnnotation annotation) {
+    String qName = annotation.getQualifiedName();
+    return qName != null &&
+           (NullableNotNullManager.isNullableAnnotation(annotation) || NullableNotNullManager.isNotNullAnnotation(annotation)) &&
+           boundType.findAnnotation(qName) != null;
   }
 
   @Nullable
