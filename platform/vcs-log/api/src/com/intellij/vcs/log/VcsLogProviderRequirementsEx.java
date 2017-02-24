@@ -18,7 +18,6 @@ package com.intellij.vcs.log;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
 
 import static com.intellij.vcs.log.VcsLogProvider.Requirements;
 
