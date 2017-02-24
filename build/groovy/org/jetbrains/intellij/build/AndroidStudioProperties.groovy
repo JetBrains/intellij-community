@@ -54,7 +54,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                   ] +
                                                   ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main", "updater-ui"] -
                                                   ["jps-model-impl", "jps-model-serialization"]
-    productLayout.additionalPlatformJars.put("resources.jar", "adt-branding")
+    productLayout.additionalPlatformJars.putAll("resources.jar", "community-resources", "adt-branding")
 
     // Android Studio: including the common base library to avoid classloader issues (?)
     productLayout.additionalPlatformJars.put("android-base-common.jar", "common")
@@ -361,7 +361,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   }
 
   @Override
-  String getSystemSelector(ApplicationInfoProperties applicationInfo) { "AndroidStudio${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
+  String getSystemSelector(ApplicationInfoProperties applicationInfo) { "AndroidStudio${applicationInfo.isEAP ? "Preview" : ""}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}" }
 
   @Override
   String getBaseArtifactName(ApplicationInfoProperties applicationInfo, String buildNumber) { "android-studio-$buildNumber" }
