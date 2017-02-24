@@ -28,26 +28,26 @@ import java.util.Set;
 
 public class BranchFilterController extends CascadeController {
   @NotNull private CollapsedGraph myCollapsedGraph;
-  private final Set<Integer> myIdsOfVisibleBranches;
+  @Nullable private final Set<Integer> myIdsOfVisibleBranches;
 
   public BranchFilterController(@NotNull CascadeController delegateLinearGraphController,
-                                @NotNull final PermanentGraphInfo<?> permanentGraphInfo,
+                                @NotNull PermanentGraphInfo<?> permanentGraphInfo,
                                 @Nullable Set<Integer> idsOfVisibleBranches) {
     super(delegateLinearGraphController, permanentGraphInfo);
     myIdsOfVisibleBranches = idsOfVisibleBranches;
-    updateCollapsedGraph();
+    myCollapsedGraph = updateCollapsedGraph();
   }
 
-  private void updateCollapsedGraph() {
-    UnsignedBitSet initVisibility =
-      ReachableNodes.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), myIdsOfVisibleBranches);
-    myCollapsedGraph = CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
+  @NotNull
+  private CollapsedGraph updateCollapsedGraph() {
+    UnsignedBitSet initVisibility = ReachableNodes.getReachableNodes(myPermanentGraphInfo.getLinearGraph(), myIdsOfVisibleBranches);
+    return CollapsedGraph.newInstance(getDelegateController().getCompiledGraph(), initVisibility);
   }
 
   @NotNull
   @Override
   protected LinearGraphAnswer delegateGraphChanged(@NotNull LinearGraphAnswer delegateAnswer) {
-    if (delegateAnswer.getGraphChanges() != null) updateCollapsedGraph();
+    if (delegateAnswer.getGraphChanges() != null) myCollapsedGraph = updateCollapsedGraph();
     return delegateAnswer;
   }
 
