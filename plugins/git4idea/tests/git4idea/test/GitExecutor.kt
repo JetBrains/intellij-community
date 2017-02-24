@@ -93,7 +93,7 @@ fun branch(name: String) : String {
 }
 
 fun checkout(vararg params: String) {
-  git("checkout " + StringUtil.join(params, " "))
+  git("checkout ${params.joinToString(" ")}")
 }
 
 fun checkoutNew(branchName: String, startPoint: String = ""): String {
@@ -107,7 +107,13 @@ fun commit(message: String): String {
 
 @JvmOverloads fun tac(file: String, content: String = "content" + Math.random()): String {
   touch(file, content)
-  return addCommit("touched " + file)
+  return addCommit("Touched $file")
+}
+
+fun tacp(file: String): String {
+  touch(file)
+  addCommit("Touched $file")
+  return git("push")
 }
 
 fun appendAndCommit(file: String, additionalContent: String) : String {

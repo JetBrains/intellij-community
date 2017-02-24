@@ -19,7 +19,10 @@ import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -29,11 +32,13 @@ import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
+  private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
 
   @NotNull private final GitVcsSettings mySettings;
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
@@ -81,5 +86,22 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   public void setOngoingRebaseSpec(@Nullable GitRebaseSpec ongoingRebaseSpec) {
     myOngoingRebaseSpec = ongoingRebaseSpec != null && ongoingRebaseSpec.isValid() ? ongoingRebaseSpec : null;
+  }
+
+  @NotNull
+  public Collection<GitRepository> getDirectSubmodules(@NotNull GitRepository superProject) {
+    Collection<GitSubmoduleInfo> modules = superProject.getSubmodules();
+    return ContainerUtil.mapNotNull(modules, module -> {
+      VirtualFile submoduleDir = superProject.getRoot().findFileByRelativePath(module.getPath());
+      if (submoduleDir == null) {
+        LOG.debug("submodule dir not found at declared path [" + module.getPath() + "] of root [" + superProject.getRoot() + "]");
+        return null;
+      }
+      GitRepository repository = getRepositoryForRoot(submoduleDir);
+      if (repository == null) {
+        LOG.warn("Submodule not registered as a repository: " + submoduleDir);
+      }
+      return repository;
+    });
   }
 }
