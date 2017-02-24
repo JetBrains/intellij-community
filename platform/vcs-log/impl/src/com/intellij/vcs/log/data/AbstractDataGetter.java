@@ -220,6 +220,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myLoader.queue(new TaskDescriptor(toLoad));
   }
 
+  @SuppressWarnings("unchecked")
   private void cacheCommit(final int commitId, long taskNumber) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
