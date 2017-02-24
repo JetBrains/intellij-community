@@ -6,33 +6,32 @@ REGEXP_FILE
           PsiElement(PYTHON_COND_REF)('(?(')
           PsiElement(NAME)('name')
           PsiElement(GROUP_END)(')')
-          RegExpPatternImpl: <yes-pattern|>
-            RegExpBranchImpl: <yes-pattern>
-              RegExpCharImpl: <y>
-                PsiElement(CHARACTER)('y')
-              RegExpCharImpl: <e>
-                PsiElement(CHARACTER)('e')
-              RegExpCharImpl: <s>
-                PsiElement(CHARACTER)('s')
-              RegExpCharImpl: <->
-                PsiElement(CHARACTER)('-')
-              RegExpCharImpl: <p>
-                PsiElement(CHARACTER)('p')
-              RegExpCharImpl: <a>
-                PsiElement(CHARACTER)('a')
-              RegExpCharImpl: <t>
-                PsiElement(CHARACTER)('t')
-              RegExpCharImpl: <t>
-                PsiElement(CHARACTER)('t')
-              RegExpCharImpl: <e>
-                PsiElement(CHARACTER)('e')
-              RegExpCharImpl: <r>
-                PsiElement(CHARACTER)('r')
-              RegExpCharImpl: <n>
-                PsiElement(CHARACTER)('n')
-            PsiElement(UNION)('|')
-            PsiErrorElement:Dangling metacharacter
-              <empty list>
+          RegExpBranchImpl: <yes-pattern>
+            RegExpCharImpl: <y>
+              PsiElement(CHARACTER)('y')
+            RegExpCharImpl: <e>
+              PsiElement(CHARACTER)('e')
+            RegExpCharImpl: <s>
+              PsiElement(CHARACTER)('s')
+            RegExpCharImpl: <->
+              PsiElement(CHARACTER)('-')
+            RegExpCharImpl: <p>
+              PsiElement(CHARACTER)('p')
+            RegExpCharImpl: <a>
+              PsiElement(CHARACTER)('a')
+            RegExpCharImpl: <t>
+              PsiElement(CHARACTER)('t')
+            RegExpCharImpl: <t>
+              PsiElement(CHARACTER)('t')
+            RegExpCharImpl: <e>
+              PsiElement(CHARACTER)('e')
+            RegExpCharImpl: <r>
+              PsiElement(CHARACTER)('r')
+            RegExpCharImpl: <n>
+              PsiElement(CHARACTER)('n')
+          PsiElement(UNION)('|')
+          PsiErrorElement:Dangling metacharacter
+            <empty list>
         RegExpQuantifierImpl: <{>
           PsiElement(LBRACE)('{')
           PsiErrorElement:Number expected
