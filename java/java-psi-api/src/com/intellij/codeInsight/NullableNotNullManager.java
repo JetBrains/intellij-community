@@ -18,7 +18,6 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -357,4 +356,12 @@ public abstract class NullableNotNullManager {
   }
 
   public abstract List<String> getPredefinedNotNulls();
+
+  public static boolean isNullableAnnotation(@NotNull PsiAnnotation annotation) {
+    return getInstance(annotation.getProject()).getNullables().contains(annotation.getQualifiedName());
+  }
+
+  public static boolean isNotNullAnnotation(@NotNull PsiAnnotation annotation) {
+    return getInstance(annotation.getProject()).getNotNulls().contains(annotation.getQualifiedName());
+  }
 }

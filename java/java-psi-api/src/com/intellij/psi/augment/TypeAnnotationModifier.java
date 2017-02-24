@@ -16,20 +16,22 @@
 package com.intellij.psi.augment;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.TypeAnnotationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Type annotations are ignored during inference process. When they are present on types which are bounds of the inference variables,
+ * then the corresponding instantiations of inference variables would contain those type annotations.
+ * If different bounds contain contradicting type annotations or type annotations on types repeat target type annotations,
+ * it could be useful to ignore such annotations in the resulted instantiation.
+ */
 public abstract class TypeAnnotationModifier {
   public static final ExtensionPointName<TypeAnnotationModifier> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiTypeAnnotationModifier");
 
   /**
-   * Type annotations are ignored during inference process. When they are present on types which are bounds of the inference variables,
-   * then the corresponding instantiations of inference variables would contain that type annotations.
-   * If different bounds contain contradicting type annotations or type annotations on types repeat target type annotations,
-   * it could be useful to ignore such annotations in the resulted instantiation.
+   * Called when a new bound is added to an inference variable. Implementations may adjust boundType's annotations based on the inference variable's type annotations.
 
    * @param inferenceVariableType   target type
    * @param boundType               bound which annotations should be changed according to present annotations
@@ -37,6 +39,18 @@ public abstract class TypeAnnotationModifier {
    * @return provider based on modified annotations or null if no applicable annotations found
    */
   @Nullable
-  public abstract TypeAnnotationProvider modifyAnnotations(@NotNull PsiType inferenceVariableType, @NotNull PsiClassType boundType);
+  public TypeAnnotationProvider boundAppeared(@NotNull PsiType inferenceVariableType, @NotNull PsiType boundType) {
+    return null;
+  }
+
+  /**
+   * Called when the inference decides to use the lower bound of a type variable as its final result.
+
+   * @return provider based on modified annotations or null if no applicable annotations found
+   */
+  @Nullable
+  public TypeAnnotationProvider modifyLowerBoundAnnotations(@NotNull PsiType lowerBound, @NotNull PsiType upperBound) {
+    return null;
+  }
 
 }

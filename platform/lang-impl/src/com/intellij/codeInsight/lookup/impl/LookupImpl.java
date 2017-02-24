@@ -602,7 +602,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       if (!isLower && !isUpper) continue;
       isAllLower = isAllLower && isLower;
       isAllUpper = isAllUpper && isUpper;
-      sameCase = sameCase && isLower == Character.isLowerCase(lookupString.charAt(i));
+      sameCase = sameCase && i < lookupString.length() && isLower == Character.isLowerCase(lookupString.charAt(i));
     }
     if (sameCase) return lookupString;
     if (isAllLower) return lookupString.toLowerCase();
