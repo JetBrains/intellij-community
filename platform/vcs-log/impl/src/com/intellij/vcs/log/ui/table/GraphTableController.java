@@ -143,9 +143,13 @@ public class GraphTableController {
 
   @NotNull
   private Point calcPoint4Graph(@NotNull Point clickPoint) {
-    TableColumn rootColumn = myTable.getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
-    return new Point(clickPoint.x - (myUi.isMultipleRoots() ? rootColumn.getWidth() : 0),
-                     PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
+    int width = 0;
+    for (int i = 0; i < myTable.getColumnModel().getColumnCount(); i++) {
+      TableColumn column = myTable.getColumnModel().getColumn(i);
+      if (column.getModelIndex() == GraphTableModel.COMMIT_COLUMN) break;
+      width += column.getWidth();
+    }
+    return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
   }
 
   @NotNull
@@ -196,7 +200,8 @@ public class GraphTableController {
   }
 
   private boolean showTooltip(int row, int column, @NotNull Point point, boolean now) {
-    JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, column), calcPoint4Graph(point), row);
+    JComponent tipComponent =
+      myCommitRenderer.getTooltip(myTable.getValueAt(row, myTable.convertColumnIndexToView(column)), calcPoint4Graph(point), row);
 
     if (tipComponent != null) {
       myTable.getExpandableItemsHandler().setEnabled(false);
