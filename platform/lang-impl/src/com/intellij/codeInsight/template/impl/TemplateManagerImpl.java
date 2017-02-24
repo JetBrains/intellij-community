@@ -49,6 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
+  private static final TemplateContextType[] ourContextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
   private final Project myProject;
   private boolean myTemplateTesting;
 
@@ -512,7 +513,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   public static TemplateContextType[] getAllContextTypes() {
-    return Extensions.getExtensions(TemplateContextType.EP_NAME);
+    return ourContextTypes;
   }
 
   @Override
