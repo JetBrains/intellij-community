@@ -29,8 +29,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
 
   void testDifferentAnnotationsWithDifferentLanguageLevels() {
-    myFixture.allowTreeAccessForAllFiles()
-
     def module6 = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'mod6', myFixture.tempDirFixture.findOrCreateDir('mod6'))
     IdeaTestUtil.setModuleLanguageLevel(module6, LanguageLevel.JDK_1_6)
     IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_8)

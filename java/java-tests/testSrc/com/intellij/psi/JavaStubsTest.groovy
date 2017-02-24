@@ -15,6 +15,7 @@
  */
 package com.intellij.psi
 
+import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
@@ -142,4 +143,15 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
     attr.node
     assert attr.name == null
   }
+
+  void "test determine annotation target without AST"() {
+    def cls = myFixture.addClass('''
+import java.lang.annotation.*;
+@Anno class Some {} 
+@Target(ElementType.METHOD) @interface Anno {}''')
+    assert 'Some' == cls.name
+    assert !AnnotationTargetUtil.isTypeAnnotation(cls.modifierList.annotations[0])
+    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+  }
+
 }

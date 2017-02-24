@@ -224,6 +224,9 @@ public class AnnotationTargetUtil {
     PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);
     if (target == null) return DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
 
-    return extractRequiredAnnotationTargets(target.findAttributeValue(null));
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(target, null);
+    if (attribute == null) return null;
+
+    return extractRequiredAnnotationTargets(attribute.getDetachedValue());
   }
 }
