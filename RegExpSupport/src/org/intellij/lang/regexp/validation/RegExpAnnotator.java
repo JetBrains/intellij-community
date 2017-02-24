@@ -128,7 +128,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpBoundary(RegExpBoundary boundary) {
     if (!myLanguageHosts.supportsBoundary(boundary)) {
-      myHolder.createErrorAnnotation(boundary, "Unsupported boundary");
+      myHolder.createErrorAnnotation(boundary, "This boundary is not supported in this regex dialect");
     }
   }
 
@@ -209,7 +209,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       }
       if (text.charAt(text.length() - 1) == '}') {
         if (!myLanguageHosts.supportsExtendedHexCharacter(ch)) {
-          myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported");
+          myHolder.createErrorAnnotation(ch, "This hex character syntax is not supported in this regex dialect");
         }
       }
     }
@@ -230,7 +230,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpNamedCharacter(RegExpNamedCharacter namedCharacter) {
     if (!myLanguageHosts.supportsNamedCharacters(namedCharacter)) {
-      myHolder.createErrorAnnotation(namedCharacter, "Named Unicode characters are not allowed in this regular expression dialect");
+      myHolder.createErrorAnnotation(namedCharacter, "Named Unicode characters are not allowed in this regex dialect");
     }
     else if (!myLanguageHosts.isValidNamedCharacter(namedCharacter)) {
       final ASTNode node = namedCharacter.getNameNode();
@@ -277,7 +277,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
     if (group.isAnyNamedGroup()) {
       if (!myLanguageHosts.supportsNamedGroupSyntax(group)) {
-        myHolder.createErrorAnnotation(group, "This named group syntax is not supported");
+        myHolder.createErrorAnnotation(group, "This named group syntax is not supported in this regex dialect");
       }
     }
     if (group.getType() == RegExpGroup.Type.ATOMIC && !myLanguageHosts.supportsPossessiveQuantifiers(group)) {
@@ -292,7 +292,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     if (groupType == RegExpGroup.Type.POSITIVE_LOOKBEHIND || groupType == RegExpGroup.Type.NEGATIVE_LOOKBEHIND) {
       final RegExpLanguageHost.Lookbehind support = myLanguageHosts.supportsLookbehind(group);
       if (support == RegExpLanguageHost.Lookbehind.NOT_SUPPORTED) {
-        myHolder.createErrorAnnotation(group, "Look-behind groups not supported in this regex dialect");
+        myHolder.createErrorAnnotation(group, "Look-behind groups are not supported in this regex dialect");
       }
       else {
         group.accept(new LookbehindVisitor(support, myHolder));
@@ -303,7 +303,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {
     if (!myLanguageHosts.supportsNamedGroupRefSyntax(groupRef)) {
-      myHolder.createErrorAnnotation(groupRef, "This named group reference syntax is not supported");
+      myHolder.createErrorAnnotation(groupRef, "This named group reference syntax is not supported in this regex dialect");
       return;
     }
     if (groupRef.getGroupName() == null) {
@@ -326,7 +326,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   public void visitComment(PsiComment comment) {
     if (comment.getText().startsWith("(?#")) {
       if (!myLanguageHosts.supportsPerl5EmbeddedComments(comment)) {
-        myHolder.createErrorAnnotation(comment, "Embedded comments are not supported");
+        myHolder.createErrorAnnotation(comment, "Embedded comments are not supported in this regex dialect");
       }
     }
   }
@@ -334,7 +334,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpPyCondRef(RegExpPyCondRef condRef) {
     if (!myLanguageHosts.supportsPythonConditionalRefs(condRef)) {
-      myHolder.createErrorAnnotation(condRef, "Conditional references are not supported");
+      myHolder.createErrorAnnotation(condRef, "Conditional references are not supported in this regex dialect");
     }
   }
 

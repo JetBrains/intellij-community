@@ -39,7 +39,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testBoundaries() {
-    doTest("\\b <error descr=\"Unsupported boundary\">\\b{g}</error> \\B \\A \\z \\Z \\G");
+    doTest("\\b <error descr=\"This boundary is not supported in this regex dialect\">\\b{g}</error> \\B \\A \\z \\Z \\G");
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), getTestRootDisposable());
     doTest("\\b \\b{g} \\B \\A \\z \\Z \\G");
   }
