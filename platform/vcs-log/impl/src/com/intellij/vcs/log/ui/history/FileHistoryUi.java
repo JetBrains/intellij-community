@@ -248,11 +248,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   private class MyPropertiesChangeListener implements VcsLogUiProperties.PropertiesChangeListener {
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-      if (property == CommonUiProperties.SHOW_DETAILS) {
+      if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
         myFileHistoryPanel.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
       }
-      else if (property == FileHistoryUiProperties.SHOW_ALL_BRANCHES) {
+      else if (FileHistoryUiProperties.SHOW_ALL_BRANCHES.equals(property)) {
         updateFilter();
+      }
+      else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+        getTable().onColumnOrderSettingChanged();
       }
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
         getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());

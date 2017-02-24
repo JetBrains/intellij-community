@@ -151,6 +151,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setColumnModel(new MyTableColumnModel(myUi.getProperties()));
     createDefaultColumnsFromModel();
     setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
+    onColumnOrderSettingChanged();
 
     setRootColumnSize();
 
@@ -176,6 +177,66 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setPaintBusy(false);
     myAuthorColumnInitialized = myAuthorColumnInitialized && !filtersChanged;
     reLayout();
+  }
+
+  public void onColumnOrderSettingChanged() {
+    if (myUi.getProperties().exists(CommonUiProperties.COLUMN_ORDER)) {
+      List<Integer> columnOrder = myUi.getProperties().get(CommonUiProperties.COLUMN_ORDER);
+
+      int columnCount = getColumnModel().getColumnCount();
+      boolean dataCorrect = true;
+      if (columnOrder.size() != columnCount) {
+        dataCorrect = false;
+      }
+      else {
+        for (int i = 0; i < columnCount; i++) {
+          Integer expectedColumnIndex = columnOrder.get(i);
+          if (expectedColumnIndex < 0 || expectedColumnIndex >= columnCount) {
+            dataCorrect = false;
+            break;
+          }
+          if (expectedColumnIndex != getColumnModel().getColumn(i).getModelIndex()) {
+            // need to put column with model index columnOrder.get(i) into position i
+            // let's find it
+            // since we are going from left to right, we know that columns on the left are already placed correctly
+            // so only need to check columns on the right
+            int foundColumnIndex = -1;
+            for (int j = i + 1; j < columnCount; j++) {
+              if (getColumnModel().getColumn(j).getModelIndex() == expectedColumnIndex) {
+                foundColumnIndex = j;
+                break;
+              }
+            }
+            if (foundColumnIndex < 0) {
+              dataCorrect = false;
+              break;
+            }
+            else {
+              ((MyTableColumnModel)getColumnModel()).moveWithoutChecks(foundColumnIndex, i);
+            }
+          }
+        }
+      }
+
+      if (!dataCorrect) {
+        if (!columnOrder.isEmpty()) {
+          LOG.debug("Incorrect column order was saved in properties " + columnOrder + ", replacing it with current order.");
+        }
+        saveColumnOrderToSettings();
+      }
+    }
+  }
+
+  private void saveColumnOrderToSettings() {
+    if (myUi.getProperties().exists(CommonUiProperties.COLUMN_ORDER)) {
+      List<Integer> columnOrder = ContainerUtil.newArrayList();
+
+      for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
+        columnOrder.add(getColumnModel().getColumn(i).getModelIndex());
+      }
+
+      myUi.getProperties().set(CommonUiProperties.COLUMN_ORDER, columnOrder);
+    }
   }
 
   public void reLayout() {
@@ -986,6 +1047,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void moveColumn(int columnIndex, int newIndex) {
       if (convertColumnIndexToModel(columnIndex) == ROOT_COLUMN || convertColumnIndexToModel(newIndex) == ROOT_COLUMN) return;
+      moveWithoutChecks(columnIndex, newIndex);
+      saveColumnOrderToSettings();
+    }
+
+    public void moveWithoutChecks(int columnIndex, int newIndex) {
       super.moveColumn(columnIndex, newIndex);
     }
   }
