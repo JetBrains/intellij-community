@@ -155,7 +155,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setRootColumnSize();
 
     for (int column = 0; column < getColumnCount(); column++) {
-      getColumnModel().getColumn(column).setResizable(column != ROOT_COLUMN);
+      getColumnByModelIndex(column).setResizable(column != ROOT_COLUMN);
     }
   }
 
@@ -220,8 +220,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         }
       }
 
-      if (width > 0 && width != getColumnModel().getColumn(i).getPreferredWidth()) {
-        getColumnModel().getColumn(i).setPreferredWidth(width);
+      if (width > 0 && width != getColumnByModelIndex(i).getPreferredWidth()) {
+        getColumnByModelIndex(i).setPreferredWidth(width);
       }
     }
 
@@ -231,7 +231,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private int getColumnWidthFromData(int i) {
     Font tableFont = getTableFont();
     if (i == AUTHOR_COLUMN) {
-      int width = getColumnModel().getColumn(AUTHOR_COLUMN).getPreferredWidth();
+      int width = getColumnByModelIndex(i).getPreferredWidth();
 
       // detect author with the longest name
       if (getModel().getRowCount() > 0) {
@@ -245,7 +245,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
             continue;
           }
           Font font = tableFont;
-          VcsLogHighlighter.TextStyle style = getStyle(row, AUTHOR_COLUMN, false, false).getTextStyle();
+          VcsLogHighlighter.TextStyle style = getStyle(row, convertColumnIndexToView(AUTHOR_COLUMN), false, false).getTextStyle();
           if (BOLD.equals(style)) {
             font = tableFont.deriveFont(Font.BOLD);
           }
@@ -268,6 +268,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     throw new IllegalArgumentException("Can only calculate author or date columns width from data, yet given column " + i);
   }
 
+  @NotNull
+  public TableColumn getColumnByModelIndex(int index) {
+    return getColumnModel().getColumn(convertColumnIndexToView(index));
+  }
+
   private static Font getTableFont() {
     return UIManager.getFont("Table.font");
   }
@@ -276,16 +281,16 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int size = getWidth();
     for (int i = 0; i < getColumnCount(); i++) {
       if (i == COMMIT_COLUMN) continue;
-      TableColumn column = getColumnModel().getColumn(i);
+      TableColumn column = getColumnByModelIndex(i);
       size -= column.getPreferredWidth();
     }
 
-    TableColumn commitColumn = getColumnModel().getColumn(COMMIT_COLUMN);
+    TableColumn commitColumn = getColumnByModelIndex(COMMIT_COLUMN);
     commitColumn.setPreferredWidth(size);
   }
 
   private void setRootColumnSize() {
-    TableColumn column = getColumnModel().getColumn(ROOT_COLUMN);
+    TableColumn column = getColumnByModelIndex(ROOT_COLUMN);
     int rootWidth;
     if (!myUi.isMultipleRoots()) {
       rootWidth = 0;
@@ -317,7 +322,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Override
   public String getToolTipText(@NotNull MouseEvent event) {
     int row = rowAtPoint(event.getPoint());
-    int column = columnAtPoint(event.getPoint());
+    int column = convertColumnIndexToModel(columnAtPoint(event.getPoint()));
     if (column < 0 || row < 0) {
       return null;
     }
@@ -636,19 +641,19 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
     int lastRow = getRowCount() - 1;
     if (lastRow >= 0) {
-      g.setColor(getStyle(lastRow, COMMIT_COLUMN, hasFocus(), false).getBackground());
+      g.setColor(getStyle(lastRow, convertColumnIndexToView(COMMIT_COLUMN), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
       if (myUi.isMultipleRoots()) {
         g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myUi.getColorManager()));
 
-        int rootWidth = getColumnModel().getColumn(ROOT_COLUMN).getWidth();
+        int rootWidth = getColumnByModelIndex(ROOT_COLUMN).getWidth();
         if (!myUi.isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
 
         g.fillRect(x, y, rootWidth, height);
       }
     }
     else {
-      g.setColor(getBaseStyle(lastRow, COMMIT_COLUMN, hasFocus(), false).getBackground());
+      g.setColor(getBaseStyle(lastRow, convertColumnIndexToView(COMMIT_COLUMN), hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
     }
   }
@@ -964,12 +969,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       // and TableColumnModelListener.columnMarginChanged does not provide any information which column was changed
       if (getTableHeader().getResizingColumn() == null) return;
       if ("width".equals(evt.getPropertyName())) {
-        TableColumn authorColumn = getColumn(AUTHOR_COLUMN);
+        TableColumn authorColumn = getColumnByModelIndex(AUTHOR_COLUMN);
         if (authorColumn.equals(evt.getSource())) {
           CommonUiProperties.saveColumnWidth(myProperties, AUTHOR_COLUMN, authorColumn.getWidth());
         }
         else {
-          TableColumn dateColumn = getColumn(DATE_COLUMN);
+          TableColumn dateColumn = getColumnByModelIndex(DATE_COLUMN);
           if (dateColumn.equals(evt.getSource())) {
             CommonUiProperties.saveColumnWidth(myProperties, DATE_COLUMN, dateColumn.getWidth());
           }
@@ -980,7 +985,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void moveColumn(int columnIndex, int newIndex) {
-      if (columnIndex == ROOT_COLUMN || newIndex == ROOT_COLUMN) return;
+      if (convertColumnIndexToModel(columnIndex) == ROOT_COLUMN || convertColumnIndexToModel(newIndex) == ROOT_COLUMN) return;
       super.moveColumn(columnIndex, newIndex);
     }
   }
