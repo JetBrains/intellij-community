@@ -58,7 +58,6 @@ import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUserRegistry;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
@@ -89,8 +88,7 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
-import static git4idea.GitUtil.getLogString;
-import static git4idea.GitUtil.getRepositoryManager;
+import static git4idea.GitUtil.*;
 import static java.util.Arrays.asList;
 
 public class GitCheckinEnvironment implements CheckinEnvironment {
@@ -136,7 +134,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public String getDefaultMessageFor(FilePath[] filesToCheckin) {
     LinkedHashSet<String> messages = newLinkedHashSet();
     GitRepositoryManager manager = getRepositoryManager(myProject);
-    for (VirtualFile root : GitUtil.gitRoots(asList(filesToCheckin))) {
+    for (VirtualFile root : gitRoots(asList(filesToCheckin))) {
       GitRepository repository = manager.getRepositoryForRoot(root);
       if (repository == null) { // unregistered nested submodule found by GitUtil.getGitRoot
         LOG.warn("Unregistered repository: " + root);
@@ -180,11 +178,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
+    GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     LOG.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
-    for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
-      VirtualFile root = entry.getKey();
+
+    List<GitRepository> repositories = manager.sortByDependency(getRepositoriesFromRoots(manager, sortedChanges.keySet()));
+    for (GitRepository repository : repositories) {
+      VirtualFile root = repository.getRoot();
       File messageFile;
       try {
         messageFile = createMessageFile(root, message);
@@ -198,7 +199,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Set<FilePath> added = new HashSet<>();
       Set<FilePath> removed = new HashSet<>();
       final Set<Change> caseOnlyRenames = new HashSet<>();
-      for (Change change : entry.getValue()) {
+      for (Change change : sortedChanges.get(root)) {
         switch (change.getType()) {
           case NEW:
           case MODIFICATION:
@@ -210,7 +211,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           case MOVED:
             FilePath afterPath = change.getAfterRevision().getFile();
             FilePath beforePath = change.getBeforeRevision().getFile();
-            if (!SystemInfo.isFileSystemCaseSensitive && GitUtil.isCaseOnlyChange(beforePath.getPath(), afterPath.getPath())) {
+            if (!SystemInfo.isFileSystemCaseSensitive && isCaseOnlyChange(beforePath.getPath(), afterPath.getPath())) {
               caseOnlyRenames.add(change);
             }
             else {
@@ -257,8 +258,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {
-      GitRepositoryManager manager = getRepositoryManager(myProject);
-      Collection<GitRepository> repositories = GitUtil.getRepositoriesFromRoots(manager, sortedChanges.keySet());
       final List<GitRepository> preselectedRepositories = newArrayList(repositories);
       GuiUtils.invokeLaterIfNeeded(() ->
         new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show(),
@@ -347,7 +346,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @NotNull
   private static VcsException cleanupExceptionText(VcsException original) {
     String msg = original.getMessage();
-    msg = GitUtil.cleanupErrorPrefixes(msg);
+    msg = cleanupErrorPrefixes(msg);
     final String DURING_EXECUTING_SUFFIX = GitSimpleHandler.DURING_EXECUTING_ERROR_MESSAGE;
     int suffix = msg.indexOf(DURING_EXECUTING_SUFFIX);
     if (suffix > 0) {
@@ -564,7 +563,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
-      sortedFiles = GitUtil.sortFilePathsByGitRoot(files);
+      sortedFiles = sortFilePathsByGitRoot(files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -619,7 +618,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
-      sortedFiles = GitUtil.sortFilesByGitRoot(files);
+      sortedFiles = sortFilesByGitRoot(files);
     }
     catch (VcsException e) {
       rc.add(e);
@@ -668,7 +667,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         // the parent paths for calculating roots in order to account for submodules that contribute
         // to the parent change. The path "." is never is valid change, so there should be no problem
         // with it.
-        vcsRoot = GitUtil.getGitRoot(filePath.getParentPath());
+        vcsRoot = getGitRoot(filePath.getParentPath());
       }
       catch (VcsException e) {
         exceptions.add(e);
@@ -764,7 +763,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       @NotNull
       @Override
       protected Set<VirtualFile> getVcsRoots(@NotNull Collection<FilePath> files) {
-        return GitUtil.gitRoots(files);
+        return gitRoots(files);
       }
 
       @Nullable
