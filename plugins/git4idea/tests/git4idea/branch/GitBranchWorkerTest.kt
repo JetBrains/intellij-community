@@ -234,7 +234,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("master")
     assertCurrentRevision("master")
-    assertSuccessfulNotification("Revision not found in project, community and contrib")
+    assertErrorNotification("Couldn't checkout unknown_ref", "Revision not found in project, community and contrib")
   }
 
   fun test_checkout_revision_checkout_ref_with_partial_success() {
@@ -627,8 +627,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     mergeBranch("master2", TestUiHandler())
 
-    assertSuccessfulNotification("Merged " + bcode("master2") + " to " + bcode("master") + "<br/><a href='delete'>Delete master2</a>",
-                 myVcsNotifier.lastNotification.content)
+    assertSuccessfulNotification("Merged ${bcode("master2")} to ${bcode("master")}<br/>" +
+                                 "<a href='delete'>Delete master2</a>")
     assertFile(myUltimate, "branch_file.txt", "branch content")
     assertFile(myCommunity, "branch_file.txt", "branch content")
     assertFile(myContrib, "branch_file.txt", "branch content")
