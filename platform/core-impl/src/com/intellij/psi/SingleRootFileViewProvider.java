@@ -447,6 +447,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return document;
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public FileViewProvider clone() {
     final VirtualFile origFile = getVirtualFile();
@@ -513,10 +514,8 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   @Nullable
   public static PsiElement findElementAt(@Nullable PsiElement psiFile, final int offset) {
-    if (psiFile == null) return null;
-
-    ASTNode treeElement = psiFile.getNode().findLeafElementAt(offset);
-    return SourceTreeToPsiMap.treeElementToPsi(treeElement);
+    ASTNode node = psiFile == null ? null : psiFile.getNode();
+    return node == null ? null : SourceTreeToPsiMap.treeElementToPsi(node.findLeafElementAt(offset));
   }
 
   public void forceCachedPsi(@NotNull PsiFile psiFile) {
