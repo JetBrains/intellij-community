@@ -42,6 +42,7 @@ class TestGitImpl : GitImpl() {
 
   @Volatile var stashListener: ((GitRepository) -> Unit)? = null
   @Volatile var mergeListener: ((GitRepository) -> Unit)? = null
+  @Volatile var pushListener: ((GitRepository) -> Unit)? = null
 
   @Volatile private var myRebaseShouldFail: (GitRepository) -> Boolean = { false }
   @Volatile private var myPushHandler: (GitRepository) -> GitCommandResult? = { null }
@@ -55,6 +56,7 @@ class TestGitImpl : GitImpl() {
                     updateTracking: Boolean,
                     tagMode: String?,
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
+    pushListener?.invoke(repository)
     return myPushHandler(repository) ?:
         super.push(repository, remote, spec, force, updateTracking, tagMode, *listeners)
   }

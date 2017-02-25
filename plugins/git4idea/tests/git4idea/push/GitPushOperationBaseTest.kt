@@ -15,18 +15,10 @@
  */
 package git4idea.push
 
-import com.intellij.dvcs.push.PushSpec
-import com.intellij.dvcs.push.PushSupport
-import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.util.Condition
+import com.intellij.dvcs.DvcsUtil.getPushSupport
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.vcs.Executor
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.ContainerUtil
 import git4idea.GitBranch
-import git4idea.GitRemoteBranch
-import git4idea.GitStandardRemoteBranch
-import git4idea.GitUtil
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.update.GitUpdateResult
@@ -40,7 +32,7 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    myPushSupport = findGitPushSupport()
+    myPushSupport = getPushSupport(myVcs) as GitPushSupport
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)
@@ -93,33 +85,5 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     assertEquals(message, GitBranch.REFS_HEADS_PREFIX + from, actualResult.sourceBranch)
     assertEquals(message, GitBranch.REFS_REMOTES_PREFIX + to, actualResult.targetBranch)
     assertEquals(message, updateResult, actualResult.updateResult)
-  }
-
-
-  private fun findGitPushSupport(): GitPushSupport {
-    return ObjectUtils.assertNotNull(ContainerUtil.find(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, myProject),
-        object : Condition<PushSupport<*, *, *>> {
-          override fun value(support: PushSupport<*, *, *>): Boolean {
-            return support is GitPushSupport
-          }
-        })) as GitPushSupport
-  }
-
-  protected fun makePushSpec(repository: GitRepository,
-                             from: String,
-                             to: String): PushSpec<GitPushSource, GitPushTarget> {
-    val source = repository.branches.findLocalBranch(from)!!
-    var target: GitRemoteBranch? = repository.branches.findBranchByName(to) as GitRemoteBranch?
-    val newBranch: Boolean
-    if (target == null) {
-      val firstSlash = to.indexOf('/')
-      val remote = GitUtil.findRemoteByName(repository, to.substring(0, firstSlash))!!
-      target = GitStandardRemoteBranch(remote, to.substring(firstSlash + 1))
-      newBranch = true
-    }
-    else {
-      newBranch = false
-    }
-    return PushSpec(GitPushSource.create(source), GitPushTarget(target, newBranch))
   }
 }

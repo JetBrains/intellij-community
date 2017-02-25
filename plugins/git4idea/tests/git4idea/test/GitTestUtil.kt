@@ -17,6 +17,11 @@
 
 package git4idea.test
 
+import com.intellij.dvcs.push.PushSpec
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.Executor.*
@@ -27,9 +32,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
+import git4idea.GitRemoteBranch
+import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.log.GitLogProvider
+import git4idea.push.GitPushSource
+import git4idea.push.GitPushTarget
 import git4idea.repo.GitRepository
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
@@ -151,3 +160,20 @@ fun findGitLogProvider(project: Project): GitLogProvider {
   assertEquals("Incorrect number of GitLogProviders", 1, providers.size)
   return providers[0] as GitLogProvider
 }
+
+fun makePushSpec(repository: GitRepository, from: String, to: String): PushSpec<GitPushSource, GitPushTarget> {
+  val source = repository.branches.findLocalBranch(from)!!
+  var target: GitRemoteBranch? = repository.branches.findBranchByName(to) as GitRemoteBranch?
+  val newBranch: Boolean
+  if (target == null) {
+    val firstSlash = to.indexOf('/')
+    val remote = GitUtil.findRemoteByName(repository, to.substring(0, firstSlash))!!
+    target = GitStandardRemoteBranch(remote, to.substring(firstSlash + 1))
+    newBranch = true
+  }
+  else {
+    newBranch = false
+  }
+  return PushSpec(GitPushSource.create(source), GitPushTarget(target, newBranch))
+}
+

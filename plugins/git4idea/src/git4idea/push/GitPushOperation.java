@@ -133,7 +133,7 @@ public class GitPushOperation {
       for (int pushAttempt = 0;
            pushAttempt < MAX_PUSH_ATTEMPTS && !remainingRoots.isEmpty();
            pushAttempt++, remainingRoots = getRejectedAndNotPushed(results)) {
-        Map<GitRepository, GitPushRepoResult> resultMap = push(remainingRoots);
+        Map<GitRepository, GitPushRepoResult> resultMap = push(myRepositoryManager.sortByDependency(remainingRoots));
         results.putAll(resultMap);
 
         GroupedPushResult result = GroupedPushResult.group(resultMap);
@@ -266,7 +266,7 @@ public class GitPushOperation {
   }
 
   @NotNull
-  private Map<GitRepository, GitPushRepoResult> push(@NotNull Collection<GitRepository> repositories) {
+  private Map<GitRepository, GitPushRepoResult> push(@NotNull List<GitRepository> repositories) {
     Map<GitRepository, GitPushRepoResult> results = ContainerUtil.newLinkedHashMap();
     for (GitRepository repository : repositories) {
       PushSpec<GitPushSource, GitPushTarget> spec = myPushSpecs.get(repository);

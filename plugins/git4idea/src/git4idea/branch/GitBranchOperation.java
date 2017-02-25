@@ -43,6 +43,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static git4idea.GitUtil.getRepositoryManager;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -69,7 +70,8 @@ abstract class GitBranchOperation {
     myProject = project;
     myGit = git;
     myUiHandler = uiHandler;
-    myRepositories = repositories;
+
+    myRepositories = getRepositoryManager(project).sortByDependency(repositories);
     myCurrentHeads = Maps.toMap(repositories, repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
     myInitialRevisions = Maps.toMap(repositories, GitRepository::getCurrentRevision);
     mySuccessfulRepositories = new ArrayList<>();

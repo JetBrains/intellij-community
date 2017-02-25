@@ -20,10 +20,7 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.util.containers.ContainerUtil
 import git4idea.commands.GitCommandResult
 import git4idea.repo.GitRepository
-import git4idea.test.cd
-import git4idea.test.git
-import git4idea.test.last
-import git4idea.test.makeCommit
+import git4idea.test.*
 import git4idea.update.GitUpdateResult
 import java.io.File
 import java.util.*

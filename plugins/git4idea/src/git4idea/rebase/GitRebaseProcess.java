@@ -118,7 +118,7 @@ public class GitRebaseProcess {
 
     Map<GitRepository, GitRebaseStatus> statuses = newLinkedHashMap(myRebaseSpec.getStatuses());
     Collection<GitRepository> toRefresh = newLinkedHashSet();
-    List<GitRepository> repositoriesToRebase = myRebaseSpec.getIncompleteRepositories();
+    List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
