@@ -19,8 +19,10 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +39,7 @@ import java.util.List;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl");
   private final PsiFile myFile;
   private final Project myProject;
   private final Document myDocument;
@@ -60,11 +63,13 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   @Override
   @Nullable
   public IndentOptionsAdjuster getIndentOptionsAdjuster() {
-    List<LineIndentInfo> linesInfo = calcLineIndentInfo(myProgressIndicator);
-    if (linesInfo != null) {
-      IndentUsageStatistics stats = new IndentUsageStatisticsImpl(linesInfo);
-      return new IndentOptionsAdjusterImpl(stats);
+    try {
+      List<LineIndentInfo> linesInfo = calcLineIndentInfo(myProgressIndicator);
+      if (linesInfo != null) {
+        return new IndentOptionsAdjusterImpl(new IndentUsageStatisticsImpl(linesInfo));
+      }
     }
+    catch (IndexNotReadyException ignore) { }
     return null;
   }
   
