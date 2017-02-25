@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.gist.GistManager
 import java.util.*
 
@@ -96,6 +97,10 @@ fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method
 
 private fun methodIndex(method: PsiMethodImpl): Int {
   val file = method.containingFile as PsiFileImpl
-  val stubTree = file.stubTree ?: file.calcStubTree()
+  val stubTree = try {
+    file.stubTree ?: file.calcStubTree()
+  } catch (e: RuntimeException) {
+    throw RuntimeException("While inferring contract for " + PsiUtil.getMemberQualifiedName(method), e)
+  }
   return stubTree.plainList.filter { it.stubType == JavaElementType.METHOD }.map { it.psi }.indexOf(method)
 }

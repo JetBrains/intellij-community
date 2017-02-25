@@ -1093,7 +1093,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           throw new RuntimeException("Stub and PSI element type mismatch in " + getName(), e);
         }
 
-        updateTrees(myTrees.withGreenStub(tree));
+        updateTrees(myTrees.withGreenStub(tree, this));
       }
 
       return tree;
