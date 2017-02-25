@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams.trace;
+package com.intellij.debugger.streams.trace.smart;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

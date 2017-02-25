@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams.trace;
+package com.intellij.debugger.streams.trace.smart;
 
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -19,4 +19,10 @@ public interface TraceElement {
 
   @NotNull
   List<TraceElement> getPrevious();
+
+  @NotNull
+  List<TraceElement> getPreviousBy(@NotNull TraceElement element);
+
+  @NotNull
+  List<TraceElement> getNextBy(@NotNull TraceElement element);
 }

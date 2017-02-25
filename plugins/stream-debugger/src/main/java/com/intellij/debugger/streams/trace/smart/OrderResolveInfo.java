@@ -1,9 +1,8 @@
-package com.intellij.debugger.streams.trace;
+package com.intellij.debugger.streams.trace.smart;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Vitaliy.Bibaev
