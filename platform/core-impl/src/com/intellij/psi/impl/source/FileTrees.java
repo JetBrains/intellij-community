@@ -72,8 +72,10 @@ final class FileTrees {
     return new FileTrees(new SoftReference<>(stub), null, false, false);
   }
 
-  FileTrees withGreenStub(@NotNull StubTree stub) {
-    assert derefTreeElement() != null && astLoaded : this;
+  FileTrees withGreenStub(@NotNull StubTree stub, @NotNull PsiFileImpl file) {
+    if (derefTreeElement() == null || !astLoaded) {
+      throw new RuntimeException("No AST in file " + file + " of " + file.getClass() + "; " + this);
+    }
     return new FileTrees(new SoftReference<>(stub), myTreeElementPointer, true, useStrongRefs);
   }
 
