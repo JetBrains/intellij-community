@@ -87,7 +87,7 @@ class GroovyInlayParameterHintsProvider : InlayParameterHintsProvider {
     return MethodInfo(fullMethodName, paramNames)
   }
 
-  override val defaultBlackList: Set<String> get() = blackList
+  override fun getDefaultBlackList(): Set<String> = blackList
 
   override fun getBlackListDependencyLanguage() = JavaLanguage.INSTANCE
 }

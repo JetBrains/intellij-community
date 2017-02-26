@@ -77,7 +77,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Override
-  public ProjectAbstractTreeStructureBase createStructure() {
+  protected ProjectAbstractTreeStructureBase createStructure() {
     return new MyTreeStructure(myProject);
   }
 

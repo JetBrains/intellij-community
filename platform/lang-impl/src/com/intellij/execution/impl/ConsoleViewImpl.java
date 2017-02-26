@@ -768,15 +768,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
     final int documentTextLength = document.getTextLength();
     if (documentTextLength > 0) {
-      CommandProcessor.getInstance().executeCommand(myProject, () -> {
-        document.setInBulkUpdate(true);
-        try {
-          document.deleteString(0, documentTextLength);
-        }
-        finally {
-          document.setInBulkUpdate(false);
-        }
-      }, null, DocCommandGroupId.noneGroupId(document));
+      CommandProcessor.getInstance().executeCommand(myProject,
+         () -> DocumentUtil.executeInBulk(document, true,
+         ()->document.deleteString(0, documentTextLength)), null, DocCommandGroupId.noneGroupId(document));
     }
   }
 

@@ -39,6 +39,7 @@ import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.util.DocumentUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NotNull
 
@@ -843,13 +844,9 @@ class Foo {
 
     def document = (DocumentEx)myFixture.editor.document
     WriteCommandAction.runWriteCommandAction myFixture.project, {
-      document.inBulkUpdate = true;
-      try {
+      DocumentUtil.executeInBulk(document, true, {
         document.insertString(document.getText().indexOf("}") + 1, "\n");
-      }
-      finally {
-        document.inBulkUpdate = false;
-      }
+      } as Closure)
     }
     assertEquals 2, foldRegionsCount
     assertEquals 0, expandedFoldRegionsCount

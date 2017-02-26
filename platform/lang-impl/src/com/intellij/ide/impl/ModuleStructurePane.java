@@ -37,7 +37,7 @@ public class ModuleStructurePane extends ProjectViewPane {
   }
 
   @Override
-  public ProjectAbstractTreeStructureBase createStructure() {
+  protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
       @Override
       protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
