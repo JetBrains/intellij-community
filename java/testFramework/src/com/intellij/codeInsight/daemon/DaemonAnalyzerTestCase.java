@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.TIntArrayList;
@@ -375,7 +374,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  private static List<IntentionAction> getIntentionActions(@NotNull Collection<HighlightInfo> infos,
+  protected static List<IntentionAction> getIntentionActions(@NotNull Collection<HighlightInfo> infos,
                                                            @NotNull Editor editor,
                                                            @NotNull PsiFile file) {
 
