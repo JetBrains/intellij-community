@@ -24,20 +24,20 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
 /**
  * @author Vladislav.Soroka
@@ -75,19 +75,39 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   @Nullable
   @Override
   public Module findIdeModule(@NotNull ModuleData module) {
-    final Module ideModule = findIdeModule(module.getInternalName());
-    return isExternalSystemAwareModule(module.getOwner(), ideModule) ? ideModule : null;
+    for (String candidate : suggestModuleNameCandidates(module)) {
+      Module ideModule = findIdeModule(candidate);
+      if (ideModule != null && isApplicableIdeModule(module, ideModule)) {
+        return ideModule;
+      }
+    }
+    return null;
+  }
+
+  protected String[] suggestModuleNameCandidates(@NotNull ModuleData module) {
+    String prefix = module.getGroup();
+    File modulePath = new File(module.getLinkedExternalProjectPath());
+    if(modulePath.isFile()) {
+      modulePath = modulePath.getParentFile();
+    }
+    if (modulePath.getParentFile() != null) {
+      prefix = modulePath.getParentFile().getName();
+    }
+    return new String[]{
+      module.getInternalName(),
+      prefix + '-' + module.getInternalName(),
+      prefix + '-' + module.getInternalName() + "~1"};
+  }
+
+  private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
+    return isExternalSystemAwareModule(moduleData.getOwner(), ideModule) &&
+           pathsEqual(getExternalProjectPath(ideModule), moduleData.getLinkedExternalProjectPath());
   }
 
   @Nullable
   @Override
   public Module findIdeModule(@NotNull String ideModuleName) {
-    for (Module module : getModules()) {
-      if (ideModuleName.equals(module.getName())) {
-        return module;
-      }
-    }
-    return null;
+    return ModuleManager.getInstance(myProject).findModuleByName(ideModuleName);
   }
 
   @Nullable

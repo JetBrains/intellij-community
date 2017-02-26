@@ -28,7 +28,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import java.util.List;
-import java.util.Set;
 
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
@@ -91,20 +89,17 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (myCompositeRootSettings != null) {
-      Pair[] pairs = myTree.getCheckedNodes(Pair.class, null);
-      Set<String> compositeParticipants = new HashSet<>();
-      for (Pair pair : pairs) {
-        compositeParticipants.add(pair.second.toString());
-      }
-      if (compositeParticipants.isEmpty()) {
+      Pair[] compositeParticipants = myTree.getCheckedNodes(Pair.class, null);
+      if (compositeParticipants.length == 0) {
         myCompositeRootSettings.setCompositeBuild(null);
       }
       else {
         GradleProjectSettings.CompositeBuild compositeBuild = new GradleProjectSettings.CompositeBuild();
         compositeBuild.setCompositeDefinitionSource(CompositeDefinitionSource.IDE);
-        for (String participant : compositeParticipants) {
+        for (Pair participant : compositeParticipants) {
           BuildParticipant buildParticipant = new BuildParticipant();
-          buildParticipant.setRootPath(participant);
+          buildParticipant.setRootProjectName(participant.first.toString());
+          buildParticipant.setRootPath(participant.second.toString());
           compositeBuild.getCompositeParticipants().add(buildParticipant);
         }
         myCompositeRootSettings.setCompositeBuild(compositeBuild);

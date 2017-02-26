@@ -31,8 +31,18 @@ import java.util.Set;
  */
 @Tag("build")
 public class BuildParticipant implements Serializable {
+  private String myRootProjectName;
   private String myRootPath;
   @NotNull private Set<String> myProjects = new HashSet<>();
+
+  @Attribute("name")
+  public String getRootProjectName() {
+    return myRootProjectName;
+  }
+
+  public void setRootProjectName(String rootProjectName) {
+    myRootProjectName = rootProjectName;
+  }
 
   @Attribute("path")
   public String getRootPath() {

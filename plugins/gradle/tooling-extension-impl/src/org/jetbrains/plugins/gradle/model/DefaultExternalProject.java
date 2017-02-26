@@ -30,6 +30,8 @@ public class DefaultExternalProject implements ExternalProject, ExternalProjectP
   private static final long serialVersionUID = 1L;
 
   @NotNull
+  private String myId;
+  @NotNull
   private String myName;
   @NotNull
   private String myQName;
@@ -74,6 +76,7 @@ public class DefaultExternalProject implements ExternalProject, ExternalProjectP
 
   public DefaultExternalProject(@NotNull ExternalProject externalProject) {
     this();
+    myId = externalProject.getId();
     myName = externalProject.getName();
     myQName = externalProject.getQName();
     myVersion = externalProject.getVersion();
@@ -107,6 +110,16 @@ public class DefaultExternalProject implements ExternalProject, ExternalProjectP
   @Override
   public String getExternalSystemId() {
     return myExternalSystemId;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myId;
+  }
+
+  public void setId(@NotNull String id) {
+    myId = id;
   }
 
   public void setExternalSystemId(@NotNull String externalSystemId) {
@@ -271,6 +284,6 @@ public class DefaultExternalProject implements ExternalProject, ExternalProjectP
 
   @Override
   public String toString() {
-    return "project '" + myQName + "'";
+    return "project '" + myId + "'";
   }
 }

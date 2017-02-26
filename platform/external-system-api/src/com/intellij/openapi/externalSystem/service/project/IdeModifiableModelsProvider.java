@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -34,6 +35,9 @@ import org.jetbrains.annotations.NotNull;
 public interface IdeModifiableModelsProvider extends IdeModelsProvider {
   @NotNull
   Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
+
+  @NotNull
+  Module newModule(@NotNull ModuleData moduleData);
 
   @NotNull
   ModifiableModuleModel getModifiableModuleModel();

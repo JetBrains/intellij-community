@@ -20,12 +20,12 @@ import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.adapter.TargetTypeProvider;
+import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.BasicIdeaProject;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +122,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       try {
         Object extraProject = controller.findModel(model, aClass);
         if (extraProject == null) continue;
-        allModels.addExtraProject(extraProject, aClass, model);
+        allModels.addExtraProject(extraProject, aClass, model != null ? model.getGradleProject() : null);
       }
       catch (Exception e) {
         // do not fail project import in a preview mode
@@ -133,7 +133,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  public static class AllModels extends ModelsHolder<IdeaProject, IdeaModule> {
+  public static class AllModels extends ModelsHolder<IdeaProject, GradleProject> {
 
     private List<IdeaProject> includedBuilds = new ArrayList<IdeaProject>();
     private boolean isGradleProjectDirSupported;
@@ -167,13 +167,27 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       isGradleProjectDirSupported = gradleProjectDirSupported;
     }
 
+    @Nullable
+    public <T> T getExtraProject(@Nullable IdeaModule model, Class<T> modelClazz) {
+      return super.getExtraProject(model != null ? model.getGradleProject() : null, modelClazz);
+    }
+
+    public void addExtraProject(@NotNull Object project, @NotNull Class modelClazz, @Nullable IdeaModule subPropject) {
+      super.addExtraProject(project, modelClazz, subPropject != null ? subPropject.getGradleProject() : null);
+    }
+
+    @NotNull
+    protected String extractMapKey(Class modelClazz, @Nullable IdeaModule module) {
+      return extractMapKey(modelClazz, module);
+    }
+
     @NotNull
     @Override
-    protected String extractMapKey(Class modelClazz, @Nullable IdeaModule module) {
-      if (module != null) {
+    protected String extractMapKey(Class modelClazz, @Nullable GradleProject gradleProject) {
+      if (gradleProject != null) {
         String id = isGradleProjectDirSupported ?
-                    module.getGradleProject().getProjectDirectory().getPath() :
-                    module.getGradleProject().getPath();
+                    gradleProject.getProjectDirectory().getPath() :
+                    gradleProject.getPath();
         return modelClazz.getName() + '@' + id;
       }
       else {
