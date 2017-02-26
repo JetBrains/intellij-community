@@ -498,7 +498,7 @@ public class GitMergeProvider implements MergeProvider2 {
     }
 
     @Override
-    public void conflictResolvedForFile(VirtualFile file, @NotNull Resolution resolution) {
+    public void conflictResolvedForFile(@NotNull VirtualFile file, @NotNull Resolution resolution) {
       Conflict c = myConflicts.get(file);
       assert c != null : "Conflict was not loaded for the file: " + file.getPath();
       try {
