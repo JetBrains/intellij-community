@@ -68,7 +68,7 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionWorkspace;
 import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -187,7 +187,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       mainModuleData.setIdeModuleGroup(isRootModule ? null : moduleGroup);
 
       for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
-        final String moduleId = getModuleId(externalProject, sourceSet);
+        final String moduleId = getModuleId(resolverCtx, gradleModule, sourceSet);
         final String moduleExternalName = gradleModule.getName() + ":" + sourceSet.getName();
         final String moduleInternalName = getInternalModuleName(gradleModule, sourceSet.getName());
 
@@ -301,7 +301,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                          @NotNull DataNode<ModuleData> ideModule) {
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (externalProject != null) {
-      processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
+      processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
           for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
@@ -350,7 +350,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
   }
 
-  private static void processSourceSets(@NotNull ExternalProject externalProject,
+  private static void processSourceSets(@NotNull ProjectResolverContext resolverCtx,
+                                        @NotNull IdeaModule gradleModule,
+                                        @NotNull ExternalProject externalProject,
                                         @NotNull DataNode<ModuleData> ideModule,
                                         @NotNull SourceSetsProcessor processor) {
     Map<String, DataNode<GradleSourceSetData>> sourceSetsMap = ContainerUtil.newHashMap();
@@ -361,7 +363,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     for (ExternalSourceSet sourceSet : externalProject.getSourceSets().values()) {
       if (sourceSet == null || sourceSet.getSources().isEmpty()) continue;
 
-      final String moduleId = getModuleId(externalProject, sourceSet);
+      final String moduleId = getModuleId(resolverCtx, gradleModule, sourceSet);
       final DataNode<? extends ModuleData> moduleDataNode = sourceSetsMap.isEmpty() ? ideModule : sourceSetsMap.get(moduleId);
       if (moduleDataNode == null) continue;
 
@@ -380,7 +382,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap = projectDataNode.getUserData(MODULES_OUTPUTS);
       assert moduleOutputsMap != null;
 
-      processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
+      processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
           for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
@@ -470,7 +472,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
       if (resolverCtx.isResolveModulePerSourceSet()) {
         assert sourceSetMap != null;
-        processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
+        processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
           @Override
           public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
             buildDependencies(resolverCtx, sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
@@ -493,7 +495,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       DependencyScope scope = parseScope(dependency.getScope());
 
       if (dependency instanceof IdeaModuleDependency) {
-        ModuleDependencyData d = buildDependency(resolverCtx.getSettings(), ideModule, (IdeaModuleDependency)dependency, ideProject);
+        ModuleDependencyData d = buildDependency(resolverCtx, ideModule, (IdeaModuleDependency)dependency, ideProject);
         d.setExported(dependency.getExported());
         if (scope != null) {
           d.setScope(scope);
@@ -826,23 +828,30 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   @NotNull
-  private static ModuleDependencyData buildDependency(@Nullable GradleExecutionSettings executionSettings,
+  private static ModuleDependencyData buildDependency(@NotNull ProjectResolverContext resolverContext,
                                                       @NotNull DataNode<ModuleData> ownerModule,
                                                       @NotNull IdeaModuleDependency dependency,
                                                       @NotNull DataNode<ProjectData> ideProject)
     throws IllegalStateException {
     IdeaModule module = dependency.getDependencyModule();
     if (module == null) {
-      if (executionSettings != null) {
+      if (resolverContext.getSettings() != null) {
         String moduleName = dependency.getTargetModuleName();
-        ModuleData moduleData = executionSettings.getExecutionWorkspace().findModuleDataByName(moduleName);
+        GradleExecutionWorkspace executionWorkspace = resolverContext.getSettings().getExecutionWorkspace();
+        ModuleData moduleData = executionWorkspace.findModuleDataByName(moduleName);
         if (moduleData != null) {
           return new ModuleDependencyData(ownerModule.getData(), moduleData);
         }
-        else if (StringUtil.isNotEmpty(moduleName)) {
-          return new ModuleDependencyData(
-            ownerModule.getData(), new ModuleData("", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, "", ""));
+        else {
+          for (IdeaProject project : resolverContext.getModels().getIncludedBuilds()) {
+            moduleData = executionWorkspace.findModuleDataByName(project.getName()  + ':' + moduleName);
+            if (moduleData != null) {
+              return new ModuleDependencyData(ownerModule.getData(), moduleData);
+            }
+          }
         }
+        return new ModuleDependencyData(
+          ownerModule.getData(), new ModuleData("", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, "", ""));
       }
       throw new IllegalStateException(
         String.format("Can't parse gradle module dependency '%s'. Reason: referenced module is null", dependency)

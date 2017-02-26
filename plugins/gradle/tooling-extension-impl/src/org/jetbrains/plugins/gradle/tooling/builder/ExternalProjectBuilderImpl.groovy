@@ -82,7 +82,15 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
     defaultExternalProject.externalSystemId = "GRADLE"
     defaultExternalProject.name = project.name
-    defaultExternalProject.QName = ":" == project.path ? project.name : project.path
+    def qName = ":" == project.path ? project.name : project.path
+    defaultExternalProject.QName = qName
+    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
+    def ideaPluginModule = ideaPlugin?.model?.module
+    def parentBuildRootProject = project.gradle.parent?.rootProject
+    def compositePrefix = parentBuildRootProject && !project.rootProject.is(parentBuildRootProject) && ":" != project.path ?
+                          (ideaPlugin?.model?.project?.name ?: project.rootProject.name) : "";
+    def ideaModuleName = ideaPluginModule?.name ?: project.name
+    defaultExternalProject.id = compositePrefix + (":" == project.path ? ideaModuleName : qName)
     defaultExternalProject.version = wrap(project.version)
     defaultExternalProject.description = project.description
     defaultExternalProject.buildDir = project.buildDir

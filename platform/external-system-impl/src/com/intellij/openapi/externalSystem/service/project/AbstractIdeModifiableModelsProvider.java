@@ -19,9 +19,11 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
@@ -56,6 +58,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isRelated;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.toCanonicalPath;
 
 public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProviderImpl implements IdeModifiableModelsProvider {
   private static final Logger LOG = Logger.getInstance(AbstractIdeModifiableModelsProvider.class);
@@ -129,6 +132,21 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
     module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
     return module;
+  }
+
+  @NotNull
+  @Override
+  public Module newModule(@NotNull ModuleData moduleData) {
+    String filePath = moduleData.getModuleFilePath();
+    String moduleTypeId = moduleData.getModuleTypeId();
+    for (String candidate : suggestModuleNameCandidates(moduleData)) {
+      Module module = findIdeModule(candidate);
+      if (module == null) {
+        filePath = toCanonicalPath(moduleData.getModuleFileDirectoryPath() + "/" + candidate + ModuleFileType.DOT_DEFAULT_EXTENSION);
+        break;
+      }
+    }
+    return newModule(filePath, moduleTypeId);
   }
 
   @Nullable

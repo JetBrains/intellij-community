@@ -93,9 +93,7 @@ public class GradleProjectResolverUtil {
       ));
     }
 
-    String gradlePath = gradleModule.getGradleProject().getPath();
-    final boolean isRootModule = StringUtil.isEmpty(gradlePath) || ":".equals(gradlePath);
-    String mainModuleId = isRootModule ? moduleName : gradlePath;
+    String mainModuleId = getModuleId(resolverCtx, gradleModule);
     final ModuleData moduleData =
       new ModuleData(mainModuleId, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName,
                      mainModuleFileDirectoryPath, mainModuleConfigPath);
@@ -165,14 +163,16 @@ public class GradleProjectResolverUtil {
   }
 
   @NotNull
-  public static String getModuleId(@NotNull IdeaModule gradleModule) {
+  public static String getModuleId(@NotNull ProjectResolverContext resolverCtx, @NotNull IdeaModule gradleModule) {
     GradleProject gradleProject = gradleModule.getGradleProject();
-    return getModuleId(gradleProject.getPath(), gradleProject.getName());
-  }
-
-  @NotNull
-  public static String getModuleId(@NotNull ExternalProject externalProject) {
-    return getModuleId(externalProject.getQName(), externalProject.getName());
+    String gradlePath = gradleProject.getPath();
+    String compositePrefix = "";
+    if (gradleModule.getProject() != resolverCtx.getModels().getIdeaProject()) {
+      if (!StringUtil.isEmpty(gradlePath) && !":".equals(gradlePath)) {
+        compositePrefix = gradleModule.getProject().getName();
+      }
+    }
+    return compositePrefix + getModuleId(gradlePath, gradleModule.getName());
   }
 
   @NotNull
@@ -181,8 +181,21 @@ public class GradleProjectResolverUtil {
   }
 
   @NotNull
+  public static String getModuleId(@NotNull ExternalProject externalProject) {
+    return externalProject.getId();
+  }
+
+  @NotNull
   public static String getModuleId(@NotNull ExternalProject externalProject, @NotNull ExternalSourceSet sourceSet) {
     String mainModuleId = getModuleId(externalProject);
+    return mainModuleId + ":" + sourceSet.getName();
+  }
+
+  @NotNull
+  public static String getModuleId(@NotNull ProjectResolverContext resolverCtx,
+                                   @NotNull IdeaModule gradleModule,
+                                   @NotNull ExternalSourceSet sourceSet) {
+    String mainModuleId = getModuleId(resolverCtx, gradleModule);
     return mainModuleId + ":" + sourceSet.getName();
   }
 
