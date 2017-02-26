@@ -15,17 +15,10 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
@@ -34,96 +27,78 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
-import static java.awt.GridBagConstraints.*;
+import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.DEFAULT_PROJECT_PRESENTATION_PATH;
+import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
+import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static java.awt.GridBagConstraints.NONE;
+import static java.awt.GridBagConstraints.NORTHWEST;
 
 public class ShelfProjectConfigurationPanel extends JPanel {
+  @NotNull private static final String CURRENT_LOCATION_HINT = "Current location: ";
   @NotNull private final VcsConfiguration myVcsConfiguration;
   @NotNull private final Project myProject;
-  @NotNull private final String myDefaultPresentationPathString;
-  @NotNull private final JBCheckBox myUseCustomShelfDirectory;
-  @NotNull private final JBLabel myShelfDirectoryLabel;
-  @NotNull private final TextFieldWithBrowseButton myShelfDirectoryPath;
   @NotNull private final JBCheckBox myBaseRevisionTexts;
-  @NotNull private final JBCheckBox myMoveShelvesCheckBox;
+  @NotNull private final JLabel myInfoLabel;
 
   public ShelfProjectConfigurationPanel(@NotNull Project project) {
     super(new BorderLayout());
     myProject = project;
     myVcsConfiguration = VcsConfiguration.getInstance(project);
-    myUseCustomShelfDirectory = new JBCheckBox("Use custom shelf storage directory");
-    myShelfDirectoryLabel = new JBLabel("Shelf directory:");
-    myShelfDirectoryLabel.setFocusable(false);
-    myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    myShelfDirectoryPath.addBrowseFolderListener("Shelf", "Select a directory to store shelves in", myProject,
-                                                 FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myShelfDirectoryPath.getTextField().setInputVerifier(new InputVerifier() {
-      @Override
-      public boolean verify(JComponent input) {
-        File file = new File(myShelfDirectoryPath.getText());
-        String errorMessage = ShelveChangesManager.validateDestinationDirectory(file);
-        if (errorMessage != null && myShelfDirectoryPath.isShowing()) {
-          PopupUtil.showBalloonForComponent(myShelfDirectoryPath, errorMessage, MessageType.WARNING, false, myProject);
-        }
-        return errorMessage != null;
-      }
-    });
-    myMoveShelvesCheckBox = new JBCheckBox(VcsBundle.message("vcs.shelf.move.text")); 
     myBaseRevisionTexts = new JBCheckBox(VcsBundle.message("vcs.shelf.store.base.content"));
-    myDefaultPresentationPathString = ShelveChangesManager.getDefaultShelfPresentationPath(project);
+    myInfoLabel = new JLabel();
+    myInfoLabel.setBorder(null);
+    myInfoLabel.setForeground(JBColor.GRAY);
     initComponents();
     layoutComponents();
   }
 
   private void initComponents() {
     restoreFromSettings();
-    myUseCustomShelfDirectory.setMnemonic('U');
     myBaseRevisionTexts.setMnemonic('b');
-    myMoveShelvesCheckBox.setMnemonic('M');
-    setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected());
-    myUseCustomShelfDirectory.addChangeListener(e -> {
-      boolean useCustomDir = myUseCustomShelfDirectory.isSelected();
-      setEnabledCustomShelfDirectoryComponents(useCustomDir);
-    });
-  }
-
-  private void setEnabledCustomShelfDirectoryComponents(boolean enabled) {
-    myShelfDirectoryPath.setEnabled(enabled);
-    myShelfDirectoryPath.setEditable(enabled);
-    myShelfDirectoryLabel.setEnabled(enabled);
-    if (!enabled) {
-      myShelfDirectoryPath.setText(myDefaultPresentationPathString);
-    }
-    else if (myProject.isDefault()) {
-      myShelfDirectoryPath.setText("");
-    }
+    updateLabelInfo();
   }
 
   private void layoutComponents() {
     JPanel contentPanel = new JPanel(new GridBagLayout());
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 1, NORTHWEST, NONE,
                                                          JBUI.insets(3), 0, 0);
-    contentPanel.add(myUseCustomShelfDirectory, gb);
-    gb.gridy++;
-    gb.fill = HORIZONTAL;
-    contentPanel.add(createCustomShelfDirectoryPanel(), gb);
-    gb.gridy++;
-    gb.fill = NONE;
-    contentPanel.add(myMoveShelvesCheckBox, gb);
-    gb.gridy++;
     contentPanel.add(createStoreBaseRevisionOption(), gb);
+
+    JPanel shelfConfigurablePanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
+    JButton shelfConfigurableButton = new JButton("Change Shelves Location");
+    shelfConfigurableButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (new ShelfStorageConfigurationDialog(myProject).showAndGet()) {
+          updateLabelInfo();
+        }
+      }
+    });
+    shelfConfigurablePanel.add(shelfConfigurableButton, BorderLayout.WEST);
+    shelfConfigurablePanel.add(myInfoLabel, BorderLayout.CENTER);
+    gb.gridy++;
+    contentPanel.add(shelfConfigurablePanel, gb);
     add(contentPanel, BorderLayout.NORTH);
   }
 
-  private JComponent createCustomShelfDirectoryPanel() {
-    JPanel pathPanel = new JPanel(new BorderLayout());
-    myShelfDirectoryLabel.setLabelFor(myShelfDirectoryPath);
-    myShelfDirectoryLabel.setBorder(JBUI.Borders.emptyLeft(25));
-    pathPanel.add(myShelfDirectoryLabel, BorderLayout.WEST);
-    pathPanel.add(myShelfDirectoryPath, BorderLayout.CENTER);
-    return pathPanel;
+  private void updateLabelInfo() {
+    myInfoLabel.setText(CURRENT_LOCATION_HINT + (myVcsConfiguration.USE_CUSTOM_SHELF_PATH ? toSystemDependentName(
+      assertNotNull(myVcsConfiguration.CUSTOM_SHELF_PATH)) : getDefaultShelfPresentationPath(myProject)));
+  }
+  
+  /**
+   * System dependent path to default shelf dir
+   */
+  @NotNull
+  static String getDefaultShelfPresentationPath(@NotNull Project project) {
+    return toSystemDependentName(project.isDefault() ? DEFAULT_PROJECT_PRESENTATION_PATH : getDefaultShelfPath(project));
   }
 
   private JComponent createStoreBaseRevisionOption() {
@@ -140,34 +115,14 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   }
 
   public void restoreFromSettings() {
-    myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
     myBaseRevisionTexts.setSelected(myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF);
-    myShelfDirectoryPath
-      .setText(myVcsConfiguration.USE_CUSTOM_SHELF_PATH ? myVcsConfiguration.CUSTOM_SHELF_PATH : myDefaultPresentationPathString);
-    myMoveShelvesCheckBox.setSelected(myVcsConfiguration.MOVE_SHELVES);
   }
 
   public boolean isModified() {
-    if (myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected()) return true;
-    if (myVcsConfiguration.USE_CUSTOM_SHELF_PATH != myUseCustomShelfDirectory.isSelected()) return true;
-    if (!StringUtil.equals(myVcsConfiguration.CUSTOM_SHELF_PATH, myShelfDirectoryPath.getText())) return true;
-    if(myVcsConfiguration.MOVE_SHELVES != myMoveShelvesCheckBox.isSelected()) return true;
-    return false;
+    return myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF != myBaseRevisionTexts.isSelected();
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myVcsConfiguration.INCLUDE_TEXT_INTO_SHELF = myBaseRevisionTexts.isSelected();
-    boolean customShelfDir = myUseCustomShelfDirectory.isSelected();
-    String prevShelfPath = myVcsConfiguration.CUSTOM_SHELF_PATH;
-    myVcsConfiguration.USE_CUSTOM_SHELF_PATH = customShelfDir;
-    myVcsConfiguration.CUSTOM_SHELF_PATH = customShelfDir ? myShelfDirectoryPath.getText() : null;
-    myVcsConfiguration.MOVE_SHELVES = myMoveShelvesCheckBox.isSelected();
-    if (!myProject.isDefault()) {
-      myProject.save();
-      if (prevShelfPath != null) {
-        ApplicationManager.getApplication().saveSettings();
-      }
-      ShelveChangesManager.getInstance(myProject).checkAndMigrateUnderProgress(prevShelfPath, myVcsConfiguration.CUSTOM_SHELF_PATH);
-    }
   }
 }
