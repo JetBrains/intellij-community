@@ -22,7 +22,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -70,7 +70,7 @@ public class RecentChangesPopup {
   }
 
   private void showList(JList list, Runnable selectAction) {
-    new PopupChooserBuilder(list).
+    JBPopupFactory.getInstance().createPopupChooserBuilder(list).
       setTitle(getTitle()).
       setItemChoosenCallback(selectAction).
       createPopup().

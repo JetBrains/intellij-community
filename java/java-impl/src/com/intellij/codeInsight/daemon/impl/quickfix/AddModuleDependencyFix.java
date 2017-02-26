@@ -117,7 +117,7 @@ class AddModuleDependencyFix extends AddOrderEntryFix {
     else {
       JBList<Module> list = new JBList<>(myModules);
       list.setCellRenderer(new ModuleListCellRenderer());
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle(QuickFixBundle.message("orderEntry.fix.choose.module.to.add.dependency.on"))
         .setMovable(false)
         .setResizable(false)

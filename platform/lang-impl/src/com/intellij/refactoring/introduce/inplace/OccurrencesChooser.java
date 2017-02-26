@@ -135,7 +135,7 @@ public abstract class OccurrencesChooser<T> {
       }
     });
 
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
+    JBPopupFactory.getInstance().createPopupChooserBuilder(list)
       .setTitle("Multiple occurrences found")
       .setMovable(true)
       .setResizable(false)

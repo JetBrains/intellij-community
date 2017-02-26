@@ -131,7 +131,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
         }
 
         final JList list = new JBList(ArrayUtil.toStringArray(macros));
-        JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(() -> {
+        JBPopupFactory.getInstance().createPopupChooserBuilder(list).setItemChoosenCallback(() -> {
           final Object value = list.getSelectedValue();
           if (value instanceof String) {
             textAccessor.setText('$' + ((String)value) + '$');

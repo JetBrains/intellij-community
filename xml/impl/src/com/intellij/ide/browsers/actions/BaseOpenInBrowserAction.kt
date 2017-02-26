@@ -180,7 +180,7 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
 
   val result = AsyncPromise<Url>()
   JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
+      .createPopupChooserBuilder(list)
       .setTitle("Choose Url")
       .setItemChoosenCallback {
         val value = list.selectedValue

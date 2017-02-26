@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.tasks.Task;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollingUtil;
@@ -221,7 +220,7 @@ public abstract class SearchSupport<T extends Task> {
 
     hideCurrentPopup();
 
-    final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
+    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myList);
     builder.addListener(new JBPopupListener() {
       public void beforeShown(LightweightWindowEvent event) {
         myTextField

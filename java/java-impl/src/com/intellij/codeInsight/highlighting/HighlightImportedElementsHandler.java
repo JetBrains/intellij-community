@@ -20,13 +20,13 @@ import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -99,7 +99,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     final ListCellRenderer renderer = new NavigationItemListCellRenderer();
     list.setCellRenderer(renderer);
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     builder.setFilteringEnabled(o -> {
       if (o instanceof PsiMember) {
         final PsiMember member = (PsiMember)o;

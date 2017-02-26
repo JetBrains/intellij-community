@@ -20,7 +20,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
@@ -92,7 +92,7 @@ public class ImportNSAction implements QuestionAction {
     if (list.getModel().getSize() == 1) {
       runnable.run();
     } else {
-      new PopupChooserBuilder(list).
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list).
         setTitle(myTitle).
         setItemChoosenCallback(runnable).
         createPopup().

@@ -59,7 +59,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -900,7 +900,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       changeView(pane.getId());
     };
 
-    new PopupChooserBuilder(list).
+    JBPopupFactory.getInstance().createPopupChooserBuilder(list).
       setTitle(IdeBundle.message("title.popup.views")).
       setItemChoosenCallback(runnable).
       createPopup().showInCenterOf(getComponent());

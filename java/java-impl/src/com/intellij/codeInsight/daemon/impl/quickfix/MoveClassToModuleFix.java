@@ -130,7 +130,7 @@ public class MoveClassToModuleFix implements IntentionAction {
           return 0;
         }
       });
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle("Choose Class to Move")
         .setMovable(false)
         .setResizable(false)

@@ -33,7 +33,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -303,17 +303,17 @@ public class ExecutionHelper {
         }
       });
 
-      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-      builder.setTitle(selectDialogTitle);
-
-      builder.setItemChoosenCallback(() -> {
-        final Object selectedValue = list.getSelectedValue();
-        if (selectedValue instanceof RunContentDescriptor) {
-          RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
-          descriptorConsumer.consume(descriptor);
-          descriptorToFront(project, descriptor);
-        }
-      }).createPopup().showInBestPositionFor(dataContext);
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
+        .setTitle(selectDialogTitle)
+        .setItemChoosenCallback(() -> {
+          final Object selectedValue = list.getSelectedValue();
+          if (selectedValue instanceof RunContentDescriptor) {
+            RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
+            descriptorConsumer.consume(descriptor);
+            descriptorToFront(project, descriptor);
+          }
+        }).createPopup()
+        .showInBestPositionFor(dataContext);
     }
   }
 

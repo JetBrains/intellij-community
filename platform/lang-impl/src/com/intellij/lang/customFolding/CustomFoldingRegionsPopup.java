@@ -23,7 +23,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class CustomFoldingRegionsPopup {
     myRegionsList.setModel(new MyListModel(orderByPosition(descriptors)));
     myRegionsList.setSelectedIndex(0);
 
-    final PopupChooserBuilder popupBuilder = JBPopupFactory.getInstance().createListPopupBuilder(myRegionsList);
+    final IPopupChooserBuilder popupBuilder = JBPopupFactory.getInstance().createPopupChooserBuilder(myRegionsList);
       myPopup = popupBuilder
         .setTitle(IdeBundle.message("goto.custom.region.command"))
         .setResizable(false)

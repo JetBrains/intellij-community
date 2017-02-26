@@ -130,7 +130,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
     }
 
     JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
+      .createPopupChooserBuilder(list)
       .setTitle("Choose Page to Debug")
       .setCancelOnWindowDeactivation(false)
       .setItemChoosenCallback {

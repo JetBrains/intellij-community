@@ -724,7 +724,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                 return result;
               }
             });
-            JBPopupFactory.getInstance().createListPopupBuilder(list)
+            JBPopupFactory.getInstance().createPopupChooserBuilder(list)
               .setTitle("Choose file to open ")
               .setItemChoosenCallback(() -> {
                 final Object value = list.getSelectedValue();

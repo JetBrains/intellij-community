@@ -22,7 +22,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,7 +104,7 @@ public class CreateParameterForFieldIntention extends Intention {
     final JList list = new JBList(constructors.toArray(new GrMethod[constructors.size()]));
     list.setCellRenderer(new MethodCellRenderer(true));
 
-    new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
+    JBPopupFactory.getInstance().createPopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
       setItemChoosenCallback(() -> {
         final Object[] selectedValues = list.getSelectedValues();
@@ -130,7 +130,7 @@ public class CreateParameterForFieldIntention extends Intention {
     final JList list = new JBList(candidates.toArray(new GrField[candidates.size()]));
     list.setCellRenderer(new DefaultPsiElementCellRenderer());
 
-    new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
+    JBPopupFactory.getInstance().createPopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
       setMovable(true).
       setItemChoosenCallback(() -> {
         final Object[] selectedValues = list.getSelectedValues();

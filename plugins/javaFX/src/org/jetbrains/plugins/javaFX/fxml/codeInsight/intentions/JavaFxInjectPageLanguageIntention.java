@@ -95,7 +95,7 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
       registerPageLanguage(project, containingFile, availableLanguages.iterator().next());
     } else {
       final JBList list = new JBList(availableLanguages);
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setItemChoosenCallback(
           () -> registerPageLanguage(project, containingFile, (String)list.getSelectedValue())).createPopup().showInBestPositionFor(editor);
     }

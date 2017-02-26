@@ -86,7 +86,7 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
       final JBList list = new JBList(currentFiles);
       int width = WindowManager.getInstance().getFrame(project).getSize().width;
       list.setCellRenderer(new GotoFileCellRenderer(width));
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle("Choose Target File")
         .setItemChoosenCallback(() -> {
           VirtualFile file = ((PsiFile)list.getSelectedValue()).getVirtualFile();

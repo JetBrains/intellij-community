@@ -116,7 +116,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     if (fqns.size() > 1) {
       final JBList listOfFqns = new JBList(fqns);
       JBPopupFactory.getInstance()
-        .createListPopupBuilder(listOfFqns)
+        .createPopupChooserBuilder(listOfFqns)
         .setTitle("Select Qualified Name")
         .setItemChoosenCallback(() -> {
           final Object value = listOfFqns.getSelectedValue();
@@ -186,7 +186,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
             initiateDownload(url, jarName);
           } else {
             JBPopupFactory.getInstance()
-            .createListPopupBuilder(libNames)
+            .createPopupChooserBuilder(libNames)
             .setTitle("Select a JAR file")
             .setItemChoosenCallback(() -> {
               final Object value = libNames.getSelectedValue();

@@ -39,7 +39,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
@@ -134,7 +134,7 @@ public final class NavigationUtil {
       }
     };
 
-    PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+    IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     if (title != null) {
       builder.setTitle(title);
     }

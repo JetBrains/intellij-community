@@ -171,7 +171,7 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
           }
         }
       });
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle(StringUtil.notNullize(e.getPresentation().getText()))
         .setMovable(false)
         .setResizable(false)

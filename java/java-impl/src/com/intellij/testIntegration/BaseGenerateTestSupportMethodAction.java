@@ -32,7 +32,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -155,7 +156,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     });
 
 
-    PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     builder.setFilteringEnabled(o -> ((TestFramework)o).getName());
 
     builder

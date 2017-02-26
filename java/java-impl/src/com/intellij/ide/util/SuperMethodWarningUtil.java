@@ -159,7 +159,7 @@ public class SuperMethodWarningUtil {
     final String renameBase = actionString + " base method";
     final String renameCurrent = actionString + " only current method";
     final JBList list = new JBList(renameBase, renameCurrent);
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
+    JBPopupFactory.getInstance().createPopupChooserBuilder(list)
       .setTitle(method.getName() + (containingClass.isInterface() && !aClass.isInterface() ? " implements" : " overrides") + " method of " +
                 SymbolPresentationUtil.getSymbolPresentableText(containingClass))
       .setMovable(false)

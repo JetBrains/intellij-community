@@ -19,7 +19,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -67,7 +68,7 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myList.setCellRenderer(renderer);
 
-      final PopupChooserBuilder builder = new PopupChooserBuilder(myList);
+      final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myList);
       renderer.installSpeedSearch(builder);
 
       final Runnable callback = () -> {

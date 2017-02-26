@@ -19,11 +19,11 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -94,7 +94,7 @@ public class YourkitFilter implements Filter{
       final JList list = new JBList(myPsiFiles);
       list.setCellRenderer(renderer);
 
-      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+      final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
       renderer.installSpeedSearch(builder);
 
       final Runnable runnable = () -> {

@@ -22,7 +22,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -131,7 +132,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
         append(String.format("%s (%s)", fileName, PathUtil.getParentPath(path)));
       }
     });
-    PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     builder.setItemChoosenCallback(() -> {
       final int[] indices = list.getSelectedIndices();
       if (ArrayUtil.indexOf(indices, fileNames.size()) >= 0) {

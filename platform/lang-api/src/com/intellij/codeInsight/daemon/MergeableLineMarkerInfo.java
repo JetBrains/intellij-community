@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -26,7 +26,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -71,7 +69,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     return updatePass;
   }
 
-  public boolean configurePopupAndRenderer(@NotNull PopupChooserBuilder builder,
+  public boolean configurePopupAndRenderer(@NotNull IPopupChooserBuilder builder,
                                            @NotNull JBList list,
                                            @NotNull List<MergeableLineMarkerInfo> markers) {
     return false;
@@ -135,7 +133,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           Collections.sort(infos, (o1, o2) -> o1.startOffset - o2.startOffset);
           final JBList list = new JBList(infos);
           list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT);
-          PopupChooserBuilder builder  = JBPopupFactory.getInstance().createListPopupBuilder(list);
+          IPopupChooserBuilder builder  = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
           if (!markers.get(0).configurePopupAndRenderer(builder, list, infos)) {
             list.installCellRenderer(dom -> {
               if (dom instanceof LineMarkerInfo) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.awt;
 
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-public class RelativePoint {
-
+public class RelativePoint extends UserDataHolderBase {
   private Component myComponent;
   private Point myPointOnComponent;
 

@@ -116,7 +116,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
       final JBList files = new JBList(ArrayUtil.toStringArray(options));
       files.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       final JBPopup popup = JBPopupFactory.getInstance()
-        .createListPopupBuilder(files)
+        .createPopupChooserBuilder(files)
         .setTitle(DevKitBundle.message("select.target.location.of.description", myFilename))
         .setItemChoosenCallback(() -> {
           final int index = files.getSelectedIndex();

@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -129,7 +129,7 @@ public class ImportFromExistingAction implements QuestionAction {
     DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
       @Override
       public void consume(DataContext dataContext) {
-        new PopupChooserBuilder(list)
+        JBPopupFactory.getInstance().createPopupChooserBuilder(list)
           .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
           .setItemChoosenCallback(runnable)
           .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))

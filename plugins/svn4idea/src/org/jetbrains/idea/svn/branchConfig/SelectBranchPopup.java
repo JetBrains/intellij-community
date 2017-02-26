@@ -234,7 +234,7 @@ public class SelectBranchPopup {
 
       final JList branchList = new JBList(items);
       branchList.setCellRenderer(new BranchRenderer());
-      final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
+      final JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(branchList)
         .setTitle(SVNPathUtil.tail(selectedValue))
         .setResizable(true)
         //.setDimensionServiceKey("Svn.CompareWithBranchPopup")

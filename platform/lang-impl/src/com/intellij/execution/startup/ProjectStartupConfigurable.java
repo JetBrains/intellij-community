@@ -48,7 +48,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -305,7 +304,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       }
     });
     final JBPopup popup = JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
+      .createPopupChooserBuilder(list)
       .setItemChoosenCallback(() -> {
         final int index = list.getSelectedIndex();
         if (index < 0) return;

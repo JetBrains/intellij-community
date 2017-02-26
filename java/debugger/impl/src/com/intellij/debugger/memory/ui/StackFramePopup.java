@@ -28,7 +28,7 @@ public class StackFramePopup {
   public static void show(@NotNull List<StackFrameItem> stack, DebugProcessImpl debugProcess) {
     StackFrameList list = new StackFrameList(debugProcess);
     list.setFrameItems(stack, () -> DebuggerUIUtil.invokeLater(() -> {
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle("Select stack frame")
         .setAutoSelectIfEmpty(true)
         .setResizable(false)

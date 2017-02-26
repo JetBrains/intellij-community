@@ -50,6 +50,12 @@ public abstract class JBPopupFactory {
   }
 
   @NotNull
+  public IPopupChooserBuilder createPopupChooserBuilder(@NotNull JList list) {
+    return new PopupChooserBuilder(list);
+  }
+
+  @Deprecated
+  @NotNull
   public PopupChooserBuilder createListPopupBuilder(@NotNull JList list) {
     return new PopupChooserBuilder(list);
   }

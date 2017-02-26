@@ -135,7 +135,7 @@ public class IntroduceTargetChooser {
       }
     });
 
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
+    JBPopupFactory.getInstance().createPopupChooserBuilder(list)
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)

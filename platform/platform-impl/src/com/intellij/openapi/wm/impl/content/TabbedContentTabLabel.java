@@ -85,7 +85,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
         return label;
       }
     });
-    final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+    final JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
       .setItemChoosenCallback(() -> {
         int index = list.getSelectedIndex();
         if (index != -1) {

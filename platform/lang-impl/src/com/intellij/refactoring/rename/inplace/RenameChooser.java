@@ -97,7 +97,7 @@ abstract class RenameChooser {
       }
     });
 
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
+    JBPopupFactory.getInstance().createPopupChooserBuilder(list)
       .setTitle("String occurrences found")
       .setMovable(false)
       .setResizable(false)

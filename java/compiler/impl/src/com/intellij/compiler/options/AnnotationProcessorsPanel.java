@@ -90,7 +90,7 @@ public class AnnotationProcessorsPanel extends JPanel {
               }
               profiles.remove(nodeProfile);
               final JBList list = new JBList(profiles);
-              final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+              final JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
                 .setTitle("Move to")
                 .setItemChoosenCallback(() -> {
                   final Object value = list.getSelectedValue();

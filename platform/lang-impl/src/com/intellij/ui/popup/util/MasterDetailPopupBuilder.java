@@ -26,7 +26,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +53,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   private String myDimensionServiceKey = null;
   private boolean myAddDetailViewToEast = true;
   private ActionGroup myActions = null;
-  private Consumer<PopupChooserBuilder> myPopupTuner = null;
+  private Consumer<IPopupChooserBuilder> myPopupTuner = null;
   private Runnable myDoneRunnable = null;
 
   public MasterDetailPopupBuilder(Project project) {
@@ -181,7 +180,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   }
 
   @NotNull
-  public MasterDetailPopupBuilder setPopupTuner(@Nullable Consumer<PopupChooserBuilder> tuner) {
+  public MasterDetailPopupBuilder setPopupTuner(@Nullable Consumer<IPopupChooserBuilder> tuner) {
     myPopupTuner = tuner;
     return this;
   }
@@ -230,7 +229,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       toolBar.setOpaque(false);
     }
 
-    PopupChooserBuilder builder = createInnerBuilder().
+    IPopupChooserBuilder builder = createInnerBuilder().
       setMovable(true).
       setResizable(true).
       setAutoselectOnMouseMove(false).
@@ -300,7 +299,7 @@ public class MasterDetailPopupBuilder implements MasterController {
     return myPopup;
   }
 
-  private PopupChooserBuilder createInnerBuilder() {
+  private IPopupChooserBuilder createInnerBuilder() {
     if (myChooserComponent instanceof JList) {
       return new MyPopupChooserBuilder((JList)myChooserComponent);
     }

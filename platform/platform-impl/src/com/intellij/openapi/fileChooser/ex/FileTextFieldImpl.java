@@ -28,7 +28,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -359,7 +358,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       }
     });
     myList.getSelectionModel().clearSelection();
-    final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
+    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myList);
     builder.addListener(new JBPopupListener() {
       public void beforeShown(LightweightWindowEvent event) {
         myPathTextField

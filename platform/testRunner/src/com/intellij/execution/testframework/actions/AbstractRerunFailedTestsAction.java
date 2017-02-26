@@ -193,7 +193,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
         }
       });
       //noinspection ConstantConditions
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle("Restart Failed Tests")
         .setMovable(false)
         .setResizable(false)

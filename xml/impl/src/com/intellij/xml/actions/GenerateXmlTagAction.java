@@ -116,7 +116,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         runnable.run();
       }
       else {
-        JBPopupFactory.getInstance().createListPopupBuilder(list)
+        JBPopupFactory.getInstance().createPopupChooserBuilder(list)
           .setTitle("Choose Tag Name")
           .setItemChoosenCallback(runnable)
           .setFilteringEnabled(o -> ((XmlElementDescriptor)o).getName())

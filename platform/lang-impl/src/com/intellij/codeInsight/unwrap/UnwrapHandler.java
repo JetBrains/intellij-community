@@ -123,7 +123,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
       }
     });
 
-    PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+    IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     builder
         .setTitle(CodeInsightBundle.message("unwrap.popup.title"))
         .setMovable(false)

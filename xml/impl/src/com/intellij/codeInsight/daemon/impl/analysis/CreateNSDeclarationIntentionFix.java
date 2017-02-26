@@ -35,7 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnchor;
@@ -331,7 +331,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
         );
       };
 
-      new PopupChooserBuilder(list).
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list).
         setTitle(title).
         setItemChoosenCallback(runnable).
         createPopup().

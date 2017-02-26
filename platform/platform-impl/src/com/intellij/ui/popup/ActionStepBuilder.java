@@ -1,18 +1,3 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.ui.popup;
 
 import com.intellij.icons.AllIcons;
@@ -35,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ActionStepBuilder {
-  private static final Logger LOG = Logger.getInstance(ActionStepBuilder.class);
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
   private final List<PopupFactoryImpl.ActionItem> myListModel;
   private final DataContext myDataContext;
@@ -53,17 +38,17 @@ public class ActionStepBuilder {
   @NotNull private String myActionPlace;
 
   public ActionStepBuilder(@NotNull DataContext dataContext,
-                    final boolean showNumbers,
-                    final boolean useAlphaAsNumbers,
-                    final boolean showDisabled,
-                    final boolean honorActionMnemonics)
+                           final boolean showNumbers,
+                           final boolean useAlphaAsNumbers,
+                           final boolean showDisabled,
+                           final boolean honorActionMnemonics)
   {
     myUseAlphaAsNumbers = useAlphaAsNumbers;
-    myListModel = new ArrayList<PopupFactoryImpl.ActionItem>();
+    myListModel = new ArrayList<>();
     myDataContext = dataContext;
     myShowNumbers = showNumbers;
     myShowDisabled = showDisabled;
-    myAction2presentation = new HashMap<AnAction, Presentation>();
+    myAction2presentation = new HashMap<>();
     myCurrentNumber = 0;
     myPrependWithSeparator = false;
     mySeparatorText = null;
@@ -179,7 +164,7 @@ public class ActionStepBuilder {
 
       Icon icon = presentation.isEnabled() ? presentation.getIcon() : IconLoader.getDisabledIcon(presentation.getIcon());
       IconWrapper iconWrapper;
-      if (icon == null) {
+      if (icon == null && presentation.getHoveredIcon() == null) {
         @NonNls final String actionId = ActionManager.getInstance().getId(action);
         if (actionId != null && actionId.startsWith("QuickList.")) {
           iconWrapper = createWrapper(AllIcons.Actions.QuickList);
@@ -193,13 +178,12 @@ public class ActionStepBuilder {
         }
       }
       else {
-        icon = new IconWrapper(icon, presentation.getHoveredIcon(), myMaxIconWidth, myMaxIconHeight);
+        iconWrapper = new IconWrapper(icon, presentation.getHoveredIcon(), myMaxIconWidth, myMaxIconHeight);
       }
       boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
       assert text != null : action + " has no presentation";
       myListModel.add(
-        new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY), presentation.isEnabled(),
-                                        (PopupFactoryImpl.ActionStepBuilder.IconWrapper)icon,
+        new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY), presentation.isEnabled(), iconWrapper,
                                         prependSeparator, mySeparatorText));
       myPrependWithSeparator = false;
       mySeparatorText = null;

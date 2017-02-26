@@ -132,7 +132,7 @@ public class InheritorChooser {
       classes.add(0, null);
       final JBList list = new JBList(classes);
       list.setCellRenderer(renderer);
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle("Choose executable classes to run " + (psiMethod != null ? psiMethod.getName() : containingClass.getName()))
         .setMovable(false)
         .setResizable(false)

@@ -32,7 +32,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -90,7 +90,7 @@ public class CopyAbstractMethodImplementationHandler {
         PsiMethod element = (PsiMethod)list.getSelectedValue();
         copyImplementation(element);
       };
-      new PopupChooserBuilder(list)
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle(CodeInsightBundle.message("copy.abstract.method.popup.title"))
         .setItemChoosenCallback(runnable)
         .createPopup()
