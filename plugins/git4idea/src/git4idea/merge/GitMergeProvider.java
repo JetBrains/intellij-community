@@ -134,7 +134,13 @@ public class GitMergeProvider implements MergeProvider2 {
           catch (Exception ex) {
             /// unable to load original revision, use the current instead
             /// This could happen in case if rebasing.
-            mergeData.ORIGINAL = file.contentsToByteArray();
+            try {
+              mergeData.ORIGINAL = file.contentsToByteArray();
+            }
+            catch (IOException e) {
+              LOG.error(e);
+              mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
+            }
           }
           mergeData.CURRENT = loadRevisionCatchingErrors(current);
           mergeData.LAST = loadRevisionCatchingErrors(last);
