@@ -17,8 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
@@ -48,12 +46,6 @@ public class LocalChangesUnderRootsTest extends PlatformTestCase {
     myChangeListManager = new MockChangeListManager();
     myBaseDir = myProject.getBaseDir();
     myLocalChangesUnderRoots = new LocalChangesUnderRoots(myChangeListManager, ProjectLevelVcsManager.getInstance(myProject));
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    ((ChangeListManagerImpl) ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
-    super.tearDown();
   }
 
   public void testChangesInTwoGitRoots() {
