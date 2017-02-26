@@ -28,7 +28,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -286,7 +286,8 @@ public class PyPep8NamingInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final JBList list = new JBList(getBaseClassNames());
-      DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> new PopupChooserBuilder(list)
+      DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext ->
+        JBPopupFactory.getInstance().createPopupChooserBuilder(list)
         .setTitle("Ignore base class")
         .setItemChoosenCallback(() -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
           PyPep8NamingInspection inspection =

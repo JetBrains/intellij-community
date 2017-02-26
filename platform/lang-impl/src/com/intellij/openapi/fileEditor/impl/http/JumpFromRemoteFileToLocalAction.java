@@ -23,7 +23,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.FileAppearanceService;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileState;
@@ -76,7 +76,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
           FileAppearanceService.getInstance().forVirtualFile((VirtualFile)value).customize(this);
         }
       });
-      new PopupChooserBuilder(list)
+      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
        .setTitle("Select Target File")
        .setMovable(true)
        .setItemChoosenCallback(() -> {

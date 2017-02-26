@@ -16,6 +16,7 @@
 package git4idea.branch
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.InputDialog
 import com.intellij.openapi.ui.MessagesServiceImpl
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.JBUI
@@ -29,7 +30,7 @@ import javax.swing.JComponent
 internal data class GitNewBranchOptions(val name: String, @get:JvmName("shouldCheckout") val checkout: Boolean)
 
 internal class GitNewBranchDialog(project: Project, dialogTitle: String, validator: GitNewBranchNameValidator) :
-  MessagesServiceImpl.InputDialog(project, "New branch name:", dialogTitle, null, "", validator) {
+  InputDialog(project, "New branch name:", dialogTitle, null, "", validator) {
 
   private lateinit var checkoutCheckbox : JBCheckBox
 

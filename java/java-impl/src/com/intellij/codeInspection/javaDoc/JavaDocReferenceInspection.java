@@ -31,7 +31,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -141,7 +141,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
         asyncResult.doWhenDone(new Consumer<DataContext>() {
           @Override
           public void consume(DataContext dataContext) {
-            new PopupChooserBuilder(list).
+            JBPopupFactory.getInstance().createPopupChooserBuilder(list).
               setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
               setItemChoosenCallback(runnable).
               createPopup().

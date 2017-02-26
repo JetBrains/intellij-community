@@ -32,7 +32,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -189,7 +189,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
     minSize.height *= 4;
     list.setMinimumSize(minSize);
-    JBPopup popup = new PopupChooserBuilder(list).setItemChoosenCallback(() -> {
+    JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list).setItemChoosenCallback(() -> {
       Injectable value = (Injectable)list.getSelectedValue();
       if (value != null) {
         onChosen.process(value);
