@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,9 +273,6 @@ public class GenerationNode extends UserDataHolderBase {
                                          CustomTemplateCallback callback,
                                          @Nullable ZenCodingGenerator generator,
                                          final boolean hasChildren) {
-    /*assert generator == null || generator instanceof XmlZenCodingGenerator :
-      "The generator cannot process TemplateToken because it doesn't inherit XmlZenCodingGenerator";*/
-
     ZenCodingGenerator zenCodingGenerator = ObjectUtils.notNull(generator, XmlZenCodingGeneratorImpl.INSTANCE);
     
     Map<String, String> attributes = token.getAttributes();
@@ -284,10 +281,10 @@ public class GenerationNode extends UserDataHolderBase {
 
     final XmlFile xmlFile = token.getFile();
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, xmlFile.getText(), false, true);
-    final XmlTag tag = dummyFile.getRootTag();
+    PsiFile dummyFile = fileFactory.createFileFromText("dummy.html", callback.getFileType(), xmlFile.getText(),
+                                                       LocalTimeCounter.currentTime(), false, true);
+    XmlTag tag = PsiTreeUtil.findChildOfType(dummyFile, XmlTag.class);
     if (tag != null) {
-
       // autodetect href
       if (EmmetOptions.getInstance().isHrefAutoDetectEnabled() && StringUtil.isNotEmpty(mySurroundedText)) {
         final boolean isEmptyLinkTag = "a".equalsIgnoreCase(tag.getName()) && isEmptyValue(tag.getAttributeValue("href"));
