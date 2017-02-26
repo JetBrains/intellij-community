@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
  */
 package com.intellij.cvsSupport2.ui.experts.importToCvs;
 
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagNameFieldOwner;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.ui.TagNameFieldOwner;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -84,7 +85,9 @@ public class CvsFieldValidator {
       dialog.enableOkAction();
     }
     else {
-      field.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(field, true);
+      });
     }
   }
 

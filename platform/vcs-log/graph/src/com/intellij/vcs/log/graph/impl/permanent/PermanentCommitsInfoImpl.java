@@ -44,12 +44,7 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
       commitIdIndex = (List<CommitId>)createCompressedIntList((List<? extends GraphCommit<Integer>>)graphCommits);
     }
     else {
-      commitIdIndex = ContainerUtil.map(graphCommits, new Function<GraphCommit<CommitId>, CommitId>() {
-        @Override
-        public CommitId fun(GraphCommit<CommitId> graphCommit) {
-          return graphCommit.getId();
-        }
-      });
+      commitIdIndex = ContainerUtil.map(graphCommits, (Function<GraphCommit<CommitId>, CommitId>)GraphCommit::getId);
     }
     return new PermanentCommitsInfoImpl<>(timestampGetter, commitIdIndex, notLoadedCommits);
   }
@@ -146,22 +141,12 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull
   public List<CommitId> convertToCommitIdList(@NotNull Collection<Integer> commitIndexes) {
-    return ContainerUtil.map(commitIndexes, new Function<Integer, CommitId>() {
-      @Override
-      public CommitId fun(Integer integer) {
-        return getCommitId(integer);
-      }
-    });
+    return ContainerUtil.map(commitIndexes, this::getCommitId);
   }
 
   @NotNull
   public Set<CommitId> convertToCommitIdSet(@NotNull Collection<Integer> commitIndexes) {
-    return ContainerUtil.map2Set(commitIndexes, new Function<Integer, CommitId>() {
-      @Override
-      public CommitId fun(Integer integer) {
-        return getCommitId(integer);
-      }
-    });
+    return ContainerUtil.map2Set(commitIndexes, this::getCommitId);
   }
 
   @NotNull

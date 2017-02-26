@@ -31,7 +31,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class VcsLogFileRevision extends VcsFileRevisionEx {
-  @Nullable private final ContentRevision myRevision;
+  @NotNull private final ContentRevision myRevision;
   @NotNull private final FilePath myPath;
   private final long myAuthorTime;
   @NotNull private final String myFullMessage;
@@ -39,7 +39,7 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
   @NotNull private final VcsUser myAuthor;
   @NotNull private final VcsUser myCommitter;
 
-  public VcsLogFileRevision(@NotNull VcsFullCommitDetails details, @Nullable ContentRevision revision, @NotNull FilePath path) {
+  public VcsLogFileRevision(@NotNull VcsFullCommitDetails details, @NotNull ContentRevision revision, @NotNull FilePath path) {
     myRevision = revision;
     myPath = path;
 
@@ -101,12 +101,10 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
   public byte[] loadContent() throws IOException, VcsException {
     if (myContent != null) return myContent;
 
-    if (myRevision != null) {
-      String content = myRevision.getContent();
-      if (content != null) {
-        myContent = content.getBytes(myPath.getCharset().name());
-        return myContent;
-      }
+    String content = myRevision.getContent();
+    if (content != null) {
+      myContent = content.getBytes(myPath.getCharset().name());
+      return myContent;
     }
     return null;
   }
@@ -117,9 +115,9 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     return myContent;
   }
 
+  @NotNull
   @Override
   public VcsRevisionNumber getRevisionNumber() {
-    if (myRevision == null) return null;
     return myRevision.getRevisionNumber();
   }
 

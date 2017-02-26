@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
@@ -185,7 +186,9 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
   public void navigate(final DomElement element) {
     final EditorTextField field = getEditorTextField(getComponent());
     SwingUtilities.invokeLater(() -> {
-      field.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(field, true);
+      });
       field.selectAll();
     });
   }

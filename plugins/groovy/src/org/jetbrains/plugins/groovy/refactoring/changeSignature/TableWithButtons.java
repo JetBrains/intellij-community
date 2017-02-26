@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.RowEditableTableModel;
 import com.intellij.ui.table.JBTable;
 
@@ -40,7 +41,9 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(myModel.getRowCount() - 1, myModel.getRowCount() - 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        myTable.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+        });
       }
     });
     myRemoveButton.addActionListener(new ActionListener() {
@@ -56,7 +59,9 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow, selectedRow);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        myTable.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+        });
       }
     });
     myMoveUpButton.addActionListener(new ActionListener() {
@@ -68,7 +73,9 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow - 1, selectedRow - 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        myTable.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+        });
       }
     });
     myMoveDownButton.addActionListener(new ActionListener() {
@@ -80,7 +87,9 @@ public abstract class TableWithButtons {
         myTable.setRowSelectionInterval(selectedRow + 1, selectedRow + 1);
         myTable.setColumnSelectionInterval(selectedColumn, selectedColumn);
         innerUpdate();
-        myTable.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+        });
       }
     });
 

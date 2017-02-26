@@ -16,6 +16,8 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -24,6 +26,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.SearchTextField.FindAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +36,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
 
 public class SettingsDialog extends DialogWrapper implements DataProvider {
   public static final String DIMENSION_KEY = "SettingsEditor";
@@ -83,6 +88,8 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     String title = CommonBundle.settingsTitle();
     if (project != null && project.isDefault()) title = "Default " + title;
     setTitle(name == null ? title : name.replace('\n', ' '));
+    AnAction action = ActionManager.getInstance().getAction(ACTION_FIND);
+    if (action != null) new FindAction().registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), myDisposable);
     init();
   }
 

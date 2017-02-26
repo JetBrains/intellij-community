@@ -306,7 +306,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().invokeLater(() -> clean());
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      clean();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(this::clean);
+    }
   }
 
   @Nullable

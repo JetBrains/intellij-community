@@ -30,17 +30,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
 public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
-  private final static Logger LOG = Logger.getInstance(AlphaUnsortedPropertiesFileInspection.class);
-  private final static String MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE = "Property keys of resource bundle '%s' aren't alphabetically sorted";
+  private static final Logger LOG = Logger.getInstance(AlphaUnsortedPropertiesFileInspection.class);
+  private static final String MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE = "Property keys of resource bundle '%s' aren't alphabetically sorted";
 
   @NotNull
   @Override
@@ -73,8 +74,8 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
     };
   }
 
-  private static boolean isResourceBundleAlphaSortedExceptOneFile(final @NotNull ResourceBundle resourceBundle,
-                                                                  final @NotNull PropertiesFile exceptedFile) {
+  private static boolean isResourceBundleAlphaSortedExceptOneFile(@NotNull final ResourceBundle resourceBundle,
+                                                                  @NotNull final PropertiesFile exceptedFile) {
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       if (!(file instanceof PropertiesFileImpl)) {
         return true;

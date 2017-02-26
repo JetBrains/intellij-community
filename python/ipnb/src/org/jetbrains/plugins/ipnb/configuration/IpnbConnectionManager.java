@@ -105,9 +105,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                @NotNull final String path) {
     final String url = getURL();
     if (connectToIpythonServer(codePanel, fileEditor, path, url)) return;
-    final String username = IpnbSettings.getInstance(myProject).getUsername();
-    final String password = IpnbSettings.getInstance(myProject).getPassword();
-    final boolean isRemote = !username.isEmpty() && !password.isEmpty();
+    final boolean isRemote = IpnbSettings.getInstance(myProject).isRemote(myProject.getLocationHash());
     if (!isRemote) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final boolean serverStarted = startIpythonServer(url, fileEditor);
@@ -124,7 +122,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                          @NotNull final String path,
                                          @NotNull final String url) {
     final IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
-    final boolean isRemote = !ipnbSettings.getUsername().isEmpty() && !ipnbSettings.getPassword().isEmpty();
+    final boolean isRemote = ipnbSettings.isRemote(myProject.getLocationHash());
     if (!isRemote) {
       if (myToken != null) return startConnection(codePanel, path, url, true);
       final Module module = ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(fileEditor.getVirtualFile());
@@ -168,7 +166,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
       socket.connect(new InetSocketAddress(host, Integer.parseInt(port)), 1000);
       return true;
     }
-    catch (IOException e) {
+    catch (IOException | IllegalArgumentException e) {
       return false;
     }
   }
@@ -194,6 +192,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
                                          catch (URISyntaxException e) {
                                            return false;
                                          }
+                                         // Do not start notebook if host is busy
                                          if (pingHost(inputString)) return false;
                                          return !inputString.isEmpty();
                                        }
@@ -295,6 +294,10 @@ public final class IpnbConnectionManager implements ProjectComponent {
     }
     catch (UnsupportedOperationException e) {
       showWarning(codePanel.getFileEditor(), e.getMessage(), new IpnbSettingsAdapter());
+    }
+    catch (UnknownHostException e) {
+      showWarning(codePanel.getFileEditor(), "Please, check Jupyter Notebook URL in <a href=\"\">Settings->Tools->Jupyter Notebook</a>",
+                  new IpnbSettingsAdapter());
     }
     catch (IOException e) {
       if (IpnbConnection.AUTHENTICATION_NEEDED.equals(e.getMessage())) {

@@ -35,10 +35,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.ContainingBranchesGetter;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.LoadingDetails;
-import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import git4idea.GitRemoteBranch;
@@ -92,8 +89,15 @@ public class GitUncommitAction extends DumbAwareAction {
       return;
     }
 
+    DataPackBase dataPackBase = ((VisiblePack)ui.getDataPack()).getDataPack();
+    if (!(dataPackBase instanceof DataPack)) {
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
     // support undo only for the last commit in the branch
-    DataPack dataPack = (DataPack)((VisiblePack)ui.getDataPack()).getDataPack();
+    DataPack dataPack = (DataPack)dataPackBase;
     List<Integer> children = dataPack.getPermanentGraph().getChildren(data.getCommitIndex(hash, root));
     if (!children.isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);

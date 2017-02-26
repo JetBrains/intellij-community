@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.Alarm;
@@ -272,7 +273,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
-    return Settings.KEY.is(dataId) ? mySettings : null;
+    return Settings.KEY.is(dataId) ? mySettings : SearchTextField.KEY.is(dataId) ? mySearch : null;
   }
 
   @Override

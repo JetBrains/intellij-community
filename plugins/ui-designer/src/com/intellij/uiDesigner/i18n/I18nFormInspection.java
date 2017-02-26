@@ -33,13 +33,13 @@ import com.intellij.uiDesigner.inspections.FormErrorCollector;
 import com.intellij.uiDesigner.inspections.StringDescriptorInspection;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
+import com.intellij.uiDesigner.lw.ITabbedPane;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.BorderProperty;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadTabbedPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +51,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
     super("HardCodedStringLiteral");
   }
 
+  @Override
   protected void checkStringDescriptor(final Module module,
                                        final IComponent component,
                                        final IProperty prop,
@@ -69,14 +70,16 @@ public class I18nFormInspection extends StringDescriptorInspection {
 
       if (prop.getName().equals(BorderProperty.NAME)) {
         provider = new EditorQuickFixProvider() {
+          @Override
           public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
             return new I18nizeFormBorderQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.border.title"),
                                                  (RadContainer)component);
           }
         };
       }
-      else if (prop.getName().equals(RadTabbedPane.TAB_TITLE_PROPERTY) || prop.getName().equals(RadTabbedPane.TAB_TOOLTIP_PROPERTY)) {
+      else if (prop.getName().equals(ITabbedPane.TAB_TITLE_PROPERTY) || prop.getName().equals(ITabbedPane.TAB_TOOLTIP_PROPERTY)) {
         provider = new EditorQuickFixProvider() {
+          @Override
           public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
             return new I18nizeTabTitleQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.tab.title", prop.getName()),
                                                component, prop.getName());
@@ -85,6 +88,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
       }
       else {
         provider = new EditorQuickFixProvider() {
+          @Override
           public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
             return new I18nizeFormPropertyQuickFix(editor, UIDesignerBundle.message("i18n.quickfix.property", prop.getName()),
                                                    component,
@@ -100,15 +104,13 @@ public class I18nFormInspection extends StringDescriptorInspection {
   }
 
   private static boolean isPropertyDescriptor(final IProperty prop) {
-    return !prop.getName().equals(BorderProperty.NAME) && !prop.getName().equals(RadTabbedPane.TAB_TITLE_PROPERTY) &&
-           !prop.getName().equals(RadTabbedPane.TAB_TOOLTIP_PROPERTY);
+    return !prop.getName().equals(BorderProperty.NAME) && !prop.getName().equals(ITabbedPane.TAB_TITLE_PROPERTY) &&
+           !prop.getName().equals(ITabbedPane.TAB_TOOLTIP_PROPERTY);
   }
 
   private static boolean isHardCodedStringDescriptor(final StringDescriptor descriptor) {
-    if (descriptor.isNoI18n()) {
-      return false;
-    }
-    return descriptor.getBundleName() == null &&
+    return !descriptor.isNoI18n() &&
+           descriptor.getBundleName() == null &&
            descriptor.getKey() == null &&
            StringUtil.containsAlphaCharacters(descriptor.getValue());
   }
@@ -132,6 +134,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
     return false;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {

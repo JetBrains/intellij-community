@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -100,7 +101,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Nullable
   public VirtualFile createVcsVirtualFile(@Nullable VcsFileRevision revision) {
-    if (revision != null && !VcsFileRevision.NULL.equals(revision)) {
+    if (!VcsHistoryUtil.isEmpty(revision)) {
       if (revision instanceof VcsFileRevisionEx) {
         FilePath path = ((VcsFileRevisionEx)revision).getPath();
         return path.isDirectory()
@@ -118,14 +119,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       for (Change change : changes) {
         ContentRevision revision = change.getAfterRevision();
         if (revision != null) {
-          return new VcsLogFileRevision(details, change.getAfterRevision(), revision.getFile());
+          return new VcsLogFileRevision(details, revision, revision.getFile());
         }
       }
       if (!changes.isEmpty()) {
+        // file was deleted
         return VcsFileRevision.NULL;
       }
     }
-    // this is ok, file was deleted here
     return null;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -347,10 +347,10 @@ public class ExecutionHelper {
     executeExternalProcess(myProject, processHandler, mode, cmdline.getCommandLineString());
   }
 
-  public static void executeExternalProcess(@Nullable final Project myProject,
-                                            @NotNull final ProcessHandler processHandler,
-                                            @NotNull final ExecutionMode mode,
-                                            @NotNull final String presentableCmdline) {
+  private static void executeExternalProcess(@Nullable final Project myProject,
+                                             @NotNull final ProcessHandler processHandler,
+                                             @NotNull final ExecutionMode mode,
+                                             @NotNull final String presentableCmdline) {
     final String title = mode.getTitle() != null ? mode.getTitle() : "Please wait...";
     final Runnable process;
     if (mode.cancelable()) {

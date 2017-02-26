@@ -16,15 +16,12 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -35,8 +32,7 @@ import com.intellij.refactoring.changeSignature.inplace.ApplyChangeSignatureActi
 import com.intellij.refactoring.changeSignature.inplace.InplaceChangeSignature;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-
-import java.util.Optional;
+import com.intellij.util.containers.ContainerUtil;
 
 /**
  * User: anna
@@ -45,33 +41,17 @@ import java.util.Optional;
 @PlatformTestCase.WrapInCommand
 public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase {
 
-  private void doTest(final Runnable run, boolean shouldShow) {
+  private void doTest(final Runnable run) {
     myFixture.configureByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + ".java");
     myFixture.enableInspections(new UnusedDeclarationInspection());
-    final EditorEx editor = (EditorEx)myFixture.getEditor();
-    final Document document = editor.getDocument();
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> new InplaceChangeSignature(myFixture.getProject(), editor, myFixture.getFile().findElementAt(myFixture.getCaretOffset())),
-                                                  ChangeSignatureHandler.REFACTORING_NAME, null);
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        run.run();
-      }
-    }.execute().throwException();
+    CommandProcessor.getInstance().executeCommand(
+      myFixture.getProject(), () ->
+        new InplaceChangeSignature(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile().findElementAt(myFixture.getCaretOffset())),
+      ChangeSignatureHandler.REFACTORING_NAME, null);
+    run.run();
 
-
-    myFixture.doHighlighting();
-    Optional<IntentionAction> intentionAction =
-      myFixture.getAvailableIntentions().stream().filter(action -> action instanceof ApplyChangeSignatureAction).findFirst();
-    if (shouldShow) {
-      final IntentionAction intention = intentionAction.orElse(null);
-      assertNotNull(intention);
-      myFixture.launchAction(intention);
-      myFixture.checkResultByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + "_after.java");
-    }
-    else {
-      assertFalse(intentionAction.isPresent());
-    }
+    myFixture.launchAction(ContainerUtil.findInstance(myFixture.getAvailableIntentions(), ApplyChangeSignatureAction.class));
+    myFixture.checkResultByFile("/refactoring/changeSignatureGesture/" + getTestName(false) + "_after.java");
   }
 
   public void testSimple() {
@@ -111,7 +91,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
         myFixture.type('\b');
       }
       myFixture.type("boolean");
-    }, true);
+    });
   }
 
   public void testNewParam() {
@@ -127,7 +107,7 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
   }
 
   private void doTypingTest(final String param) {
-    doTest(() -> myFixture.type(param), true);
+    doTest(() -> myFixture.type(param));
   }
 
   public void testModifier() {
@@ -136,10 +116,6 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
 
   public void testAddParameterFinal() {
     doTypingTest("final int param");
-  }
-
-  private void doTypingNoBorderTest(final String param) {
-    doTest(() -> myFixture.type(param), false);
   }
 
   public void testDeleteParamInSuperUsed() {
@@ -158,10 +134,9 @@ public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase 
       final Document document = editor.getDocument();
       final int selectionStart = editor.getSelectionModel().getSelectionStart();
       final int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-      CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
-      document.deleteString(selectionStart, selectionEnd);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(selectionStart, selectionEnd));
       editor.getCaretModel().moveToOffset(selectionStart);
-    }, true);
+    });
   }
 
   @Override

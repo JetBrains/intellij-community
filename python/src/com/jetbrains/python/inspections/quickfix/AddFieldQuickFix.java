@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -71,7 +72,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return "Add field to class";
   }
 
-  @Nullable
+  @NotNull
   public static PsiElement appendToMethod(PyFunction init, Function<String, PyStatement> callback) {
     // add this field as the last stmt of the constructor
     final PyStatementList statementList = init.getStatementList();
@@ -82,7 +83,6 @@ public class AddFieldQuickFix implements LocalQuickFix {
       selfName = params[0].getName();
     }
     final PyStatement newStmt = callback.fun(selfName);
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(statementList)) return null;
     final PsiElement result = PyUtil.addElementToStatementList(newStmt, statementList, true);
     PyPsiUtils.removeRedundantPass(statementList);
     return result;
@@ -94,21 +94,30 @@ public class AddFieldQuickFix implements LocalQuickFix {
     final PyClassType type = getClassType(element);
     if (type == null) return;
     final PyClass cls = type.getPyClass();
-    PsiElement initStatement;
-    if (!type.isDefinition()) {
-      initStatement = addFieldToInit(project, cls, myIdentifier, new CreateFieldCallback(project, myIdentifier, myInitializer));
-    }
-    else {
-      PyStatement field = PyElementGenerator.getInstance(project)
-        .createFromText(LanguageLevel.getDefault(), PyStatement.class, myIdentifier + " = " + myInitializer);
-      initStatement = PyUtil.addElementToStatementList(field, cls.getStatementList(), true);
-    }
-    if (initStatement != null) {
-      showTemplateBuilder(initStatement, cls.getContainingFile());
-      return;
-    }
-    // somehow we failed. tell about this
-    PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(cls)) return;
+
+    WriteAction.run(() -> {
+      PsiElement initStatement;
+      if (!type.isDefinition()) {
+        initStatement = addFieldToInit(project, cls, myIdentifier, new CreateFieldCallback(project, myIdentifier, myInitializer));
+      }
+      else {
+        PyStatement field = PyElementGenerator.getInstance(project)
+          .createFromText(LanguageLevel.getDefault(), PyStatement.class, myIdentifier + " = " + myInitializer);
+        initStatement = PyUtil.addElementToStatementList(field, cls.getStatementList(), true);
+      }
+      if (initStatement != null) {
+        showTemplateBuilder(initStatement, cls.getContainingFile());
+        return;
+      }
+      // somehow we failed. tell about this
+      PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
+    });
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   private static PyClassType getClassType(@NotNull final PsiElement element) {
@@ -156,10 +165,6 @@ public class AddFieldQuickFix implements LocalQuickFix {
           if (init != null) break;
         }
         PyFunction newInit = createInitMethod(project, cls, init);
-        if (newInit == null) {
-          return null;
-        }
-
         appendToMethod(newInit, callback);
 
         PsiElement addAnchor = null;
@@ -177,12 +182,9 @@ public class AddFieldQuickFix implements LocalQuickFix {
     return null;
   }
 
-  @Nullable
+  @NotNull
   private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit) {
     // found it; copy its param list and make a call to it.
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(cls)) {
-      return null;
-    }
     String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";
 
     String functionText = "def " + PyNames.INIT + paramList + ":\n";

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.util.ConcurrencyUtil;
 import junit.framework.TestCase;
 
 public class ConcurrentBitSetTest extends TestCase {
@@ -86,9 +87,7 @@ public class ConcurrentBitSetTest extends TestCase {
       threads[i] = thread;
       thread.start();
     }
-    for (Thread thread : threads) {
-      thread.join();
-    }
+    ConcurrencyUtil.joinAll(threads);
 
     assertEquals(-1, bitSet.nextSetBit(0));
   }
@@ -109,9 +108,7 @@ public class ConcurrentBitSetTest extends TestCase {
       threads[i] = thread;
       thread.start();
     }
-    for (Thread thread : threads) {
-      thread.join();
-    }
+    ConcurrencyUtil.joinAll(threads);
 
     assertEquals(-1, bitSet.nextSetBit(0));
   }

@@ -180,6 +180,8 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
           })
           .createPopup();
 
+        list.setVisibleRowCount(30); // override default of 15 set when createPopup() is called
+
         popup.show(point);
       }, 300);
     }

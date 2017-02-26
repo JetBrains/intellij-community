@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
@@ -286,7 +287,9 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
         myTable.getSelectionModel().clearSelection();
       }
     }
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   public void removeAllElements() {
@@ -322,7 +325,9 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     myTableModel.addElement(element, markState);
     myElementToPropertiesMap.put(element, elementProperties);
     selectRow(myTableModel.getRowCount() - 1);
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   public void setElementProperties(T element, ElementProperties properties) {
@@ -365,7 +370,9 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     final int[] rows = getElementsRows(elements);
     TableUtil.selectRows(myTable, rows);
     TableUtil.scrollSelectionToVisible(myTable);
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   private int[] getElementsRows(final Collection<? extends T> elements) {

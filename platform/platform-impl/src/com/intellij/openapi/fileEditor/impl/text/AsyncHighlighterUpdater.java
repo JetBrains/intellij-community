@@ -33,9 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * @author peter
@@ -82,14 +80,25 @@ public class AsyncHighlighterUpdater extends ReadTask {
   @TestOnly
   public static void completeAsyncTasks() {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
-    for (Future<?> future : ourHighlighterFutures) {
+    ApplicationManager.getApplication().invokeAndWait(() -> ourHighlighterFutures.forEach(AsyncHighlighterUpdater::waitForFuture));
+    UIUtil.dispatchAllInvocationEvents();
+  }
+
+  @TestOnly
+  private static void waitForFuture(Future<?> future) {
+    int iteration = 0;
+    while (!future.isDone() && iteration++ < 1000) {
+      UIUtil.dispatchAllInvocationEvents();
       try {
-        future.get();
+        future.get(10, TimeUnit.MILLISECONDS);
+        return;
+      }
+      catch (TimeoutException ignore) {
       }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
-    UIUtil.dispatchAllInvocationEvents();
+    assert future.isDone() : "Too long async highlighter";
   }
 }

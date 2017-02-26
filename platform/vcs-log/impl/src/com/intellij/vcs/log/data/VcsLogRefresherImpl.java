@@ -179,12 +179,12 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   }
 
   @NotNull
-  private GraphCommitImpl<Integer> compactCommit(@NotNull TimedVcsCommit commit, @NotNull final VirtualFile root) {
+  private GraphCommit<Integer> compactCommit(@NotNull TimedVcsCommit commit, @NotNull final VirtualFile root) {
     List<Integer> parents = ContainerUtil.map(commit.getParents(),
                                               (NotNullFunction<Hash, Integer>)hash -> myStorage.getCommitIndex(hash, root));
     int index = myStorage.getCommitIndex(commit.getId(), root);
     myIndex.markForIndexing(index, root);
-    return new GraphCommitImpl<>(index, parents, commit.getTimestamp());
+    return GraphCommitImpl.createIntCommit(index, parents, commit.getTimestamp());
   }
 
   private void storeUsersAndDetails(@NotNull List<? extends VcsCommitMetadata> metadatas) {
@@ -368,7 +368,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   }
 
   private static class RefreshRequest {
-    private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.<VirtualFile>emptyList()) {
+    private static final RefreshRequest RELOAD_ALL = new RefreshRequest(Collections.emptyList()) {
       @Override
       public String toString() {
         return "RELOAD_ALL";

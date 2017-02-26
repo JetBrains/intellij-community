@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +32,8 @@ import java.util.Collection;
 public class PluginOptionsTopHitProvider extends OptionsTopHitProvider {
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
-    ArrayList<BooleanOptionDescription> options = new ArrayList<>();
+  public Collection<OptionDescription> getOptions(@Nullable Project project) {
+    ArrayList<OptionDescription> options = new ArrayList<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor pluginDescriptor : PluginManagerCore.getPlugins()) {
       if (applicationInfo.isEssentialPlugin(pluginDescriptor.getPluginId().getIdString())) {

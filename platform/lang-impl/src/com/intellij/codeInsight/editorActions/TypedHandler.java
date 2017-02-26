@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class TypedHandler extends TypedActionHandlerBase {
 
   @Override
   public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
-    if (COMPLEX_CHARS.contains(c)) return;
+    if (COMPLEX_CHARS.contains(c) || Character.isSurrogate(c)) return;
 
     if (editor.isInsertMode()) {
       int offset = plan.getCaretOffset();

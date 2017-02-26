@@ -146,11 +146,12 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
   }
 
   private List<GroovyResolveResult> filterCorrectParameterCount(Collection<GroovyResolveResult> candidates) {
-    if (myArgumentTypes == null) return ContainerUtil.newArrayList(candidates);
+    PsiType[] argumentTypes = myArgumentTypes.getValue();
+    if (argumentTypes == null) return ContainerUtil.newArrayList(candidates);
     final List<GroovyResolveResult> result = ContainerUtil.newSmartList();
     for (GroovyResolveResult candidate : candidates) {
       if (candidate instanceof GroovyMethodResult) {
-        if (((GroovyMethodResult)candidate).getElement().getParameterList().getParametersCount() == myArgumentTypes.length) {
+        if (((GroovyMethodResult)candidate).getElement().getParameterList().getParametersCount() == argumentTypes.length) {
           result.add(candidate);
         }
       }
@@ -197,7 +198,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
   @Nullable
   @Override
   public PsiType[] getArgumentTypes() {
-    return myArgumentTypes;
+    return myArgumentTypes.getValue();
   }
 
   @Nullable

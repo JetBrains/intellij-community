@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemService;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -141,9 +142,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
       if (!exc.isNull()) {
         throw exc.get();
       }
-      for (Thread thread : threads) {
-        thread.join();
-      }
+      ConcurrencyUtil.joinAll(threads);
     }
   }
 

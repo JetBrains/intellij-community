@@ -988,7 +988,7 @@ public class AbstractTreeUi {
       final ActionCallback result = new ActionCallback();
       Object eachParent = element;
       while(eachParent != null) {
-        DefaultMutableTreeNode node = getNodeForElement(element, false);
+        DefaultMutableTreeNode node = getNodeForElement(eachParent, false);
         if (node != null) {
           addSubtreeToUpdate(node, updateStructure);
           break;
@@ -2959,8 +2959,10 @@ public class AbstractTreeUi {
     }
     final Object oldElement = getElementFromDescriptor(childDescriptor);
     if (oldElement == null) {
-      pass.expire();
-      return Promises.<Void>rejectedPromise();
+      // if a tree node with removed element was not properly removed from a tree model
+      // we must not ignore this situation and should remove a wrong node
+      removeNodeFromParent(childNode, true);
+      return Promises.<Void>resolvedPromise();
     }
 
     Promise<Boolean> update;
@@ -4068,7 +4070,7 @@ public class AbstractTreeUi {
 
     Object anchor = TreeAnchorizer.getService().createAnchor(element);
     Object o = myElementToNodeMap.get(anchor);
-    TreeAnchorizer.getService().freeAnchor(element);
+    TreeAnchorizer.getService().freeAnchor(anchor);
 
     if (o instanceof List) {
       final TreePath[] paths = getTree().getSelectionPaths();

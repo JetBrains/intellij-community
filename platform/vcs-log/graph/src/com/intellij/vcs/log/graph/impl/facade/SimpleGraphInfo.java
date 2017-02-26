@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -86,7 +85,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
                                                 if (row1 < start || row1 >= end) return null;
                                                 return permanentCommitsInfo.getCommitId(linearGraph.getNodeId(row1));
                                               }));
-      graphCommits.add(new GraphCommitImpl<>(commit, parents, permanentCommitsInfo.getTimestamp(nodeId)));
+      graphCommits.add(GraphCommitImpl.createCommit(commit, parents, permanentCommitsInfo.getTimestamp(nodeId)));
       commitsIdMap.add(commit);
     }
     IntTimestampGetter timestampGetter = PermanentCommitsInfoImpl.createTimestampGetter(graphCommits);

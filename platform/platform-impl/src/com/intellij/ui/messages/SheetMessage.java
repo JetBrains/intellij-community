@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import java.awt.event.WindowEvent;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
  * Created by Denis Fokin
@@ -134,10 +136,14 @@ public class SheetMessage {
       focusCandidate = IdeFocusManager.getGlobalInstance().getLastFocusedFor(IdeFocusManager.getGlobalInstance().getLastFocusedFrame());
     }
 
+    final Component finalFocusCandidate = focusCandidate;
+
     // focusCandidate is null if a welcome screen is closed and ide frame is not opened.
     // this is ok. We set focus correctly on our frame activation.
     if (focusCandidate != null) {
-      focusCandidate.requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        getGlobalInstance().requestFocus(finalFocusCandidate, true);
+      });
     }
   }
 

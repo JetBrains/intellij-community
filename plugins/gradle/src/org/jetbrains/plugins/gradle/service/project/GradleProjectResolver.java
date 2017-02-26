@@ -38,6 +38,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
@@ -288,8 +289,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     allModels.setBuildEnvironment(buildEnvironment);
 
     final long startDataConversionTime = System.currentTimeMillis();
-    extractExternalProjectModels(allModels, resolverCtx.isPreviewMode());
-    resolverCtx.setModels(allModels);
+    extractExternalProjectModels(allModels, resolverCtx);
 
     // import project data
     ProjectData projectData = projectResolverChain.createProject();
@@ -308,8 +308,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       throw new IllegalStateException("No modules found for the target project: " + ideaProject);
     }
 
-    List<IdeaModule> gradleModulesWithIncludedBuilds = exposeCompositeBuild(allModels, projectDataNode, gradleModules);
-
+    Collection<IdeaModule> includedModules = exposeCompositeBuild(allModels, projectDataNode);
     final Map<String /* module id */, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap = ContainerUtilRt.newHashMap();
     final Map<String /* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetsMap = ContainerUtil.newHashMap();
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, sourceSetsMap);
@@ -322,7 +321,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
 
     // import modules data
-    for (IdeaModule gradleModule : gradleModulesWithIncludedBuilds) {
+    for (IdeaModule gradleModule : ContainerUtil.concat(gradleModules, includedModules)) {
       if (gradleModule == null) {
         continue;
       }
@@ -338,7 +337,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
 
       DataNode<ModuleData> moduleDataNode = projectResolverChain.createModule(gradleModule, projectDataNode);
-      String mainModuleId = getModuleId(gradleModule);
+      String mainModuleId = getModuleId(resolverCtx, gradleModule);
+
+      if (moduleMap.containsKey(mainModuleId)) {
+        // we should ensure deduplicated module names in the scope of single import
+        throw new IllegalStateException("Duplicate modules names detected: " + gradleModule);
+      }
       moduleMap.put(mainModuleId, Pair.create(moduleDataNode, gradleModule));
     }
 
@@ -415,18 +419,21 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   @NotNull
-  private static List<IdeaModule> exposeCompositeBuild(ProjectImportAction.AllModels allModels,
-                                                       DataNode<ProjectData> projectDataNode,
-                                                       DomainObjectSet<? extends IdeaModule> gradleModules) {
-    List<IdeaModule> gradleModulesWithIncludedBuilds = ContainerUtil.newArrayList(gradleModules.getAll());
+  private static Collection<IdeaModule> exposeCompositeBuild(ProjectImportAction.AllModels allModels,
+                                                             DataNode<ProjectData> projectDataNode) {
+    CompositeBuildData compositeBuildData = null;
+    List<IdeaModule> gradleIncludedModules = new SmartList<>();
     List<IdeaProject> includedBuilds = allModels.getIncludedBuilds();
     if (!includedBuilds.isEmpty()) {
       ProjectData projectData = projectDataNode.getData();
-      CompositeBuildData compositeBuildData = new CompositeBuildData(projectData.getLinkedExternalProjectPath());
+      compositeBuildData = new CompositeBuildData(projectData.getLinkedExternalProjectPath());
       for (IdeaProject project : includedBuilds) {
         if (!project.getModules().isEmpty()) {
+          String rootProjectName = project.getName();
           BuildParticipant buildParticipant = new BuildParticipant();
-          gradleModulesWithIncludedBuilds.addAll(project.getModules());
+          for (IdeaModule ideaModule : project.getModules()) {
+            gradleIncludedModules.add(ideaModule);
+          }
           GradleProject gradleProject = project.getModules().getAt(0).getGradleProject();
           String projectPath = null;
           do {
@@ -439,6 +446,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           }
           while ((gradleProject = gradleProject.getParent()) != null);
           if (projectPath != null) {
+            buildParticipant.setRootProjectName(rootProjectName);
             buildParticipant.setRootPath(projectPath);
             for (IdeaModule module : project.getModules()) {
               try {
@@ -457,7 +465,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
       projectDataNode.createChild(CompositeBuildData.KEY, compositeBuildData);
     }
-    return gradleModulesWithIncludedBuilds;
+    return gradleIncludedModules;
   }
 
   private static void mergeLibraryAndModuleDependencyData(DataNode<ProjectData> projectDataNode,
@@ -626,33 +634,53 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private static Map<String, ExternalProject> extractExternalProjectModels(ProjectImportAction.AllModels models, boolean isPreview) {
-    final Class<? extends ExternalProject> modelClazz = isPreview ? ExternalProjectPreview.class : ExternalProject.class;
-    final ExternalProject externalRootProject = models.getExtraProject(null, modelClazz);
-    if (externalRootProject == null) return Collections.emptyMap();
+  private static void extractExternalProjectModels(@NotNull ProjectImportAction.AllModels models,
+                                                   @NotNull ProjectResolverContext resolverCtx) {
+    resolverCtx.setModels(models);
+    final Class<? extends ExternalProject> modelClazz = resolverCtx.isPreviewMode() ? ExternalProjectPreview.class : ExternalProject.class;
+    final ExternalProject externalRootProject = models.getExtraProject((IdeaModule)null, modelClazz);
+    if (externalRootProject == null) return;
 
     final DefaultExternalProject wrappedExternalRootProject = new DefaultExternalProject(externalRootProject);
     models.addExtraProject(wrappedExternalRootProject, ExternalProject.class);
-    final Map<String, ExternalProject> externalProjectsMap = createExternalProjectsMap(wrappedExternalRootProject);
+    final Map<String, ExternalProject> externalProjectsMap = createExternalProjectsMap(null, wrappedExternalRootProject);
 
     DomainObjectSet<? extends IdeaModule> gradleModules = models.getIdeaProject().getModules();
     if (gradleModules != null && !gradleModules.isEmpty()) {
-      List<IdeaModule> gradleModulesWithIncludedBuilds = ContainerUtil.newArrayList(gradleModules.getAll());
-      for (IdeaProject project : models.getIncludedBuilds()) {
-        gradleModulesWithIncludedBuilds.addAll(project.getModules());
-      }
-      for (IdeaModule ideaModule : gradleModulesWithIncludedBuilds) {
-        final ExternalProject externalProject = externalProjectsMap.get(getModuleId(ideaModule));
+      for (IdeaModule ideaModule : gradleModules) {
+        final ExternalProject externalProject = externalProjectsMap.get(getModuleId(resolverCtx, ideaModule));
         if (externalProject != null) {
-          models.addExtraProject(externalProject, ExternalProject.class, ideaModule);
+          models.addExtraProject(externalProject, ExternalProject.class, ideaModule.getGradleProject());
         }
       }
     }
+    for (IdeaProject project : models.getIncludedBuilds()) {
+      DomainObjectSet<? extends IdeaModule> ideaModules = project.getModules();
+      if (ideaModules.isEmpty()) continue;
 
-    return externalProjectsMap;
+      GradleProject gradleProject = ideaModules.getAt(0).getGradleProject();
+      while (gradleProject.getParent() != null) {
+        gradleProject = gradleProject.getParent();
+      }
+      final ExternalProject externalIncludedRootProject = models.getExtraProject(gradleProject, modelClazz);
+      if (externalIncludedRootProject == null) continue;
+      final DefaultExternalProject wrappedExternalIncludedRootProject = new DefaultExternalProject(externalIncludedRootProject);
+      wrappedExternalRootProject.getChildProjects().put(wrappedExternalIncludedRootProject.getName(), wrappedExternalIncludedRootProject);
+      models.addExtraProject(wrappedExternalIncludedRootProject, ExternalProject.class);
+      String compositePrefix = project.getName();
+      final Map<String, ExternalProject> externalIncludedProjectsMap =
+        createExternalProjectsMap(compositePrefix, wrappedExternalIncludedRootProject);
+      for (IdeaModule ideaModule : ideaModules) {
+        final ExternalProject externalProject = externalIncludedProjectsMap.get(getModuleId(resolverCtx, ideaModule));
+        if (externalProject != null) {
+          models.addExtraProject(externalProject, ExternalProject.class, ideaModule.getGradleProject());
+        }
+      }
+    }
   }
 
-  private static Map<String, ExternalProject> createExternalProjectsMap(@Nullable final ExternalProject rootExternalProject) {
+  private static Map<String, ExternalProject> createExternalProjectsMap(@Nullable String compositePrefix,
+                                                                        @Nullable final ExternalProject rootExternalProject) {
     final Map<String, ExternalProject> externalProjectMap = ContainerUtilRt.newHashMap();
 
     if (rootExternalProject == null) return externalProjectMap;
@@ -666,6 +694,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       final String moduleName = externalProject.getName();
       final String qName = externalProject.getQName();
       String moduleId = StringUtil.isEmpty(qName) || ":".equals(qName) ? moduleName : qName;
+      if (compositePrefix != null && externalProject != rootExternalProject) {
+        moduleId = compositePrefix + moduleId;
+      }
       externalProjectMap.put(moduleId, externalProject);
     }
 
@@ -922,5 +953,4 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     return appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
   }
-
 }

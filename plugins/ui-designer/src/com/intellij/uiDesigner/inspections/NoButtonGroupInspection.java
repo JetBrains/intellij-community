@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 
 /**
  * @author yole
@@ -52,6 +51,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
     return UIDesignerBundle.message("inspection.no.button.group");
   }
 
+  @Override
   protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
     if (FormInspectionUtil.isComponentClass(module, component, JRadioButton.class)) {
       final IRootContainer root = FormEditingUtil.getRoot(component);
@@ -69,6 +69,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
               final String groupName = root.getButtonGroupName(child);
               if (groupName == null) {
                 quickFixProvider = new EditorQuickFixProvider() {
+                   @Override
                    public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                      return new CreateGroupQuickFix(editor, component, c1.getColumn() == c2.getColumn());
                    }
@@ -77,6 +78,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
               }
               else {
                 quickFixProvider = new EditorQuickFixProvider() {
+                  @Override
                   public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                     return new AddToGroupQuickFix(editor, component, groupName);
                   }
@@ -103,18 +105,19 @@ public class NoButtonGroupInspection extends BaseFormInspection {
                FormEditingUtil.nextRow(container, c1.getRow()) == c2.getRow();
       }
     }
-    return (c1.getRow() == c2.getRow() && Math.abs(c1.getColumn() - c2.getColumn()) == 1) ||
-        (c1.getColumn() == c2.getColumn() && Math.abs(c1.getRow() - c2.getRow()) == 1);
+    return c1.getRow() == c2.getRow() && Math.abs(c1.getColumn() - c2.getColumn()) == 1 ||
+           c1.getColumn() == c2.getColumn() && Math.abs(c1.getRow() - c2.getRow()) == 1;
   }
 
   private static class CreateGroupQuickFix extends QuickFix {
     private final boolean myVerticalGroup;
 
-    public CreateGroupQuickFix(final GuiEditor editor, final RadComponent component, boolean verticalGroup) {
+    CreateGroupQuickFix(final GuiEditor editor, final RadComponent component, boolean verticalGroup) {
       super(editor, UIDesignerBundle.message("inspection.no.button.group.quickfix.create"), component);
       myVerticalGroup = verticalGroup;
     }
 
+    @Override
     public void run() {
       RadContainer parent = myComponent.getParent();
       ArrayList<RadComponent> buttonsToGroup = new ArrayList<>();
@@ -166,11 +169,12 @@ public class NoButtonGroupInspection extends BaseFormInspection {
   private static class AddToGroupQuickFix extends QuickFix {
     private final String myGroupName;
 
-    public AddToGroupQuickFix(final GuiEditor editor, final RadComponent component, final String groupName) {
+    AddToGroupQuickFix(final GuiEditor editor, final RadComponent component, final String groupName) {
       super(editor, UIDesignerBundle.message("inspection.no.button.group.quickfix.add", groupName), component);
       myGroupName = groupName;
     }
 
+    @Override
     public void run() {
       RadRootContainer root = (RadRootContainer) FormEditingUtil.getRoot(myComponent);
       if (root == null) return;

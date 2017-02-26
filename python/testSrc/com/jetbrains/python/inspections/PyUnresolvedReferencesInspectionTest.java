@@ -275,11 +275,6 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-7708
-  public void testXReadLinesForOpen() {
-    doTest();
-  }
-
   // PY-8063
   public void testAddForListComprehension() {
     doTest();

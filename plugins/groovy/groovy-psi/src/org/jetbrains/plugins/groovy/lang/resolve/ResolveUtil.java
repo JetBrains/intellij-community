@@ -1059,9 +1059,6 @@ public class ResolveUtil {
       if (resolved instanceof PsiClass) {
         return TypesUtil.createType((PsiClass)resolved);
       }
-      if (resolved instanceof PsiPrimitiveType) {
-        return (PsiType)resolved;
-      }
     }
 
     if (expression instanceof GrBuiltinTypeClassExpression) {

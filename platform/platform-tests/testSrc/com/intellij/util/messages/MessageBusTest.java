@@ -22,6 +22,7 @@ package com.intellij.util.messages;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import junit.framework.TestCase;
 
@@ -301,9 +302,7 @@ public class MessageBusTest extends TestCase {
     if (e != null) {
       throw e;
     }
-    for (Thread thread : threads) {
-      thread.join();
-    }
+    ConcurrencyUtil.joinAll(threads);
   }
 
 

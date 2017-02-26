@@ -203,7 +203,7 @@ class VisiblePackBuilderTest {
     val data = HashMap<GraphCommit<Int>, Data>()
 
     operator fun Int.invoke(vararg id: Int): GraphCommit<Int> {
-      val commit = GraphCommitImpl(this, id.toList(), this.toLong())
+      val commit = GraphCommitImpl.createCommit(this, id.toList(), this.toLong())
       commits.add(commit)
       data[commit] = Data()
       return commit

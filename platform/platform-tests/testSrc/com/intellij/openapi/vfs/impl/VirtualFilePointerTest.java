@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -894,15 +895,15 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
       }
     };
-    int N = Math.max(100, Timings.adjustAccordingToMySpeed(10_000, false));
-    System.out.println("N = " + N);
-    for (int i=0; i<N;i++) {
+    long start = System.currentTimeMillis();
+    int i;
+    for (i=0; System.currentTimeMillis() < start + 15_000;i++) {
       Disposable disposable = Disposer.newDisposable();
       // supply listener to separate pointers under one root so that it will be removed on dispose
       VirtualFilePointerImpl bb =
         (VirtualFilePointerImpl)VirtualFilePointerManager.getInstance().create(fileToCreatePointer.getUrl() + "/bb", disposable, listener);
 
-      if (i%1000==0)System.out.println("i = " + i);
+      if (i%1000==0) LOG.info("i = " + i);
 
       int NThreads = Runtime.getRuntime().availableProcessors();
       CountDownLatch ready = new CountDownLatch(NThreads);
@@ -927,16 +928,10 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       VirtualFilePointer bc = VirtualFilePointerManager.getInstance().create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
 
       run = false;
-      threads.forEach(thread -> {
-        try {
-          thread.join();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      });
+      ConcurrencyUtil.joinAll(threads);
       if (exception !=null) throw exception;
       Disposer.dispose(disposable);
     }
+    System.out.println("final i = " + i);
   }
 }

@@ -94,24 +94,24 @@ public class IpnbConnection {
     myProject = project;
     myCookieManager = new CookieManager();
     CookieHandler.setDefault(myCookieManager);
-    if (!isRemote()) {
-      if (!myURI.getScheme().equals("http")) {
+    if (!IpnbSettings.getInstance(project).isRemote(project.getLocationHash())) {
+      if (!"http".equals(myURI.getScheme())) {
         throw new UnsupportedOperationException("Only http urls are supported for local notebooks");
       }
     }
-    else if (!myURI.getScheme().equals("https")) {
+    else if (!"https".equals(myURI.getScheme())) {
       throw new UnsupportedOperationException("Only https urls are supported for remote notebooks");
     }
     
-    initXSRF(myURI.toString());
-    
-    if (isRemote()) {
+    if (IpnbSettings.getInstance(project).isRemote(project.getLocationHash())) {
       String loginUrl = getLoginUrl();
+      initXSRF(myURI.toString() + loginUrl);
       myIsHubServer = isHubServer(loginUrl);
       myKernelId = authorizeAndGetKernel(project, pathToFile, loginUrl);
       mySessionId = myHeaders.get(SM.COOKIE);
     }
     else {
+      initXSRF(myURI.toString());
       if (myToken != null) {
         myHeaders.put(HttpHeaders.AUTHORIZATION, "token " + myToken);
       }
@@ -125,7 +125,7 @@ public class IpnbConnection {
   private String authorizeAndGetKernel(@NotNull Project project, @NotNull String pathToFile, @NotNull String loginUrl) throws IOException {
     IpnbSettings ipnbSettings = IpnbSettings.getInstance(project);
     final String username = ipnbSettings.getUsername();
-    String cookies = login(username, ipnbSettings.getPassword(), loginUrl);
+    String cookies = login(username, ipnbSettings.getPassword(myProject.getLocationHash()), loginUrl);
     myHeaders.put(SM.COOKIE, cookies);
     if (myIsHubServer) {
       if (myXsrf == null) {
@@ -325,7 +325,7 @@ public class IpnbConnection {
     return location.isEmpty() ? DEFAULT_LOGIN_PATH : location;
   }
 
-  private void initXSRF(String url) {
+  private void initXSRF(String url) throws IOException {
     URLConnection connection = null;
     try {
       connection = new URL(url).openConnection();
@@ -337,7 +337,8 @@ public class IpnbConnection {
         }
       }
     }
-    catch (IOException ignored) {
+    catch (IllegalArgumentException e){
+      throw new IOException(e);
     }
     finally {
       if (connection instanceof HttpURLConnection) {
@@ -531,10 +532,6 @@ public class IpnbConnection {
     final JsonObject metadata = new JsonObject();
 
     return Message.create(header, parentHeader, metadata, content);
-  }
-
-  private boolean isRemote() {
-    return !IpnbSettings.getInstance(myProject).getUsername().isEmpty() && !IpnbSettings.getInstance(myProject).getPassword().isEmpty();
   }
 
   @SuppressWarnings("UnusedDeclaration")

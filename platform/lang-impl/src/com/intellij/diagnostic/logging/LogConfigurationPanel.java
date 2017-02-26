@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
@@ -125,7 +126,9 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
           if (selection >= 0) {
             myFilesTable.setRowSelectionInterval(selection, selection);
           }
-          myFilesTable.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myFilesTable, true);
+          });
         }
       }).setEditAction(new AnActionButtonRunnable() {
         @Override
@@ -424,7 +427,9 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
           showEditorDialog(myLogFileOptions);
           JTextField textField = getChildComponent();
           textField.setText(myLogFileOptions.getName());
-          textField.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
+          });
           myModel.fireTableDataChanged();
         }
       });

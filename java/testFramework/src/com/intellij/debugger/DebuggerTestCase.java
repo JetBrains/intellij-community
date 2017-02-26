@@ -28,6 +28,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -58,16 +59,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -77,6 +77,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   protected final AtomicInteger myRestart = new AtomicInteger();
   private static final int MAX_RESTARTS = 3;
   private volatile TestDisposable myTestRootDisposable;
+  private final List<Runnable> myTearDownRunnables = new ArrayList<>();
 
   @Override
   protected void initApplication() throws Exception {
@@ -156,6 +157,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         myDebugProcess.stop(true);
         myDebugProcess.waitFor();
       }
+      myTearDownRunnables.forEach(Runnable::run);
+      myTearDownRunnables.clear();
     }
     finally {
       super.tearDown();
@@ -589,5 +592,43 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public void writeExternal(Element element) throws WriteExternalException { }
+  }
+
+  protected void disableRenderer(NodeRenderer renderer) {
+    setRendererEnabled(renderer, false);
+  }
+
+  protected void enableRenderer(NodeRenderer renderer) {
+    setRendererEnabled(renderer, true);
+  }
+
+  private void setRendererEnabled(NodeRenderer renderer, boolean state) {
+    boolean oldValue = renderer.isEnabled();
+    if (oldValue != state) {
+      myTearDownRunnables.add(() -> renderer.setEnabled(oldValue));
+      renderer.setEnabled(state);
+    }
+  }
+
+  protected void doWhenXSessionPausedThenResume(ThrowableRunnable runnable) {
+    XDebugSession session = getDebuggerSession().getXDebugSession();
+    assertNotNull(session);
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            runnable.run();
+          }
+          catch (Throwable e) {
+            addException(e);
+          }
+          finally {
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(session::resume);
+          }
+        });
+      }
+    });
   }
 }

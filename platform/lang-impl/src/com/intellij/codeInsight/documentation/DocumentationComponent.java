@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -187,10 +188,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   public void requestFocus() {
     // With a screen reader active, set the focus directly to the editor because
     // it makes it easier for users to read/navigate the documentation contents.
-    if (ScreenReader.isActive())
-      myEditorPane.requestFocus();
-    else
-      myScrollPane.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      if (ScreenReader.isActive()) {
+        IdeFocusManager.getGlobalInstance().requestFocus(myEditorPane, true);
+      }
+      else {
+        IdeFocusManager.getGlobalInstance().requestFocus(myScrollPane, true);
+      }
+    });
   }
 
   public DocumentationComponent(final DocumentationManager manager, final AnAction[] additionalActions) {

@@ -2385,6 +2385,7 @@ public class UIUtil {
     return component != null && component.isFocusable() && component.isEnabled() && component.isShowing();
   }
 
+  @Deprecated
   public static void requestFocus(@NotNull final JComponent c) {
     if (c.isShowing()) {
       c.requestFocus();

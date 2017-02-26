@@ -135,7 +135,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private static String getFileTypeNodeName(FileType fileType) {
-    return fileType.getName() + " context files";
+    return fileType.getName() + " files";
   }
 
   private static boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {

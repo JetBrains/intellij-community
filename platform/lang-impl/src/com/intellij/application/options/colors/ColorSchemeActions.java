@@ -61,7 +61,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     }
     final SchemeImporter<EditorColorsScheme> importer = SchemeImporterEP.getImporter(importerName, EditorColorsScheme.class);
     if (importer != null) {
-      VirtualFile importSource = SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null);
+      VirtualFile importSource =
+        SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null, "Choose " + importerName);
       if (importSource != null) {
         try {
           EditorColorsScheme imported =

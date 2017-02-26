@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.*;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,6 +51,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+
+import static com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy.getPreferredFocusedComponent;
 
 /**
  * @author Eugene Belyaev
@@ -429,7 +427,9 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
     final CommanderPanel inactivePanel = getInactivePanel();
     inactivePanel.setActive(true);
     activePanel.setActive(false);
-    IdeFocusTraversalPolicy.getPreferredFocusedComponent(inactivePanel).requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(inactivePanel), true);
+    });
   }
 
   public void enterElementInActivePanel(final PsiElement element) {

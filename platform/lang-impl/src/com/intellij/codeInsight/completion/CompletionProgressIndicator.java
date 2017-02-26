@@ -88,6 +88,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Please don't use this class directly from plugins
  */
+@SuppressWarnings("deprecation")
 @Deprecated
 public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcess, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
@@ -96,6 +97,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Caret myCaret;
   private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
+  private OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
   private final MergingUpdateQueue myQueue;
   private final Update myUpdate = new Update("update") {
@@ -114,6 +116,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       finishCompletionProcess(true);
     }
   };
+
+  private volatile boolean myIsUpdateSuppressed = false;
   private static int ourInsertSingleItemTimeSpan = 300;
 
   //temp external setters to make Rider autopopup more reactive
@@ -129,6 +133,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<>();
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
+  private CompletionThreadingBase myStrategy;
 
   public CompletionProgressIndicator(final Editor editor,
                                      @NotNull Caret caret,
@@ -136,6 +141,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                      CodeCompletionHandlerBase handler,
                                      Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap,
+                                     OffsetsInFile hostOffsets,
                                      boolean hasModifiers,
                                      LookupImpl lookup) {
     myEditor = editor;
@@ -144,6 +150,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler = handler;
     myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
+    myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
 
@@ -165,7 +172,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myQueue.setPassThrough(false);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Disposer.register(this, offsetMap);
 
     if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
@@ -182,11 +188,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
-  public OffsetMap getOffsetMap() {
+  OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
-  public int getSelectionEndOffset() {
+  OffsetsInFile getHostOffsets() {
+    return myHostOffsets;
+  }
+
+  private int getSelectionEndOffset() {
     return getOffsetMap().getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
@@ -220,13 +230,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     ProgressManager.checkCanceled();
 
+    Document document = initContext.getEditor().getDocument();
     if (!initContext.getOffsetMap().wasModified(CompletionInitializationContext.IDENTIFIER_END_OFFSET)) {
       try {
         final int selectionEndOffset = initContext.getSelectionEndOffset();
         final PsiReference reference = TargetElementUtil.findReference(myEditor, selectionEndOffset);
         if (reference != null) {
           final int replacementOffset = findReplacementOffset(selectionEndOffset, reference);
-          final Document document = initContext.getEditor().getDocument();
           if (replacementOffset > document.getTextLength()) {
             LOG.error("Invalid replacementOffset: " + replacementOffset + " returned by reference " + reference + " of " + reference.getClass() + 
                       "; doc=" + document + 
@@ -248,6 +258,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       contributor.duringCompletion(initContext);
+    }
+    if (document instanceof DocumentWindow) {
+      myHostOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     }
   }
 
@@ -321,9 +334,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myLookup;
   }
 
+  public void withSingleUpdate(Runnable action) {
+    try {
+      myIsUpdateSuppressed = true;
+      action.run();
+    } finally {
+      myIsUpdateSuppressed = false;
+      myQueue.queue(myUpdate);
+    }
+  }
+
   private boolean updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isOutdated() || !shouldShowLookup()) return false;
+    if (isOutdated() || !shouldShowLookup() || myIsUpdateSuppressed) return false;
 
     while (true) {
       Runnable action = myAdvertiserChanges.poll();
@@ -374,11 +397,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
-  final boolean isInsideIdentifier() {
+  private boolean isInsideIdentifier() {
     return getIdentifierEndOffset() != getSelectionEndOffset();
   }
 
-  public int getIdentifierEndOffset() {
+  int getIdentifierEndOffset() {
     return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
@@ -748,12 +771,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
+
   void startCompletion(final CompletionInitializationContext initContext) {
     boolean sync = ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup;
-    final CompletionThreading strategy = sync ? new SyncCompletion() : new AsyncCompletion();
-
-    strategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
-    final WeighingDelegate weigher = strategy.delegateWeighing(this);
+    myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
+    myStrategy.startThread(ProgressWrapper.wrap(this), this::scheduleAdvertising);
+    final WeighingDelegate weigher = myStrategy.delegateWeighing(this);
 
     class CalculateItems implements Runnable {
       @Override
@@ -770,7 +793,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         }
       }
     }
-    strategy.startThread(this, new CalculateItems());
+    myStrategy.startThread(this, new CalculateItems());
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {
@@ -782,6 +805,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     weigher.waitFor();
     ProgressManager.checkCanceled();
+  }
+
+  @Nullable
+  CompletionThreadingBase getCompletionThreading() {
+    return myStrategy;
   }
 
   public void addAdvertisement(@NotNull final String text, @Nullable final Color bgColor) {

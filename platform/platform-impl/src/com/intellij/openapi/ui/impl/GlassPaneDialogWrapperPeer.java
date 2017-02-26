@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -518,7 +519,9 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
         myTransparentPane.repaint();
 
         if (myPreviouslyFocusedComponent != null) {
-          myPreviouslyFocusedComponent.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myPreviouslyFocusedComponent, true);
+          });
           myPreviouslyFocusedComponent = null;
         }
 

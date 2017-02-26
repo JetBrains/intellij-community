@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,9 +120,9 @@ class UndoableGroup {
     final boolean wrapInBulkUpdate = myActions.size() > 50;
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
-    final Set<DocumentEx> bulkDocuments = new THashSet<>();
+    final UnexpectedUndoException[] exception = {null};
     ApplicationManager.getApplication().runWriteAction(() -> {
-      UnexpectedUndoException exception = null;
+      final Set<DocumentEx> bulkDocuments = new THashSet<>();
       try {
         for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
           if (wrapInBulkUpdate) {
@@ -147,15 +147,15 @@ class UndoableGroup {
         }
       }
       catch (UnexpectedUndoException e) {
-        exception = e;
+        exception[0] = e;
       }
       finally {
         for (DocumentEx bulkDocument : bulkDocuments) {
           bulkDocument.setInBulkUpdate(false);
         }
       }
-      if (exception != null) reportUndoProblem(exception, isUndo);
     });
+    if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
     commitAllDocuments();
   }
 

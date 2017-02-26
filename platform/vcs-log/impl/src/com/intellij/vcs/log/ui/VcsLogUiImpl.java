@@ -66,7 +66,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                                  "\nAnswer:" +
                                  answer;
         updater.run();
-        getTable().handleAnswer(answer, true);
+        getTable().handleAnswer(answer);
       });
     }, title, false, null, getMainFrame().getMainComponent());
   }

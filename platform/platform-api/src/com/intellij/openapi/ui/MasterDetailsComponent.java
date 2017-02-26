@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -583,7 +584,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect, boolean center, final boolean requestFocus) {
     if (requestFocus) {
-      myTree.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
+      });
     }
     if (nodeToSelect != null) {
       return TreeUtil.selectInTree(nodeToSelect, requestFocus, myTree, center);

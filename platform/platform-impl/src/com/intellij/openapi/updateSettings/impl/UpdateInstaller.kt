@@ -111,6 +111,9 @@ object UpdateInstaller {
     val jnaUtils = findLib("jna-platform.jar")
 
     val tempDir = getTempDir()
+    if (FileUtil.isAncestor(PathManager.getHomePath(), tempDir.path, true)) {
+      throw IOException("Temp directory inside installation: $tempDir")
+    }
     if (!(tempDir.exists() || tempDir.mkdirs())) {
       throw IOException("Cannot create temp directory: $tempDir")
     }

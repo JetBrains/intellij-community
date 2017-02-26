@@ -250,6 +250,11 @@ public class InjectorUtils {
 
   @Nullable
   public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<PsiElement> causeRef) {
+    return findCommentInjectionData(context, true, causeRef);
+  }
+
+  @Nullable
+  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     PsiFile file = target.getContainingFile();
     if (file == null) return null;
@@ -264,20 +269,22 @@ public class InjectorUtils {
 
     // calculate topmost siblings & heights
     PsiElement commonParent = PsiTreeUtil.findCommonParent(psiComment, target);
-    int h1 = 0, h2 = 0;
-    PsiElement e1 = psiComment, e2 = target;
-    for (PsiElement e = e1; e != commonParent; e1 = e, e = e.getParent(), h1++);
-    for (PsiElement e = e2; e != commonParent; e2 = e, e = e.getParent(), h2++);
+    PsiElement topmostElement = target;
+    PsiElement parent = target;
+    while (parent != null && (treeElementsIncludeComment ? parent : parent.getParent()) != commonParent) {
+      topmostElement = parent;
+      parent = parent.getParent();
+    }
 
     // make sure comment is close enough and ...
     int off1 = r0.getEndOffset();
-    int off2 = e2.getTextRange().getStartOffset();
+    int off2 = topmostElement.getTextRange().getStartOffset();
     if (off2 - off1 > 120) {
       return null;
     }
     else if (off2 - off1 > 2) {
-      // ... there's no non-empty valid host in between comment and e2
-      Producer<PsiElement> producer = prevWalker(e2, commonParent);
+      // ... there's no non-empty valid host in between comment and topmostElement
+      Producer<PsiElement> producer = prevWalker(topmostElement, commonParent);
       PsiElement e;
       while ( (e = producer.produce()) != null && e != psiComment) {
         if (e instanceof PsiLanguageInjectionHost &&

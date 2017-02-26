@@ -32,33 +32,40 @@ public class GuiFormFileType implements /*UIBased*/FileType {
   @NonNls public static final String DEFAULT_EXTENSION = "form";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
+  @Override
   @NotNull
   public String getName() {
     return "GUI_DESIGNER_FORM";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return IdeBundle.message("filetype.description.gui.designer.form");
   }
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return DEFAULT_EXTENSION;
   }
 
+  @Override
   public Icon getIcon() {
     return PlatformIcons.UI_FORM_ICON;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
     return CharsetToolkit.UTF8;
   }

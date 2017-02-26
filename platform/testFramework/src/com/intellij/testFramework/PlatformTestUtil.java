@@ -57,6 +57,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ref.GCUtil;
@@ -279,9 +281,12 @@ public class PlatformTestUtil {
     boolean sleptAlready = false;
     try {
       while (!alarmInvoked2.get()) {
+        AtomicBoolean laterInvoked = new AtomicBoolean();
+        ApplicationManager.getApplication().invokeLater(() -> laterInvoked.set(true));
         UIUtil.dispatchAllInvocationEvents();
-        //noinspection BusyWait
-        Thread.sleep(sleptAlready ? 10 : delay);
+        Assert.assertTrue(laterInvoked.get());
+
+        TimeoutUtil.sleep(sleptAlready ? 10 : delay);
         sleptAlready = true;
         if (System.currentTimeMillis() - start > 100 * 1000) {
           throw new AssertionError("Couldn't await alarm" +
@@ -294,7 +299,8 @@ public class PlatformTestUtil {
                                    "; app.disposed=" + app.isDisposed() +
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
-                                   "\n queued=" + LaterInvocator.getLaterInvocatorQueue()
+                                   "\n delayQueue=" + ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue() +
+                                   "\n invocatorQueue=" + LaterInvocator.getLaterInvocatorQueue()
           );
         }
       }

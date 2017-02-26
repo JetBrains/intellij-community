@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+
 public class DebuggerUIUtil {
   @NonNls public static final String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
 
@@ -83,7 +85,9 @@ public class DebuggerUIUtil {
   }
 
   public static void focusEditorOnCheck(final JCheckBox checkbox, final JComponent component) {
-    final Runnable runnable = () -> component.requestFocus();
+    final Runnable runnable = () -> getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      getGlobalInstance().requestFocus(component, true);
+    });
     checkbox.addActionListener(e -> {
       if (checkbox.isSelected()) {
         SwingUtilities.invokeLater(runnable);

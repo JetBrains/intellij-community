@@ -21,7 +21,7 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
-fun PsiElement.getParents(strict: Boolean = false) = treeSequence(if (strict) this.parent else this) { it.parent }
+fun PsiElement.getParents() = treeSequence(this) { it.parent }
 
 /**
  * Creates sequence of pairs of elements corresponding to tree walk up by contexts.

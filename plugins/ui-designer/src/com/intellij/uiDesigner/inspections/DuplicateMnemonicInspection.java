@@ -37,12 +37,7 @@ import java.util.List;
  * @author yole
  */
 public class DuplicateMnemonicInspection extends BaseFormInspection {
-  private static final ThreadLocal<HashMap<IRootContainer, MnemonicMap>> myContainerMnemonicMap = new ThreadLocal<HashMap<IRootContainer, MnemonicMap>>() {
-    @Override
-    protected HashMap<IRootContainer, MnemonicMap> initialValue() {
-      return new HashMap<>();
-    }
-  };
+  private static final ThreadLocal<HashMap<IRootContainer, MnemonicMap>> myContainerMnemonicMap = ThreadLocal.withInitial(HashMap::new);
 
   public DuplicateMnemonicInspection() {
     super("DuplicateMnemonic");
@@ -62,6 +57,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     myContainerMnemonicMap.get().remove(rootContainer);
   }
 
+  @Override
   protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
     SupportCode.TextWithMnemonic twm = getTextWithMnemonic(module, component);
     if (twm != null) {
@@ -70,7 +66,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
   }
 
   @Nullable
-  public static SupportCode.TextWithMnemonic getTextWithMnemonic(final Module module, final IComponent component) {
+  static SupportCode.TextWithMnemonic getTextWithMnemonic(final Module module, final IComponent component) {
     if (module.isDisposed()) return null;
     IProperty prop = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
     if (prop != null) {
@@ -109,6 +105,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
                                                   FormInspectionUtil.getText(module, oldComponent),
                                                   FormInspectionUtil.getText(module, component)),
                          new EditorQuickFixProvider() {
+                           @Override
                            public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
                              return new AssignMnemonicFix(editor, component,
                                                           UIDesignerBundle.message("inspection.duplicate.mnemonics.quickfix"));
@@ -138,7 +135,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     private final char myMnemonicChar;
     private final List<Integer> myExclusiveContainerStack;
 
-    public MnemonicKey(final char mnemonicChar, final List<Integer> exclusiveContainerStack) {
+    MnemonicKey(final char mnemonicChar, final List<Integer> exclusiveContainerStack) {
       myMnemonicChar = mnemonicChar;
       myExclusiveContainerStack = exclusiveContainerStack;
     }
@@ -156,8 +153,7 @@ public class DuplicateMnemonicInspection extends BaseFormInspection {
     }
 
     public int hashCode() {
-      int result;
-      result = (int)myMnemonicChar;
+      int result = (int)myMnemonicChar;
       result = 31 * result + myExclusiveContainerStack.hashCode();
       return result;
     }

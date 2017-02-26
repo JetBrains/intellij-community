@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TableUtil;
@@ -140,7 +141,9 @@ public class ProcessedModulesTable extends JPanel {
   public void addModule(Module element, String dirName) {
     myTableModel.addElement(element, dirName);
     selectRow(myTableModel.getRowCount() - 1);
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   public void removeModule(Module element) {
@@ -161,7 +164,9 @@ public class ProcessedModulesTable extends JPanel {
         myTable.getSelectionModel().clearSelection();
       }
     }
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   public void removeAllElements() {
@@ -204,7 +209,9 @@ public class ProcessedModulesTable extends JPanel {
     final int[] rows = getElementsRows(elements);
     TableUtil.selectRows(myTable, rows);
     TableUtil.scrollSelectionToVisible(myTable);
-    myTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myTable, true);
+    });
   }
 
   private int[] getElementsRows(final Collection<? extends Module> elements) {

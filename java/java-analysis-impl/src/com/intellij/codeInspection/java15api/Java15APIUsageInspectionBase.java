@@ -97,7 +97,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     ourDefaultMethods.add("java.util.Iterator#remove()");
   }
 
-  protected LanguageLevel myEffectiveLanguageLevel;
+  LanguageLevel myEffectiveLanguageLevel;
 
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
@@ -119,14 +119,8 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       return;
     }
 
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), CharsetToolkit.UTF8_CHARSET));
-      try {
-        set.addAll(FileUtil.loadLines(reader));
-      }
-      finally {
-        reader.close();
-      }
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), CharsetToolkit.UTF8_CHARSET))) {
+      set.addAll(FileUtil.loadLines(reader));
     }
     catch (IOException ignored) { }
   }
@@ -367,7 +361,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
 
   private static String getJdkName(LanguageLevel languageLevel) {
     final String presentableText = languageLevel.getPresentableText();
-    return presentableText.substring(0, presentableText.indexOf(" "));
+    return presentableText.substring(0, presentableText.indexOf(' '));
   }
 
   public static boolean isForbiddenApiUsage(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {

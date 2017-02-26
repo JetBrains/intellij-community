@@ -1441,6 +1441,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final long elapsed = System.currentTimeMillis() - start;
 
     data.checkResult(infos, file.getText());
+    if (data.hasLineMarkers()) {
+      Document document = getDocument(getFile());
+      data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
+    }
     //noinspection ResultOfMethodCallIgnored
     hardRefToFileElement.hashCode(); // use it so gc won't collect it
     return elapsed;

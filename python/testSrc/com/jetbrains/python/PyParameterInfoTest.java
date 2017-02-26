@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
@@ -45,14 +46,36 @@ import java.util.List;
  * Date: Jul 14, 2009 3:42:44 AM
  */
 public class PyParameterInfoTest extends LightMarkedTestCase {
+
+  @Override
   protected Map<String, PsiElement> loadTest() {
     String fname = "/paramInfo/" + getTestName(false) + ".py";
     return configureByFile(fname);
   }
 
-  protected Map<String, PsiElement> loadTest(int expected_marks) {
+  private Map<String, PsiElement> loadTest(int expected_marks) {
     Map<String, PsiElement> marks = loadTest();
     assertEquals("Test data sanity", marks.size(), expected_marks);
+    return marks;
+  }
+
+  @NotNull
+  private Map<String, PsiElement> loadMultiFileTest(int expectedMarks) {
+    final String relativeDirectory = "/paramInfo/" + getTestName(false);
+    final String relativeMainFile = relativeDirectory + "/a.py";
+
+    final Map<String, PsiElement> marks = configureByFile(relativeMainFile);
+    assertEquals("Test data sanity", marks.size(), expectedMarks);
+
+    final String absoluteDirectory = getTestDataPath() + relativeDirectory;
+    final String absoluteMainFile =  getTestDataPath() + relativeMainFile;
+
+    Arrays
+      .stream(new File(absoluteDirectory).listFiles())
+      .map(File::getPath)
+      .filter(path -> !path.equals(absoluteMainFile))
+      .forEach(path -> myFixture.copyFileToProject(path, new File(path).getName()));
+
     return marks;
   }
 
@@ -443,6 +466,72 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         final List<String[]> disabled = Arrays.asList(new String[]{"self: C1, "}, new String[]{"self: C2, "});
 
         feignCtrlP(offset).check(texts, highlighted, disabled);
+      }
+    );
+  }
+
+  public void testOverloadsInImportedClass() {
+    myFixture.copyDirectoryToProject("typing", "");
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
+
+        final List<String> texts = Arrays.asList("self: C, a: str, b: str", "self: C, a: int, b: int");
+        final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int, "});
+        final List<String[]> disabled = Arrays.asList(new String[]{"self: C, "}, new String[]{"self: C, "});
+
+        feignCtrlP(offset).check(texts, highlighted, disabled);
+      }
+    );
+  }
+
+  public void testOverloadsInImportedModule() {
+    myFixture.copyDirectoryToProject("typing", "");
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
+
+        final List<String> texts = Arrays.asList("a: int, b: int", "a: str, b: str");
+        final List<String[]> highlighted = Arrays.asList(new String[]{"a: int, "}, new String[]{"a: str, "});
+
+        feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY));
+      }
+    );
+  }
+
+  public void testOverloadsWithDifferentNumberOfArgumentsInImportedClass() {
+    myFixture.copyDirectoryToProject("typing", "");
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
+
+        final List<String> texts = Arrays.asList("self: C, a: str, b: str", "self: C, a: int");
+        final List<String[]> highlighted = Arrays.asList(new String[]{"a: str, "}, new String[]{"a: int"});
+        final List<String[]> disabled = Arrays.asList(new String[]{"self: C, "}, new String[]{"self: C, "});
+
+        feignCtrlP(offset).check(texts, highlighted, disabled);
+      }
+    );
+  }
+
+  public void testOverloadsWithDifferentNumberOfArgumentsInImportedModule() {
+    myFixture.copyDirectoryToProject("typing", "");
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadMultiFileTest(1).get("<arg1>").getTextOffset();
+
+        final List<String> texts = Arrays.asList("a: int", "a: str, b: str");
+        final List<String[]> highlighted = Arrays.asList(new String[]{"a: int"}, new String[]{"a: str, "});
+
+        feignCtrlP(offset).check(texts, highlighted, Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY));
       }
     );
   }

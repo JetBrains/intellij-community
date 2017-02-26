@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.*;
 
-import static java.util.Collections.singleton;
+import static java.util.Collections.*;
 
 public abstract class VcsLogUserFilterTest {
   @NotNull protected final Project myProject;
@@ -149,10 +149,10 @@ public abstract class VcsLogUserFilterTest {
 
     StringBuilder builder = new StringBuilder();
 
-    checkTurkishAndEnglishLocales(upperCaseDotUser, Collections.emptySet(), commits, metadata, builder);
-    checkTurkishAndEnglishLocales(lowerCaseDotlessUser, Collections.emptySet(), commits, metadata, builder);
-    checkTurkishAndEnglishLocales(lowerCaseDotUser, Collections.singleton(upperCaseDotlessUser), commits, metadata, builder);
-    checkTurkishAndEnglishLocales(upperCaseDotlessUser, Collections.singleton(lowerCaseDotUser), commits, metadata, builder);
+    checkTurkishAndEnglishLocales(upperCaseDotUser, emptySet(), commits, metadata, builder);
+    checkTurkishAndEnglishLocales(lowerCaseDotlessUser, emptySet(), commits, metadata, builder);
+    checkTurkishAndEnglishLocales(lowerCaseDotUser, singleton(upperCaseDotlessUser), commits, metadata, builder);
+    checkTurkishAndEnglishLocales(upperCaseDotlessUser, singleton(lowerCaseDotUser), commits, metadata, builder);
 
     assertFilteredCorrectly(builder);
   }
@@ -194,7 +194,7 @@ public abstract class VcsLogUserFilterTest {
     MultiMap<VcsUser, String> commits = generateHistory(users);
     List<VcsCommitMetadata> metadata = generateMetadata(commits);
     StringBuilder builder = new StringBuilder();
-    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton("jeka"), Collections.emptyMap(), commits.keySet());
+    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton("jeka"), emptyMap(), commits.keySet());
     checkFilter(userFilter, "jeka", commits.get(jeka), metadata, builder);
     assertFilteredCorrectly(builder);
   }
@@ -204,8 +204,7 @@ public abstract class VcsLogUserFilterTest {
                                   @NotNull Collection<String> expectedHashes,
                                   @NotNull List<VcsCommitMetadata> metadata, @NotNull StringBuilder errorMessageBuilder)
     throws VcsException {
-    VcsLogUserFilter userFilter =
-      new VcsLogUserFilterImpl(singleton(VcsUserUtil.getShortPresentation(user)), Collections.emptyMap(), allUsers);
+    VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(VcsUserUtil.getShortPresentation(user)), emptyMap(), allUsers);
     checkFilter(userFilter, user.toString(), expectedHashes, metadata, errorMessageBuilder);
   }
 
@@ -249,7 +248,7 @@ public abstract class VcsLogUserFilterTest {
 
     for (VcsUser user : commits.keySet()) {
       for (String commit : commits.get(user)) {
-        result.add(myObjectsFactory.createCommitMetadata(HashImpl.build(commit), Collections.emptyList(), System.currentTimeMillis(),
+        result.add(myObjectsFactory.createCommitMetadata(HashImpl.build(commit), emptyList(), System.currentTimeMillis(),
                                                          myProject.getBaseDir(), "subject " + Math.random(), user.getName(),
                                                          user.getEmail(), "message " + Math.random(), user.getName(), user.getEmail(),
                                                          System.currentTimeMillis()));

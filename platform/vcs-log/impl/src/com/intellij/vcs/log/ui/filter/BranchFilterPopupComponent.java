@@ -27,7 +27,6 @@ import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,14 +35,11 @@ import java.util.Collection;
 import java.util.List;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
-  @NotNull private final VcsLogUiImpl myUi;
-  private VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
+  private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
-  public BranchFilterPopupComponent(@NotNull VcsLogUiImpl ui,
-                                    @NotNull MainVcsLogUiProperties uiProperties,
+  public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
     super("Branch", uiProperties, filterModel);
-    myUi = ui;
     myBranchFilterModel = filterModel;
   }
 

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 /**
  * User: anna
@@ -71,17 +72,21 @@ public class InferenceVariable extends LightTypeParameter {
   public static void addBound(PsiType inferenceVariableType, PsiType boundType, InferenceBound inferenceBound, InferenceSession session) {
     final InferenceVariable variable = session.getInferenceVariable(inferenceVariableType);
     if (variable != null) {
-      for (TypeAnnotationModifier modifier : TypeAnnotationModifier.EP_NAME.getExtensions()) {
-        if (boundType instanceof PsiClassType) {
-          final TypeAnnotationProvider annotationProvider = modifier.modifyAnnotations(inferenceVariableType, (PsiClassType)boundType);
-          if (annotationProvider != null) {
-            boundType = boundType.annotate(annotationProvider);
-          }
-        }
-      }
-
+      boundType = modifyAnnotations(boundType, (b, modifier) -> modifier.boundAppeared(inferenceVariableType, b));
       variable.addBound(boundType, inferenceBound, session.myIncorporationPhase);
     }
+  }
+
+  static PsiType modifyAnnotations(PsiType type, BiFunction<PsiType, TypeAnnotationModifier, TypeAnnotationProvider> executeModifier) {
+    for (TypeAnnotationModifier modifier : TypeAnnotationModifier.EP_NAME.getExtensions()) {
+      if (type instanceof PsiClassType) {
+        final TypeAnnotationProvider annotationProvider = executeModifier.apply(type, modifier);
+        if (annotationProvider != null) {
+          type = type.annotate(annotationProvider);
+        }
+      }
+    }
+    return type;
   }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound, @Nullable InferenceIncorporationPhase incorporationPhase) {

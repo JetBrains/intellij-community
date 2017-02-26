@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UINumericRange;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -91,7 +92,9 @@ public class JBIntSpinner extends JSpinner {
         JTextField textField = getTextField();
         if (textField.isEnabled() ) {
           MouseEvent event = SwingUtilities.convertMouseEvent(component, e, textField);
-          textField.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
+          });
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> textField.dispatchEvent(event));
         }

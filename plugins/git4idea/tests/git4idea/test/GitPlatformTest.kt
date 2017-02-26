@@ -70,8 +70,8 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     try {
       if (wasInit { myDialogManager }) { myDialogManager.cleanup() }
       if (wasInit { myVcsNotifier }) { myVcsNotifier.cleanup() }
-      myGit.reset()
-      myGitSettings.appSettings.setPathToGit(null)
+      if (wasInit {myGit}) { myGit.reset() }
+      if (wasInit {myGitSettings}) { myGitSettings.appSettings.setPathToGit(null) }
     }
     finally {
       super.tearDown()

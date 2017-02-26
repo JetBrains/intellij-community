@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
@@ -660,7 +661,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       IpnbEditablePanel ipnbPanel = getIpnbPanelByClick(e.getPoint());
       if (ipnbPanel != null) {
         ipnbPanel.setEditing(false);
-        ipnbPanel.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(ipnbPanel, true);
+        });
         repaint();
         setSelectedCell(ipnbPanel, true);
       }

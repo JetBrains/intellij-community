@@ -34,6 +34,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -186,9 +187,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
                                                  }
                                                }, indicator), "indicator test"));
       threads.forEach(Thread::start);
-      for (Thread thread : threads) {
-        thread.join();
-      }
+      ConcurrencyUtil.joinAll(threads);
     }
     if (exception != null) throw exception;
   }

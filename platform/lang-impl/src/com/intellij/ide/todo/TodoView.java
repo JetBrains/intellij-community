@@ -229,11 +229,13 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     private void _updateFilters() {
       try {
-        updateFilters();
+        if (!DumbService.isDumb(myProject)) {
+          updateFilters();
+          return;
+        }
       }
-      catch (ProcessCanceledException e) {
-        DumbService.getInstance(myProject).smartInvokeLater(this::_updateFilters, ModalityState.NON_MODAL);
-      }
+      catch (ProcessCanceledException ignore) { }
+      DumbService.getInstance(myProject).smartInvokeLater(this::_updateFilters);
     }
 
     private void updateFilters() {

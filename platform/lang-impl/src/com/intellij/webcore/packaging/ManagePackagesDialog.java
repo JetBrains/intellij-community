@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.CatchingConsumer;
@@ -356,7 +357,9 @@ public class ManagePackagesDialog extends DialogWrapper {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             e.consume();
             filter();
-            myPackages.requestFocus();
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(myPackages, true);
+            });
           } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
             onEscape(e);
           }

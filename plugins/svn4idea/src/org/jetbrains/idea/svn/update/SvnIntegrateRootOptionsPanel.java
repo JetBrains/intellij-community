@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -99,12 +100,16 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   public void apply(SvnConfiguration conf) throws ConfigurationException {
 
     if (myMergeText1.getText().trim().length() == 0) {
-      myMergeText1.getTextField().requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myMergeText1.getTextField(), true);
+      });
       throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
     }
 
     if (myMergeText2.getText().trim().length() == 0) {
-      myMergeText2.getTextField().requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myMergeText2.getTextField(), true);
+      });
       throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
     }
 

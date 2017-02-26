@@ -74,14 +74,13 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
                                 DuplicatesIndex.ourEnabledLightProfiles;
     if (usingLightProfile) {
       LighterAST ast = node.getLighterAST();
-      assert ast != null;
       ((LightDuplicateProfile)profile).process(ast, new LightDuplicateProfile.Callback() {
         DuplicatedCodeProcessor<LighterASTNode> myProcessor;
         @Override
         public void process(int hash, int hash2, @NotNull final LighterAST ast, @NotNull final LighterASTNode... nodes) {
           class LightDuplicatedCodeProcessor extends DuplicatedCodeProcessor<LighterASTNode> {
 
-            LightDuplicatedCodeProcessor(VirtualFile file, Project project) {
+            private LightDuplicatedCodeProcessor(VirtualFile file, Project project) {
               super(file, project, myFilterOutGeneratedCode);
             }
 
@@ -129,7 +128,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
 
           class OldDuplicatedCodeProcessor extends DuplicatedCodeProcessor<PsiFragment> {
 
-            OldDuplicatedCodeProcessor(VirtualFile file, Project project) {
+            private OldDuplicatedCodeProcessor(VirtualFile file, Project project) {
               super(file, project, myFilterOutGeneratedCode);
             }
 
@@ -225,7 +224,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     return null;
   }
 
-  static abstract class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<TIntArrayList> {
+  abstract static class DuplicatedCodeProcessor<T> implements FileBasedIndex.ValueProcessor<TIntArrayList> {
     final TreeMap<Integer, TextRange> reportedRanges = new TreeMap<>();
     final TIntObjectHashMap<VirtualFile> reportedFiles = new TIntObjectHashMap<>();
     final TIntObjectHashMap<PsiElement> reportedPsi = new TIntObjectHashMap<>();
@@ -258,7 +257,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
     }
 
     @Override
-    public boolean process(VirtualFile file, TIntArrayList list) {
+    public boolean process(@NotNull VirtualFile file, TIntArrayList list) {
       for(int i = 0, len = list.size(); i < len; i+=2) {
         ProgressManager.checkCanceled();
 

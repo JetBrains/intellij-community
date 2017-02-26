@@ -1684,7 +1684,7 @@
     <action id="ExcludeFromStubGeneration"
             class="org.jetbrains.plugins.groovy.compiler.ExcludeFromStubGenerationAction"
             text="Exclude from stub generation" description="Don't generate Java stubs for this Groovy file on compilation">
-      <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="RenameJavaFileToGroovyFileAction"/>
+      <add-to-group group-id="EditorTabPopupMenu"/>
     </action>
 
 

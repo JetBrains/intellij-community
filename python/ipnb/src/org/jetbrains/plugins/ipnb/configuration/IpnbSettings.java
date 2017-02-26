@@ -61,17 +61,30 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   
   @Transient
   @NotNull
-  public String getPassword() {
-    final String username = getUsername();
-    if (StringUtil.isEmptyOrSpaces(username)) return "";
-    return StringUtil.notNullize(PasswordSafe.getInstance().getPassword(IpnbSettings.class, IPNB_PASSWORD_KEY + username));
+  public String getPassword(@NotNull String projectPathHash) {
+  final String username = getUsername();
+    final String url = getURL();
+    final String accountName = createAccountName(username, url, projectPathHash);
+    final String newStylePassword = PasswordSafe.getInstance().getPassword(IpnbSettings.class, accountName);
+    
+   return StringUtil.notNullize(newStylePassword == null ? PasswordSafe.getInstance().getPassword(IpnbSettings.class, username) : newStylePassword);
   }
 
   @Transient
-  public void setPassword(@NotNull String password) {
+  public void setPassword(@NotNull String password, @NotNull String projectPathHash) {
     final String username = getUsername();
-    if (password.isEmpty() || username.isEmpty()) return;
-    PasswordSafe.getInstance().setPassword(IpnbSettings.class, IPNB_PASSWORD_KEY + username, password);
+    final String url = getURL();
+    final String accountName = createAccountName(username, url, projectPathHash);
+    PasswordSafe.getInstance().setPassword(IpnbSettings.class, accountName, password);
+  }
+  
+  public boolean isRemote(String locationHash) {
+    final String password = getPassword(locationHash);
+    return !password.isEmpty();
+  }
+
+  private static String createAccountName(@NotNull String username, @NotNull String url, @NotNull String projectPath) {
+    return IPNB_PASSWORD_KEY + url + username + projectPath;
   }
 
   @Override

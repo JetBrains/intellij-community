@@ -52,7 +52,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
   }
 
   private void setWarningLabelText() {
-    final boolean isRemote = !myUsernameField.getText().isEmpty() && myPasswordField.getPassword().length > 0;
+    final boolean isRemote = myPasswordField.getPassword().length > 0;
     final String url = myFieldUrl.getText();
     if (isRemote && !url.startsWith("https")) {
       myWarningLabel.setText("Only HTTPS urls are supported in remote notebooks");
@@ -98,7 +98,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
 
   public boolean isCredentialsModified() {
     final String oldUsername = StringUtil.notNullize(IpnbSettings.getInstance(myProject).getUsername());
-    final String oldPassword = IpnbSettings.getInstance(myProject).getPassword();
+    final String oldPassword = IpnbSettings.getInstance(myProject).getPassword(myProject.getLocationHash());
 
     final String username = StringUtil.notNullize(myUsernameField.getText());
     final String password = StringUtil.notNullize(String.valueOf(myPasswordField.getPassword()));
@@ -115,14 +115,14 @@ public class IpnbConfigurable implements SearchableConfigurable {
     url = StringUtil.trimEnd(url, "/");
     final boolean urlModified = !url.equals(IpnbSettings.getInstance(myProject).getURL());
     if (urlModified) {
-      IpnbSettings.getInstance(myProject).setURL(url);
       IpnbConnectionManager.getInstance(myProject).shutdownKernels();
+      IpnbSettings.getInstance(myProject).setURL(url);
     }
 
     if (isCredentialsModified()) {
-      IpnbSettings.getInstance(myProject).setUsername(myUsernameField.getText());
-      IpnbSettings.getInstance(myProject).setPassword(String.valueOf(myPasswordField.getPassword()));
       IpnbConnectionManager.getInstance(myProject).shutdownKernels();
+      IpnbSettings.getInstance(myProject).setUsername(myUsernameField.getText());
+      IpnbSettings.getInstance(myProject).setPassword(String.valueOf(myPasswordField.getPassword()), myProject.getLocationHash());
     }
   }
 
@@ -132,7 +132,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
     myWorkingDirField.setText(IpnbSettings.getInstance(myProject).getWorkingDirectory());
     myArgumentsField.setText(IpnbSettings.getInstance(myProject).getArguments());
     myUsernameField.setText(IpnbSettings.getInstance(myProject).getUsername());
-    myPasswordField.setText(IpnbSettings.getInstance(myProject).getPassword());
+    myPasswordField.setText(IpnbSettings.getInstance(myProject).getPassword(myProject.getLocationHash()));
 
     setWarningLabelText();
   }

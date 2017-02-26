@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.BalloonImpl;
@@ -183,7 +184,11 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
             switch (me.getID()) {
               case MouseEvent.MOUSE_PRESSED:
                 boolean consumed = false;
-                if (target.isFocusable()) target.requestFocus();
+                if (target.isFocusable()) {
+                  IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                    IdeFocusManager.getGlobalInstance().requestFocus(target, true);
+                  });
+                }
                 for (final MouseListener listener : listeners) {
                   final String className = listener.getClass().getName();
                   if (className.indexOf("BasicTreeUI$") >= 0 || className.indexOf("MacTreeUI$") >= 0) continue;

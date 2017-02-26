@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.Variable;
@@ -23,11 +38,11 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.*;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -495,7 +510,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
     } catch(PatternSyntaxException ex) {
       Messages.showErrorDialog(SSRBundle.message("invalid.regular.expression", ex.getMessage()),
                                SSRBundle.message("invalid.regular.expression.title"));
-      field.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(field, true);
+      });
       return false;
     }
     return true;
@@ -509,7 +526,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       if (message != null) {
         Messages.showErrorDialog(message, SSRBundle.message("invalid.groovy.script"));
-        field.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(field, true);
+        });
         return false;
       }
     }
@@ -521,7 +540,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
       if (Integer.parseInt(field.getText()) < 0) throw new NumberFormatException();
     } catch(NumberFormatException ex) {
       Messages.showErrorDialog(SSRBundle.message("invalid.occurence.count"), SSRBundle.message("invalid.occurence.count"));
-      field.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(field, true);
+      });
       return false;
     }
     return true;

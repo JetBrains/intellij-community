@@ -39,7 +39,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testBoundaries() {
-    doTest("\\b <error descr=\"Unsupported boundary\">\\b{g}</error> \\B \\A \\z \\Z \\G");
+    doTest("\\b <error descr=\"This boundary is not supported in this regex dialect\">\\b{g}</error> \\B \\A \\z \\Z \\G");
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), getTestRootDisposable());
     doTest("\\b \\b{g} \\B \\A \\z \\Z \\G");
   }
@@ -214,7 +214,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest("a{2147483647}");
     doTest("a{<error descr=\"Repetition value too large\">2147483648</error>}");
     doTest("a{<error descr=\"Illegal repetition range (min > max)\">1,0</error>}");
-    doTest("a{<error descr=\"Number expected\">,</error>}");
+    doTest("a<weak_warning descr=\"Repetition range replaceable by '*'\">{<error descr=\"Number expected\">,</error>}</weak_warning>");
   }
 
   public void testOptions() {

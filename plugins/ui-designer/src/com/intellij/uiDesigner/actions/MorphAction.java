@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
@@ -69,7 +70,9 @@ public class MorphAction extends AbstractGuiEditorAction {
         editor.refreshAndSave(true);
       };
       CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable, UIDesignerBundle.message("morph.component.command"), null);
-      editor.getGlassLayer().requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(editor.getGlassLayer(), true);
+      });
       return true;
     };
 

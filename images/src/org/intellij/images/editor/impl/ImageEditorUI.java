@@ -25,6 +25,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.IdeBorderFactory;
@@ -460,7 +461,9 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   private class FocusRequester extends MouseAdapter {
     public void mousePressed(@NotNull MouseEvent e) {
-      requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true);
+      });
     }
   }
 

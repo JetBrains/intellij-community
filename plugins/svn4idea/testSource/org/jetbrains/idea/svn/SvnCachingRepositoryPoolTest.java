@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.testFramework.vcs.FileBasedTest;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -223,9 +224,7 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
       Assert.assertEquals(0, group.getInactiveSize());
     }
 
-    for (Thread thread : threads) {
-      thread.join();
-    }
+    ConcurrencyUtil.joinAll(threads);
   }
 
   private boolean timeout(long start) {

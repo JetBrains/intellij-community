@@ -19,16 +19,20 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
@@ -160,23 +164,31 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testGetPathPerformance() throws IOException, InterruptedException {
-    File dir = myTempDir.newFolder();
-
-    String path = dir.getPath() + StringUtil.repeat("/xxx", 50) + "/fff.txt";
-    File ioFile = new File(path);
-    boolean b = ioFile.getParentFile().mkdirs();
-    assertTrue(b);
-    boolean c = ioFile.createNewFile();
-    assertTrue(c);
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(ioFile.getPath().replace(File.separatorChar, '/'));
-    assertNotNull(file);
-
-    PlatformTestUtil.startPerformanceTest("VF.getPath() performance failed", 4000, () -> {
-      for (int i = 0; i < 1000000; ++i) {
-        file.getPath();
+  public void testGetPathPerformance() throws Exception {
+    LightTempDirTestFixtureImpl fixture = new LightTempDirTestFixtureImpl();
+    fixture.setUp();
+    Disposer.register(getTestRootDisposable(), () -> {
+      try {
+        fixture.tearDown();
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+      catch (Exception e) {
+        ExceptionUtil.rethrowAllAsUnchecked(e);
+      }
+    });
+
+    EdtTestUtil.runInEdtAndWait(() -> {
+      String path = "unitTest_testGetPathPerformance_6542623412414351229/" +
+                    "junit6921058097194294088/" +
+                    StringUtil.repeat("xxx/", 50) +
+                    "fff.txt";
+      VirtualFile file = fixture.findOrCreateDir(path);
+
+      PlatformTestUtil.startPerformanceTest("VF.getPath() performance failed", 4000, () -> {
+        for (int i = 0; i < 1000000; ++i) {
+          file.getPath();
+        }
+      }).cpuBound().useLegacyScaling().assertTiming();
+    });
   }
 
   @Test

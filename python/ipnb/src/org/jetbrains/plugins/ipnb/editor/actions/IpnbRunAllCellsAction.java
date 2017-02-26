@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
@@ -60,7 +61,9 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
       cell.runCell(true);
       ipnbFilePanel.revalidate();
       ipnbFilePanel.repaint();
-      ipnbFilePanel.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(ipnbFilePanel, true);
+      });
     }
   }
 }

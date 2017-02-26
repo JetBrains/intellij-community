@@ -98,7 +98,7 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
     try {
       Collection<VcsUser> users = myPersistentEnumerator != null ?
                                   myPersistentEnumerator.getAllDataObjects(ACCEPT_ALL_DATA_FILTER) :
-                                  Collections.<VcsUser>emptySet();
+                                  Collections.emptySet();
       return ContainerUtil.newHashSet(users);
     }
     catch (IOException e) {

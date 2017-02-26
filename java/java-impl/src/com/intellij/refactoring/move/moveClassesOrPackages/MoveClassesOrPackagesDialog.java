@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -116,7 +117,9 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
 
       myInnerClassChooser.setText(((PsiClass)initialTargetElement).getQualifiedName());
 
-      ApplicationManager.getApplication().invokeLater(() -> myInnerClassChooser.requestFocus(), ModalityState.stateForComponent(myMainPanel));
+      ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myInnerClassChooser, true);
+      }), ModalityState.stateForComponent(myMainPanel));
     }
     else if (initialTargetElement instanceof PsiPackage) {
       myClassPackageChooser.setText(((PsiPackage)initialTargetElement).getQualifiedName());
@@ -126,13 +129,17 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
     myToPackageRadioButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateControlsEnabled();
-        myClassPackageChooser.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myClassPackageChooser, true);
+        });
       }
     });
     myMakeInnerClassOfRadioButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateControlsEnabled();
-        myInnerClassChooser.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myInnerClassChooser, true);
+        });
       }
     });
 

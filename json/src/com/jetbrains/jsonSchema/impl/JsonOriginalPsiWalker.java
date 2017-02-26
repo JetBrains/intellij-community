@@ -126,7 +126,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     final int offset = element.getTextRange().getStartOffset();
     final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
     if (object != null) {
-      return ContainerUtil.or(object.getPropertyList(), prop -> prop.getTextRange().getStartOffset() >= offset);
+      return ContainerUtil.or(object.getPropertyList(), prop -> prop.getTextRange().getStartOffset() >= offset &&
+                                                                !PsiTreeUtil.isAncestor(prop, element, false));
     }
     return false;
   }
@@ -135,7 +136,9 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   public Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element) {
     final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
     if (object != null) {
-      return object.getPropertyList().stream().map(p -> StringUtil.unquoteString(p.getName())).collect(Collectors.toSet());
+      return object.getPropertyList().stream()
+        .filter(p -> StringUtil.isQuotedString(p.getName()))
+        .map(p -> StringUtil.unquoteString(p.getName())).collect(Collectors.toSet());
     }
     return Collections.emptySet();
   }

@@ -37,6 +37,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -111,9 +112,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
     }
 
     assertTrue("Timed out", reads.await(5, TimeUnit.MINUTES));
-    for (Thread thread : threads) {
-      thread.join();
-    }
+    ConcurrencyUtil.joinAll(threads);
   }
 
   private static void mark(final String s) {

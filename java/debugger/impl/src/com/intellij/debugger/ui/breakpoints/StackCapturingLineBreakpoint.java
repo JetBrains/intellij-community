@@ -21,10 +21,13 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.*;
+import com.intellij.debugger.engine.evaluation.expression.Evaluator;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
@@ -80,8 +83,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     myProperties.myClassPattern = myCapturePoint.myClassName;
     myProperties.myMethodName = myCapturePoint.myMethodName;
 
-    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression);
-    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression);
+    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression, false);
+    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression, false);
   }
 
   @NotNull
@@ -231,14 +234,28 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   private static class MyEvaluator {
     private final String myExpression;
+    private final boolean myCached;
     ExpressionEvaluator myEvaluator;
 
-    public MyEvaluator(String expression) {
+    public MyEvaluator(String expression, boolean cached) {
       myExpression = expression;
+      int paramId = DecompiledLocalVariable.getParamId(myExpression);
+      if (paramId > -1) {
+        myEvaluator = new ExpressionEvaluatorImpl(new Evaluator() {
+          @Override
+          public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+            StackFrameProxyImpl frame = context.getFrameProxy();
+            return frame != null ? ContainerUtil.getOrElse(frame.getArgumentValues(), paramId, null) : null;
+          }
+        });
+        cached = true;
+      }
+      myCached = cached;
     }
 
+    @Nullable
     Value evaluate(final EvaluationContext context) throws EvaluateException {
-      if (myEvaluator == null) {
+      if ((!myCached || myEvaluator == null) && !StringUtil.isEmpty(myExpression)) {
         myEvaluator = ApplicationManager.getApplication().runReadAction(
           (ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);
@@ -247,9 +264,12 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
               new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myExpression), contextElement, sourcePosition, context.getProject());
           });
       }
-      Value value = myEvaluator.evaluate(context);
-      DebuggerUtilsEx.keep(value, context);
-      return value;
+      if (myEvaluator != null) {
+        Value value = myEvaluator.evaluate(context);
+        DebuggerUtilsEx.keep(value, context);
+        return value;
+      }
+      return null;
     }
   }
 }

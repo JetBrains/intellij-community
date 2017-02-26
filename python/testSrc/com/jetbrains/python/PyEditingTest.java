@@ -16,10 +16,8 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -477,7 +475,7 @@ public class PyEditingTest extends PyTestCase {
     myFixture.configureByText(PythonFileType.INSTANCE,
                               "import re\n" +
                               "re.compile(ur'\\U00010000<caret>')");
-    doTyping("t");
+    myFixture.type("t");
     myFixture.checkResult("import re\n" +
                           "re.compile(ur'\\U00010000t')");
   }
@@ -489,50 +487,28 @@ public class PyEditingTest extends PyTestCase {
   }
 
   private String doTestTyping(final String text, final int offset, final char character) {
-    final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(character);
-        return file;
-      }
-    });
+    final PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.getEditor().getCaretModel().moveToOffset(offset);
+    myFixture.type(character);
     return myFixture.getDocument(file).getText();
   }
 
   private void doTypingTest(final char character) {
     final String testName = "editing/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
-    doTyping(character);
+    myFixture.type(character);
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
   private void doTypingTest(@NotNull String text) {
     final String testName = "editing/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
-    doTyping(text);
+    myFixture.type(text);
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
   private void doDocStringTypingTest(final String text, @NotNull DocStringFormat format) {
     runWithDocStringFormat(format, () -> doTypingTest(text));
-  }
-
-  private void doTyping(final char character) {
-    final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      myFixture.getEditor().getCaretModel().moveToOffset(offset);
-      myFixture.type(character);
-    });
-  }
-  
-  private void doTyping(final String text) {
-    final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      myFixture.getEditor().getCaretModel().moveToOffset(offset);
-      myFixture.type(text);
-    });
   }
 
   public void testFirstParamClassmethod() {

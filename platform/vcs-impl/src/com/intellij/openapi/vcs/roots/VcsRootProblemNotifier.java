@@ -61,6 +61,7 @@ public class VcsRootProblemNotifier {
   @NotNull private final ChangeListManager myChangeListManager;
   @NotNull private final ProjectFileIndex myProjectFileIndex;
 
+  // unregistered roots reported during this session but not explicitly ignored
   @NotNull private final Set<String> myReportedUnregisteredRoots;
 
   @Nullable private Notification myNotification;
@@ -76,7 +77,7 @@ public class VcsRootProblemNotifier {
     myChangeListManager = ChangeListManager.getInstance(project);
     myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myReportedUnregisteredRoots = new HashSet<>(mySettings.IGNORED_UNREGISTERED_ROOTS);
+    myReportedUnregisteredRoots = new HashSet<>();
   }
 
   public void rescanAndNotifyIfNeeded() {
@@ -95,10 +96,10 @@ public class VcsRootProblemNotifier {
       VcsRootError singleUnregRoot = notNull(getFirstItem(importantUnregisteredRoots));
       String mappingPath = singleUnregRoot.getMapping();
       VirtualFile projectDir = guessProjectDir(myProject);
-      if (!myVcsManager.hasAnyMappings()
-          && !myReportedUnregisteredRoots.contains(mappingPath)
-          && projectDir != null && FileUtil.isAncestor(projectDir.getPath(), mappingPath, false)
-          && Registry.is("vcs.auto.add.single.root")) {
+      if (!myVcsManager.hasAnyMappings() &&
+          !myReportedUnregisteredRoots.contains(mappingPath) &&
+          FileUtil.isAncestor(projectDir.getPath(), mappingPath, false) &&
+          Registry.is("vcs.auto.add.single.root")) {
         VcsDirectoryMapping mapping = new VcsDirectoryMapping(mappingPath, singleUnregRoot.getVcsKey().getName());
         myVcsManager.setDirectoryMappings(Collections.singletonList(mapping));
         LOG.info("Added " + mapping.getVcs() + " root " + mapping + " as the only auto-detected root.");
@@ -132,7 +133,7 @@ public class VcsRootProblemNotifier {
            FileUtil.isAncestor(mapping, projectDir, false);
   }
 
-  private boolean isIgnoredOrExcluded(@NotNull String mapping) {
+  private boolean isIgnoredOrExcludedPath(@NotNull String mapping) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(mapping);
     return file != null && (myChangeListManager.isIgnoredFile(file) || myProjectFileIndex.isExcluded(file));
   }
@@ -217,7 +218,10 @@ public class VcsRootProblemNotifier {
   private List<VcsRootError> getImportantUnregisteredMappings(@NotNull Collection<VcsRootError> errors) {
     return ContainerUtil.filter(errors, error -> {
       String mapping = error.getMapping();
-      return error.getType() == VcsRootError.Type.UNREGISTERED_ROOT && isUnderOrAboveProjectDir(mapping) && !isIgnoredOrExcluded(mapping);
+      return error.getType() == VcsRootError.Type.UNREGISTERED_ROOT &&
+             isUnderOrAboveProjectDir(mapping) &&
+             !isIgnoredOrExcludedPath(mapping) &&
+             !mySettings.isIgnoredUnregisteredRoot(mapping);
     });
   }
 

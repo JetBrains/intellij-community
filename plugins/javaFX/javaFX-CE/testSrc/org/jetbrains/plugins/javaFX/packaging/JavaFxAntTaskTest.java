@@ -428,7 +428,6 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     private List<JavaFxManifestAttribute> myCustomManifestAttributes;
     private JavaFxApplicationIcons myIcons;
     private JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
-    ;
 
     private MockJavaFxPackager(String outputPath) {
       myOutputPath = outputPath;

@@ -63,6 +63,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+
 /**
  * Author: msk
  */
@@ -753,7 +755,9 @@ public class EditorWindow {
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
             res.setSelectedEditor(selectedEditor, true);
-            selectedEditor.getComponent().requestFocus();
+            getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              getGlobalInstance().requestFocus(selectedEditor.getComponent(), true);
+            });
           }
           panel.revalidate();
         }

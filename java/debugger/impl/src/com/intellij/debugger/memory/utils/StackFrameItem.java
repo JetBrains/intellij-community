@@ -268,5 +268,13 @@ public class StackFrameItem {
     public void setWithSeparator(boolean withSeparator) {
       myWithSeparator = withSeparator;
     }
+
+    @Override
+    public String toString() {
+      if (mySourcePosition != null) {
+        return mySourcePosition.getFile().getName() + ":" + (mySourcePosition.getLine() + 1);
+      }
+      return "<position unknown>";
+    }
   }
 }
