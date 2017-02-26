@@ -506,7 +506,10 @@ public class GitMergeProvider implements MergeProvider2 {
     @Override
     public void conflictResolvedForFile(@NotNull VirtualFile file, @NotNull Resolution resolution) {
       Conflict c = myConflicts.get(file);
-      assert c != null : "Conflict was not loaded for the file: " + file.getPath();
+      if (c == null) {
+        LOG.error("Conflict was not loaded for the file: " + file.getPath());
+        return;
+      }
       try {
         Conflict.Status status;
         switch (resolution) {
@@ -555,7 +558,10 @@ public class GitMergeProvider implements MergeProvider2 {
       @Override
       public String valueOf(VirtualFile file) {
         Conflict c = myConflicts.get(file);
-        assert c != null : "No conflict for the file " + file;
+        if (c == null) {
+          LOG.error("No conflict for the file " + file);
+          return "";
+        }
         Conflict.Status s = myIsTheirs ? c.myStatusTheirs : c.myStatusYours;
         switch (s) {
           case MODIFIED:
