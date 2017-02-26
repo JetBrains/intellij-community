@@ -500,7 +500,7 @@ public class GitMergeProvider implements MergeProvider2 {
     @Override
     public boolean canMerge(@NotNull VirtualFile file) {
       Conflict c = myConflicts.get(file);
-      return c != null;
+      return c != null && !file.isDirectory();
     }
 
     @Override
