@@ -84,6 +84,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public GitPushTagMode PUSH_TAGS = null;
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
+    public boolean SKIP_COMMIT_HOOK = false;
+    public boolean SKIP_PUSH_HOOK = false;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
 
     @AbstractCollection(surroundWithTag = false)
@@ -259,6 +261,21 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SIGN_OFF_COMMIT = state;
   }
 
+  public boolean shouldSkipCommitHook() {
+    return myState.SKIP_COMMIT_HOOK;
+  }
+
+  public void setSkipCommitHook(boolean shouldSkip) {
+    myState.SKIP_COMMIT_HOOK = shouldSkip;
+  }
+
+  public boolean shouldSkipPushHook() {
+    return myState.SKIP_PUSH_HOOK;
+  }
+
+  public void setSkipPushHook(boolean shouldSkip) {
+    myState.SKIP_PUSH_HOOK = shouldSkip;
+  }
 
   /**
    * Provides migration from project settings.

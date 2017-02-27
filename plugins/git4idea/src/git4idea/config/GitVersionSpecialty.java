@@ -158,6 +158,16 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 0, 0));
     }
+  },
+
+  /**
+   * Git pre-push hook is supported since version 1.8.2.
+   */
+  PRE_PUSH_HOOK {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 8, 2, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);

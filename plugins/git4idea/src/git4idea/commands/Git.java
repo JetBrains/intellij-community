@@ -137,6 +137,7 @@ public interface Git {
                         @NotNull String spec,
                         boolean force,
                         boolean updateTracking,
+                        boolean skipHook,
                         @Nullable String tagMode,
                         GitLineHandlerListener... listeners);
 

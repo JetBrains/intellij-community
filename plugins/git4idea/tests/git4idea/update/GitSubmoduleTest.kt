@@ -119,7 +119,7 @@ class GitSubmoduleTest : GitPlatformTest() {
       reposInActualOrder.add(it)
     }
 
-    GitPushOperation(myProject, getPushSupport(myVcs) as GitPushSupport, pushSpecs, null, false).execute()
+    GitPushOperation(myProject, getPushSupport(myVcs) as GitPushSupport, pushSpecs, null, false, false).execute()
     assertOrder(reposInActualOrder)
   }
 

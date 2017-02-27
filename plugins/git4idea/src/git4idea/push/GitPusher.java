@@ -48,11 +48,14 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
   public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
                    @Nullable VcsPushOptionValue optionValue, boolean force) {
     expireExistingErrorsAndWarnings();
-    GitPushTagMode pushTagMode = (GitPushTagMode)optionValue;
-    GitPushResult result = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force).execute();
+    GitVcsPushOptionValue value = optionValue != null ? (GitVcsPushOptionValue)optionValue : GitVcsPushOptionValue.UNDEFINED;
+    GitPushTagMode pushTagMode = value.getPushTagMode();
+    boolean skipHook = value.shouldSkipHook();
+    GitPushResult result = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force, skipHook).execute();
     GitPushResultNotification notification = GitPushResultNotification.create(myProject, result, myRepositoryManager.moreThanOneRoot());
     notification.notify(myProject);
     mySettings.setPushTagMode(pushTagMode);
+    mySettings.setSkipPushHook(skipHook);
     rememberTargets(pushSpecs);
   }
 

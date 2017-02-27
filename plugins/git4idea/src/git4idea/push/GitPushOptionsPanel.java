@@ -27,13 +27,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 
-public class GitPushTagPanel extends VcsPushOptionsPanel {
+public class GitPushOptionsPanel extends VcsPushOptionsPanel {
 
   private final ComboBox myCombobox;
   private final JBCheckBox myCheckBox;
+  private final JBCheckBox mySkipHook;
 
-  public GitPushTagPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported) {
+  public GitPushOptionsPanel(@Nullable GitPushTagMode defaultMode,
+                             boolean followTagsSupported,
+                             boolean showSkipHookOption,
+                             boolean skipHook) {
     String checkboxText = "Push Tags";
     if (followTagsSupported) {
       checkboxText += ": ";
@@ -70,12 +75,20 @@ public class GitPushTagPanel extends VcsPushOptionsPanel {
       myCombobox = null;
     }
 
+    mySkipHook = new JBCheckBox("Skip hook");
+    mySkipHook.setMnemonic(KeyEvent.VK_H);
+    mySkipHook.setSelected(skipHook);
+    mySkipHook.setVisible(showSkipHookOption);
+
+    add(mySkipHook, BorderLayout.EAST);
   }
 
   @Nullable
   @Override
   public VcsPushOptionValue getValue() {
-    return myCheckBox.isSelected() ? myCombobox == null ? GitPushTagMode.ALL : (VcsPushOptionValue)myCombobox.getSelectedItem() : null;
+    GitPushTagMode selectedTagMode = myCombobox == null ? GitPushTagMode.ALL : (GitPushTagMode)myCombobox.getSelectedItem();
+    GitPushTagMode tagMode = myCheckBox.isSelected() ? selectedTagMode : null;
+    return new GitVcsPushOptionValue(tagMode, mySkipHook.isVisible() && mySkipHook.isSelected());
   }
 
 }
