@@ -68,7 +68,7 @@ elif [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
   if [ ! -d "$JDK" ]; then
     JDK="$IDE_HOME/$JDK"
   fi
-elif [ "$OS_TYPE" = "Linux" ] && [ -x "$IDE_HOME/jre/jre/bin/java" ] && "$IDE_HOME/jre/jre/bin/java" -version > /dev/null 2>&1 ; then
+elif [ "$OS_TYPE" = "Linux" ] && [ -x "$IDE_HOME/jre/bin/java" ] && "$IDE_HOME/jre/bin/java" -version > /dev/null 2>&1 ; then
   JDK="$IDE_HOME/jre"
 elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
   JDK="$JDK_HOME"
