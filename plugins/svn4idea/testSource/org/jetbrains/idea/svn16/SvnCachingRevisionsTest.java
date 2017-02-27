@@ -32,6 +32,8 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    myInternalManager = null;
+    myLocation = null;
     FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
     super.tearDown();
   }
