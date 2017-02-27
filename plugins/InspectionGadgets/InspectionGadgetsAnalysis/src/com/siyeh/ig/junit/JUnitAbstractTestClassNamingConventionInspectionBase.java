@@ -63,6 +63,11 @@ public class JUnitAbstractTestClassNamingConventionInspectionBase extends Conven
     return new NamingConventionsVisitor();
   }
 
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return file instanceof PsiClassOwner;
+  }
+
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
     @Override

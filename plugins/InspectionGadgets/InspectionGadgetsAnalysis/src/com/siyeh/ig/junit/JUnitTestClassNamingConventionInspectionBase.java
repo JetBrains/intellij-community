@@ -17,12 +17,10 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.naming.ConventionInspection;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class JUnitTestClassNamingConventionInspectionBase extends ConventionInspection {
@@ -64,6 +62,11 @@ public class JUnitTestClassNamingConventionInspectionBase extends ConventionInsp
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return file instanceof PsiClassOwner;
   }
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
