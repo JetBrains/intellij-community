@@ -50,6 +50,10 @@ public class YAMLScalarLiteralEscaperTest extends LightPlatformCodeInsightFixtur
     doTest();
   }
 
+  public void testPlainScalar3Tag() {
+    doTest();
+  }
+
   public void testLiteralStyle1() {
     doTest();
   }
@@ -78,7 +82,15 @@ public class YAMLScalarLiteralEscaperTest extends LightPlatformCodeInsightFixtur
     doTest();
   }
 
+  public void testFoldedStyle4Tag() {
+    doTest();
+  }
+
   public void testSingleQuote1() {
+    doTest();
+  }
+
+  public void testSingleQuote1Tag() {
     doTest();
   }
 
@@ -89,12 +101,16 @@ public class YAMLScalarLiteralEscaperTest extends LightPlatformCodeInsightFixtur
   public void testDoubleQuote1() {
     doTest();
   }
-  
+
   public void testDoubleQuote2() {
     doTest();
   }
-  
+
   public void testDoubleQuote3() {
+    doTest();
+  }
+
+  public void testDoubleQuoteTag() {
     doTest();
   }
 
@@ -112,12 +128,12 @@ public class YAMLScalarLiteralEscaperTest extends LightPlatformCodeInsightFixtur
     final StringBuilder builder = new StringBuilder();
     assertTrue(elementLiteralEscaper.decode(scalarElement.getTextRange(), builder));
     assertEquals(scalarElement.getTextValue(), builder.toString());
-    
+
     int[] offsets = new int[builder.length() + 1];
     for (int i = 0; i < builder.length() + 1; ++i) {
       offsets[i] = elementLiteralEscaper.getOffsetInHost(i, TextRange.from(0, scalarElement.getTextLength()));
     }
-    
+
     final String elementText = scalarElement.getText();
     StringBuilder description = new StringBuilder();
     for (int i = 0; i < builder.length(); ++i) {
@@ -126,8 +142,8 @@ public class YAMLScalarLiteralEscaperTest extends LightPlatformCodeInsightFixtur
         .append(elementText.subSequence(offsets[i], offsets[i + 1]))
         .append('\n');
     }
-    assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".positions.txt", 
-                            Arrays.toString(offsets) + "\n" + description, 
+    assertSameLinesWithFile(getTestDataPath() + getTestName(true) + ".positions.txt",
+                            Arrays.toString(offsets) + "\n" + description,
                             false);
   }
 }
