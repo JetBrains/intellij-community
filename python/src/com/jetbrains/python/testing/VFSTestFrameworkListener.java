@@ -160,7 +160,10 @@ public class VFSTestFrameworkListener {
     myService.SDK_TO_PYTEST.put(sdkHome, installed);
   }
 
-  public boolean isPyTestInstalled(@NotNull Sdk sdk) {
+  public boolean isPyTestInstalled(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return false;
+    }
     final Boolean isInstalled = myService.SDK_TO_PYTEST.get(sdk.getHomePath());
     if (isInstalled == null) {
       scheduleTestFrameworkCheck(sdk, PyNames.PY_TEST);
@@ -173,7 +176,10 @@ public class VFSTestFrameworkListener {
     myService.SDK_TO_NOSETEST.put(sdkHome, installed);
   }
 
-  public boolean isNoseTestInstalled(@NotNull Sdk sdk) {
+  public boolean isNoseTestInstalled(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return false;
+    }
     final Boolean isInstalled = myService.SDK_TO_NOSETEST.get(sdk.getHomePath());
     if (isInstalled == null) {
       scheduleTestFrameworkCheck(sdk, PyNames.NOSE_TEST);
