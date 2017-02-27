@@ -120,6 +120,26 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     assertEquals("Foo.ListImpl", inheritor.getQualifiedName());
   }
 
+  public void testExtensionRename() {
+    final PsiFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.txt")[1];
+    rebuildProject();
+    assertOneElement(getReferentFilesForElementUnderCaret());
+    myFixture.renameElement(file, "Foo.java");
+    final PsiClass foo = myFixture.findClass("Foo");
+    assertNotNull(foo);
+    final CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl) CompilerReferenceService.getInstance(myFixture.getProject());
+    compilerReferenceService.getScopeWithoutCodeReferences(foo);
+    assertOneElement(compilerReferenceService.getDirtyScopeHolder().getAllDirtyModulesForTest());
+  }
+
+  public void testReverseExtensionRename() {
+    final PsiFile file = myFixture.configureByFiles(getName() + "/Bar.java", getName() + "/Foo.java")[1];
+    rebuildProject();
+    assertSize(2, getReferentFilesForElementUnderCaret());
+    myFixture.renameElement(file, "Foo.txt");
+    assertEquals("Bar.java", assertOneElement(getReferentFilesForElementUnderCaret()).getName());
+  }
+
   private CompilerDirectHierarchyInfo getHierarchyForElementUnderCaret() {
     final PsiElement atCaret = myFixture.getElementAtCaret();
     assertNotNull(atCaret);
