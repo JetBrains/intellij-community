@@ -91,6 +91,12 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
       return null;
     }
     //noinspection TestOnlyProblems
-    return new LocalInspectionToolWrapper(sharedTool);
+    return new LocalInspectionToolWrapper(sharedTool){
+      @Nullable
+      @Override
+      public String getLanguage() {
+        return GlobalInspectionToolWrapper.this.getLanguage(); // inherit "language=" xml tag from the global inspection EP
+      }
+    };
   }
 }
