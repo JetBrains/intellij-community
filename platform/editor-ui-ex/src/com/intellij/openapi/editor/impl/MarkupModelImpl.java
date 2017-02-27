@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.event.MarkupModelListenerEx;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -55,8 +54,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   private final List<MarkupModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final RangeHighlighterTree myHighlighterTree;          // this tree holds regular highlighters with target = HighlighterTargetArea.EXACT_RANGE
   private final RangeHighlighterTree myHighlighterTreeForLines;  // this tree holds line range highlighters with target = HighlighterTargetArea.LINES_IN_RANGE
-  private boolean myFlush = false;
-  private boolean myInBulkUpdate;
 
   MarkupModelImpl(@NotNull DocumentEx document) {
     myDocument = document;
@@ -227,7 +224,6 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     for (MarkupModelListener listener : myListeners) {
       listener.attributesChanged(segmentHighlighter, renderersChanged, fontStyleOrColorChanged);
     }
-    ensureFlush();
   }
 
   @Override
@@ -235,52 +231,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     for (MarkupModelListener listener : myListeners) {
       listener.afterAdded(segmentHighlighter);
     }
-    ensureFlush();
   }
 
   @Override
   public void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
     for (MarkupModelListener listener : myListeners) {
       listener.beforeRemoved(segmentHighlighter);
-    }
-    ensureFlush();
-  }
-
-  @Override
-  public void inBulkUpdate(@NotNull Runnable runnable) {
-    if (myInBulkUpdate) {
-      runnable.run();
-      return;
-    }
-    myInBulkUpdate = true;
-    try {
-      runnable.run();
-    } finally {
-      myInBulkUpdate = false;
-      fireFlush(true);
-    }
-  }
-
-
-  private void ensureFlush() {
-    if (myInBulkUpdate) return;
-    if (myFlush) return;
-    myFlush = true;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        fireFlush(false); // ?
-        myFlush = false;
-      }
-    });
-  }
-
-  @Override
-  public void fireFlush(boolean bulk) {
-    for (MarkupModelListener listener : myListeners) {
-      if (listener instanceof MarkupModelListenerEx) {
-        ((MarkupModelListenerEx)listener).flush(bulk);
-      }
     }
   }
 

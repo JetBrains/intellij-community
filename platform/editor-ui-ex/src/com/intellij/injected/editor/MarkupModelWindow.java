@@ -82,11 +82,6 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   }
 
   @Override
-  public void inBulkUpdate(@NotNull Runnable runnable) {
-    myHostModel.inBulkUpdate(runnable);
-  }
-
-  @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(final int line, final int layer, final TextAttributes textAttributes) {
     int hostLine = myDocument.injectedToHostLine(line);
@@ -167,11 +162,6 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
 
   @Override
   public void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter) {
-
-  }
-
-  @Override
-  public void fireFlush(boolean bulk) {
 
   }
 

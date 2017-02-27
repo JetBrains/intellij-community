@@ -41,8 +41,6 @@ public interface MarkupModelEx extends MarkupModel {
 
   void fireBeforeRemoved(@NotNull RangeHighlighterEx segmentHighlighter);
 
-  void fireFlush(boolean bulk);
-
   boolean containsHighlighter(@NotNull RangeHighlighter highlighter);
 
   void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
@@ -74,6 +72,4 @@ public interface MarkupModelEx extends MarkupModel {
 
   // runs change attributes action and fires highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<RangeHighlighterEx> changeAttributesAction);
-
-  void inBulkUpdate(@NotNull Runnable runnable);
 }
