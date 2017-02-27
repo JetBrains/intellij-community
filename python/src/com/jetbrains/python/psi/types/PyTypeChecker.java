@@ -69,9 +69,14 @@ public class PyTypeChecker {
       final PyClassType classType = (PyClassType)actual;
       final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(classType.getPyClass());
 
-      if (actual == builtinCache.getObjectType(PyNames.BASESTRING)) {
+      if (actual.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
         return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
       }
+    }
+    if (expected instanceof PyClassType &&
+        expected.equals(PyBuiltinCache.getInstance(((PyClassType)expected).getPyClass()).getTypeType()) &&
+        actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition()) {
+      return true;
     }
     if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType
         && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
