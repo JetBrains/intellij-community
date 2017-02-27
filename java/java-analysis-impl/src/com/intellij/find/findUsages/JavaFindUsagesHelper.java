@@ -72,7 +72,7 @@ public class JavaFindUsagesHelper {
         if (qname != null) {
           result.add(qname);
           PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-          if (topLevelClass != null) {
+          if (topLevelClass != null && !(topLevelClass instanceof PsiSyntheticClass)) {
             String topName = topLevelClass.getQualifiedName();
             assert topName != null : "topLevelClass : " + topLevelClass + "; element: " + element + " (" + qname + ") top level file: " + InjectedLanguageManager.getInstance(
               element.getProject()).getTopLevelFile(element);
