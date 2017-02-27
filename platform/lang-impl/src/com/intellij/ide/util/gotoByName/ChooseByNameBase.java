@@ -1029,20 +1029,22 @@ public abstract class ChooseByNameBase {
       reversed();
 
     int bestPosition = 0;
+    while (bestPosition < modelElements.length - 1 && isSpecialElement(modelElements[bestPosition])) bestPosition++;
+
     for (int i = 1; i < modelElements.length; i++) {
       final Object modelElement = modelElements[i];
-      if (EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement)) continue;
+      if (isSpecialElement(modelElement)) continue;
 
       if (itemComparator.compare(modelElement, modelElements[bestPosition]) < 0) {
         bestPosition = i;
       }
     }
 
-    if (bestPosition < modelElements.length - 1 && modelElements[bestPosition] == NON_PREFIX_SEPARATOR) {
-      bestPosition++;
-    }
-
     return bestPosition;
+  }
+
+  private static boolean isSpecialElement(Object modelElement) {
+    return EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement);
   }
 
   private int getUseCount(String statContext, Object modelElement) {
