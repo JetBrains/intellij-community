@@ -33,13 +33,14 @@ public class HgRootChecker extends VcsRootChecker {
     return new File(path, HgUtil.DOT_HG).exists();
   }
 
+  @NotNull
   @Override
   public VcsKey getSupportedVcs() {
     return HgVcs.getKey();
   }
 
   @Override
-  public boolean isVcsDir(String path) {
-    return path != null && path.toLowerCase().endsWith(HgUtil.DOT_HG);
+  public boolean isVcsDir(@NotNull String path) {
+    return path.toLowerCase().endsWith(HgUtil.DOT_HG);
   }
 }

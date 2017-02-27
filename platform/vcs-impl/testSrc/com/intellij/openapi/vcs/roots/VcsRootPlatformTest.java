@@ -41,7 +41,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -86,6 +85,7 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
     myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
     myExtension = new VcsRootChecker() {
+      @NotNull
       @Override
       public VcsKey getSupportedVcs() {
         return myVcs.getKeyInstanceMethod();
@@ -97,8 +97,8 @@ public abstract class VcsRootPlatformTest extends UsefulTestCase {
       }
 
       @Override
-      public boolean isVcsDir(@Nullable String path) {
-        return path != null && path.toLowerCase().endsWith(DOT_MOCK);
+      public boolean isVcsDir(@NotNull String path) {
+        return path.toLowerCase().endsWith(DOT_MOCK);
       }
     };
     point.registerExtension(myExtension);
