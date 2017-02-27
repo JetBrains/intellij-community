@@ -199,7 +199,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       Dimension panelSize = getPreferredSize();
       Dimension prev = DimensionService.getInstance().getSize(SERVICE_KEY);
       if (!myCbPreserveCase.isVisible()) {
-        panelSize.width += myCbPreserveCase.getPreferredSize().width + 4;
+        panelSize.width += myCbPreserveCase.getPreferredSize().width + 8;
       }
       panelSize.height *= 2;
       if (prev != null && prev.height < panelSize.height) prev.height = panelSize.height;
@@ -310,6 +310,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     AnAction myShowFilterPopupAction = new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
+        if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
+        
         ListPopup listPopup =
           JBPopupFactory.getInstance().createActionGroupPopup(null, switchContextGroup, e.getDataContext(), false, null, 10);
         listPopup.showUnderneathOf(myFilterContextButton);
@@ -606,15 +608,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
 
-    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gap 0"));
+    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gap 0 0 0 8"));
     add(myTitleLabel, "gapleft 4, sx 2, growx, pushx, growy");
-    add(myCbCaseSensitive, "gapright 8");
-    add(myCbPreserveCase, "gapright 8");
-    add(myCbWholeWordsOnly, "gapright 8");
-    add(myCbRegularExpressions);
-    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 8");
-    add(myCbFileFilter);
-    add(myFileMaskField, "gapright 8");
+    add(myCbCaseSensitive);
+    add(myCbPreserveCase);
+    add(myCbWholeWordsOnly);
+    add(myCbRegularExpressions, "gapright 0");
+    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 16");
+    add(myCbFileFilter, "gapright 0");
+    add(myFileMaskField, "gapright 16");
     add(myFilterContextButton, "wrap");
     add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(myReplaceTextArea, "pushx, growx, sx 10, wrap");
