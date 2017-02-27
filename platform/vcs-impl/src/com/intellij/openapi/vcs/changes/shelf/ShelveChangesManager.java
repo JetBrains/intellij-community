@@ -51,7 +51,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,7 +76,6 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.openapi.components.StoragePathMacros.PROJECT_CONFIG_DIR;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
@@ -100,8 +98,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private static final String SHELVE_MANAGER_DIR_PATH = "shelf";
-  @SuppressWarnings("deprecation")
-  public static final String DEFAULT_PROJECT_SHELF_DIR = Paths.get(PROJECT_CONFIG_DIR, SHELVE_MANAGER_DIR_PATH).toString();
+  public static final String DEFAULT_PROJECT_PRESENTATION_PATH = Paths.get("<Project>", SHELVE_MANAGER_DIR_PATH).toString();
 
   /**
    * System independent file-path for non-default project
@@ -113,17 +110,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     return VcsUtil
       .getFilePath(chooseNotNull(ProjectKt.getProjectStoreDirectory(project.getBaseDir()), project.getBaseDir()), SHELVE_MANAGER_DIR_PATH)
       .getPath();
-  }
-
-  /**
-   * System independent file-path to current shelf dir
-   */
-  @NotNull
-  public static String getCurrentShelfStoragePath(@NotNull Project project) {
-    VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
-    if (vcsConfiguration.USE_CUSTOM_SHELF_PATH) return ObjectUtils.assertNotNull(vcsConfiguration.CUSTOM_SHELF_PATH);
-    if (project.isDefault()) return DEFAULT_PROJECT_SHELF_DIR;
-    return getDefaultShelfPath(project);
   }
 
   private final MessageBus myBus;

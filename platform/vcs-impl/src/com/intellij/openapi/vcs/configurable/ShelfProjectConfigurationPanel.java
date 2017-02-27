@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.JBColor;
@@ -31,8 +30,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.vcs.VcsConfiguration.ourMaximumFileForBaseRevisionSize;
-import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getCurrentShelfStoragePath;
+import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.DEFAULT_PROJECT_PRESENTATION_PATH;
+import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 import static java.awt.GridBagConstraints.NONE;
@@ -86,7 +88,16 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   }
 
   private void updateLabelInfo() {
-    myInfoLabel.setText(CURRENT_LOCATION_HINT + FileUtil.toSystemDependentName(getCurrentShelfStoragePath(myProject)));
+    myInfoLabel.setText(CURRENT_LOCATION_HINT + (myVcsConfiguration.USE_CUSTOM_SHELF_PATH ? toSystemDependentName(
+      assertNotNull(myVcsConfiguration.CUSTOM_SHELF_PATH)) : getDefaultShelfPresentationPath(myProject)));
+  }
+  
+  /**
+   * System dependent path to default shelf dir
+   */
+  @NotNull
+  static String getDefaultShelfPresentationPath(@NotNull Project project) {
+    return toSystemDependentName(project.isDefault() ? DEFAULT_PROJECT_PRESENTATION_PATH : getDefaultShelfPath(project));
   }
 
   private JComponent createStoreBaseRevisionOption() {

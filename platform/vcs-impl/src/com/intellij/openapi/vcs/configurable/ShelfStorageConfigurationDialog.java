@@ -41,6 +41,7 @@ import java.awt.*;
 import java.io.File;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.getDefaultShelfPath;
+import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurationPanel.getDefaultShelfPresentationPath;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
@@ -85,7 +86,7 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
     myMoveShelvesCheckBox.setSelected(myVcsConfiguration.MOVE_SHELVES);
     myShelfDirectoryPath
-      .setText(FileUtil.toSystemDependentName(chooseNotNull(myVcsConfiguration.CUSTOM_SHELF_PATH, getDefaultPresentationText())));
+      .setText(FileUtil.toSystemDependentName(chooseNotNull(myVcsConfiguration.CUSTOM_SHELF_PATH, getDefaultShelfPresentationPath(myProject))));
     setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected());
     myUseCustomShelfDirectory.addChangeListener(e -> setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected()));
   }
@@ -133,17 +134,11 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
   private JPanel createDefaultLocationPanel() {
     JPanel defaultPanel = new JPanel(new BorderLayout());
     defaultPanel.add(myUseDefaultShelfDirectory, BorderLayout.WEST);
-    JLabel infoLabel = new JLabel(getDefaultPresentationText());
+    JLabel infoLabel = new JLabel(getDefaultShelfPresentationPath(myProject));
     infoLabel.setBorder(null);
     infoLabel.setForeground(JBColor.GRAY);
     defaultPanel.add(infoLabel, BorderLayout.CENTER);
     return defaultPanel;
-  }
-
-  @NotNull
-  private String getDefaultPresentationText() {
-    return FileUtil
-      .toSystemDependentName(myProject.isDefault() ? ShelveChangesManager.DEFAULT_PROJECT_SHELF_DIR : getDefaultShelfPath(myProject));
   }
 
   @Override
