@@ -72,8 +72,9 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
     myToolbar = createToolbar();
+    controlsPanel.add(Box.createRigidArea(new Dimension(6, 0)));
     controlsPanel.add(myToolbar);
-    controlsPanel.add(Box.createRigidArea(new Dimension(15, 0)));
+    controlsPanel.add(Box.createRigidArea(new Dimension(9, 0)));
     myInfoComponent = createInfoComponent();
     controlsPanel.add(myInfoComponent);
     controlsPanel.add(Box.createHorizontalGlue());
@@ -87,7 +88,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   
   private JComponent createToolbar() {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, toolbarActionGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     toolbarComponent.setMaximumSize(new Dimension(toolbarComponent.getPreferredSize().width, Short.MAX_VALUE));
