@@ -17,9 +17,12 @@ package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,16 +30,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ConstructionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.*;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -65,6 +68,14 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     .register(UNMODIFIABLE_SET, call -> PrepopulatedCollectionModel.fromSet(call.getArgumentList().getExpressions()[0]))
     .register(UNMODIFIABLE_LIST, call -> PrepopulatedCollectionModel.fromList(call.getArgumentList().getExpressions()[0]));
 
+  public boolean IGNORE_NON_CONSTANT = false;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Do not warn when content is non-constant", this, "IGNORE_NON_CONSTANT");
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -75,10 +86,17 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
-        if(model != null) {
-          PsiElement element = call.getMethodExpression().getReferenceNameElement();
+        if (model != null && model.isValid()) {
+          ProblemHighlightType type = model.myConstantContent || !IGNORE_NON_CONSTANT
+                                      ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                      : ProblemHighlightType.INFORMATION;
+          if (type == ProblemHighlightType.INFORMATION && !isOnTheFly) return;
+          boolean wholeStatement = isOnTheFly &&
+                                   (type == ProblemHighlightType.INFORMATION ||
+                                    InspectionProjectProfileManager.isInformationLevel(getShortName(), call));
+          PsiElement element = wholeStatement ? call : call.getMethodExpression().getReferenceNameElement();
           if(element != null) {
-            holder.registerProblem(element, "Can be replaced with '"+model.myType+".of' call",
+            holder.registerProblem(element, "Can be replaced with '" + model.myType + ".of' call", type,
                                    new ReplaceWithCollectionFactoryFix(model.myType));
           }
         }
@@ -90,11 +108,34 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     final List<PsiExpression> myContent;
     final List<PsiElement> myElementsToDelete;
     final String myType;
+    final boolean myConstantContent;
+    final boolean myRepeatingKeys;
+    final boolean myHasNulls;
 
     PrepopulatedCollectionModel(List<PsiExpression> content, List<PsiElement> delete, String type) {
       myContent = content;
       myElementsToDelete = delete;
       myType = type;
+      Map<PsiExpression, List<Object>> constants = StreamEx.of(myContent)
+        .cross(ExpressionUtils::possibleValues).mapValues(ExpressionUtils::computeConstantExpression).distinct().grouping();
+      myConstantContent = StreamEx.ofValues(constants).flatCollection(Function.identity()).allMatch(Objects::nonNull);
+      myRepeatingKeys = keyExpressions().flatCollection(constants::get).nonNull().distinct(2).findAny().isPresent();
+      myHasNulls = StreamEx.of(myContent).flatMap(ExpressionUtils::possibleValues).map(PsiExpression::getType).has(PsiType.NULL);
+    }
+
+    public boolean isValid() {
+      return !myHasNulls && !myRepeatingKeys;
+    }
+
+    private StreamEx<PsiExpression> keyExpressions() {
+      switch (myType) {
+        case "Set":
+          return StreamEx.of(myContent);
+        case "Map":
+          return IntStreamEx.range(0, myContent.size(), 2).elements(myContent);
+        default:
+          return StreamEx.empty();
+      }
     }
 
     public static PrepopulatedCollectionModel fromList(PsiExpression listDefinition) {
@@ -254,7 +295,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class, false);
       if(call == null) return;
       PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
       if(model == null) return;

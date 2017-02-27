@@ -26,6 +26,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class ExpressionUtils {
   @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
@@ -222,9 +224,36 @@ public class ExpressionUtils {
     return "\"\"".equals(text);
   }
 
+  @Contract("null -> false")
   public static boolean isNullLiteral(@Nullable PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
     return expression != null && PsiType.NULL.equals(expression.getType());
+  }
+
+  /**
+   * Returns stream of sub-expressions of supplied expression which could be equal (by ==) to resulting
+   * value of the expression. The expressions in returned stream are guaranteed not to be each other ancestors.
+   * Also the expression value is guaranteed to be equal to one of returned sub-expressions.
+   *
+   * <p>
+   * E.g. for {@code ((a) ? b : (c))} the stream will contain b and c.
+   * </p>
+   *
+   * @param expression expression to create a stream from
+   * @return a new stream
+   */
+  public static Stream<PsiExpression> possibleValues(@NotNull PsiExpression expression) {
+    return StreamEx.ofTree(expression, e -> {
+      if (e instanceof PsiConditionalExpression) {
+        PsiConditionalExpression ternary = (PsiConditionalExpression)e;
+        return StreamEx.of(ternary.getThenExpression(), ternary.getElseExpression()).nonNull();
+      }
+      if (e instanceof PsiParenthesizedExpression) {
+        return StreamEx.ofNullable(((PsiParenthesizedExpression)e).getExpression());
+      }
+      return null;
+    }).remove(e -> e instanceof PsiConditionalExpression ||
+                   e instanceof PsiParenthesizedExpression);
   }
 
   public static boolean isZero(@Nullable PsiExpression expression) {
