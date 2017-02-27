@@ -295,6 +295,11 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   void testSecondSwitchCaseWithEnumConstant() { doTest() }
 
+  void testInsideSwitchCaseWithEnumConstant() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'compareTo', 'equals'
+  }
+
   void testMethodInAnnotation() throws Exception {
     configureByFile("Annotation.java")
     checkResultByFile("Annotation_after.java")
