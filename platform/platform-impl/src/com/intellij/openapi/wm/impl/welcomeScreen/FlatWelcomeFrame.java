@@ -872,7 +872,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     actionsListPanel.add(pane, BorderLayout.CENTER);
 
     int width = (int)Math.min(Math.round(list.getPreferredSize().getWidth()), 200);
-    pane.setPreferredSize(JBUI.size(width, -1));
+    pane.setPreferredSize(JBUI.size(width + 14, -1));
 
     boolean singleProjectGenerator = list.getModel().getSize() == 1;
 
