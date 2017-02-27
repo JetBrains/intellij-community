@@ -2,7 +2,6 @@ import org.jetbrains.annotations.*;
 
 class Test {
 
-  /*
   @Nullable
   String findMessage(@NotNull Element element) {
     while (element != null) {
@@ -24,7 +23,6 @@ class Test {
     }
     return null;
   }
-  */
 
   void foo(@NotNull String param) {
     if (equals(3)) {
