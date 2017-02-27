@@ -1208,7 +1208,9 @@ public class AbstractPopup implements JBPopup {
 
     if (myPreferredFocusedComponent != null) {
       getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(myPreferredFocusedComponent, true);
+        if (!myDisposed) {
+          getGlobalInstance().requestFocus(myPreferredFocusedComponent, true);
+        }
       });
     }
   }
