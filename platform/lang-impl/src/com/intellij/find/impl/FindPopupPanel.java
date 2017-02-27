@@ -258,10 +258,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myCbWholeWordsOnly.addItemListener(liveResultsPreviewUpdateListener);
     myCbRegularExpressions = createCheckbox(FindBundle.message("find.popup.regex"));
     myCbRegularExpressions.addItemListener(liveResultsPreviewUpdateListener);
-    myCbFileFilter = createCheckbox("");
+    myCbFileFilter = createCheckbox("File mask: ");
     myCbFileFilter.setMnemonic('a');
     myCbFileFilter.setToolTipText("<html>Use file m<u>a</u>sk(s)");
-    myCbFileFilter.setMargin(JBUI.emptyInsets());
+    //myCbFileFilter.setMargin(JBUI.emptyInsets());
     myCbFileFilter.setBorder(null);
     myCbFileFilter.addItemListener(new ItemListener() {
       @Override
