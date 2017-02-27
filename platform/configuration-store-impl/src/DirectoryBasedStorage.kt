@@ -220,7 +220,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     }
 
     private fun deleteFiles(dir: VirtualFile) {
-      runWriteAction {
+      runWriteAction(undoTransparent = true) {
         for (file in dir.children) {
           val fileName = file.name
           if (fileName.endsWith(FileStorageCoreUtil.DEFAULT_EXT) && !copiedStorageData!!.containsKey(fileName)) {

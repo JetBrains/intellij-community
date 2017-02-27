@@ -80,7 +80,7 @@ internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtens
 }
 
 internal fun VirtualFile.getOrCreateChild(fileName: String, requestor: Any): VirtualFile {
-  return findChild(fileName) ?: runWriteAction { createChildData(requestor, fileName) }
+  return findChild(fileName) ?: runWriteAction(undoTransparent = true) { createChildData(requestor, fileName) }
 }
 
 internal fun createDir(ioDir: Path, requestor: Any): VirtualFile {

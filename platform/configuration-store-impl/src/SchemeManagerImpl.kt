@@ -554,7 +554,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     var deleteUsingIo = !useVfs
     if (!deleteUsingIo) {
       virtualDirectory?.let {
-        runWriteAction {
+        runWriteAction(undoTransparent = true) {
           try {
             it.delete(this)
           }
@@ -632,7 +632,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           oldFile?.let {
             // VFS doesn't allow to rename to existing file, so, check it
             if (dir!!.findChild(fileName) == null) {
-              runWriteAction { it.rename(this, fileName) }
+              runWriteAction(undoTransparent = true) { it.rename(this, fileName) }
               file = oldFile
             }
             else {
@@ -645,7 +645,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
           file = dir.getOrCreateChild(fileName, this)
         }
 
-        runWriteAction {
+        runWriteAction(undoTransparent = true) {
           file!!.getOutputStream(this).use { byteOut.writeTo(it) }
         }
       }
@@ -736,7 +736,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
       virtualDirectory?.let {
         val childrenToDelete = it.children.filter { filesToDelete.contains(it.name) }
         if (childrenToDelete.isNotEmpty()) {
-          runWriteAction {
+          runWriteAction(undoTransparent = true) {
             childrenToDelete.forEach { file ->
               errors.catch { file.delete(this) }
             }
