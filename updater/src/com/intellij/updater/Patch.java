@@ -321,6 +321,10 @@ public class Patch {
         if ((action instanceof CreateAction) &&
             !new File(toDir, action.getPath()).getParentFile().exists()) {
           Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
+        }
+        else if ((action instanceof UpdateAction) &&
+              !new File(toDir, action.getPath()).getParentFile().exists()) {
+            Runner.logger().info("Update action: " + action.getPath() + " skipped. The parent folder is absent.");
         } else {
           appliedActions.add(action);
           action.apply(patchFile, backupDir, toDir);
