@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author vlan
@@ -84,7 +83,7 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
       return false;
     }
     final PyGenericType type = (PyGenericType)o;
-    return myName.equals(type.myName) && Objects.equals(myBound, type.getBound()) && myIsDefinition == type.isDefinition();
+    return myName.equals(type.myName) && myIsDefinition == type.isDefinition();
   }
 
   @Override

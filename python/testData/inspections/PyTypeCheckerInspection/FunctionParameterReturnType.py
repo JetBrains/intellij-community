@@ -15,7 +15,7 @@ def test():
     for item in func(<warning descr="Expected type '(Any) -> str', got '(x: Any) -> int' instead">f</warning>, []):
         pass
 
-    for item in func(<warning descr="Expected type '(Any) -> str', got 'int' instead">int</warning>, []):
+    for item in func(<warning descr="Expected type '(Any) -> str', got 'Type[int]' instead">int</warning>, []):
         pass
 
     for item in func(<warning descr="Expected type '(Any) -> str', got '(x: Any) -> int' instead">lambda x: int(x)</warning>, []):
