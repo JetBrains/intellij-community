@@ -144,7 +144,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     def paths = [buildContext.paths.distAll, unixDistPath]
     if (jreDirectoryPath != null) {
       paths += jreDirectoryPath
-      extraBins += "jre/jre/bin/*"
+      extraBins += "jre/bin/*"
     }
     def description = "archive${jreDirectoryPath != null ? "" : " (without JRE)"}"
     buildContext.messages.block("Build Linux tar.gz $description") {

@@ -105,6 +105,8 @@ class BundledJreManager {
         buildContext.ant.exec(executable: "tar", dir: archive.parent) {
           arg(value: "-xf")
           arg(value: archive.name)
+          arg(value: "--strip")
+          arg(value: "1")
           arg(value: "--directory")
           arg(value: destination)
         }
