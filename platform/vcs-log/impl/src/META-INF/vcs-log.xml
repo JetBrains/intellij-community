@@ -83,6 +83,7 @@
             use-shortcut-of="Diff.ShowDiff" text="Show Diff" description="Show diff with previous version"
             icon="AllIcons.Actions.Diff"/>
     <action class="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryAction" id="Vcs.Log.ShowDiffWithLocal"
+            use-shortcut-of="Vcs.ShowDiffWithLocal"
             text="Show Diff with Local" description="Compare selected revision with the local version of the file"
             icon="AllIcons.Actions.DiffWithCurrent"/>
     <action class="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryAction" id="Vcs.Log.CreatePatchFromHistory"
