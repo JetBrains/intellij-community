@@ -19,7 +19,7 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
@@ -304,7 +304,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
       filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
     }
     else {
-      filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
+      filePath = runUndoTransparentWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
     }
 
     val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!

@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -228,6 +229,18 @@ public class DirtyScopeHolder extends UserDataHolderBase {
       }
 
       @Override
+      public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
+        if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) && event.getFile().isDirectory() && event.getFile().isInLocalFileSystem()) {
+          final String path = event.getFile().getPath();
+          for (Module module : ModuleManager.getInstance(myService.getProject()).getModules()) {
+            if (FileUtil.isAncestor(path, module.getModuleFilePath(), true)) {
+              addToDirtyModules(module);
+            }
+          }
+        }
+      }
+
+      @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) || VirtualFile.PROP_SYMLINK_TARGET.equals(event.getPropertyName())) {
           processChange(event.getFile());
@@ -253,15 +266,19 @@ public class DirtyScopeHolder extends UserDataHolderBase {
         fileChanged(file);
       }
 
-      void fileChanged(VirtualFile file) {
+      private void fileChanged(VirtualFile file) {
         final Module module = getModuleForSourceContentFile(file);
         if (module != null) {
-          synchronized (myLock) {
-            if (myCompilationPhase) {
-              myChangedModulesDuringCompilation.add(module);
-            } else {
-              myVFSChangedModules.add(module);
-            }
+          addToDirtyModules(module);
+        }
+      }
+
+      private void addToDirtyModules(Module module) {
+        synchronized (myLock) {
+          if (myCompilationPhase) {
+            myChangedModulesDuringCompilation.add(module);
+          } else {
+            myVFSChangedModules.add(module);
           }
         }
       }

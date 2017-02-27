@@ -95,6 +95,33 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private boolean myOnClose;
 
   private volatile MemoryDiskConflictResolver myConflictResolver = new MemoryDiskConflictResolver();
+  private final PrioritizedDocumentListener myPhysicalDocumentChangeTracker = new PrioritizedDocumentListener() {
+    @Override
+    public void beforeDocumentChange(DocumentEvent event) {
+    }
+
+    @Override
+    public int getPriority() {
+      return Integer.MIN_VALUE;
+    }
+
+    @Override
+    public void documentChanged(DocumentEvent e) {
+      final Document document = e.getDocument();
+      if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
+        myUnsavedDocuments.add(document);
+      }
+      final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
+      Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
+      String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
+      document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+
+      // avoid documents piling up during batch processing
+      if (areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
+        saveAllDocumentsLater();
+      }
+    }
+  };
 
   public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
     virtualFileManager.addVirtualFileListener(this);
@@ -171,42 +198,17 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
         document.setModificationStamp(file.getModificationStamp());
         final FileType fileType = file.getFileType();
         document.setReadOnly(tooLarge || !file.isWritable() || fileType.isBinary());
+
+        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)) {
+          document.addDocumentListener(myPhysicalDocumentChangeTracker);
+        }
+
         if (file instanceof LightVirtualFile) {
           registerDocument(document, file);
         }
         else {
-          cacheDocument(file, document);
           document.putUserData(FILE_KEY, file);
-        }
-
-        if (!(file instanceof LightVirtualFile || file.getFileSystem() instanceof NonPhysicalFileSystem)) {
-          document.addDocumentListener(new PrioritizedDocumentListener() {
-            @Override
-            public void beforeDocumentChange(DocumentEvent event) {
-            }
-
-            @Override
-            public int getPriority() {
-              return Integer.MIN_VALUE;
-            }
-
-            @Override
-            public void documentChanged(DocumentEvent e) {
-              final Document document = e.getDocument();
-              if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
-                myUnsavedDocuments.add(document);
-              }
-              final Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
-              Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
-              String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
-              document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
-
-              // avoid documents piling up during batch processing
-              if (areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
-                saveAllDocumentsLater();
-              }
-            }
-          });
+          cacheDocument(file, document);
         }
       }
 
@@ -241,8 +243,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
     synchronized (lock) {
-      virtualFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
       document.putUserData(FILE_KEY, virtualFile);
+      virtualFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
     }
   }
 

@@ -214,6 +214,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return sdkHome;
   }
 
+  @Nullable
   public Sdk getSdk() {
     if (myUseModuleSdk) {
       return PythonSdkType.findPythonSdk(getModule());

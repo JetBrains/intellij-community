@@ -633,8 +633,4 @@ public class ReflectionUtil {
       return JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces());
     }
   };
-
-  public static boolean isPotentiallyThisCapturing(Class<?> clazz) {
-    return clazz.getEnclosingClass() != null && !Modifier.isStatic(clazz.getModifiers());
-  }
 }
