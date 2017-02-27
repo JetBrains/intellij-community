@@ -90,6 +90,7 @@
             use-shortcut-of="ChangesView.CreatePatch" text="Create Patch..." description="Create patch for selected changes"
             icon="AllIcons.Actions.CreatePatch"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
+            use-shortcut-of="Vcs.GetVersion"
             text="Get" description="Get version from repository" icon="AllIcons.Actions.Get"/>
     <action class="com.intellij.vcs.log.ui.actions.history.AnnotateRevisionFromHistoryAction" id="Vcs.Log.AnnotateRevisionAction"
             use-shortcut-of="Annotate"
