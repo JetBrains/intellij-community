@@ -58,6 +58,7 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import static java.awt.event.InputEvent.SHIFT_DOWN_MASK;
 import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
@@ -77,12 +78,32 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode) {
+    this(textArea, searchMode, infoMode, false);
+  }
+
+  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode, boolean allowInsertTabInMultiline) {
     myTextArea = textArea;
     mySearchMode = searchMode;
     myInfoMode = infoMode;
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addPropertyChangeListener("font", this);
     myTextArea.addFocusListener(this);
+    myTextArea.registerKeyboardAction(e -> {
+      if (allowInsertTabInMultiline && myTextArea.getText().contains("\n")) {
+        if (myTextArea.isEditable() && myTextArea.isEnabled()) {
+          myTextArea.replaceSelection("\t");
+        }
+        else {
+          UIManager.getLookAndFeel().provideErrorFeedback(myTextArea);
+        }
+      }
+      else {
+        myTextArea.transferFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), WHEN_FOCUSED);
+
+    myTextArea.registerKeyboardAction(e -> myTextArea.transferFocusBackward(), KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK), WHEN_FOCUSED);
+
     myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {

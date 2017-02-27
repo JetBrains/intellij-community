@@ -69,7 +69,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
             ((Graphics2D)g).draw(getShape(size));
           }
         }
-        else if (state == ActionButtonComponent.POPPED) {
+        else if (state == ActionButtonComponent.POPPED || state == ActionButtonComponent.SELECTED) {
           if (UIUtil.isUnderAquaLookAndFeel()) {
             ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, bg, 0, size.height, ColorUtil.darker(bg, 2)));
             ((Graphics2D)g).fill(getShape(size));
