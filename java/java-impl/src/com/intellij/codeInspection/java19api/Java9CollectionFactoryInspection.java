@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.java19api;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -73,7 +70,8 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Do not warn when content is non-constant", this, "IGNORE_NON_CONSTANT");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.collection.factories.option.ignore.non.constant"), this,
+                                          "IGNORE_NON_CONSTANT");
   }
 
   @NotNull
@@ -96,7 +94,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
                                     InspectionProjectProfileManager.isInformationLevel(getShortName(), call));
           PsiElement element = wholeStatement ? call : call.getMethodExpression().getReferenceNameElement();
           if(element != null) {
-            holder.registerProblem(element, "Can be replaced with '" + model.myType + ".of' call", type,
+            holder.registerProblem(element, InspectionsBundle.message("inspection.collection.factories.message", model.myType), type,
                                    new ReplaceWithCollectionFactoryFix(model.myType));
           }
         }
@@ -283,14 +281,14 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Replace with '"+myType+".of' call";
+      return InspectionsBundle.message("inspection.collection.factories.fix.name", myType);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with collection factory call";
+      return InspectionsBundle.message("inspection.collection.factories.fix.family.name");
     }
 
     @Override
