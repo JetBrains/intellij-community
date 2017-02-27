@@ -19,14 +19,16 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
 import javax.swing.SwingUtilities
 
-inline fun <T> runWriteAction(undoTransparent: Boolean = false, crossinline runnable: () -> T): T {
-  val app = ApplicationManager.getApplication()
-  if (undoTransparent) {
-    var result: T? = null
-    CommandProcessor.getInstance().runUndoTransparentAction { result = app.runWriteAction(Computable { runnable() }) }
-    return result as T
+inline fun <T> runWriteAction(crossinline runnable: () -> T): T {
+  return ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
+}
+
+inline fun <T> runUndoTransparentWriteAction(crossinline runnable: () -> T): T {
+  var result: T? = null
+  CommandProcessor.getInstance().runUndoTransparentAction {
+    result = ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
   }
-  return app.runWriteAction(Computable { runnable() })
+  return result as T
 }
 
 inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(
