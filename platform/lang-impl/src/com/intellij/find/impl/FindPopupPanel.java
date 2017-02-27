@@ -49,6 +49,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -169,12 +170,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         .setModalContext(false)
         .setRequestFocus(true)
         .setCancelCallback(() -> {
-          Window dialog = SwingUtilities.windowForComponent(this);
-          if (dialog != null && dialog.getOwnedWindows().length > 0 && dialog.getOwnedWindows()[0].isShowing()) {
-            Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-            dialog.getOwnedWindows()[0].dispose();
-            if (focusOwner != null) {
-              ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getInstance(myProject).requestFocus(focusOwner, true));
+          List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
+          if (!popups.isEmpty()) {
+            for (JBPopup popup : popups) {
+              popup.cancel();
             }
             return Boolean.FALSE;
           }
@@ -208,7 +207,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       if (!myCbPreserveCase.isVisible()) {
         panelSize.width += myCbPreserveCase.getPreferredSize().width + 4;
       }
-      if (prev == null) panelSize.height *= 2;
+      panelSize.height *= 2;
+      if (prev != null && prev.height < panelSize.height) prev.height = panelSize.height;
       myBalloon.setMinimumSize(panelSize);
       myBalloon.setSize(prev != null ? prev : panelSize);
 
@@ -313,8 +313,16 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     switchContextGroup.setPopup(true);
     Presentation filterPresentation = new Presentation();
     filterPresentation.setIcon(AllIcons.General.Filter);
+    AnAction myShowFilterPopupAction = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        ListPopup listPopup =
+          JBPopupFactory.getInstance().createActionGroupPopup(null, switchContextGroup, e.getDataContext(), false, null, 10);
+        listPopup.showUnderneathOf(myFilterContextButton);
+      }
+    };
     myFilterContextButton =
-      new ActionButton(switchContextGroup, filterPresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      new ActionButton(myShowFilterPopupAction, filterPresentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
         public int getPopState() {
           int state = super.getPopState();
@@ -519,9 +527,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     myScopeDetailsPanel = new JPanel(new CardLayout());
     myScopeDetailsPanel.add(Scope.PROJECT.name(), new JLabel());
-    myScopeDetailsPanel.add(Scope.MODULE.name(), myModuleComboBox);
+    myScopeDetailsPanel.add(Scope.MODULE.name(), shrink(myModuleComboBox));
     myScopeDetailsPanel.add(Scope.DIRECTORY.name(), directoryPanel);
-    myScopeDetailsPanel.add(Scope.SCOPE.name(), myScopeCombo);
+    myScopeDetailsPanel.add(Scope.SCOPE.name(), shrink(myScopeCombo));
 
     myResultsPreviewTable = new JBTable() {
       @Override
@@ -606,7 +614,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     splitter.setSecondComponent(myCodePreviewComponent);
     JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
-    scopesPanel.add(myScopeDetailsPanel);
+    scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
 
     setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gap 0"));
     add(myTitleLabel, "gapleft 4, sx 2, growx, pushx, growy");
@@ -626,6 +634,13 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     
     MnemonicHelper.init(this);
     setFocusCycleRoot(true);
+  }
+
+  private static JComponent shrink(JComponent toShrink) {
+    JPanel wrapper = new JPanel(new BorderLayout());
+    wrapper.add(toShrink, BorderLayout.WEST);
+    wrapper.add(Box.createHorizontalGlue(), BorderLayout.CENTER);
+    return wrapper;
   }
 
   private static ActionToolbarImpl createToolbar(AnAction... actions) {
