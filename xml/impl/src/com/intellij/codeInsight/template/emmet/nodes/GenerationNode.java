@@ -281,8 +281,8 @@ public class GenerationNode extends UserDataHolderBase {
 
     final XmlFile xmlFile = token.getFile();
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    PsiFile dummyFile = fileFactory.createFileFromText("dummy.html", callback.getFileType(), xmlFile.getText(),
-                                                       LocalTimeCounter.currentTime(), false, true);
+    PsiFile dummyFile = fileFactory.createFileFromText("dummy.html", callback.getFile().getLanguage(), xmlFile.getText(),
+                                                       false, true);
     XmlTag tag = PsiTreeUtil.findChildOfType(dummyFile, XmlTag.class);
     if (tag != null) {
       // autodetect href
