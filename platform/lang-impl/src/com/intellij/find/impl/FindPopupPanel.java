@@ -93,8 +93,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.find.impl.FindDialog.createCheckbox;
-
 public class FindPopupPanel extends JBPanel implements FindUI {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
 
@@ -107,8 +105,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
   private static final KeyStroke NEW_LINE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
 
-  private static final KeyStroke MOVE_CARET_DOWN_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK);
-  private static final KeyStroke MOVE_CARET_UP_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.ALT_DOWN_MASK);
   private static final KeyStroke NEW_LINE_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
   private static final String SERVICE_KEY = "find.popup";
   private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";
@@ -165,7 +161,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       myBalloon.cancel();
     }
     if (myBalloon == null || myBalloon.isDisposed()) {
-      final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this, getPreferredFocusedComponent());
+      final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this, mySearchComponent);
       myBalloon = builder
         .setProject(myHelper.getProject())
         .setResizable(true)
@@ -243,7 +239,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private void initComponents() {
     myTitleLabel = new JBLabel(FindBundle.message("find.in.path.dialog.title"), UIUtil.ComponentStyle.REGULAR);
     myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(Font.BOLD));
-    myCbCaseSensitive = createCheckbox(FindBundle.message("find.popup.case.sensitive"));
+    myCbCaseSensitive = new StateRestoringCheckBox(FindBundle.message("find.popup.case.sensitive"));
     ItemListener liveResultsPreviewUpdateListener = new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -251,14 +247,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
     };
     myCbCaseSensitive.addItemListener(liveResultsPreviewUpdateListener);
-    myCbPreserveCase = createCheckbox(FindBundle.message("find.options.replace.preserve.case"));
+    myCbPreserveCase = new StateRestoringCheckBox(FindBundle.message("find.options.replace.preserve.case"));
     myCbPreserveCase.addItemListener(liveResultsPreviewUpdateListener);
     myCbPreserveCase.setVisible(myHelper.getModel().isReplaceState());
-    myCbWholeWordsOnly = createCheckbox(FindBundle.message("find.popup.whole.words"));
+    myCbWholeWordsOnly = new StateRestoringCheckBox(FindBundle.message("find.popup.whole.words"));
     myCbWholeWordsOnly.addItemListener(liveResultsPreviewUpdateListener);
-    myCbRegularExpressions = createCheckbox(FindBundle.message("find.popup.regex"));
+    myCbRegularExpressions = new StateRestoringCheckBox(FindBundle.message("find.popup.regex"));
     myCbRegularExpressions.addItemListener(liveResultsPreviewUpdateListener);
-    myCbFileFilter = createCheckbox("File mask: ");
+    myCbFileFilter = new StateRestoringCheckBox("File mask: ");
     myCbFileFilter.setMnemonic('a');
     myCbFileFilter.setToolTipText("<html>Use file m<u>a</u>sk(s)");
     //myCbFileFilter.setMargin(JBUI.emptyInsets());
@@ -319,6 +315,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
                  : ActionButtonComponent.PUSHED;
         }
       };
+    myFilterContextButton.setFocusable(true);
 
     DefaultActionGroup tabResultsContextGroup = new DefaultActionGroup();
     tabResultsContextGroup.add(new ToggleAction(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox")) {
@@ -523,6 +520,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         return new Dimension(getWidth(), 1 + getRowHeight() * 4);
       }
     };
+    myResultsPreviewTable.setFocusable(false);
     myResultsPreviewTable.getEmptyText().setShowAboveCenter(false);
     myResultsPreviewTable.setShowColumns(false);
     myResultsPreviewTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -618,6 +616,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(bottomPanel, "pushx, growx, dock south, sx 10, pad 0 -4 0 4");
     
     MnemonicHelper.init(this);
+    setFocusCycleRoot(true);
   }
 
   private static ActionToolbarImpl createToolbar(AnAction... actions) {
@@ -778,9 +777,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myCbPreserveCase.setVisible(isReplaceState);
   }
 
-  public JComponent getPreferredFocusedComponent() {
-    return mySearchComponent;
-  }
+  //public JComponent getPreferredFocusedComponent() {
+  //  return myCbCaseSensitive;
+  //}
 
   private static void applyFont(JBFont font, Component... components) {
     for (Component component : components) {
