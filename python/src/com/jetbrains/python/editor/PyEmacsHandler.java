@@ -101,7 +101,13 @@ public class PyEmacsHandler implements EmacsProcessingHandler {
     }
     
     ChangeIndentContext context = new ChangeIndentContext(project, file, editor, document, caretLine);
-
+    int targetLineIndent = getLineIndent(context, context.targetLine);
+    int soleLineIndent = getSoleIndent(context);
+    int lineStart = context.document.getLineStartOffset(context.targetLine);
+    if (caretOffset - lineStart < targetLineIndent) {
+      changeIndent(context, soleLineIndent);
+      return Result.STOP;
+    }
     switch (tryToIndentToRight(context)) {
       case STOP_SUCCESSFUL: return Result.STOP;
       case STOP_UNSUCCESSFUL: return Result.CONTINUE;
