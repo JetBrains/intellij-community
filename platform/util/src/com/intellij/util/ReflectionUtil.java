@@ -633,5 +633,4 @@ public class ReflectionUtil {
       return JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces());
     }
   };
-
 }

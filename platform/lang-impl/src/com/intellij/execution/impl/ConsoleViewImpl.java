@@ -512,7 +512,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @TestOnly
-  void waitAllRequests() {
+  public void waitAllRequests() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
