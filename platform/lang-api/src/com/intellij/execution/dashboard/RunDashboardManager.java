@@ -15,12 +15,18 @@
  */
 package com.intellij.execution.dashboard;
 
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author konstantin.aleev
@@ -38,4 +44,10 @@ public interface RunDashboardManager {
   String getToolWindowId();
 
   Icon getToolWindowIcon();
+
+  boolean isToolWindowAvailable();
+
+  void createToolWindowContent(@NotNull ToolWindow toolWindow);
+
+  List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations();
 }
