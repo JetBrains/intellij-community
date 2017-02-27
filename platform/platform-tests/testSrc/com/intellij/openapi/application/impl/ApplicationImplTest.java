@@ -573,14 +573,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       log.add("write started");
       app.executeSuspendingWriteAction(ourProject, "", () -> {
         app.invokeAndWait(() ->
-          futures.add(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("foreign read")))));
+          futures.add(app.executeOnPooledThread((Runnable)() -> ReadAction.run(() -> log.add("foreign read")))));
 
         mayStartForeignRead.up();
         TimeoutUtil.sleep(50);
 
         ReadAction.run(() -> log.add("progress read"));
         app.invokeAndWait(() -> WriteAction.run(() -> log.add("nested write")));
-        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("forked read"))));
+        waitForFuture(app.executeOnPooledThread((Runnable)() -> ReadAction.run(() -> log.add("forked read"))));
       });
       log.add("write finished");
     });
@@ -607,7 +607,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       assertTrue(app.hasWriteAction(actionClass));
       app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
         assertTrue(app.hasWriteAction(actionClass));
-        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
+        waitForFuture(app.executeOnPooledThread((Runnable)() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
       }));
     });
   }
