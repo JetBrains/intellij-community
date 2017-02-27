@@ -992,8 +992,11 @@ public abstract class UsefulTestCase extends TestCase {
   public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.roots.IdeaModifiableModelsProvider";
   //</editor-fold>
 
-  public class TestDisposable implements Disposable {
+  protected class TestDisposable implements Disposable {
     private volatile boolean myDisposed;
+
+    public TestDisposable() {
+    }
 
     @Override
     public void dispose() {

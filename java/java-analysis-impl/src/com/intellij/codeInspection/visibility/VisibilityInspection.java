@@ -61,7 +61,7 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
   public boolean SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = true;
   public boolean SUGGEST_PRIVATE_FOR_INNERS;
-  private Map<String, Boolean> myExtensions = new TreeMap<>();
+  private final Map<String, Boolean> myExtensions = new TreeMap<>();
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.visibility.display.name");
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
   private static final String CAN_BE_PRIVATE = InspectionsBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));

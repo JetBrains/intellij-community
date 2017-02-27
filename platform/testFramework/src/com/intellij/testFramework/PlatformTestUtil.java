@@ -196,13 +196,7 @@ public class PlatformTestUtil {
     DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
 
     final Object userObject = defaultMutableTreeNode.getUserObject();
-    String nodeText;
-    if (userObject != null) {
-      nodeText = toString(userObject, printInfo);
-    }
-    else {
-      nodeText = "null";
-    }
+    String nodeText = toString(userObject, printInfo);
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
@@ -490,7 +484,7 @@ public class PlatformTestUtil {
   }
 
   /**
-   * example usage: startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();
+   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();}
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public static TestInfo startPerformanceTest(@NonNls @NotNull String message, int expectedMs, @NotNull ThrowableRunnable test) {
@@ -585,6 +579,9 @@ public class PlatformTestUtil {
         try {
           if (setup != null) setup.run();
           data = CpuUsageData.measureCpuUsage(test);
+        }
+        catch (RuntimeException|Error throwable) {
+          throw throwable;
         }
         catch (Throwable throwable) {
           throw new RuntimeException(throwable);
