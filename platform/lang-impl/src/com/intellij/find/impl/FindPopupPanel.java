@@ -169,6 +169,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         .setModalContext(false)
         .setRequestFocus(true)
         .setCancelCallback(() -> {
+          Window dialog = SwingUtilities.windowForComponent(this);
+          if (dialog != null && dialog.getOwnedWindows().length > 0 && dialog.getOwnedWindows()[0].isShowing()) {
+            Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
+            dialog.getOwnedWindows()[0].dispose();
+            if (focusOwner != null) {
+              ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getInstance(myProject).requestFocus(focusOwner, true));
+            }
+            return Boolean.FALSE;
+          }
           DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
           DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
           return Boolean.TRUE;
