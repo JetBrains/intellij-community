@@ -268,9 +268,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return;
     }
 
-    setVariableState(var, getVariableState(var).withValue(value));
+    setVariableState(var, withValueNullability(value, getVariableState(var).withValue(value)));
     if (value instanceof DfaTypeValue) {
-      setVariableState(var, getVariableState(var).withNullability(((DfaTypeValue)value).getNullness()));
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
       if (((DfaTypeValue)value).isNotNull()) {
         applyCondition(dfaInstanceof);
@@ -291,6 +290,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (getVariableState(var).isNotNull()) {
       applyCondition(compareToNull(var, true));
     }
+  }
+
+  private DfaVariableState withValueNullability(DfaValue value, DfaVariableState state) {
+    if (value instanceof DfaTypeValue) return state.withNullability(((DfaTypeValue)value).getNullness());
+    if (isNull(value)) return state.withNullability(Nullness.NULLABLE);
+    return state;
   }
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
