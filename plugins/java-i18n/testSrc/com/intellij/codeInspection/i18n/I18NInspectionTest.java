@@ -3,11 +3,14 @@
  */
 package com.intellij.codeInspection.i18n;
 
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.InspectionsKt;
+import com.intellij.uiDesigner.i18n.I18nFormInspection;
 
 /**
  * @author lesya
@@ -40,7 +43,12 @@ public class I18NInspectionTest extends InspectionTestCase {
      }
    }
 
-  public void testFormTabbedPaneTitle() throws Exception { doTest(); }
+  public void testFormTabbedPaneTitle() throws Exception {
+    LocalInspectionToolWrapper wrapper = new LocalInspectionToolWrapper(new I18nFormInspection());
+    InspectionsKt.enableInspectionTool(getProject(), wrapper, getTestRootDisposable());
+    doTest("i18n/" + getTestName(true), new LocalInspectionToolWrapper(new I18nInspection()), "java 1.4", false, false,
+           wrapper);
+  }
   public void testVarargNonNlsParameter() throws Exception { doTest(); }
   public void testInitializerInAnonymousClass() throws Exception{ doTest(); }
   public void testNonNlsArray() throws Exception{ doTest(); }
