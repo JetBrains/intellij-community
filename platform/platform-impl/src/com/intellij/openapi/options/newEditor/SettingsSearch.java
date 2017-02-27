@@ -17,7 +17,10 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SearchTextField;
 
 import javax.swing.KeyStroke;
@@ -36,6 +39,7 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
 
   SettingsSearch() {
     super(false);
+    updateToolTipText();
     addKeyListener(new KeyAdapter() {
     });
     if (!SystemInfo.isMac) {
@@ -109,5 +113,11 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
         delegateKeyEvent(event);
       }
     }
+  }
+
+  void updateToolTipText() {
+    ShortcutSet set = SettingsDialog.getFindActionShortcutSet();
+    String text = set == null ? null : StringUtil.join(set.getShortcuts(), KeymapUtil::getShortcutText, "\n");
+    getTextEditor().setToolTipText(StringUtil.isEmpty(text) ? null : text);
   }
 }

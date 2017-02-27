@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.help.HelpManager;
@@ -88,8 +89,8 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     String title = CommonBundle.settingsTitle();
     if (project != null && project.isDefault()) title = "Default " + title;
     setTitle(name == null ? title : name.replace('\n', ' '));
-    AnAction action = ActionManager.getInstance().getAction(ACTION_FIND);
-    if (action != null) new FindAction().registerCustomShortcutSet(action.getShortcutSet(), getRootPane(), myDisposable);
+    ShortcutSet set = getFindActionShortcutSet();
+    if (set != null) new FindAction().registerCustomShortcutSet(set, getRootPane(), myDisposable);
     init();
   }
 
@@ -183,5 +184,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
       }
     }
     super.doCancelAction(source);
+  }
+
+  static ShortcutSet getFindActionShortcutSet() {
+    AnAction action = ActionManager.getInstance().getAction(ACTION_FIND);
+    return action == null ? null : action.getShortcutSet();
   }
 }
