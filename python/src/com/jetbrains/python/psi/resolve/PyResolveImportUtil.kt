@@ -78,11 +78,12 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
     }
   }
 
-  val allResults = listOf(relativeResults,
-                          resultsFromRoots(name, context),
-                          relativeResultsFromSkeletons(name, context),
-                          foreignResults(name, context)).flatten()
-  val results = if (name.componentCount > 0) findFirstResults(allResults) else allResults
+  val foreignResults = foreignResults(name, context)
+  val pythonResults = listOf(relativeResults,
+                             resultsFromRoots(name, context),
+                             relativeResultsFromSkeletons(name, context)).flatten()
+  val allResults = foreignResults + pythonResults
+  val results = if (name.componentCount > 0) foreignResults + findFirstResults(pythonResults) else allResults
 
   if (mayCache) {
     cache?.put(key, results)

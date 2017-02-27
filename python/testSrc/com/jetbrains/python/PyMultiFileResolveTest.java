@@ -16,24 +16,33 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.util.QualifiedName;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -96,6 +105,23 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertTrue(element instanceof PsiFile);
     assertEquals("myfile.py", ((PsiFile)element).getName());
     assertEquals("mypackage", ((PsiFile)element).getContainingDirectory().getName());
+  }
+
+  public void testCustomPackageIdentifier() {
+    PlatformTestUtil.registerExtension(PyCustomPackageIdentifier.EP_NAME, new PyCustomPackageIdentifier() {
+      @Override
+      public boolean isPackage(PsiDirectory directory) {
+        return true;
+      }
+
+      @Override
+      public boolean isPackageFile(PsiFile file) {
+        return false;
+      }
+    }, getTestRootDisposable());
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PsiFile);
+    assertEquals("myfile.py", ((PyFile)element).getName());
   }
 
   public void testImportAs() {
@@ -448,6 +474,28 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       assertInstanceOf(element, PyFile.class);
       final VirtualFile file = ((PyFile)element).getVirtualFile();
       assertEquals("root1", file.getParent().getName());
+    });
+  }
+
+  // PY-22522
+  public void testBothForeignAndSourceRootImportResultsReturned() {
+    myFixture.copyDirectoryToProject("bothForeignAndSourceRootImportResultsReturned", "");
+
+    VirtualFile vf = myFixture.findFileInTempDir("ext/m1.py");
+    final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
+    PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
+    PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
+
+    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(2, elements.size());
+      final Set<String> parentNames = elements.stream()
+        .filter(e -> e instanceof PyFile)
+        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+      assertContainsElements(parentNames, "root", "ext");
     });
   }
 
