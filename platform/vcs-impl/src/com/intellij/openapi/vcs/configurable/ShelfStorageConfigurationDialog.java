@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -94,7 +95,7 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
   private void setEnabledCustomShelfDirectoryComponents(boolean enabled) {
     myShelfDirectoryPath.setEnabled(enabled);
     myShelfDirectoryPath.setEditable(enabled);
-    if (enabled && myProject.isDefault()) {
+    if (enabled && myProject.isDefault() && myVcsConfiguration.CUSTOM_SHELF_PATH == null) {
       myShelfDirectoryPath.setText("");
     }
   }
@@ -185,6 +186,7 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
+    updateOkAction();
     if (myUseCustomShelfDirectory.isSelected()) {
       File toFile = new File(myShelfDirectoryPath.getText());
       if (!toFile.exists()) return null;   // check that file can be created after OK button pressed;
@@ -198,5 +200,16 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
       if (validationError != null) return new ValidationInfo(validationError, myShelfDirectoryPath);
     }
     return super.doValidate();
+  }
+
+  private void updateOkAction() {
+    setOKActionEnabled(isModified());
+  }
+
+  private boolean isModified() {
+    if (myVcsConfiguration.USE_CUSTOM_SHELF_PATH != myUseCustomShelfDirectory.isSelected()) return true;
+    if (myVcsConfiguration.MOVE_SHELVES != myMoveShelvesCheckBox.isSelected()) return true;
+    return myUseCustomShelfDirectory.isSelected() &&
+           !StringUtil.equals(myVcsConfiguration.CUSTOM_SHELF_PATH, myShelfDirectoryPath.getText());
   }
 }
