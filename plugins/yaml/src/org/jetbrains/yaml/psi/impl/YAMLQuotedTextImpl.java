@@ -14,6 +14,7 @@ import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -22,17 +23,25 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
 
   public YAMLQuotedTextImpl(@NotNull ASTNode node) {
     super(node);
-    myIsSingleQuoted = getNode().getFirstChildNode().getElementType() == YAMLTokenTypes.SCALAR_STRING;
+    final ASTNode firstContentNode = getFirstContentNode();
+    myIsSingleQuoted = firstContentNode != null && firstContentNode.getElementType() == YAMLTokenTypes.SCALAR_STRING;
   }
 
   @NotNull
   @Override
   public List<TextRange> getContentRanges() {
-    List<TextRange> result = new ArrayList<>();
+    final ASTNode firstContentNode = getFirstContentNode();
+    if (firstContentNode == null) {
+      return Collections.emptyList();
+    }
 
-    final List<String> lines = StringUtil.split(getText(), "\n", true, false);
+    List<TextRange> result = new ArrayList<>();
+    TextRange contentRange = TextRange.create(firstContentNode.getStartOffset(), getTextRange().getEndOffset())
+      .shiftRight(-getTextRange().getStartOffset());
+
+    final List<String> lines = StringUtil.split(contentRange.substring(getText()), "\n", true, false);
     // First line has opening quote
-    int cumulativeOffset = 0;
+    int cumulativeOffset = contentRange.getStartOffset();
     for (int i = 0; i < lines.size(); ++i) {
       final String line = lines.get(i);
 
@@ -82,9 +91,9 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
   @Override
   protected List<Pair<TextRange, String>> getDecodeReplacements(@NotNull CharSequence input) {
     List<Pair<TextRange, String>> result = new ArrayList<>();
-    
+
     for (int i = 0; i + 1 < input.length(); ++i) {
-      
+
       if (isSingleQuote() && input.charAt(i) == '\'' && input.charAt(i + 1) == '\'') {
         result.add(Pair.create(TextRange.from(i, 2), "'"));
         i++;
@@ -115,10 +124,10 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
         }
       }
     }
-    
+
     final int indent = YAMLUtil.getIndentToThisElement(this);
     final String indentString = StringUtil.repeatSymbol(' ', indent);
-    
+
     final List<Pair<TextRange, String>> result = new ArrayList<>();
     int currentLength = 0;
     for (int i = 0; i < input.length(); ++i) {
@@ -138,7 +147,7 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
       }
 
 
-      if (currentLength > MAX_SCALAR_LENGTH_PREDEFINED 
+      if (currentLength > MAX_SCALAR_LENGTH_PREDEFINED
           && (!isSingleQuote() || (c == ' ' && isSurroundedByNoSpace(input, i)))) {
         final String replacement;
         if (isSingleQuote()) {
@@ -155,12 +164,12 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
       }
 
       currentLength++;
-      
+
       if (isSingleQuote() && c == '\'') {
         result.add(Pair.create(TextRange.from(i, 1), "''"));
         continue;
       }
-      
+
       if (!isSingleQuote()) {
         if (c == '"') {
           result.add(Pair.create(TextRange.from(i, 1), "\\\""));
@@ -186,7 +195,7 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
   public String toString() {
     return "YAML quoted text";
   }
-  
+
   private static class Escaper {
     private static final int[][] ONE_LETTER_CONVERSIONS = new int[][] {
       {'0', 0},
@@ -208,7 +217,7 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
       {'L', 8232},
       {'P', 8233},
     };
-    
+
     private static final NotNullLazyValue<Map<Integer, Integer>> ESC_TO_CODE = new NotNullLazyValue<Map<Integer, Integer>>() {
       @NotNull
       @Override
@@ -232,12 +241,12 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
         return map;
       }
     };
-    
+
     static int findEscapementLength(@NotNull CharSequence text, int pos) {
       if (pos + 1 >= text.length() || text.charAt(pos) != '\\') {
         throw new IllegalArgumentException("This is not an escapement start");
       }
-      
+
       final char c = text.charAt(pos + 1);
       if (c == 'x') {
         return 3;
@@ -252,7 +261,7 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
         return 1;
       }
     }
-    
+
     static int toUnicodeChar(@NotNull CharSequence text, int pos, int length) {
       if (length > 1) {
         CharSequence s = text.subSequence(pos + 2, Math.min(text.length(), pos + length + 1));
