@@ -52,16 +52,15 @@ import java.io.IOException;
 import java.util.*;
 
 public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
-
-  private Set<VirtualFile> myOpenedFiles = new THashSet<>();
-  private Set<VirtualFile> myCreatedFiles = new THashSet<>();
+  private final Set<VirtualFile> myOpenedFiles = new THashSet<>();
+  private final Set<VirtualFile> myCreatedFiles = new THashSet<>();
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     EditorNotifications notifications = new EditorNotificationsImpl(getProject());
     ((ComponentManagerImpl)getProject()).registerComponentInstance(EditorNotifications.class, notifications);
-    NonProjectFileWritingAccessProvider.enableChecksInTests(getTestRootDisposable());
+    NonProjectFileWritingAccessProvider.enableChecksInTests(getProject());
     ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
   }
 
@@ -69,10 +68,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   protected void tearDown() throws Exception {
     try {
       NonProjectFileWritingAccessProvider.setCustomUnlocker(null);
-      FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-      for (VirtualFile file : myOpenedFiles) {
-        editorManager.closeFile(file);
-      }
+      closeOpenFiles();
       ApplicationManager.getApplication().runWriteAction(() -> {
         for (VirtualFile each : myCreatedFiles) {
           try {
@@ -87,6 +83,13 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     finally {
       super.tearDown();
       ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed
+    }
+  }
+
+  private void closeOpenFiles() {
+    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+    for (VirtualFile file : myOpenedFiles) {
+      editorManager.closeFile(file);
     }
   }
 
@@ -323,7 +326,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       public boolean isPotentiallyWritable(@NotNull VirtualFile file) {
         return true;
       }
-    }, getTestRootDisposable());
+    }, getProject());
     return requested;
   }
 
@@ -340,7 +343,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
                                            return filesToDeny.contains(file);
                                          }
                                        },
-                                       getTestRootDisposable());
+                                       getProject());
   }
 
   @NotNull
@@ -359,7 +362,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       @Override
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         // create externally, since files created via VFS are marked for editing automatically
-        File file = new File(dir, FileUtil.createSequentFileName(dir, "file", "txt"));
+        File file = new File(dir, FileUtil.createSequentFileName(dir, "extfile", "txt"));
         file.createNewFile();
         result.setResult(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
       }
@@ -399,7 +402,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     return editor;
   }
 
-  protected void typeInChar(Editor e, char c) {
+  private void typeInChar(Editor e, char c) {
     getActionManager().getTypedAction().actionPerformed(e, c, createDataContextFor(e));
   }
 

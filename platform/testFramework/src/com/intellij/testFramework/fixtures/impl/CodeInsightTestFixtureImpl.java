@@ -347,7 +347,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void enableInspections(@NotNull InspectionProfileEntry... inspections) {
     assertInitialized();
-    InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), inspections);
+    InspectionsKt.enableInspectionTools(getProject(), getProject(), inspections);
   }
 
   @SafeVarargs
@@ -446,7 +446,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public HighlightTestInfo testFile(@NotNull String... filePath) {
-    return new HighlightTestInfo(getTestRootDisposable(), filePath) {
+    return new HighlightTestInfo(getProject(), filePath) {
       @Override
       public HighlightTestInfo doTest() {
         configureByFiles(filePaths);
@@ -985,7 +985,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(epName);
     extensionPoint.registerExtension(extension);
-    Disposer.register(getTestRootDisposable(), new Disposable() {
+    Disposer.register(getProject(), new Disposable() {
       @Override
       public void dispose() {
         extensionPoint.unregisterExtension(extension);
@@ -1167,7 +1167,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       PlatformTestCase.synchronizeTempDirVfs(tempDir);
 
       myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-      InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), getTestRootDisposable());
+      InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getProject());
 
       DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
       daemonCodeAnalyzer.prepareForTest();
@@ -1184,11 +1184,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       EdtTestUtil.runInEdtAndWait(() -> {
         try {
           DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-          FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-          for (VirtualFile openFile : editorManager.getOpenFiles()) {
-            editorManager.closeFile(openFile);
-          }
+          closeOpenFiles();
         }
         finally {
           myEditor = null;
@@ -1207,6 +1203,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     finally {
       super.tearDown();
+    }
+  }
+
+  private void closeOpenFiles() {
+    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    for (VirtualFile openFile : editorManager.getOpenFiles()) {
+      editorManager.closeFile(openFile);
     }
   }
 
