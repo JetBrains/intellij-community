@@ -48,6 +48,7 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
     }
 
     val parentPath = event.file.parent?.path ?: return
+    var someModulePathIsChanged = false
     for (module in moduleManager.modules) {
       if (!module.isLoaded) {
         continue
@@ -57,7 +58,12 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
       val moduleFilePath = module.moduleFilePath
       if (FileUtil.isAncestor(ancestorPath, moduleFilePath, true)) {
         setModuleFilePath(module, "$parentPath/${event.newValue}/${FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/')}")
+        someModulePathIsChanged = true
       }
+    }
+
+    if (someModulePathIsChanged) {
+      moduleManager.incModificationCount()
     }
   }
 
