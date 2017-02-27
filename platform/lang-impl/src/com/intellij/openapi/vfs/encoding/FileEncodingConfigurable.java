@@ -151,7 +151,20 @@ public class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   public JComponent createComponent() {
     myTablePanel.add(super.createComponent(), BorderLayout.CENTER);
-    JPanel p = createActionPanel(null, () -> myPropsCharset, o -> myPropsCharset = o);
+    JPanel p = createActionPanel(null, new Value<Charset>() {
+      @Override
+      public void commit() {}
+
+      @Override
+      public Charset get() {
+        return myPropsCharset;
+      }
+
+      @Override
+      public void set(Charset value) {
+        myPropsCharset = value;
+      }
+    });
     myPropertiesFilesEncodingCombo.add(p, BorderLayout.CENTER);
     return myPanel;
   }

@@ -93,6 +93,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private final List<Trinity<String, Producer<T>, Consumer<T>>> myDefaultProps = ContainerUtil.newArrayList();
   private VirtualFile myFileToSelect;
 
+  protected interface Value<T> extends Setter<T>, Getter<T> {
+    void commit();
+  }
+
   protected PerFileConfigurableBase(@NotNull Project project, @NotNull PerFileMappings<T> mappings) {
     myProject = project;
     myMappings = mappings;
@@ -210,9 +214,20 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
     for (Trinity<String, Producer<T>, Consumer<T>> prop : myDefaultProps) {
       myDefaultVals.put(prop.first, prop.second.produce());
-      JPanel p = createActionPanel(null,
-                                   () -> myDefaultVals.get(prop.first),
-                                   o -> myDefaultVals.put(prop.first, adjustChosenValue(null, o)));
+      JPanel p = createActionPanel(null, new Value<T>() {
+        @Override
+        public void commit() {}
+
+        @Override
+        public T get() {
+          return myDefaultVals.get(prop.first);
+        }
+
+        @Override
+        public void set(T value) {
+          myDefaultVals.put(prop.first, adjustChosenValue(null, value));
+        }
+      });
       panel.add(new JBLabel(prop.first + ":"), cons1);
       panel.add(p, cons2);
     }
@@ -477,20 +492,31 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         editorValue = pair.second; // (T)value
         if (!canEditTarget(target, editorValue)) return null;
 
-        JPanel panel = createActionPanel(target, () -> editorValue, chosen -> {
-          editorValue = adjustChosenValue(target, chosen);
-          TableUtil.stopEditing(myTable);
-          selectRows(new int[]{modelRow}, true);
-          if (Comparing.equal(editorValue, pair.second)) {
-            // do nothing
+        JPanel panel = createActionPanel(target, new Value<T>() {
+          @Override
+          public T get() {
+            return editorValue;
           }
-          else {
-            int ret = clearSubdirectoriesOnDemandOrCancel(false, target);
-            if (ret == Messages.CANCEL) {
-              myModel.setValueAt(value, modelRow, column);
-            }
+
+          @Override
+          public void set(T value) {
+            editorValue = adjustChosenValue(target, value);
+          }
+
+          @Override
+          public void commit() {
+            TableUtil.stopEditing(myTable);
             selectRows(new int[]{modelRow}, true);
-          }
+            if (Comparing.equal(editorValue, pair.second)) {
+              // do nothing
+            }
+            else {
+              int ret = clearSubdirectoriesOnDemandOrCancel(false, target);
+              if (ret == Messages.CANCEL) {
+                myModel.setValueAt(value, modelRow, column);
+              }
+              selectRows(new int[]{modelRow}, true);
+            }          }
         }, true);
 
         AbstractButton button = UIUtil.uiTraverser(panel).filter(JButton.class).first();
@@ -516,13 +542,13 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @NotNull
-  protected JPanel createActionPanel(@Nullable Object target, Producer<T> value, @NotNull Consumer<T> consumer) {
-    return createActionPanel(target, value, consumer, false);
+  protected JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value) {
+    return createActionPanel(target, value, false);
   }
 
   @NotNull
-  private JPanel createActionPanel(@Nullable Object target, Producer<T> value, @NotNull Consumer<T> consumer, boolean editor) {
-    AnAction changeAction = createValueAction(target, value, consumer);
+  private JPanel createActionPanel(@Nullable Object target, @NotNull Value<T> value, boolean editor) {
+    AnAction changeAction = createValueAction(target, value);
     JComponent comboComponent = ((CustomComponentAction)changeAction).createCustomComponent(changeAction.getTemplatePresentation());
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
@@ -620,10 +646,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @NotNull
-  protected final AnAction createValueAction(@Nullable Object target, Producer<T> value, @NotNull Consumer<T> consumer) {
+  protected final AnAction createValueAction(@Nullable Object target, @NotNull Value<T> value) {
     return new ComboBoxAction() {
       void updateText() {
-        String text = renderValue(value.produce(), StringUtil.notNullize(getNullValueText(target)));
+        String text = renderValue(value.get(), StringUtil.notNullize(getNullValueText(target)));
         getTemplatePresentation().setText(StringUtil.shortenTextWithEllipsis(text, 40, 0));
       }
 
@@ -642,10 +668,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       protected ComboBoxButton createComboBoxButton(Presentation presentation) {
         return new ComboBoxButton(presentation) {
           protected JBPopup createPopup(Runnable onDispose) {
-            JBPopup popup = createValueEditorPopup(target, value.produce(), onDispose, getDataContext(), o -> {
-              consumer.consume(o);
+            JBPopup popup = createValueEditorPopup(target, value.get(), onDispose, getDataContext(), o -> {
+              value.set(o);
               updateText();
-            });
+            }, value::commit);
             popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
             return popup;
           }
@@ -654,7 +680,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
           @Override
           public String getToolTipText() {
             boolean cellEditor = UIUtil.uiParents(this, true).take(4).filter(JBTable.class).first() != null;
-            return cellEditor ? null : getToolTipFor(value.produce());
+            return cellEditor ? null : getToolTipFor(value.get());
           }
         };
       }
@@ -666,8 +692,12 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
                                            @Nullable T value,
                                            @Nullable Runnable onDispose,
                                            @NotNull DataContext dataContext,
-                                           @NotNull Consumer<T> onChosen) {
-    return createValueEditorActionListPopup(target, onDispose, dataContext, onChosen);
+                                           @NotNull Consumer<T> onChosen,
+                                           @NotNull Runnable onCommit) {
+    return createValueEditorActionListPopup(target, onDispose, dataContext, chosen -> {
+      onChosen.consume(chosen);
+      onCommit.run();
+    });
   }
 
   @NotNull
