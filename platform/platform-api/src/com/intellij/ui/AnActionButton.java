@@ -179,7 +179,7 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
   }
 
-  private static class AnActionButtonWrapper extends AnActionButton {
+  public static class AnActionButtonWrapper extends AnActionButton {
 
     private final AnAction myAction;
 
