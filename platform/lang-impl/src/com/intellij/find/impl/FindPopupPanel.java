@@ -105,10 +105,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
                                                                                           ? InputEvent.META_DOWN_MASK
                                                                                           : InputEvent.CTRL_DOWN_MASK);
 
-  private static final KeyStroke MOVE_CARET_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
-  private static final KeyStroke MOVE_CARET_UP = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);
-  private static final KeyStroke MOVE_CARET_PAGE_DOWN = KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0);
-  private static final KeyStroke MOVE_CARET_PAGE_UP = KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0);
   private static final KeyStroke NEW_LINE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
 
   private static final KeyStroke MOVE_CARET_DOWN_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK);
@@ -535,10 +531,12 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     new NavigateToSourceListener().installOn(myResultsPreviewTable);
     applyFont(JBUI.Fonts.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
               myResultsPreviewTable);
-    KeymapUtil.reassignAction(mySearchComponent, MOVE_CARET_DOWN, MOVE_CARET_DOWN_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
-    KeymapUtil.reassignAction(mySearchComponent, MOVE_CARET_UP, MOVE_CARET_UP_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
+    ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
+    ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceComponent);
     KeymapUtil.reassignAction(mySearchComponent, NEW_LINE, NEW_LINE_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
-    UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, MOVE_CARET_UP, MOVE_CARET_DOWN, NEW_LINE, MOVE_CARET_PAGE_UP, MOVE_CARET_PAGE_DOWN);
+    KeymapUtil.reassignAction(myReplaceComponent, NEW_LINE, NEW_LINE_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
+    UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, NEW_LINE);
+    UIUtil.redirectKeystrokes(myDisposable, myReplaceComponent, myResultsPreviewTable, NEW_LINE);
 
 
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), PREVIEW_IS_EDITABLE) {
