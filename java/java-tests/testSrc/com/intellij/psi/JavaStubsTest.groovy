@@ -159,4 +159,15 @@ import java.lang.annotation.*;
     assert list.parametersCount == list.parameters.size()
   }
 
+  void "test deprecated enum constant"() {
+    def cls = myFixture.addClass("enum Foo { c1, @Deprecated c2, /** @deprecated */ c3 }")
+    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+
+    assert !cls.fields[0].deprecated
+    assert cls.fields[1].deprecated
+    assert cls.fields[2].deprecated
+
+    assert !((PsiFileImpl) cls.containingFile).contentsLoaded
+  }
+
 }
