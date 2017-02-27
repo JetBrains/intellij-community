@@ -304,7 +304,7 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
       filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
     }
     else {
-      filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
+      filePath = runWriteAction(undoTransparent = true) { projectCreator(tempDirManager.newVirtualDirectory()) }
     }
 
     val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!

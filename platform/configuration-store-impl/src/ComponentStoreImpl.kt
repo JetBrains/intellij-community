@@ -211,7 +211,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val state = StoreUtil.getStateSpec(component.javaClass) ?: throw AssertionError("${component.javaClass} doesn't have @State annotation and doesn't implement ExportableApplicationComponent")
     val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(state.storages).path)).toAbsolutePath().toString()
-    runWriteAction {
+    runWriteAction(undoTransparent = true) {
       try {
         VfsRootAccess.allowRootAccess(absolutePath)
         CompoundRuntimeException.throwIfNotEmpty(doSave(sessions))

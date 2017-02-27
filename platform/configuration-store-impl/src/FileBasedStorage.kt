@@ -236,7 +236,7 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
     throw ReadOnlyModificationException(file, StateStorage.SaveSession { doWrite(requestor, file, byteArray, lineSeparator, prependXmlProlog) })
   }
 
-  runWriteAction {
+  runWriteAction(undoTransparent = true) {
     file.getOutputStream(requestor).use { out ->
       if (prependXmlProlog) {
         out.write(XML_PROLOG)
@@ -292,7 +292,7 @@ private fun deleteFile(file: Path, requestor: Any, virtualFile: VirtualFile?) {
 }
 
 internal fun deleteFile(requestor: Any, virtualFile: VirtualFile) {
-  runWriteAction { virtualFile.delete(requestor) }
+  runWriteAction(undoTransparent = true) { virtualFile.delete(requestor) }
 }
 
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: StateStorage.SaveSession?) : RuntimeException("File is read-only: "+file)
