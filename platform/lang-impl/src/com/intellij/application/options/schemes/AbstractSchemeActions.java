@@ -255,7 +255,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
                                                    @NotNull Collection<String> actionNames,
                                                    @NotNull BiFunction<String, String, AnAction> createActionByName) {
     if (actionNames.size() == 1) {
-      return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName);
+      return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName + "...");
     } else {
       return new ImportExportActionGroup(groupName, actionNames) {
         @NotNull
