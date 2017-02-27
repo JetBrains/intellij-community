@@ -118,7 +118,7 @@ public class CodeStyleConfigurableWrapper
   @Override
   @NotNull
   public String getId() {
-    return "preferences.sourceCode." + getDisplayName();
+    return getConfigurableId(getDisplayName());
   }
 
   @Override
@@ -148,5 +148,10 @@ public class CodeStyleConfigurableWrapper
       myPanel = new CodeStyleMainPanel(myOwner.ensureModel(), myFactory, canBeShared());
     }
     return myPanel.processListOptions();
+  }
+
+  @NotNull
+  public static String getConfigurableId(String configurableDisplayName) {
+    return "preferences.sourceCode." + configurableDisplayName;
   }
 }

@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -119,7 +120,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     final String testDir = getTestDataPath() + "/" + folderName;
     GlobalInspectionContextImpl context = runTool(testDir, jdkName, runDeadCodeFirst, toolWrapper, additional);
 
-    InspectionTestUtil.compareToolResults(context, toolWrapper, checkRange, testDir);
+    InspectionTestUtil.compareToolResults(context, checkRange, testDir, ContainerUtil.append(Collections.singletonList(toolWrapper), additional));
   }
 
   protected void runTool(@NonNls @NotNull String testDir, @NonNls final String jdkName, @NotNull InspectionToolWrapper tool) {

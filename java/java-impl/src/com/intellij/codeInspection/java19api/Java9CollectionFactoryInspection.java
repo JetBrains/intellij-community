@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInspection.java19api;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,16 +27,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ConstructionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.*;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -46,12 +46,16 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
   private static final CallMatcher UNMODIFIABLE_SET =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "unmodifiableSet").parameterCount(1);
+  private static final CallMatcher UNMODIFIABLE_MAP =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "unmodifiableMap").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_LIST =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "unmodifiableList").parameterCount(1);
   private static final CallMatcher ARRAYS_AS_LIST =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "asList");
   private static final CallMatcher COLLECTION_ADD =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "add").parameterCount(1);
+  private static final CallMatcher MAP_PUT =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "put").parameterCount(2);
   private static final CallMatcher STREAM_COLLECT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher STREAM_OF =
@@ -63,7 +67,17 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
 
   private static final CallMapper<PrepopulatedCollectionModel> MAPPER = new CallMapper<PrepopulatedCollectionModel>()
     .register(UNMODIFIABLE_SET, call -> PrepopulatedCollectionModel.fromSet(call.getArgumentList().getExpressions()[0]))
+    .register(UNMODIFIABLE_MAP, call -> PrepopulatedCollectionModel.fromMap(call.getArgumentList().getExpressions()[0]))
     .register(UNMODIFIABLE_LIST, call -> PrepopulatedCollectionModel.fromList(call.getArgumentList().getExpressions()[0]));
+
+  public boolean IGNORE_NON_CONSTANT = false;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.collection.factories.option.ignore.non.constant"), this,
+                                          "IGNORE_NON_CONSTANT");
+  }
 
   @NotNull
   @Override
@@ -75,10 +89,17 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
         PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
-        if(model != null) {
-          PsiElement element = call.getMethodExpression().getReferenceNameElement();
+        if (model != null && model.isValid()) {
+          ProblemHighlightType type = model.myConstantContent || !IGNORE_NON_CONSTANT
+                                      ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                                      : ProblemHighlightType.INFORMATION;
+          if (type == ProblemHighlightType.INFORMATION && !isOnTheFly) return;
+          boolean wholeStatement = isOnTheFly &&
+                                   (type == ProblemHighlightType.INFORMATION ||
+                                    InspectionProjectProfileManager.isInformationLevel(getShortName(), call));
+          PsiElement element = wholeStatement ? call : call.getMethodExpression().getReferenceNameElement();
           if(element != null) {
-            holder.registerProblem(element, "Can be replaced with '"+model.myType+".of' call",
+            holder.registerProblem(element, InspectionsBundle.message("inspection.collection.factories.message", model.myType), type,
                                    new ReplaceWithCollectionFactoryFix(model.myType));
           }
         }
@@ -90,11 +111,35 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     final List<PsiExpression> myContent;
     final List<PsiElement> myElementsToDelete;
     final String myType;
+    final boolean myConstantContent;
+    final boolean myRepeatingKeys;
+    final boolean myHasNulls;
 
     PrepopulatedCollectionModel(List<PsiExpression> content, List<PsiElement> delete, String type) {
       myContent = content;
       myElementsToDelete = delete;
       myType = type;
+      Map<PsiExpression, List<Object>> constants = StreamEx.of(myContent)
+        .cross(ExpressionUtils::possibleValues).mapValues(ExpressionUtils::computeConstantExpression).distinct().grouping();
+      myConstantContent = StreamEx.ofValues(constants).flatCollection(Function.identity()).allMatch(Objects::nonNull);
+      myRepeatingKeys = keyExpressions().flatCollection(constants::get).nonNull().distinct(2).findAny().isPresent();
+      myHasNulls = StreamEx.of(myContent).flatMap(ExpressionUtils::possibleValues).map(PsiExpression::getType).has(PsiType.NULL);
+    }
+
+    public boolean isValid() {
+      boolean mapOfTooManyParameters = myType.equals("Map") && myContent.size() > 20;
+      return !myHasNulls && !myRepeatingKeys && !mapOfTooManyParameters;
+    }
+
+    private StreamEx<PsiExpression> keyExpressions() {
+      switch (myType) {
+        case "Set":
+          return StreamEx.of(myContent);
+        case "Map":
+          return IntStreamEx.range(0, myContent.size(), 2).elements(myContent);
+        default:
+          return StreamEx.empty();
+      }
     }
 
     public static PrepopulatedCollectionModel fromList(PsiExpression listDefinition) {
@@ -104,54 +149,56 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
         if (ARRAYS_AS_LIST.test(call)) {
           return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), "List");
         }
-        if(STREAM_COLLECT.test(call) && COLLECTORS_TO_LIST.matches(call.getArgumentList().getExpressions()[0])) {
-          PsiMethodCallExpression qualifier = MethodCallUtils.getQualifierMethodCall(call);
-          if(STREAM_OF.matches(qualifier)) {
-            return new PrepopulatedCollectionModel(Arrays.asList(qualifier.getArgumentList().getExpressions()), Collections.emptyList(),
-                                                   "List");
-          }
-        }
+        return fromCollect(call, "List", COLLECTORS_TO_LIST);
       }
       if(listDefinition instanceof PsiNewExpression) {
         return fromNewExpression((PsiNewExpression)listDefinition, "List", CommonClassNames.JAVA_UTIL_ARRAY_LIST);
       }
       if (listDefinition instanceof PsiReferenceExpression) {
-        PsiLocalVariable variable = tryCast(((PsiReferenceExpression)listDefinition).resolve(), PsiLocalVariable.class);
-        if (variable != null) {
-          return fromVariable(variable, listDefinition, "List", CommonClassNames.JAVA_UTIL_ARRAY_LIST);
-        }
+        return fromVariable((PsiReferenceExpression)listDefinition, "List", CommonClassNames.JAVA_UTIL_ARRAY_LIST, COLLECTION_ADD);
       }
       return null;
     }
 
     public static PrepopulatedCollectionModel fromSet(PsiExpression setDefinition) {
       setDefinition = PsiUtil.skipParenthesizedExprDown(setDefinition);
-      if(setDefinition instanceof PsiNewExpression) {
+      if (setDefinition instanceof PsiMethodCallExpression) {
+        return fromCollect((PsiMethodCallExpression)setDefinition, "Set", COLLECTORS_TO_SET);
+      }
+      if (setDefinition instanceof PsiNewExpression) {
         return fromNewExpression((PsiNewExpression)setDefinition, "Set", CommonClassNames.JAVA_UTIL_HASH_SET);
       }
-      if(setDefinition instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression call = (PsiMethodCallExpression)setDefinition;
-        if(STREAM_COLLECT.test(call) && COLLECTORS_TO_SET.matches(call.getArgumentList().getExpressions()[0])) {
-          PsiMethodCallExpression qualifier = MethodCallUtils.getQualifierMethodCall(call);
-          if(STREAM_OF.matches(qualifier)) {
-            return new PrepopulatedCollectionModel(Arrays.asList(qualifier.getArgumentList().getExpressions()), Collections.emptyList(),
-                                                   "Set");
-          }
-        }
-      }
       if (setDefinition instanceof PsiReferenceExpression) {
-        PsiLocalVariable variable = tryCast(((PsiReferenceExpression)setDefinition).resolve(), PsiLocalVariable.class);
-        if (variable != null) {
-          return fromVariable(variable, setDefinition, "Set", CommonClassNames.JAVA_UTIL_HASH_SET);
+        return fromVariable((PsiReferenceExpression)setDefinition, "Set", CommonClassNames.JAVA_UTIL_HASH_SET, COLLECTION_ADD);
+      }
+      return null;
+    }
+
+    public static PrepopulatedCollectionModel fromMap(PsiExpression mapDefinition) {
+      mapDefinition = PsiUtil.skipParenthesizedExprDown(mapDefinition);
+      if (mapDefinition instanceof PsiReferenceExpression) {
+        return fromVariable((PsiReferenceExpression)mapDefinition, "Map", CommonClassNames.JAVA_UTIL_HASH_MAP, MAP_PUT);
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PrepopulatedCollectionModel fromCollect(PsiMethodCallExpression call, String typeName, CallMatcher collector) {
+      if (STREAM_COLLECT.test(call) && collector.matches(call.getArgumentList().getExpressions()[0])) {
+        PsiMethodCallExpression qualifier = MethodCallUtils.getQualifierMethodCall(call);
+        if (STREAM_OF.matches(qualifier)) {
+          return new PrepopulatedCollectionModel(Arrays.asList(qualifier.getArgumentList().getExpressions()), Collections.emptyList(),
+                                                 typeName);
         }
       }
       return null;
     }
 
     @Nullable
-    private static PrepopulatedCollectionModel fromVariable(PsiLocalVariable variable,
-                                                            PsiExpression expression,
-                                                            String typeName, String collectionClass) {
+    private static PrepopulatedCollectionModel fromVariable(PsiReferenceExpression expression,
+                                                            String typeName, String collectionClass, CallMatcher addMethod) {
+      PsiLocalVariable variable = tryCast(expression.resolve(), PsiLocalVariable.class);
+      if (variable == null) return null;
       PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
       if (block == null || declaration == null) return null;
@@ -172,9 +219,9 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
           if (PsiTreeUtil.isAncestor(cur, expression, false)) break;
           if (!(cur instanceof PsiExpressionStatement)) return null;
           PsiMethodCallExpression call = tryCast(((PsiExpressionStatement)cur).getExpression(), PsiMethodCallExpression.class);
-          if (!COLLECTION_ADD.test(call)) return null;
+          if (!addMethod.test(call)) return null;
           if (!refs.remove(call.getMethodExpression().getQualifierExpression())) return null;
-          contents.add(call.getArgumentList().getExpressions()[0]);
+          contents.addAll(Arrays.asList(call.getArgumentList().getExpressions()));
           elementsToRemove.add(cur);
         }
         if (!refs.isEmpty()) return null;
@@ -242,19 +289,19 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return "Replace with '"+myType+".of' call";
+      return InspectionsBundle.message("inspection.collection.factories.fix.name", myType);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with collection factory call";
+      return InspectionsBundle.message("inspection.collection.factories.fix.family.name");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class, false);
       if(call == null) return;
       PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
       if(model == null) return;
