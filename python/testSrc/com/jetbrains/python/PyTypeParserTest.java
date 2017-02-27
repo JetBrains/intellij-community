@@ -24,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.jetbrains.python.psi.PyUtil.as;
-
 /**
  * @author yole
  */
@@ -139,7 +137,7 @@ public class PyTypeParserTest extends PyTestCase {
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "T");
     assertNotNull(type);
     assertInstanceOf(type, PyGenericType.class);
-    assertEquals("TypeVar('T')", type.getName());
+    assertEquals("T", type.getName());
   }
 
   // PY-4223
@@ -251,7 +249,7 @@ public class PyTypeParserTest extends PyTestCase {
     assertEquals("int", type0.getName());
     final PyType type1 = parameterTypes.get(1).getType(context);
     assertNotNull(type1);
-    assertEquals("TypeVar('T')", type1.getName());
+    assertEquals("T", type1.getName());
   }
 
   public void testCallableWithoutArgs() {

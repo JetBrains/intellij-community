@@ -23,7 +23,7 @@ for x in C1:
     pass
 
 
-for y in <warning descr="Expected 'collections.Iterable', got 'C2' instead">C2</warning>:
+for y in <warning descr="Expected 'collections.Iterable', got 'Type[C2]' instead">C2</warning>:
     pass
 
 
