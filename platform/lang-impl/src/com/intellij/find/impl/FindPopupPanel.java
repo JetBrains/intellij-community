@@ -98,12 +98,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
 
   private static final boolean PREVIEW_IS_EDITABLE = true;//todo move it to registry at least
-  // unify with CommonShortcuts.CTRL_ENTER
-  private static final KeyStroke OK_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
-
-                                                                                          ? InputEvent.META_DOWN_MASK
-                                                                                          : InputEvent.CTRL_DOWN_MASK);
-
   private static final KeyStroke NEW_LINE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
 
   private static final KeyStroke NEW_LINE_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
@@ -396,7 +390,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
     };
     myOKButton.addActionListener(myOkActionListener);
-    registerKeyboardAction(myOkActionListener, OK_KEYSTROKE, WHEN_IN_FOCUSED_WINDOW);
+    registerKeyboardAction(myOkActionListener, NEW_LINE, WHEN_IN_FOCUSED_WINDOW);
     mySearchComponent = new JTextArea();
     mySearchComponent.setColumns(25);
     mySearchComponent.setRows(1);
@@ -543,15 +537,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myResultsPreviewTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myResultsPreviewTable.setShowGrid(false);
     myResultsPreviewTable.setIntercellSpacing(JBUI.emptySize());
-    new NavigateToSourceListener().installOn(myResultsPreviewTable);
     applyFont(JBUI.Fonts.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
               myResultsPreviewTable);
     ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
     ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceComponent);
     KeymapUtil.reassignAction(mySearchComponent, NEW_LINE, NEW_LINE_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
     KeymapUtil.reassignAction(myReplaceComponent, NEW_LINE, NEW_LINE_ALTERNATIVE, WHEN_IN_FOCUSED_WINDOW);
-    UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, NEW_LINE);
-    UIUtil.redirectKeystrokes(myDisposable, myReplaceComponent, myResultsPreviewTable, NEW_LINE);
+    UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myOKButton, NEW_LINE);
+    UIUtil.redirectKeystrokes(myDisposable, myReplaceComponent, myOKButton, NEW_LINE);
 
 
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), PREVIEW_IS_EDITABLE) {
@@ -605,9 +598,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 0 4, fillx, hidemode 3, gap 0"));
     bottomPanel.add(myTabResultsButton);
     bottomPanel.add(Box.createHorizontalGlue(), "growx, pushx");
-    JBLabel label = new JBLabel(KeymapUtil.getShortcutsText(new Shortcut[]{new KeyboardShortcut(OK_KEYSTROKE, null)}));
-    label.setEnabled(false);
-    bottomPanel.add(label, "gapright 10");
     bottomPanel.add(myOKButton);
 
     myCodePreviewComponent = myUsagePreviewPanel.createComponent();
