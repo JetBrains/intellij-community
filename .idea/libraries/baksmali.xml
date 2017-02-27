@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="baksmali">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/baksmali-2.2b4-dev.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/baksmali-2.2b4-dev-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

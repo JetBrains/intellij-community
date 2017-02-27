@@ -799,6 +799,30 @@ java_library(
 )
 
 java_library(
+    name = "baksmali",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/adt/idea/android/lib:baksmali-2.2b4-dev"],
+    runtime_deps = ["//tools/adt/idea/android/lib:baksmali-2.2b4-dev"],
+)
+
+java_library(
+    name = "dexlib2-2.2b4",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    exports = [
+        "//tools/adt/idea/android/lib:dexlib2-2.2b4-dev",
+        "//tools/adt/idea/android/lib:dexlib2-util-2.2b4-dev",
+    ],
+    # do not sort: must match IML order
+    runtime_deps = [
+        "//tools/adt/idea/android/lib:dexlib2-2.2b4-dev",
+        "//tools/adt/idea/android/lib:dexlib2-util-2.2b4-dev",
+    ],
+)
+
+java_library(
     name = "dexlib2",
     tags = ["managed"],
     visibility = ["//visibility:public"],
