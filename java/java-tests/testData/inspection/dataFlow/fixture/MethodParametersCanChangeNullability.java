@@ -2,6 +2,7 @@ import org.jetbrains.annotations.*;
 
 class Test {
 
+  /*
   @Nullable
   String findMessage(@NotNull Element element) {
     while (element != null) {
@@ -22,6 +23,16 @@ class Test {
       element = element.getNullableParent();
     }
     return null;
+  }
+  */
+
+  void foo(@NotNull String param) {
+    if (equals(3)) {
+      param = null;
+    }
+    if (param != null) {
+      System.out.println();
+    }
   }
 
 }
