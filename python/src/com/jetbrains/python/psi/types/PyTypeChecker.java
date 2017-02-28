@@ -615,28 +615,22 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  public static List<AnalyzeCallResults> analyzeCallSite(@Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if (callSite != null) {
-      final List<AnalyzeCallResults> results = new ArrayList<>();
-      for (PyCallable callable : resolveCallee(callSite, context)) {
-        final PyExpression receiver = getReceiver(callSite, callable);
-        for (List<PyParameter> parameters : PyUtil.getOverloadedParametersSet(callable, context)) {
-          final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, callable, parameters, context);
-          results.add(new AnalyzeCallResults(callable, receiver, mapping));
-        }
-      }
-      return results;
+  public static List<AnalyzeCallResults> analyzeCallSite(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    final List<AnalyzeCallResults> results = new ArrayList<>();
+    for (PyCallable callable : multiResolveCallee(callSite, context)) {
+      final PyExpression receiver = getReceiver(callSite, callable);
+      final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, callable, context);
+      results.add(new AnalyzeCallResults(callable, receiver, mapping));
     }
-    return Collections.emptyList();
+    return results;
   }
 
   @NotNull
-  private static List<PyCallable> resolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  private static List<PyCallable> multiResolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     if (callSite instanceof PyCallExpression) {
-      final PyCallExpression callExpr = (PyCallExpression)callSite;
-      final PyCallExpression.PyMarkedCallee callee = callExpr.resolveCallee(resolveContext);
-      return callee != null ? Collections.singletonList(callee.getCallable()) : Collections.emptyList();
+      final List<PyCallExpression.PyRatedCallee> ratedCallees = ((PyCallExpression)callSite).multiResolveRatedCalleeFunction(resolveContext);
+      return ContainerUtil.map(PyUtil.filterTopPriorityResults(ratedCallees), PyCallExpression.PyRatedCallee::getElement);
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
       final List<PyCallable> results = new ArrayList<>();
