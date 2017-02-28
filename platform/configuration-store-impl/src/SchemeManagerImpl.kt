@@ -177,8 +177,17 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     private fun schemeCreatedExternally(file: VirtualFile) {
-      val readScheme = readSchemeFromFile(file)
+      val newSchemes = SmartList<T>()
+      val readScheme = readSchemeFromFile(file, newSchemes)
       if (readScheme != null) {
+        val existingScheme = findSchemeByName(readScheme.name)
+        if (existingScheme != null && readOnlyExternalizableSchemes.get(existingScheme.name) !== existingScheme) {
+          LOG.warn("Ignore incorrect VFS create scheme event: schema ${readScheme.name} is already exists")
+          return
+        }
+
+        schemes.addAll(newSchemes)
+
         processor.initScheme(readScheme)
         processor.onSchemeAdded(readScheme)
       }
