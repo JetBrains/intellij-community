@@ -63,7 +63,7 @@ public class BackwardReferenceIndexWriter {
     return ourInstance;
   }
 
-  static void initialize(@NotNull final CompileContext context) {
+  static void initialize(@NotNull final CompileContext context, int attempt) {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
     if (isEnabled()) {
@@ -77,11 +77,11 @@ public class BackwardReferenceIndexWriter {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
       }
       else if (CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
-        if (areAllJavaModulesAffected(context)) {
+        CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
+        if ((attempt == 0 && areAllJavaModulesAffected(context)) ) {
           throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
         } else {
           // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
-          CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
         }
       }
 
