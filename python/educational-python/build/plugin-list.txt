@@ -5,6 +5,5 @@ github
 student
 student-python
 course-creator
-course-creator-python
 hg4idea
 ipnb
