@@ -537,25 +537,35 @@ public class JBViewport extends JViewport implements ZoomableViewport {
           if (grand instanceof JScrollPane) {
             JScrollPane pane = (JScrollPane)grand;
             // calculate empty border under vertical scroll bar
-            if (viewport == pane.getViewport() || viewport == pane.getColumnHeader()) {
-              JScrollBar vsb = pane.getVerticalScrollBar();
-              Alignment va = getAlignment(vsb);
-              if (va == Alignment.LEFT) {
-                insets.left += vsb.getWidth();
-              }
-              else if (va == Alignment.RIGHT && isAlignmentNeeded(view, false)) {
-                insets.right += vsb.getWidth();
+            JScrollBar vsb = pane.getVerticalScrollBar();
+            if (vsb != null && vsb.isVisible()) {
+              boolean opaque = vsb.isOpaque();
+              if (viewport == pane.getColumnHeader()
+                  ? (!opaque || Registry.is("ide.scroll.layout.header.over.corner"))
+                  : (!opaque && viewport == pane.getViewport())) {
+                Alignment va = UIUtil.getClientProperty(vsb, Alignment.class);
+                if (va == Alignment.LEFT) {
+                  insets.left += vsb.getWidth();
+                }
+                else if (va == Alignment.RIGHT && (opaque || isAlignmentNeeded(view, false))) {
+                  insets.right += vsb.getWidth();
+                }
               }
             }
             // calculate empty border under horizontal scroll bar
-            if (viewport == pane.getViewport() || viewport == pane.getRowHeader()) {
-              JScrollBar hsb = pane.getHorizontalScrollBar();
-              Alignment ha = getAlignment(hsb);
-              if (ha == Alignment.TOP) {
-                insets.top += hsb.getHeight();
-              }
-              else if (ha == Alignment.BOTTOM && isAlignmentNeeded(view, true)) {
-                insets.bottom += hsb.getHeight();
+            JScrollBar hsb = pane.getHorizontalScrollBar();
+            if (hsb != null && hsb.isVisible()) {
+              boolean opaque = hsb.isOpaque();
+              if (viewport == pane.getRowHeader()
+                  ? (!opaque || Registry.is("ide.scroll.layout.header.over.corner"))
+                  : (!opaque && viewport == pane.getViewport())) {
+                Alignment ha = UIUtil.getClientProperty(hsb, Alignment.class);
+                if (ha == Alignment.TOP) {
+                  insets.top += hsb.getHeight();
+                }
+                else if (ha == Alignment.BOTTOM && (opaque || isAlignmentNeeded(view, true))) {
+                  insets.bottom += hsb.getHeight();
+                }
               }
             }
           }
