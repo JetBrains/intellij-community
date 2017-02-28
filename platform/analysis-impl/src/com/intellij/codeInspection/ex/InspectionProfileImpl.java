@@ -657,6 +657,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
+  @Deprecated
   public void disableTool(@NotNull String inspectionTool, @Nullable Project project) {
     setToolEnabled(inspectionTool, false, project);
   }
@@ -667,17 +668,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  public boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element) {
+  public boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element) {
     if (key == null) {
       return false;
     }
     final Tools toolState = getToolsOrNull(key.toString(), element == null ? null : element.getProject());
     return toolState != null && toolState.isEnabled(element);
-  }
-
-  @Override
-  public boolean isToolEnabled(@Nullable HighlightDisplayKey key) {
-    return isToolEnabled(key, null);
   }
 
   @Override
