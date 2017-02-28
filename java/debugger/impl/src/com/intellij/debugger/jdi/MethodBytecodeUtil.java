@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,11 +52,16 @@ public class MethodBytecodeUtil {
   }
 
   public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
-    // need to keep the size, otherwise labels array will not be initialized correctly
-    byte[] originalBytecodes = method.bytecodes();
-    byte[] bytecodes = new byte[originalBytecodes.length];
-    System.arraycopy(originalBytecodes, 0, bytecodes, 0, (int)maxOffset);
-    visit(method, bytecodes, methodVisitor, withLineNumbers);
+    if (maxOffset > 0) {
+      // need to keep the size, otherwise labels array will not be initialized correctly
+      byte[] originalBytecodes = method.bytecodes();
+      byte[] bytecodes = originalBytecodes;
+      if (maxOffset < originalBytecodes.length) {
+        bytecodes = new byte[originalBytecodes.length];
+        System.arraycopy(originalBytecodes, 0, bytecodes, 0, (int)maxOffset);
+      }
+      visit(method, bytecodes, methodVisitor, withLineNumbers);
+    }
   }
 
   public static byte[] getConstantPool(ReferenceType type) {

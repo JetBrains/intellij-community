@@ -284,31 +284,34 @@ public class LocalVariablesUtil {
         return Collections.emptyList();
       }
 
-      final byte[] bytecodes = method.bytecodes();
-      if (bytecodes != null && bytecodes.length > 0) {
-        final int firstLocalVariableSlot = getFirstLocalsSlot(method);
-        final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<>();
-        MethodBytecodeUtil.visit(method, location.codeIndex(),
-          new MethodVisitor(Opcodes.API_VERSION) {
-           @Override
-           public void visitVarInsn(int opcode, int slot) {
-             if (slot >= firstLocalVariableSlot) {
-               DecompiledLocalVariable variable = usedVars.get(slot);
-               String typeSignature = MethodBytecodeUtil.getVarInstructionType(opcode).getDescriptor();
-               if (variable == null || !typeSignature.equals(variable.getSignature())) {
-                 variable = new DecompiledLocalVariable(slot, false, typeSignature, namesMap.get(slot));
-                 usedVars.put(slot, variable);
-               }
-             }
-           }
-          }, false);
-        if (usedVars.isEmpty()) {
-          return Collections.emptyList();
-        }
+      long codeIndex = location.codeIndex();
+      if (codeIndex > 0) {
+        final byte[] bytecodes = method.bytecodes();
+        if (bytecodes != null && bytecodes.length > 0) {
+          final int firstLocalVariableSlot = getFirstLocalsSlot(method);
+          final HashMap<Integer, DecompiledLocalVariable> usedVars = new HashMap<>();
+          MethodBytecodeUtil.visit(method, codeIndex,
+                                   new MethodVisitor(Opcodes.API_VERSION) {
+                                     @Override
+                                     public void visitVarInsn(int opcode, int slot) {
+                                       if (slot >= firstLocalVariableSlot) {
+                                         DecompiledLocalVariable variable = usedVars.get(slot);
+                                         String typeSignature = MethodBytecodeUtil.getVarInstructionType(opcode).getDescriptor();
+                                         if (variable == null || !typeSignature.equals(variable.getSignature())) {
+                                           variable = new DecompiledLocalVariable(slot, false, typeSignature, namesMap.get(slot));
+                                           usedVars.put(slot, variable);
+                                         }
+                                       }
+                                     }
+                                   }, false);
+          if (usedVars.isEmpty()) {
+            return Collections.emptyList();
+          }
 
-        List<DecompiledLocalVariable> vars = new ArrayList<>(usedVars.values());
-        vars.sort(Comparator.comparingInt(DecompiledLocalVariable::getSlot));
-        return vars;
+          List<DecompiledLocalVariable> vars = new ArrayList<>(usedVars.values());
+          vars.sort(Comparator.comparingInt(DecompiledLocalVariable::getSlot));
+          return vars;
+        }
       }
     }
     catch (UnsupportedOperationException ignored) {
