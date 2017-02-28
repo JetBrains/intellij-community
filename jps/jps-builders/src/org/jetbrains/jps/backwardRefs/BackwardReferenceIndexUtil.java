@@ -50,11 +50,7 @@ public class BackwardReferenceIndexUtil {
         for (JavacRef superClass : superClasses) {
           LightRef.JavaLightClassRef superClassRef = writer.asClassUsage(superClass);
 
-          Collection<LightRef> children = backwardHierarchyMap.get(superClassRef);
-          if (children == null) {
-            backwardHierarchyMap.put(superClassRef, children = new SmartList<>());
-          }
-          children.add(aClass);
+          backwardHierarchyMap.computeIfAbsent(superClassRef, k -> new SmartList<>()).add(aClass);
         }
       }
       else if (def instanceof JavacDef.JavacFunExprDef) {
