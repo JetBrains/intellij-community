@@ -70,6 +70,12 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
                                                                 @NotNull GlobalSearchScope searchScope,
                                                                 @NotNull FileType searchFileType);
 
+  /**
+   * @return count of references that were observed on compile-time (in the last compilation) or null if given element is not supported for some reason.
+   */
+  @Nullable
+  public abstract Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element);
+
   public static boolean isEnabled() {
     return IS_ENABLED_KEY.asBoolean();
   }

@@ -171,9 +171,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                         PsiModificationTracker.MODIFICATION_COUNT,
                                                                                         this));
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
     catch (RuntimeException e) {
       return onException(e, "scope without code references");
     }
@@ -195,6 +192,43 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                        @NotNull GlobalSearchScope searchScope,
                                                        @NotNull FileType searchFileType) {
     return getHierarchyInfo(functionalInterface, useScope, searchScope, searchFileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
+  }
+
+  @Nullable
+  @Override
+  public Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element) {
+    if (!isServiceEnabledFor(element)) return null;
+    try {
+      return CachedValuesManager.getCachedValue(element,
+                                                () -> CachedValueProvider.Result.create(calculateOccurrenceCount(element),
+                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
+                                                                                        this));
+    }
+    catch (RuntimeException e) {
+      return onException(e, "weighting for completion");
+    }
+  }
+
+  private Integer calculateOccurrenceCount(@NotNull PsiElement element) {
+    final CompilerElementInfo searchElementInfo = asCompilerElements(element, true);
+    if (searchElementInfo == null) return null;
+
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) return null;
+      try {
+        int occurrenceCount = 0;
+        for (LightRef ref : searchElementInfo.searchElements) {
+          occurrenceCount += myReader.getOccurrenceCount(ref);
+        }
+        return occurrenceCount;
+      }
+      catch (StorageException e) {
+        throw new RuntimeException(e);
+      }
+    } finally {
+      myReadDataLock.unlock();
+    }
   }
 
   @Nullable
@@ -535,6 +569,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @Nullable
   private <T> T onException(@NotNull RuntimeException e, @NotNull String actionName) {
+    if (e instanceof ProcessCanceledException) {
+      throw e;
+    }
     final Throwable cause = e.getCause();
     if (cause instanceof PersistentEnumeratorBase.CorruptedException || cause instanceof StorageException) {
       closeReaderIfNeed(true);

@@ -109,6 +109,15 @@ class CompilerReferenceReader {
     }
   }
 
+  public int getOccurrenceCount(@NotNull LightRef element) throws StorageException {
+    final ValueContainer.ValueIterator<Integer> occurrenceIt = myIndex.get(CompilerIndices.BACK_USAGES).getData(element).getValueIterator();
+    int occurrenceCount = 0;
+    while (occurrenceIt.hasNext()) {
+      occurrenceCount += occurrenceIt.next();
+    }
+    return occurrenceCount;
+  }
+
   static boolean exists(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
     if (buildDir == null || CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
