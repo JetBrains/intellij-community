@@ -643,7 +643,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
   public void testGetFileFromConcurrentlyCreatedDocument() throws Exception {
     List<VirtualFile> physicalFiles = new ArrayList<>();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
       physicalFiles.add(createFile("a" + i + ".txt", "a" + i));
     }
 
@@ -661,7 +661,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     List<Future> futures = new ArrayList<>();
     for (VirtualFile file : files) {
       assertNull(fdm.getCachedDocument(file));
-      for (int i = 0; i < 50; i++) {
+      for (int i = 0; i < 30; i++) {
         futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
           Document document = fdm.getDocument(file);
           assertEquals(file, fdm.getFile(document));
@@ -677,7 +677,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
   @NotNull
   private static List<VirtualFile> createNonPhysicalFiles() {
     List<VirtualFile> allFiles = new ArrayList<>();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 5; i++) {
       allFiles.add(new LightVirtualFile("b" + i + ".txt", "b" + i));
     }
     return allFiles;
