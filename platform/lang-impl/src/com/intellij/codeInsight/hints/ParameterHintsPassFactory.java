@@ -121,7 +121,10 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       if (hints.isEmpty()) return;
       HintInfo info = provider.getHintInfo(element);
       if (info == null || !isMatchedByAny(info, blackListMatchers)) {
-        hints.forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
+        hints.forEach((hint) -> {
+          String presentation = provider.getInlayPresentation(hint.getText());
+          myAnnotations.put(hint.getOffset(), presentation);
+        });
       }
     }
 

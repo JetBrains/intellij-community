@@ -17,6 +17,7 @@ package com.intellij.testFramework.utils.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.InlayInfo
+import com.intellij.codeInsight.hints.InlayParameterHintsExtension
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
@@ -55,20 +56,23 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val file = myFixture.file
     val document = myFixture.getDocument(file)
     val originalText = document.text
-    val expectedInlays = extractInlays(document)
-    val actualInlays = getActualInlays()
-
-    if (expectedInlays.size != actualInlays.size || actualInlays.zip(expectedInlays).any { it.second != it.first }) {
+    val expectedInlays: List<InlayInfo> = extractInlays(document)
+    val actual: List<Pair<Int, String>> = getActualInlays()
+    
+    val provider = InlayParameterHintsExtension.forLanguage(file.language)
+    val expected = expectedInlays.map { Pair(it.offset, provider.getInlayPresentation(it.text)) }
+    
+    if (expectedInlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
       val proposedText = StringBuilder(document.text)
-      actualInlays.asReversed().forEach { proposedText.insert(it.offset, "<hint text=\"${it.text}\" />") }
+      actual.asReversed().forEach { proposedText.insert(it.first, "<hint text=\"${it.second}\" />") }
 
       VfsTestUtil.TEST_DATA_FILE_PATH.get(file.virtualFile)?.let { originalPath ->
         throw FileComparisonFailure("Hints differ", originalText, proposedText.toString(), originalPath)
       } ?: throw ComparisonFailure("Hints differ", originalText, proposedText.toString())
     }
   }
-
-  private fun getActualInlays(): List<InlayInfo> {
+  
+  private fun getActualInlays(): List<Pair<Int, String>> {
     myFixture.doHighlighting()
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
@@ -76,8 +80,8 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val hintManager = ParameterHintsPresentationManager.getInstance()
     return allInlays
       .filter { hintManager.isParameterHint(it) }
-      .map { InlayInfo(hintManager.getHintText(it), it.offset) }
-      .sortedBy { it.offset }
+      .map { it.offset to hintManager.getHintText(it)}
+      .sortedBy { it.first }
   }
 
   fun extractInlays(document: Document): List<InlayInfo> {
