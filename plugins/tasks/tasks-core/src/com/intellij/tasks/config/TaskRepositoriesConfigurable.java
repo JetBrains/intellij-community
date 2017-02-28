@@ -23,7 +23,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -121,7 +120,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
         }
 
         JBPopupFactory.getInstance()
-          .createActionGroupPopup("Add server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
+          .createActionGroupPopup("Add Server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(
           anActionButton.getPreferredPopupPoint());
       }
