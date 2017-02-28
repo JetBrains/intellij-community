@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -50,6 +51,9 @@ import java.util.List;
  */
 public class TextEditorProvider implements FileEditorProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorProvider");
+
+  @TestOnly
+  public static final Key<Boolean> TREAT_AS_SHOWN = Key.create("treat.editor.component.as.shown");
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");
 
@@ -296,7 +300,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     }
 
     final int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
-    UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), () -> {
+    Runnable scrollingRunnable = () -> {
       if (!editor.isDisposed()) {
         editor.getScrollingModel().disableAnimation();
         if (relativeCaretPosition != Integer.MAX_VALUE) {
@@ -305,7 +309,10 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getScrollingModel().enableAnimation();
       }
-    });
+    };
+    //noinspection TestOnlyProblems
+    if (Boolean.TRUE.equals(editor.getUserData(TREAT_AS_SHOWN))) scrollingRunnable.run();
+    else UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), scrollingRunnable);
   }
 
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
