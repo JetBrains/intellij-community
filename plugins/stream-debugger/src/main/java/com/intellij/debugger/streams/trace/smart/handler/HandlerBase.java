@@ -10,20 +10,19 @@ import java.util.List;
  */
 public abstract class HandlerBase implements MapToArrayTracerImpl.StreamCallTraceHandler {
   private static final String DECLARATION_FORMAT = "final %s %s = %s;" + System.lineSeparator();
-  private final List<Variable> myVariables;
-
-  public HandlerBase(@NotNull List<Variable> variables) {
-    myVariables = variables;
-  }
 
   @NotNull
   @Override
-  public String additionalVariablesDeclaration() {
+  final public String additionalVariablesDeclaration() {
     final StringBuilder stringBuilder = new StringBuilder();
-    for (final Variable variable : myVariables) {
+    final List<Variable> variables = getVariables();
+    for (final Variable variable : variables) {
       stringBuilder.append(String.format(DECLARATION_FORMAT, variable.getTypeName(), variable.getName(), variable.getInitialExpression()));
     }
 
     return stringBuilder.toString();
   }
+
+  @NotNull
+  protected abstract List<Variable> getVariables();
 }

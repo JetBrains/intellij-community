@@ -3,7 +3,7 @@ package com.intellij.debugger.streams.trace.smart.handler;
 import com.intellij.debugger.streams.wrapper.MethodCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -11,31 +11,38 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class PeekTracerHandler extends HandlerBase {
-  public PeekTracerHandler(int callNumber, @NotNull String callName) {
-    super(Arrays.asList());
+  private final List<Variable> myVariables = new ArrayList<>();
+
+  public PeekTracerHandler(int num, @NotNull String name) {
   }
 
   @NotNull
   @Override
   public List<MethodCall> additionalCallsBefore() {
-    return null;
+    return Collections.emptyList();
   }
 
   @NotNull
   @Override
   public List<MethodCall> additionalCallsAfter() {
-    return null;
+    return Collections.emptyList();
   }
 
   @NotNull
   @Override
   public String prepareResult() {
-    return null;
+    return "";
   }
 
   @NotNull
   @Override
   public String getResultExpression() {
-    return null;
+    return "";
+  }
+
+  @NotNull
+  @Override
+  protected List<Variable> getVariables() {
+    return myVariables;
   }
 }

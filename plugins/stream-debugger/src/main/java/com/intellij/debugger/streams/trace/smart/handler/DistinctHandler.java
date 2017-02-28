@@ -4,7 +4,6 @@ import com.intellij.debugger.streams.wrapper.MethodCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -14,8 +13,8 @@ public class DistinctHandler extends HandlerBase {
   private final PeekTracerHandler myPeekTracer;
 
   public DistinctHandler(int callNumber, @NotNull String callName) {
-    super(Arrays.asList());
     myPeekTracer = new PeekTracerHandler(callNumber, callName);
+
   }
 
   @NotNull
@@ -48,5 +47,11 @@ public class DistinctHandler extends HandlerBase {
   @NotNull
   private String doPrepareResult() {
     return "";
+  }
+
+  @NotNull
+  @Override
+  protected List<Variable> getVariables() {
+    return null;
   }
 }

@@ -10,7 +10,7 @@ public class VariableImpl implements Variable {
   private final String myType;
   private final String myInitialExpression;
 
-  public VariableImpl(String name, String type, String initialExpression) {
+  public VariableImpl(@NotNull String type, @NotNull String name, @NotNull String initialExpression) {
     myName = name;
     myType = type;
     myInitialExpression = initialExpression;
