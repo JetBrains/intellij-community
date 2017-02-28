@@ -1089,9 +1089,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       super(parentScheme);
 
       parentScheme.getFontPreferences().copyTo(getFontPreferences());
-      setLineSpacing(parentScheme.getLineSpacing());
 
-      parentScheme.getConsoleFontPreferences().copyTo(getConsoleFontPreferences());
+      if (parentScheme.isUseEditorFontPreferencesInConsole()) {
+        setUseEditorFontPreferencesInConsole();
+      }
+      else {
+        setConsoleFontPreferences(parentScheme.getConsoleFontPreferences());
+      }
       setConsoleLineSpacing(parentScheme.getConsoleLineSpacing());
 
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
@@ -1146,14 +1150,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     private boolean isFontModified() {
-      if (!getFontPreferences().equals(myParentScheme.getFontPreferences())) return true;
-      if (getLineSpacing() != myParentScheme.getLineSpacing()) return true;
-      return getQuickDocFontSize() != myParentScheme.getQuickDocFontSize();
+      return !getFontPreferences().equals(myParentScheme.getFontPreferences());
     }
 
     private boolean isConsoleFontModified() {
-      if (!getConsoleFontPreferences().equals(myParentScheme.getConsoleFontPreferences())) return true;
-      return getConsoleLineSpacing() != myParentScheme.getConsoleLineSpacing();
+      return !getConsoleFontPreferences().equals(myParentScheme.getConsoleFontPreferences());
     }
 
     private boolean apply() {
@@ -1167,10 +1168,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       boolean isModified = isFontModified() || isConsoleFontModified();
 
       scheme.setFontPreferences(getFontPreferences());
-      scheme.setLineSpacing(myLineSpacing);
-      scheme.setQuickDocFontSize(getQuickDocFontSize());
-      scheme.setConsoleFontPreferences(getConsoleFontPreferences());
-      scheme.setConsoleLineSpacing(getConsoleLineSpacing());
+
+      if (isUseEditorFontPreferencesInConsole()) {
+        scheme.setUseEditorFontPreferencesInConsole();
+      }
+      else {
+        scheme.setConsoleFontPreferences(getConsoleFontPreferences());
+      }
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
         if (descriptor.isModified()) {

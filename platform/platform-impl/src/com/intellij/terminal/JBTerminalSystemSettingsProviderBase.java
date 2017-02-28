@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -151,7 +152,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   protected static class MyColorSchemeDelegate implements EditorColorsScheme {
 
-    private final FontPreferences myFontPreferences = new FontPreferences();
+    private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
     private final HashMap<TextAttributesKey, TextAttributes> myOwnAttributes = new HashMap<>();
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<>();
     private Map<EditorFontType, Font> myFontsMap = null;

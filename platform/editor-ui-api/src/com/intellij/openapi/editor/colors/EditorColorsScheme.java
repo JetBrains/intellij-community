@@ -99,6 +99,9 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   @NotNull
   FontPreferences getConsoleFontPreferences();
   void setConsoleFontPreferences(@NotNull FontPreferences preferences);
+  
+  default void setUseEditorFontPreferencesInConsole() {}
+  default boolean isUseEditorFontPreferencesInConsole() {return false;}
 
   String getConsoleFontName();
   void setConsoleFontName(String fontName);
