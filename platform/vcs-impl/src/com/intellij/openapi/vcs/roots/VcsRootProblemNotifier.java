@@ -39,13 +39,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsDirectoryMapping.PROJECT_CONSTANT;
+import static com.intellij.openapi.vcs.VcsRootError.Type.UNREGISTERED_ROOT;
 import static com.intellij.project.ProjectKt.guessProjectDir;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.Collections.singletonList;
@@ -102,7 +106,9 @@ public class VcsRootProblemNotifier {
       VcsRootError singleUnregRoot = notNull(getFirstItem(importantUnregisteredRoots));
       String mappingPath = singleUnregRoot.getMapping();
       VirtualFile projectDir = guessProjectDir(myProject);
+      Collection<VcsRootError> allUnregisteredRoots = filter(errors, it -> it.getType() == UNREGISTERED_ROOT);
       if (!myVcsManager.hasAnyMappings() &&
+          allUnregisteredRoots.size() == 1 &&
           !myReportedUnregisteredRoots.contains(mappingPath) &&
           FileUtil.isAncestor(projectDir.getPath(), mappingPath, false) &&
           Registry.is("vcs.auto.add.single.root")) {
@@ -225,9 +231,9 @@ public class VcsRootProblemNotifier {
 
   @NotNull
   private List<VcsRootError> getImportantUnregisteredMappings(@NotNull Collection<VcsRootError> errors) {
-    return ContainerUtil.filter(errors, error -> {
+    return filter(errors, error -> {
       String mapping = error.getMapping();
-      return error.getType() == VcsRootError.Type.UNREGISTERED_ROOT &&
+      return error.getType() == UNREGISTERED_ROOT &&
              isUnderOrAboveProjectDir(mapping) &&
              !isIgnoredOrExcludedPath(mapping) &&
              !mySettings.isIgnoredUnregisteredRoot(mapping);
@@ -236,7 +242,7 @@ public class VcsRootProblemNotifier {
 
   @NotNull
   private static Collection<VcsRootError> getInvalidRoots(@NotNull Collection<VcsRootError> errors) {
-    return ContainerUtil.filter(errors, error -> error.getType() == VcsRootError.Type.EXTRA_MAPPING);
+    return filter(errors, error -> error.getType() == VcsRootError.Type.EXTRA_MAPPING);
   }
 
   private static class MyNotificationListener extends NotificationListener.Adapter {
