@@ -40,6 +40,8 @@ public class HgCommonBranchActions extends BranchActionGroup {
     myBranchName = branchName;
     myRepositories = repositories;
     getTemplatePresentation().setText(myBranchName, false); // no mnemonics
+    getTemplatePresentation().setIcon(null);
+    getTemplatePresentation().setHoveredIcon(null);
   }
 
   @NotNull
