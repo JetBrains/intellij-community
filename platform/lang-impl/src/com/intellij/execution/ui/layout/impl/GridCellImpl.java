@@ -37,6 +37,7 @@ import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -47,7 +48,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -346,10 +346,10 @@ public class GridCellImpl implements GridCell {
     restoreProportions();
 
     final Content[] contents = getContents();
-    final List<Content> toMinimize = new ArrayList<>();
+    final List<Content> toMinimize = new SmartList<>();
 
     int window = 0;
-    for (Content each : contents) {
+    for (final Content each : contents) {
       final View view = myContainer.getStateFor(each);
       if (view.isMinimizedInGrid()) {
         toMinimize.add(each);
@@ -443,6 +443,7 @@ public class GridCellImpl implements GridCell {
   }
 
   public void minimize(Content[] contents) {
+    if (contents.length == 0) return;
     myContext.saveUiState();
 
     for (final Content each : contents) {
