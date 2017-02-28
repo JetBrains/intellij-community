@@ -17,9 +17,13 @@
 
   <actions>
     <action id="StreamTracerAction"
-            class="com.intellij.debugger.streams.action.StreamTracerAction"
-            icon="AllIcons.Debugger.ThreadRunning">
+            class="com.intellij.debugger.streams.action.StreamTracerAction">
       <keyboard-shortcut keymap="$default" first-keystroke="alt P"/>
+    </action>
+
+    <action id="AdvancedStreamTracerAction"
+            class="com.intellij.debugger.streams.action.AdvancedStreamTracerAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt O"/>
     </action>
   </actions>
 
