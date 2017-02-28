@@ -2,7 +2,8 @@
 
 The launchers can be built from the command line, with the following prerequisites:
  * Xcode6 (Mac OS X) with Platform SDK 10.9
- * Visual Studio 2010 with 64-bit compilers (either use Professional Edition or install Windows SDK 7.1) and .NET Framework v4 (Windows).
+ * Visual Studio 2013 with 64-bit compilers (either use Professional Edition or install Windows SDK 7.1), Microsoft Foundation
+  Classes for C++, and .NET Framework v4 (Windows).
 
 ### Mac Launcher
 The JDK still depends on Apple's JavaVM and JRS frameworks: https://bugs.openjdk.java.net/browse/JDK-8024281. Because of this,
@@ -40,3 +41,11 @@ tools\idea\native\WinLauncher\WinLauncher> msbuild /p:JdkPath="C:\Program Files\
 ```
 
 The resulting binaries WinLauncher.exe and WinLauncher64.exe will be available under tools\idea\bin\WinLauncher.
+
+For CMake-based builds, use the checked-in version from prebuilts and make sure to set all the environment variables expected by
+ CMakeLists.txt. For example, here's how to build IdeaWin:
+
+```
+BUILD_NUMBER=0 CMAKE_PATH="D:\src\studio-master-dev\prebuilts\studio\sdk\windows\cmake\3.6.3155560" JDK_18_x64="C:\Program Files\Java\jdk1.8.0_111" winpty build.cmd build64 x64
+BUILD_NUMBER=0 CMAKE_PATH="D:\src\studio-master-dev\prebuilts\studio\sdk\windows\cmake\3.6.3155560" JDK_18="C:\Program Files\Java\jdk1.8.0_111" winpty build.cmd build32 Win32
+```
