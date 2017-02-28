@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -100,12 +101,12 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   @Override
   public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
-    try {
-      SuspendContextImpl suspendContext = action.getSuspendContext();
-      if (suspendContext != null) {
-        StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
-        if (frameProxy != null) {
-          DebugProcessImpl process = suspendContext.getDebugProcess();
+    SuspendContextImpl suspendContext = action.getSuspendContext();
+    if (suspendContext != null) {
+      StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
+      if (frameProxy != null) {
+        DebugProcessImpl process = suspendContext.getDebugProcess();
+        try {
           Map<Object, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
           if (stacks == null) {
             stacks = new CapturedStacksMap();
@@ -120,11 +121,13 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             stacks.put(getKey((ObjectReference)key), frames);
           }
         }
+        catch (EvaluateException e) {
+          LOG.debug(e);
+          process.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.capture.expression", e.getMessage()) + "\n");
+        }
       }
     }
-    catch (EvaluateException e) {
-      LOG.debug(e);
-    }
+
     return false;
   }
 
@@ -206,6 +209,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             }
             catch (EvaluateException e) {
               LOG.debug(e);
+              debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
             }
           }
         }
