@@ -5,11 +5,7 @@ Inspection detects calls to <code>Map.get</code> which could be replaced with <c
 <ul>
   <li><b>Map.getOrDefault</b> method could be used to replace the code like this:
     <pre>
-      aValue = map.get(aKey);
-      if (aValue == null) {
-        aValue = "none";
-      }
-    </pre>
+      String val = map.containsKey(key) ? map.get(key) : "none";</pre>
   </li>
   <li><b>Map.computeIfAbsent</b> method could be used to replace the code like this:
     <pre>
@@ -17,26 +13,18 @@ Inspection detects calls to <code>Map.get</code> which could be replaced with <c
       if (list == null) {
         list = new ArrayList&lt;&gt;();
         map.put(key, list);
-      }
-    </pre>
+      }</pre>
   </li>
   <li><b>Map.putIfAbsent</b> method could be used to replace the code like this:
     <pre>
       String val = map.get(key);
-      if (val == null) {
-        map.put(key, newVal);
-      }
-    </pre>
+      if (val == null) map.put(key, newVal);</pre>
   </li>
   <li><b>Map.merge</b> method could be used to replace the code like this:
     <pre>
       Integer val = map.get(key);
-      if (val == null) {
-        map.put(key, 1);
-      } else {
-        map.put(key, val + 1);
-      }
-    </pre>
+      if (val == null) map.put(key, 1);
+      else map.put(key, val + 1);</pre>
   </li>
 
 </ul>
