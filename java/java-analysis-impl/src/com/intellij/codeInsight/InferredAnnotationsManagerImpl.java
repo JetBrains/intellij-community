@@ -133,7 +133,9 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   }
 
   private PsiAnnotation getInferredNullityAnnotation(PsiParameter parameter) {
-    PsiElement scope = parameter.getDeclarationScope();
+    PsiElement parent = parameter.getParent();
+    if (!(parent instanceof PsiParameterList)) return null;
+    PsiElement scope = parent.getParent();
     if (scope instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)scope;
       if (method.getName().equals("of")) {
@@ -142,7 +144,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
           String className = containingClass.getQualifiedName();
           if (CommonClassNames.JAVA_UTIL_LIST.equals(className) ||
               CommonClassNames.JAVA_UTIL_SET.equals(className) ||
-              CommonClassNames.JAVA_UTIL_MAP.equals(className)) {
+              CommonClassNames.JAVA_UTIL_MAP.equals(className) ||
+              "java.util.EnumSet".equals(className)) {
             return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
           }
         }
