@@ -17,10 +17,6 @@
 
 package git4idea.test
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.Executor.*
@@ -28,7 +24,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestCase
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.VcsRef
@@ -38,7 +33,6 @@ import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
-import org.picocontainer.MutablePicoContainer
 import java.io.File
 
 const val USER_NAME = "John Doe"
@@ -136,22 +130,6 @@ fun assumeSupportedGitVersion(vcs: GitVcs) {
   assumeTrue("Unsupported Git version: " + version, version.isSupported)
 }
 
-inline fun <reified Int : Any, reified Impl : Int> overrideService(project: Project): Impl {
-  val key = Int::class.java.name
-  val picoContainer = project.picoContainer as MutablePicoContainer
-  picoContainer.unregisterComponent(key)
-  picoContainer.registerComponentImplementation(key, Impl::class.java)
-  return project.service<Int>() as Impl
-}
-
-inline fun <reified Int : Any, reified Impl : Int> overrideService(): Impl {
-  val key = Int::class.java.name
-  val picoContainer = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
-  picoContainer.unregisterComponent(key)
-  picoContainer.registerComponentImplementation(key, Impl::class.java)
-  return service<Int>() as Impl
-}
-
 fun readAllRefs(root: VirtualFile, objectsFactory: VcsLogObjectsFactory): Set<VcsRef> {
   val refs = git("log --branches --tags --no-walk --format=%H%d --decorate=full").lines()
   val result = mutableSetOf<VcsRef>()
@@ -165,25 +143,6 @@ fun makeCommit(file: String): String {
   append(file, "some content")
   addCommit("some message")
   return last()
-}
-
-fun assertNotification(type: NotificationType, title: String, content: String, actual: Notification): Notification {
-  assertEquals("Incorrect notification type: " + tos(actual), type, actual.type)
-  assertEquals("Incorrect notification title: " + tos(actual), title, actual.title)
-  assertEquals("Incorrect notification content: " + tos(actual), cleanupForAssertion(content), cleanupForAssertion(actual.content))
-  return actual
-}
-
-fun cleanupForAssertion(content: String): String {
-  val nobr = content.replace("<br/>", "\n").replace("<br>", "\n").replace("<hr/>", "\n")
-  return nobr.lines()
-    .map { line -> line.replace(" href='[^']*'".toRegex(), "").trim({ it <= ' ' }) }
-    .filter { line -> !line.isEmpty() }
-    .joinToString(" ")
-}
-
-private fun tos(notification: Notification): String {
-  return "${notification.title}|${notification.content}"
 }
 
 fun findGitLogProvider(project: Project): GitLogProvider {

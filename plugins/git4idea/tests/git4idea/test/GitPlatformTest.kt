@@ -15,14 +15,15 @@
  */
 package git4idea.test
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.vcs.test.VcsPlatformTest
+import com.intellij.vcs.test.overrideService
 import git4idea.DialogManager
 import git4idea.GitUtil
 import git4idea.GitVcs
@@ -40,7 +41,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var myGit: TestGitImpl
   protected lateinit var myVcs: GitVcs
   protected lateinit var myDialogManager: TestDialogManager
-  protected lateinit var myVcsNotifier: TestVcsNotifier
   protected lateinit var vcsHelper: MockVcsHelper
 
   @Throws(Exception::class)
@@ -51,8 +51,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     myGitSettings.appSettings.setPathToGit(gitExecutable())
 
     myDialogManager = service<DialogManager>() as TestDialogManager
-    myVcsNotifier = myProject.service<VcsNotifier>() as TestVcsNotifier
-
     vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(myProject)
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
@@ -68,10 +66,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   @Throws(Exception::class)
   override fun tearDown() {
     try {
-      if (wasInit { myDialogManager }) { myDialogManager.cleanup() }
-      if (wasInit { myVcsNotifier }) { myVcsNotifier.cleanup() }
-      if (wasInit {myGit}) { myGit.reset() }
-      if (wasInit {myGitSettings}) { myGitSettings.appSettings.setPathToGit(null) }
+      if (wasInit { myDialogManager }) myDialogManager.cleanup()
+      if (wasInit { myGit }) myGit.reset()
+      if (wasInit { myGitSettings }) myGitSettings.appSettings.setPathToGit(null)
     }
     finally {
       super.tearDown()
@@ -119,32 +116,6 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun `do nothing on merge`() {
     vcsHelper.onMerge{}
-  }
-
-  protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
-    return assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
-  }
-
-  protected fun assertSuccessfulNotification(message: String) : Notification {
-    return assertSuccessfulNotification("", message)
-  }
-
-  protected fun assertWarningNotification(title: String, message: String) {
-    assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
-  }
-
-  protected fun assertErrorNotification(title: String, message: String) : Notification {
-    val notification = myVcsNotifier.lastNotification
-    assertNotNull("No notification was shown", notification)
-    assertNotification(NotificationType.ERROR, title, message, notification)
-    return notification
-  }
-
-  protected fun assertNoNotification() {
-    val notification = myVcsNotifier.lastNotification
-    if (notification != null) {
-      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}")
-    }
   }
 
   protected fun `assert merge dialog was shown`() {

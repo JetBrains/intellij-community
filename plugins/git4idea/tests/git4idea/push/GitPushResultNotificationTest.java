@@ -36,9 +36,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.vcs.test.UtilsKt.assertNotification;
 import static git4idea.push.GitPushNativeResult.Type.*;
 import static git4idea.push.GitPushRepoResult.convertFromNative;
-import static git4idea.test.GitTestUtil.assertNotification;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 

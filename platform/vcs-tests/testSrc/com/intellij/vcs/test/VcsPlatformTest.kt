@@ -16,15 +16,22 @@
 package com.intellij.vcs.test
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.TestVcsNotifier
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -50,6 +57,8 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   private val asyncTasks = mutableSetOf<AsyncTask>()
 
   protected lateinit var changeListManager: ChangeListManagerImpl
+  protected lateinit var vcsManager: ProjectLevelVcsManagerImpl
+  protected lateinit var myVcsNotifier: TestVcsNotifier
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -67,11 +76,16 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     myProjectPath = myProjectRoot.path
 
     changeListManager = ChangeListManager.getInstance(myProject) as ChangeListManagerImpl
+    vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
+
+    myVcsNotifier = overrideService<VcsNotifier, TestVcsNotifier>(myProject)
+    myVcsNotifier = myProject.service<VcsNotifier>() as TestVcsNotifier
   }
 
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { if (wasInit { myVcsNotifier }) myVcsNotifier.cleanup() })
       .append(ThrowableRunnable { waitForPendingTasks() })
       .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(myTestStartedIndicator) })
       .append(ThrowableRunnable { clearFields(this) })
@@ -133,7 +147,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     for ((name, indicator, future) in asyncTasks) {
       if (!future.isDone) {
         LOG.error("Task $name didn't finish within the test")
-        indicator.cancel();
+        indicator.cancel()
         future.get(10, TimeUnit.SECONDS)
       }
     }
@@ -149,7 +163,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   private fun checkTestRootIsEmpty(testRoot: File) {
     val files = testRoot.listFiles()
-    if (files != null && files.size > 0) {
+    if (files != null && files.isNotEmpty()) {
       LOG.warn("Test root was not cleaned up during some previous test run. " + "testRoot: " + testRoot +
           ", files: " + Arrays.toString(files))
       for (file in files) {
@@ -169,7 +183,32 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     return "Starting " + javaClass.name + "." + getTestName(false) + Math.random()
   }
 
-  data class AsyncTask(val name: String,
-                  val indicator: ProgressIndicator,
-                  val future: Future<*>)
+
+  protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
+    return assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
+  }
+
+  protected fun assertSuccessfulNotification(message: String) : Notification {
+    return assertSuccessfulNotification("", message)
+  }
+
+  protected fun assertWarningNotification(title: String, message: String) {
+    assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
+  }
+
+  protected fun assertErrorNotification(title: String, message: String) : Notification {
+    val notification = myVcsNotifier.lastNotification
+    assertNotNull("No notification was shown", notification)
+    assertNotification(NotificationType.ERROR, title, message, notification)
+    return notification
+  }
+
+  protected fun assertNoNotification() {
+    val notification = myVcsNotifier.lastNotification
+    if (notification != null) {
+      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}")
+    }
+  }
+
+  data class AsyncTask(val name: String, val indicator: ProgressIndicator, val future: Future<*>)
 }

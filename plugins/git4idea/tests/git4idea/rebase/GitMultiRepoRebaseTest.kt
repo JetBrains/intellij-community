@@ -25,7 +25,7 @@ import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
 import git4idea.test.UNKNOWN_ERROR_TEXT
-import git4idea.test.cleanupForAssertion
+import com.intellij.vcs.test.cleanupForAssertion
 import git4idea.test.git
 import org.mockito.Mockito
 import kotlin.properties.Delegates
