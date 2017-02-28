@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private static final String SHELVE_MANAGER_DIR_PATH = "shelf";
-  public static final String DEFAULT_PROJECT_PRESENTATION_PATH = Paths.get("<Project>", SHELVE_MANAGER_DIR_PATH).toString();
+  public static final String DEFAULT_PROJECT_PRESENTATION_PATH = "<Project>/shelf";
 
   /**
    * System independent file-path for non-default project
