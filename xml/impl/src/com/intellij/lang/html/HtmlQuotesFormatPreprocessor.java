@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
   }
 
 
-  private static class HtmlQuotesConverter extends XmlRecursiveElementVisitor implements Runnable {
+  public static class HtmlQuotesConverter extends XmlRecursiveElementVisitor implements Runnable {
     private TextRange myTextRange;
     private final Document myDocument;
     private final PsiDocumentManager myDocumentManager;
@@ -65,7 +65,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     private int myDelta = 0;
     private final char myQuoteChar;
 
-    private HtmlQuotesConverter(CodeStyleSettings.QuoteStyle style,
+    public HtmlQuotesConverter(CodeStyleSettings.QuoteStyle style,
                                 @NotNull PsiElement element,
                                 @NotNull TextRange textRange) {
       Project project = element.getProject();
