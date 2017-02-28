@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -58,6 +59,8 @@ import java.util.List;
  * @author max
  */
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
+  private static final Logger LOG = Logger.getInstance("#" + OptionTableWithPreviewPanel.class.getName());
+
   protected TreeTable myTreeTable;
   private final JPanel myPanel = new JPanel();
 
@@ -449,6 +452,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         for (int i = 0; i < values.length; i++) {
           if (values[i] == value) return options[i];
         }
+        LOG.error("Invalid option value " + value + " for " + field.getName());
       }
       catch (IllegalAccessException ignore) {
       }
@@ -464,6 +468,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
             return;
           }
         }
+        LOG.error("Invalid option value " + value + " for " + field.getName());
       }
       catch (IllegalAccessException ignore) {
       }
@@ -661,7 +666,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
 
     public boolean isModified(final CodeStyleSettings settings) {
-      return !myValue.equals(myKey.getValue(settings));
+      return myValue != null && !myValue.equals(myKey.getValue(settings));
     }
 
     public void apply(final CodeStyleSettings settings) {
