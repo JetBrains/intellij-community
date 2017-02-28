@@ -347,7 +347,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void enableInspections(@NotNull InspectionProfileEntry... inspections) {
     assertInitialized();
-    InspectionsKt.enableInspectionTools(getProject(), getProject(), inspections);
+    InspectionsKt.enableInspectionTools(getProject(), myProjectFixture.getTestRootDisposable(), inspections);
   }
 
   @SafeVarargs
@@ -446,7 +446,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public HighlightTestInfo testFile(@NotNull String... filePath) {
-    return new HighlightTestInfo(getProject(), filePath) {
+    return new HighlightTestInfo(myProjectFixture.getTestRootDisposable(), filePath) {
       @Override
       public HighlightTestInfo doTest() {
         configureByFiles(filePaths);
@@ -985,12 +985,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(epName);
     extensionPoint.registerExtension(extension);
-    Disposer.register(getProject(), new Disposable() {
-      @Override
-      public void dispose() {
-        extensionPoint.unregisterExtension(extension);
-      }
-    });
+    Disposer.register(myProjectFixture.getTestRootDisposable(), () -> extensionPoint.unregisterExtension(extension));
   }
 
   @NotNull
@@ -1167,7 +1162,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       PlatformTestCase.synchronizeTempDirVfs(tempDir);
 
       myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
-      InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getProject());
+      InspectionsKt.configureInspections(LocalInspectionTool.EMPTY_ARRAY, getProject(), myProjectFixture.getTestRootDisposable());
 
       DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
       daemonCodeAnalyzer.prepareForTest();
@@ -1747,7 +1742,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     StructureViewComponent component = null;
     try {
-      component = (StructureViewComponent)builder.createStructureView(fileEditor, myProjectFixture.getProject());
+      component = (StructureViewComponent)builder.createStructureView(fileEditor, getProject());
       consumer.consume(component);
     }
     finally {
