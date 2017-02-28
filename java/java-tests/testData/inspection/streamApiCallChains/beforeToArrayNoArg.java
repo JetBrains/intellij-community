@@ -1,4 +1,4 @@
-// "Replace 'collection.stream().toArray()' with 'collection.toArray()'" "true"
+// "Replace 'stream().toArray()' with 'toArray()'" "true"
 
 import java.util.*;
 

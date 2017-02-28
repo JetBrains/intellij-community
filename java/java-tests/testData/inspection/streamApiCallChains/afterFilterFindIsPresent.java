@@ -1,4 +1,4 @@
-// "Replace Stream.filter().findAny().isPresent() with Stream.anyMatch()" "true"
+// "Replace 'filter().findAny().isPresent()' with 'anyMatch()'" "true"
 
 import java.util.*;
 import java.util.stream.Stream;

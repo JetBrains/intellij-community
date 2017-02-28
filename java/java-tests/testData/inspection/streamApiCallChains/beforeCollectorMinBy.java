@@ -1,4 +1,4 @@
-// "Replace Stream.collect(minBy()) with Stream.min() (may change semantics when result is null)" "true"
+// "Replace 'collect(minBy())' with 'min()' (may change semantics when result is null)" "true"
 
 import java.util.List;
 import java.util.stream.Collectors;
