@@ -253,6 +253,12 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
+  @SuppressWarnings("WeakerAccess")
+  protected boolean canExpandPathTo(@NotNull final AbstractTreeNode root,
+                                    final Object element) {
+    return true;
+  }
+
   @NotNull
   private AsyncResult<AbstractTreeNode> expandPathTo(final VirtualFile file,
                                                      @NotNull final AbstractTreeNode root,
@@ -270,6 +276,11 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         target.set(root);
         async.setDone(root);
       }
+      return async;
+    }
+
+    if (!canExpandPathTo(root, element)) {
+      async.setRejected();
       return async;
     }
 
