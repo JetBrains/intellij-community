@@ -108,6 +108,22 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     assertFalse("The root shouldn't be auto-added after explicit removal", vcsManager.hasAnyMappings())
   }
 
+  // IDEA-CR-18592
+  fun `test single root is not added automatically if there is ignored root`() {
+    assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
+    val subRoot = File(myProjectPath, "lib")
+    assertTrue(File(subRoot, DOT_MOCK).mkdirs())
+    VcsConfiguration.getInstance(myProject).addIgnoredUnregisteredRoots(listOf(subRoot.path))
+
+    rootProblemNotifier.rescanAndNotifyIfNeeded()
+
+    assertFalse("The root shouldn't be auto-added because it is not the only one", vcsManager.hasAnyMappings())
+    assertSuccessfulNotification("Unregistered VCS root detected","""
+      The directory ${toSystemDependentName(myProjectPath)} is under mock, but is not registered in the Settings.
+      <a>Add root</a> <a>Configure</a> <a>Ignore</a>
+      """.trimIndent())
+  }
+
   private fun getExtensionPoint() = Extensions.getRootArea().getExtensionPoint(VcsRootChecker.EXTENSION_POINT_NAME)
 
   private class MockRootChecker(private val vcs: MockAbstractVcs) : VcsRootChecker() {
