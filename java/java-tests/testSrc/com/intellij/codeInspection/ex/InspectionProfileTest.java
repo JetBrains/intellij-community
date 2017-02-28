@@ -502,7 +502,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     InspectionProfileImpl profile = createProfile(registrar);
 
-    List<ScopeToolState> tools = profile.getAllTools(getProject());
+    List<ScopeToolState> tools = profile.getAllTools();
     assertEquals(1, tools.size());
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("foo")));
     assertTrue(profile.getToolDefaultState("foo", getProject()).isEnabled());
@@ -526,7 +526,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     profile = createProfile(registrar);
     profile.readExternal(element);
 
-    tools = profile.getAllTools(getProject());
+    tools = profile.getAllTools();
     assertEquals(3, tools.size());
 
     assertTrue(profile.isProfileLocked());
@@ -577,7 +577,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     model = foo.getModifiableModel();
     assertEquals(0, countInitializedTools(model));
-    List<ScopeToolState> tools = model.getAllTools(getProject());
+    List<ScopeToolState> tools = model.getAllTools();
     for (ScopeToolState tool : tools) {
       if (!tool.isEnabled()) {
         tool.setEnabled(true);
@@ -633,7 +633,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   @NotNull
   public static List<InspectionToolWrapper> getInitializedTools(@NotNull InspectionProfileImpl foo) {
     List<InspectionToolWrapper> initialized = null;
-    List<ScopeToolState> tools = foo.getAllTools(getProject());
+    List<ScopeToolState> tools = foo.getAllTools();
     for (ScopeToolState tool : tools) {
       InspectionToolWrapper toolWrapper = tool.getTool();
       if (toolWrapper.isInitialized()) {

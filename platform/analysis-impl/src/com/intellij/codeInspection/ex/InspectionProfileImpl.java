@@ -21,7 +21,6 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -74,9 +73,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private volatile String myToolShortName;
   private String[] myScopesOrder;
   private String myDescription;
-  private volatile boolean myInitialized;
-
-  private final Object myLock = new Object();
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
@@ -190,7 +186,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @NotNull
   public Set<HighlightSeverity> getUsedSeverities() {
-    LOG.assertTrue(myInitialized);
+    LOG.assertTrue(wasInitialized());
     Set<HighlightSeverity> result = new THashSet<>();
     for (Tools tools : myTools.values()) {
       for (ScopeToolState state : tools.getTools()) {
@@ -234,7 +230,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     super.writeExternal(element);
 
     synchronized (myLock) {
-      if (!myInitialized) {
+      if (!wasInitialized()) {
         for (Element el : myUninitializedSettings.values()) {
           element.addContent(el.clone());
         }
@@ -402,7 +398,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public void scopesChanged() {
-    if (!myInitialized) {
+    if (!wasInitialized()) {
       return;
     }
 
@@ -470,29 +466,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public boolean wasInitialized() {
-    return myInitialized;
-  }
-
-  public void initInspectionTools(@Nullable Project project) {
-    //noinspection TestOnlyProblems
-    if (myInitialized || (ApplicationManager.getApplication().isUnitTestMode() && !INIT_INSPECTIONS)) {
-      return;
-    }
-
-    synchronized (myLock) {
-      if (!myInitialized) {
-        initialize(project);
-      }
-    }
-  }
-
   @NotNull
   protected List<InspectionToolWrapper> createTools(@Nullable Project project) {
     return myRegistrar.createTools();
   }
 
-  private void initialize(@Nullable Project project) {
+  @Override
+  protected void initialize(@Nullable Project project) {
     SchemeDataHolder<? super InspectionProfileImpl> dataHolder = myDataHolder;
     if (dataHolder != null) {
       myDataHolder = null;
@@ -538,7 +518,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
     copyToolsConfigurations(project);
 
-    myInitialized = true;
+    initialized = true;
     if (dataHolder != null) {
       // should be only after set myInitialized
       dataHolder.updateDigest(this);
@@ -644,7 +624,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public void cleanup(@NotNull Project project) {
-    if (!myInitialized) {
+    if (!wasInitialized()) {
       return;
     }
 
@@ -773,8 +753,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @NotNull
-  public List<ScopeToolState> getAllTools(@Nullable Project project) {
-    initInspectionTools(project);
+  public List<ScopeToolState> getAllTools() {
+    initInspectionTools();
 
     List<ScopeToolState> result = new ArrayList<>();
     for (Tools tools : myTools.values()) {

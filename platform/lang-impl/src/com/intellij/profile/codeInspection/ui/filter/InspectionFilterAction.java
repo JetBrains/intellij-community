@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.FilterComponent;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.SmartList;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
@@ -86,13 +90,12 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     }
     addSeparator();
 
-    final Set<String> languageIds = new HashSet<>();
+    final Set<String> languageIds = new THashSet<>();
     for (ScopeToolState state : profile.getDefaultStates(project)) {
-      final String languageId = state.getTool().getLanguage();
-      languageIds.add(languageId);
+      languageIds.add(state.getTool().getLanguage());
     }
 
-    final List<Language> languages = new ArrayList<>();
+    final List<Language> languages = new SmartList<>();
     for (String id : languageIds) {
       if (id != null) {
         final Language language = Language.findLanguageByID(id);
