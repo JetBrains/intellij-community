@@ -72,7 +72,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       .add("java.util.Map", "of|ofEntries|entry")
       .add("java.util.Collections", "unmodifiable.*|singleton.*|checked.*|min|max|stream")
       .add("java.util.UUID",".*")
-      .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparantBounds|hasAnchoringBounds|hitEnd|requireEnd")
+      .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparentBounds|hasAnchoringBounds|hitEnd|requireEnd")
       .add("java.util.regex.Pattern",".*")
       .add("java.util.stream.BaseStream",".*")
       .finishDefault();
