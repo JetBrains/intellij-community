@@ -110,7 +110,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private SearchTextArea mySearchTextArea;
   private SearchTextArea myReplaceTextArea;
   private ActionListener myOkActionListener;
-  private AtomicBoolean myCanClose = new AtomicBoolean();
+  private AtomicBoolean myCanClose = new AtomicBoolean(true);
   private JBLabel myOKHintLabel;
 
   enum Scope {
@@ -163,19 +163,21 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         .setProject(myHelper.getProject())
         .setResizable(true)
         .setMayBeParent(true)
+        .setCancelOnClickOutside(true)
         .setModalContext(false)
         .setRequestFocus(true)
         .setCancelCallback(() -> {
+          if (!myCanClose.get()) return false;
           List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
           if (!popups.isEmpty()) {
             for (JBPopup popup : popups) {
               popup.cancel();
             }
-            return Boolean.FALSE;
+            return false;
           }
           DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
           DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
-          return Boolean.TRUE;
+          return true;
         })
         .createPopup();
       Disposer.register(myBalloon, myDisposable);
@@ -262,7 +264,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myCbFileFilter = new StateRestoringCheckBox("File mask: ");
     myCbFileFilter.setMnemonic('a');
     myCbFileFilter.setToolTipText("<html>Use file m<u>a</u>sk(s)");
-    //myCbFileFilter.setMargin(JBUI.emptyInsets());
     myCbFileFilter.setBorder(null);
     myCbFileFilter.addItemListener(new ItemListener() {
       @Override
@@ -462,20 +463,24 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        FindModel tmp = myHelper.getModel().clone();
+        descriptor.setForcedToUseIdeaFileChooser(true);
+        myCanClose.set(false);
         FileChooser.chooseFiles(descriptor, myProject, FindPopupPanel.this, null, new FileChooser.FileChooserConsumer() {
           @Override
           public void consume(List<VirtualFile> files) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              tmp.setDirectoryName(files.get(0).getPresentableUrl());
-              FindManager.getInstance(myProject).showFindDialog(tmp, myHelper.getOkHandler());
+              myCanClose.set(true);
+              IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
+              myHelper.getModel().setDirectoryName(files.get(0).getPresentableUrl());
+              myDirectoryComboBox.getEditor().setItem(files.get(0).getPresentableUrl());
             });
           }
 
           @Override
           public void cancelled() {
             ApplicationManager.getApplication().invokeLater(() -> {
-              FindManager.getInstance(myProject).showFindDialog(tmp, myHelper.getOkHandler());
+              myCanClose.set(true);
+              IdeFocusManager.getInstance(myProject).requestFocus(myDirectoryComboBox.getEditor().getEditorComponent(), true);
             });
           }
         });
@@ -516,9 +521,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
       @Override
       public void onBeforeBrowseStarted() {
-        myModelSnapshot = myHelper.getModel().clone();
-        myCanClose.set(true);
-        Disposer.dispose(myBalloon);
+        myModelSnapshot = myHelper.getModel();
+        myCanClose.set(false);
+        //Disposer.dispose(myBalloon);
       }
 
       @Override
@@ -528,7 +533,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           if (scope != null) {
             myModelSnapshot.setCustomScope(scope);
           }
-          FindManager.getInstance(myProject).showFindDialog(myModelSnapshot, myHelper.getOkHandler());
+          myCanClose.set(true);
+          //FindManager.getInstance(myProject).showFindDialog(myModelSnapshot, myHelper.getOkHandler());
         }
       }
     });
