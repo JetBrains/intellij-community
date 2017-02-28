@@ -59,10 +59,10 @@ public class LoadProjectTest extends PlatformTestCase {
       () -> super.tearDown()).run();
   }
 
-  private void checkNoPsiFilesInProjectReachable(Project project) {
+  private static void checkNoPsiFilesInProjectReachable(Project project) {
     LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class,
-                               psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
-                                          psiFile.getProject() == project);
+                         psiFile -> psiFile.getViewProvider().getVirtualFile().getFileSystem() instanceof LocalFileSystem &&
+                                    psiFile.getProject() == project);
   }
 
   public void testLoadProject() throws Exception {
