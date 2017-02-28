@@ -160,7 +160,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     }
 
     private String getText() {
-      return myText == null ? null : myText.substring(0, myText.length() - 1);
+      return myText;
     }
 
     public void update(Editor editor, String newText) {
@@ -176,7 +176,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     private void updateState(Editor editor, String text) {
       FontMetrics metrics = getFontMetrics(editor).metrics;
       startWidth = doCalcWidth(myText, metrics);
-      myText = text == null ? null : (text + ":");
+      myText = text;
       int endWidth = doCalcWidth(myText, metrics);
       step = 1;
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);

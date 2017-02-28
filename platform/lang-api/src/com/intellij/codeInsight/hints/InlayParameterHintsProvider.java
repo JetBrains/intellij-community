@@ -75,4 +75,11 @@ public interface InlayParameterHintsProvider {
     return true;
   }
 
+  /**
+   * Customise hints presentation
+   */
+  default String getInlayPresentation(String inlayText) {
+    return inlayText + ":"; 
+  }
+
 }

@@ -72,7 +72,8 @@ class Foo {
     def offset = 0
     actualParameterHints.each { hintOffset, hintName ->
       if (hintName != null) {
-        def hintString = /<hint name="$hintName">/
+        def hintText = hintName.substring(0, hintName.length() - 1)
+        def hintString = /<hint name="$hintText">/
         actualText.insert(hintOffset + offset, hintString)
         offset += hintString.length()
       }
