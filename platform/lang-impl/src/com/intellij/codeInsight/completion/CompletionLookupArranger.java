@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -46,12 +45,12 @@ import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionLookupArranger");
-  private static final Key<String> GLOBAL_PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
-  private final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  private static final Key<PresentationInvariant> GLOBAL_PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  private final Key<PresentationInvariant> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = (o1, o2) -> {
-    String invariant = PRESENTATION_INVARIANT.get(o1);
+    PresentationInvariant invariant = PRESENTATION_INVARIANT.get(o1);
     assert invariant != null;
-    return StringUtil.naturalCompare(invariant, PRESENTATION_INVARIANT.get(o2));
+    return invariant.compareTo(PRESENTATION_INVARIANT.get(o2));
   };
   static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
@@ -145,8 +144,7 @@ public class CompletionLookupArranger extends LookupArranger {
   public void addElement(LookupElement element, LookupElementPresentation presentation) {
     StatisticsWeigher.clearBaseStatisticsInfo(element);
 
-    String tail = getTailTextOrSpace(presentation);
-    String invariant = presentation.getItemText() + "\0###" + String.format("%02d", tail.length()) + tail + "###" + presentation.getTypeText();
+    PresentationInvariant invariant = new PresentationInvariant(presentation.getItemText(), presentation.getTailText(), presentation.getTypeText());
     element.putUserData(PRESENTATION_INVARIANT, invariant);
     element.putUserData(GLOBAL_PRESENTATION_INVARIANT, invariant);
 
@@ -202,12 +200,6 @@ public class CompletionLookupArranger extends LookupArranger {
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     classifier.removeElement(element, context);
-  }
-
-  @NotNull
-  private static String getTailTextOrSpace(LookupElementPresentation presentation) {
-    String tailText = presentation.getTailText();
-    return tailText == null || tailText.isEmpty() ? " " : tailText;
   }
 
   private List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
@@ -379,7 +371,7 @@ public class CompletionLookupArranger extends LookupArranger {
       }
 
       for (int i = 0; i < items.size(); i++) {
-        String invariant = PRESENTATION_INVARIANT.get(items.get(i));
+        PresentationInvariant invariant = PRESENTATION_INVARIANT.get(items.get(i));
         if (invariant != null && invariant.equals(GLOBAL_PRESENTATION_INVARIANT.get(lastSelection))) {
           return i;
         }
