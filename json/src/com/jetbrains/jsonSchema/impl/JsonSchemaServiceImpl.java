@@ -23,10 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.CodeInsightProviders;
 import com.jetbrains.jsonSchema.JsonSchemaFileTypeManager;
@@ -144,7 +141,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   @Override
   public List<Pair<Boolean, String>> getMatchingSchemaDescriptors(@Nullable VirtualFile file) {
     final List<CodeInsightProviders> wrappers = getWrappers(file);
-    if (wrappers == null || wrappers.isEmpty()) return null;
+    if (wrappers.isEmpty()) return null;
     return ContainerUtil.map(wrappers, (NotNullFunction<CodeInsightProviders, Pair<Boolean, String>>)
       wrapper -> Pair.create(wrapper.isUserSchema(), wrapper.getName()));
   }
@@ -202,7 +199,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private CodeInsightProviders getWrapper(@Nullable VirtualFile file) {
     if (file == null) return null;
     final List<CodeInsightProviders> wrappers = getWrappers(file);
-    if (wrappers == null || wrappers.isEmpty()) {
+    if (wrappers.isEmpty()) {
       return null;
     }
     return (wrappers.size() == 1 ? wrappers.get(0) : new CompositeCodeInsightProviderWithWarning(wrappers));
@@ -217,13 +214,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     }
   }
 
-  @Nullable
+  @NotNull
   private List<CodeInsightProviders> getWrappers(@Nullable VirtualFile file) {
-    if (file == null) return null;
+    if (file == null) return Collections.emptyList();
     final FileType type = file.getFileType();
     final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
 
-    final List<CodeInsightProviders> wrappers = new ArrayList<>();
+    final List<CodeInsightProviders> wrappers = new SmartList<>();
     getWrapperSkeletonMethod(provider -> (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) &&
                                          provider.isAvailable(myProject, file),
                              wrapper -> wrappers.add(wrapper), true);
