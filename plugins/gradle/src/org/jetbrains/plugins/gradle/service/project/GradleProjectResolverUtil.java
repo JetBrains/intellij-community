@@ -226,6 +226,25 @@ public class GradleProjectResolverUtil {
     return externalProjectId.substring(i + 1);
   }
 
+  @Nullable
+  public static String getGradlePath(final Module module) {
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
+    final String projectId = ExternalSystemApiUtil.getExternalProjectId(module);
+    if (projectId == null) return null;
+    final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
+    final String gradlePath;
+    if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(moduleType)) {
+      int lastColonIndex = projectId.lastIndexOf(':');
+      assert lastColonIndex != -1;
+      int firstColonIndex = projectId.indexOf(':');
+      gradlePath = firstColonIndex == lastColonIndex ? ":" : projectId.substring(firstColonIndex, lastColonIndex);
+    }
+    else {
+      gradlePath = projectId.charAt(0) == ':' ? projectId : ":";
+    }
+    return gradlePath;
+  }
+
   @NotNull
   public static DependencyScope getDependencyScope(@Nullable String scope) {
     return scope != null ? DependencyScope.valueOf(scope) : DependencyScope.COMPILE;

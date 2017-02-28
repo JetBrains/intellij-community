@@ -34,8 +34,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.task.ExecuteRunConfigurationTask;
 import org.intellij.lang.annotations.Language;
@@ -70,7 +72,8 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     PsiClass mainClass = applicationConfiguration.getMainClass();
     if (mainClass == null) return null;
 
-    Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(mainClass.getContainingFile().getVirtualFile());
+    VirtualFile virtualFile = mainClass.getContainingFile().getVirtualFile();
+    Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile);
     if (module == null) return null;
 
     final JavaParameters params = new JavaParameters();
@@ -115,17 +118,17 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       assert runnerAndConfigurationSettings != null;
       ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
 
-      String gradlePath = ExternalSystemApiUtil.getExternalProjectId(module);
-      int lastPathDelimiterIndex = gradlePath == null ? -1 : gradlePath.lastIndexOf(':');
-      if (gradlePath == null || !gradlePath.startsWith(":")) {
-        gradlePath = ":";
+      final String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
+      if (gradlePath == null) return null;
+      final String sourceSetName;
+      if (GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) {
+        sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
       }
       else {
-        if (!gradlePath.equals(":")) {
-          gradlePath = gradlePath.substring(0, lastPathDelimiterIndex);
-        }
+        sourceSetName = ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(virtualFile) ? "test" : "main";
       }
-      String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
+      if (sourceSetName == null) return null;
+
       @Language("Groovy")
       String initScript = "projectsEvaluated {\n" +
                           "  rootProject.allprojects {\n" +
