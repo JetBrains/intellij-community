@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
@@ -85,6 +86,12 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     myVirtualFile = vFile;
     myListener = listener;
     setBackground(IpnbEditorUtil.getBackground());
+    addKeyListener(new KeyStrokeAdapter() {
+      @Override
+      public void keyPressed(KeyEvent event) {
+        super.keyPressed(event);
+      }
+    });
 
     final Alarm alarm = new Alarm();
     myDocumentListener = new DocumentListener() {
@@ -578,6 +585,10 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   @Override
   protected void processKeyEvent(KeyEvent e) {
+    processKeyPressed(e);
+  }
+
+  public void processKeyPressed(KeyEvent e) {
     if (mySelectedCellPanel != null && e.getID() == KeyEvent.KEY_PRESSED) {
       if (e.getKeyCode() == KeyEvent.VK_ENTER) {
         mySelectedCellPanel.switchToEditing();
