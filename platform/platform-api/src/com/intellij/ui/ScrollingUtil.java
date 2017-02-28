@@ -568,8 +568,14 @@ public class ScrollingUtil {
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null);
+      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent));
     }
+  }
+
+  public static boolean isEmpty(JComponent component) {
+    if (component instanceof JTable) return ((JTable)component).getRowCount() < 1;
+    if (component instanceof JList) return ((JList)component).getModel().getSize() <1;
+    return false;
   }
 
   public static void installActions(final JTable table, final boolean cycleScrolling) {
