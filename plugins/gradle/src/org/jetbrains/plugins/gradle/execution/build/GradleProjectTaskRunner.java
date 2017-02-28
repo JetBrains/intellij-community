@@ -192,7 +192,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       Collection<String> cleanRootTasks = cleanTasksMap.getModifiable(rootProjectPath);
       Collection<String> buildRootTasks = buildTasksMap.getModifiable(rootProjectPath);
       final String moduleType = ExternalSystemApiUtil.getExternalModuleType(module);
-      if(moduleType == null) continue;
       String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
       if(gradlePath == null) continue;
       if(gradlePath.equals(":")) {
