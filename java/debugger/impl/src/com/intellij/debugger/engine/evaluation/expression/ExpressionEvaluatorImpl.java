@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,9 @@ import com.sun.jdi.Value;
 public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator");
   private final Evaluator myEvaluator;
-  Value myValue;
 
   public ExpressionEvaluatorImpl(Evaluator evaluator) {
     myEvaluator = evaluator;
-  }
-
-  //call evaluate before
-  @Override
-  public Value getValue() {
-    return myValue;
   }
 
   //call evaluate before
@@ -69,8 +62,7 @@ public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
           .createEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", ""));
       }
 
-      myValue = (Value)value;
-      return myValue;
+      return (Value)value;
     }
     catch (ReturnEvaluator.ReturnException r) {
       return (Value)r.getReturnValue();
