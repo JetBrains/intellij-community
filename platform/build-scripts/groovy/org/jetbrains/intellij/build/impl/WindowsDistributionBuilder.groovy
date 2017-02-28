@@ -211,7 +211,10 @@ IDS_VM_OPTIONS=$vmOptions
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix)
         }
-        zipfileset(dir: jdkDirectoryPath, prefix: "$zipPrefix/jre")
+        zipfileset(dir: jdkDirectoryPath, prefix: "$zipPrefix/jre") {
+          exclude(name: "src.zip")
+          type(type: "file")
+        }
       }
       buildContext.notifyArtifactBuilt(targetPath)
     }
