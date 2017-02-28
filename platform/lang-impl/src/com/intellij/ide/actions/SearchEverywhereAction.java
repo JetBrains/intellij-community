@@ -1080,6 +1080,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (cmp == null) {
         if (value instanceof GotoActionModel.ActionWrapper) {
           cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
+          if (cmp instanceof JComponent) ((JComponent)cmp).setBorder(null);
         } else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
