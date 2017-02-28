@@ -20,6 +20,8 @@ import com.intellij.debugger.streams.remote.InvokeMethodProxy;
 import com.intellij.debugger.streams.remote.ProxyBase;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
+import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
+import com.intellij.debugger.streams.trace.smart.resolve.impl.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.MethodCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,11 +69,11 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
     final Map<Integer, Map<Integer, Value>> map;
     try {
       map = convertToLocalMap(result);
-      final ArrayList<Map<Integer, TraceElement>> trace = new ArrayList<>(map.size());
+      final ArrayList<TraceInfo> trace = new ArrayList<>(map.size());
       map.keySet().stream().filter(x -> x >= 0)
         .map(x -> map.get(x).keySet().stream()
           .collect(Collectors.toMap(k -> k, k -> (TraceElement)new TraceElementImpl(k, map.get(x).get(k)))))
-        .forEach(trace::add);
+        .forEach(x -> trace.add(new ValuesOrderInfo(x)));
       final Value res = map.get(-1).get(-1);
       return new MyResult(res, trace);
     }
@@ -193,9 +195,9 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
 
   private static class MyResult implements TracingResult {
     private final Value myValue;
-    private final List<Map<Integer, TraceElement>> myCalls;
+    private final List<TraceInfo> myCalls;
 
-    MyResult(@Nullable Value streamResult, @NotNull List<Map<Integer, TraceElement>> traces) {
+    MyResult(@Nullable Value streamResult, @NotNull List<TraceInfo> traces) {
       myValue = streamResult;
       myCalls = new ArrayList<>(traces);
     }
@@ -208,7 +210,7 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
 
     @NotNull
     @Override
-    public List<Map<Integer, TraceElement>> getTrace() {
+    public List<TraceInfo> getTrace() {
       return Collections.unmodifiableList(myCalls);
     }
   }

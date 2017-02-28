@@ -15,13 +15,12 @@
  */
 package com.intellij.debugger.streams.trace;
 
-import com.intellij.debugger.streams.trace.smart.TraceElement;
+import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Vitaliy.Bibaev
@@ -34,5 +33,5 @@ public interface TracingResult {
   Value getResult();
 
   @NotNull
-  List<Map<Integer, TraceElement>> getTrace();
+  List<TraceInfo> getTrace();
 }

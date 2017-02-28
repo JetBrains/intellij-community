@@ -22,6 +22,7 @@ import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
+import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -117,7 +118,7 @@ public class StreamChain {
     return myCalls.size();
   }
 
-  public String getCallname(int ix) {
+  public String getCallName(int ix) {
     return myCalls.get(ix).getName();
   }
 
@@ -144,15 +145,15 @@ public class StreamChain {
     }
 
     final Value res = result.getResult();
-    final List<Map<Integer, TraceElement>> trace = result.getTrace();
+    final List<TraceInfo> trace = result.getTrace();
 
     assert myCalls.size() == trace.size() + 1;
     final List<ResolvedCall> resolvedCalls = new ArrayList<>();
 
     Map<TraceElement, List<TraceElement>> prevResolved = Collections.emptyMap();
     for (int i = 1; i < myCalls.size() - 1; i++) {
-      final Map<Integer, TraceElement> prev = trace.get(i - 1);
-      final Map<Integer, TraceElement> next = trace.get(i);
+      final Map<Integer, TraceElement> prev = trace.get(i - 1).getValuesOrder();
+      final Map<Integer, TraceElement> next = trace.get(i).getValuesOrder();
       final MethodCall previousCall = myCalls.get(i - 1);
       final MethodCall currentCall = myCalls.get(i);
 
