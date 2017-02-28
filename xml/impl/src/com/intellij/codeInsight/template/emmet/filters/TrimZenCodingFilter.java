@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import org.jetbrains.annotations.NotNull;
@@ -55,30 +54,26 @@ public class TrimZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String filterText(@NotNull String text, @NotNull TemplateToken token) {
-    XmlDocument document = token.getFile().getDocument();
-    if (document != null) {
-      XmlTag tag = document.getRootTag();
-      if (tag != null && !tag.getText().isEmpty()) {
-        tag.accept(new XmlElementVisitor() {
-          @Override
-          public void visitXmlTag(final XmlTag tag) {
-            if (!tag.isEmpty()) {
-              final XmlTagValue tagValue = tag.getValue();
-              final Matcher matcher = PATTERN.matcher(tagValue.getText());
-              if (matcher.matches()) {
-                ApplicationManager.getApplication().runWriteAction(() -> tagValue.setText(matcher.replaceAll("")));
-              }
+    XmlTag tag = token.getXmlTag();
+    if (tag != null && !tag.getText().isEmpty()) {
+      tag.accept(new XmlElementVisitor() {
+        @Override
+        public void visitXmlTag(final XmlTag tag) {
+          if (!tag.isEmpty()) {
+            final XmlTagValue tagValue = tag.getValue();
+            final Matcher matcher = PATTERN.matcher(tagValue.getText());
+            if (matcher.matches()) {
+              ApplicationManager.getApplication().runWriteAction(() -> tagValue.setText(matcher.replaceAll("")));
             }
-            tag.acceptChildren(this);
           }
-        });
-        return tag.getText();
-      }
-      else {
-        return PATTERN.matcher(document.getText()).replaceAll("");
-      }
+          tag.acceptChildren(this);
+        }
+      });
+      return tag.getText();
     }
-    return text;
+    else {
+      return PATTERN.matcher(token.getTemplateText()).replaceAll("");
+    }
   }
 
   @NotNull
