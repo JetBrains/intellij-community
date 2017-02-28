@@ -267,6 +267,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
         }
       }
     }
+    if (matchingProviders.isEmpty()) return;
 
     final Map<VirtualFile, Pair<CodeInsightProviders, JsonSchemaFileProvider>> created = new HashMap<>();
     for (JsonSchemaFileProvider provider : matchingProviders) {
