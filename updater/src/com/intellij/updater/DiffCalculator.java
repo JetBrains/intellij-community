@@ -73,6 +73,19 @@ public class DiffCalculator {
     return result;
   }
 
+  private static int compareRootFolders(String[] dirs, String[] others){
+    int matches = 0;
+    for (int i = 0; i < dirs.length && i < others.length; i++) {
+      if (dirs[i].equals(others[i])) {
+        matches = i + 1;
+      }
+      else {
+        break;
+      }
+    }
+    return matches;
+  }
+
   private static String findBestCandidateForMove(List<String> paths, String path) {
     int common = 0;
     String best = "";
@@ -84,6 +97,11 @@ public class DiffCalculator {
           if (i + 1 > common) {
             best = other;
             common = i + 1;
+          // check root folders of candidates with the same matches
+          } else if (i + 1 == common) {
+            if (compareRootFolders(dirs, best.split("/")) < compareRootFolders (dirs, other.split("/"))){
+              best = other;
+            }
           }
         } else {
           break;
