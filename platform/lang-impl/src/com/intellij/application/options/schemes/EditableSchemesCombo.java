@@ -165,7 +165,7 @@ public class EditableSchemesCombo<T extends Scheme> {
       @Override
       protected SimpleTextAttributes getSchemeAttributes(T scheme) {
         SchemesModel<T> model = mySchemesPanel.getModel();
-        SimpleTextAttributes baseAttributes = model.canDeleteScheme(scheme)
+        SimpleTextAttributes baseAttributes = !useBoldForNonRemovableSchemes() || model.canDeleteScheme(scheme)
                ? SimpleTextAttributes.REGULAR_ATTRIBUTES
                : SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         if (mySchemesPanel.highlightNonDefaultSchemes() && model.canResetScheme(scheme) && model.differsFromDefault(scheme)) {
@@ -181,7 +181,7 @@ public class EditableSchemesCombo<T extends Scheme> {
       }
     });
   }
-  
+
   public void startEdit() {
     T scheme = getSelectedScheme();
     if (scheme != null) {
@@ -208,6 +208,10 @@ public class EditableSchemesCombo<T extends Scheme> {
   
   public JComponent getComponent() {
     return myRootPanel;
+  }
+
+  private boolean useBoldForNonRemovableSchemes() {
+    return mySchemesPanel.useBoldForNonRemovableSchemes();
   }
 
   @Nullable

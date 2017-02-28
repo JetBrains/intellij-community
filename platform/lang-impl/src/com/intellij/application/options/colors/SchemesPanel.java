@@ -118,4 +118,9 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> impleme
   protected boolean highlightNonDefaultSchemes() {
     return true;
   }
+
+  @Override
+  public boolean useBoldForNonRemovableSchemes() {
+    return true;
+  }
 }

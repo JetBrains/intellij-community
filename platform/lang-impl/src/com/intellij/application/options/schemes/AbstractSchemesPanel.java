@@ -181,6 +181,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   protected abstract boolean highlightNonDefaultSchemes();
 
+  public abstract boolean useBoldForNonRemovableSchemes();
+
   public void showStatus(final String message, MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
