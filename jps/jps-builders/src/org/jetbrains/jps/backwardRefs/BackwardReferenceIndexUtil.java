@@ -18,9 +18,8 @@ package org.jetbrains.jps.backwardRefs;
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
+import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
@@ -69,13 +68,7 @@ public class BackwardReferenceIndexUtil {
       }
     }
 
-    Map<LightRef, Integer> convertedRefs = new FactoryMap<LightRef, Integer>() {
-      @Nullable
-      @Override
-      protected Integer create(LightRef key) {
-        return 0;
-      }
-    };
+    Map<LightRef, Integer> convertedRefs = new THashMap<>();
     refs.forEachEntry((ref, count) -> {
       convertedRefs.put(writer.enumerateNames(ref), count);
       return true;
