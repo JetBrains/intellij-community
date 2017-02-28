@@ -670,7 +670,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     }
 
     for (Future future : futures) {
-      future.get(10, TimeUnit.SECONDS);
+      future.get(20, TimeUnit.SECONDS);
     }
   }
 
