@@ -7,6 +7,7 @@ iml_module(
         "resources",
         "src",
     ],
+    javacopts = ["-extra_checks:off"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
