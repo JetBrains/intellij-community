@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionProfile
+import com.intellij.codeInspection.ex.InspectionProfileImpl.INIT_INSPECTIONS
 import com.intellij.configurationStore.SerializableScheme
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
@@ -31,6 +32,12 @@ const val DEFAULT_PROFILE_NAME = "Default"
 val BASE_PROFILE by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
 
 abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
+  @Volatile
+  @JvmField
+  protected var initialized = false
+  @JvmField
+  protected val myLock = Any()
+
   private var isProjectLevel: Boolean = false
 
   @JvmField
@@ -51,6 +58,10 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
 
   fun setProfileManager(value: BaseInspectionProfileManager) {
     profileManager = value
+  }
+
+  fun wasInitialized(): Boolean {
+    return initialized
   }
 
   protected val pathMacroManager: PathMacroManager
@@ -92,6 +103,21 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"$name\"")
 
   abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
+
+  @JvmOverloads
+  fun initInspectionTools(project: Project? = (profileManager as? ProjectInspectionProfileManager)?.project) {
+    if (initialized || ApplicationManager.getApplication().isUnitTestMode && !INIT_INSPECTIONS) {
+      return
+    }
+
+    synchronized(myLock) {
+      if (!initialized) {
+        initialize(project)
+      }
+    }
+  }
+
+  protected abstract fun initialize(project: Project?)
 }
 
 fun createSimple(name: String, project: Project, toolWrappers: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {
