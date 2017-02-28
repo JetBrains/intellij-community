@@ -255,7 +255,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
         updateFilter();
       }
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
-        getTable().onColumnWidthSettingChanged();
+        getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
       }
     }
   }

@@ -262,7 +262,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
     public abstract void onHighlighterChanged();
 
-    public abstract void onColumnWidthChanged();
+    public abstract void onColumnWidthChanged(int column);
 
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
@@ -291,7 +291,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
         onHighlighterChanged();
       }
       else if (property instanceof CommonUiProperties.TableColumnProperty) {
-        onColumnWidthChanged();
+        onColumnWidthChanged(((CommonUiProperties.TableColumnProperty)property).getColumn());
       }
       else {
         throw new UnsupportedOperationException("Property " + property + " does not exist");

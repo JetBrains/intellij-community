@@ -99,7 +99,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
   @NotNull private final StringCellRenderer myStringCellRenderer;
-  private boolean myColumnsSizeInitialized = false;
+  private boolean myAuthorColumnInitialized = false;
 
   @Nullable private Selection mySelection = null;
 
@@ -154,11 +154,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     setRootColumnSize();
 
-    // all dates have nearly equal sizes
-    int dateSize = getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
-                   myStringCellRenderer.getHorizontalTextPadding();
-    getColumnModel().getColumn(DATE_COLUMN).setMinWidth(dateSize);
-
     for (int column = 0; column < getColumnCount(); column++) {
       getColumnModel().getColumn(column).setResizable(column != ROOT_COLUMN);
     }
@@ -179,71 +174,89 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     setPaintBusy(false);
-    reLayout(filtersChanged);
+    myAuthorColumnInitialized = myAuthorColumnInitialized && !filtersChanged;
+    reLayout();
   }
 
-  public void reLayout(boolean forceRecalculateMinimumWidth) {
-    if (!myColumnsSizeInitialized || forceRecalculateMinimumWidth) {
-      myColumnsSizeInitialized = updateColumnsMinWidth();
-    }
+  public void reLayout() {
     if (getTableHeader().getResizingColumn() == null) {
-      updateColumnsPreferredWidth();
+      updateAuthorAndDataWidth();
+      super.doLayout();
+      repaint();
     }
-    updateCommitColumnWidth();
-
-    super.doLayout();
   }
 
-  public void onColumnWidthSettingChanged() {
-    if (getTableHeader().getResizingColumn() == null) {
-      reLayout(false);
-    }
+  public void forceReLayout(int column) {
+    if (column == AUTHOR_COLUMN) myAuthorColumnInitialized = false;
+    reLayout();
   }
 
   @Override
   public void doLayout() {
-    reLayout(false);
+    if (getTableHeader().getResizingColumn() == null) {
+      updateAuthorAndDataWidth();
+    }
+    super.doLayout();
   }
 
-  private void updateColumnsPreferredWidth() {
+  private void updateAuthorAndDataWidth() {
     for (int i : new int[]{AUTHOR_COLUMN, DATE_COLUMN}) {
-      int width = CommonUiProperties.getColumnWidth(myUi.getProperties(), i, getColumnModel().getColumn(i).getMinWidth());
-      getColumnModel().getColumn(i).setPreferredWidth(Math.min(width, getWidth()));
+      int width = CommonUiProperties.getColumnWidth(myUi.getProperties(), i);
+      if (width <= 0 || width > getWidth()) {
+        if (i != AUTHOR_COLUMN || !myAuthorColumnInitialized) {
+          width = getColumnWidthFromData(i);
+        }
+        else {
+          width = -1;
+        }
+      }
+
+      if (width > 0 && width != getColumnModel().getColumn(i).getPreferredWidth()) {
+        getColumnModel().getColumn(i).setPreferredWidth(width);
+      }
     }
+
+    updateCommitColumnWidth();
   }
 
-  private boolean updateColumnsMinWidth() {
+  private int getColumnWidthFromData(int i) {
     Font tableFont = getTableFont();
+    if (i == AUTHOR_COLUMN) {
+      int width = getColumnModel().getColumn(AUTHOR_COLUMN).getPreferredWidth();
 
-    // detect author with the longest name
-    boolean sizeCalculated = false;
-    if (getModel().getRowCount() > 0) {
-      int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
-      int maxAuthorWidth = 0;
-      int unloaded = 0;
-      for (int row = 0; row < maxRowsToCheck; row++) {
-        String value = getModel().getValueAt(row, AUTHOR_COLUMN).toString();
-        if (value.isEmpty()) {
-          unloaded++;
-          continue;
+      // detect author with the longest name
+      if (getModel().getRowCount() > 0) {
+        int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
+        int maxAuthorWidth = 0;
+        int unloaded = 0;
+        for (int row = 0; row < maxRowsToCheck; row++) {
+          String value = getModel().getValueAt(row, AUTHOR_COLUMN).toString();
+          if (value.isEmpty()) {
+            unloaded++;
+            continue;
+          }
+          Font font = tableFont;
+          VcsLogHighlighter.TextStyle style = getStyle(row, AUTHOR_COLUMN, false, false).getTextStyle();
+          if (BOLD.equals(style)) {
+            font = tableFont.deriveFont(Font.BOLD);
+          }
+          else if (ITALIC.equals(style)) {
+            font = tableFont.deriveFont(Font.ITALIC);
+          }
+          maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
         }
-        Font font = tableFont;
-        VcsLogHighlighter.TextStyle style = getStyle(row, AUTHOR_COLUMN, false, false).getTextStyle();
-        if (BOLD.equals(style)) {
-          font = tableFont.deriveFont(Font.BOLD);
-        }
-        else if (ITALIC.equals(style)) {
-          font = tableFont.deriveFont(Font.ITALIC);
-        }
-        maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
+
+        width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
+        if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
       }
-      int authorSize =
-        Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
-      getColumnModel().getColumn(AUTHOR_COLUMN).setMinWidth(authorSize);
-      if (unloaded * 2 <= maxRowsToCheck) sizeCalculated = true;
+      return width;
     }
-
-    return sizeCalculated;
+    else if (i == DATE_COLUMN) {
+      // all dates have nearly equal sizes
+      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
+             myStringCellRenderer.getHorizontalTextPadding();
+    }
+    throw new IllegalArgumentException("Can only calculate author or date columns width from data, yet given column " + i);
   }
 
   private static Font getTableFont() {
@@ -288,7 +301,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public void rootColumnUpdated() {
     setRootColumnSize();
-    reLayout(false);
+    reLayout();
     repaint();
   }
 
@@ -940,14 +953,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if ("width".equals(evt.getPropertyName())) {
         TableColumn authorColumn = getColumn(AUTHOR_COLUMN);
         if (authorColumn.equals(evt.getSource())) {
-          CommonUiProperties.saveColumnWidth(myProperties, AUTHOR_COLUMN,
-                                             authorColumn.getMinWidth() == authorColumn.getWidth() ? -1 : authorColumn.getWidth());
+          CommonUiProperties.saveColumnWidth(myProperties, AUTHOR_COLUMN, authorColumn.getWidth());
         }
         else {
           TableColumn dateColumn = getColumn(DATE_COLUMN);
           if (dateColumn.equals(evt.getSource())) {
-            CommonUiProperties.saveColumnWidth(myProperties, DATE_COLUMN,
-                                               dateColumn.getMinWidth() == dateColumn.getWidth() ? -1 : dateColumn.getWidth());
+            CommonUiProperties.saveColumnWidth(myProperties, DATE_COLUMN, dateColumn.getWidth());
           }
         }
       }
