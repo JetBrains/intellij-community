@@ -141,8 +141,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private String mySelectedContextName = FindBundle.message("find.context.anywhere.scope.label");
   private Scope mySelectedScope = Scope.PROJECT;
   private JPanel myScopeDetailsPanel;
-  private ComboBox myModuleComboBox;
-  private ComboBox myDirectoryComboBox;
+  private ComboBox<String> myModuleComboBox;
+  private ComboBox<String> myDirectoryComboBox;
   private FixedSizeButton mySelectDirectoryButton;
   private ScopeChooserCombo myScopeCombo;
 
@@ -173,6 +173,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             for (JBPopup popup : popups) {
               popup.cancel();
             }
+            return false;
+          }
+          if (hidePopupIfNeed(myDirectoryComboBox, myScopeCombo.getComboBox(), myModuleComboBox)) {
             return false;
           }
           DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
@@ -449,10 +452,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
 
     Arrays.sort(names, String.CASE_INSENSITIVE_ORDER);
-    myModuleComboBox = new ComboBox(names);
+    myModuleComboBox = new ComboBox<>(names);
     ActionListener restartSearchListener = e -> scheduleResultsUpdate();
     myModuleComboBox.addActionListener(restartSearchListener);
-    myDirectoryComboBox = new ComboBox(200);
+    myDirectoryComboBox = new ComboBox<>(200);
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
       JTextField field = (JTextField)editorComponent;
@@ -1230,5 +1233,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       navigations.get(0).navigate(true);
       for (int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
     }
+  }
+
+  private static boolean hidePopupIfNeed(JComboBox...candidates) {
+    for (JComboBox candidate : candidates) {
+      if (candidate.isPopupVisible()) {
+        candidate.hidePopup();
+        return true;
+      }
+    }
+    return false;
   }
 }
