@@ -25,6 +25,7 @@ public interface Computable <T> {
 
   T compute();
 
+  @Deprecated
   class PredefinedValueComputable<T> implements Computable<T> {
 
     private final T myValue;
@@ -39,6 +40,10 @@ public interface Computable <T> {
     }
   }
 
+  /**
+   * @deprecated Use {@link NotNullLazyValue}::getValue instead
+   */
+  @Deprecated
   abstract class NotNullCachedComputable<T> implements NotNullComputable<T> {
     private T myValue;
 
@@ -53,19 +58,12 @@ public interface Computable <T> {
       }
       return myValue;
     }
-
-    @NotNull
-    public static <T> NotNullCachedComputable<T> from(@NotNull final NotNullComputable<T> delegate) {
-      return new NotNullCachedComputable<T>() {
-        @NotNull
-        @Override
-        protected T internalCompute() {
-          return delegate.compute();
-        }
-      };
-    }
   }
 
+  /**
+   * @deprecated Use {@link NullableLazyValue}::getValue instead
+   */
+  @Deprecated
   abstract class NullableCachedComputable<T> implements NullableComputable<T> {
     private static final Object NULL_VALUE = new Object();
     private Object myValue;
@@ -82,17 +80,6 @@ public interface Computable <T> {
       }
       //noinspection unchecked
       return myValue != NULL_VALUE ? (T)myValue : null;
-    }
-
-    @NotNull
-    public static <T> NullableCachedComputable<T> from(@NotNull final NullableComputable<T> delegate) {
-      return new NullableCachedComputable<T>() {
-        @Nullable
-        @Override
-        protected T internalCompute() {
-          return delegate.compute();
-        }
-      };
     }
   }
 }
