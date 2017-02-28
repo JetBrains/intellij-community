@@ -471,6 +471,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (callableType != null) {
         return Ref.create(callableType);
       }
+      final PyType classObjType = getClassObjectType(resolved, context);
+      if (classObjType != null) {
+        return Ref.create(classObjType);
+      }
       final PyType parameterizedType = getParameterizedType(resolved, context);
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
@@ -482,10 +486,6 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyType genericType = getGenericTypeFromTypeVar(resolved, context);
       if (genericType != null) {
         return Ref.create(genericType);
-      }
-      final PyType classObjType = getClassObjectType(resolved, context);
-      if (classObjType != null) {
-        return Ref.create(classObjType);
       }
       final Ref<PyType> classType = getClassType(resolved, context.getTypeContext());
       if (classType != null) {
@@ -507,7 +507,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getClassObjectType(@Nullable PsiElement resolved, @NotNull Context context) {
+  private static PyType getClassObjectType(@NotNull PsiElement resolved, @NotNull Context context) {
     if (resolved instanceof PySubscriptionExpression) {
       final PySubscriptionExpression subsExpr = (PySubscriptionExpression)resolved;
       final PyExpression operand = subsExpr.getOperand();
@@ -526,6 +526,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           }
         }
       }
+    }
+    // Replace plain non-parametrized Type with its builtin counterpart
+    else if (TYPE.equals(getQualifiedName(resolved))) {
+      return PyTypeParser.getTypeByName(resolved, PyNames.TYPE);
     }
     return null;
   }

@@ -832,6 +832,15 @@ public class PyTypingTest extends PyTestCase {
            "expr = f(42)");
   }
 
+  // PY-20057
+  public void testNonParametrizedTypingTypeMapsToBuiltinType() {
+    doTest("type",
+           "from typing import Type\n" +
+           "\n" +
+           "def f(x: Type):\n" +
+           "    expr = x");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

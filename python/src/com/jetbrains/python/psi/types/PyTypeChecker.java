@@ -65,22 +65,26 @@ public class PyTypeChecker {
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
                                @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive) {
     // TODO: subscriptable types?, module types?, etc.
-    if (actual instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)actual;
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(classType.getPyClass());
-
-      if (actual.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
-        return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
+    // Special cases: object and type
+    if (expected instanceof PyClassType) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(((PyClassType)expected).getPyClass());
+      if (expected.equals(builtinCache.getObjectType())) {
+        return true;
       }
-    }
-    if (expected instanceof PyClassType &&
-        expected.equals(PyBuiltinCache.getInstance(((PyClassType)expected).getPyClass()).getTypeType()) &&
-        actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition()) {
-      return true;
+      if (expected.equals(builtinCache.getTypeType()) &&
+          actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition()) {
+        return true;
+      }
     }
     if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType
         && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
       return false;
+    }
+    if (actual instanceof PyClassType) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(((PyClassType)actual).getPyClass());
+      if (actual.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
+        return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
+      }
     }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
@@ -114,12 +118,6 @@ public class PyTypeChecker {
     }
     if (expected == null || actual == null) {
       return true;
-    }
-    if (expected instanceof PyClassType) {
-      final PyClass c = ((PyClassType)expected).getPyClass();
-      if ("object".equals(c.getName())) {
-        return true;
-      }
     }
     if (isUnknown(actual)) {
       return true;
