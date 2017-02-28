@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -305,10 +306,30 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       if(call == null) return;
       PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
       if(model == null) return;
+      String typeArgument = getTypeArguments(call.getType(), model.myType);
       CommentTracker ct = new CommentTracker();
       model.myElementsToDelete.forEach(ct::delete);
-      ct.replaceAndRestoreComments(call, StreamEx.of(model.myContent).map(ct::text)
-        .joining(",", "java.util." + model.myType + ".of(", ")"));
+      PsiElement replacement = ct.replaceAndRestoreComments(call, StreamEx.of(model.myContent).map(ct::text)
+        .joining(",", "java.util." + model.myType + "." + typeArgument + "of(", ")"));
+      PsiDiamondTypeUtil.removeRedundantTypeArguments(replacement);
+    }
+
+    @NotNull
+    private static String getTypeArguments(PsiType type, String typeName) {
+      if (typeName.equals("Map")) {
+        PsiType keyType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 0, false);
+        PsiType valueType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_MAP, 1, false);
+        if (keyType != null && valueType != null) {
+          return "<" + keyType.getCanonicalText() + "," + valueType.getCanonicalText() + ">";
+        }
+      }
+      else {
+        PsiType elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_UTIL_COLLECTION, 0, false);
+        if (elementType != null) {
+          return "<" + elementType.getCanonicalText() + ">";
+        }
+      }
+      return "";
     }
   }
 }
