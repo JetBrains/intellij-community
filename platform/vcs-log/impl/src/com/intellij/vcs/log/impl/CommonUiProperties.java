@@ -39,14 +39,11 @@ public class CommonUiProperties {
     }
   }
 
-  public static int getColumnWidth(@NotNull VcsLogUiProperties properties, int column, int defaultWidth) {
+  public static int getColumnWidth(@NotNull VcsLogUiProperties properties, int column) {
     if (properties.exists(COLUMN_WIDTH.get(column))) {
-      Integer savedWidth = properties.get(COLUMN_WIDTH.get(column));
-      if (savedWidth > defaultWidth) {
-        return savedWidth;
-      }
+      return properties.get(COLUMN_WIDTH.get(column));
     }
-    return defaultWidth;
+    return -1;
   }
 
   public static class TableColumnProperty extends VcsLogUiProperty<Integer> {

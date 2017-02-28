@@ -185,8 +185,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     }
 
     @Override
-    public void onColumnWidthChanged() {
-      myMainFrame.getGraphTable().onColumnWidthSettingChanged();
+    public void onColumnWidthChanged(int column) {
+      myMainFrame.getGraphTable().forceReLayout(column);
     }
 
     @Override
