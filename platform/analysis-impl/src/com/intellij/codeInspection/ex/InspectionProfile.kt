@@ -78,7 +78,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
    * If you need to enable multiple tools, please use [.modifyProfile]
    */
   @JvmOverloads
-  fun setToolEnabled(toolShortName: String, enabled: Boolean, project: Project? = null) {
+  fun setToolEnabled(toolShortName: String, enabled: Boolean, project: Project? = null, fireEvents: Boolean = true) {
     val tools = getTools(toolShortName, project ?: (profileManager as? ProjectInspectionProfileManager)?.project)
     if (enabled) {
       if (tools.isEnabled && tools.defaultState.isEnabled) {
@@ -97,7 +97,9 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       schemeState = SchemeState.POSSIBLY_CHANGED
     }
 
-    profileManager.fireProfileChanged(this as InspectionProfileImpl)
+    if (fireEvents) {
+      profileManager.fireProfileChanged(this as InspectionProfileImpl)
+    }
   }
 
   fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"$name\"")
