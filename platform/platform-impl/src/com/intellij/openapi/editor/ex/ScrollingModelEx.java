@@ -40,6 +40,6 @@ public interface ScrollingModelEx extends ScrollingModel {
    */
   void flushViewportChanges();
 
-  void addScrollEventsListener(@NotNull ScrollingEventsListener listener);
-  void removeEditorScrollingListener(@NotNull ScrollingEventsListener listener);
+  void addScrollingEventsListener(@NotNull ScrollingEventsListener listener);
+  void removeScrollingEventsListener(@NotNull ScrollingEventsListener listener);
 }

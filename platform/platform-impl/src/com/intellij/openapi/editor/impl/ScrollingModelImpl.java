@@ -151,6 +151,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
     assertIsDispatchThread();
     myEditor.validateSize();
     AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.getCaretModel().getVisualPosition(), scrollType));
+
     for (ScrollingEventsListener listener : myScrollingEventsListeners) {
       listener.scrollToCaret(scrollType);
     }
@@ -172,6 +173,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
     AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.logicalPositionToXY(pos), scrollType));
+
     for (ScrollingEventsListener listener : myScrollingEventsListeners) {
       listener.scrollTo(pos, scrollType);
     }
@@ -410,12 +412,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   @Override
-  public void addScrollEventsListener(@NotNull ScrollingEventsListener listener) {
+  public void addScrollingEventsListener(@NotNull ScrollingEventsListener listener) {
     myScrollingEventsListeners.add(listener);
   }
 
   @Override
-  public void removeEditorScrollingListener(@NotNull ScrollingEventsListener listener) {
+  public void removeScrollingEventsListener(@NotNull ScrollingEventsListener listener) {
     boolean success = myScrollingEventsListeners.remove(listener);
     LOG.assertTrue(success);
   }
