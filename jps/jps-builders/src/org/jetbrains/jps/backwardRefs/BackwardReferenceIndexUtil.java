@@ -70,7 +70,10 @@ public class BackwardReferenceIndexUtil {
 
     Map<LightRef, Integer> convertedRefs = new THashMap<>();
     refs.forEachEntry((ref, count) -> {
-      convertedRefs.put(writer.enumerateNames(ref), count);
+      final LightRef lightRef = writer.enumerateNames(ref);
+      if (lightRef != null) {
+        convertedRefs.put(lightRef, count);
+      }
       return true;
     });
     writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
