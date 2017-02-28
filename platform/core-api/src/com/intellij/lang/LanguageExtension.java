@@ -21,6 +21,7 @@ package com.intellij.lang;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,15 +87,25 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
    *  @see #allForLanguageOrAny(Language)
    */
   @NotNull
-  public List<T> allForLanguage(@NotNull Language l) {
-    List<T> list = forKey(l);
-    if (list.isEmpty()) {
-      Language base = l.getBaseLanguage();
-      if (base != null) {
-        return allForLanguage(base);
+  public List<T> allForLanguage(@NotNull Language language) {
+    boolean copyList = true;
+    List<T> result = null;
+    for (Language l = language; l != null; l = l.getBaseLanguage()) {
+      List<T> list = forKey(l);
+      if (result == null) {
+        result = list;
+      }
+      else if (!list.isEmpty()) {
+        if (copyList) {
+          result = ContainerUtil.newArrayList(ContainerUtil.concat(result, list));
+          copyList = false;
+        }
+        else {
+          result.addAll(list);
+        }
       }
     }
-    return list;
+    return result;
   }
 
   @NotNull
