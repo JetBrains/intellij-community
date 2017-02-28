@@ -15,7 +15,8 @@
  */
 package org.jetbrains.jps.javac.ast.api;
 
-import java.util.Collection;
+import gnu.trove.TObjectIntHashMap;
+
 import java.util.List;
 
 public interface JavacFileReferencesRegistrar {
@@ -25,5 +26,5 @@ public interface JavacFileReferencesRegistrar {
 
   boolean onlyImports();
 
-  void registerFile(String filePath, Collection<JavacRef> refs, List<JavacDef> defs);
+  void registerFile(String filePath, TObjectIntHashMap<JavacRef> refs, List<JavacDef> defs);
 }

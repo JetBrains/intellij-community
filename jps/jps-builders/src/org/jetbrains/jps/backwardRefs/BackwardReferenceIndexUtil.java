@@ -19,16 +19,20 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BackwardReferenceIndexUtil {
   static void registerFile(String filePath,
-                           Collection<? extends JavacRef> refs,
+                           TObjectIntHashMap<? extends JavacRef> refs,
                            List<JavacDef> defs,
                            final BackwardReferenceIndexWriter writer) {
     final int fileId = writer.enumeratePath(filePath);
@@ -72,12 +76,10 @@ public class BackwardReferenceIndexUtil {
         return 0;
       }
     };
-    for (JavacRef ref : refs) {
-      LightRef key = writer.enumerateNames(ref);
-      if (key != null) {
-        convertedRefs.put(key, convertedRefs.get(key) + 1);
-      }
-    }
+    refs.forEachEntry((ref, count) -> {
+      convertedRefs.put(writer.enumerateNames(ref), count);
+      return true;
+    });
     writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
   }
 }

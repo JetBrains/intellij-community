@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
@@ -41,7 +42,7 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
   }
 
   @Override
-  public void registerFile(String filePath, Collection<JavacRef> refs, List<JavacDef> defs) {
+  public void registerFile(String filePath, TObjectIntHashMap<JavacRef> refs, List<JavacDef> defs) {
     BackwardReferenceIndexUtil.registerFile(filePath, refs, defs, myWriter);
   }
 }
