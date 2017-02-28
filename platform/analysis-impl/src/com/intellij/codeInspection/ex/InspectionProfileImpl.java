@@ -677,7 +677,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  public boolean isExecutable(Project project) {
+  public boolean isExecutable(@Nullable Project project) {
     initInspectionTools(project);
     for (Tools tools : myTools.values()) {
       if (tools.isEnabled()) return true;

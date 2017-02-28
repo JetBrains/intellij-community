@@ -81,7 +81,7 @@ public interface InspectionProfile extends Comparable {
     return isToolEnabled(key, null);
   }
 
-  boolean isExecutable(Project project);
+  boolean isExecutable(@Nullable Project project);
 
   /**
    * @see {@link InspectionProfileImpl#setSingleTool(String)}
