@@ -223,16 +223,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     final FileType type = file.getFileType();
     final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
 
-    synchronized (myLock) {
-      if (mySchemaFiles.isEmpty()) {
-        mySchemaFiles.addAll(getProviders().stream()
-                               .filter(provider -> provider.getSchemaFile() != null)
-          .map(provider -> provider.getSchemaFile()).collect(Collectors.toSet()));
-      }
-    }
-
     final List<CodeInsightProviders> wrappers = new ArrayList<>();
-    getWrapperSkeletonMethod(provider -> provider.isAvailable(myProject, file) && (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())),
+    getWrapperSkeletonMethod(provider -> (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) &&
+                                         provider.isAvailable(myProject, file),
                              wrapper -> wrappers.add(wrapper), true);
 
     return wrappers;
@@ -252,18 +245,20 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   private void getWrapperSkeletonMethod(@NotNull final Processor<JsonSchemaFileProvider> processor,
                                         @NotNull final Consumer<CodeInsightProviders> consumer,
                                         final boolean multiple) {
+    final List<JsonSchemaFileProvider> filtered = getProviders().stream().filter(processor::process).collect(Collectors.toList());
+    if (filtered.isEmpty()) return;
+
     final List<JsonSchemaFileProvider> matchingProviders = new ArrayList<>();
     synchronized (myLock) {
-      for (JsonSchemaFileProvider provider : getProviders()) {
-        if (processor.process(provider)) {
-          final CodeInsightProviders wrapper = myWrappers.get(provider.getSchemaFile());
-          if (wrapper != null) {
-            consumer.consume(wrapper);
-            if (!multiple) return;
-          } else {
-            matchingProviders.add(provider);
-            if (!multiple) break;
-          }
+      for (JsonSchemaFileProvider provider : filtered) {
+        final CodeInsightProviders wrapper = myWrappers.get(provider.getSchemaFile());
+        if (wrapper != null) {
+          consumer.consume(wrapper);
+          if (!multiple) return;
+        }
+        else {
+          matchingProviders.add(provider);
+          if (!multiple) break;
         }
       }
     }
@@ -276,8 +271,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
       if (wrapper != null) created.put(provider.getSchemaFile(), Pair.create(wrapper, provider));
     }
 
+    final List<JsonSchemaFileProvider> providers = getProviders();
     synchronized (myLock) {
-      final List<JsonSchemaFileProvider> providers = getProviders();
       created.forEach((file, pair) -> {
         final CodeInsightProviders wrapper = pair.getFirst();
         final JsonSchemaFileProvider provider = pair.getSecond();
