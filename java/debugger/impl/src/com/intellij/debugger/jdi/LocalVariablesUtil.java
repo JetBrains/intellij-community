@@ -192,7 +192,8 @@ public class LocalVariablesUtil {
                                                                      StackFrame frame) throws Exception {
     final Long frameId = ReflectionUtil.getField(frame.getClass(), frame, long.class, "id");
     final VirtualMachine vm = frame.virtualMachine();
-    final Method stateMethod = ReflectionUtil.getDeclaredMethod(vm.getClass(), "state");
+    final Method stateMethod = vm.getClass().getDeclaredMethod("state");
+    stateMethod.setAccessible(true);
 
     Object slotInfoArray = createSlotInfoArray(vars);
 
@@ -222,7 +223,8 @@ public class LocalVariablesUtil {
     try {
       final Long frameId = ReflectionUtil.getField(frame.getClass(), frame, long.class, "id");
       final VirtualMachine vm = frame.virtualMachine();
-      final Method stateMethod = ReflectionUtil.getDeclaredMethod(vm.getClass(), "state");
+      final Method stateMethod = vm.getClass().getDeclaredMethod("state");
+      stateMethod.setAccessible(true);
 
       Object slotInfoArray = createSlotInfoArraySet(slot, value);
 
