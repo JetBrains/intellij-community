@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.streams.resolve;
 
+import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.openapi.util.Pair;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -54,8 +54,6 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "mapToDouble":
       case "boxed":
         return new MapResolver();
-      case "distinct":
-        return new DistinctResolver();
       case "sorted":
       case "peek":
         return IDENTITY_RESOLVER;
@@ -67,8 +65,8 @@ public class ResolverFactoryImpl implements ResolverFactory {
   private static class MyEmptyResolver implements ValuesOrderResolver {
     @NotNull
     @Override
-    public Pair<Map<Value, List<Value>>, Map<Value, List<Value>>> resolve(@NotNull Map<Integer, Value> previousCalls,
-                                                                          @NotNull Map<Integer, Value> nextCalls) {
+    public Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
+                                                                                                      @NotNull Map<Integer, TraceElement> nextCalls) {
       return Pair.create(Collections.emptyMap(), Collections.emptyMap());
     }
   }
@@ -76,14 +74,14 @@ public class ResolverFactoryImpl implements ResolverFactory {
   private static class MyIdentityResolver implements ValuesOrderResolver {
     @NotNull
     @Override
-    public Pair<Map<Value, List<Value>>, Map<Value, List<Value>>> resolve(@NotNull Map<Integer, Value> previousCalls,
-                                                                          @NotNull Map<Integer, Value> nextCalls) {
+    public Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
+                                                                                                      @NotNull Map<Integer, TraceElement> nextCalls) {
       assert previousCalls.size() == nextCalls.size();
       return Pair.create(buildIdentityMapping(previousCalls), buildIdentityMapping(nextCalls));
     }
 
-    private static Map<Value, List<Value>> buildIdentityMapping(@NotNull Map<Integer, Value> previousCalls) {
-      final LinkedHashMap<Value, List<Value>> result = new LinkedHashMap<>();
+    private static Map<TraceElement, List<TraceElement>> buildIdentityMapping(@NotNull Map<Integer, TraceElement> previousCalls) {
+      final LinkedHashMap<TraceElement, List<TraceElement>> result = new LinkedHashMap<>();
       previousCalls.values().stream().distinct().forEach(x -> result.put(x, Collections.singletonList(x)));
       return result;
     }

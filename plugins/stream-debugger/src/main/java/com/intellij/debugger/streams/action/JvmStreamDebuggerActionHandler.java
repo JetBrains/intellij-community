@@ -38,7 +38,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +46,9 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class JvmStreamDebuggerActionHandler extends DebuggerActionHandler {
+public class JvmStreamDebuggerActionHandler {
   private static final Logger LOG = Logger.getInstance(JvmStreamDebuggerActionHandler.class);
 
-  @Override
   public void perform(@NotNull Project project, AnActionEvent event) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null) {
@@ -61,24 +59,27 @@ public class JvmStreamDebuggerActionHandler extends DebuggerActionHandler {
     if (elementAtCursor != null) {
       final StreamChain chain = StreamChain.tryBuildChain(elementAtCursor);
       if (chain != null) {
-        new MapStreamTracerImpl(session).trace(chain, new TracingCallback() {
-          @Override
-          public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-            final List<ResolvedCall> calls = chain.resolveCalls(result);
-            ApplicationManager.getApplication()
-              .invokeLater(() -> new TraceWindow(context, session.getProject(), calls).show());
-          }
-
-          @Override
-          public void failed(@NotNull String traceExpression, @NotNull String reason) {
-            LOG.warn(reason + System.lineSeparator() + "expression:" + System.lineSeparator() + traceExpression);
-          }
-        });
+        handle(session, chain);
       }
     }
   }
 
-  @Override
+  public void handle(@NotNull XDebugSession session, @NotNull StreamChain chain) {
+    new MapStreamTracerImpl(session).trace(chain, new TracingCallback() {
+      @Override
+      public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
+        final List<ResolvedCall> calls = chain.resolveCalls(result);
+        ApplicationManager.getApplication()
+          .invokeLater(() -> new TraceWindow(context, session.getProject(), calls).show());
+      }
+
+      @Override
+      public void failed(@NotNull String traceExpression, @NotNull String reason) {
+        LOG.warn(reason + System.lineSeparator() + "expression:" + System.lineSeparator() + traceExpression);
+      }
+    });
+  }
+
   public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     final PsiElement elementAtCursor = session == null ? null : findElementAtCursor(session);

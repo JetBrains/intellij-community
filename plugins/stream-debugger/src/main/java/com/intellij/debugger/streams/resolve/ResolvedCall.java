@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.resolve;
 
+import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.wrapper.MethodCall;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +27,11 @@ import java.util.List;
  */
 public interface ResolvedCall extends MethodCall {
   @NotNull
-  List<Value> getPreviousValues(@NotNull Value value);
+  List<TraceElement> getPreviousValues(@NotNull TraceElement value);
 
   @NotNull
-  List<Value> getNextValues(@NotNull Value value);
+  List<TraceElement> getNextValues(@NotNull TraceElement value);
 
   @NotNull
-  List<Value> getValues();
+  List<TraceElement> getValues();
 }

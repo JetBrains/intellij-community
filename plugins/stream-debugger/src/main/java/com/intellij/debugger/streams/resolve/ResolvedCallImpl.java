@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.streams.resolve;
 
+import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.wrapper.MethodCall;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,12 +29,12 @@ import java.util.Map;
  */
 public class ResolvedCallImpl implements ResolvedCall {
   private final MethodCall myMethodCall;
-  private final Map<Value, List<Value>> myPrevious;
-  private final Map<Value, List<Value>> myNext;
+  private final Map<TraceElement, List<TraceElement>> myPrevious;
+  private final Map<TraceElement, List<TraceElement>> myNext;
 
   public ResolvedCallImpl(@NotNull MethodCall call,
-                          @NotNull Map<Value, List<Value>> input,
-                          @NotNull Map<Value, List<Value>> output) {
+                          @NotNull Map<TraceElement, List<TraceElement>> input,
+                          @NotNull Map<TraceElement, List<TraceElement>> output) {
     myMethodCall = call;
     myPrevious = input;
     myNext = output;
@@ -54,25 +54,25 @@ public class ResolvedCallImpl implements ResolvedCall {
 
   @NotNull
   @Override
-  public List<Value> getPreviousValues(@NotNull Value value) {
+  public List<TraceElement> getPreviousValues(@NotNull TraceElement value) {
     return extractList(myPrevious, value);
   }
 
   @NotNull
   @Override
-  public List<Value> getNextValues(@NotNull Value value) {
+  public List<TraceElement> getNextValues(@NotNull TraceElement value) {
     return extractList(myNext, value);
   }
 
   @NotNull
   @Override
-  public List<Value> getValues() {
+  public List<TraceElement> getValues() {
     return Collections.unmodifiableList(new ArrayList<>(myNext.keySet()));
   }
 
   @NotNull
-  private static List<Value> extractList(@NotNull Map<Value, List<Value>> values, @NotNull Value key) {
-    final List<Value> result = values.get(key);
+  private static List<TraceElement> extractList(@NotNull Map<TraceElement, List<TraceElement>> values, @NotNull TraceElement key) {
+    final List<TraceElement> result = values.get(key);
     return result == null ? Collections.emptyList() : Collections.unmodifiableList(result);
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.ui;
 
+import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,5 +26,5 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface ValuesHighlightingListener extends EventListener {
-  void highlightingChanged(@NotNull List<Value> values, @NotNull PropagationDirection direction);
+  void highlightingChanged(@NotNull List<TraceElement> values, @NotNull PropagationDirection direction);
 }

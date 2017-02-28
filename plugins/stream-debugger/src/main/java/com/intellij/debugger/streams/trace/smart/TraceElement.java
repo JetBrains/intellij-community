@@ -13,16 +13,4 @@ public interface TraceElement {
 
   @NotNull
   Value getValue();
-
-  @NotNull
-  List<TraceElement> getNext();
-
-  @NotNull
-  List<TraceElement> getPrevious();
-
-  @NotNull
-  List<TraceElement> getPreviousBy(@NotNull TraceElement element);
-
-  @NotNull
-  List<TraceElement> getNextBy(@NotNull TraceElement element);
 }

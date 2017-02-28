@@ -63,7 +63,7 @@ public abstract class EvaluateExpressionTracerBase implements StreamTracer {
               final DebugProcess process =
                 DebuggerManager.getInstance(mySession.getProject()).getDebugProcess(mySession.getDebugProcess().getProcessHandler());
               final RemoteMethodInvoker invoker = new RemoteMethodInvoker(process, context, (ObjectReference)reference);
-              final TracingResult interpretedResult = interpretResult(invoker);
+              final TracingResult interpretedResult = interpretResult(chain, invoker);
               callback.evaluated(interpretedResult, context);
               return;
             }
@@ -85,5 +85,5 @@ public abstract class EvaluateExpressionTracerBase implements StreamTracer {
   protected abstract String getTraceExpression(@NotNull StreamChain chain);
 
   @NotNull
-  protected abstract TracingResult interpretResult(@NotNull InvokeMethodProxy result);
+  protected abstract TracingResult interpretResult(@NotNull StreamChain chain, @NotNull InvokeMethodProxy result);
 }

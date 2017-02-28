@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.resolve;
 
+import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.openapi.util.Pair;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,6 @@ import java.util.Map;
  */
 public interface ValuesOrderResolver {
   @NotNull
-  Pair<Map<Value, List<Value>>, Map<Value, List<Value>>> resolve(@NotNull Map<Integer, Value> previousCalls,
-                                                                 @NotNull Map<Integer, Value> nextCalls);
+  Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
+                                                                                             @NotNull Map<Integer, TraceElement> nextCalls);
 }

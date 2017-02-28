@@ -15,11 +15,14 @@
  */
 package com.intellij.debugger.streams.resolve;
 
+import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.openapi.util.Pair;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Vitaliy.Bibaev
@@ -27,12 +30,12 @@ import java.util.*;
 public class FilterResolver implements ValuesOrderResolver {
   @NotNull
   @Override
-  public Pair<Map<Value, List<Value>>, Map<Value, List<Value>>> resolve(@NotNull Map<Integer, Value> previousCalls,
-                                                                        @NotNull Map<Integer, Value> nextCalls) {
+  public Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
+                                                                                                    @NotNull Map<Integer, TraceElement> nextCalls) {
 
     assert previousCalls.size() >= nextCalls.size();
-    final Map<Value, List<Value>> forward = new LinkedHashMap<>();
-    final Map<Value, List<Value>> backward = new LinkedHashMap<>();
+    final Map<TraceElement, List<TraceElement>> forward = new LinkedHashMap<>();
+    final Map<TraceElement, List<TraceElement>> backward = new LinkedHashMap<>();
 
     // TODO: O(n) solution
     //final Integer[] beforeTimes = new Integer[previousCalls.size()];
@@ -50,7 +53,7 @@ public class FilterResolver implements ValuesOrderResolver {
     //}
 
     // this is O(n^2) solution
-    for (Value leftValue : previousCalls.values()) {
+    for (TraceElement leftValue : previousCalls.values()) {
       if (nextCalls.containsValue(leftValue)) {
         forward.put(leftValue, Collections.singletonList(leftValue));
         backward.put(leftValue, Collections.singletonList(leftValue));

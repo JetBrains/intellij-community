@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.streams.resolve;
 
+import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.openapi.util.Pair;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,10 +30,10 @@ import java.util.Map;
 public class FlatMapResolver implements ValuesOrderResolver {
   @NotNull
   @Override
-  public Pair<Map<Value, List<Value>>, Map<Value, List<Value>>> resolve(@NotNull Map<Integer, Value> previousCalls,
-                                                                        @NotNull Map<Integer, Value> nextCalls) {
-    final Map<Value, List<Value>> forward = new LinkedHashMap<>();
-    final Map<Value, List<Value>> backward = new LinkedHashMap<>();
+  public Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
+                                                                                                    @NotNull Map<Integer, TraceElement> nextCalls) {
+    final Map<TraceElement, List<TraceElement>> forward = new LinkedHashMap<>();
+    final Map<TraceElement, List<TraceElement>> backward = new LinkedHashMap<>();
 
     nextCalls.values().stream().distinct().forEach(x -> backward.put(x, new ArrayList<>()));
 
@@ -44,11 +44,11 @@ public class FlatMapResolver implements ValuesOrderResolver {
 
     int rightIndex = 0;
     for (int i = 0; i < beforeTimes.length; i++) {
-      final Value leftValue = previousCalls.get(beforeTimes[i]);
-      final List<Value> right = new ArrayList<>();
+      final TraceElement leftValue = previousCalls.get(beforeTimes[i]);
+      final List<TraceElement> right = new ArrayList<>();
       final int nextLeftTime = i + 1 < beforeTimes.length ? beforeTimes[i + 1] : Integer.MAX_VALUE;
       while (rightIndex < afterTimes.length && afterTimes[rightIndex] < nextLeftTime) {
-        final Value rightValue = nextCalls.get(afterTimes[rightIndex]);
+        final TraceElement rightValue = nextCalls.get(afterTimes[rightIndex]);
 
         right.add(rightValue);
         backward.get(rightValue).add(leftValue);
