@@ -33,9 +33,12 @@ target('default': 'Downloads custom JRE build from Teamcity server') {
     return
   }
 
+  def majorBuildNumber = ideBuildNumber.split(/\./)[0]
+  def buildConfiguration = jreBuildTypeId.replaceAll(/#build#/, majorBuildNumber)
+
   String buildId, buildNumber
   try {
-    buildId = new URL("$jreTeamcityUrl/buildTypes/id:$jreBuildTypeId/builds/tags:$jreBuildTag/id").text
+    buildId = new URL("$jreTeamcityUrl/buildTypes/id:$buildConfiguration/builds/tags:$jreBuildTag/id").text
     buildNumber = new URL("$jreTeamcityUrl/builds/id:$buildId/number").text
   }
   catch (IOException e) {
