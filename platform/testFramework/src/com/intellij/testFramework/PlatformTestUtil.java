@@ -293,7 +293,7 @@ public class PlatformTestUtil {
                                    "; app.disposed=" + app.isDisposed() +
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
-                                   "\n delayQueue=" + ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue() +
+                                   "\n delayQueue=" + StringUtil.trimLog(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue(), 1000) +
                                    "\n invocatorQueue=" + LaterInvocator.getLaterInvocatorQueue()
           );
         }
