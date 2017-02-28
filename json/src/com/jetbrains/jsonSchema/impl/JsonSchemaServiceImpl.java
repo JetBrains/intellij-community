@@ -245,7 +245,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
     final List<JsonSchemaFileProvider> filtered = getProviders().stream().filter(processor::process).collect(Collectors.toList());
     if (filtered.isEmpty()) return;
 
-    final List<JsonSchemaFileProvider> matchingProviders = new ArrayList<>();
+    final List<JsonSchemaFileProvider> matchingProviders = new SmartList<>();
     synchronized (myLock) {
       for (JsonSchemaFileProvider provider : filtered) {
         final CodeInsightProviders wrapper = myWrappers.get(provider.getSchemaFile());
@@ -395,7 +395,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaServiceEx {
   public Collection<Pair<VirtualFile, String>> getSchemaFilesByFile(@NotNull final VirtualFile file) {
     final CodeInsightProviders wrapper = getWrapper(file);
     if (wrapper != null) {
-      final List<Pair<VirtualFile, String>> result = new ArrayList<>();
+      final List<Pair<VirtualFile, String>> result = new SmartList<>();
       wrapper.iterateSchemaFiles((schemaFile, schemaId) -> result.add(Pair.create(schemaFile, schemaId)));
       return result;
     }
