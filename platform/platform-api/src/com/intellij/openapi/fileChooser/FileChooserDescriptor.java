@@ -54,6 +54,7 @@ public class FileChooserDescriptor implements Cloneable {
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
   private Condition<VirtualFile> myFileFilter = null;
+  private boolean myForcedToUseIdeaFileChooser = false;
 
   private final Map<String, Object> myUserData = new HashMap<>();
 
@@ -294,6 +295,14 @@ public class FileChooserDescriptor implements Cloneable {
    * @throws Exception if the the files cannot be accepted
    */
   public void validateSelectedFiles(VirtualFile[] files) throws Exception {
+  }
+
+  public boolean isForcedToUseIdeaFileChooser() {
+    return myForcedToUseIdeaFileChooser;
+  }
+
+  public void setForcedToUseIdeaFileChooser(boolean forcedToUseIdeaFileChooser) {
+    myForcedToUseIdeaFileChooser = forcedToUseIdeaFileChooser;
   }
 
   private boolean acceptAsGeneralFile(VirtualFile file) {
