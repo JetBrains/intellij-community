@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -51,6 +52,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -97,11 +99,9 @@ import java.util.regex.PatternSyntaxException;
 public class FindPopupPanel extends JBPanel implements FindUI {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
 
-  private static final boolean PREVIEW_IS_EDITABLE = true;//todo move it to registry at least
   private static final KeyStroke NEW_LINE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
   private static final KeyStroke OK_FIND = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK);
 
-  private static final KeyStroke NEW_LINE_ALTERNATIVE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
   private static final String SERVICE_KEY = "find.popup";
   private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";
   private final FindUIHelper myHelper;
@@ -399,7 +399,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (!myHelper.isReplaceState()) return;
+        if (!myHelper.isReplaceState()) {
+          navigateToSelectedUsage(myResultsPreviewTable);
+          return;
+        }
         myOkActionListener.actionPerformed(e);
       }
     }, NEW_LINE, WHEN_IN_FOCUSED_WINDOW);
@@ -431,7 +434,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     };
     mySearchComponent.getDocument().addDocumentListener(documentAdapter);
     myReplaceComponent.getDocument().addDocumentListener(documentAdapter);
-
+    mySearchTextArea.setMultilineEnabled(false);
+    myReplaceTextArea.setMultilineEnabled(false);
 
     myScopeSelectionToolbar = createToolbar(
       new MySelectScopeToggleAction(Scope.PROJECT),
@@ -561,18 +565,30 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myResultsPreviewTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myResultsPreviewTable.setShowGrid(false);
     myResultsPreviewTable.setIntercellSpacing(JBUI.emptySize());
-    new NavigateToSourceListener().installOn(myResultsPreviewTable);
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent event) {
+        Object source = event.getSource();
+        if (!(source instanceof JBTable)) return false;
+        navigateToSelectedUsage((JBTable)source);
+        return true;
+      }
+    }.installOn(myResultsPreviewTable);
     applyFont(JBUI.Fonts.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
               myResultsPreviewTable);
     ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
     ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceComponent);
-    KeymapUtil.reassignAction(mySearchComponent, NEW_LINE, NEW_LINE_ALTERNATIVE, WHEN_FOCUSED);
-    KeymapUtil.reassignAction(myReplaceComponent, NEW_LINE, NEW_LINE_ALTERNATIVE, WHEN_FOCUSED);
     UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, NEW_LINE);
     UIUtil.redirectKeystrokes(myDisposable, myReplaceComponent, myResultsPreviewTable, NEW_LINE);
+    ActionListener helpAction = new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        HelpManager.getInstance().invokeHelp("reference.dialogs.findinpath");
+      }
+    };
+    registerKeyboardAction(helpAction,KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0),JComponent.WHEN_IN_FOCUSED_WINDOW);
+    registerKeyboardAction(helpAction,KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0),JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-
-    myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), PREVIEW_IS_EDITABLE) {
+    myUsagePreviewPanel = new UsagePreviewPanel(myProject, new UsageViewPresentation(), Registry.is("ide.find.as.popup.editable.code")) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(myResultsPreviewTable.getWidth(), Math.max(getHeight(), getLineHeight() * 15));
@@ -1194,47 +1210,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     public void setSelected(AnActionEvent e, boolean state) {
       myHelper.getModel().setWithSubdirectories(state);
       scheduleResultsUpdate();
-    }
-  }
-
-  private class NavigateToSourceListener extends DoubleClickListener {
-
-    @Override
-    protected boolean onDoubleClick(MouseEvent event) {
-      Object source = event.getSource();
-      if (!(source instanceof JBTable)) return false;
-      navigateToSelectedUsage((JBTable)source);
-      return true;
-    }
-
-    @Override
-    public void installOn(@NotNull final Component c) {
-      super.installOn(c);
-
-      if (c instanceof JBTable) {
-        AnAction anAction = new AnAction() {
-          @Override
-          public void actionPerformed(AnActionEvent e) {
-            navigateToSelectedUsage((JBTable)c);
-          }
-        };
-
-        String key = "navigate.to.usage";
-        JComponent component = (JComponent)c;
-        component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(NEW_LINE, key);
-        component.getActionMap().put(key, new AbstractAction() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            if (!myHelper.isReplaceState()) {
-              navigateToSelectedUsage((JBTable)c);
-            } else {
-              myOkActionListener.actionPerformed(e);
-            }
-          }
-        });
-        anAction.registerCustomShortcutSet(CommonShortcuts.ALT_ENTER, component);
-        anAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), component);
-      }
     }
   }
 

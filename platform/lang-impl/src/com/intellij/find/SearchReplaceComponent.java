@@ -57,8 +57,6 @@ import java.util.List;
 import static java.awt.event.InputEvent.*;
 
 public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
-  static final KeyStroke NEW_LINE_KEYSTROKE
-    = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -435,10 +433,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
       SearchTextArea textArea = new SearchTextArea(search);
       textComponent = textArea.getTextArea();
       ((JTextArea)textComponent).setRows(isMultiline() ? 2 : 1);
-      KeymapUtil.reassignAction(textComponent,
-                                KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-                                NEW_LINE_KEYSTROKE,
-                                WHEN_FOCUSED);
 
     wrapper.setContent(textArea);
 
