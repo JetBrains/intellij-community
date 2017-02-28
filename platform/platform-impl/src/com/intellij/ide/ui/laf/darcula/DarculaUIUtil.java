@@ -16,15 +16,13 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -56,9 +54,6 @@ public class DarculaUIUtil {
       return (UIUtil.isUnderDarcula()) ? new Color(0x725252) : new Color(0xebbcbc);
     }
   });
-
-  private static final Color BALLOON_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
-  private static final Color BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
 
   public static void paintFocusRing(Graphics g, Rectangle bounds) {
     MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
@@ -134,40 +129,6 @@ public class DarculaUIUtil {
   public static boolean isCurrentEventShiftDownEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
     return (event instanceof KeyEvent && ((KeyEvent)event).isShiftDown());
-  }
-
-  public static void showErrorTip(JComponent component) {
-    BalloonBuilder bb = (BalloonBuilder)component.getClientProperty("JComponent.error.balloonBuilder");
-    if (bb != null) {
-      component.putClientProperty("JComponent.error.balloonBuilder", null);
-
-      Balloon balloon = bb.setPointerSize(new JBDimension(17, 6))
-        .setCornerToPointerDistance(JBUI.scale(30))
-        .setBorderColor(BALLOON_BORDER)
-        .setFillColor(BALLOON_BACKGROUND)
-        .setHideOnFrameResize(false)
-        .setRequestFocus(false)
-        .setAnimationCycle(300)
-        .setShadow(false)
-        .createBalloon();
-
-      JComponent root = component.getRootPane();
-      Point componentPos = SwingUtilities.convertPoint(component, 0, 0, root);
-      Dimension bSize = balloon.getPreferredSize();
-      if (componentPos.y >= bSize.height) {
-        balloon.show(new PositionTracker<Balloon>(component) {
-          @Override public RelativePoint recalculateLocation(Balloon balloon) {
-            return new RelativePoint(getComponent(), new Point(JBUI.scale(60), 0));
-          }
-        }, Balloon.Position.above);
-      } else {
-        balloon.show(new PositionTracker<Balloon>(component) {
-          @Override public RelativePoint recalculateLocation(Balloon balloon) {
-            return new RelativePoint(getComponent(), new Point(JBUI.scale(60), getComponent().getHeight()));
-          }
-        }, Balloon.Position.below);
-      }
-    }
   }
 
   /**

@@ -57,9 +57,6 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       } finally {
         g2.dispose();
       }
-      if (Registry.is("ide.inplace.errors.balloon")) {
-        DarculaUIUtil.showErrorTip((JComponent)c);
-      }
     } else if (c.hasFocus()) {
       MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
     }

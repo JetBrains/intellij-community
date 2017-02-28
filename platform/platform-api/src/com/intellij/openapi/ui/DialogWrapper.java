@@ -31,8 +31,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -44,6 +43,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -52,10 +52,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.DialogUtil;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -206,6 +203,9 @@ public abstract class DialogWrapper {
   private ErrorText myErrorText;
 
   private final Alarm myErrorTextAlarm = new Alarm();
+
+  private static final Color BALLOON_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
+  private static final Color BALLOON_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
 
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
@@ -1949,6 +1949,7 @@ public abstract class DialogWrapper {
 
     if (Registry.is("ide.inplace.errors.outline") && myLastComponent != null) {
       myLastComponent.putClientProperty("JComponent.error.outline", Boolean.FALSE);
+      myLastComponent.putClientProperty("JComponent.error.balloon.builder", null);
     }
 
     myLastErrorText = text;
@@ -1961,21 +1962,34 @@ public abstract class DialogWrapper {
 
     if (Registry.is("ide.inplace.errors.balloon") && component != null && outline) {
       JLabel label = new JLabel();
-
-      Insets insets = UIManager.getInsets("Balloon.error.textInsets");
-      int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
-      int textWidth = component.getWidth() - JBUI.scale(30) - insets.left - insets.right;
-      if (textWidth > oneLineWidth) textWidth = oneLineWidth;
-
-      String htmlText = String.format("<html><div width=%d>%s</div></html>", textWidth, text);
-      label.setText(htmlText);
       label.setHorizontalAlignment(SwingConstants.LEADING);
+      setErrorTipText(component, label, text);
 
-      BalloonBuilder bb = JBPopupFactory.getInstance().createBalloonBuilder(label)
+      BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(label)
         .setDisposable(getDisposable())
-        .setBorderInsets(insets);
+        .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
+        .setPointerSize(new JBDimension(17, 6))
+        .setCornerToPointerDistance(JBUI.scale(30))
+        .setBorderColor(BALLOON_BORDER)
+        .setFillColor(BALLOON_BACKGROUND)
+        .setHideOnFrameResize(false)
+        .setRequestFocus(false)
+        .setAnimationCycle(100)
+        .setShadow(true);
 
-      component.putClientProperty("JComponent.error.balloonBuilder", bb);
+      myLastComponent.putClientProperty("JComponent.error.balloon.builder", balloonBuilder);
+      if (myLastComponent.hasFocus()) {
+        showErrorTip(balloonBuilder, myLastComponent, label, text);
+      }
+
+      myLastComponent.addFocusListener(new FocusAdapter() {
+        @Override public void focusGained(FocusEvent e) {
+          JComponent c = (JComponent)e.getComponent();
+          if (c.getClientProperty("JComponent.error.balloon") == null) {
+              showErrorTip((BalloonBuilder)c.getClientProperty("JComponent.error.balloon.builder"), c, label, text);
+          }
+        }
+      });
     } else {
       myErrorTextAlarm.addRequest(() -> {
         myErrorText.setError(myLastErrorText);
@@ -1984,6 +1998,56 @@ public abstract class DialogWrapper {
         }
       }, 300, null);
     }
+  }
+
+  private void showErrorTip(BalloonBuilder balloonBuilder, JComponent component, JLabel label, String text) {
+    if (balloonBuilder == null) return;
+
+    Balloon balloon = balloonBuilder.createBalloon();
+
+    ComponentListener rl = new ComponentAdapter() {
+      @Override public void componentResized(ComponentEvent e) {
+        if (!balloon.isDisposed()) {
+          setErrorTipText(component, label, text);
+          balloon.revalidate();
+        }
+      }
+    };
+
+    balloon.addListener(new JBPopupListener.Adapter() {
+      @Override public void onClosed(LightweightWindowEvent event) {
+        JRootPane rootPane = getRootPane();
+        if (rootPane != null) {
+          rootPane.removeComponentListener(rl);
+        }
+        component.putClientProperty("JComponent.error.balloon", null);
+      }
+    });
+
+    getRootPane().addComponentListener(rl);
+
+    Point componentPos = SwingUtilities.convertPoint(component, 0, 0, getRootPane());
+    Dimension bSize = balloon.getPreferredSize();
+
+    Insets cInsets = component.getInsets();
+    int top =  cInsets != null ? cInsets.top : 0;
+    if (componentPos.y >= bSize.height + Registry.intValue("ide.balloon.shadow.size") + top) {
+      balloon.show(new ErrorTipTracker(component, 0), Balloon.Position.above);
+    } else {
+      balloon.show(new ErrorTipTracker(component, component.getHeight()), Balloon.Position.below);
+    }
+    component.putClientProperty("JComponent.error.balloon", balloon);
+  }
+
+  private void setErrorTipText(JComponent component, JLabel label, String text) {
+    Insets insets = UIManager.getInsets("Balloon.error.textInsets");
+    int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
+    int textWidth = getRootPane().getWidth() - component.getX() - insets.left - insets.right - JBUI.scale(30);
+    if (textWidth < JBUI.scale(90)) textWidth = JBUI.scale(90);
+    if (textWidth > oneLineWidth) textWidth = oneLineWidth;
+
+    String htmlText = String.format("<html><div width=%d>%s</div></html>", textWidth, text);
+    label.setText(htmlText);
   }
 
   @Nullable
@@ -2212,6 +2276,21 @@ public abstract class DialogWrapper {
 
     private void setValidationInfo(@Nullable ValidationInfo info) {
       myInfo = info;
+    }
+  }
+
+  private class ErrorTipTracker extends PositionTracker<Balloon> {
+    private final int y;
+
+    private ErrorTipTracker(JComponent component, int y) {
+      super(component);
+      this.y = y;
+    }
+
+    @Override public RelativePoint recalculateLocation(Balloon balloon) {
+      int width = getComponent().getWidth();
+      int delta = width < JBUI.scale(120) ? width / 2 : JBUI.scale(60);
+      return new RelativePoint(getComponent(), new Point(delta, y));
     }
   }
 
