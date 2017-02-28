@@ -248,8 +248,12 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         myEvaluator = new ExpressionEvaluatorImpl(new Evaluator() {
           @Override
           public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-            StackFrameProxyImpl frame = context.getFrameProxy();
-            return frame != null ? ContainerUtil.getOrElse(frame.getArgumentValues(), paramId, null) : null;
+            @SuppressWarnings("ConstantConditions")
+            List<Value> argumentValues = context.getFrameProxy().getArgumentValues();
+            if (paramId >= argumentValues.size()) {
+              throw new EvaluateException("Param index " + paramId + " requested, but only " + argumentValues.size() + " available");
+            }
+            return argumentValues.get(paramId);
           }
         });
         cached = true;
