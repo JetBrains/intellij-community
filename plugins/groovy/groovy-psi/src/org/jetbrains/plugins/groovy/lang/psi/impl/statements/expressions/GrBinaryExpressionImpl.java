@@ -54,7 +54,8 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
             super.visitElement(element);
           }
           else if (element instanceof GrParenthesizedExpression) {
-            super.visitElement(((GrParenthesizedExpression)element).getOperand());
+            GrExpression operand = ((GrParenthesizedExpression)element).getOperand();
+            if (operand != null) super.visitElement(operand);
           }
         }
 

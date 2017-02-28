@@ -617,7 +617,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
             super.visitElement(((GrMethodCall)element).getInvokedExpression());
           }
           else if (element instanceof GrParenthesizedExpression) {
-            super.visitElement(((GrParenthesizedExpression)element).getOperand());
+            GrExpression operand = ((GrParenthesizedExpression)element).getOperand();
+            if (operand != null) super.visitElement(operand);
           }
         }
 

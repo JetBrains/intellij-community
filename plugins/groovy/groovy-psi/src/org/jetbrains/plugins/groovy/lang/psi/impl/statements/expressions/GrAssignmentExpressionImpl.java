@@ -198,7 +198,8 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
             super.visitElement(element);
           }
           else if (element instanceof GrParenthesizedExpression) {
-            super.visitElement(((GrParenthesizedExpression)element).getOperand());
+            GrExpression operand = ((GrParenthesizedExpression)element).getOperand();
+            if (operand != null) super.visitElement(operand);
           }
         }
 
