@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vitaliy.Bibaev
  */
 public class StreamCallImpl implements MethodCall {
-  private PsiMethodCallExpression myMethodCall;
+  private final PsiMethodCallExpression myMethodCall;
 
   public StreamCallImpl(@NotNull PsiMethodCallExpression methodCallExpression) {
     myMethodCall = methodCallExpression;
