@@ -31,6 +31,7 @@
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsRootChecker
@@ -113,7 +114,7 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
     assertTrue(File(myProjectPath, DOT_MOCK).mkdir())
     val subRoot = File(myProjectPath, "lib")
     assertTrue(File(subRoot, DOT_MOCK).mkdirs())
-    VcsConfiguration.getInstance(myProject).addIgnoredUnregisteredRoots(listOf(subRoot.path))
+    VcsConfiguration.getInstance(myProject).addIgnoredUnregisteredRoots(listOf(FileUtil.toSystemIndependentName(subRoot.path)))
 
     rootProblemNotifier.rescanAndNotifyIfNeeded()
 
