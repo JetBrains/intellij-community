@@ -76,6 +76,8 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   @Nullable
   public abstract Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element);
 
+  public abstract boolean isActive();
+
   public static boolean isEnabled() {
     return IS_ENABLED_KEY.asBoolean();
   }

@@ -210,18 +210,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   private Integer calculateOccurrenceCount(@NotNull PsiElement element) {
-    final CompilerElementInfo searchElementInfo = asCompilerElements(element, true);
+    final CompilerElementInfo searchElementInfo = asCompilerElements(element, false);
     if (searchElementInfo == null) return null;
 
     myReadDataLock.lock();
     try {
       if (myReader == null) return null;
       try {
-        int occurrenceCount = 0;
-        for (LightRef ref : searchElementInfo.searchElements) {
-          occurrenceCount += myReader.getOccurrenceCount(ref);
-        }
-        return occurrenceCount;
+        return myReader.getOccurrenceCount(searchElementInfo.searchElements[0]);
       }
       catch (StorageException e) {
         throw new RuntimeException(e);
@@ -271,12 +267,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   private boolean isServiceEnabledFor(PsiElement element) {
-    if (!isServiceEnabled()) return false;
+    if (!isActive()) return false;
     PsiFile file = ReadAction.compute(() -> element.getContainingFile());
     return file != null && !InjectedLanguageManager.getInstance(myProject).isInjectedFragment(file);
   }
 
-  private boolean isServiceEnabled() {
+  @Override
+  public boolean isActive() {
     return myReader != null && isEnabled();
   }
 
