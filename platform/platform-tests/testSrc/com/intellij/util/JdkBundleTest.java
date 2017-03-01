@@ -113,10 +113,7 @@ public class JdkBundleTest {
     }
   }
 
-  @Test
-  public void testCreateBundle() throws Exception {
-    File homeJDK = new File(System.getProperty("java.home")).getParentFile();
-
+  public void doTestCreateBundle(File homeJDK) throws Exception {
     if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
 
     File bootJDK = SystemInfo.isMac ? homeJDK.getParentFile().getParentFile() : homeJDK;
@@ -139,6 +136,15 @@ public class JdkBundleTest {
 
     final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
     assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
+  }
+
+  @Test
+  public void testCreateBundle() throws Exception {
+    File home = new File(System.getProperty("java.home"));
+
+    doTestCreateBundle(home);
+
+    doTestCreateBundle(home.getParentFile());
   }
 
   @Test
