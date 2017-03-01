@@ -76,4 +76,21 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
       public @interface Nullable {}
       """
   }
+
+  void "test no always failing calls in tests"() {
+    PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("test"), true)
+
+    myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("test/Foo.java", """
+class Foo {
+  void foo() {
+    assertTrue(false);
+  }
+  private void assertTrue(boolean b) {
+    if (!b) throw new RuntimeException();
+  }
+}
+""").virtualFile)
+    myFixture.enableInspections(new DataFlowInspection())
+    myFixture.checkHighlighting()
+  }
 }
