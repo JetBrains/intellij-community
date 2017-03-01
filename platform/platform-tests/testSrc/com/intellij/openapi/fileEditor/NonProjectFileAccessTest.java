@@ -25,6 +25,7 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -52,7 +53,6 @@ import java.io.IOException;
 import java.util.*;
 
 public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
-  private final Set<VirtualFile> myOpenedFiles = new THashSet<>();
   private final Set<VirtualFile> myCreatedFiles = new THashSet<>();
 
   @Override
@@ -68,7 +68,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   protected void tearDown() throws Exception {
     try {
       NonProjectFileWritingAccessProvider.setCustomUnlocker(null);
-      closeOpenFiles();
+      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
       ApplicationManager.getApplication().runWriteAction(() -> {
         for (VirtualFile each : myCreatedFiles) {
           try {
@@ -83,13 +83,6 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     finally {
       super.tearDown();
       ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges(); // unblock only after project is disposed
-    }
-  }
-
-  private void closeOpenFiles() {
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
-    for (VirtualFile file : myOpenedFiles) {
-      editorManager.closeFile(file);
     }
   }
 
@@ -396,7 +389,6 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private Editor getEditor(VirtualFile file) {
-    myOpenedFiles.add(file);
     Editor editor = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), file, 0), false);
     EditorTestUtil.waitForLoading(editor);
     return editor;
