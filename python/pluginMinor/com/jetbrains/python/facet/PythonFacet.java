@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,14 @@ import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * This facet is intended to be used in the python plugin for IDEs other then IntelliJ IDEA
+ *
+ * @author traff
  */
-public class PythonFacet extends LibraryContributingFacet<PythonFacetConfiguration> {
+public class PythonFacet extends LibraryContributingFacet<PythonFacetType.PythonFacetConfiguration> {
   public static final FacetTypeId<PythonFacet> ID = new FacetTypeId<>("python");
 
-  public PythonFacet(@NotNull final FacetType facetType,
-                     @NotNull final Module module,
-                     final @NotNull String name,
-                     @NotNull final PythonFacetConfiguration configuration,
+  public PythonFacet(@NotNull final FacetType facetType, @NotNull final Module module, final @NotNull String name, @NotNull final PythonFacetType.PythonFacetConfiguration configuration,
                      Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
   }
@@ -41,10 +40,6 @@ public class PythonFacet extends LibraryContributingFacet<PythonFacetConfigurati
 
   public void removeLibrary() {
     PythonFacetUtil.removeLibrary(getModule());
-  }
-
-  public static String getFacetLibraryName(final String sdkName) {
-    return sdkName + PYTHON_FACET_LIBRARY_NAME_SUFFIX;
   }
 
   public void initFacet() {
