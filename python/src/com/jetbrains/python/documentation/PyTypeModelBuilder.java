@@ -267,14 +267,19 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyUnionType && allowUnions) {
       final PyUnionType unionType = (PyUnionType)type;
+      final Collection<PyType> unionMembers = unionType.getMembers();
       if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false)) {
         result = new UnknownType(build(unionType.excludeNull(myContext), true));
+      }
+      else if (unionMembers.stream().allMatch(t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
+        final List<TypeModel> instanceTypes = ContainerUtil.map(unionMembers, t -> build(((PyClassType)t).toInstance(), allowUnions));
+        result = new ClassObjectType(new OneOf(instanceTypes));
       }
       else {
         result = Optional
           .ofNullable(getOptionalType(unionType))
-          .<PyTypeModelBuilder.TypeModel>map(optionalType -> new OptionalType(build(optionalType, true)))
-          .orElseGet(() -> new OneOf(Collections2.transform(unionType.getMembers(), t -> build(t, false))));
+          .<TypeModel>map(optionalType -> new OptionalType(build(optionalType, true)))
+          .orElseGet(() -> new OneOf(Collections2.transform(unionMembers, t -> build(t, false))));
       }
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {

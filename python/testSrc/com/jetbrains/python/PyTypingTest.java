@@ -858,6 +858,15 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Tuple[Type[42], Type[], Type[unresolved]]):\n" +
            "    expr = x");
   }
+  
+  // PY-20057
+  public void testUnionOfClassObjectTypes() {
+    doTest("Type[Union[int, str]]",
+           "from typing import Type, Union\n" +
+           "\n" +
+           "def f(x: Type[Union[int, str]]):\n" +
+           "    expr = x");
+  }
 
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);

@@ -529,6 +529,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           if (typeVar != null && !typeVar.isDefinition()) {
             return Ref.create(new PyGenericType(typeVar.getName(), typeVar.getBound(), true));
           }
+          // Represent Type[Union[str, int]] internally as Union[Type[str], Type[int]]
+          final PyUnionType unionType = as(type, PyUnionType.class);
+          if (unionType != null &&
+              unionType.getMembers().stream().allMatch(t -> t instanceof PyClassType && !((PyClassType)t).isDefinition())) {
+            return Ref.create(PyUnionType.union(ContainerUtil.map(unionType.getMembers(), t -> ((PyClassType)t).toClass())));
+          }
         }
         // Map Type[Something] with unsupported type parameter to Any, instead of generic type for the class "type"
         return Ref.create();
