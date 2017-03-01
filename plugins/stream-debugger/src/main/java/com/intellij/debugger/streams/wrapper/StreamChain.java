@@ -131,7 +131,7 @@ public class StreamChain {
       final MethodCall call = iterator.next();
       builder.append(call.getName()).append(call.getArguments());
       if (iterator.hasNext()) {
-        builder.append(".");
+        builder.append(System.lineSeparator()).append(".");
       }
     }
 
