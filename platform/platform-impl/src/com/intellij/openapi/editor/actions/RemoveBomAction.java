@@ -18,10 +18,9 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -63,13 +62,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
           byte[] bytes = file.contentsToByteArray();
           byte[] contentWithStrippedBom = new byte[bytes.length - bom.length];
           System.arraycopy(bytes, bom.length, contentWithStrippedBom, 0, contentWithStrippedBom.length);
-          ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Void, IOException>() {
-            @Override
-            public Void compute() throws IOException {
-              file.setBinaryContent(contentWithStrippedBom);
-              return null;
-            }
-          });
+          WriteAction.run(() -> file.setBinaryContent(contentWithStrippedBom));
         }
         catch (IOException ex) {
           LOG.warn("Unexpected exception occurred on attempt to remove BOM from file " + file, ex);
