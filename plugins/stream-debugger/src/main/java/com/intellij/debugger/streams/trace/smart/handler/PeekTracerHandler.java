@@ -31,7 +31,7 @@ public class PeekTracerHandler extends HandlerBase {
   @Override
   public List<MethodCall> additionalCallsAfter() {
     final String afterMapName = myBeforeVariable.getName();
-    return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.addAndGet(), x)", afterMapName)));
+    return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.incrementAndGet(), x)", afterMapName)));
   }
 
   @NotNull
