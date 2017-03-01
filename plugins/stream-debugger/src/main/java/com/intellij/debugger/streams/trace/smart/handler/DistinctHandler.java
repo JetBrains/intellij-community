@@ -4,6 +4,7 @@ import com.intellij.debugger.streams.wrapper.MethodCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -11,25 +12,34 @@ import java.util.List;
  */
 public class DistinctHandler extends HandlerBase {
   private final PeekTracerHandler myPeekTracer;
+  private final HashMapVariableImpl myStoreMapVariable;
+  private final HashMapVariableImpl myResolveMapVariable;
 
   public DistinctHandler(int callNumber, @NotNull String callName) {
     myPeekTracer = new PeekTracerHandler(callNumber, callName);
 
+    final String variablePrefix = callName + callNumber;
+    myStoreMapVariable = new HashMapVariableImpl(variablePrefix + "Store", "Object", "Map<Integer, Object>", false);
+    myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", "Object", "Object", false);
   }
 
   @NotNull
   @Override
   public List<MethodCall> additionalCallsBefore() {
-    final List<MethodCall> result = new ArrayList<>();
-    // TODO: insert calls
-    result.addAll(myPeekTracer.additionalCallsBefore());
+    final List<MethodCall> result = new ArrayList<>(myPeekTracer.additionalCallsBefore());
+
+    final PeekCall storeCall = new PeekCall(createStoreLambda());
+    result.add(storeCall);
     return result;
   }
 
   @NotNull
   @Override
   public List<MethodCall> additionalCallsAfter() {
-    return myPeekTracer.additionalCallsAfter();
+    final List<MethodCall> result = new ArrayList<>(myPeekTracer.additionalCallsAfter());
+    final MethodCall checkCall = new PeekCall(createResolveLambda());
+    result.add(checkCall);
+    return result;
   }
 
   @NotNull
@@ -41,7 +51,7 @@ public class DistinctHandler extends HandlerBase {
   @NotNull
   @Override
   public String getResultExpression() {
-    return null;
+    return "";
   }
 
   @NotNull
@@ -50,8 +60,34 @@ public class DistinctHandler extends HandlerBase {
   }
 
   @NotNull
+  private String createStoreLambda() {
+    final String storeMap = myStoreMapVariable.getName();
+    return "x -> " +
+           String.format("%s.computeIfAbsent(x, () -> new LinkedHashMap<Object>).put(time.get(), x)", storeMap);
+  }
+
+  @NotNull
+  private String createResolveLambda() {
+    final String newLine = System.lineSeparator();
+    final String storeMap = myStoreMapVariable.getName();
+    final String resolveMap = myResolveMapVariable.getName();
+
+    return "x -> {" + newLine +
+           "final Map<Integer, Object> objects = " + String.format("%s.get(x);", storeMap) + newLine +
+           "for (final int key: objects) {" + newLine +
+           "final Object value = objects.get(key);" + newLine +
+           "if (value == x) {" + newLine +
+           String.format("%s.put(key, time.get())", resolveMap) + newLine +
+           "    }" + newLine +
+           "  }" + newLine +
+           "}" + newLine;
+  }
+
+  @NotNull
   @Override
   protected List<Variable> getVariables() {
-    return null;
+    final List<Variable> variables = new ArrayList<>(Arrays.asList(myStoreMapVariable, myResolveMapVariable));
+    variables.addAll(myPeekTracer.getVariables());
+    return variables;
   }
 }
