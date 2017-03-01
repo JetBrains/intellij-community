@@ -140,5 +140,6 @@
     <orderEntry type="module" module-name="android-plugin" />
     <orderEntry type="module" module-name="android" />
     <orderEntry type="module" module-name="designer" />
+    <orderEntry type="module" module-name="smali" />
   </component>
 </module>
