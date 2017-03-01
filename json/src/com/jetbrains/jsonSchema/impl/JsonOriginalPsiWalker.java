@@ -137,7 +137,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     final JsonObject object = PsiTreeUtil.getParentOfType(element, JsonObject.class);
     if (object != null) {
       return object.getPropertyList().stream()
-        .filter(p -> StringUtil.isQuotedString(p.getName()))
+        .filter(p -> p.getNameElement() instanceof JsonStringLiteral)
         .map(p -> StringUtil.unquoteString(p.getName())).collect(Collectors.toSet());
     }
     return Collections.emptySet();
