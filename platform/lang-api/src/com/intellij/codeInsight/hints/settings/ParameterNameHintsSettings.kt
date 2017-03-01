@@ -165,10 +165,12 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
 }
 
 private fun Element.addLanguagePatternElements(language: String, patterns: Set<String>, tag: String) {
-  val list = getOrCreateChild(XmlTagHelper.LANGUAGE_LIST)
-  list.setAttribute(XmlTagHelper.LANGUAGE, language)
   val elements = patterns.map { it.toPatternElement(tag) }
-  list.addContent(elements)
+  val languageBlacklist = Element(XmlTagHelper.LANGUAGE_LIST).apply {
+    setAttribute(XmlTagHelper.LANGUAGE, language)
+    addContent(elements)
+  }
+  addContent(languageBlacklist)
 }
 
 private fun Element.extractPatterns(tag: String): Set<String> {
