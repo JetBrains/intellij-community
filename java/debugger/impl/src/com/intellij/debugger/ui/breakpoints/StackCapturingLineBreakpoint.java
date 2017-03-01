@@ -239,12 +239,14 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static class MyEvaluator {
     private final String myExpression;
     private final boolean myCached;
-    ExpressionEvaluator myEvaluator;
+    private ExpressionEvaluator myEvaluator;
+    private final boolean myNeedKeepValue;
 
     public MyEvaluator(String expression, boolean cached) {
       myExpression = expression;
       int paramId = DecompiledLocalVariable.getParamId(myExpression);
-      if (paramId > -1) {
+      boolean paramEvaluator = paramId > -1;
+      if (paramEvaluator) {
         myEvaluator = new ExpressionEvaluatorImpl(new Evaluator() {
           @Override
           public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
@@ -258,6 +260,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         });
         cached = true;
       }
+      myNeedKeepValue = !paramEvaluator;
       myCached = cached;
     }
 
@@ -274,7 +277,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       }
       if (myEvaluator != null) {
         Value value = myEvaluator.evaluate(context);
-        DebuggerUtilsEx.keep(value, context);
+        if (myNeedKeepValue) {
+          DebuggerUtilsEx.keep(value, context);
+        }
         return value;
       }
       return null;
