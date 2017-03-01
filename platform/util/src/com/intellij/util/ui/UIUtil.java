@@ -1472,6 +1472,10 @@ public class UIUtil {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
   }
 
+  public static boolean isUnderDefaultMacTheme() {
+    return SystemInfo.isMac && isUnderIntelliJLaF();
+  }
+
   public static boolean isUnderWin10LookAndFeel() {
     return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui");
   }
