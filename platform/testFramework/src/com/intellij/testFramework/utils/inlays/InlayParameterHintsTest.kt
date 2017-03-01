@@ -59,8 +59,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val expectedInlays: List<InlayInfo> = extractInlays(document)
     val actual: List<Pair<Int, String>> = getActualInlays()
     
-    val provider = InlayParameterHintsExtension.forLanguage(file.language)
-    val expected = expectedInlays.map { Pair(it.offset, provider.getInlayPresentation(it.text)) }
+    val expected = expectedInlays.map { Pair(it.offset, it.text) }
     
     if (expectedInlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
       val proposedText = StringBuilder(document.text)
