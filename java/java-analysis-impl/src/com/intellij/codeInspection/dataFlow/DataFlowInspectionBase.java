@@ -39,6 +39,7 @@ import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -401,6 +402,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static void reportAlwaysFailingCalls(ProblemsHolder holder,
                                                DataFlowInstructionVisitor visitor,
                                                HashSet<PsiElement> reportedAnchors) {
+    if (ProjectFileIndex.SERVICE.getInstance(holder.getProject()).isInTestSourceContent(holder.getFile().getViewProvider().getVirtualFile())) {
+      return;
+    }
+
     for (PsiCall call : visitor.getAlwaysFailingCalls()) {
       PsiMethod method = call.resolveMethod();
       if (method != null && reportedAnchors.add(call)) {
