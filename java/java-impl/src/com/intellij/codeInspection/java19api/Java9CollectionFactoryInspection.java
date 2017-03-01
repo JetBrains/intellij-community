@@ -308,9 +308,12 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       if(model == null) return;
       String typeArgument = getTypeArguments(call.getType(), model.myType);
       CommentTracker ct = new CommentTracker();
+      String replacementText = StreamEx.of(model.myContent)
+        .prepend((PsiExpression)null)
+        .pairMap((prev, next) -> (prev == null ? "" : CommentTracker.commentsBetween(prev, next)) + ct.text(next))
+        .joining(",", "java.util." + model.myType + "." + typeArgument + "of(", ")");
       model.myElementsToDelete.forEach(ct::delete);
-      PsiElement replacement = ct.replaceAndRestoreComments(call, StreamEx.of(model.myContent).map(ct::text)
-        .joining(",", "java.util." + model.myType + "." + typeArgument + "of(", ")"));
+      PsiElement replacement = ct.replaceAndRestoreComments(call, replacementText);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(replacement);
     }
 
