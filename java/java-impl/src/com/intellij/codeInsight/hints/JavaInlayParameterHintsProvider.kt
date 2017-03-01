@@ -88,7 +88,16 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.equal(*)",
 
       "java.lang.Math.*",
-      "org.slf4j.Logger.*"
+      "org.slf4j.Logger.*",
+      
+      "*.singleton(*)",
+      "*.singletonList(*)",
+      
+      "*.Set.of",
+      "*.ImmutableList.of",
+      "*.ImmutableMultiset.of",
+      "*.ImmutableSortedMultiset.of",
+      "*.ImmutableSortedSet.of"
   )
   
   val isDoNotShowIfMethodNameContainsParameterName = Option("java.method.name.contains.parameter.name", 
