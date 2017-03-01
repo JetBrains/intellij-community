@@ -25,8 +25,6 @@ import java.util.Objects;
  */
 public final class GitVcsPushOptionValue implements VcsPushOptionValue {
 
-  public static final GitVcsPushOptionValue UNDEFINED = new GitVcsPushOptionValue(null, false);
-
   @Nullable private final GitPushTagMode myPushTagMode;
   private final boolean skipHook;
 
