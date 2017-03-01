@@ -34,16 +34,19 @@ abstract class BaseRCSettingsConfigurable extends SettingsEditorConfigurable<Run
   @Override
   public boolean isModified() {
     try {
-    RunnerAndConfigurationSettings original = getSettings();
-    RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
+      RunnerAndConfigurationSettings original = getSettings();
+      RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
 
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(original.getConfiguration().getProject());
-    if (runManager.findExistingConfigurationId(original) == null) return true;
-    if (!super.isModified()) return false;
+      final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(original.getConfiguration().getProject());
+      if (runManager.findExistingConfigurationId(original) == null) return true;
+      if (!super.isModified()) return false;
       if (!original.isTemplate() && runManager.findExistingConfigurationId(original) == null) {
         return true;
       }
       if (isSnapshotSpecificallyModified(runManager, original, snapshot)) {
+        return true;
+      }
+      if (!runManager.getBeforeRunTasks(original.getConfiguration()).equals(runManager.getBeforeRunTasks(snapshot.getConfiguration()))) {
         return true;
       }
       if (original instanceof JDOMExternalizable && snapshot instanceof JDOMExternalizable) {
