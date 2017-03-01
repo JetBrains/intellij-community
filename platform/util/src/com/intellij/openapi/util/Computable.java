@@ -25,7 +25,6 @@ public interface Computable <T> {
 
   T compute();
 
-  @Deprecated
   class PredefinedValueComputable<T> implements Computable<T> {
 
     private final T myValue;
