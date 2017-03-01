@@ -21,24 +21,14 @@ def log_error_once(msg):
 
 pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
 
-def _get_pydevd_args():
-    new_args = []
-    for x in sys.original_argv:
-        new_args.append(x)
-        if x == '--file':
-            break
-    return new_args
-
 def _get_python_c_args(host, port, indC, args):
-    host_literal = "'" + host + "'" if host is not None else 'None'
     return ("import sys; sys.path.append(r'%s'); import pydevd; "
-            "pydevd.settrace(host=%s, port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
-            "sys.original_argv = %s; %s"
+            "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
+            "%s"
             ) % (
                pydev_src_dir,
-               host_literal,
+               host,
                port,
-               _get_pydevd_args(),
                args[indC + 1])
 
 def _get_host_port():
@@ -155,7 +145,9 @@ def patch_args(args):
         # Original args should be something as:
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
-        original = sys.original_argv[:]
+        from _pydevd_bundle.pydevd_command_line_handling import setup_to_argv
+        from pydevd import SetupHolder
+        original = setup_to_argv(SetupHolder.setup) + ['--file']
         while i < len(args):
             if args[i] == '-m':
                 # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
