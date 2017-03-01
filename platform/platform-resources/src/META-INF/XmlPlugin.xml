@@ -460,6 +460,10 @@
                      bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
+    <localInspection language="HTML" enabledByDefault="true" level="INFORMATION"
+                     bundle="messages.XmlBundle" key="html.inspections.missing.closing.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlMissingClosingTagInspection"/>
     <localInspection language="XML" shortName="HtmlUnknownTarget" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.target"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
