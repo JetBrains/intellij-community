@@ -1657,8 +1657,6 @@ public class UsageViewImpl implements UsageView {
 
     @Override
     public void calcData(final DataKey key, final DataSink sink) {
-      Node node = getSelectedNode();
-
       if (key == CommonDataKeys.PROJECT) {
         sink.put(CommonDataKeys.PROJECT, myProject);
       }
@@ -1698,16 +1696,19 @@ public class UsageViewImpl implements UsageView {
       else if (key == PlatformDataKeys.COPY_PROVIDER) {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
-      else if (node != null) {
-        Object userObject = node.getUserObject();
-        if (userObject instanceof TypeSafeDataProvider) {
-          ((TypeSafeDataProvider)userObject).calcData(key, sink);
-        }
-        else if (userObject instanceof DataProvider) {
-          DataProvider dataProvider = (DataProvider)userObject;
-          Object data = dataProvider.getData(key.getName());
-          if (data != null) {
-            sink.put(key, data);
+      else {
+        Node node = getSelectedNode();
+        if (node != null) {
+          Object userObject = node.getUserObject();
+          if (userObject instanceof TypeSafeDataProvider) {
+            ((TypeSafeDataProvider)userObject).calcData(key, sink);
+          }
+          else if (userObject instanceof DataProvider) {
+            DataProvider dataProvider = (DataProvider)userObject;
+            Object data = dataProvider.getData(key.getName());
+            if (data != null) {
+              sink.put(key, data);
+            }
           }
         }
       }
