@@ -56,7 +56,6 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     final int callCount = calls.size();
     final StringBuilder declarationBuilder = new StringBuilder();
     final StringBuilder resultBuilder = new StringBuilder();
-    final StringBuilder resultPreparationBuilder = new StringBuilder();
     declarationBuilder.append(String.format(INFO_ARRAY_DECLARATION_FORMAT, callCount));
     for (int i = 0; i < calls.size(); i++) {
       final MethodCall call = calls.get(i);
@@ -65,8 +64,10 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
       final StreamCallTraceHandler handler = HandlerFactory.create(i, name);
 
       declarationBuilder.append(handler.additionalVariablesDeclaration());
-      resultPreparationBuilder.append(handler.prepareResult());
+      resultBuilder.append("{").append(System.lineSeparator());
+      resultBuilder.append(handler.prepareResult());
       resultBuilder.append(String.format("info[%d] = %s;", i, handler.getResultExpression())).append(System.lineSeparator());
+      resultBuilder.append("}").append(System.lineSeparator());
 
       final List<MethodCall> callsBefore = handler.additionalCallsBefore();
       final List<MethodCall> callsAfter = handler.additionalCallsAfter();
@@ -80,7 +81,7 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     final StreamChain newChain = new StreamChain(tracingChainCalls);
     final String tracingCall = "final Object streamResult = " + newChain.getText() + ";" + System.lineSeparator();
 
-    final String result = declarationBuilder.toString() + tracingCall + resultPreparationBuilder.toString() + resultBuilder.toString();
+    final String result = declarationBuilder.toString() + tracingCall + resultBuilder.toString();
     LOG.info("stream expression to trace:" + System.lineSeparator() + result);
     return result;
   }
