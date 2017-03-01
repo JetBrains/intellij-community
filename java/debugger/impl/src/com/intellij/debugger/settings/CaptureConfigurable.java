@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.settings;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -204,7 +205,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
     public static final int INSERT_KEY_EXPR = 6;
 
     static final String[] COLUMN_NAMES =
-      new String[]{"", "Class name", "Method name", "Key expression", "Insert class name", "Insert method name", "Insert key expression"};
+      new String[]{"", "Capture class name", "Capture method name", "Capture key expression", "Insert class name", "Insert method name", "Insert key expression"};
     List<CapturePoint> myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
 
     public String getColumnName(int column) {
@@ -319,7 +320,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Capture";
+    return DebuggerBundle.message("async.stacktraces.configurable.display.name");
   }
 
   @Nullable
