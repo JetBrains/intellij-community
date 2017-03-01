@@ -209,8 +209,11 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     final boolean hasSnapshotMapping = indexExtension instanceof FileBasedIndexExtension &&
                                        ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
                                        IdIndex.ourSnapshotMappingsEnabled;
+    if (hasSnapshotMapping) return null;
 
-    return hasSnapshotMapping ? null : new SharedMapBasedForwardIndex<>(new MyForwardIndex<>(indexExtension));
+    MapBasedForwardIndex<Key, Value> backgroundIndex =
+      !SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS ? new MyForwardIndex<>(indexExtension) : null;
+    return new SharedMapBasedForwardIndex<>(indexExtension, backgroundIndex);
   }
 
   private static class MyForwardIndex<Key, Value> extends MapBasedForwardIndex<Key, Value> {
