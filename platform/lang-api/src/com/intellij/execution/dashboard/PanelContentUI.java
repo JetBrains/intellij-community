@@ -27,15 +27,11 @@ import java.awt.*;
  * @author konstantin.aleev
  */
 class PanelContentUI implements ContentUI {
-
-  private final JPanel myPanel;
-
-  public PanelContentUI() {
-    myPanel = new JPanel(new BorderLayout());
-  }
+  private JPanel myPanel;
 
   @Override
   public JComponent getComponent() {
+    initUI();
     return myPanel;
   }
 
@@ -43,14 +39,27 @@ class PanelContentUI implements ContentUI {
   public void setManager(@NotNull ContentManager manager) {
     manager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
+      public void contentAdded(ContentManagerEvent event) {
+        initUI();
+      }
+
+      @Override
       public void selectionChanged(final ContentManagerEvent event) {
         if (ContentManagerEvent.ContentOperation.add == event.getOperation()) {
           showContent(event.getContent());
-        } else if (ContentManagerEvent.ContentOperation.remove == event.getOperation()) {
+        }
+        else if (ContentManagerEvent.ContentOperation.remove == event.getOperation()) {
           hideContent();
         }
       }
     });
+  }
+
+  private void initUI() {
+    if (myPanel != null) {
+      return;
+    }
+    myPanel = new JPanel(new BorderLayout());
   }
 
   private void showContent(@NotNull Content content) {
@@ -121,5 +130,4 @@ class PanelContentUI implements ContentUI {
   @Override
   public void dispose() {
   }
-
 }
