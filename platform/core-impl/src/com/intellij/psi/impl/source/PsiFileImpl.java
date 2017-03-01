@@ -406,7 +406,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   @Override
   public long getModificationStamp() {
     PsiElement context = getContext();
-    PsiFile contextFile = context == null ? null : context.getContainingFile();
+    PsiFile contextFile = context == null || !context.isValid() ? null : context.getContainingFile();
     long contextStamp = contextFile == null ? 0 : contextFile.getModificationStamp();
     return myModificationStamp + contextStamp;
   }
