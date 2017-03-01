@@ -29,6 +29,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -164,10 +165,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if(qualifier != null) {
         PsiType elementType = StreamApiUtil.getStreamElementType(qualifier.getType());
-        if(elementType == null || ((elementType instanceof PsiClassType) && ((PsiClassType)elementType).isRaw())) {
-          // Raw type in any stream step is not supported
-          return null;
-        }
+        if (!isValidElementType(elementType, call)) return null;
         Operation op = Operation.createIntermediate(name, args, outVar, elementType, supportUnknownSources);
         if (op != null) return op;
         op = TerminalOperation.createTerminal(name, args, elementType, callType, isVoidContext(call.getParent()));
@@ -176,6 +174,21 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       return null;
     }
     return SourceOperation.createSource(call, supportUnknownSources);
+  }
+
+  private static boolean isValidElementType(PsiType elementType, PsiElement context) {
+    if(elementType == null || ((elementType instanceof PsiClassType) && ((PsiClassType)elementType).isRaw())) {
+      // Raw type in any stream step is not supported
+      return false;
+    }
+    if(elementType instanceof PsiImmediateClassType) {
+      PsiType typeFromText =
+        JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(elementType.getCanonicalText(), context);
+      if(!(typeFromText instanceof PsiClassType) || ((PsiClassType)typeFromText).resolve() == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean isVoidContext(PsiElement element) {
@@ -198,7 +211,7 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       FunctionHelper fn = FunctionHelper.create(args[0], 1, true);
       if (fn == null) return null;
       PsiType elementType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
-      if(elementType == null) return null;
+      if(!isValidElementType(elementType, terminalCall)) return null;
       elementType = GenericsUtil.getVariableTypeByExpressionType(elementType);
       TerminalOperation terminal = new TerminalOperation.ForEachTerminalOperation(fn);
       SourceOperation source = new SourceOperation.ForEachSource(qualifier);
