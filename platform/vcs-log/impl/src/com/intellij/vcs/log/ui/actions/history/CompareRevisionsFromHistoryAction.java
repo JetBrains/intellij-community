@@ -39,6 +39,7 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 public class CompareRevisionsFromHistoryAction extends AnAction implements DumbAware {
@@ -85,11 +86,16 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
-
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
     FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
+
+    if (e.getInputEvent() instanceof MouseEvent && ui.getTable().isResizingColumns()) {
+      // disable action during columns resize
+      return;
+    }
+
+    VcsLogUtil.triggerUsage(e);
 
     List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
     if (commits.size() != 1 && commits.size() != 2) return;

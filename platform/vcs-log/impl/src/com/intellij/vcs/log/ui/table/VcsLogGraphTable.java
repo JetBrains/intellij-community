@@ -653,7 +653,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  boolean isResizingColumns() {
+  public boolean isResizingColumns() {
     return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
   }
 
