@@ -1,4 +1,4 @@
-package com.jetbrains.edu.intellij.android;
+package com.jetbrains.edu.learning.intellij.android;
 
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.projectWizard.ProjectTemplateList;
@@ -8,7 +8,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.platform.ProjectTemplate;
-import com.jetbrains.edu.intellij.EduIntelliJProjectTemplate;
+import com.jetbrains.edu.learning.intellij.EduIntelliJProjectTemplate;
 
 import javax.swing.*;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.jetbrains.edu.intellij;
+package com.jetbrains.edu.learning.intellij;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;

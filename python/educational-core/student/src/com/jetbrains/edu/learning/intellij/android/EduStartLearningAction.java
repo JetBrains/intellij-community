@@ -1,11 +1,11 @@
-package com.jetbrains.edu.intellij.android;
+package com.jetbrains.edu.learning.intellij.android;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.jetbrains.edu.intellij.EduIntelliJProjectTemplate;
+import com.jetbrains.edu.learning.intellij.EduIntelliJProjectTemplate;
 
 public class EduStartLearningAction extends AnAction {
 

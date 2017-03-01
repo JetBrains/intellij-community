@@ -1,4 +1,4 @@
-package com.jetbrains.edu.intellij;
+package com.jetbrains.edu.learning.intellij;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.WizardContext;

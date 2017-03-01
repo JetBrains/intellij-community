@@ -1,4 +1,4 @@
-package com.jetbrains.edu.intellij;
+package com.jetbrains.edu.learning.intellij;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.platform.ProjectTemplate;

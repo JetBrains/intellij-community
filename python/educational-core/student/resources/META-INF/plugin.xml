@@ -37,9 +37,9 @@
   </application-components>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="Edu.eduIntelliJProjectTemplate" interface="com.jetbrains.edu.intellij.EduIntelliJProjectTemplate"/>
+    <extensionPoint qualifiedName="Edu.eduIntelliJProjectTemplate" interface="com.jetbrains.edu.learning.intellij.EduIntelliJProjectTemplate"/>
     <extensionPoint qualifiedName="Edu.courseConfigurator" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.intellij.EduCourseConfigurator"/>
+      <with attribute="implementationClass" implements="com.jetbrains.edu.learning.intellij.EduCourseConfigurator"/>
     </extensionPoint>
     <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.checker.StudyExecutor"/>
