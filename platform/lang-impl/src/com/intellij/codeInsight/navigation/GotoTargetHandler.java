@@ -136,7 +136,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
           return myActionElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
         PsiElementListCellRenderer renderer = getRenderer(value, gotoData.renderers, gotoData);
-        return renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        return renderer.getListCellRendererComponent(list, (PsiElement)value, index, isSelected, cellHasFocus);
       }
     });
 

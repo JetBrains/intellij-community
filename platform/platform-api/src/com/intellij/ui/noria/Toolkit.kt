@@ -16,7 +16,6 @@
 package com.intellij.ui.noria
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.Extensions
 import java.awt.FlowLayout
 import java.awt.LayoutManager
 
@@ -62,7 +61,7 @@ interface PrimitiveComponentType<C : Any, in T : BaseProps> {
     val EP_NAME: ExtensionPointName<PrimitiveComponentType<*, *>> = ExtensionPointName.create<PrimitiveComponentType<*, *>>(
         "com.intellij.openapi.ui.noria.BasicUIComponentTypeEP")
 
-    private fun getTypes() = Extensions.getExtensions(EP_NAME)
+    private fun getTypes() = listOf(CheckboxComponentType());//Extensions.getExtensions(EP_NAME)
     fun getComponents(): Map<String, PrimitiveComponentType<*, *>> = getTypes().map { it.type to it }.toMap()
   }
 

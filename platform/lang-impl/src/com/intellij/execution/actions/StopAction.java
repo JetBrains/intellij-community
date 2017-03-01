@@ -28,12 +28,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ITypedChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -133,40 +133,41 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
         return;
       }
 
-      final JBList list = new JBList(handlerItems.first);
-      if (handlerItems.second != null) list.setSelectedValue(handlerItems.second, true);
+      List<HandlerItem> items = handlerItems.first;
+      ITypedChooserBuilder<HandlerItem> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+        .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<HandlerItem>() {
+          @Nullable
+          @Override
+          public String getTextFor(HandlerItem value) {
+            return value != null ? value.displayName : null;
+          }
 
-      list.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter() {
-        @Nullable
-        @Override
-        public String getTextFor(Object value) {
-          return value instanceof HandlerItem ? ((HandlerItem)value).displayName : null;
-        }
+          @Nullable
+          @Override
+          public Icon getIconFor(HandlerItem value) {
+            return value != null ? value.icon : null;
+          }
 
-        @Nullable
-        @Override
-        public Icon getIconFor(Object value) {
-          return value instanceof HandlerItem ? ((HandlerItem)value).icon : null;
-        }
-
-        @Override
-        public boolean hasSeparatorAboveOf(Object value) {
-          return value instanceof HandlerItem && ((HandlerItem)value).hasSeparator;
-        }
-      }));
-
-      JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
+          @Override
+          public boolean hasSeparatorAboveOf(HandlerItem value) {
+            return value != null && value.hasSeparator;
+          }
+        }))
         .setMovable(true)
-        .setTitle(handlerItems.first.size() == 1 ? "Confirm process stop" : "Stop process")
+        .setTitle(items.size() == 1 ? "Confirm process stop" : "Stop process")
         .setFilteringEnabled(o -> ((HandlerItem)o).displayName)
-        .setItemChoosenCallback(() -> {
-          List valuesList = list.getSelectedValuesList();
-          for (Object o : valuesList) {
-            if (o instanceof HandlerItem) ((HandlerItem)o).stop();
+        .setItemsChoosenCallback((valuesList) -> {
+          for (HandlerItem item : valuesList) {
+            item.stop();
           }
         })
-        .setRequestFocus(true)
+        .setRequestFocus(true);
+      if (handlerItems.second != null) {
+        builder.setSelectedValue(handlerItems.second, true);
+      }
+      JBPopup popup = builder
         .createPopup();
+
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;
       if (component != null && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {

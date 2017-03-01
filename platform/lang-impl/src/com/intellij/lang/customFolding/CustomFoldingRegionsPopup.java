@@ -21,59 +21,45 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Rustam Vishnyakov
  */
 public class CustomFoldingRegionsPopup {
-  private final @NotNull JBList myRegionsList;
-  private final @NotNull JBPopup myPopup;
-  private final @NotNull Editor myEditor;
-
-  CustomFoldingRegionsPopup(@NotNull Collection<FoldingDescriptor> descriptors,
-                            @NotNull final Editor editor,
-                            @NotNull final Project project) {
-    myEditor = editor;
-    myRegionsList = new JBList();
-    //noinspection unchecked
-    myRegionsList.setModel(new MyListModel(orderByPosition(descriptors)));
-    myRegionsList.setSelectedIndex(0);
-
-    final IPopupChooserBuilder popupBuilder = JBPopupFactory.getInstance().createPopupChooserBuilder(myRegionsList);
-      myPopup = popupBuilder
-        .setTitle(IdeBundle.message("goto.custom.region.command"))
-        .setResizable(false)
-        .setMovable(false)
-        .setItemChoosenCallback(() -> {
-          PsiElement navigationElement = getNavigationElement();
+  public static void show(@NotNull final Collection<FoldingDescriptor> descriptors,
+                          @NotNull final Editor editor,
+                          @NotNull final Project project) {
+    List<MyFoldingDescriptorWrapper> model =
+      orderByPosition(descriptors)
+        .stream()
+        .map(descriptor -> new MyFoldingDescriptorWrapper(descriptor))
+        .collect(Collectors.toList());
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(model)
+      .setTitle(IdeBundle.message("goto.custom.region.command"))
+      .setResizable(false)
+      .setMovable(false)
+      .setItemChoosenCallback((selection) -> {
+        if (selection != null) {
+          PsiElement navigationElement = selection.getDescriptor().getElement().getPsi();
           if (navigationElement != null) {
             navigateTo(editor, navigationElement);
             IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
           }
-        }).createPopup();
-  }
-
-  void show() {
-    myPopup.showInBestPositionFor(myEditor);
-  }
-
-  private static class MyListModel extends DefaultListModel {
-    private MyListModel(Collection<FoldingDescriptor> descriptors) {
-      for (FoldingDescriptor descriptor : descriptors) {
-        //noinspection unchecked
-        super.addElement(new MyFoldingDescriptorWrapper(descriptor));
-      }
-    }
+        }
+      })
+      .createPopup()
+      .showInBestPositionFor(editor);
   }
 
   private static class MyFoldingDescriptorWrapper {
@@ -95,16 +81,7 @@ public class CustomFoldingRegionsPopup {
     }
   }
 
-  @Nullable
-  public PsiElement getNavigationElement() {
-    Object selection = myRegionsList.getSelectedValue();
-    if (selection instanceof MyFoldingDescriptorWrapper) {
-      return  ((MyFoldingDescriptorWrapper)selection).getDescriptor().getElement().getPsi();
-    }
-    return null;
-  }
-
-  private static Collection<FoldingDescriptor> orderByPosition(Collection<FoldingDescriptor> descriptors) {
+  private static List<FoldingDescriptor> orderByPosition(Collection<FoldingDescriptor> descriptors) {
     List<FoldingDescriptor> sorted = new ArrayList<>(descriptors.size());
     sorted.addAll(descriptors);
     Collections.sort(sorted, (descriptor1, descriptor2) -> {

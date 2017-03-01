@@ -33,12 +33,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -140,8 +138,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       return;
     }
 
-    final JList list = new JBList(frameworks.toArray(new TestFramework[frameworks.size()]));
-    list.setCellRenderer(new DefaultListCellRenderer() {
+    DefaultListCellRenderer cellRenderer = new DefaultListCellRenderer() {
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         Component result = super.getListCellRendererComponent(list, "", index, isSelected, cellHasFocus);
@@ -153,15 +150,13 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
         return result;
       }
-    });
-
-
-    IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
-    builder.setFilteringEnabled(o -> ((TestFramework)o).getName());
-
-    builder
+    };
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(frameworks)
+      .setRenderer(cellRenderer)
+      .setFilteringEnabled(o -> ((TestFramework)o).getName())
       .setTitle("Choose Framework")
-      .setItemChoosenCallback(() -> consumer.consume((TestFramework)list.getSelectedValue()))
+      .setItemChoosenCallback((selectedValue) -> consumer.consume(selectedValue))
       .setMovable(true)
       .createPopup().showInBestPositionFor(editor);
   }

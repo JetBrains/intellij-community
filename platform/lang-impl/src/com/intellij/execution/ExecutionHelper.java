@@ -42,7 +42,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.MessageView;
@@ -289,30 +288,28 @@ public class ExecutionHelper {
       descriptorToFront(project, descriptor);
     }
     else if (consoles.size() > 1) {
-      final JList list = new JBList(consoles);
       final Icon icon = DefaultRunExecutor.getRunExecutorInstance().getIcon();
-      list.setCellRenderer(new ListCellRendererWrapper<RunContentDescriptor>() {
-        @Override
-        public void customize(final JList list,
-                              final RunContentDescriptor value,
-                              final int index,
-                              final boolean selected,
-                              final boolean hasFocus) {
-          setText(value.getDisplayName());
-          setIcon(icon);
-        }
-      });
-
-      JBPopupFactory.getInstance().createPopupChooserBuilder(list)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(consoles))
+        .setRenderer(new ListCellRendererWrapper<RunContentDescriptor>() {
+          @Override
+          public void customize(final JList list,
+                                final RunContentDescriptor value,
+                                final int index,
+                                final boolean selected,
+                                final boolean hasFocus) {
+            setText(value.getDisplayName());
+            setIcon(icon);
+          }
+        })
         .setTitle(selectDialogTitle)
-        .setItemChoosenCallback(() -> {
-          final Object selectedValue = list.getSelectedValue();
-          if (selectedValue instanceof RunContentDescriptor) {
-            RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
+        .setItemChoosenCallback((descriptor) -> {
+          if (descriptor != null) {
             descriptorConsumer.consume(descriptor);
             descriptorToFront(project, descriptor);
           }
-        }).createPopup()
+        })
+        .createPopup()
         .showInBestPositionFor(dataContext);
     }
   }

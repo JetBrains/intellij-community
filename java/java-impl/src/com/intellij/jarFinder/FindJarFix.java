@@ -114,16 +114,16 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     final List<String> fqns = getPossibleFqns(myRef);
     myEditorComponent = editor.getComponent();
     if (fqns.size() > 1) {
-      final JBList listOfFqns = new JBList(fqns);
       JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(listOfFqns)
+        .createPopupChooserBuilder(fqns)
         .setTitle("Select Qualified Name")
-        .setItemChoosenCallback(() -> {
-          final Object value = listOfFqns.getSelectedValue();
-          if (value instanceof String) {
-            findJarsForFqn(((String)value), editor);
+        .setItemChoosenCallback((value) -> {
+          if (value != null) {
+            findJarsForFqn(value, editor);
           }
-        }).createPopup().showInBestPositionFor(editor);
+        })
+        .createPopup()
+        .showInBestPositionFor(editor);
     }
     else if (fqns.size() == 1) {
       findJarsForFqn(fqns.get(0), editor);
@@ -272,10 +272,10 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   }
 
   protected abstract Collection<String> getFqns(@NotNull T ref);
-  
+
   protected List<String> getPossibleFqns(T ref) {
     Collection<String> fqns = getFqns(ref);
-    
+
     List<String> res = new ArrayList<>(fqns.size());
 
     for (String fqn : fqns) {

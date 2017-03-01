@@ -36,7 +36,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
@@ -285,14 +284,13 @@ public class PyPep8NamingInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      final JBList list = new JBList(getBaseClassNames());
       DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext ->
-        JBPopupFactory.getInstance().createPopupChooserBuilder(list)
+        JBPopupFactory.getInstance().createPopupChooserBuilder(getBaseClassNames())
         .setTitle("Ignore base class")
-        .setItemChoosenCallback(() -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
+        .setItemChoosenCallback((selectedValue) -> InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, it -> {
           PyPep8NamingInspection inspection =
             (PyPep8NamingInspection)it.getUnwrappedTool(PyPep8NamingInspection.class.getSimpleName(), descriptor.getPsiElement());
-          addIfNotNull(inspection.ignoredBaseClasses, (String)list.getSelectedValue());
+          addIfNotNull(inspection.ignoredBaseClasses, selectedValue);
         }))
         .setFilteringEnabled(o -> (String)o)
         .createPopup()

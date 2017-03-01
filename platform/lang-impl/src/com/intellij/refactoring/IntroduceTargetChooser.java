@@ -26,13 +26,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduce.IntroduceTarget;
 import com.intellij.refactoring.introduce.PsiIntroduceTarget;
-import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,55 +90,26 @@ public class IntroduceTargetChooser {
                                                                             @NotNull @Nls String title,
                                                                             int selection) {
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
-    CollectionListModel<T> model = new CollectionListModel<>(expressions);
-    JBList<T> list = new JBList<>(model);
-    // Set the accessible name so that screen readers announce the list tile (e.g. "Expression Types list").
-    AccessibleContextUtil.setName(list, title);
-    list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    if (selection > -1) list.setSelectedIndex(selection);
-    list.setCellRenderer(new DefaultListCellRenderer() {
 
-      @Override
-      public Component getListCellRendererComponent(JList list,
-                                                    Object value,
-                                                    int index,
-                                                    boolean isSelected,
-                                                    boolean cellHasFocus) {
-        Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        IntroduceTarget expr = (T)value;
-        if (expr.isValid()) {
-          String text = expr.render();
-          int firstNewLinePos = text.indexOf('\n');
-          String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
-          if (trimmedText.length() != text.length()) trimmedText += " ...";
-          setText(trimmedText);
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(expressions)
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setSelectedValue(expressions.get(selection > -1 ? selection : null), true)
+      .setAccessibleName(title)
+      .setItemSelectedCallback((expr) -> {
+        ScopeHighlighter h = highlighter.get();
+        if (h == null) return;
+        h.dropHighlight();
+        if (expr != null && expr.isValid()) {
+          TextRange range = expr.getTextRange();
+          h.highlight(Pair.create(range, Collections.singletonList(range)));
         }
-        else {
-          setForeground(JBColor.RED);
-          setText("Invalid");
-        }
-        return rendererComponent;
-      }
-    });
-
-    list.addListSelectionListener(e -> {
-      ScopeHighlighter h = highlighter.get();
-      if (h == null) return;
-      h.dropHighlight();
-      T expr = list.getSelectedValue();
-      if (expr != null && expr.isValid()) {
-        TextRange range = expr.getTextRange();
-        h.highlight(Pair.create(range, Collections.singletonList(range)));
-      }
-    });
-
-    JBPopupFactory.getInstance().createPopupChooserBuilder(list)
+      })
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(() -> {
-        T expr = list.getSelectedValue();
+      .setItemChoosenCallback((expr) -> {
         if (expr != null && expr.isValid()) {
           callback.pass(expr);
         }
@@ -150,6 +118,29 @@ public class IntroduceTargetChooser {
         @Override
         public void onClosed(LightweightWindowEvent event) {
           highlighter.getAndSet(null).dropHighlight();
+        }
+      })
+      .setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean isSelected,
+                                                      boolean cellHasFocus) {
+          Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          IntroduceTarget expr = (T)value;
+          if (expr.isValid()) {
+            String text = expr.render();
+            int firstNewLinePos = text.indexOf('\n');
+            String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+            if (trimmedText.length() != text.length()) trimmedText += " ...";
+            setText(trimmedText);
+          }
+          else {
+            setForeground(JBColor.RED);
+            setText("Invalid");
+          }
+          return rendererComponent;
         }
       })
       .createPopup().showInBestPositionFor(editor);

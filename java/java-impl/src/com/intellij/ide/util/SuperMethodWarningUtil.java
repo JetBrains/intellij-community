@@ -33,8 +33,8 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -158,19 +158,20 @@ public class SuperMethodWarningUtil {
     final PsiMethod[] methods = {superMethod, method};
     final String renameBase = actionString + " base method";
     final String renameCurrent = actionString + " only current method";
-    final JBList list = new JBList(renameBase, renameCurrent);
-    JBPopupFactory.getInstance().createPopupChooserBuilder(list)
+
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(ContainerUtil.newArrayList(renameBase, renameCurrent))
       .setTitle(method.getName() + (containingClass.isInterface() && !aClass.isInterface() ? " implements" : " overrides") + " method of " +
                 SymbolPresentationUtil.getSymbolPresentableText(containingClass))
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(() -> {
-        final Object value = list.getSelectedValue();
-        if (value instanceof String) {
+      .setItemChoosenCallback((value) -> {
+        if (value != null) {
           processor.execute(methods[value.equals(renameBase) ? 0 : 1]);
         }
-      }).createPopup().showInBestPositionFor(editor);
+      })
+      .createPopup().showInBestPositionFor(editor);
   }
 
   @Messages.YesNoCancelResult

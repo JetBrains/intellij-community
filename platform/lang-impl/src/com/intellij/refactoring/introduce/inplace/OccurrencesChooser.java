@@ -25,16 +25,14 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * User: anna
@@ -93,34 +91,30 @@ public abstract class OccurrencesChooser<T> {
       callback.pass(occurrencesMap.keySet().iterator().next());
       return;
     }
-    final DefaultListModel model = new DefaultListModel();
-    for (ReplaceChoice choice : occurrencesMap.keySet()) {
-      model.addElement(choice);
-    }
-    final JList list = new JBList(model);
-    list.setCellRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final ReplaceChoice choices = (ReplaceChoice)value;
-        if (choices != null) {
-          String text = choices.getDescription();
-          if (choices == ReplaceChoice.ALL) {
-            text = MessageFormat.format(text, occurrencesMap.get(choices).size());
+    List<ReplaceChoice> model = occurrencesMap.keySet().stream().collect(Collectors.toList());
+
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(model)
+      .setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(final JList list,
+                                                      final Object value,
+                                                      final int index,
+                                                      final boolean isSelected,
+                                                      final boolean cellHasFocus) {
+          final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          final ReplaceChoice choices = (ReplaceChoice)value;
+          if (choices != null) {
+            String text = choices.getDescription();
+            if (choices == ReplaceChoice.ALL) {
+              text = MessageFormat.format(text, occurrencesMap.get(choices).size());
+            }
+            setText(text);
           }
-          setText(text);
+          return rendererComponent;
         }
-        return rendererComponent;
-      }
-    });
-    list.addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(final ListSelectionEvent e) {
-        final ReplaceChoice value = (ReplaceChoice)list.getSelectedValue();
+      })
+      .setItemSelectedCallback(value -> {
         if (value == null) return;
         dropHighlighters();
         final MarkupModel markupModel = myEditor.getMarkupModel();
@@ -132,15 +126,12 @@ public abstract class OccurrencesChooser<T> {
             HighlighterTargetArea.EXACT_RANGE);
           myRangeHighlighters.add(rangeHighlighter);
         }
-      }
-    });
-
-    JBPopupFactory.getInstance().createPopupChooserBuilder(list)
+      })
       .setTitle("Multiple occurrences found")
       .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(() -> callback.pass((ReplaceChoice)list.getSelectedValue()))
+      .setItemChoosenCallback(callback::pass)
       .addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {

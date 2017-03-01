@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.branchConfig;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -22,8 +23,8 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ModalityIgnorantBackgroundableTask;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -232,41 +233,23 @@ public class SelectBranchPopup {
       System.arraycopy(branches.toArray(), 0, items, 0, branches.size());
       items[items.length - 1] = REFRESH_MESSAGE;
 
-      final JList branchList = new JBList(items);
-      branchList.setCellRenderer(new BranchRenderer());
-      final JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(branchList)
+      final JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(items))
         .setTitle(SVNPathUtil.tail(selectedValue))
+        .setRenderer(new BranchRenderer())
         .setResizable(true)
         //.setDimensionServiceKey("Svn.CompareWithBranchPopup")
-        .setItemChoosenCallback(new Runnable() {
-          public void run() {
-            if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  loadBranches(selectedValue, new Runnable() {
-                    @Override
-                    public void run() {
-                      showBranchPopup(selectedValue);
-                    }
-                  });
-                }
-              });
-              return;
-            }
-            SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
-            if (item != null) {
-              myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
-            }
+        .setItemChoosenCallback((v) -> {
+          if (REFRESH_MESSAGE.equals(v)) {
+            ApplicationManager.getApplication().invokeLater(() -> loadBranches(selectedValue, () -> showBranchPopup(selectedValue)));
+            return;
+          }
+          SvnBranchItem item = (SvnBranchItem)v;
+          if (item != null) {
+            myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
           }
         })
-        .setFilteringEnabled(new NullableFunction<Object, String>() {
-          @Nullable
-          @Override
-          public String fun(Object item) {
-            return item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null;
-          }
-        })
+        .setFilteringEnabled(
+          (NullableFunction<Object, String>)item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
         .createPopup();
       showPopupAt(popup);
     }

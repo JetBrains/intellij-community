@@ -77,13 +77,11 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -880,30 +878,20 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     views.remove(getCurrentProjectViewPane());
     Collections.sort(views, PANE_WEIGHT_COMPARATOR);
 
-    final JList list = new JBList(ArrayUtil.toObjectArray(views));
-    list.setCellRenderer(new DefaultListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        AbstractProjectViewPane pane = (AbstractProjectViewPane)value;
-        setText(pane.getTitle());
-        return this;
-      }
-    });
-
-    if (!views.isEmpty()) {
-      list.setSelectedValue(views.get(0), true);
-    }
-    Runnable runnable = () -> {
-      if (list.getSelectedIndex() < 0) return;
-      AbstractProjectViewPane pane = (AbstractProjectViewPane)list.getSelectedValue();
-      changeView(pane.getId());
-    };
-
-    JBPopupFactory.getInstance().createPopupChooserBuilder(list).
-      setTitle(IdeBundle.message("title.popup.views")).
-      setItemChoosenCallback(runnable).
-      createPopup().showInCenterOf(getComponent());
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(views)
+      .setRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+          super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          AbstractProjectViewPane pane = (AbstractProjectViewPane)value;
+          setText(pane.getTitle());
+          return this;
+        }
+      })
+      .setTitle(IdeBundle.message("title.popup.views"))
+      .setItemChoosenCallback(pane -> {if (pane != null) changeView(pane.getId());})
+      .createPopup().showInCenterOf(getComponent());
   }
 
   @Override

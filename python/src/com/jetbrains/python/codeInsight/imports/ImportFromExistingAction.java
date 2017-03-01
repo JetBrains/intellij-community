@@ -36,7 +36,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
@@ -114,29 +113,20 @@ public class ImportFromExistingAction implements QuestionAction {
   private void selectSourceAndDo() {
     // GUI part
     ImportCandidateHolder[] items = mySources.toArray(new ImportCandidateHolder[mySources.size()]); // silly JList can't handle modern collections
-    final JList list = new JBList(items);
-    list.setCellRenderer(new CellRenderer(myName));
 
-    final Runnable runnable = () -> {
-      final Object selected = list.getSelectedValue();
-      if (selected instanceof ImportCandidateHolder) {
-        final ImportCandidateHolder item = (ImportCandidateHolder)selected;
-        PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-        doWriteAction(item);
-      }
-    };
-
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-      @Override
-      public void consume(DataContext dataContext) {
-        JBPopupFactory.getInstance().createPopupChooserBuilder(list)
-          .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
-          .setItemChoosenCallback(runnable)
-          .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
-          .createPopup()
-          .showInBestPositionFor(dataContext);
-      }
-    });
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(mySources)
+      .setRenderer(new CellRenderer(myName))
+      .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
+      .setItemChoosenCallback((item) -> {
+        if (item != null) {
+          PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
+          doWriteAction(item);
+        }
+      })
+      .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
+      .createPopup()
+      .showInBestPositionFor(dataContext));
   }
 
   private void doIt(final ImportCandidateHolder item) {

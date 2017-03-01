@@ -36,8 +36,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -45,8 +45,9 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.ui.components.JBList;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
 import java.util.*;
@@ -57,7 +58,6 @@ public class ImplementAbstractMethodHandler {
   private final Project myProject;
   private final Editor myEditor;
   private final PsiMethod myMethod;
-  private JList myList;
 
   public ImplementAbstractMethodHandler(Project project, Editor editor, PsiMethod method) {
     myProject = project;
@@ -95,9 +95,10 @@ public class ImplementAbstractMethodHandler {
       }
     }), CodeInsightBundle.message("intention.implement.abstract.method.searching.for.descendants.progress"), true, myProject);
 
-    if (result[0] == null) return;
+    PsiElement[] elements = result[0];
+    if (elements == null) return;
 
-    if (result[0].length == 0) {
+    if (elements.length == 0) {
       Messages.showMessageDialog(myProject,
                                  CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.message"),
                                  CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.title"),
@@ -105,29 +106,25 @@ public class ImplementAbstractMethodHandler {
       return;
     }
 
-    if (result[0].length == 1) {
-      implementInClass(new Object[] {result[0][0]});
+    if (elements.length == 1) {
+      implementInClass(new Object[]{elements[0]});
       return;
     }
 
     final MyPsiElementListCellRenderer elementListCellRenderer = new MyPsiElementListCellRenderer();
-    elementListCellRenderer.sort(result[0]);
-    myList = new JBList(result[0]);
-    myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    final Runnable runnable = () -> {
-      int index = myList.getSelectedIndex();
-      if (index < 0) return;
-      implementInClass(myList.getSelectedValues());
-    };
-    myList.setCellRenderer(elementListCellRenderer);
-    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myList);
+    elementListCellRenderer.sort(elements);
+    final IPopupChooserBuilder builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
+      .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
+      .setRenderer(elementListCellRenderer)
+      .setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title")).
+        setItemsChoosenCallback((selectedValues) -> {
+          if (!selectedValues.isEmpty()) {
+            implementInClass(ArrayUtil.toObjectArray(selectedValues));
+          }
+        });
     elementListCellRenderer.installSpeedSearch(builder);
-
-    builder.
-      setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title")).
-      setItemChoosenCallback(runnable).
-      createPopup().
-      showInBestPositionFor(myEditor);
+    builder.createPopup().showInBestPositionFor(myEditor);
   }
 
   public void implementInClass(final Object[] selection) {

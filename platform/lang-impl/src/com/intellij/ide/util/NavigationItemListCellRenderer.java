@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
+public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer<Object> {
 
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());

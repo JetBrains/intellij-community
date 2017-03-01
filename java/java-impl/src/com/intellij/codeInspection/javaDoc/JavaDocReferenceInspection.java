@@ -41,11 +41,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +55,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
     List<PsiClass> classesToImport = new ImportClassFix(reference).getClassesToImport();
     return classesToImport.isEmpty() ? null : new JavaDocReferenceInspection.AddQualifierFix(classesToImport);
   }
+
   @Override
   protected RenameReferenceQuickFix createRenameReferenceQuickFix(Set<String> unboundParams) {
     return new RenameReferenceQuickFix(unboundParams);
@@ -101,7 +100,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
     }
   }
 
-  private class AddQualifierFix implements LocalQuickFix{
+  private class AddQualifierFix implements LocalQuickFix {
     private final List<PsiClass> originalClasses;
 
     public AddQualifierFix(final List<PsiClass> originalClasses) {
@@ -117,37 +116,29 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
-      if (element instanceof PsiJavaCodeReferenceElement) {
+      if (element != null) {
         final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
         Collections.sort(originalClasses, new PsiProximityComparator(referenceElement.getElement()));
-        final JList list = new JBList(originalClasses.toArray(new PsiClass[originalClasses.size()]));
-        list.setCellRenderer(new FQNameCellRenderer());
-        final Runnable runnable = () -> {
-          if (!element.isValid()) return;
-          final int index = list.getSelectedIndex();
-          if (index < 0) return;
-          new WriteCommandAction(project, element.getContainingFile()){
-            @Override
-            protected void run(@NotNull final Result result) throws Throwable {
-              final PsiClass psiClass = originalClasses.get(index);
-              if (psiClass.isValid()) {
-                PsiDocumentManager.getInstance(project).commitAllDocuments();
-                referenceElement.bindToElement(psiClass);
-              }
-            }
-          }.execute();
-        };
         final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-        asyncResult.doWhenDone(new Consumer<DataContext>() {
-          @Override
-          public void consume(DataContext dataContext) {
-            JBPopupFactory.getInstance().createPopupChooserBuilder(list).
-              setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
-              setItemChoosenCallback(runnable).
-              createPopup().
-              showInBestPositionFor(dataContext);
-          }
-        });
+        asyncResult.doWhenDone((Consumer<DataContext>)dataContext ->
+          JBPopupFactory.getInstance()
+            .createPopupChooserBuilder(originalClasses).
+            setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
+            setItemChoosenCallback((psiClass) -> {
+              if (!element.isValid() || psiClass == null) return;
+              new WriteCommandAction(project, element.getContainingFile()) {
+                @Override
+                protected void run(@NotNull final Result result) throws Throwable {
+                  if (psiClass.isValid()) {
+                    PsiDocumentManager.getInstance(project).commitAllDocuments();
+                    referenceElement.bindToElement(psiClass);
+                  }
+                }
+              }.execute();
+            })
+            .setRenderer(new FQNameCellRenderer())
+            .createPopup()
+            .showInBestPositionFor(dataContext));
       }
     }
   }

@@ -34,8 +34,6 @@ import com.intellij.ui.MacroAwareTextBrowseFolderListener;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.TextAccessor;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
@@ -130,13 +128,17 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
           macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
         }
 
-        final JList list = new JBList(ArrayUtil.toStringArray(macros));
-        JBPopupFactory.getInstance().createPopupChooserBuilder(list).setItemChoosenCallback(() -> {
-          final Object value = list.getSelectedValue();
-          if (value instanceof String) {
-            textAccessor.setText('$' + ((String)value) + '$');
-          }
-        }).setMovable(false).setResizable(false).createPopup().showUnderneathOf(button);
+        JBPopupFactory.getInstance()
+          .createPopupChooserBuilder(macros)
+          .setItemChoosenCallback((value) -> {
+            if (value != null) {
+              textAccessor.setText('$' + value + '$');
+            }
+          })
+          .setMovable(false)
+          .setResizable(false)
+          .createPopup()
+          .showUnderneathOf(button);
       }
     });
 

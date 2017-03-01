@@ -49,6 +49,8 @@ public abstract class JBPopupFactory {
     return ServiceManager.getService(JBPopupFactory.class);
   }
 
+  public abstract <T> ITypedChooserBuilder<T> createPopupChooserBuilder(List<T> list);
+
   @NotNull
   public IPopupChooserBuilder createPopupChooserBuilder(@NotNull JList list) {
     return new PopupChooserBuilder(list);

@@ -24,13 +24,11 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlNamespaceHelper;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,49 +52,48 @@ public class ImportNSAction implements QuestionAction {
 
   @Override
   public boolean execute() {
-    final String[] strings = ArrayUtil.toStringArray(myNamespaces);
-    final JList list = new JBList(strings);
-    list.setCellRenderer(XmlNSRenderer.INSTANCE);
-    list.setSelectedIndex(0);
     final int offset = myElement.getTextOffset();
     final RangeMarker marker = myEditor.getDocument().createRangeMarker(offset, offset);
-    final Runnable runnable = () -> {
-      final String namespace = (String)list.getSelectedValue();
+    Consumer<String> consumer = (namespace) -> {
       if (namespace != null) {
-          final Project project = myFile.getProject();
-          new WriteCommandAction.Simple(project, myFile) {
+        final Project project = myFile.getProject();
+        new WriteCommandAction.Simple(project, myFile) {
 
-            @Override
-            protected void run() throws Throwable {
-              final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
-              final String prefix = extension.getNamespacePrefix(myElement);
-              extension.insertNamespaceDeclaration(myFile,
-                                                   myEditor,
-                                                   Collections.singleton(namespace),
-                                                   prefix,
-                                                   new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
-                  @Override
-                  public void run(final String s) throws IncorrectOperationException {
-                    PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-                    PsiElement element = myFile.findElementAt(marker.getStartOffset());
-                    if (element != null) {
-                      extension.qualifyWithPrefix(s, element, myEditor.getDocument());
-                    }
+          @Override
+          protected void run() throws Throwable {
+            final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
+            final String prefix = extension.getNamespacePrefix(myElement);
+            extension.insertNamespaceDeclaration(
+              myFile,
+              myEditor,
+              Collections.singleton(namespace),
+              prefix,
+              new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+                @Override
+                public void run(final String s) throws IncorrectOperationException {
+                  PsiDocumentManager.getInstance(myFile.getProject())
+                    .doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                  PsiElement element = myFile.findElementAt(marker.getStartOffset());
+                  if (element != null) {
+                    extension.qualifyWithPrefix(s, element, myEditor.getDocument());
                   }
                 }
-              );
-            }
-          }.execute();
+              }
+            );
+          }
+        }.execute();
       }
     };
-    if (list.getModel().getSize() == 1) {
-      runnable.run();
+    if (myNamespaces.size() == 1) {
+      consumer.consume(myNamespaces.get(0));
     } else {
-      JBPopupFactory.getInstance().createPopupChooserBuilder(list).
-        setTitle(myTitle).
-        setItemChoosenCallback(runnable).
-        createPopup().
-        showInBestPositionFor(myEditor);
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(myNamespaces)
+        .setRenderer(XmlNSRenderer.INSTANCE)
+        .setTitle(myTitle)
+        .setItemChoosenCallback(consumer)
+        .createPopup()
+        .showInBestPositionFor(myEditor);
     }
 
     return true;

@@ -45,6 +45,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.IconListPopupRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -84,6 +85,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
   private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<>();
+
+  @Override
+  public <T> ITypedChooserBuilder<T> createPopupChooserBuilder(List<T> list) {
+    return new PopupChooserBuilder<>(new JBList<>(list));
+  }
 
   @NotNull
   @Override

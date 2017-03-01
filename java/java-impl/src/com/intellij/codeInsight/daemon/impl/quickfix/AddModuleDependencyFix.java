@@ -33,12 +33,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author anna
@@ -115,14 +117,14 @@ class AddModuleDependencyFix extends AddOrderEntryFix {
       addDependencyOnModule(project, editor, ContainerUtil.getFirstItem(myModules));
     }
     else {
-      JBList<Module> list = new JBList<>(myModules);
-      list.setCellRenderer(new ModuleListCellRenderer());
-      JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list)
+      JBPopup popup = JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(myModules))
+        .setRenderer(new ModuleListCellRenderer())
         .setTitle(QuickFixBundle.message("orderEntry.fix.choose.module.to.add.dependency.on"))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(() -> addDependencyOnModule(project, editor, list.getSelectedValue()))
+        .setItemChoosenCallback((selectedValue) -> addDependencyOnModule(project, editor, selectedValue))
         .createPopup();
       if (editor != null) {
         popup.showInBestPositionFor(editor);
