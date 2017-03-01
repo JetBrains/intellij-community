@@ -315,10 +315,17 @@ public class IpnbConnection {
     if (myURI.getScheme().equals("https")) {
       configureHttpsConnection();
       final HttpsURLConnection connection = (HttpsURLConnection)new URL(loginUrl).openConnection();
-      connection.setInstanceFollowRedirects(false);
-      connection.connect();
-      if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
-        location = connection.getHeaderField(HttpHeaders.LOCATION);
+      try {
+        connection.setInstanceFollowRedirects(false);
+        connection.connect();
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_MOVED_TEMP) {
+          location = connection.getHeaderField(HttpHeaders.LOCATION);
+        }
+      }
+      catch (IllegalArgumentException e) {
+        throw new IOException("Connection refused: " + e.getMessage());
+      }
+      finally {
         connection.disconnect();
       }
     }
