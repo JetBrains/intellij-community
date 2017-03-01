@@ -45,18 +45,16 @@ public class DistinctHandler extends HandlerBase {
   @NotNull
   @Override
   public String prepareResult() {
-    return doPrepareResult() + myPeekTracer.prepareResult();
+    final String peekPrepare = myPeekTracer.prepareResult();
+    final String resolve2Array = myResolveMapVariable.convertToArray("resolveArray");
+    final String peekResult = "final Object peekResult = " + myPeekTracer.getResultExpression() + System.lineSeparator();
+    return peekPrepare + resolve2Array + peekResult;
   }
 
   @NotNull
   @Override
   public String getResultExpression() {
-    return "";
-  }
-
-  @NotNull
-  private String doPrepareResult() {
-    return "";
+    return "new Object[] { peekResult, resolveArray }";
   }
 
   @NotNull
