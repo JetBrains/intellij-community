@@ -34,6 +34,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
@@ -1398,6 +1399,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         LOG.debug(e);
       }
     }
+  }
+
+  public void onHotSwapFinished() {
+    getPositionManager().clearCache();
+    StackCapturingLineBreakpoint.clearCaches(this);
   }
 
   @NotNull

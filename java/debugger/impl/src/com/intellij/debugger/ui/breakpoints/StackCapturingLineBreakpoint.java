@@ -43,6 +43,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakHashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
@@ -84,8 +85,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     myProperties.myClassPattern = myCapturePoint.myClassName;
     myProperties.myMethodName = myCapturePoint.myMethodName;
 
-    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression, false);
-    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression, false);
+    myCaptureEvaluator = new MyEvaluator(myCapturePoint.myCaptureKeyExpression);
+    myInsertEvaluator = new MyEvaluator(myCapturePoint.myInsertKeyExpression);
   }
 
   @NotNull
@@ -159,6 +160,17 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
     if (Registry.is("debugger.capture.points")) {
       DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
+    }
+  }
+
+  public static void clearCaches(DebugProcessImpl debugProcess) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    List<StackCapturingLineBreakpoint> bpts = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
+    if (!ContainerUtil.isEmpty(bpts)) {
+      bpts.forEach(b -> {
+        b.myCaptureEvaluator.clearCache();
+        b.myInsertEvaluator.clearCache();
+      });
     }
   }
 
@@ -238,11 +250,11 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   private static class MyEvaluator {
     private final String myExpression;
-    private final boolean myCached;
     private ExpressionEvaluator myEvaluator;
     private final boolean myNeedKeepValue;
+    private final WeakHashMap<Location, ExpressionEvaluator> myEvaluatorCache = new WeakHashMap<>();
 
-    public MyEvaluator(String expression, boolean cached) {
+    public MyEvaluator(String expression) {
       myExpression = expression;
       int paramId = DecompiledLocalVariable.getParamId(myExpression);
       boolean paramEvaluator = paramId > -1;
@@ -258,31 +270,40 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             return argumentValues.get(paramId);
           }
         });
-        cached = true;
       }
       myNeedKeepValue = !paramEvaluator;
-      myCached = cached;
     }
 
     @Nullable
     Value evaluate(final EvaluationContext context) throws EvaluateException {
-      if ((!myCached || myEvaluator == null) && !StringUtil.isEmpty(myExpression)) {
-        myEvaluator = ApplicationManager.getApplication().runReadAction(
-          (ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
+      ExpressionEvaluator evaluator = myEvaluator;
+      if (evaluator == null) {
+        @SuppressWarnings("ConstantConditions")
+        Location location = context.getFrameProxy().location();
+        evaluator = myEvaluatorCache.get(location);
+        if (evaluator == null && !StringUtil.isEmpty(myExpression)) {
+          evaluator = ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {
             SourcePosition sourcePosition = ContextUtil.getSourcePosition(context);
             PsiElement contextElement = ContextUtil.getContextElement(sourcePosition);
             return EvaluatorBuilderImpl.build(
               new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, myExpression), contextElement, sourcePosition, context.getProject());
           });
+          myEvaluatorCache.put(location, evaluator);
+        }
       }
-      if (myEvaluator != null) {
-        Value value = myEvaluator.evaluate(context);
+      if (evaluator != null) {
+        Value value = evaluator.evaluate(context);
         if (myNeedKeepValue) {
           DebuggerUtilsEx.keep(value, context);
         }
         return value;
       }
       return null;
+    }
+
+    void clearCache() {
+      DebuggerManagerThreadImpl.assertIsManagerThread();
+      myEvaluatorCache.clear();
     }
   }
 }
