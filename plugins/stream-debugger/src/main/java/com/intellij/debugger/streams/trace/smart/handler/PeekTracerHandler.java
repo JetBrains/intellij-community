@@ -24,14 +24,14 @@ public class PeekTracerHandler extends HandlerBase {
   @Override
   public List<MethodCall> additionalCallsBefore() {
     final String beforeMapName = myBeforeVariable.getName();
-    return Collections.singletonList(new MyPeekCall(String.format("x -> %s.put(time.addAndGet(), x)", beforeMapName)));
+    return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.addAndGet(), x)", beforeMapName)));
   }
 
   @NotNull
   @Override
   public List<MethodCall> additionalCallsAfter() {
     final String afterMapName = myBeforeVariable.getName();
-    return Collections.singletonList(new MyPeekCall(String.format("x -> %s.put(time.addAndGet(), x)", afterMapName)));
+    return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.addAndGet(), x)", afterMapName)));
   }
 
   @NotNull
@@ -52,25 +52,5 @@ public class PeekTracerHandler extends HandlerBase {
   @Override
   protected List<Variable> getVariables() {
     return Arrays.asList(myBeforeVariable, myAfterVariable);
-  }
-
-  private static class MyPeekCall implements MethodCall {
-    private final String myLambda;
-
-    private MyPeekCall(@NotNull String lambda) {
-      myLambda = lambda;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "peek";
-    }
-
-    @NotNull
-    @Override
-    public String getArguments() {
-      return String.format("(%s)", myLambda);
-    }
   }
 }

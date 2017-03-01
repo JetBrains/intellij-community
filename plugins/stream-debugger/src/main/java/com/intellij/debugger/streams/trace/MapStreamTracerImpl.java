@@ -20,6 +20,7 @@ import com.intellij.debugger.streams.remote.InvokeMethodProxy;
 import com.intellij.debugger.streams.remote.ProxyBase;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
+import com.intellij.debugger.streams.trace.smart.handler.PeekCall;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.debugger.streams.trace.smart.resolve.impl.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.MethodCall;
@@ -88,7 +89,7 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
     final List<MethodCall> result = new ArrayList<>();
     for (int i = 0; i < calls.size() - 1; i++) {
       result.add(calls.get(i));
-      result.add(new MyTracingPeekCall(String.format(PEEK_ACTION_FORMAT, i)));
+      result.add(new PeekCall(String.format(PEEK_ACTION_FORMAT, i)));
     }
 
     result.add(calls.get(calls.size() - 1));
@@ -170,26 +171,6 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
     @NotNull
     InvokeMethodProxy value() throws EvaluateException {
       return call("getValue");
-    }
-  }
-
-  private static class MyTracingPeekCall implements MethodCall {
-    private final String myAction;
-
-    MyTracingPeekCall(@NotNull String peekAction) {
-      myAction = peekAction;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "peek";
-    }
-
-    @NotNull
-    @Override
-    public String getArguments() {
-      return "(" + myAction + ")";
     }
   }
 
