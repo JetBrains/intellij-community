@@ -42,7 +42,7 @@ from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogge
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
 
 
-__version_info__ = (0, 0, 5)
+__version_info__ = (1, 0, 0)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
@@ -931,8 +931,10 @@ class PyDB:
                     return meth(mod_name)
         return None
 
-    def run(self, file, globals=None, locals=None, module=False, set_trace=True):
-        if module:
+    def run(self, file, globals=None, locals=None, is_module=False, set_trace=True):
+        module_name = None
+        if is_module:
+            module_name = file
             filename = self.get_fullname(file)
             if filename is None:
                 sys.stderr.write("No module named %s\n" % file)
@@ -971,11 +973,12 @@ class PyDB:
                 # print >> sys.stderr, 'Deleting: ', sys.path[0]
                 del sys.path[0]
 
-            # now, the local directory has to be added to the pythonpath
-            # sys.path.insert(0, os.getcwd())
-            # Changed: it's not the local directory, but the directory of the file launched
-            # The file being run ust be in the pythonpath (even if it was not before)
-            sys.path.insert(0, os.path.split(file)[0])
+            if not is_module:
+                # now, the local directory has to be added to the pythonpath
+                # sys.path.insert(0, os.getcwd())
+                # Changed: it's not the local directory, but the directory of the file launched
+                # The file being run must be in the pythonpath (even if it was not before)
+                sys.path.insert(0, os.path.split(file)[0])
 
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
@@ -1005,7 +1008,16 @@ class PyDB:
             sys.stderr.write("Matplotlib support in debugger failed\n")
             traceback.print_exc()
 
-        pydev_imports.execfile(file, globals, locals)  # execute the script
+        if not is_module:
+            pydev_imports.execfile(file, globals, locals)  # execute the script
+        else:
+            # Run with the -m switch
+            import runpy
+            if hasattr(runpy, '_run_module_as_main'):
+                # Newer versions of Python actually use this when the -m switch is used.
+                runpy._run_module_as_main(module_name, alter_argv=False)
+            else:
+                runpy.run_module(module_name)
         return globals
 
     def exiting(self):
@@ -1050,86 +1062,9 @@ def enable_qt_support():
     pydev_monkey_qt.patch_qt()
 
 
-def process_command_line(argv):
-    """ parses the arguments.
-        removes our arguments from the command line """
-    setup = {}
-    setup['client'] = None
-    setup['server'] = False
-    setup['port'] = 0
-    setup['file'] = ''
-    setup['multiproc'] = False #Used by PyCharm (reuses connection: ssh tunneling)
-    setup['multiprocess'] = False # Used by PyDev (creates new connection to ide)
-    setup['save-signatures'] = False
-    setup['save-threading'] = False
-    setup['save-asyncio'] = False
-    setup['qt-support'] = False
-    setup['print-in-debugger-startup'] = False
-    setup['cmd-line'] = False
-    setup['module'] = False
-    i = 0
-    del argv[0]
-    while (i < len(argv)):
-        if argv[i] == '--port':
-            del argv[i]
-            setup['port'] = int(argv[i])
-            del argv[i]
-        elif argv[i] == '--vm_type':
-            del argv[i]
-            setup['vm_type'] = argv[i]
-            del argv[i]
-        elif argv[i] == '--client':
-            del argv[i]
-            setup['client'] = argv[i]
-            del argv[i]
-        elif argv[i] == '--server':
-            del argv[i]
-            setup['server'] = True
-        elif argv[i] == '--file':
-            del argv[i]
-            setup['file'] = argv[i]
-            i = len(argv) # pop out, file is our last argument
-        elif argv[i] == '--DEBUG_RECORD_SOCKET_READS':
-            del argv[i]
-            setup['DEBUG_RECORD_SOCKET_READS'] = True
-        elif argv[i] == '--DEBUG':
-            del argv[i]
-            set_debug(setup)
-        elif argv[i] == '--multiproc':
-            del argv[i]
-            setup['multiproc'] = True
-        elif argv[i] == '--multiprocess':
-            del argv[i]
-            setup['multiprocess'] = True
-        elif argv[i] == '--save-signatures':
-            del argv[i]
-            setup['save-signatures'] = True
-        elif argv[i] == '--save-threading':
-            del argv[i]
-            setup['save-threading'] = True
-        elif argv[i] == '--save-asyncio':
-            del argv[i]
-            setup['save-asyncio'] = True
-        elif argv[i] == '--qt-support':
-            del argv[i]
-            setup['qt-support'] = True
-
-        elif argv[i] == '--print-in-debugger-startup':
-            del argv[i]
-            setup['print-in-debugger-startup'] = True
-        elif (argv[i] == '--cmd-line'):
-            del argv[i]
-            setup['cmd-line'] = True
-        elif (argv[i] == '--module'):
-            del argv[i]
-            setup['module'] = True
-        else:
-            raise ValueError("unexpected option " + argv[i])
-    return setup
-
 def usage(doExit=0):
     sys.stdout.write('Usage:\n')
-    sys.stdout.write('pydevd.py --port=N [(--client hostname) | --server] --file executable [file_options]\n')
+    sys.stdout.write('pydevd.py --port N [(--client hostname) | --server] --file executable [file_options]\n')
     if doExit:
         sys.exit(0)
 
@@ -1236,6 +1171,15 @@ def _locked_settrace(
 
     if not connected :
         pydevd_vm_type.setup_type()
+
+        if SetupHolder.setup is None:
+            setup = {
+                'client': host,  # dispatch expects client to be set to the host address when server is False
+                'server': False,
+                'port': int(port),
+                'multiprocess': patch_multiprocessing,
+            }
+            SetupHolder.setup = setup
 
         debugger = PyDB()
         debugger.connect(host, port)  # Note: connect can raise error.
@@ -1467,7 +1411,7 @@ if __name__ == '__main__':
 
     # parse the command line. --file is our last argument that is required
     try:
-        sys.original_argv = sys.argv[:]
+        from _pydevd_bundle.pydevd_command_line_handling import process_command_line
         setup = process_command_line(sys.argv)
         SetupHolder.setup = setup
     except ValueError:

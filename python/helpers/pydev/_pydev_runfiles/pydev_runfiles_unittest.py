@@ -26,6 +26,17 @@ _PythonTextTestResult = python_unittest.TextTestRunner()._makeResult().__class__
 #=======================================================================================================================
 class PydevTestResult(_PythonTextTestResult):
 
+    def addSubTest(self, test, subtest, err):
+        """Called at the end of a subtest.
+        'err' is None if the subtest ended successfully, otherwise it's a
+        tuple of values as returned by sys.exc_info().
+        """
+        _PythonTextTestResult.addSubTest(self, test, subtest, err)
+        if err is not None:
+            subdesc = subtest._subDescription()
+            error = (test, self._exc_info_to_string(err, test))
+            self._reportErrors([error], [], '', '%s %s' % (self.get_test_name(test), subdesc))
+
 
     def startTest(self, test):
         _PythonTextTestResult.startTest(self, test)
