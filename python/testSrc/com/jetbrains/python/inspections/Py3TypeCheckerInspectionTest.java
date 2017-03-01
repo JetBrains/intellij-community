@@ -213,4 +213,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testClassObjectTypeWithUnion() {
     doTest();
   }
+
+  // PY-22730
+  public void testOptionalOfBoundTypeVarInWarnings() {
+    doTest();
+  }
 }
