@@ -113,7 +113,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             stacks = new CapturedStacksMap();
             process.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
           }
-          Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy, frameProxy.thisObject()));
+          Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
           if (key instanceof ObjectReference) {
             List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext, true);
             if (frames.size() > MAX_STACK_LENGTH) {
@@ -214,7 +214,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
               StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
             try {
-              Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame, frame.thisObject()));
+              Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame));
               if (key instanceof ObjectReference) {
                 return capturedStacks.get(getKey((ObjectReference)key));
               }
