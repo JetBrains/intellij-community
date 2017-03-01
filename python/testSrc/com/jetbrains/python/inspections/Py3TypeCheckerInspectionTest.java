@@ -208,4 +208,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testTypeAndClassObjectTypesCompatibility() {
     doTest();
   }
+
+  // PY-20057
+  public void testClassObjectTypeWithUnion() {
+    doTest();
+  }
 }
