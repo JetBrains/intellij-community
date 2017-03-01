@@ -28,8 +28,17 @@ class BlackListCorrectnessTest: LightPlatformTestCase() {
     providers.forEach {
       val blacklist = it.second.defaultBlackList
       val invalidLineNumbers = getBlackListInvalidLineNumbers(blacklist.joinToString("\n"))
-      TestCase.assertTrue("Blacklist error in ${it.first} implementation on lines: $invalidLineNumbers", invalidLineNumbers.isEmpty())
+      
+      TestCase.assertTrue(
+        "Blacklist pattern error detected in ${it.first.displayName} implementation: ${getInvalidElements(blacklist, invalidLineNumbers)}", 
+        invalidLineNumbers.isEmpty()
+      )
     }
+  }
+  
+  private fun getInvalidElements(blacklist: Set<String>, invalidLineNumbers: List<Int>): List<String> {
+    val list = blacklist.toList()
+    return invalidLineNumbers.map { list[it] }
   }
   
 }
