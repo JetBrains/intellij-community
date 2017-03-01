@@ -40,9 +40,22 @@ import java.util.stream.Collectors;
 
 class PyTypeCheckerInspectionProblemRegistrar {
 
-  static void registerSingleCalleeProblem(@NotNull PyInspectionVisitor visitor,
-                                          @NotNull PyTypeCheckerInspection.AnalyzeCalleeResults calleeResults,
-                                          @NotNull TypeEvalContext context) {
+  static void registerProblem(@NotNull PyInspectionVisitor visitor,
+                              @NotNull PyCallSiteExpression callSite,
+                              @NotNull List<PyType> argumentTypes,
+                              @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                              @NotNull TypeEvalContext context) {
+    if (calleesResults.size() == 1) {
+      registerSingleCalleeProblem(visitor, calleesResults.get(0), context);
+    }
+    else if (!calleesResults.isEmpty()) {
+      registerMultiCalleeProblem(visitor, callSite, argumentTypes, calleesResults, context);
+    }
+  }
+
+  private static void registerSingleCalleeProblem(@NotNull PyInspectionVisitor visitor,
+                                                  @NotNull PyTypeCheckerInspection.AnalyzeCalleeResults calleeResults,
+                                                  @NotNull TypeEvalContext context) {
     for (PyTypeCheckerInspection.AnalyzeArgumentResult argumentResult : calleeResults.getResults()) {
       if (argumentResult.isMatched()) continue;
 
@@ -52,14 +65,15 @@ class PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  static void registerMultiCalleeProblem(@NotNull PyInspectionVisitor visitor,
-                                         @NotNull PyCallSiteExpression callSite,
-                                         @NotNull List<PyType> argumentTypes,
-                                         @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
-                                         @NotNull TypeEvalContext context) {
+  private static void registerMultiCalleeProblem(@NotNull PyInspectionVisitor visitor,
+                                                 @NotNull PyCallSiteExpression callSite,
+                                                 @NotNull List<PyType> argumentTypes,
+                                                 @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                                                 @NotNull TypeEvalContext context) {
     if (callSite instanceof PyBinaryExpression) {
       registerMultiCalleeProblemForBinaryExpression(visitor, (PyBinaryExpression)callSite, argumentTypes, calleesResults, context);
-    } else {
+    }
+    else {
       visitor.registerProblem(getMultiCalleeElementToHighlight(callSite),
                               getMultiCalleeProblemMessage(argumentTypes, calleesResults, context),
                               getMultiCalleeHighlightType(calleesResults));
@@ -123,7 +137,8 @@ class PyTypeCheckerInspectionProblemRegistrar {
 
     if (preferredOperatorsResults.size() == 1) {
       registerSingleCalleeProblem(visitor, preferredOperatorsResults.get(0), context);
-    } else {
+    }
+    else {
       visitor.registerProblem(allCalleesAreRightOperators ? binaryExpression.getLeftExpression() : binaryExpression.getRightExpression(),
                               getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context),
                               getMultiCalleeHighlightType(preferredOperatorsResults));

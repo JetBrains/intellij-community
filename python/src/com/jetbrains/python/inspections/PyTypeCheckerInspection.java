@@ -186,14 +186,9 @@ public class PyTypeCheckerInspection extends PyInspection {
         .map(this::analyzeCallee)
         .toList();
 
-      if (matchedCalleeResultsExist(calleesResults)) return;
-
-      if (calleesResults.size() == 1) {
-        PyTypeCheckerInspectionProblemRegistrar.registerSingleCalleeProblem(this, calleesResults.get(0), myTypeEvalContext);
-      }
-      else if (!calleesResults.isEmpty()) {
+      if (!matchedCalleeResultsExist(calleesResults)) {
         PyTypeCheckerInspectionProblemRegistrar
-          .registerMultiCalleeProblem(this, callSite, getArgumentTypes(calleesResults), calleesResults, myTypeEvalContext);
+          .registerProblem(this, callSite, getArgumentTypes(calleesResults), calleesResults, myTypeEvalContext);
       }
     }
 
