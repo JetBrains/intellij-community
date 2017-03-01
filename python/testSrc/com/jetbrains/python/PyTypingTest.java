@@ -840,6 +840,24 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Type):\n" +
            "    expr = x");
   }
+  
+  // PY-20057
+  public void testTypingTypeOfAnyMapsToBuiltinType() {
+    doTest("type",
+           "from typing import Type, Any\n" +
+           "\n" +
+           "def f(x: Type[Any]):\n" +
+           "    expr = x");
+  }
+
+  // PY-20057
+  public void testIllegalTypingTypeFormat() {
+    doTest("Tuple[Any, Any, Any]",
+           "from typing import Type, Tuple\n" +
+           "\n" +
+           "def f(x: Tuple[Type[42], Type[], Type[unresolved]]):\n" +
+           "    expr = x");
+  }
 
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
