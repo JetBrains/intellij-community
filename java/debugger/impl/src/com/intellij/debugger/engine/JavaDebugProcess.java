@@ -408,14 +408,6 @@ public class JavaDebugProcess extends XDebugProcess {
         }, classesFilteredView);
 
         ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
-
-        process.addProcessListener(new ProcessAdapter() {
-          @Override
-          public void processTerminated(ProcessEvent event) {
-            ApplicationManager.getApplication().invokeLater(() -> memoryViewContent.setIcon(AllIcons.Debugger.MemoryView.Inactive));
-            process.removeProcessListener(this);
-          }
-        });
       }
     };
   }
