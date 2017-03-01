@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
+import java.util.Objects;
 
 public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.IdePopupManager");
@@ -133,6 +134,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     return myDispatchStack.stream()
              .flatMap(IdePopupEventDispatcher::getPopupStream)
              .map(JBPopup::getContent)
+             .filter(Objects::nonNull)
              .anyMatch(jbPopupContent -> SwingUtilities.getWindowAncestor(jbPopupContent) == w);
   }
 }
