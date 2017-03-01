@@ -108,7 +108,7 @@ public class StackFrameItem {
                 // trying to collect values from variable slots
                 try {
                   for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
-                    .fetchValues(frame, suspendContext.getDebugProcess()).entrySet()) {
+                    .fetchValues(frame, suspendContext.getDebugProcess(), false).entrySet()) {
                     vars.add(createVariable(entry.getValue(), entry.getKey().getDisplayName(), VariableItem.VarType.PARAM));
                   }
                 }

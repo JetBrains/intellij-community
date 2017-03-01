@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ class LocalVariableEvaluator implements Evaluator {
 
           // try to look in slots
           try {
-            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process);
+            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process, true);
             for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
               DecompiledLocalVariable var = entry.getKey();
               if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
