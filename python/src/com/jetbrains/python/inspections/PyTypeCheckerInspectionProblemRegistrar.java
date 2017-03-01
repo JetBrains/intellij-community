@@ -24,10 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyCallSiteExpression;
-import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
@@ -36,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -135,7 +133,17 @@ class PyTypeCheckerInspectionProblemRegistrar {
   @NotNull
   private static PsiElement getMultiCalleeElementToHighlight(@NotNull PyCallSiteExpression callSite) {
     if (callSite instanceof PyCallExpression) {
-      return ObjectUtils.notNull(((PyCallExpression)callSite).getArgumentList(), callSite);
+      final PyCallExpression call = (PyCallExpression)callSite;
+      final PyArgumentList argumentList = call.getArgumentList();
+
+      final PsiElement result = Optional
+        .ofNullable(argumentList)
+        .map(PyArgumentList::getArguments)
+        .filter(arguments -> arguments.length == 1)
+        .<PsiElement>map(arguments -> arguments[0])
+        .orElse(argumentList);
+
+      return ObjectUtils.notNull(result, callSite);
     }
     else if (callSite instanceof PySubscriptionExpression) {
       return ObjectUtils.notNull(((PySubscriptionExpression)callSite).getIndexExpression(), callSite);
