@@ -2,7 +2,10 @@ import sys
 import weakref
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, dict_iter_items
+# IFDEF CYTHON
+# ELSE
 from _pydevd_bundle.pydevd_frame import PyDBFrame
+# ENDIF
 
 
 #=======================================================================================================================
