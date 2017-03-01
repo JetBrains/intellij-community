@@ -17,6 +17,7 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -268,7 +269,11 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyUnionType && allowUnions) {
       final PyUnionType unionType = (PyUnionType)type;
       final Collection<PyType> unionMembers = unionType.getMembers();
-      if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false)) {
+      final Ref<PyType> optionalType = getOptionalType(unionType);
+      if (optionalType != null) {
+        result = new OptionalType(build(optionalType.get(), true));
+      }
+      else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false)) {
         result = new UnknownType(build(unionType.excludeNull(myContext), true));
       }
       else if (unionMembers.stream().allMatch(t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
@@ -276,10 +281,7 @@ public class PyTypeModelBuilder {
         result = new ClassObjectType(new OneOf(instanceTypes));
       }
       else {
-        result = Optional
-          .ofNullable(getOptionalType(unionType))
-          .<TypeModel>map(optionalType -> new OptionalType(build(optionalType, true)))
-          .orElseGet(() -> new OneOf(Collections2.transform(unionMembers, t -> build(t, false))));
+        result = new OneOf(Collections2.transform(unionMembers, t -> build(t, false)));
       }
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
@@ -318,7 +320,7 @@ public class PyTypeModelBuilder {
   }
 
   @Nullable
-  private static PyType getOptionalType(@NotNull PyUnionType type) {
+  private static Ref<PyType> getOptionalType(@NotNull PyUnionType type) {
     final Collection<PyType> members = type.getMembers();
     if (members.size() == 2) {
       boolean foundNone = false;
@@ -332,7 +334,7 @@ public class PyTypeModelBuilder {
         }
       }
       if (foundNone) {
-        return optional;
+        return Ref.create(optional);
       }
     }
     return null;

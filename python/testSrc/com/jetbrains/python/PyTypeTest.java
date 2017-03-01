@@ -1496,14 +1496,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20409
   public void testGetFromDictWithDefaultNoneValue() {
-    doTest("Union[None, Any]",
+    doTest("Optional[Any]",
            "d = {}\n" +
            "expr = d.get(\"abc\", None)");
   }
 
   // PY-20757
   public void testMinOrNone() {
-    doTest("Union[None, Any]",
+    doTest("Optional[Any]",
            "def get_value(v):\n" +
            "    if v:\n" +
            "        return min(v)\n" +
