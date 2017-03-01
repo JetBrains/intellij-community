@@ -307,7 +307,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       result.addElement(LookupElementBuilder.create("*"));
     }
 
-    addKeywords(parameters, result, session);
+    result.addAllElements(new JavaKeywordCompletion(parameters, session).getResults());
 
     addExpressionVariants(parameters, position, result);
   }
@@ -463,16 +463,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
     });
     return usedWords;
-  }
-
-  private static void addKeywords(CompletionParameters parameters, CompletionResultSet result, JavaCompletionSession session) {
-    JavaKeywordCompletion.addKeywords(parameters, session, element -> {
-      if (element.getLookupString().startsWith(result.getPrefixMatcher().getPrefix())) {
-        result.addElement(element);
-      }
-    });
-
-    JavaKeywordCompletion.addEnumCases(result, parameters.getPosition());
   }
 
   static boolean isClassNamePossible(CompletionParameters parameters) {

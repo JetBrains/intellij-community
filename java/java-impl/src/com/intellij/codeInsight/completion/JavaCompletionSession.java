@@ -48,6 +48,10 @@ public class JavaCompletionSession implements Consumer<LookupElement> {
     myResult.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(lookupElement));
   }
 
+  @NotNull String getPrefix() {
+    return myResult.getPrefixMatcher().getPrefix();
+  }
+
   @Nullable private static PsiClass extractClass(LookupElement lookupElement) {
     final Object object = lookupElement.getObject();
     if (object instanceof PsiClass) {
