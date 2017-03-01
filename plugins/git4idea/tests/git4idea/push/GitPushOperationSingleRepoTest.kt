@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
-import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushRepoResult.Type.*
@@ -35,7 +34,6 @@ import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
-import junit.framework.TestCase
 import java.io.File
 import java.io.IOException
 import java.util.Collections.singletonMap
@@ -346,9 +344,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     val rejectHook = """
       exit 1
       """.trimIndent()
-    val gitDir = GitUtil.findGitDir(File(repository.root.path))
-    TestCase.assertNotNull(gitDir)
-    installHook(gitDir as File, "pre-push", rejectHook)
+    installHook(File(repository.root.path, ".git"), "pre-push", rejectHook)
 
     val result = push("master", "origin/master", false, true)
 
