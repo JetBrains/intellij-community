@@ -221,7 +221,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (getLeakedProjects().count() >= MAX_LEAKY_PROJECTS) {
       List<Project> copy = getLeakedProjects().collect(Collectors.toCollection(UnsafeWeakList::new));
       myProjects.clear();
-      if (new ArrayList<>(copy).size() >= MAX_LEAKY_PROJECTS) {
+      if (ContainerUtil.collect(copy.iterator()).size() >= MAX_LEAKY_PROJECTS) {
         throw new TooManyProjectLeakedException(copy);
       }
     }
