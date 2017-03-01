@@ -69,7 +69,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -770,11 +769,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
       }
 
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-        CommandProcessor.getInstance().setCurrentCommandGroupId(myEditor.getDocument());
-        ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
-        actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
-      }, null, DocCommandGroupId.noneGroupId(myEditor.getDocument()));
+      ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getEditorDataContext());
+      actionManager.getTypedAction().actionPerformed(getEditor(), c, getEditorDataContext());
     });
   }
 
@@ -1022,7 +1018,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
             handler.invokeCompletion(getProject(), editor, invocationCount);
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // to compare with file text
           }
-        }, null, null);
+        }, null, null, getEditor().getDocument());
         return getLookupElements();
       }
     });
