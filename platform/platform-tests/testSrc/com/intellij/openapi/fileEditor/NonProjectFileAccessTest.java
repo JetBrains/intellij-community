@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -185,7 +185,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     VirtualFile nonProjectFileDir12 = createFileExternally(dir);
 
     File subDir = new File(dir, "subdir");
-    subDir.mkdirs();
+    assertTrue(subDir.mkdirs());
     VirtualFile nonProjectFileDirSubdir1 = createFileExternally(subDir);
     
     VirtualFile nonProjectFileDir2 = createNonProjectFile();
@@ -356,7 +356,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
       protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
         // create externally, since files created via VFS are marked for editing automatically
         File file = new File(dir, FileUtil.createSequentFileName(dir, "extfile", "txt"));
-        file.createNewFile();
+        assertTrue(file.createNewFile());
         result.setResult(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
       }
     }.execute().getResultObject();
@@ -399,13 +399,10 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   }
 
   private DataContext createDataContextFor(final Editor editor) {
-    return new DataContext() {
-      @Override
-      public Object getData(String dataId) {
-        if (dataId.equals(DataConstants.EDITOR)) return editor;
-        if (dataId.equals(DataConstants.PROJECT)) return getProject();
-        return null;
-      }
+    return dataId -> {
+      if (dataId.equals(CommonDataKeys.EDITOR.getName())) return editor;
+      if (dataId.equals(CommonDataKeys.PROJECT.getName())) return getProject();
+      return null;
     };
   }
 
