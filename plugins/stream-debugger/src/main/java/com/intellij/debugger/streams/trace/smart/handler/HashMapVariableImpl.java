@@ -16,7 +16,7 @@ public class HashMapVariableImpl extends VariableImpl {
   public String convertToArray(@NotNull String arrayName) {
     final StringBuilder builder = new StringBuilder();
     final String newLine = System.lineSeparator();
-    builder.append("final ").append(arrayName).append(String.format(" = new Object[%s.size()];", getName())).append(System.lineSeparator());
+    builder.append("final Object[] ").append(arrayName).append(String.format(" = new Object[%s.size()];", getName())).append(System.lineSeparator());
     builder.append("{").append(newLine);
     builder.append("int i = 0;").append(newLine);
     builder.append("for (final ").append(myFromType).append(String.format(" key : %s.keySet()) {", getName())).append(newLine);

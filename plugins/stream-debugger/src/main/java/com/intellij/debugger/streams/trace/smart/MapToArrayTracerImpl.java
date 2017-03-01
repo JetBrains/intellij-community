@@ -24,7 +24,7 @@ import java.util.List;
 public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
   private static final Logger LOG = Logger.getInstance(MapToArrayTracerImpl.class);
 
-  private static final String INFO_ARRAY_DECLARATION_FORMAT = "final info = new Object[%d];" + System.lineSeparator();
+  private static final String INFO_ARRAY_DECLARATION_FORMAT = "final Object[] info = new Object[%d];" + System.lineSeparator();
   private static final String RETURN_EXPRESSION = "new java.lang.Object[]{ info, streamResult };" + System.lineSeparator();
 
   public MapToArrayTracerImpl(@NotNull XDebugSession session) {
