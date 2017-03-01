@@ -851,7 +851,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     XmlFile file = (XmlFile)createFile("a.xml", "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
     List<XmlTag> tags = ContainerUtil.newArrayList(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
     List<SmartPsiElementPointer> pointers = tags.stream().map(this::createPointer).collect(Collectors.toList());
-    Random random = new Random();
     ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update after PSI change", 21000, () -> {
       for (int i = 0; i < tags.size(); i++) {
         XmlTag tag = tags.get(i);
@@ -859,7 +858,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
         assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
         assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
 
-        tag.setName("bar" + random.nextInt(20));
+        tag.setName("bar1" + (i % 10));
         assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
         assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
       }
