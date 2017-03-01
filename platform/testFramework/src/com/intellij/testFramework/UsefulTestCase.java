@@ -42,10 +42,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
-import com.intellij.util.Consumer;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -873,6 +870,40 @@ public abstract class UsefulTestCase extends TestCase {
    */
   protected void assertException(AbstractExceptionCase exceptionCase, @Nullable String expectedErrorMsg) throws Throwable {
     assertExceptionOccurred(true, exceptionCase, expectedErrorMsg);
+  }
+
+  /**
+   * Checks that the code block throws an exception of the specified class.
+   *
+   * @param exceptionClass   Expected exception type
+   * @param runnable         Block annotated with some exception type
+   */
+  protected void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
+                              @NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    assertThrows(exceptionClass, null, runnable);
+  }
+
+  /**
+   * Checks that the code block throws an exception of the specified class with expected error msg.
+   * If expected error message is null it will not be checked.
+   *
+   * @param exceptionClass   Expected exception type
+   * @param expectedErrorMsg expected error message, of any
+   * @param runnable         Block annotated with some exception type
+   */
+  protected void assertThrows(@NotNull Class<? extends Throwable> exceptionClass, @Nullable String expectedErrorMsg,
+                              @NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    assertException(new AbstractExceptionCase() {
+      @Override
+      public Class getExpectedExceptionClass() {
+        return exceptionClass;
+      }
+
+      @Override
+      public void tryClosure() throws Throwable {
+        runnable.run();
+      }
+    }, expectedErrorMsg);
   }
 
   /**
