@@ -867,6 +867,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @param expectedErrorMsg expected error message
    */
   protected void assertException(AbstractExceptionCase exceptionCase, @Nullable String expectedErrorMsg) throws Throwable {
+    //noinspection unchecked
     assertExceptionOccurred(true, exceptionCase, expectedErrorMsg);
   }
 
@@ -876,8 +877,8 @@ public abstract class UsefulTestCase extends TestCase {
    * @param exceptionClass   Expected exception type
    * @param runnable         Block annotated with some exception type
    */
-  protected void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
-                              @NotNull ThrowableRunnable<?> runnable) throws Throwable {
+  protected <T extends Throwable> void assertThrows(@NotNull Class<? extends T> exceptionClass,
+                                                    @NotNull ThrowableRunnable<T> runnable) throws T {
     assertThrows(exceptionClass, null, runnable);
   }
 
@@ -889,12 +890,13 @@ public abstract class UsefulTestCase extends TestCase {
    * @param expectedErrorMsg expected error message, of any
    * @param runnable         Block annotated with some exception type
    */
-  protected void assertThrows(@NotNull Class<? extends Throwable> exceptionClass, @Nullable String expectedErrorMsg,
-                              @NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    assertException(new AbstractExceptionCase() {
+  @SuppressWarnings({"unchecked", "SameParameterValue"})
+  protected <T extends Throwable> void assertThrows(@NotNull Class<?> exceptionClass, @Nullable String expectedErrorMsg,
+                                                    @NotNull ThrowableRunnable<T> runnable) throws T {
+    assertExceptionOccurred(true, new AbstractExceptionCase() {
       @Override
-      public Class getExpectedExceptionClass() {
-        return exceptionClass;
+      public Class<Throwable> getExpectedExceptionClass() {
+        return (Class<Throwable>)exceptionClass;
       }
 
       @Override
@@ -909,7 +911,7 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param exceptionCase Block annotated with some exception type
    */
-  protected void assertNoException(final AbstractExceptionCase exceptionCase) throws Throwable {
+  protected <T extends Throwable> void assertNoException(final AbstractExceptionCase<T> exceptionCase) throws T {
     assertExceptionOccurred(false, exceptionCase, null);
   }
 
@@ -924,9 +926,9 @@ public abstract class UsefulTestCase extends TestCase {
     assertNull(throwableName);
   }
 
-  private static void assertExceptionOccurred(boolean shouldOccur,
-                                              AbstractExceptionCase exceptionCase,
-                                              String expectedErrorMsg) throws Throwable {
+  private static <T extends Throwable> void assertExceptionOccurred(boolean shouldOccur,
+                                                                    AbstractExceptionCase<T> exceptionCase,
+                                                                    String expectedErrorMsg) throws T {
     boolean wasThrown = false;
     try {
       exceptionCase.tryClosure();
