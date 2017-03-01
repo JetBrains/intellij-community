@@ -77,6 +77,7 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
@@ -403,7 +404,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (!myHelper.isReplaceState()) {
-          navigateToSelectedUsage(myResultsPreviewTable);
+          navigateToSelectedUsage();
           return;
         }
         myOkActionListener.actionPerformed(e);
@@ -571,9 +572,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        Object source = event.getSource();
-        if (!(source instanceof JBTable)) return false;
-        navigateToSelectedUsage((JBTable)source);
+        if (event.getSource() != myResultsPreviewTable) return false;
+        navigateToSelectedUsage();
         return true;
       }
     }.installOn(myResultsPreviewTable);
@@ -1216,25 +1216,30 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  private void navigateToSelectedUsage(JBTable source) {
-    int[] rows = source.getSelectedRows();
-    java.util.List<Usage> navigations = null;
-    for (int row : rows) {
-      Object valueAt = source.getModel().getValueAt(row, 0);
-      if (valueAt instanceof Usage) {
-        if (navigations == null) navigations = new SmartList<>();
-        Usage at = (Usage)valueAt;
-        navigations.add(at);
-      }
-    }
-
-    if (navigations != null) {
+  private void navigateToSelectedUsage() {
+    Usage[] usages = getSelectedUsages();
+    if (usages != null) {
       applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
       myBalloon.cancel();
 
-      navigations.get(0).navigate(true);
-      for (int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
+      usages[0].navigate(true);
+      for (int i = 1; i < usages.length; ++i) usages[i].highlightInEditor();
     }
+  }
+
+  @Nullable
+  private Usage[] getSelectedUsages() {
+    int[] rows = myResultsPreviewTable.getSelectedRows();
+    List<Usage> usages = null;
+    for (int row : rows) {
+      Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
+      if (valueAt instanceof Usage) {
+        if (usages == null) usages = new SmartList<>();
+        Usage at = (Usage)valueAt;
+        usages.add(at);
+      }
+    }
+    return usages != null ? ContainerUtil.toArray(usages, Usage.EMPTY_ARRAY) : null;
   }
 
   private static boolean hidePopupIfNeed(JComboBox...candidates) {
