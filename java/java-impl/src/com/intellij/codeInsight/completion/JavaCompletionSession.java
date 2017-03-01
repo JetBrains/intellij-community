@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +29,7 @@ import java.util.Set;
 /**
 * @author peter
 */
-public class JavaCompletionSession implements Consumer<LookupElement> {
+public class JavaCompletionSession {
   private final Set<String> myAddedClasses = new HashSet<>();
   private Set<String> myKeywords = new HashSet<>();
   private final CompletionResultSet myResult;
@@ -39,8 +38,7 @@ public class JavaCompletionSession implements Consumer<LookupElement> {
     myResult = result;
   }
 
-  @Override
-  public void consume(LookupElement lookupElement) {
+  public void addClassItem(LookupElement lookupElement) {
     PsiClass psiClass = extractClass(lookupElement);
     if (psiClass != null) {
       registerClass(psiClass);
@@ -48,8 +46,8 @@ public class JavaCompletionSession implements Consumer<LookupElement> {
     myResult.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(lookupElement));
   }
 
-  @NotNull String getPrefix() {
-    return myResult.getPrefixMatcher().getPrefix();
+  @NotNull PrefixMatcher getMatcher() {
+    return myResult.getPrefixMatcher();
   }
 
   @Nullable private static PsiClass extractClass(LookupElement lookupElement) {
@@ -87,7 +85,7 @@ public class JavaCompletionSession implements Consumer<LookupElement> {
     return myKeywords.contains(keyword);
   }
 
-  public void registerKeyword(@NotNull String keyword) {
+  void registerKeyword(@NotNull String keyword) {
     myKeywords.add(keyword);
   }
 }

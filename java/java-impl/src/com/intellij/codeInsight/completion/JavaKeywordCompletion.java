@@ -27,7 +27,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.jsp.JspElementType;
@@ -191,7 +190,7 @@ public class JavaKeywordCompletion {
   JavaKeywordCompletion(CompletionParameters parameters, JavaCompletionSession session) {
     myParameters = parameters;
     mySession = session;
-    myPrefix = session.getPrefix();
+    myPrefix = session.getMatcher().getPrefix();
     myPosition = parameters.getPosition();
     myPrevLeaf = PsiTreeUtil.prevVisibleLeaf(myPosition);
 
@@ -617,14 +616,6 @@ public class JavaKeywordCompletion {
     }
 
     return END_OF_BLOCK.getValue().isAcceptable(position, position);
-  }
-
-  static void addExpectedTypeMembers(CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getInvocationCount() <= 1) { // on second completion, StaticMemberProcessor will suggest those
-      for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-        new JavaMembersGetter(info.getDefaultType(), parameters).addMembers(false, result);
-      }
-    }
   }
 
   private void addUnfinishedMethodTypeParameters() {
