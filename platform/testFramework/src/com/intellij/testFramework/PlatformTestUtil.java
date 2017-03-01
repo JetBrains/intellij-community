@@ -149,10 +149,7 @@ public class PlatformTestUtil {
         return presentation;
       }
     }
-    if (node == null) {
-      return "NULL";
-    }
-    return node.toString();
+    return String.valueOf(node);
   }
 
   public static String print(JTree tree, boolean withSelection) {
@@ -245,7 +242,7 @@ public class PlatformTestUtil {
   }
 
   @TestOnly
-  public static void waitForAlarm(final int delay) throws InterruptedException {
+  public static void waitForAlarm(final int delay) {
     Application app = ApplicationManager.getApplication();
     assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
     assert app.isDispatchThread();
