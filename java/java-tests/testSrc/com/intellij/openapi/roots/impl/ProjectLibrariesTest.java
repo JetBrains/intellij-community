@@ -55,6 +55,12 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     ModuleRootModificationUtil.addDependency(myModule, myLib);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myLib = null;
+    super.tearDown();
+  }
+
   public void test() {
     assertNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
 

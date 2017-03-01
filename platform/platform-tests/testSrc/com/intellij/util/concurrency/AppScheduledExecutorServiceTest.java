@@ -50,6 +50,7 @@ public class AppScheduledExecutorServiceTest extends TestCase {
   protected void tearDown() throws Exception {
     service.shutdownAppScheduledExecutorService();
     assertTrue(service.awaitTermination(10, TimeUnit.SECONDS));
+    service = null;
     super.tearDown();
   }
 

@@ -37,6 +37,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
       Disposer.dispose(myContent);
     }
     finally {
+      myContent = null;
       super.tearDown();
     }
   }

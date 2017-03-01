@@ -45,6 +45,7 @@ public class RawTypeCanBeGenericTest extends LightCodeInsightFixtureTestCase {
       myFixture.disableInspections(myInspection);
     }
     finally {
+      myInspection = null;
       super.tearDown();
     }
   }

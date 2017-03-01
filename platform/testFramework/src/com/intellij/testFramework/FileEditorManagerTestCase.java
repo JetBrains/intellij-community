@@ -76,6 +76,8 @@ public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsight
       ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
     }
     finally {
+      myManager = null;
+      myOldManager = null;
       super.tearDown();
     }
   }

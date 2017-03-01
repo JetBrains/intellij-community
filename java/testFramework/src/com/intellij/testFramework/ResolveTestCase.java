@@ -36,6 +36,7 @@ public abstract class ResolveTestCase extends PsiTestCase {
   protected void tearDown() throws Exception {
     if (myDocument != null) {
       FileDocumentManager.getInstance().reloadFromDisk(myDocument);
+      myDocument = null;
     }
 
     super.tearDown();

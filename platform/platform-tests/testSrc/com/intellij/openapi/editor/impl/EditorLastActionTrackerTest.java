@@ -45,6 +45,9 @@ public class EditorLastActionTrackerTest extends LightPlatformCodeInsightFixture
   @Override
   public void tearDown() throws Exception {
     EditorActionManager.getInstance().setActionHandler(SAMPLE_ACTION, mySavedHandler);
+    myTracker = null;
+    mySavedHandler = null;
+    
     super.tearDown();
   }
 

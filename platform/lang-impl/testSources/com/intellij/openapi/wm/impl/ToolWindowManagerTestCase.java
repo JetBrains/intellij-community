@@ -45,7 +45,9 @@ public abstract class ToolWindowManagerTestCase extends LightPlatformCodeInsight
   public void tearDown() throws Exception {
     try {
       myManager.projectClosed();
+      myManager = null;
       ((ComponentManagerImpl)getProject()).registerComponentInstance(ToolWindowManager.class, myOldManager);
+      myOldManager = null;
     }
     finally {
       super.tearDown();

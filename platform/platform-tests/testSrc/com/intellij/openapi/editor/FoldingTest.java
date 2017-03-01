@@ -40,6 +40,12 @@ public class FoldingTest extends AbstractEditorTest {
     myModel = (FoldingModelEx)myEditor.getFoldingModel();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myModel = null;
+    super.tearDown();
+  }
+
   public void testCleanupInvalidRegions() {
     myModel.runBatchFoldingOperation(() -> {
       myModel.addFoldRegion(0, 4, "/*...*/");

@@ -46,9 +46,9 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     try {
       myHistory.projectClosed();
       myHistory.disposeComponent();
-      myHistory = null;
     }
     finally {
+      myHistory = null;
       super.tearDown();
     }
   }

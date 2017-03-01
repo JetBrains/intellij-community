@@ -80,6 +80,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     myReloadFromDisk = null;
+    myDocumentManager = null;
     super.tearDown();
   }
 

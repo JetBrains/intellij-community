@@ -45,6 +45,7 @@ public abstract class FileBasedTest {
 
   @After
   public void tearDown() throws Exception {
+    myProject = null;
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         myProjectFixture.tearDown();

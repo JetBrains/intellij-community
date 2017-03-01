@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
@@ -68,18 +67,6 @@ public class SuppressExternalTest extends UsefulTestCase {
     LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
-  private void addAnnotationsModuleRoot() throws IOException {
-    myFixture.copyDirectoryToProject("content/anno/suppressed", "content/anno/suppressed");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      final Module module = myFixture.getModule();
-      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      final String url = VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno");
-      model.getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(new String[]{url});
-      model.commit();
-    });
-  }
-
-
   @Override
   public void tearDown() throws Exception {
     LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
@@ -91,6 +78,18 @@ public class SuppressExternalTest extends UsefulTestCase {
       myFixture = null;
       super.tearDown();
     }
+  }
+
+
+  private void addAnnotationsModuleRoot() throws IOException {
+    myFixture.copyDirectoryToProject("content/anno/suppressed", "content/anno/suppressed");
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final Module module = myFixture.getModule();
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+      final String url = VfsUtilCore.pathToUrl(myFixture.getTempDirPath() + "/content/anno");
+      model.getModuleExtension(JavaModuleExternalPaths.class).setExternalAnnotationUrls(new String[]{url});
+      model.commit();
+    });
   }
 
 

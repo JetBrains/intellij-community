@@ -59,6 +59,13 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     timeOut = System.currentTimeMillis() + 2*60*1000;
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    readThreads = null;
+    exception = null;
+    super.tearDown();
+  }
+
   private volatile Throwable exception;
   public void testAcquireReadActionLockVsRunReadActionPerformance() throws Throwable {
     final int N = 100000000;

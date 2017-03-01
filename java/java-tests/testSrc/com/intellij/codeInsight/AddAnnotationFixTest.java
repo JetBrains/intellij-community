@@ -62,9 +62,9 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   private CodeInsightTestFixture myFixture;
   private Module myModule;
   private Project myProject;
-  private boolean myExpectedEventWasProduced = false;
-  private boolean myUnexpectedEventWasProduced = false;
-  private MessageBusConnection myBusConnection = null;
+  private boolean myExpectedEventWasProduced;
+  private boolean myUnexpectedEventWasProduced;
+  private MessageBusConnection myBusConnection;
 
   @Override
   public void setUp() throws Exception {
@@ -94,9 +94,9 @@ public class AddAnnotationFixTest extends UsefulTestCase {
       myFixture = null;
       myModule = null;
       myProject = null;
+      myBusConnection = null;
 
       super.tearDown();
-      assertNull(myBusConnection);
     }
   }
 
@@ -128,7 +128,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
   private void startListening(@NotNull final List<Trinity<PsiModifierListOwner, String, Boolean>> expectedSequence) {
     myBusConnection = myProject.getMessageBus().connect();
     myBusConnection.subscribe(ExternalAnnotationsManager.TOPIC, new DefaultAnnotationsListener() {
-      private int index = 0;
+      private int index;
 
       @Override
       public void afterExternalAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName,

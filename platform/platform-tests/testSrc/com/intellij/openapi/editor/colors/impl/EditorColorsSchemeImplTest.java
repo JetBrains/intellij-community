@@ -34,7 +34,13 @@ import static java.util.Collections.singletonList;
 
 @SuppressWarnings("Duplicates")
 public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
-  EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
+  private EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
+
+  @Override
+  protected void tearDown() throws Exception {
+    myScheme = null;
+    super.tearDown();
+  }
 
   public void testDefaults() {
     checkState(myScheme.getFontPreferences(),

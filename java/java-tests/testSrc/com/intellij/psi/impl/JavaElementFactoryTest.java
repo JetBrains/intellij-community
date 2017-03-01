@@ -33,6 +33,12 @@ public class JavaElementFactoryTest extends LightCodeInsightFixtureTestCase {
     myFactory = getJavaFacade().getElementFactory();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myFactory = null;
+    super.tearDown();
+  }
+
   public void testDocCommentTrimming() {
     myFactory.createDocCommentFromText(" /** ... */");
   }

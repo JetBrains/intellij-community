@@ -20,7 +20,7 @@ import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspecti
 import com.intellij.testFramework.InspectionTestCase;
 
 public class SameParameterValueLocalTest extends InspectionTestCase {
-  private final LocalInspectionTool myTool = new SameParameterValueInspection().getSharedLocalInspectionTool();
+  private LocalInspectionTool myTool = new SameParameterValueInspection().getSharedLocalInspectionTool();
 
   @Override
   protected String getTestDataPath() {
@@ -29,6 +29,12 @@ public class SameParameterValueLocalTest extends InspectionTestCase {
 
   private String getGlobalTestDir() {
     return "sameParameterValue/" + getTestName(true);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myTool = null;
+    super.tearDown();
   }
 
   public void testEntryPoint() {

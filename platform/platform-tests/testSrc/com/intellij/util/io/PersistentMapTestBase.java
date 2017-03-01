@@ -43,6 +43,7 @@ abstract class PersistentMapTestBase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     clearMap(myFile, myMap);
+    myMap = null;
     super.tearDown();
   }
 

@@ -119,25 +119,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   }
 
-  private void ensureTempDirCreated() throws IOException {
-    if (ourTempDir != null) return;
-
-    ourTempDir = new File(FileUtil.getTempDirectory(), "mavenTests");
-    FileUtil.delete(ourTempDir);
-    FileUtil.ensureExists(ourTempDir);
-  }
-
-  protected void setUpFixtures() throws Exception {
-    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
-    myTestFixture.setUp();
-  }
-
-  protected void setUpInWriteAction() throws Exception {
-    File projectDir = new File(myDir, "project");
-    projectDir.mkdirs();
-    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
-  }
-
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -170,6 +151,25 @@ public abstract class MavenTestCase extends UsefulTestCase {
       }
       resetClassFields(getClass());
     }
+  }
+
+  private void ensureTempDirCreated() throws IOException {
+    if (ourTempDir != null) return;
+
+    ourTempDir = new File(FileUtil.getTempDirectory(), "mavenTests");
+    FileUtil.delete(ourTempDir);
+    FileUtil.ensureExists(ourTempDir);
+  }
+
+  protected void setUpFixtures() throws Exception {
+    myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).getFixture();
+    myTestFixture.setUp();
+  }
+
+  protected void setUpInWriteAction() throws Exception {
+    File projectDir = new File(myDir, "project");
+    projectDir.mkdirs();
+    myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
   }
 
   private static void printDirectoryContent(File dir) {

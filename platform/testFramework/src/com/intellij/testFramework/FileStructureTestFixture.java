@@ -39,7 +39,7 @@ public class FileStructureTestFixture implements Disposable {
   private FileStructurePopup myPopup;
   private PsiFile myFile;
 
-  public FileStructureTestFixture(CodeInsightTestFixture fixture) {
+  public FileStructureTestFixture(@NotNull CodeInsightTestFixture fixture) {
     myFixture = fixture;
   }
 

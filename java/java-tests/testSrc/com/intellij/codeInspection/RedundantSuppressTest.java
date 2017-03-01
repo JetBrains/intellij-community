@@ -48,6 +48,13 @@ public class RedundantSuppressTest extends InspectionTestCase {
     });
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myWrapper = null;
+    myInspectionToolWrappers = null;
+    super.tearDown();
+  }
+
   public void testDefaultFile() throws Exception {
     doTest();
   }

@@ -48,6 +48,14 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, listener);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myFindModel = null;
+    myOutputStream = null;
+    myLivePreviewController = null;
+    super.tearDown();
+  }
+
   private void initFind() {
     SearchResults searchResults = new SearchResults(getEditor(), getProject());
     myLivePreviewController = new LivePreviewController(searchResults, null, getTestRootDisposable());

@@ -58,12 +58,12 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    myProject = null;
     try {
       super.tearDown();
     }
     finally {
       clearFields(this);
-      myProject = null;
     }
   }
 

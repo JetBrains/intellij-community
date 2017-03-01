@@ -25,6 +25,12 @@ import org.jetbrains.annotations.Nullable;
 public class ClassEscapesItsScopeInspectionTest extends LightInspectionTestCase {
   private ClassEscapesItsScopeInspection myInspection = new ClassEscapesItsScopeInspection();
 
+  @Override
+  protected void tearDown() throws Exception {
+    myInspection = null;
+    super.tearDown();
+  }
+
   public void testClassEscapesItsScope() { doTest(true, true); }
 
   public void testGenericParameterEscapesItsScope() { doTest(true, true); }

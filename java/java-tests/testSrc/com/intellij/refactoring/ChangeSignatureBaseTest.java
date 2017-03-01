@@ -44,6 +44,12 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
     myFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myFactory = null;
+    super.tearDown();
+  }
+
   protected void doTest(@Nullable String returnType,
                         @Nullable final String[] parameters,
                         @Nullable final String[] exceptions,

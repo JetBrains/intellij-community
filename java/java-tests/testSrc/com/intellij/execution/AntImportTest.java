@@ -42,6 +42,8 @@ public class AntImportTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onFinishTesting();
     Disposer.dispose(myEventsProcessor);
     Disposer.dispose(myRootNode);
+    myRootNode = null;
+    myEventsProcessor = null;
 
     super.tearDown();
   }

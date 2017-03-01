@@ -54,6 +54,13 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertNotNull(myObjectClass);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myScope = null;
+    myObjectClass = null;
+    super.tearDown();
+  }
+
   public void testClassFileUpdate() throws IOException {
     File testFile = IoTestUtil.createTestFile("TestClass.class");
     File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");

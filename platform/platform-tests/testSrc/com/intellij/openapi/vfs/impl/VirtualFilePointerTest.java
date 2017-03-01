@@ -86,6 +86,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       assertEquals(numberOfListenersBefore, myVirtualFilePointerManager.numberOfListeners()); // check there is no leak
     }
     finally {
+      myVirtualFilePointerManager = null;
       super.tearDown();
     }
   }

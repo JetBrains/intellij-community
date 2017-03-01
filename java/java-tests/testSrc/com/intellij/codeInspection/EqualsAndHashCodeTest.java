@@ -15,7 +15,7 @@ import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class EqualsAndHashCodeTest extends InspectionTestCase {
-  private final EqualsAndHashcode myTool = new EqualsAndHashcode();
+  private EqualsAndHashcode myTool = new EqualsAndHashcode();
 
   @Override
   protected String getTestDataPath() {
@@ -26,6 +26,12 @@ public class EqualsAndHashCodeTest extends InspectionTestCase {
     doTest("equalsAndHashcode/" + getTestName(true), myTool);
   }
 
+
+  @Override
+  protected void tearDown() throws Exception {
+    myTool = null;
+    super.tearDown();
+  }
 
   public void testInnerClass() throws Exception {
     doTest();

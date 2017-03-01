@@ -36,14 +36,23 @@ import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class NullableStuffInspectionAncientTest extends InspectionTestCase {
-  private final NullableStuffInspection myInspection = new NullableStuffInspection();
-  {
-    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
-  }
+  private NullableStuffInspection myInspection = new NullableStuffInspection();
 
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = false;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myInspection = null;
+    super.tearDown();
   }
 
   public void testJdk14() throws Exception{

@@ -43,7 +43,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(getProject())
   }
 
   void "test concurrent switching with checkCanceled"() {

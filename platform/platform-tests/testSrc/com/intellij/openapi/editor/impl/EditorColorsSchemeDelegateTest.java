@@ -43,6 +43,8 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
       ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).getSchemeManager().removeScheme(myTestScheme);
     }
     finally {
+      myTestScheme = null;
+      mySavedScheme = null;
       super.tearDown();
     }
   }

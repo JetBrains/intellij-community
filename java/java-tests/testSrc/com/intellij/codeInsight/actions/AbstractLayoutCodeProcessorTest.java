@@ -101,6 +101,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
   @Override
   public void tearDown() throws Exception {
     VfsTestUtil.deleteFile(myWorkingDirectory.getVirtualFile());
+    myWorkingDirectory = null;
     super.tearDown();
   }
 

@@ -5,7 +5,7 @@ import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspecti
 import com.intellij.testFramework.InspectionTestCase;
 
 public class SameParameterValueTest extends InspectionTestCase {
-  private final SameParameterValueInspection myTool = new SameParameterValueInspection();
+  private SameParameterValueInspection myTool = new SameParameterValueInspection();
 
   @Override
   protected String getTestDataPath() {
@@ -14,6 +14,12 @@ public class SameParameterValueTest extends InspectionTestCase {
 
   private String getTestDir() {
     return "sameParameterValue/" + getTestName(true);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myTool = null;
+    super.tearDown();
   }
 
   public void testEntryPoint() {

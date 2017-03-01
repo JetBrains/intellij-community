@@ -36,6 +36,13 @@ public abstract class AbstractUnusedDeclarationTest extends InspectionTestCase {
     myTool = (UnusedDeclarationInspection)myToolWrapper.getTool();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myTool = null;
+    myToolWrapper = null;
+    super.tearDown();
+  }
+
   protected void doTest() {
     myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
     myTool.getSharedLocalInspectionTool().PARAMETER = false;

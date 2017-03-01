@@ -188,10 +188,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
 
   @Override
   protected void tearDown() throws Exception {
-    super.tearDown();
     myFile = null;
     myProject = null;
     myPsiManager = null;
+    myFileFactory = null;
+    super.tearDown();
   }
 
   protected String getTestDataPath() {

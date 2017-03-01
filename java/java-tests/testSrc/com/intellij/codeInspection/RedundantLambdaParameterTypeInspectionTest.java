@@ -18,17 +18,15 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-import java.util.Calendar;
 import java.util.List;
 
 public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsightFixtureTestCase {
   private RedundantLambdaParameterTypeInspection myInspection = new RedundantLambdaParameterTypeInspection();
-  private String myIntentionName = "Remove redundant parameter types";
+  private final String myIntentionName = "Remove redundant parameter types";
 
   @Override
   protected String getBasePath() {
@@ -48,6 +46,7 @@ public class RedundantLambdaParameterTypeInspectionTest extends LightCodeInsight
       myFixture.disableInspections(myInspection);
     }
     finally {
+      myInspection = null;
       super.tearDown();
     }
   }

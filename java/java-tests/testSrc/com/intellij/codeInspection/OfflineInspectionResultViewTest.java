@@ -110,16 +110,28 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
       tools.put(tool.getShortName(), new ToolsImpl(tool, tool.getDefaultLevel(), true));
       tool.initialize(myView.getGlobalInspectionContext());
     }
-}
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      Disposer.dispose(myView);
+    }
+    finally {
+      myView = null;
+      myUnusedToolWrapper = null;
+      myDataFlowToolWrapper = null;
+      super.tearDown();
+    }
+  }
 
   private Map<String, Map<String, Set<OfflineProblemDescriptor>>> parse() throws IOException {
     final String moduleName = getModule().getName();
-    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> map = new HashMap<>();
     final File res = new File(PathManagerEx.getTestDataPath(), getTestPath() + File.separator + "res");
     final File[] files = res.listFiles();
     assert files != null;
+    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> map = new HashMap<>();
     for (File file : files) {
-      final String name = file.getName();
       final String problems = FileUtil.loadFile(file);
       final Map<String, Set<OfflineProblemDescriptor>> descriptors = OfflineViewParseUtil.parse(problems);
       for (Set<OfflineProblemDescriptor> problemDescriptors : descriptors.values()) {
@@ -127,22 +139,10 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
           descriptor.setModule(moduleName);
         }
       }
+      final String name = file.getName();
       map.put(name.substring(0, name.lastIndexOf('.')), descriptors);
     }
     return map;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      Disposer.dispose(myView);
-      myView = null;
-      myUnusedToolWrapper = null;
-      myDataFlowToolWrapper = null;
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   public void testOfflineWithInvalid() throws Exception {
@@ -153,7 +153,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
                                            " -Declaration redundancy\n" +
                                            "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -" + getModule().toString() + "\n"
+                                           + "   -" + getModule() + "\n"
                                            + "    -<default>\n"
                                            + "     -Test\n"
                                            + "      -foo()\n"
@@ -193,7 +193,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n" +
                                            " -Declaration redundancy\n"
                                            + "  -" + myUnusedToolWrapper + "\n"
-                                           + "   -" + getModule().toString() + "\n"
+                                           + "   -" + getModule() + "\n"
                                            + "    -<default>\n"
                                            + "     -Test\n"
                                            + "      -foo()\n"

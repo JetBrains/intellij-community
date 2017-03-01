@@ -33,6 +33,12 @@ public class ConstantValuesTest extends LightCodeInsightFixtureTestCase {
     myClass = ((PsiJavaFile)myFixture.configureByFile("ClassWithConstants.java")).getClasses()[0];
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myClass = null;
+    super.tearDown();
+  }
+
   public void testInt1() {
     PsiField field = myClass.findFieldByName("INT_CONST1", false);
     assertNotNull(field);

@@ -32,12 +32,19 @@ import java.security.SecureRandom;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class JavaStubBuilderTest extends LightIdeaTestCase {
-  private final StubBuilder myBuilder = new JavaLightStubBuilder();
+  private StubBuilder myBuilder;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+    myBuilder = new JavaLightStubBuilder();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myBuilder = null;
+    super.tearDown();
   }
 
   public void testEmpty() {

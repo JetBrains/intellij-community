@@ -45,6 +45,7 @@ public class MavenShortcutsManagerTest extends MavenImportingTestCase {
       MavenKeymapExtension.clearActions(myProject);
     }
     finally {
+      myShortcutsManager = null;
       super.tearDown();
     }
   }

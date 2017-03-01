@@ -57,6 +57,12 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     myTempFiles = new TempFiles(myFilesToDelete);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myModulesToDispose.clear();
+    super.tearDown();
+  }
+
   protected void addModule(String path) throws IOException {
     addModule(path, true);
   }
@@ -109,12 +115,6 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
     String filePath = PathManagerEx.getTestDataPath() + File.separator + "junit" + File.separator + "configurations" +
                       File.separator + path;
     return LocalFileSystem.getInstance().findFileByPath(filePath.replace(File.separatorChar, '/'));
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    myModulesToDispose.clear();
-    super.tearDown();
   }
 
   protected void disposeModule(Module module) {

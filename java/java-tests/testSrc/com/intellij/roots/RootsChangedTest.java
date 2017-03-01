@@ -54,6 +54,12 @@ public class RootsChangedTest extends ModuleTestCase {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myModuleRootListener = null;
+    super.tearDown();
+  }
+
   public void testEventsAfterFileModifications() throws Exception {
     File root = new File(FileUtil.getTempDirectory());
 
