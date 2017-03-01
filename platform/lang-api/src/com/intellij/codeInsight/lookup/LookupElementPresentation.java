@@ -136,7 +136,6 @@ public class LookupElementPresentation {
   @Nullable
   public String getTailText() {
     if (myTail == null) return null;
-    if (myTail.size() == 1) return myTail.get(0).text;
     return StringUtil.join(myTail, fragment -> fragment.text, "");
   }
 
