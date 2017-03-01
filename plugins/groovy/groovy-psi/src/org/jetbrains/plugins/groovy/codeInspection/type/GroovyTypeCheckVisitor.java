@@ -930,7 +930,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       if (signatures.size() > 1) {
         final PsiType[] fittingSignature = ContainerUtil.find(signatures, types -> {
           for (int i = 0; i < types.length; i++) {
-            if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
+            if (!TypesUtil.isAssignableByMethodCallConversion(paramTypes.get(i), types[i], parameterList)) {
               return false;
             }
           }
@@ -952,7 +952,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           if (typeElement == null) continue;
           PsiType expected = types[i];
           PsiType actual = paramTypes.get(i);
-          if (!typesAreEqual(expected, actual, parameterList)) {
+          if (!TypesUtil.isAssignableByMethodCallConversion(actual, expected, parameterList)) {
             registerError(
               typeElement,
               GroovyInspectionBundle.message("expected.type.0", expected.getCanonicalText(false), actual.getCanonicalText(false)),
