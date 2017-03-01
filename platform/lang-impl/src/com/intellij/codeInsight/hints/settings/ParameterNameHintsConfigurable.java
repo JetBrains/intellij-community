@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hints.HintUtilsKt;
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
-import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -40,7 +40,6 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +51,6 @@ import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
 
@@ -105,25 +102,13 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   private void updateOkEnabled(@NotNull Language language, @NotNull EditorTextField editorTextField) {
     String text = editorTextField.getText();
-    List<String> rules = StringUtil.split(text, "\n", true, false);
-    List<Integer> invalidLines = getInvalidLinesNumbers(rules);
+    List<Integer> invalidLines = HintUtilsKt.getBlackListInvalidLineNumbers(text);
     
     myIsValidPatterns.put(language, invalidLines.isEmpty());
     boolean isEveryOneValid = !myIsValidPatterns.containsValue(false);
     
     getOKAction().setEnabled(isEveryOneValid);
     highlightErrorLines(invalidLines, editorTextField);
-  }
-
-  private static List<Integer> getInvalidLinesNumbers(List<String> rules) {
-    Stream<Integer> intStream = IntStream.iterate(0, i -> i + 1).boxed();
-    return StreamEx.of(rules)
-      .zipWith(intStream)
-      .filterKeys((rule) -> !rule.isEmpty())
-      .mapKeys((rule) -> MatcherConstructor.INSTANCE.createMatcher(rule))
-      .filterKeys((matcher) -> matcher == null)
-      .values()
-      .toList();
   }
 
   private static void highlightErrorLines(@NotNull List<Integer> lines, @NotNull EditorTextField editorTextField) {
@@ -315,10 +300,10 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   @NotNull
   private static List<Language> getBaseLanguagesWithProviders() {
-    return Language.getRegisteredLanguages()
+    return HintUtilsKt
+      .getHintProviders()
       .stream()
-      .filter(lang -> lang.getBaseLanguage() == null)
-      .filter(lang -> InlayParameterHintsExtension.INSTANCE.forLanguage(lang) != null)
+      .map((langWithImplementation) -> langWithImplementation.getFirst())
       .sorted(Comparator.comparingInt(l -> l.getDisplayName().length()))
       .collect(Collectors.toList());
   }
