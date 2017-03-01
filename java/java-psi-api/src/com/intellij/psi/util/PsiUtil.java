@@ -1005,6 +1005,9 @@ public final class PsiUtil extends PsiUtilCore {
     if (file != null) {
       PsiElement context = file.getContext();
       if (context != null) {
+        if (!context.isValid()) {
+          throw new PsiInvalidElementAccessException(context, "Invalid context in " + file + " of " + file.getClass());
+        }
         return getLanguageLevel(context);
       }
     }
