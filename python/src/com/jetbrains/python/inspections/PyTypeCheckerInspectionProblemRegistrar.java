@@ -20,7 +20,9 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyCallExpression;
@@ -35,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class PyTypeCheckerInspectionProblemRegistrar {
@@ -56,9 +59,13 @@ class PyTypeCheckerInspectionProblemRegistrar {
                                          @NotNull List<PyType> argumentTypes,
                                          @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
                                          @NotNull TypeEvalContext context) {
-    visitor.registerProblem(getMultiCalleeElementToHighlight(callSite),
-                            getMultiCalleeProblemMessage(argumentTypes, calleesResults, context),
-                            getMultiCalleeHighlightType(calleesResults));
+    if (callSite instanceof PyBinaryExpression) {
+      registerMultiCalleeProblemForBinaryExpression(visitor, (PyBinaryExpression)callSite, argumentTypes, calleesResults, context);
+    } else {
+      visitor.registerProblem(getMultiCalleeElementToHighlight(callSite),
+                              getMultiCalleeProblemMessage(argumentTypes, calleesResults, context),
+                              getMultiCalleeHighlightType(calleesResults));
+    }
   }
 
   @NotNull
@@ -101,13 +108,34 @@ class PyTypeCheckerInspectionProblemRegistrar {
     return expectedTypeAfterSubstitution == null ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.WEAK_WARNING;
   }
 
+  private static void registerMultiCalleeProblemForBinaryExpression(@NotNull PyInspectionVisitor visitor,
+                                                                    @NotNull PyBinaryExpression binaryExpression,
+                                                                    @NotNull List<PyType> argumentTypes,
+                                                                    @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                                                                    @NotNull TypeEvalContext context) {
+    final Predicate<PyTypeCheckerInspection.AnalyzeCalleeResults> isRightOperatorResults =
+      calleeResults -> PyNames.isRightOperatorName(calleeResults.getCallable().getName());
+
+    final boolean allCalleesAreRightOperators = calleesResults.stream().allMatch(isRightOperatorResults);
+
+    final List<PyTypeCheckerInspection.AnalyzeCalleeResults> preferredOperatorsResults =
+      allCalleesAreRightOperators
+      ? calleesResults
+      : ContainerUtil.filter(calleesResults, calleeResults -> !isRightOperatorResults.test(calleeResults));
+
+    if (preferredOperatorsResults.size() == 1) {
+      registerSingleCalleeProblem(visitor, preferredOperatorsResults.get(0), context);
+    } else {
+      visitor.registerProblem(allCalleesAreRightOperators ? binaryExpression.getLeftExpression() : binaryExpression.getRightExpression(),
+                              getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context),
+                              getMultiCalleeHighlightType(preferredOperatorsResults));
+    }
+  }
+
   @NotNull
   private static PsiElement getMultiCalleeElementToHighlight(@NotNull PyCallSiteExpression callSite) {
     if (callSite instanceof PyCallExpression) {
       return ObjectUtils.notNull(((PyCallExpression)callSite).getArgumentList(), callSite);
-    }
-    else if (callSite instanceof PyBinaryExpression) {
-      return ObjectUtils.notNull(((PyBinaryExpression)callSite).getPsiOperator(), callSite);
     }
     else if (callSite instanceof PySubscriptionExpression) {
       return ObjectUtils.notNull(((PySubscriptionExpression)callSite).getIndexExpression(), callSite);
