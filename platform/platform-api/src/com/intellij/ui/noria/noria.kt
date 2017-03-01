@@ -78,7 +78,7 @@ fun<Node> buildComponent(parent: Node, e: Element, r: Toolkit<Node>, update: () 
   } else {
     val context = ReactiveContext(onInvalidate = update)
     val render = e.type.renderFn()
-    val substElement = withReactiveContext(context, { render(e.props, e.children) })
+    val substElement = withReactiveContext(context, { render(e.props, e.children) }).copy(index = e.index)
     val (c, updates) = buildComponent(parent, substElement, r, update)
     UserComponent(node = c.node,
                   render = render,
@@ -198,7 +198,7 @@ data class UserComponent<Node>(override val node: Node,
             else
               substitution.element to reactiveContext
 
-        val (subst, updates) = substitution.reconcile(substElement, tk, update)
+        val (subst, updates) = substitution.reconcile(substElement.copy(index = e.index), tk, update)
         (if (subst != substitution || element != e)
           copy(element = e,
                reactiveContext = context,
@@ -254,16 +254,16 @@ fun<Node> mount(parentDisposable: Disposable,
     toolkit.scheduleReconcile {
       val (c, updates) = rootC!!.reconcile(element, toolkit, ::reconciler)
       rootC = c
-      toolkit.performUpdates(updates)
+      toolkit.performUpdates(updates, root)
     }
   }
   val reconciliation = buildComponent(root, element, toolkit, ::reconciler)
   rootC = reconciliation.first
   val updates = reconciliation.second
-  toolkit.performUpdates(updates)
+  toolkit.performUpdates(updates, root)
 
   Disposer.register(parentDisposable, Disposable {
-    toolkit.performUpdates(listOf(RemoveChild(parent = root, child = rootC!!.node)))
+    toolkit.performUpdates(listOf(RemoveChild(parent = root, child = rootC!!.node)), root)
   })
   return object: NoriaHandle<Node> {
     override fun getPreferredFocusedNode(): Node? = firstDescendant(rootC!!, {it.props is Focusable && it.props.autoFocus})?.node
@@ -430,5 +430,84 @@ fun<P: Any> statefulComponent(type: String,
          })
      elementBuilder.done()
    }
+
+
+//fun main(args: Array<String>) {
+//
+//
+//  val counter = cell(5)
+//  val cbEnabled = cell(true)
+//  val cbSelected = cell(true)
+//  val allOn = cell { cbEnabled.value && cbSelected.value && counter.value > 6}
+//
+//  data class ControlProps(val c: VarCell<Int>)
+//
+//  val controls = component<ControlProps>("controls") { cp, ch ->
+//    panel {
+//      props = Panel()
+//
+//      button {
+//        props = Button(text = "Inc",
+//                       onClick = { cp.c.value++ })
+//      }
+//      button {
+//        props = Button(text = "Dec",
+//                       onClick = { cp.c.value-- })
+//      }
+//    }
+//  }
+//
+//  val rootComponent = component<Unit>("root") { u, ch ->
+//    panel {
+//      props = Panel()
+//      label {
+//        key = "label"
+//        props = Label(text = if (allOn.value) "ON" else "OFF")
+//      }
+//      checkbox {
+//        key = "master"
+//        props = Checkbox(text = "enabled",
+//                         selected = cbEnabled.value,
+//                         onChange = { cbEnabled.value = it })
+//      }
+//      for (i in 0..counter.value) {
+//        checkbox {
+//          key = i
+//          props = Checkbox(text = "$i",
+//                           selected = cbSelected.value,
+//                           enabled = cbEnabled.value,
+//                           onChange = {cbSelected.value = it})
+//        }
+//      }
+//      controls {
+//        key = "controls"
+//        props = ControlProps(c = counter)
+//      }
+//    }
+//  }
+//  val jFrame = JFrame()
+//  val panel = JPanel()
+//  jFrame.contentPane = panel
+//
+//  mount(Disposer.newDisposable(),
+//        buildElement<Unit> { rootComponent { props = Unit } },
+//        panel,
+//        SwingToolkit())
+//  jFrame.pack()
+//  jFrame.setVisible(true)
+//
+//  val jFrame2 = JFrame()
+//  val panel2 = JPanel()
+//  jFrame2.contentPane = panel2
+//
+//  mount(Disposer.newDisposable(),
+//        buildElement<Unit> {
+//          rootComponent { props = Unit }
+//        },
+//        panel2,
+//        SwingToolkit())
+//  jFrame2.pack()
+//  jFrame2.setVisible(true)
+//}
 
 

@@ -40,7 +40,8 @@ class SwingToolkit : Toolkit<JComponent> {
     return type.createNode(e.props as BaseProps)
   }
 
-  override fun performUpdates(l: List<Update<JComponent>>) {
+  override fun performUpdates(l: List<Update<JComponent>>,
+                              root: JComponent) {
     l.forEach { update ->
       when (update) {
         is AddChild ->
@@ -50,7 +51,8 @@ class SwingToolkit : Toolkit<JComponent> {
           type as PrimitiveComponentType<JComponent, BaseProps>
           type.update(UpdateInfo(update.node, update.oldProps as BaseProps, update.newProps as BaseProps))
         }
-        is RemoveChild -> update.parent.remove(update.child)
+        is RemoveChild ->
+          update.parent.remove(update.child)
         is DestroyNode -> {
           val type = registry[update.type.type] ?: throw IllegalStateException("can't find component for type ${update.type.type}")
           type as PrimitiveComponentType<JComponent, BaseProps>
@@ -58,6 +60,7 @@ class SwingToolkit : Toolkit<JComponent> {
         }
       }
     }
+    root.validate()
   }
 }
 

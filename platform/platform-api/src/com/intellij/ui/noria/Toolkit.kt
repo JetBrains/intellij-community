@@ -23,7 +23,7 @@ import java.awt.LayoutManager
 interface Toolkit<Node> {
   fun isPrimitive(e: ElementType): Boolean
   fun createNode(e: Element): Node
-  fun performUpdates(l: List<Update<Node>>)
+  fun performUpdates(l: List<Update<Node>>, root: Node)
   fun scheduleReconcile(function: () -> Unit) {
     function()
   }
@@ -33,7 +33,7 @@ interface BaseProps {
   var constraints: Any
 }
 
-data class BasePropsData(override var constraints: Any = Unit) : BaseProps
+data class BasePropsData(override var constraints: Any = "") : BaseProps
 
 data class Checkbox(val text: String,
                     val selected: Boolean,
