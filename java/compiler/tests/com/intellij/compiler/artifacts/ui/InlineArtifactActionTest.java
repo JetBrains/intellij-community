@@ -19,6 +19,12 @@ public class InlineArtifactActionTest extends ArtifactEditorActionTestCase {
     myIncluded = addArtifact("included", root().module(module));
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myIncluded = null;
+    super.tearDown();
+  }
+
   public void testSimple() throws Exception {
     createEditor(addArtifact(root().artifact(myIncluded)));
     selectNode("included");

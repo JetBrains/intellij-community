@@ -22,6 +22,12 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
   private Artifact myArtifact;
 
   @Override
+  protected void tearDown() throws Exception {
+    myArtifact = null;
+    super.tearDown();
+  }
+
+  @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
     CompilerConfiguration.getInstance(getProject()).addResourceFilePattern("?*.MF");

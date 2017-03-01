@@ -22,6 +22,12 @@ import java.util.Collections;
 public abstract class ArtifactEditorTestCase extends PackagingElementsTestCase {
   protected ArtifactEditorImpl myArtifactEditor;
 
+  @Override
+  protected void tearDown() throws Exception {
+    myArtifactEditor = null;
+    super.tearDown();
+  }
+
   protected void createEditor(Artifact artifact) {
     createEditor(artifact, false);
   }
