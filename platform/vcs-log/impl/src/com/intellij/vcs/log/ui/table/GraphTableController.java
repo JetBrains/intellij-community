@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
@@ -234,6 +235,7 @@ public class GraphTableController {
   }
 
   private class MyMouseAdapter extends MouseAdapter {
+    private static final int BORDER_THICKNESS = 3;
     @NotNull private final TableLinkMouseListener myLinkListener = new SimpleColoredComponentLinkMouseListener();
 
     @Override
@@ -242,9 +244,23 @@ public class GraphTableController {
         return;
       }
 
+      int c = myTable.columnAtPoint(e.getPoint());
+      int column = myTable.convertColumnIndexToModel(c);
+      // if clicked on the left of column border, c2 is the column to the right of the border
+      // we resize it first
+      int c2 = myTable.columnAtPoint(new Point(e.getPoint().x + BORDER_THICKNESS, e.getPoint().y));
+      int column2 = myTable.convertColumnIndexToModel(c2);
+      if (e.getClickCount() == 2 && isOnBorder(e, c)) {
+        if (isOnBorder(e, c2) && (column2 == GraphTableModel.AUTHOR_COLUMN || column2 == GraphTableModel.DATE_COLUMN)) {
+          myTable.resetColumnWidth(column2);
+        }
+        else if (column == GraphTableModel.AUTHOR_COLUMN || column == GraphTableModel.DATE_COLUMN) {
+          myTable.resetColumnWidth(column);
+        }
+      }
+
       int row = myTable.rowAtPoint(e.getPoint());
       if ((row >= 0 && row < myTable.getRowCount()) && e.getClickCount() == 1) {
-        int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
         if (column == GraphTableModel.ROOT_COLUMN) {
           performRootColumnAction();
         }
@@ -255,6 +271,15 @@ public class GraphTableController {
           }
         }
       }
+    }
+
+    public boolean isOnBorder(@NotNull MouseEvent e, int column) {
+      int x = 0;
+      for (int i = 0; i < column; i++) {
+        x += myTable.getColumnModel().getColumn(i).getWidth();
+      }
+      return Math.abs(x - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS) ||
+             Math.abs(x + myTable.getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
     }
 
     @Override

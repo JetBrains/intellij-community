@@ -199,6 +199,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     super.doLayout();
   }
 
+  public void resetColumnWidth(int column) {
+    if (CommonUiProperties.getColumnWidth(myUi.getProperties(), column) != -1) {
+      CommonUiProperties.saveColumnWidth(myUi.getProperties(), column, -1);
+    }
+    else {
+      forceReLayout(column);
+    }
+  }
+
   private void updateAuthorAndDataWidth() {
     for (int i : new int[]{AUTHOR_COLUMN, DATE_COLUMN}) {
       int width = CommonUiProperties.getColumnWidth(myUi.getProperties(), i);
