@@ -32,15 +32,15 @@
     <localInspection groupName="RegExp" language="RegExp" shortName="SingleCharAlternation" displayName="Single character alternation"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.regexp.inspection.SingleCharAlternationInspection"/>
-    <localInspection groupName="RegExp" language="RegExp"  shortName="OctalEscape" displayName="Octal escape" enabledByDefault="false"
-                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.OctalEscapeInspection"/>
+    <localInspection groupName="RegExp" language="RegExp"  shortName="OctalEscape" displayName="Octal escape" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="org.intellij.lang.regexp.inspection.OctalEscapeInspection"/>
     <!--<localInspection groupName="RegExp" language="RegExp" shortName="ReDoS" displayName="Exponential backtracking" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.ReDoSInspection"/>-->
     <localInspection groupName="RegExp" language="RegExp" shortName="DuplicateAlternationBranch"
                      displayName="Duplicate branch in alternation" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.regexp.inspection.DuplicateAlternationBranchInspection"/>
     <localInspection groupName="RegExp" language="RegExp" shortName="EscapedMetaCharacter" displayName="Escaped meta character"
-                     enabledByDefault="false" level="WARNING"
+                     enabledByDefault="true" level="INFORMATION"
                      implementationClass="org.intellij.lang.regexp.inspection.EscapedMetaCharacterInspection"/>
   </extensions>
 </idea-plugin>
