@@ -1147,15 +1147,7 @@ public class MavenProjectsTree {
   }
 
   private MavenProject findParent(MavenProject project) {
-    MavenId parentId = project.getParentId();
-    if (parentId == null) return null; // has no parent or not fully initialized yet
-
-    Properties properties = project.getProperties();
-    return findProject(new MavenId(
-      MavenUtil.expandProperties(parentId.getGroupId(), properties),
-      MavenUtil.expandProperties(parentId.getArtifactId(), properties),
-      MavenUtil.expandProperties(parentId.getVersion(), properties)
-    ));
+    return findProject(project.getParentId());
   }
 
   public Collection<MavenProject> findInheritors(MavenProject project) {
