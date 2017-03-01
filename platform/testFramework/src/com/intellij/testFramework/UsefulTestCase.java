@@ -871,6 +871,40 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   /**
+   * Checks that the code block throws an exception of the specified class.
+   *
+   * @param exceptionClass   Expected exception type
+   * @param runnable         Block annotated with some exception type
+   */
+  protected void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
+                              @NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    assertThrows(exceptionClass, null, runnable);
+  }
+
+  /**
+   * Checks that the code block throws an exception of the specified class with expected error msg.
+   * If expected error message is null it will not be checked.
+   *
+   * @param exceptionClass   Expected exception type
+   * @param expectedErrorMsg expected error message, of any
+   * @param runnable         Block annotated with some exception type
+   */
+  protected void assertThrows(@NotNull Class<? extends Throwable> exceptionClass, @Nullable String expectedErrorMsg,
+                              @NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    assertException(new AbstractExceptionCase() {
+      @Override
+      public Class getExpectedExceptionClass() {
+        return exceptionClass;
+      }
+
+      @Override
+      public void tryClosure() throws Throwable {
+        runnable.run();
+      }
+    }, expectedErrorMsg);
+  }
+
+  /**
    * Checks that code block doesn't throw corresponding exception.
    *
    * @param exceptionCase Block annotated with some exception type
