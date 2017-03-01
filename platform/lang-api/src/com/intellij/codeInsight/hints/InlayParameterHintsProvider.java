@@ -78,7 +78,7 @@ public interface InlayParameterHintsProvider {
   /**
    * Customise hints presentation
    */
-  default String getInlayPresentation(String inlayText) {
+  default String getInlayPresentation(@NotNull String inlayText) {
     return inlayText + ":"; 
   }
 
