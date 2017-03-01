@@ -50,10 +50,10 @@ public abstract class PythonPathCache {
     if (references == null) {
       return null;
     }
-    final List<PsiElement> result = references.stream().map(r -> r.get()).filter(p -> p != null).collect(Collectors.toList());
-    final boolean staleElementRemoved = result.removeIf(e -> !e.isValid());
-    if (staleElementRemoved) {
-      Logger.getInstance(PythonPathCache.class).warn("Removing invalid element from cache");
+    final List<PsiElement> result = references.stream().map(r -> r.get()).collect(Collectors.toList());
+    if (result.stream().anyMatch(o -> o == null || ! o.isValid())) {
+      // Null in list means SoftReference has been collected meaning cache is not valid
+      return null;
     }
     return result;
   }
