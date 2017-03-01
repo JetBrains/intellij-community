@@ -32,9 +32,9 @@ expects_type(type)
 expects_type(object)
 expects_typing_type(type)
 expects_typing_type(object)
-expects_str_class(<warning descr="Expected type 'Type[str]', got 'Type[type]' instead">type</warning>)
+expects_str_class(<warning descr="Expected type 'Type[str]', got 'type' instead">type</warning>)
 expects_any_type_via_type_var(type)
-expects_str_subclass(<warning descr="Expected type 'Type[TypeVar('T', str)]', got 'Type[type]' instead">type</warning>)
+expects_str_subclass(<warning descr="Expected type 'Type[TypeVar('T', str)]', got 'type' instead">type</warning>)
 expects_object(type)
 
     

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
@@ -280,7 +281,14 @@ public class PyTypeModelBuilder {
       result = buildCallable((PyCallableType)type);
     }
     else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
-      result = new ClassObjectType(build(((PyInstantiableType)type).toInstance(), allowUnions));
+      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
+      // Special case: render Type[type] as just type
+      if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
+        result = NamedType.nameOrAny(type);
+      }
+      else {
+        result = new ClassObjectType(build(instanceType, allowUnions));
+      }
     }
     else if (type instanceof PyGenericType) {
       //assert !((PyGenericType)type).isDefinition()
