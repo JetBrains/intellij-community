@@ -17,31 +17,78 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.JdomKt;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 
 public class ShowUpdateInfoDialogAction extends AnAction {
-  private boolean myShowBigData = false;
 
   public ShowUpdateInfoDialogAction() {
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    Project project = ObjectUtils.notNull(e.getProject());
+    JComponent component = ObjectUtils.notNull((JComponent)e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
+    String title = "Updates.xml <channel> Text";
+    JBList list = new JBList("Manual Text", "Default Text (short)", "Default Text (long)");
+    JBPopupFactory.getInstance().createListPopupBuilder(list)
+      .setTitle(title)
+      .setFilteringEnabled(o -> (String)o)
+      .setItemChoosenCallback(() -> {
+        int index = list.getSelectedIndex();
+        showDialog(index == 0 ? getUserText(project, component, title) : getXML(index == 2));
+      })
+      .createPopup()
+      .showCenteredInCurrentWindow(project);
+  }
+
+  @Nullable
+  private static String getUserText(@NotNull Project project, @NotNull JComponent component, @NotNull String title) {
+    JBTextField field = new JBTextField();
+    field.setVisible(false);
+    component.getRootPane().add(field);
     try {
-      myShowBigData = ! myShowBigData;
-      UpdateChannel channel = new UpdateChannel(JdomKt.loadElement(getXML(myShowBigData)));
-      BuildInfo newBuild = channel.getBuilds().get(0);
-      PatchInfo patchInfo = new PatchInfo(
-        JdomKt.loadElement("<patch from=\"" + ApplicationInfo.getInstance().getBuild().asString() + "\" size=\"from 733 to 800\"/>"));
-      new UpdateInfoDialog(channel, newBuild, patchInfo, true, UpdateSettings.getInstance().canUseSecureConnection(),
-                           Collections.emptyList(), Collections.emptyList()).show();
+      Messages.showTextAreaDialog(field, title, null);
     }
-    catch (Exception ignored) {
-      ignored.printStackTrace();
+    finally {
+      component.getRootPane().remove(field);
     }
+    return field.getText();
+  }
+
+  protected void showDialog(@Nullable String text) {
+    String trim = StringUtil.trim(text);
+    if (StringUtil.isEmpty(trim)) return;
+
+    Element element;
+    try {
+      element = JdomKt.loadElement(trim);
+      if (!"channel".equals(element.getName())) return;
+    }
+    catch (Exception ex) {
+      Logger.getInstance(ShowUpdateInfoDialogAction.class).error(ex);
+      return;
+    }
+    UpdateChannel channel = new UpdateChannel(element);
+    BuildInfo newBuild = ContainerUtil.getFirstItem(channel.getBuilds());
+    PatchInfo patch = ContainerUtil.getFirstItem(newBuild.getPatches());
+    new UpdateInfoDialog(channel, newBuild, patch, true, UpdateSettings.getInstance().canUseSecureConnection(),
+                         Collections.emptyList(), Collections.emptyList()).show();
   }
 
 
@@ -118,10 +165,13 @@ public class ShowUpdateInfoDialogAction extends AnAction {
                                                 "        <patch from=\"145.1617\" size=\"from 42 to 58\"/>\n" +
                                                 "      </build>\n" +
                                                 "    </channel>\n";
+
   private static String getXML(boolean bigData) {
     StringBuilder sb = new StringBuilder(CHANNEL_XML_START);
     int count = bigData ? 4 : 1;
-    for (int i = 0; i < count; i++) { sb.append(PARAGRAPH); }
+    for (int i = 0; i < count; i++) {
+      sb.append(PARAGRAPH);
+    }
     sb.append(CHANNEL_XML_END);
     return sb.toString();
   }

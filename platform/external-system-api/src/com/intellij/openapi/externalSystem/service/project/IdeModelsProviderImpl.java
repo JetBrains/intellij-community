@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -87,16 +88,17 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   protected String[] suggestModuleNameCandidates(@NotNull ModuleData module) {
     String prefix = module.getGroup();
     File modulePath = new File(module.getLinkedExternalProjectPath());
-    if(modulePath.isFile()) {
+    if (modulePath.isFile()) {
       modulePath = modulePath.getParentFile();
     }
     if (modulePath.getParentFile() != null) {
       prefix = modulePath.getParentFile().getName();
     }
+    char delimiter = ModuleGrouperKt.isQualifiedModuleNamesEnabled() ? '.' : '_';
     return new String[]{
       module.getInternalName(),
-      prefix + '-' + module.getInternalName(),
-      prefix + '-' + module.getInternalName() + "~1"};
+      prefix + delimiter + module.getInternalName(),
+      prefix + delimiter + module.getInternalName() + "~1"};
   }
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {

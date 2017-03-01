@@ -29,6 +29,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
+import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Factory;
@@ -866,15 +867,16 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (paths.contains(moduleNode.getData().getLinkedExternalProjectPath())) continue;
 
         resultProjectDataNode.addChild(moduleNode);
+        if (!ModuleGrouperKt.isQualifiedModuleNamesEnabled()) {
+          // adjust ide module group
+          final ModuleData moduleData = moduleNode.getData();
+          if (moduleData.getIdeModuleGroup() != null) {
+            String[] moduleGroup = ArrayUtil.prepend(resultProjectDataNode.getData().getInternalName(), moduleData.getIdeModuleGroup());
+            moduleData.setIdeModuleGroup(moduleGroup);
 
-        // adjust ide module group
-        final ModuleData moduleData = moduleNode.getData();
-        if (moduleData.getIdeModuleGroup() != null) {
-          String[] moduleGroup = ArrayUtil.prepend(resultProjectDataNode.getData().getInternalName(), moduleData.getIdeModuleGroup());
-          moduleData.setIdeModuleGroup(moduleGroup);
-
-          for (DataNode<GradleSourceSetData> sourceSetNode : ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY)) {
-            sourceSetNode.getData().setIdeModuleGroup(moduleGroup);
+            for (DataNode<GradleSourceSetData> sourceSetNode : ExternalSystemApiUtil.getChildren(moduleNode, GradleSourceSetData.KEY)) {
+              sourceSetNode.getData().setIdeModuleGroup(moduleGroup);
+            }
           }
         }
       }
