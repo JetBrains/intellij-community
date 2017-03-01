@@ -46,7 +46,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
     ;
     g2d.setColor(tabColor != null ? tabColor : getDefaultTabColor());
     g2d.fillRect(x, y, w, h);
-    if (myTabs.hasUnderlineSelection()) return;
+    //if (myTabs.hasUnderlineSelection()) return;
     g2d.setColor(getInactiveMaskColor());
     g2d.fillRect(x, y, w, h);
   }
