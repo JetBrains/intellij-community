@@ -236,7 +236,7 @@ public class ExpressionUtils {
    * Also the expression value is guaranteed to be equal to one of returned sub-expressions.
    *
    * <p>
-   * E.g. for {@code ((a) ? b : (c))} the stream will contain b and c.
+   * E.g. for {@code ((a) ? (Foo)b : (c))} the stream will contain b and c.
    * </p>
    *
    * @param expression expression to create a stream from
@@ -253,7 +253,18 @@ public class ExpressionUtils {
       }
       return null;
     }).remove(e -> e instanceof PsiConditionalExpression ||
-                   e instanceof PsiParenthesizedExpression);
+                   e instanceof PsiParenthesizedExpression)
+      .map(e -> {
+        if(e instanceof PsiTypeCastExpression) {
+          PsiExpression operand = ((PsiTypeCastExpression)e).getOperand();
+          if(operand != null && !(e.getType() instanceof PsiPrimitiveType) &&
+             (!(operand.getType() instanceof PsiPrimitiveType) || PsiType.NULL.equals(operand.getType()))) {
+            // Ignore to-primitive/from-primitive casts as they may actually change the value
+            return PsiUtil.skipParenthesizedExprDown(operand);
+          }
+        }
+        return e;
+      });
   }
 
   public static boolean isZero(@Nullable PsiExpression expression) {
