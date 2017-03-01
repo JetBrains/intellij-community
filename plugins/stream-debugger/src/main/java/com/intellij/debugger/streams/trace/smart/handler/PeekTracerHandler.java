@@ -3,7 +3,7 @@ package com.intellij.debugger.streams.trace.smart.handler;
 import com.intellij.debugger.streams.wrapper.MethodCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -11,38 +11,66 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class PeekTracerHandler extends HandlerBase {
-  private final List<Variable> myVariables = new ArrayList<>();
+  private final HashMapVariableImpl myBeforeVariable;
+  private final HashMapVariableImpl myAfterVariable;
 
   public PeekTracerHandler(int num, @NotNull String name) {
+    final String variablePrefix = String.format("%sPeek%d", name, num);
+    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", "Integer", "Object", true);
+    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", "Integer", "Object", true);
   }
 
   @NotNull
   @Override
   public List<MethodCall> additionalCallsBefore() {
-    return Collections.emptyList();
+    final String beforeMapName = myBeforeVariable.getName();
+    return Collections.singletonList(new MyPeekCall(String.format("x -> %s.put(time.addAndGet(), x)", beforeMapName)));
   }
 
   @NotNull
   @Override
   public List<MethodCall> additionalCallsAfter() {
-    return Collections.emptyList();
+    final String afterMapName = myBeforeVariable.getName();
+    return Collections.singletonList(new MyPeekCall(String.format("x -> %s.put(time.addAndGet(), x)", afterMapName)));
   }
 
   @NotNull
   @Override
   public String prepareResult() {
-    return "";
+    final String beforeConversion = myBeforeVariable.convertToArray("beforeArray");
+    final String afterConversion = myAfterVariable.convertToArray("afterArray");
+    return beforeConversion + System.lineSeparator() + afterConversion;
   }
 
   @NotNull
   @Override
   public String getResultExpression() {
-    return "";
+    return "new Object[] {beforeArray, afterArray}";
   }
 
   @NotNull
   @Override
   protected List<Variable> getVariables() {
-    return myVariables;
+    return Arrays.asList(myBeforeVariable, myAfterVariable);
+  }
+
+  private static class MyPeekCall implements MethodCall {
+    private final String myLambda;
+
+    private MyPeekCall(@NotNull String lambda) {
+      myLambda = lambda;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "peek";
+    }
+
+    @NotNull
+    @Override
+    public String getArguments() {
+      return String.format("(%s)", myLambda);
+    }
   }
 }
