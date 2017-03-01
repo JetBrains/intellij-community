@@ -52,7 +52,7 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
     boolean skipHook;
     if (optionValue instanceof GitVcsPushOptionValue) {
       pushTagMode = ((GitVcsPushOptionValue)optionValue).getPushTagMode();
-      skipHook = ((GitVcsPushOptionValue)optionValue).shouldSkipHook();
+      skipHook = ((GitVcsPushOptionValue)optionValue).isSkipHook();
     }
     else {
       pushTagMode = null;
