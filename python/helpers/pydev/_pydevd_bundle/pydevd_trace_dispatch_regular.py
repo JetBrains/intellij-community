@@ -7,9 +7,10 @@ from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_tracing import SetTrace
-
 # IFDEF CYTHON
 # # In Cython, PyDBAdditionalThreadInfo is bundled in the file.
+# from cpython.object cimport PyObject
+# from cpython.ref cimport Py_INCREF, Py_XDECREF
 # ELSE
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 # ENDIF
@@ -46,6 +47,18 @@ def trace_dispatch(py_db, frame, event, arg):
     return thread_tracer.__call__(frame, event, arg)
 
 # IFDEF CYTHON
+# cdef class SafeCallWrapper:
+#   cdef method_object
+#   def __init__(self, method_object):
+#       self.method_object = method_object
+#   def  __call__(self, *args):
+#       #Cannot use 'self' once inside the delegate call since we are borrowing the self reference f_trace field
+#       #in the frame, and that reference might get destroyed by set trace on frame and parents
+#       cdef PyObject* method_obj = <PyObject*> self.method_object
+#       Py_INCREF(<object>method_obj)
+#       ret = (<object>method_obj)(*args)
+#       Py_XDECREF (method_obj)
+#       return SafeCallWrapper(ret) if ret is not None else None
 # cdef class ThreadTracer:
 #     cdef public tuple _args;
 #     def __init__(self, tuple args):
