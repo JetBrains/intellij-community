@@ -144,8 +144,18 @@ public class ExecUtil {
     command.add(commandLine.getExePath());
     command.addAll(commandLine.getParametersList().getList());
 
-    GeneralCommandLine sudoCommandLine;
-    if (SystemInfo.isMac) {
+    final GeneralCommandLine sudoCommandLine;
+    if (SystemInfo.isWinVistaOrNewer) {
+      // Sudo.exe process with elevated permissions on UAC. Only non-interactive processes are supported
+      final File sudoExe = PathManager.tryFindBinFile("sudo.exe");
+      assert sudoExe != null && sudoExe.exists(): "Can't find sudo.exe";
+      sudoCommandLine = new GeneralCommandLine(sudoExe.getPath());
+      sudoCommandLine.setWorkDirectory(commandLine.getWorkDirectory());
+      sudoCommandLine.addParameter(commandLine.getExePath());
+      sudoCommandLine.addParameters(commandLine.getParametersList().getParameters());
+      sudoCommandLine.getEnvironment().putAll(commandLine.getEffectiveEnvironment());
+    }
+    else if (SystemInfo.isMac) {
       String escapedCommandLine = StringUtil.join(command, ExecUtil::escapeAppleScriptArgument, " & \" \" & ");
       String escapedScript = "tell current application\n" +
                              "   activate\n" +
