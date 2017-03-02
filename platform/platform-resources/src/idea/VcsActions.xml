@@ -306,6 +306,13 @@
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>
     </group>
 
+    <group id="FileHistory.KeymapGroup" text="File History">
+      <reference id="Vcs.ShowHistoryForBlock"/>
+      <reference id="Vcs.GetVersion"/>
+
+      <add-to-group group-id="Vcs.KeymapGroup"/>
+    </group>
+
     <group>
       <reference ref="CheckinProject"/>
       <reference ref="CheckinFiles"/>

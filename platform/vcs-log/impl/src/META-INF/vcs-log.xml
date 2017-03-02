@@ -181,7 +181,7 @@
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
 
-    <group id="FileHistory.KeymapGroup" text="File History">
+    <group id="Log.FileHistory.KeymapGroup" popup="false">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
       <reference id="Vcs.Log.ShowDiff"/>
       <reference id="Vcs.Log.ShowDiffWithLocal"/>
@@ -197,7 +197,7 @@
       <reference id="VcsHistoryActionsGroup"/>
       <reference ref="Vcs.Log.CloseLogTabAction"/>
 
-      <add-to-group group-id="Vcs.KeymapGroup"/>
+      <add-to-group group-id="FileHistory.KeymapGroup"/>
     </group>
   </actions>
 
