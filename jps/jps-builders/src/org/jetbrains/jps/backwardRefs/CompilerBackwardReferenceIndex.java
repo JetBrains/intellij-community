@@ -167,8 +167,7 @@ public class CompilerBackwardReferenceIndex {
         is.close();
       }
     }
-    catch (IOException ex) {
-      LOG.info(ex);
+    catch (IOException ignored) {
     }
     return true;
   }
