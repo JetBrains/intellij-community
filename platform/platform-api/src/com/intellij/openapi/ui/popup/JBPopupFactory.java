@@ -56,6 +56,11 @@ public abstract class JBPopupFactory {
     return new PopupChooserBuilder(list);
   }
 
+  @NotNull
+  public IPopupChooserBuilder createPopupChooserBuilder(@NotNull JTable list) {
+    return new PopupChooserBuilder(list);
+  }
+
   @Deprecated
   @NotNull
   public PopupChooserBuilder createListPopupBuilder(@NotNull JList list) {

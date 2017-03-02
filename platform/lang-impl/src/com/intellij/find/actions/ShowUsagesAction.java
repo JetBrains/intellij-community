@@ -42,10 +42,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -643,7 +642,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final AsyncProcessIcon processIcon) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    IPopupChooserBuilder builder = new PopupChooserBuilder(table);
+    IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
     final String title = presentation.getTabText();
     if (title != null) {
       String result = getFullTitle(usages, title, false, visibleNodes.size() - 1, true);
