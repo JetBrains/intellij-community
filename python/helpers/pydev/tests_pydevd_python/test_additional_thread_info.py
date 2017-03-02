@@ -20,35 +20,6 @@ except:
 # TestCase
 #=======================================================================================================================
 class TestCase(unittest.TestCase):
-    '''
-        Used for profiling the PyDBAdditionalThreadInfoWithoutCurrentFramesSupport version
-    '''
-
-    def test_met_no_frames_support(self):
-        from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
-        info = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport()
-
-        main_debugger = Null()
-        filename = ''
-        base = ''
-        additional_info = Null()
-        t = Null()
-        frame = Null()
-
-        times = 10
-        for i in range(times):
-            info.create_db_frame((main_debugger, filename, additional_info, t, frame))
-
-        #we haven't kept any reference, so, they must have been garbage-collected already!
-        self.assertEqual(0, len(info.iter_frames(t)))
-
-        kept_frames = []
-        for i in range(times):
-            kept_frames.append(info.create_db_frame((main_debugger, filename, additional_info, t, frame)))
-
-        for i in range(times):
-            self.assertEqual(times, len(info.iter_frames(t)))
-
 
     def test_start_new_thread(self):
         pydev_monkey.patch_thread_modules()

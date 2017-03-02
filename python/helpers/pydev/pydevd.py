@@ -10,7 +10,7 @@ import os
 import sys
 import traceback
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_pop, dict_contains, \
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OLDER, get_thread_id, dict_keys, dict_contains, \
     dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE
 from _pydev_bundle import fix_getpass
@@ -379,7 +379,7 @@ class PyDB:
         # import hook and patches for matplotlib support in debug console
         from _pydev_bundle.pydev_import_hook import import_hook_manager
         for module in dict_keys(self.mpl_modules_for_patching):
-            import_hook_manager.add_module_name(module, dict_pop(self.mpl_modules_for_patching, module))
+            import_hook_manager.add_module_name(module, self.mpl_modules_for_patching.pop(module))
 
     def init_matplotlib_support(self):
         # prepare debugger for integration with matplotlib GUI event loop
@@ -408,7 +408,7 @@ class PyDB:
         if len(self.mpl_modules_for_patching) > 0:
             for module in dict_keys(self.mpl_modules_for_patching):
                 if module in sys.modules:
-                    activate_function = dict_pop(self.mpl_modules_for_patching, module)
+                    activate_function = self.mpl_modules_for_patching.pop(module)
                     activate_function()
                     self.mpl_in_use = True
 
@@ -586,11 +586,14 @@ class PyDB:
 
 
     def consolidate_breakpoints(self, file, id_to_breakpoint, breakpoints):
+        from _pydevd_bundle.pydevd_trace_dispatch import global_cache_skips, global_cache_frame_skips
         break_dict = {}
         for breakpoint_id, pybreakpoint in dict_iter_items(id_to_breakpoint):
             break_dict[pybreakpoint.line] = pybreakpoint
 
         breakpoints[file] = break_dict
+        global_cache_skips.clear()
+        global_cache_frame_skips.clear()
 
     def add_break_on_exception(
             self,
