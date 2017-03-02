@@ -951,6 +951,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                             myPlace, myActionManager, transparentOnly);
 
     if (forced || !newVisibleActions.equals(myVisibleActions)) {
+      myPresentationFactory.retainAll(newVisibleActions);
+
       boolean shouldRebuildUI = newVisibleActions.isEmpty() || myVisibleActions.isEmpty();
       myVisibleActions = newVisibleActions;
 

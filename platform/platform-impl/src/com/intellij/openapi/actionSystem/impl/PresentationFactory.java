@@ -18,9 +18,11 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class PresentationFactory {
@@ -51,5 +53,14 @@ public class PresentationFactory {
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myAction2Presentation.clear();
+  }
+
+  public void retainAll(@NotNull Collection<AnAction> actions) {
+    HashSet<AnAction> toRemove = new HashSet<>(myAction2Presentation.keySet());
+    toRemove.removeAll(actions);
+
+    for (AnAction action : toRemove) {
+      myAction2Presentation.remove(action);
+    }
   }
 }
