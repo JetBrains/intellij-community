@@ -183,6 +183,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       for (int i = editors.length - 1; i >= 0; i--) {
         final FileEditor           editor = editors   [i];
         final FileEditorProvider provider = providers [i];
+        if (provider == null) continue; // can happen if fallbackProvider is null
         if (!editor.isValid()) {
           // this can happen for example if file extension was changed
           // and this method was called during corresponding myEditor close up
