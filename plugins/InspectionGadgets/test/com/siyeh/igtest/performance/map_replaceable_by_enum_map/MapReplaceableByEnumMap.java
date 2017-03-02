@@ -6,7 +6,7 @@ import java.util.Map; import java.util.TreeMap;
 public class MapReplaceableByEnumMap {
 
     public static void main(String[] args) {
-        final HashMap<MyEnum, Object> myEnums = new HashMap<MyEnum, Object>();
+        final HashMap<MyEnum, Object> myEnums = new <warning descr="'HashMap<MyEnum, Object>' replaceable with 'EnumMap'">HashMap<MyEnum, Object></warning>();
     }
 
     enum MyEnum{
