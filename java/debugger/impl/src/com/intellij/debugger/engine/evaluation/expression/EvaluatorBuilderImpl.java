@@ -506,7 +506,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         rResult = handleUnaryNumericPromotion(rType, rResult);
       }
 
-      return new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType.getCanonicalText());
+      return DisableGC.create(new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType.getCanonicalText()));
     }
 
     private static boolean isBinaryNumericPromotionApplicable(PsiType lType, PsiType rType, IElementType opType) {

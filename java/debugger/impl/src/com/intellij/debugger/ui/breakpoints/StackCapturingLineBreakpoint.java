@@ -27,7 +27,6 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -255,7 +254,6 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static class MyEvaluator {
     private final String myExpression;
     private ExpressionEvaluator myEvaluator;
-    private final boolean myNeedKeepValue;
     private final WeakHashMap<Location, ExpressionEvaluator> myEvaluatorCache = new WeakHashMap<>();
 
     public MyEvaluator(String expression) {
@@ -275,7 +273,6 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           }
         });
       }
-      myNeedKeepValue = !paramEvaluator;
     }
 
     @Nullable
@@ -296,11 +293,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         }
       }
       if (evaluator != null) {
-        Value value = evaluator.evaluate(context);
-        if (myNeedKeepValue) {
-          DebuggerUtilsEx.keep(value, context);
-        }
-        return value;
+        return evaluator.evaluate(context);
       }
       return null;
     }
