@@ -74,7 +74,7 @@ public class StackFrameItem {
     ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
     if (threadReferenceProxy != null) {
       List<StackFrameItem> res = new ArrayList<>();
-      for (StackFrameProxyImpl frame : threadReferenceProxy.frames()) {
+      for (StackFrameProxyImpl frame : threadReferenceProxy.forceFrames()) {
         try {
           List<XNamedValue> vars = null;
           if (withVars) {

@@ -30,6 +30,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -104,22 +105,25 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   public boolean processLocatableEvent(SuspendContextCommandImpl action, LocatableEvent event) throws EventProcessingException {
     SuspendContextImpl suspendContext = action.getSuspendContext();
     if (suspendContext != null) {
-      StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
-      if (frameProxy != null) {
+      ThreadReferenceProxyImpl thread = suspendContext.getThread();
+      if (thread != null) {
         DebugProcessImpl process = suspendContext.getDebugProcess();
         try {
-          Map<Object, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
-          if (stacks == null) {
-            stacks = new CapturedStacksMap();
-            process.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
-          }
-          Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
-          if (key instanceof ObjectReference) {
-            List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext, true);
-            if (frames.size() > MAX_STACK_LENGTH) {
-              frames = frames.subList(0, MAX_STACK_LENGTH);
+          StackFrameProxyImpl frameProxy = ContainerUtil.getFirstItem(thread.forceFrames());
+          if (frameProxy != null) {
+            Map<Object, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
+            if (stacks == null) {
+              stacks = new CapturedStacksMap();
+              process.putUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks));
             }
-            stacks.put(getKey((ObjectReference)key), frames);
+            Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
+            if (key instanceof ObjectReference) {
+              List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext, true);
+              if (frames.size() > MAX_STACK_LENGTH) {
+                frames = frames.subList(0, MAX_STACK_LENGTH);
+              }
+              stacks.put(getKey((ObjectReference)key), frames);
+            }
           }
         }
         catch (EvaluateException e) {
