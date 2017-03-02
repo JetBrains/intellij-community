@@ -30,10 +30,29 @@ typealias WeightedElement = Pair<LookupElement, Double>
 
 class PrefixCachedLookupWeight(val weight: Double, val prefix: String)
 
+
+class OrderingEmptyClassifer(next: Classifier<LookupElement>)
+  : Classifier<LookupElement>(next, "before_rerank_order") {
+
+  override fun getSortingWeights(source: MutableIterable<LookupElement>,
+                                 ctx: ProcessingContext): MutableList<Pair<LookupElement, Any>> {
+    return source
+            .mapIndexed { index, lookupElement -> Pair(lookupElement, index as Any) }
+            .toMutableList()
+  }
+
+  override fun classify(source: MutableIterable<LookupElement>, 
+                        ctx: ProcessingContext): MutableIterable<LookupElement> {
+    return source
+  }
+  
+}
+
+
 class MLClassifier(next: Classifier<LookupElement>,
                    private val lookupArranger: LookupArranger,
                    private val lookup: LookupImpl,
-                   private val ranker: Ranker) : Classifier<LookupElement>(next, "MLClassifier") {
+                   private val ranker: Ranker) : Classifier<LookupElement>(next, "ml_rank") {
 
   private val cachedScore = mutableMapOf<LookupElement, PrefixCachedLookupWeight>()
 
@@ -102,10 +121,21 @@ class MLClassifier(next: Classifier<LookupElement>,
 
 }
 
+
+
+
+
+class PreservingOrderClassifierFactory: ClassifierFactory<LookupElement>("before_rerank_order") {
+  override fun createClassifier(next: Classifier<LookupElement>): Classifier<LookupElement> {
+    return OrderingEmptyClassifer(next)    
+  }
+}
+
+
 class MLClassifierFactory(
         private val lookupArranger: LookupArranger,
         private val lookup: LookupImpl
-) : ClassifierFactory<LookupElement>("MLClassifierFactory") {
+) : ClassifierFactory<LookupElement>("ml_rank") {
   
   override fun createClassifier(next: Classifier<LookupElement>): Classifier<LookupElement> {
     val ranker = Ranker.getInstance()
@@ -126,8 +156,11 @@ open class MLCompletionContributor : CompletionContributor() {
     val lookupArranger = getLookupArranger(parameters)
     val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl
 
-    val classifierFactory = newClassifierFactory(lookupArranger, lookup)
-    val newSorter = oldSorter.withClassifier("templates", true, classifierFactory)
+    val mlClassifierFactory = newClassifierFactory(lookupArranger, lookup)
+    val newSorter = oldSorter
+            .withClassifier("templates", true, mlClassifierFactory)
+            .withClassifier("ml_rank", false, PreservingOrderClassifierFactory())
+    
     val newResult = result.withRelevanceSorter(newSorter)
     
     newResult.runRemainingContributors(parameters, {
