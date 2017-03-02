@@ -20,14 +20,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -733,7 +731,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
     private final Collection<VirtualFile> myFiles;
-    private Boolean myHasFilesOutOfProjectRoots;
+    private volatile Boolean myHasFilesOutOfProjectRoots;
 
     /**
      * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
@@ -780,19 +778,14 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     private boolean hasFilesOutOfProjectRoots() {
-      if (myHasFilesOutOfProjectRoots == null) {
-        myHasFilesOutOfProjectRoots = false;
+      Boolean result = myHasFilesOutOfProjectRoots;
+      if (result == null) {
         Project project = getProject();
-        if (project != null && !project.isDefault()) {
-          for (VirtualFile file : myFiles) {
-            if (FileIndexFacade.getInstance(project).getModuleForFile(file) == null) {
-              myHasFilesOutOfProjectRoots = true;
-              break;
-            }
-          }
-        }
+        myHasFilesOutOfProjectRoots = result =
+          project != null && !project.isDefault() &&
+          myFiles.stream().anyMatch(file -> FileIndexFacade.getInstance(project).getModuleForFile(file) == null);
       }
-      return myHasFilesOutOfProjectRoots;
+      return result;
     }
 
     @Override
