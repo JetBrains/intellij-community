@@ -221,6 +221,7 @@ public class AllIcons {
 
     }
     public static final Icon AddToWatch = IconLoader.getIcon("/debugger/addToWatch.png"); // 16x16
+    public static final Icon AttachToProcess = IconLoader.getIcon("/debugger/attachToProcess.png"); // 16x16
     public static final Icon AutoVariablesMode = IconLoader.getIcon("/debugger/autoVariablesMode.png"); // 16x16
     public static final Icon BreakpointAlert = IconLoader.getIcon("/debugger/breakpointAlert.png"); // 16x16
     public static final Icon Class_filter = IconLoader.getIcon("/debugger/class_filter.png"); // 16x16
