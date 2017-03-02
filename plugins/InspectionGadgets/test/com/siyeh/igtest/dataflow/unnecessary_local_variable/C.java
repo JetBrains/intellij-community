@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,5 +198,30 @@ class UsingConstant {
   void bar() {
     int yes = YES;
     yes++;
+  }
+}
+
+class Test {
+  final int x = (int)(Math.random() * 10);
+
+  int test() {
+    Test t = new Test();
+    int <warning descr="Local variable 'xx' is redundant">xx</warning> = this.x;
+    t = null;
+    return xx;
+  }
+
+  int test2() {
+    Test t = new Test();
+    int xx = t.x;
+    t = null;
+    return xx;
+  }
+
+  int test(Test[] arr) {
+    // copying of the field from array element is conservatively not considered safe to inline as array may change
+    int res = arr[0].x;
+    arr[0] = null;
+    return res;
   }
 }
