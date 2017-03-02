@@ -288,15 +288,15 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @NotNull
   String getGroupName(@NotNull OptionDescription description) {
-    String id = description.getConfigurableId();
-    String name = myConfigurablesNames.getValue().get(id);
+    String name = description.getGroupName();
+    if (name == null) name = myConfigurablesNames.getValue().get(description.getConfigurableId());
     String settings = SystemInfo.isMac ? "Preferences" : "Settings";
-    if (name == null) return settings;
+    if (name == null || name.equals(description.getHit())) return settings;
     return settings + " > " + name;
   }
 
-  void initConfigurables() {
-    myConfigurablesNames.getValue();
+  Map<String, String> getConfigurablesNames() {
+    return myConfigurablesNames.getValue();
   }
 
   private void collectActions(@NotNull Map<AnAction, String> result, @NotNull ActionGroup group, @Nullable String containingGroupName) {

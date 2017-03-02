@@ -37,6 +37,7 @@ import com.intellij.util.CollectConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,7 +121,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private boolean processOptions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
-    myModel.initConfigurables();
+    Map<String, String> map = myModel.getConfigurablesNames();
     SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
 
     List<Comparable> options = ContainerUtil.newArrayList();
@@ -147,6 +148,15 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       } else {
         optionDescriptions = null;
         break;
+      }
+    }
+    if (!StringUtil.isEmptyOrSpaces(pattern)) {
+      Matcher matcher = NameUtil.buildMatcher("*" + pattern).build();
+      if (optionDescriptions == null) optionDescriptions = ContainerUtil.newTroveSet();
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        if (matcher.matches(entry.getValue())) {
+          optionDescriptions.add(new OptionDescription(null, entry.getKey(), entry.getValue(), null, entry.getValue()));
+        }
       }
     }
     if (optionDescriptions != null && !optionDescriptions.isEmpty()) {
