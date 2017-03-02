@@ -721,7 +721,7 @@ public class Main {
   }
 
   private excludeFromCompilation(ExcludesConfiguration configuration, PsiFile foo) {
-    configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, testRootDisposable))
+    configuration.addExcludeEntryDescription(new ExcludeEntryDescription(foo.virtualFile, false, true, myFixture.testRootDisposable))
   }
 
   void "test make stub-level error and correct it"() {

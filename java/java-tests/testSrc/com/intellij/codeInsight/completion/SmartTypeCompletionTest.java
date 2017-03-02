@@ -669,7 +669,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     final SmartCompletionContextType completionContextType =
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), SmartCompletionContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(completionContextType, true);
-    CodeInsightTestUtil.addTemplate(template, getTestRootDisposable());
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
     doTest();
   }
 

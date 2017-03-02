@@ -421,12 +421,12 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testExcludeStringBuffer() throws Throwable {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, StringBuffer.name)
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, StringBuffer.name)
     doAntiTest()
   }
 
   void testExcludeInstanceInnerClasses() throws Throwable {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
     configure()
@@ -435,7 +435,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testExcludedInstanceInnerClassCreation() throws Throwable {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
     configure()
@@ -444,7 +444,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testExcludedInstanceInnerClassQualifiedReference() throws Throwable {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public class Inner {} }'
     myFixture.addClass 'package bar; public class Inner {}'
     configure()
@@ -453,14 +453,14 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testStaticMethodOfExcludedClass() {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo")
     myFixture.addClass 'package foo; public class Outer { public static void method() {} }'
     configure()
     assert myFixture.lookupElementStrings == ['method']
   }
 
   void testExcludeWildcards() {
-    JavaProjectCodeInsightSettings.setExcludedNames(project, testRootDisposable, "foo.Outer.*1*")
+    JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, "foo.Outer.*1*")
     myFixture.addClass '''
 package foo; 
 public class Outer { 
@@ -1684,7 +1684,7 @@ class Bar {
   void testIndentingForSwitchCase() { doTest() }
 
   void testIncrementalCopyReparse() {
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(myFixture.testRootDisposable)
     
     myFixture.configureByText('a.java', 'class Fooxxxxxxxxxx { Fooxxxxx<caret>a f;\n' + 'public void foo() {}\n' * 10000 + '}')
     def items = myFixture.completeBasic()

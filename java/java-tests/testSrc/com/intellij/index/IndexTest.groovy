@@ -620,7 +620,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testIndexedFilesListener() throws Throwable {
     def listener = new RecordingVfsListener()
 
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(
+    ApplicationManager.getApplication().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(
       VirtualFileManager.VFS_CHANGES,
       listener
     )

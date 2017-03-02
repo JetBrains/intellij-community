@@ -444,7 +444,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
       public boolean isImplicitWrite(PsiElement element) {
         return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
     doTest();
   }
 

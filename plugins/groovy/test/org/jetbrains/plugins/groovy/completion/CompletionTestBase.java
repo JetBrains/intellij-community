@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiPackage;
@@ -16,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -29,7 +27,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
     doTest("");
   }
   protected void doTest(String directory) {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
     final List<String> stringList = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
     if (directory.length()!=0) directory += "/";
     final String fileName = directory + getTestName(true) + "." + getExtension();

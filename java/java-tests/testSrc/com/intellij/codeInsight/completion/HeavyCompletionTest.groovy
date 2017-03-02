@@ -122,7 +122,7 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testMapsInvalidation() throws Exception {
-    JavaAutoPopupTest.registerCompletionContributor(CacheVerifyingContributor, testRootDisposable, LoadingOrder.FIRST)
+    JavaAutoPopupTest.registerCompletionContributor(CacheVerifyingContributor, myFixture.testRootDisposable, LoadingOrder.FIRST)
     myFixture.configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java")
     assertInstanceOf(myFixture.getFile().getVirtualFile().getFileSystem(), LocalFileSystem.class) // otherwise the completion copy won't be preserved which is critical here
     myFixture.completeBasic()
@@ -229,7 +229,7 @@ class Foo {{ Books.Test.v1<caret> }}
   }
 
   void "test different jdks in different modules"() {
-    (StatisticsManager.instance as StatisticsManagerImpl).enableStatistics(testRootDisposable)
+    (StatisticsManager.instance as StatisticsManagerImpl).enableStatistics(myFixture.testRootDisposable)
 
     def anotherModule = PsiTestUtil.addModule(project, StdModuleTypes.JAVA, 'another', myFixture.tempDirFixture.findOrCreateDir('another'))
     ModuleRootModificationUtil.setModuleSdk(anotherModule, IdeaTestUtil.mockJdk17)

@@ -81,7 +81,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target(ElementType.TYPE_USE) public @interface TestNotNull { }");
     NullableNotNullManager manager = NullableNotNullManager.getInstance(getProject());
     manager.setNotNulls("foo.TestNotNull");
-    Disposer.register(getTestRootDisposable(), manager::setNotNulls);
+    Disposer.register(myFixture.getTestRootDisposable(), manager::setNotNulls);
     doTest();
   }
 

@@ -143,7 +143,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   void testDeeplyNestedClosures() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     String text = "println 'hi'"
     String defs = ""
     for (i in 1..10) {
@@ -155,7 +155,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   void testDeeplyNestedClosuresInCompileStatic() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
 
     String text = "println 'hi'"
     String defs = ""
@@ -170,7 +170,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   void testDeeplyNestedClosuresInGenericCalls() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
@@ -181,7 +181,7 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   void testDeeplyNestedClosuresInGenericCalls2() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     String text = "println it"
     for (i in 1..10) {
       text = "foo(it) { $text }"
@@ -195,13 +195,13 @@ class GroovyStressPerformanceTest extends LightGroovyTestCase {
   }
 
   void "test no recursion prevention when resolving supertype"() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     myFixture.addClass("interface Bar {}")
     measureHighlighting("class Foo implements Bar {}", 200)
   }
 
   void "test no recursion prevention when contributing constructors"() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     myFixture.addClass("interface Bar {}")
     def text = """
 @groovy.transform.TupleConstructor
@@ -216,7 +216,7 @@ class Foo implements Bar {
   }
 
   void "test using non-reassigned for loop parameters"() {
-    RecursionManager.assertOnRecursionPrevention(testRootDisposable)
+    RecursionManager.assertOnRecursionPrevention(myFixture.testRootDisposable)
     def text = """
 def foo(List<File> list) {
   for (file in list) {

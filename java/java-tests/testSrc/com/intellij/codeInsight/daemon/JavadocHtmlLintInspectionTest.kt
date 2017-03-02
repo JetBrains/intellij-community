@@ -26,7 +26,7 @@ class JavadocHtmlLintInspectionTest : LightCodeInsightFixtureTestCase() {
 
     val javaHome = System.getProperty("java.home")
     val jdkHome = if (javaHome.endsWith("jre")) PathUtil.getParentPath(javaHome) else javaHome
-    VfsRootAccess.allowRootAccess(testRootDisposable, jdkHome)
+    VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, jdkHome)
   }
 
   fun testNoComment() = doTest("class C { }")

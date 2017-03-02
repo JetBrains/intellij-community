@@ -40,7 +40,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testBoundaries() {
     doTest("\\b <error descr=\"This boundary is not supported in this regex dialect\">\\b{g}</error> \\B \\A \\z \\Z \\G");
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), getTestRootDisposable());
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), myFixture.getTestRootDisposable());
     doTest("\\b \\b{g} \\B \\A \\z \\Z \\G");
   }
 
@@ -70,7 +70,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testUnicodeGrapheme() {
     doTest("<error descr=\"Illegal/unsupported escape sequence\">\\X</error>");
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), getTestRootDisposable());
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), myFixture.getTestRootDisposable());
     doTest("\\X");
   }
 
@@ -131,7 +131,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testIllegalCharacterRange4() {
-    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), getTestRootDisposable());
+    IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, myFixture.getModule(), myFixture.getTestRootDisposable());
     doTest("[<error descr=\"Illegal character range (to < from)\">\\N{LATIN SMALL LETTER Z}-\\N{LATIN SMALL LETTER A}</error>]");
   }
 

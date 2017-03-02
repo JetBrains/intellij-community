@@ -621,7 +621,7 @@ interface TxANotAnno {}
   }
 
   void testLiveTemplateOrdering() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
     checkPreferredItems(0, 'return')
     assert lookup.items.find { it.lookupString == 'ritar'} != null
   }

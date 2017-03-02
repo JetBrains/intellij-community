@@ -64,7 +64,7 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   private void doTest() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();

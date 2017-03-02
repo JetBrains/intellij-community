@@ -128,7 +128,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   private void setupCustomAnnotations() {
     myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface Nullable { }");
     myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface NotNull { }");
-    setCustomAnnotations(getProject(), getTestRootDisposable(), "foo.NotNull", "foo.Nullable");
+    setCustomAnnotations(getProject(), myFixture.getTestRootDisposable(), "foo.NotNull", "foo.Nullable");
   }
 
   static void setCustomAnnotations(Project project, Disposable parentDisposable, String notNull, String nullable) {

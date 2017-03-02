@@ -33,7 +33,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   @Override
   public void setUp() {
     super.setUp();
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, getTestRootDisposable());
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable());
   }
 
   @Override
@@ -51,12 +51,12 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   public void testSimpleCompletionList() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable());
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     doAutoPopupTest("ins", InstanceofExpressionPostfixTemplate.class);
   }
 
   public void testAutopopupWithEnabledLiveTemplatesInCompletion() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, getTestRootDisposable());
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable());
 
     configureByFile();
     type("instanceof");
@@ -124,14 +124,14 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   public void testDoNotAutoCompleteCompletionElementIfTemplateUnique() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable());
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     configureByFile();
     myFixture.completeBasic();
     checkResultByFile();
   }
 
   public void testDoNotCompleteTemplateInMultiCaretMode() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable());
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     configureByFile();
     assertEmpty(myFixture.complete(CompletionType.BASIC));
     checkResultByFile();
@@ -187,7 +187,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   public void testTabCompletionWithTemplatesInAutopopup() {
-    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable());
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
 
     configureByFile();
     type(".");

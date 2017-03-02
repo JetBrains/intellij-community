@@ -239,7 +239,7 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
 
   public void testHighlightConstructorJustChosenInCompletion() {
     Registry.get("java.completion.show.constructors").setValue(true);
-    Disposer.register(getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
+    Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
 
     myFixture.addClass("class Bar {" +
                        "Bar(boolean a);" +

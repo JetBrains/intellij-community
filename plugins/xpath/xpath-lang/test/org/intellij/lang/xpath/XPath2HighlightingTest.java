@@ -62,7 +62,7 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
   }
 
   public void testValidOperations2() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 

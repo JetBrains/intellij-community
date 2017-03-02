@@ -31,7 +31,7 @@ public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
     addTemplate("simple", "simple template text", "description", "test");
     addTemplate("complex key", "complex template text", "", "test");
     addTemplate("template.with.desc", "template with description", "desc", "test");
@@ -46,7 +46,7 @@ public class ListTemplateActionTest extends LightCodeInsightFixtureTestCase {
     template.setDescription(description);
     TemplateContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
     template.getTemplateContext().setEnabled(contextType, true);
-    CodeInsightTestUtil.addTemplate(template, getTestRootDisposable());
+    CodeInsightTestUtil.addTemplate(template, myFixture.getTestRootDisposable());
   }
 
   @Override

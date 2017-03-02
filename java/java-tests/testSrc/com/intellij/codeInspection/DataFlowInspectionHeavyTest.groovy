@@ -45,7 +45,7 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
       '''
 
     myFixture.addFileToProject 'annos/annos.java', annotationsText("ElementType.TYPE_USE")
-    DataFlowInspection8Test.setCustomAnnotations(project, testRootDisposable, 'annos.NotNull', 'annos.Nullable')
+    DataFlowInspection8Test.setCustomAnnotations(project, myFixture.testRootDisposable, 'annos.NotNull', 'annos.Nullable')
 
     def testFile = myFixture.addFileToProject 'test.java', '''
       class Zoo {

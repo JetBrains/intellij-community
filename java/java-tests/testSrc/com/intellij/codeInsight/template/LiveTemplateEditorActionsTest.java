@@ -110,7 +110,7 @@ public class LiveTemplateEditorActionsTest extends LightCodeInsightFixtureTestCa
   }
 
   private void expendTemplate() {
-    TemplateManagerImpl.setTemplateTesting(myFixture.getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(myFixture.getProject(), myFixture.getTestRootDisposable());
     myFixture.configureByFile("BeforeTestData.java");
 
     final TemplateManager manager = TemplateManager.getInstance(getProject());

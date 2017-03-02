@@ -82,7 +82,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
 
     String path = "/template";
 
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable());
     configureByFile(path + "/before1.java");
     selectItem(myItems[0]);
     TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());

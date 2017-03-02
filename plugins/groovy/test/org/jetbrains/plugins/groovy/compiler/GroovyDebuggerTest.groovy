@@ -57,7 +57,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   private void enableDebugLogging() {
-    TestLoggerFactory.enableDebugLogging(testRootDisposable,
+    TestLoggerFactory.enableDebugLogging(myFixture.testRootDisposable,
                                          "#com.intellij.debugger.engine.DebugProcessImpl",
                                          "#com.intellij.debugger.engine.DebugProcessEvents",
                                          "#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")

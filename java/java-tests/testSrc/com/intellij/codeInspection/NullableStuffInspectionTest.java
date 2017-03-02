@@ -153,7 +153,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
 
     final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     nnnManager.setNullables("custom.CheckForNull");
-    Disposer.register(getTestRootDisposable(), new Disposable() {
+    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         nnnManager.setNullables();

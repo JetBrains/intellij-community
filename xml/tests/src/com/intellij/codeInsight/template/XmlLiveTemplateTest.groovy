@@ -35,7 +35,7 @@ class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
+    TemplateManagerImpl.setTemplateTesting(getProject(), myFixture.getTestRootDisposable())
   }
 
   @Override

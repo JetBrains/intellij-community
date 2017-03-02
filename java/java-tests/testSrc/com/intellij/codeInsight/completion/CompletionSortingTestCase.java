@@ -39,7 +39,7 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable());
   }
 
   @Override

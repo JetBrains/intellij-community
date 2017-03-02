@@ -56,7 +56,7 @@ public class ClassChooserTest extends LightCodeInsightFixtureTestCase {
           return new JRootPane();
         }
       };
-    Disposer.register(getTestRootDisposable(), dialog.getDisposable());
+    Disposer.register(myFixture.getTestRootDisposable(), dialog.getDisposable());
 
     ChooseByNameModelEx model = (ChooseByNameModelEx)ref.get();
     CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
