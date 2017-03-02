@@ -65,6 +65,7 @@ typedef struct {
 } watch_root;
 
 static array* roots = NULL;
+static set* roots_as_paths = NULL;
 
 static int log_level = 0;
 static bool self_test = false;
@@ -73,9 +74,9 @@ static void init_log();
 static void run_self_test();
 static bool main_loop();
 static int read_input();
-static bool update_roots(array* new_roots);
-static void unregister_roots();
-static bool register_roots(array* new_roots, array* unwatchable, array* mounts);
+static bool update_roots(set* new_roots);
+static void unregister_roots(set* to_remove);
+static bool register_roots(set* new_roots, array* unwatchable, array* mounts);
 static array* unwatchable_mounts();
 static void inotify_callback(const char* path, int event);
 static void report_event(const char* event, const char* path);
@@ -116,6 +117,7 @@ int main(int argc, char** argv) {
 
   int rv = 0;
   roots = array_create(20);
+  roots_as_paths = set_create(20);
   if (roots != NULL && init_inotify()) {
     set_inotify_callback(&inotify_callback);
 
@@ -128,7 +130,7 @@ int main(int argc, char** argv) {
       run_self_test();
     }
 
-    unregister_roots();
+    unregister_roots(roots_as_paths);
   }
   else {
     output("GIVEUP\n");
@@ -208,12 +210,12 @@ void userlog(int priority, const char* format, ...) {
 
 
 static void run_self_test() {
-  array* test_roots = array_create(1);
+  set* test_roots = set_create(1);
   char* cwd = malloc(PATH_MAX);
   if (getcwd(cwd, PATH_MAX) == NULL) {
     strncpy(cwd, ".", PATH_MAX);
   }
-  array_push(test_roots, cwd);
+  set_add(test_roots, cwd);
   update_roots(test_roots);
 }
 
@@ -263,7 +265,7 @@ static int read_input() {
   }
 
   if (strcmp(line, "ROOTS") == 0) {
-    array* new_roots = array_create(20);
+    set* new_roots = set_create(20);
     CHECK_NULL(new_roots, ERR_ABORT);
 
     while (1) {
@@ -278,7 +280,8 @@ static int read_input() {
       else {
         int l = strlen(line);
         if (l > 1 && line[l-1] == '/')  line[l-1] = '\0';
-        CHECK_NULL(array_push(new_roots, strdup(line)), ERR_ABORT);
+        set_add(new_roots, strdup(line));
+
       }
     }
 
@@ -289,21 +292,15 @@ static int read_input() {
   return ERR_CONTINUE;
 }
 
+static bool update_roots(set* new_roots) {
+  userlog(LOG_INFO, "updating roots (curr:%d, new:%d)", set_size(roots_as_paths), set_size(new_roots));
 
-static bool update_roots(array* new_roots) {
-  userlog(LOG_INFO, "updating roots (curr:%d, new:%d)", array_size(roots), array_size(new_roots));
-
-  unregister_roots();
-
-  if (array_size(new_roots) == 0) {
-    output("UNWATCHEABLE\n#\n");
-    array_delete(new_roots);
-    return true;
-  }
-  else if (array_size(new_roots) == 1 && strcmp(array_get(new_roots, 0), "/") == 0) {  // refuse to watch entire tree
+  if (set_size(new_roots) == 1 && set_contains(new_roots, "/")) {  // refuse to watch entire tree
     output("UNWATCHEABLE\n/\n#\n");
     userlog(LOG_INFO, "unwatchable: /");
-    array_delete_vs_data(new_roots);
+    unregister_roots(roots_as_paths);
+    set_delete_vs_data(roots_as_paths);
+    roots_as_paths = set_create(20);
     return true;
   }
 
@@ -312,10 +309,25 @@ static bool update_roots(array* new_roots) {
     return false;
   }
 
-  array* unwatchable = array_create(20);
-  if (!register_roots(new_roots, unwatchable, mounts)) {
+  set* to_add = set_create(set_size(new_roots));
+
+  if (!set_difference(roots_as_paths, new_roots, to_add)) {
     return false;
   }
+
+  set* to_remove = set_create(array_size(roots));
+
+  if (!set_difference(new_roots, roots_as_paths, to_remove)) {
+    return false;
+  }
+
+  array* unwatchable = array_create(20);
+
+  if (!register_roots(to_add, unwatchable, mounts)) {
+    return false;
+  }
+
+  unregister_roots(to_remove);
 
   output("UNWATCHEABLE\n");
   for (int i=0; i<array_size(unwatchable); i++) {
@@ -325,28 +337,50 @@ static bool update_roots(array* new_roots) {
   }
   output("#\n");
 
+  set_delete(to_add);
+  set_delete(to_remove);
+
+  set_delete_vs_data(roots_as_paths);
+  roots_as_paths = new_roots;
+
   array_delete_vs_data(unwatchable);
   array_delete_vs_data(mounts);
-  array_delete_vs_data(new_roots);
 
   return true;
 }
 
 
-static void unregister_roots() {
+static void unregister_roots(set* to_remove) {
+  if (set_size(to_remove) == 0) {
+    return;
+  }
+
   watch_root* root;
+  array* temp = array_create(array_size(roots));
   while ((root = array_pop(roots)) != NULL) {
-    userlog(LOG_INFO, "unregistering root: %s", root->path);
-    unwatch(root->id);
-    free(root->path);
-    free(root);
-  };
+    if (set_contains(to_remove, root->path)) {
+      userlog(LOG_INFO, "unregistering root: %s", root->path);
+      unwatch(root->id);
+      free(root->path);
+      free(root);
+    }
+    else {
+      array_push(temp,root);
+    }
+  }
+  int tmp_array_size = array_size(temp);
+  for (int j = 0; j < tmp_array_size; j++) {
+    array_push(roots, array_pop(temp));
+  }
+
+  array_delete(temp);
 }
 
 
-static bool register_roots(array* new_roots, array* unwatchable, array* mounts) {
-  for (int i=0; i<array_size(new_roots); i++) {
-    char* new_root = array_get(new_roots, i);
+static bool register_roots(set* new_roots, array* unwatchable, array* mounts) {
+  set_iterator* itr;
+  char* new_root = NULL;
+  for (itr = set_itr(new_roots); set_itr_next(itr, &new_root);) {
     char* unflattened = UNFLATTEN(new_root);
     userlog(LOG_INFO, "registering root: %s", new_root);
 
@@ -398,9 +432,10 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
     }
   }
 
+  set_itr_delete(itr);
+
   return true;
 }
-
 
 static bool is_watchable(const char* fs) {
   // don't watch special and network filesystems
