@@ -73,7 +73,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     val map = ContainerUtil.newHashMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>()
     map.put(myRepository, spec1)
     map.put(myCommunity, spec2)
-    val result = GitPushOperation(myProject, myPushSupport, map, null, false).execute()
+    val result = GitPushOperation(myProject, myPushSupport, map, null, false, false).execute()
 
     val result1 = result.results[myRepository]!!
     val result2 = result.results[myCommunity]!!
@@ -97,7 +97,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     val mainSpec = makePushSpec(myRepository, "master", "origin/master")
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE) // auto-update-all-roots is selected by default
     val result = GitPushOperation(myProject, myPushSupport,
-        Collections.singletonMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>(myRepository, mainSpec), null, false).execute()
+        Collections.singletonMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>(myRepository, mainSpec), null, false, false).execute()
 
     val result1 = result.results[myRepository]!!
     val result2 = result.results[myCommunity]

@@ -52,10 +52,11 @@ class TestGitImpl : GitImpl() {
                     spec: String,
                     force: Boolean,
                     updateTracking: Boolean,
+                    skipHook: Boolean,
                     tagMode: String?,
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
     return myPushHandler(repository) ?:
-        super.push(repository, remote, spec, force, updateTracking, tagMode, *listeners)
+        super.push(repository, remote, spec, force, updateTracking, skipHook, tagMode, *listeners)
   }
 
   override fun branchDelete(repository: GitRepository,
