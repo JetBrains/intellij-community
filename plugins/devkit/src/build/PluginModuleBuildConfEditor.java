@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.ConfigurationException;
@@ -120,12 +119,10 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     myBuildProperties.setUseUserManifest(myUseUserManifest.isSelected());
   }
 
-  protected void askToDeleteOldPlugin(File plugin, Project project) {
+  private static void askToDeleteOldPlugin(File plugin, Project project) {
     if (Messages.showYesNoDialog(project, DevKitBundle.message("deployment.view.delete", plugin.getPath()),
                                  DevKitBundle.message("deployment.cleanup", META_INF), null) == Messages.YES) {
-      WriteCommandAction.writeCommandAction(project)
-        .withName(DevKitBundle.message("deployment.cleanup", META_INF))
-        .run(() -> FileUtil.delete(plugin.getParentFile()));
+      FileUtil.delete(plugin.getParentFile());
     }
   }
 
