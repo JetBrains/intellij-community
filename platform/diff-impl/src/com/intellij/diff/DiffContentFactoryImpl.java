@@ -238,7 +238,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     FileType type = referent != null ? referent.getContentType() : null;
     VirtualFile highlightFile = referent != null ? referent.getHighlightFile() : null;
 
-    return createImpl(project, StringUtil.notNullize(text), type, "Clipboard.txt", highlightFile, true, false);
+    return createImpl(project, StringUtil.notNullize(text), type, "Clipboard.txt", highlightFile, false, false);
   }
 
 
