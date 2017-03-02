@@ -939,6 +939,10 @@
       <category>Java/Streams</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ExtractStreamMapAction</className>
+      <category>Java/Streams</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ComposeFunctionChainAction</className>
       <category>Java/Refactorings</category>
     </intentionAction>
