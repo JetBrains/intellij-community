@@ -17,7 +17,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
-import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -40,7 +39,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.codeInspection.*;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
@@ -103,12 +101,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       @Override
       public void onSchemeAdded(@NotNull InspectionProfileImpl scheme) {
         fireProfileChanged(scheme);
-        onProfilesChanged();
-      }
-
-      @Override
-      public void onSchemeDeleted(@NotNull InspectionProfileImpl scheme) {
-        onProfilesChanged();
       }
     });
   }
@@ -251,14 +243,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   public void fireProfileChanged(@NotNull InspectionProfileImpl profile) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged(profile);
-    }
-
-    onProfilesChanged();
-  }
-
-  public static void onProfilesChanged() {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      AppUIUtil.invokeLaterIfProjectAlive(project, () -> DaemonListeners.getInstance(project).updateStatusBar());
     }
   }
 }
