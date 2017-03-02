@@ -2,45 +2,45 @@ class ArgHandlerWithParam:
     '''
     Handler for some arguments which needs a value
     '''
-    
+
     def __init__(self, arg_name, convert_val=None, default_val=None):
         self.arg_name = arg_name
         self.arg_v_rep = '--%s' % (arg_name,)
         self.convert_val = convert_val
         self.default_val = default_val
-        
+
     def to_argv(self, lst, setup):
         v = setup.get(self.arg_name)
         if v is not None and v != self.default_val:
             lst.append(self.arg_v_rep)
             lst.append('%s' % (v,))
-        
+
     def handle_argv(self, argv, i, setup):
         assert argv[i] == self.arg_v_rep
         del argv[i]
-        
+
         val = argv[i]
         if self.convert_val:
             val = self.convert_val(val)
-            
+
         setup[self.arg_name] = val
         del argv[i]
-        
+
 class ArgHandlerBool:
     '''
     If a given flag is received, mark it as 'True' in setup.
     '''
-    
+
     def __init__(self, arg_name, default_val=False):
         self.arg_name = arg_name
         self.arg_v_rep = '--%s' % (arg_name,)
         self.default_val = default_val
-        
+
     def to_argv(self, lst, setup):
         v = setup.get(self.arg_name)
         if v:
             lst.append(self.arg_v_rep)
-        
+
     def handle_argv(self, argv, i, setup):
         assert argv[i] == self.arg_v_rep
         del argv[i]
@@ -51,7 +51,7 @@ ACCEPTED_ARG_HANDLERS = [
     ArgHandlerWithParam('port', int, 0),
     ArgHandlerWithParam('vm_type'),
     ArgHandlerWithParam('client'),
-    
+
     ArgHandlerBool('server'),
     ArgHandlerBool('DEBUG_RECORD_SOCKET_READS'),
     ArgHandlerBool('multiproc'), # Used by PyCharm (reuses connection: ssh tunneling)
@@ -67,7 +67,7 @@ ACCEPTED_ARG_HANDLERS = [
 ARGV_REP_TO_HANDLER = {}
 for handler in ACCEPTED_ARG_HANDLERS:
     ARGV_REP_TO_HANDLER[handler.arg_v_rep] = handler
-    
+
 def get_pydevd_file():
     import pydevd
     f = pydevd.__file__
@@ -83,7 +83,7 @@ def setup_to_argv(setup):
     :note: does not handle --file nor --DEBUG.
     '''
     ret = [get_pydevd_file()]
-    
+
     for handler in ACCEPTED_ARG_HANDLERS:
         if handler.arg_name in setup:
             handler.to_argv(ret, setup)
@@ -104,7 +104,7 @@ def process_command_line(argv):
         handler = ARGV_REP_TO_HANDLER.get(argv[i])
         if handler is not None:
             handler.handle_argv(argv, i, setup)
-            
+
         elif argv[i].startswith('--qt-support'):
             # The --qt-support is special because we want to keep backward compatibility: 
             # Previously, just passing '--qt-support' meant that we should use the auto-discovery mode
@@ -112,7 +112,7 @@ def process_command_line(argv):
             # mode can be one of 'auto', 'none', 'pyqt5', 'pyqt4', 'pyside'.
             if argv[i] == '--qt-support':
                 setup['qt-support'] = 'auto'
-                
+
             elif argv[i].startswith('--qt-support='):
                 qt_support = argv[i][len('--qt-support='):]
                 valid_modes = ('none', 'auto', 'pyqt5', 'pyqt4', 'pyside')
@@ -125,16 +125,16 @@ def process_command_line(argv):
                     setup['qt-support'] = qt_support
             else:
                 raise ValueError("Unexpected definition for qt-support flag: " + argv[i])
-            
+
             del argv[i]
-            
-            
+
+
         elif argv[i] == '--file':
             # --file is special because it's the last one (so, no handler for it).
             del argv[i]
             setup['file'] = argv[i]
             i = len(argv) # pop out, file is our last argument
-            
+
         elif argv[i] == '--DEBUG':
             from pydevd import set_debug
             del argv[i]
