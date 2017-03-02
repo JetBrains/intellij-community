@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.junit;
 
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
+import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
 
-public abstract class JUnitConfigurationProducer extends AbstractJavaTestConfigurationProducer<JUnitConfiguration> implements Cloneable {
-
-  public JUnitConfigurationProducer() {
+public class TestInClassConfigurationProducer extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
+  public TestInClassConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
-  }
-
-  protected JUnitConfigurationProducer(ConfigurationType configurationType) {
-    super(configurationType);
   }
 }

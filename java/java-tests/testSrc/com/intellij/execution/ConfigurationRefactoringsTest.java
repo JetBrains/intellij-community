@@ -21,8 +21,8 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfigurationType;
+import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
@@ -244,7 +244,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
 
   @Override
   protected JUnitConfiguration createJUnitConfiguration(@NotNull PsiElement psiElement,
-                                                        @NotNull Class<? extends JUnitConfigurationProducer> producerClass,
+                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
                                                         @NotNull MapDataContext dataContext) {
     final JUnitConfiguration configuration = super.createJUnitConfiguration(psiElement, producerClass, dataContext);
     RunManagerEx.getInstanceEx(myProject).setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(null, configuration, false));

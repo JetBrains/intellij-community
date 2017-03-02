@@ -102,7 +102,7 @@ public class ConfigurationsTest {
     final Project project = myProjectFixture.getProject();
     final PsiClass psiClass = findTestClass(project);
     final TestNGConfiguration configuration = createConfiguration(project);
-    configuration.setClassConfiguration(psiClass);
+    configuration.beClassConfiguration(psiClass);
     final String newName = "Testt1";
     final RenameRefactoring renameClass = RefactoringFactory.getInstance(project).createRename(psiClass, newName);
     renameClass.setSearchInComments(false);
@@ -138,7 +138,7 @@ public class ConfigurationsTest {
     final TestNGConfiguration configuration = createConfiguration(project);
 
     final PsiMethod method = findTestMethod(psiClass);
-    configuration.setMethodConfiguration(new PsiLocation<>(project, method));
+    configuration.beMethodConfiguration(new PsiLocation<>(project, method));
     final String newMethodName = "renamedTest";
     final RenameRefactoring renameMethod = RefactoringFactory.getInstance(project).createRename(method, newMethodName);
     renameMethod.setSearchInComments(false);
@@ -179,13 +179,13 @@ public class ConfigurationsTest {
     final TestNGConfigurationType type = (TestNGConfigurationType)configuration.getFactory().getType();
 
     //class config
-    configuration.setClassConfiguration(psiClass);
+    configuration.beClassConfiguration(psiClass);
     PsiMethod testMethod = findTestMethod(psiClass);
     Assert.assertTrue(type.isConfigurationByLocation(configuration, new PsiLocation(project, psiClass)));
     Assert.assertFalse(type.isConfigurationByLocation(configuration, new PsiLocation(project, testMethod)));
 
     //method config
-    configuration.setMethodConfiguration(new PsiLocation<>(project, testMethod));
+    configuration.beMethodConfiguration(new PsiLocation<>(project, testMethod));
     Assert.assertTrue(type.isConfigurationByLocation(configuration, new PsiLocation(project, testMethod)));
     Assert.assertFalse(type.isConfigurationByLocation(configuration, new PsiLocation(project, psiClass)));
   }

@@ -222,10 +222,20 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return !data.TEST_OBJECT.equals(TestType.PACKAGE.getType()) ? null : data.getPackageName();
   }
 
-  public void setClassConfiguration(PsiClass psiclass) {
+  public void beClassConfiguration(PsiClass psiclass) {
     setModule(data.setMainClass(psiclass));
     data.TEST_OBJECT = TestType.CLASS.getType();
     setGeneratedName();
+  }
+
+  @Override
+  public boolean isConfiguredByElement(PsiElement element) {
+    return TestNGTestObject.fromConfig(this).isConfiguredByElement(element);
+  }
+
+  @Override
+  public String prepareParameterizedParameter(String paramSetName) {
+    return TestNGConfigurationProducer.getInvocationNumber(paramSetName);
   }
 
   public void setPackageConfiguration(Module module, PsiPackage pkg) {
@@ -235,12 +245,24 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     setGeneratedName();
   }
 
+  public void beMethodConfiguration(Location<PsiMethod> location) {
+    setModule(data.setTestMethod(location));
+    setGeneratedName();
+  }
+
+  @Deprecated
+  public void setClassConfiguration(PsiClass psiclass) {
+    setModule(data.setMainClass(psiclass));
+    data.TEST_OBJECT = TestType.CLASS.getType();
+    setGeneratedName();
+  }
+
+  @Deprecated
   public void setMethodConfiguration(Location<PsiMethod> location) {
     setModule(data.setTestMethod(location));
     setGeneratedName();
   }
-  
-  
+
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     data.TEST_OBJECT = TestType.PATTERN.getType();
     final String suffix;
@@ -443,7 +465,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   public void beFromSourcePosition(PsiLocation<PsiMethod> position) {
-    setMethodConfiguration(position);
+    beMethodConfiguration(position);
     getPersistantData().TEST_OBJECT = TestType.SOURCE.getType();
   }
 }

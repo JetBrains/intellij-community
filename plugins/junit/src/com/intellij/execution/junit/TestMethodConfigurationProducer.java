@@ -15,7 +15,10 @@
  */
 package com.intellij.execution.junit;
 
-public class TestMethodConfigurationProducer extends AbstractTestMethodConfigurationProducer {
+import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
+
+@Deprecated
+public class TestMethodConfigurationProducer extends AbstractInClassConfigurationProducer {
   public TestMethodConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
   }

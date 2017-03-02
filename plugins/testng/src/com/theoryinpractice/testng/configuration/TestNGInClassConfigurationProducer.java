@@ -15,7 +15,9 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-public class TestNGInClassConfigurationProducer extends AbstractTestNGInClassConfigurationProducer {
+import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
+
+public class TestNGInClassConfigurationProducer extends AbstractInClassConfigurationProducer<TestNGConfiguration> {
   protected TestNGInClassConfigurationProducer() {
     super(TestNGConfigurationType.getInstance());
   }

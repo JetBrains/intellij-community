@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@
  * User: anna
  * Date: 23-May-2007
  */
-package com.theoryinpractice.testng.configuration;
+package com.intellij.execution.testframework;
 
+import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.info.MethodLocation;
@@ -34,23 +34,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGConfigurationProducer {
+public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
 
-  protected AbstractTestNGInClassConfigurationProducer(ConfigurationType configurationType) {
+  protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }
 
-  private static boolean isTestNGClass(PsiClass psiClass) {
-    return psiClass != null && TestNGUtil.hasTest(psiClass);
-  }
 
-  @Override
-  public void onFirstRun(final ConfigurationFromContext configuration, final ConfigurationContext fromContext, @NotNull Runnable performRunnable) {
+  public void onFirstRun(@NotNull final ConfigurationFromContext configuration,
+                         @NotNull final ConfigurationContext fromContext,
+                         @NotNull Runnable performRunnable) {
     final PsiElement psiElement = configuration.getSourceElement();
     if (psiElement instanceof PsiMethod || psiElement instanceof PsiClass) {
 
@@ -60,7 +57,8 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
       if (psiElement instanceof PsiMethod) {
         psiMethod = (PsiMethod)psiElement;
         containingClass = psiMethod.getContainingClass();
-      } else {
+      }
+      else {
         psiMethod = null;
         containingClass = (PsiClass)psiElement;
       }
@@ -68,7 +66,7 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
       final InheritorChooser inheritorChooser = new InheritorChooser() {
         @Override
         protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {
-          ((TestNGConfiguration)configuration.getConfiguration()).bePatternConfiguration(classes, method);
+          ((T)configuration.getConfiguration()).bePatternConfiguration(classes, method);
           super.runForClasses(classes, method, context, performRunnable);
         }
 
@@ -80,24 +78,26 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
           if (psiElement instanceof PsiMethod) {
             final Project project = psiMethod.getProject();
             final MethodLocation methodLocation = new MethodLocation(project, psiMethod, PsiLocation.fromPsiElement(aClass));
-            ((TestNGConfiguration)configuration.getConfiguration()).setMethodConfiguration(methodLocation);
-          } else {
-            ((TestNGConfiguration)configuration.getConfiguration()).setClassConfiguration(aClass);
+            ((T)configuration.getConfiguration()).beMethodConfiguration(methodLocation);
+          }
+          else {
+            ((T)configuration.getConfiguration()).beClassConfiguration(aClass);
           }
           super.runForClass(aClass, psiMethod, context, performRunnable);
         }
       };
       if (inheritorChooser.runMethodInAbstractClass(fromContext, performRunnable, psiMethod, containingClass,
-                                                    aClass -> aClass.hasModifierProperty(PsiModifier.ABSTRACT) && TestNGUtil.hasTest(aClass))) return;
+                                                    aClass -> aClass.hasModifierProperty(PsiModifier.ABSTRACT) && isTestClass(aClass))) {
+        return;
+      }
     }
     super.onFirstRun(configuration, fromContext, performRunnable);
   }
 
-  @Override
-  protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
+  protected boolean setupConfigurationFromContext(T configuration,
                                                   ConfigurationContext context,
                                                   Ref<PsiElement> sourceElement) {
-    if (RunConfigurationProducer.getInstance(AbstractTestNGPatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
+    if (isMultipleElementsSelected(context)) {
       return false;
     }
 
@@ -107,13 +107,13 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
     PsiClass psiClass = null;
     PsiElement element = context.getPsiLocation();
     while (element != null) {
-      if (element instanceof PsiClass && isTestNGClass((PsiClass)element)) {
+      if (element instanceof PsiClass && isTestClass((PsiClass)element)) {
         psiClass = (PsiClass)element;
         break;
       }
       else if (element instanceof PsiMember) {
         psiClass = ((PsiMember)element).getContainingClass();
-        if (isTestNGClass(psiClass)) {
+        if (isTestClass(psiClass)) {
           break;
         }
       }
@@ -126,19 +126,19 @@ public abstract class AbstractTestNGInClassConfigurationProducer extends TestNGC
       }
       element = element.getParent();
     }
-    if (!isTestNGClass(psiClass)) return false;
+    if (!isTestClass(psiClass)) return false;
 
     PsiElement psiElement = psiClass;
     final Project project = context.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();
-    configuration.setClassConfiguration(psiClass);
+    configuration.beClassConfiguration(psiClass);
 
     PsiMethod method = PsiTreeUtil.getParentOfType(context.getPsiLocation(), PsiMethod.class, false);
     while (method != null) {
-      if (TestNGUtil.hasTest(method)) {
-        configuration.setMethodConfiguration(PsiLocation.fromPsiElement(project, method));
+      if (isTestMethod(false, method)) {
+        configuration.beMethodConfiguration(PsiLocation.fromPsiElement(project, method));
         psiElement = method;
       }
       method = PsiTreeUtil.getParentOfType(method, PsiMethod.class);

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
@@ -32,10 +33,24 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     addModule("commonConfiguration");
   }
 
+  public void testAbstractJUnit3TestCase() throws Exception {
+    String packageName = "abstractTests";
+    String shortName = "AbstractTest";
+    String qualifiedName = StringUtil.getQualifiedName(packageName, shortName);
+    PsiClass psiClass = findClass(getModule1(), qualifiedName);
+    PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, false)[0];
+    JUnitConfiguration configuration = createConfiguration(testMethod);
+
+    checkClassName(qualifiedName, configuration);
+    checkMethodName(METHOD_NAME, configuration);
+    checkPackage(packageName, configuration);
+    checkGeneretedName(configuration, shortName + "." + METHOD_NAME);
+  }
+
   public void testJUnitMethodTest() {
     PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
     PsiMethod testMethod = psiClass.findMethodsByName(METHOD_NAME, false)[0];
-    JUnitConfiguration configuration = (JUnitConfiguration)createConfiguration(testMethod);
+    JUnitConfiguration configuration = createConfiguration(testMethod);
     checkTestObject(JUnitConfiguration.TEST_METHOD, configuration);
     checkClassName(CLASS_NAME, configuration);
     checkMethodName(METHOD_NAME, configuration);
@@ -46,7 +61,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
   public void testJUnitClassTest() {
     PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
     final MapDataContext dataContext = new MapDataContext();
-    JUnitConfiguration configuration = createJUnitConfiguration(psiClass, TestClassConfigurationProducer.class,  dataContext);
+    JUnitConfiguration configuration = createJUnitConfiguration(psiClass, TestInClassConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_CLASS, configuration);
     checkClassName(CLASS_NAME, configuration);
     checkPackage(PACKAGE_NAME, configuration);
@@ -64,7 +79,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     configuration.setModule(getModule2());
     MapDataContext dataContext = new MapDataContext();
     dataContext.put(DataConstantsEx.RUNTIME_CONFIGURATION, configuration);
-    configuration = createJUnitConfiguration(psiClass, TestClassConfigurationProducer.class, dataContext);
+    configuration = createJUnitConfiguration(psiClass, TestInClassConfigurationProducer.class, dataContext);
     checkClassName(psiClass.getQualifiedName(), configuration);
     assertEquals(Collections.singleton(getModule2()), new HashSet(Arrays.asList(configuration.getModules())));
   }
