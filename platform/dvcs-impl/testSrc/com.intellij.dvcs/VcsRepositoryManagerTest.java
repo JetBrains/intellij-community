@@ -78,13 +78,10 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     try {
       if (myProjectLevelVcsManager != null) {
         myProjectLevelVcsManager.unregisterVcs(myVcs);
-        myProjectLevelVcsManager = null;
       }
       if (myMockCreator != null) {
         getExtensionPoint().unregisterExtension(myMockCreator);
-        myMockCreator = null;
       }
-      myVcs = null;
     }
     finally {
       super.tearDown();
