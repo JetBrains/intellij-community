@@ -410,7 +410,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   private static VcsTaskHandler.TaskInfo fromBranches(List<BranchInfo> branches) {
-    if (branches.isEmpty()) return new VcsTaskHandler.TaskInfo(null, Collections.<String>emptyList());
+    if (branches.isEmpty()) return new VcsTaskHandler.TaskInfo(null, Collections.emptyList());
     MultiMap<String, String> map = new MultiMap<>();
     for (BranchInfo branch : branches) {
       map.putValue(branch.name, branch.repository);
@@ -560,11 +560,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @NotNull
   public Config getState() {
-    myConfig.tasks = ContainerUtil.map(myTasks.values(), new Function<Task, LocalTaskImpl>() {
-      public LocalTaskImpl fun(Task task) {
-        return new LocalTaskImpl(task);
-      }
-    });
+    myConfig.tasks = ContainerUtil.map(myTasks.values(), (Function<Task, LocalTaskImpl>)task -> new LocalTaskImpl(task));
     myConfig.servers = XmlSerializer.serialize(getAllRepositories());
     return myConfig;
   }
