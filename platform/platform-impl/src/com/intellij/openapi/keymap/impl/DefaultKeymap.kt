@@ -88,7 +88,7 @@ open class DefaultKeymap {
       return when (name) {
         KeymapManager.DEFAULT_IDEA_KEYMAP -> SystemInfo.isWindows
         KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> SystemInfo.isMac
-        KeymapManager.X_WINDOW_KEYMAP, "Default for GNOME", KeymapManager.KDE_KEYMAP -> SystemInfo.isXWindow
+        KeymapManager.X_WINDOW_KEYMAP, KeymapManager.GNOME_KEYMAP, KeymapManager.KDE_KEYMAP -> SystemInfo.isXWindow
         else -> true
       }
     }
@@ -109,7 +109,9 @@ open class DefaultKeymap {
   open val defaultKeymapName: String
     get() = when {
       SystemInfo.isMac -> KeymapManager.MAC_OS_X_KEYMAP
-      SystemInfo.isXWindow -> if (SystemInfo.isKDE) KeymapManager.KDE_KEYMAP else KeymapManager.X_WINDOW_KEYMAP
+      SystemInfo.isGNOME -> KeymapManager.GNOME_KEYMAP
+      SystemInfo.isKDE -> KeymapManager.KDE_KEYMAP
+      SystemInfo.isXWindow -> KeymapManager.X_WINDOW_KEYMAP
       else -> KeymapManager.DEFAULT_IDEA_KEYMAP
     }
 
