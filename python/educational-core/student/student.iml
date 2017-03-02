@@ -36,7 +36,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="testExtensions" scope="TEST" />
+    <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="openapi" />
   </component>
 </module>
