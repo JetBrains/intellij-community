@@ -969,7 +969,7 @@ class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
 #=======================================================================================================================
 class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
 
-    TEST_FILE = 'tests_python._debugger_case_m_switch'
+    TEST_FILE = 'tests_pydevd_python._debugger_case_m_switch'
     IS_MODULE = True
 
     def get_environ(self):
@@ -1057,7 +1057,7 @@ class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThr
         self.sock, addr = self.server_socket.accept()
         print('accepted second process')
 
-        from tests_python.debugger_unittest import ReaderThread
+        from tests_pydevd_python.debugger_unittest import ReaderThread
         self.reader_thread = ReaderThread(self.sock)
         self.reader_thread.start()
 
@@ -1227,19 +1227,19 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
 
 
 
-class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
-
-    def get_command_line(self):
-        return [PYTHON_EXE, '-u']
-
-    def add_command_line_args(self, args):
-        return args + [self.writer_thread.TEST_FILE]
-
-    def test_remote_debugger(self):
-        self.check_case(WriterThreadCaseRemoteDebugger)
-
-    def test_remote_debugger2(self):
-        self.check_case(WriterThreadCaseRemoteDebuggerMultiProc)
+# class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
+#
+#     def get_command_line(self):
+#         return [PYTHON_EXE, '-u']
+#
+#     def add_command_line_args(self, args):
+#         return args + [self.writer_thread.TEST_FILE]
+#
+#     def test_remote_debugger(self):
+#         self.check_case(WriterThreadCaseRemoteDebugger)
+#
+#     def test_remote_debugger2(self):
+#         self.check_case(WriterThreadCaseRemoteDebuggerMultiProc)
 
 
 class TestPython(unittest.TestCase, DebuggerBase):
