@@ -24,11 +24,11 @@ import java.util.Map;
 public class CompiledFileData {
   private final Map<LightRef, Collection<LightRef>> myBackwardHierarchyMap;
   private final Map<LightRef, Integer> myReferences;
-  private final Map<LightRef, Void> myDefinitions;
+  private final Map<LightRef, Boolean> myDefinitions;
 
   public CompiledFileData(@NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
                           @NotNull Map<LightRef, Integer> references,
-                          @NotNull Map<LightRef, Void> definitions) {
+                          @NotNull Map<LightRef, Boolean> definitions) {
     myBackwardHierarchyMap = backwardHierarchyMap;
     myReferences = references;
     myDefinitions = definitions;
@@ -45,7 +45,7 @@ public class CompiledFileData {
   }
 
   @NotNull
-  public Map<LightRef, Void> getDefinitions() {
+  public Map<LightRef, Boolean> getDefinitions() {
     return myDefinitions;
   }
 }
