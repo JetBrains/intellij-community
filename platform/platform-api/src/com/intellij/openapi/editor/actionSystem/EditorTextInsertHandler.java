@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import com.intellij.util.Producer;
 import java.awt.datatransfer.Transferable;
 
 /**
+ * {@link EditorActionHandler Handlers} for {@link com.intellij.openapi.actionSystem.IdeActions#ACTION_EDITOR_PASTE EditorPaste} action
+ * should implement this interface (it's required for text drag-n-drop functionality in editor).
+ *
  * @author pegov
  */
 public interface EditorTextInsertHandler {
