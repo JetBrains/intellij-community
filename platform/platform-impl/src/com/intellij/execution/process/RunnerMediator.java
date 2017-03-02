@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,11 +94,11 @@ public class RunnerMediator {
       }
       LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + " environment variable (" + path + ")");
     }
-    File runnerw = new File(PathManager.getBinPath(), STANDARD_RUNNERW);
-    if (runnerw.exists()) {
+    File runnerw = PathManager.tryFindBinFile(STANDARD_RUNNERW);
+    if (runnerw != null) {
       return runnerw.getPath();
     }
-    LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by default path (" + runnerw.getAbsolutePath() + ")");
+    LOG.warn("Cannot locate " + StringUtil.join(PathManager.getPossibleBinaryFileLocationsString(STANDARD_RUNNERW),","));
     return null;
   }
 
