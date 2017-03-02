@@ -16,7 +16,7 @@
 
 #pragma once
 
-#define VERSION "20160218.1348"
+#define VERSION "20170302.1839"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -57,6 +57,32 @@ table* table_create(int capacity);
 void* table_put(table* t, int key, void* value);
 void* table_get(table* t, int key);
 void table_delete(table* t);
+
+
+// hashset
+typedef struct __set set;
+
+set* set_create(int capacity);
+bool set_add(set* s, char* elem);
+bool set_contains(set* s, char* elem);
+bool set_remove(set* s, char* elem);
+int set_size(set* s);
+void set_delete(set* s);
+void set_delete_data(set* s);
+void set_delete_vs_data(set* s);
+
+bool set_difference(set* s1, set* s2, set* diff);
+
+
+
+typedef struct __set_iterator set_iterator;
+
+set_iterator* set_itr(set* st);
+bool set_itr_next(set_iterator* it, char** ptr);
+bool set_itr_has_next(set_iterator* it);
+void set_itr_delete(set_iterator* it);
+
+
 
 
 // inotify subsystem

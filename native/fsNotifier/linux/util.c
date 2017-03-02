@@ -23,6 +23,10 @@
 
 #define REALLOC_FACTOR 2
 
+#define REMOVED_ELEMENTS_THRESHOLD 0.1
+
+#define STEP 1
+
 struct __array {
   void** data;
   int size;
@@ -177,6 +181,268 @@ void table_delete(table* t) {
     free(t->data);
     free(t);
   }
+}
+
+
+static char* REMOVED_PLACEHOLDER = "";
+
+// linear-probing based hashset
+struct __set {
+  char** data;
+  int capacity;
+  int elements;
+  int removed;
+};
+
+static unsigned long hash(char *str);
+
+static bool set_realloc(set* s, int new_cap);
+
+set* set_create(int capacity) {
+  if (capacity < 1) {
+    capacity = 1;
+  }
+  set* s = calloc(1, sizeof(set));
+  if (s == NULL) {
+    return NULL;
+  }
+
+  s->data = calloc(capacity, sizeof(char*));
+  if (s->data == NULL) {
+    free(s);
+    return NULL;
+  }
+
+  s->capacity = capacity;
+  s->elements = 0;
+  s->removed = 0;
+
+  return s;
+}
+
+void set_delete(set* s) {
+  if (s != NULL) {
+    free(s->data);
+    free(s);
+  }
+}
+
+void set_delete_data(set* s) {
+  if (s != NULL) {
+    for (int i=0; i<s->capacity; i++) {
+      if (s->data[i] != NULL) {
+        free(s->data[i]);
+      }
+    }
+    s->elements = 0;
+    s->removed = 0;
+  }
+}
+
+void set_delete_vs_data(set* a) {
+  if (a != NULL) {
+    set_delete_data(a);
+    set_delete(a);
+  }
+}
+
+bool set_add(set* s, char* elem) {
+  if (s == NULL) {
+    return false;
+  }
+
+  if (s->capacity < REALLOC_FACTOR*(s->elements + s->removed)) {
+    set_realloc(s, s->capacity*REALLOC_FACTOR);
+  }
+
+  int index = hash(elem) % s->capacity;
+  while (s->data[index] != NULL && s->data[index] != REMOVED_PLACEHOLDER)  {
+    if (strcmp(s->data[index], elem) == 0) {
+      return false;
+    }
+    index = (index + STEP) % s->capacity;
+  }
+
+  if (s->data[index] != NULL && s->data[index] == REMOVED_PLACEHOLDER) {
+    s->removed--;
+  }
+
+  s->data[index] = elem;
+  s->elements++;
+
+  return true;
+}
+
+int set_size(set* s) {
+  if (s == NULL) {
+    return 0;
+  }
+  return s->elements;
+}
+
+bool set_contains(set* s, char* elem) {
+  if (s == NULL || elem == NULL) {
+    return false;
+  }
+
+  int index = hash(elem) % s->capacity;
+  int i = 0;
+
+  while (s->data[index] != NULL && i++ < s->capacity ) {
+    if (strcmp(s->data[index], elem) == 0) {
+      return true;
+    }
+    index = (index + STEP) % s->capacity;
+  }
+
+  return false;
+}
+
+bool set_remove(set* s, char* elem) {
+  if (s == NULL || elem == NULL) {
+    return false;
+  }
+  int index = hash(elem) % s->capacity;
+  while (s->data[index] != NULL) {
+    if (strcmp(s->data[index], elem) == 0) {
+      s->data[index] = REMOVED_PLACEHOLDER;
+      s->removed++;
+      s->elements--;
+      if (s->removed > REMOVED_ELEMENTS_THRESHOLD*s->capacity) {
+        set_realloc(s, s->capacity);
+      }
+      return true;
+    }
+    index = (index + STEP) % s->capacity;
+  }
+  return false;
+}
+
+// djb2
+static inline unsigned long hash(char *str){
+  unsigned long hash = 5381;
+
+  int c = *str++;
+  while (c != 0) {
+    hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+    c = *str++;
+  }
+
+  return hash;
+}
+
+static bool set_realloc(set* s, int new_cap) {
+  if (s == NULL) {
+    return false;
+  }
+  int old_capacity = s->capacity;
+  int old_elements = s->elements;
+  int old_removed = s->removed;
+  char** old_data = s->data;
+
+  char** new_data = (char**) calloc(new_cap, sizeof(char*));
+  if (new_data == NULL) {
+    return false;
+  }
+
+  s->data = new_data;
+  s->capacity = new_cap;
+  s->elements = 0;
+  s->removed = 0;
+
+  for (int i = 0; i < old_capacity; i++) {
+    if (old_data[i] != NULL && old_data[i] != REMOVED_PLACEHOLDER ) {
+      if (!set_add(s, old_data[i])) {
+        s->data=old_data;
+        s->capacity=old_capacity;
+        s->elements=old_elements;
+        s->removed=old_removed;
+        free(new_data);
+        return false;
+      }
+    }
+  }
+
+  free(old_data);
+
+  return true;
+
+}
+
+
+struct __set_iterator {
+  set* s;
+  int i;
+};
+
+set_iterator* set_itr(set* set) {
+  if (set == NULL) {
+    return NULL;
+  }
+  set_iterator* it = calloc(1, sizeof(set_iterator));
+  it->s=set;
+  it->i=0;
+  set_itr_has_next(it);
+  return it;
+}
+
+bool set_itr_next(set_iterator* it, char** ptr) {
+  if (it == NULL) {
+    return false;
+  }
+
+  set* s = it->s;
+
+  while (it->i < s->capacity) {
+    if (s->data[it->i] != NULL && s->data[it->i] != REMOVED_PLACEHOLDER) {
+      *ptr = s->data[it->i++];
+      return true;
+    }
+    it->i++;
+  }
+
+  return false;
+}
+
+bool set_itr_has_next(set_iterator* it) {
+  if (it == NULL) {
+    return false;
+  }
+
+  set* s = it->s;
+
+  while (it->i < s->capacity) {
+    if (s->data[it->i] != NULL && s->data[it->i] != REMOVED_PLACEHOLDER) {
+      return true;
+    }
+    it->i++;
+  }
+
+  return false;
+
+}
+
+void set_itr_delete(set_iterator* it) {
+  free(it);
+}
+
+bool set_difference(set* s1, set* s2, set* diff) {
+  if (s1 == NULL || s2 == NULL || diff == NULL) {
+    return false;
+  }
+  set_iterator* it;
+  char* elem = NULL;
+  for (it = set_itr(s2); set_itr_next(it, &elem); ) {
+    if (!set_contains(s1, elem)) {
+      if (!set_add(diff, elem)) {
+        return false;
+      }
+    }
+  }
+
+  set_itr_delete(it);
+
+  return true;
 }
 
 
