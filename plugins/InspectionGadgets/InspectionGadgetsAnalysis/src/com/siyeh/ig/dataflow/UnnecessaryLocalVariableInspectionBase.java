@@ -124,14 +124,14 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
         return false;
       }
       final PsiReferenceExpression reference = (PsiReferenceExpression)initializer;
-      final PsiElement referent = reference.resolve();
-      if (referent == null) {
+      final PsiVariable initialization = ObjectUtils.tryCast(reference.resolve(), PsiVariable.class);
+      if (initialization == null) {
         return false;
       }
-      if (!(referent instanceof PsiResourceVariable) && variable instanceof PsiResourceVariable) {
+      if (!(initialization instanceof PsiResourceVariable) && variable instanceof PsiResourceVariable) {
         return false;
       }
-      if (!(referent instanceof PsiLocalVariable || referent instanceof PsiParameter)) {
+      if (!(initialization instanceof PsiLocalVariable || initialization instanceof PsiParameter)) {
         if (!isFinalChain(reference) || ReferencesSearch.search(variable).findAll().size() != 1) {
           // only warn when variable is referenced once, to avoid warning when a field is cached in local variable
           // as in e.g. gnu.trove.TObjectHash#forEach()
@@ -145,7 +145,6 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
       if (variableMayChange(containingScope, null, variable)) {
         return false;
       }
-      final PsiVariable initialization = (PsiVariable)referent;
       if (variableMayChange(containingScope, PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression()), initialization)) {
         return false;
       }
