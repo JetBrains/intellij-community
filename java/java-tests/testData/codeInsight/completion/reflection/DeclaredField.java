@@ -23,4 +23,5 @@ class Test {
   public int num;
   public int num2;
   int num1;
+  private int num0;
 }
