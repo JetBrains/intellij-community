@@ -155,9 +155,12 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
         return newFromImport;
       }
       else {
+        final int oldLength = fromImport.getTextLength();
         // Add only trailing comma
-        final PsiElement comma = fromImport.addAfter(generator.createComma().getPsi(), allNames[allNames.length - 1]);
-        codeStyleManager.reformat(comma);
+        fromImport.addAfter(generator.createComma().getPsi(), allNames[allNames.length - 1]);
+        // Adjust spaces around the comma if necessary
+        codeStyleManager.reformat(fromImport, true);
+        myHelper.updateResultRange(oldLength, fromImport.getTextLength());
         return fromImport;
       }
     }
