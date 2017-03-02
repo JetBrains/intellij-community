@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.memory.utils;
 
+import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -77,52 +78,61 @@ public class StackFrameItem {
       for (StackFrameProxyImpl frame : threadReferenceProxy.forceFrames()) {
         try {
           List<XNamedValue> vars = null;
+          Location location = frame.location();
+          Method method = location.method();
           if (withVars) {
-            vars = new ArrayList<>();
-
-            try {
-              ObjectReference thisObject = frame.thisObject();
-              if (thisObject != null) {
-                vars.add(createVariable(thisObject, "this", VariableItem.VarType.OBJECT));
-              }
+            if (method.isNative() || method.isBridge() || method.isSynthetic()) {
+              vars = Collections.singletonList(
+                JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.not.captured"),
+                                                 XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
             }
-            catch (EvaluateException e) {
-              LOG.debug(e);
-            }
+            else {
+              vars = new ArrayList<>();
 
-            try {
-              for (LocalVariableProxyImpl v : frame.visibleVariables()) {
-                try {
-                  VariableItem.VarType varType = v.getVariable().isArgument() ? VariableItem.VarType.PARAM :VariableItem.VarType.OBJECT;
-                  vars.add(createVariable(frame.getValue(v), v.name(), varType));
+              try {
+                ObjectReference thisObject = frame.thisObject();
+                if (thisObject != null) {
+                  vars.add(createVariable(thisObject, "this", VariableItem.VarType.OBJECT));
                 }
-                catch (EvaluateException e) {
+              }
+              catch (EvaluateException e) {
+                LOG.debug(e);
+              }
+
+              try {
+                for (LocalVariableProxyImpl v : frame.visibleVariables()) {
+                  try {
+                    VariableItem.VarType varType = v.getVariable().isArgument() ? VariableItem.VarType.PARAM : VariableItem.VarType.OBJECT;
+                    vars.add(createVariable(frame.getValue(v), v.name(), varType));
+                  }
+                  catch (EvaluateException e) {
+                    LOG.debug(e);
+                  }
+                }
+              }
+              catch (EvaluateException e) {
+                if (e.getCause() instanceof AbsentInformationException) {
+                  vars.add(JavaStackFrame.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(),
+                                                            XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
+                  // trying to collect values from variable slots
+                  try {
+                    for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
+                      .fetchValues(frame, suspendContext.getDebugProcess(), false).entrySet()) {
+                      vars.add(createVariable(entry.getValue(), entry.getKey().getDisplayName(), VariableItem.VarType.PARAM));
+                    }
+                  }
+                  catch (Exception ex) {
+                    LOG.info(ex);
+                  }
+                }
+                else {
                   LOG.debug(e);
                 }
               }
             }
-            catch (EvaluateException e) {
-              if (e.getCause() instanceof AbsentInformationException) {
-                vars.add(JavaStackFrame.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(),
-                                                                       XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
-                // trying to collect values from variable slots
-                try {
-                  for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
-                    .fetchValues(frame, suspendContext.getDebugProcess(), false).entrySet()) {
-                    vars.add(createVariable(entry.getValue(), entry.getKey().getDisplayName(), VariableItem.VarType.PARAM));
-                  }
-                }
-                catch (Exception ex) {
-                  LOG.info(ex);
-                }
-              }
-              else {
-                LOG.debug(e);
-              }
-            }
           }
 
-          StackFrameItem frameItem = new StackFrameItem(frame.location(), vars);
+          StackFrameItem frameItem = new StackFrameItem(location, vars);
           res.add(frameItem);
 
           List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
