@@ -1,0 +1,35 @@
+<idea-plugin version="2">
+  <id>ru.adelf.idea.dotenv</id>
+  <name>.env files support</name>
+  <version>0.1</version>
+  <vendor email="adel.faiz@gmail.com" url="http://adelf.ru">Adel Fayzrakhmanov</vendor>
+
+  <description><![CDATA[
+      <h1>.env files support</h1><br>
+    <br/>
+    <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>
+    <br/>
+
+      <h2>Features</h2>
+      <ul>
+        <li>getenv() and env() parameters completion, based from .env file keys</li>
+      </ul>
+    ]]></description>
+
+  <change-notes><![CDATA[]]></change-notes>
+
+  <idea-version since-build="145.0"/>
+
+  <depends>com.jetbrains.php</depends>
+  <depends>com.intellij.modules.platform</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.extension.CompletionContributor"/>
+
+    <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotenvKeysIndex"/>
+  </extensions>
+
+  <actions>
+  </actions>
+
+</idea-plugin>
