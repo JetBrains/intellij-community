@@ -15,10 +15,40 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
-public class TestInClassConfigurationProducer extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
+public class TestInClassConfigurationProducer extends JUnitConfigurationProducer {
+  private JUnitInClassConfigurationProducerDelegate myDelegate = new JUnitInClassConfigurationProducerDelegate();
   public TestInClassConfigurationProducer() {
     super(JUnitConfigurationType.getInstance());
+  }
+
+  @Override
+  protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
+                                                  ConfigurationContext context,
+                                                  Ref<PsiElement> sourceElement) {
+    return myDelegate.setupConfigurationFromContext(configuration, context, sourceElement);
+  }
+
+  @Override
+  public void onFirstRun(@NotNull ConfigurationFromContext configuration,
+                         @NotNull ConfigurationContext fromContext,
+                         @NotNull Runnable performRunnable) {
+    myDelegate.onFirstRun(configuration, fromContext, performRunnable);
+  }
+
+  private static class JUnitInClassConfigurationProducerDelegate
+    extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
+    public JUnitInClassConfigurationProducerDelegate() {super(JUnitConfigurationType.getInstance());}
+
+    @Override
+    protected boolean setupConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context, Ref<PsiElement> sourceElement) {
+      return super.setupConfigurationFromContext(configuration, context, sourceElement);
+    }
   }
 }
