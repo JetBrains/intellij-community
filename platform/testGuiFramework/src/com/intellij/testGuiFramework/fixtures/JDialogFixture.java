@@ -21,6 +21,7 @@ import org.fest.swing.core.Robot;
 import org.fest.swing.fixture.ContainerFixture;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
+import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,11 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
 
   @NotNull
   public static JDialogFixture find(@NotNull Robot robot, String title) {
+    return find(robot, title, GuiTestUtil.SHORT_TIMEOUT);
+  }
+
+  @NotNull
+  public static JDialogFixture find(@NotNull Robot robot, String title, Timeout timeout) {
     GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
@@ -48,7 +54,7 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
         Collection<JDialog> dialogs = robot.finder().findAll(matcher);
         return !dialogs.isEmpty();
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, timeout);
 
     JDialog dialog = robot.finder().find(matcher);
     return new JDialogFixture(robot, dialog);

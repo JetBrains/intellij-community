@@ -18,7 +18,6 @@ package com.intellij.testGuiFramework.tests
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.testGuiFramework.fixtures.JBListPopupFixture
-import com.intellij.testGuiFramework.fixtures.MessagesFixture
 import com.intellij.testGuiFramework.fixtures.ToolWindowFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.ui.EditorComboBox
@@ -53,7 +52,7 @@ class GitGuiTest : GitGuiTestCase() {
         })
         button("Clone").click()
       }
-      MessagesFixture.findByTitle(myRobot, target(), VcsBundle.message("checkout.title")).clickYes()
+      message(VcsBundle.message("checkout.title")).clickYes()
       dialog("Import Project") {
         button("Next").click()
         val textField = GuiTestUtil.findTextField(myRobot, "Project name:").click()

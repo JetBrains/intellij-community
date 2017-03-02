@@ -453,7 +453,20 @@ GuiTestUtil {
     }
   }
 
+  public static void clickPopupMenuItem(@NotNull String label, boolean searchByPrefix, @NotNull Component component, @NotNull Robot robot, @NotNull Timeout timeout) {
+    if (searchByPrefix) {
+      clickPopupMenuItemMatching(new PrefixMatcher(label), component, robot, timeout);
+    }
+    else {
+      clickPopupMenuItemMatching(new EqualsMatcher(label), component, robot, timeout);
+    }
+  }
+
   public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot) {
+    clickPopupMenuItemMatching(labelMatcher, component, robot, SHORT_TIMEOUT);
+  }
+
+  public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot, @NotNull Timeout timeout) {
     // IntelliJ doesn't seem to use a normal JPopupMenu, so this won't work:
     //    JPopupMenu menu = myRobot.findActivePopupMenu();
     // Instead, it uses a JList (technically a JBList), which is placed somewhere
@@ -465,13 +478,13 @@ GuiTestUtil {
     // so limit it to one that is actually used as a popup, as identified by its model being a ListPopupModel:
     assertNotNull(root);
 
-    JBList list = waitUntilFound(robot, new GenericTypeMatcher<JBList>(JBList.class) {
+    JBList list = waitUntilFound(robot, null,  new GenericTypeMatcher<JBList>(JBList.class) {
       @Override
       protected boolean isMatching(@NotNull JBList list) {
         ListModel model = list.getModel();
         return model instanceof ListPopupModel;
       }
-    });
+    }, timeout);
 
 
     // We can't use the normal JListFixture method to click by label since the ListModel items are
@@ -797,14 +810,23 @@ GuiTestUtil {
     return new JTreeFixture(robot, actionTree);
   }
 
+  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text, @NotNull Timeout timeout){
+    JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
+      @Override
+      protected boolean isMatching(@Nonnull JRadioButton button) {
+        return (button.getText() != null && button.getText().equals(text));
+      }
+    }, timeout);
+    return new JRadioButtonFixture(robot, radioButton);
+  }
+
   public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
         return (button.getText() != null && button.getText().equals(text));
       }
-    });
-
+    }, SHORT_TIMEOUT);
     return new JRadioButtonFixture(robot, radioButton);
   }
 
