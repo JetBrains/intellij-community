@@ -52,7 +52,7 @@ public class DiffCalculator {
           String source = byContent.get(create.getValue());
           boolean move = true;
 
-          if (source == null) {
+          if (source == null || create.getKey().startsWith("jre")) {
             List<String> sameName = byName.get(new File(create.getKey()).getName());
             if (sameName != null) {
               source = findBestCandidateForMove(sameName, create.getKey());
