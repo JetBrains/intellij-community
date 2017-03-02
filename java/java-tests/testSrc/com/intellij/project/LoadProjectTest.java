@@ -15,6 +15,7 @@
  */
 package com.intellij.project;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Editor;
@@ -77,7 +78,7 @@ public class LoadProjectTest extends PlatformTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     assertNotNull(editorA);
-    CodeInsightTestFixtureImpl.instantiateAndRun(fileA, editorA, new int[0], false);
+    CodeInsightTestFixtureImpl.instantiateAndRun(fileA, editorA, new int[] {Pass.EXTERNAL_TOOLS}, false);
 
     VirtualFile b = src.findFileByRelativePath("/x/BClass.java");
     assertNotNull(b);
@@ -88,7 +89,7 @@ public class LoadProjectTest extends PlatformTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     assertNotNull(editorB);
-    CodeInsightTestFixtureImpl.instantiateAndRun(fileB, editorB, new int[0], false);
+    CodeInsightTestFixtureImpl.instantiateAndRun(fileB, editorB, new int[]{Pass.EXTERNAL_TOOLS}, false);
 
     FileEditor[] allEditors = FileEditorManager.getInstance(getProject()).getAllEditors();
     assertEquals(2, allEditors.length);
