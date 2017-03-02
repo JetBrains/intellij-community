@@ -10,6 +10,7 @@ public class Test {
   public <T> void test(List<T> list) {
     Optional<T> s = list.size() > 0 ? Optional.of(list.get(0)) : Optional.empty();
     varArg(1, Optional.of(1), Optional.empty());
+    s = Optional.empty();
     m((Optional<String>) Optional.<String>empty());
     Optional.of("xyz").flatMap(x -> Optional.empty()).ifPresent(System.out::println);
   }
