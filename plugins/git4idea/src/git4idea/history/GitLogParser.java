@@ -59,12 +59,12 @@ import java.util.regex.Pattern;
 public class GitLogParser {
   // Single records begin with %x01, end with %03. Items of commit information (hash, committer, subject, etc.) are separated by %x02.
   // each character is declared twice - for Git pattern format and for actual character in the output.
-  public static final String RECORD_START = "\u0001";
+  public static final String RECORD_START = "\u0001\u0001";
   public static final String ITEMS_SEPARATOR = "\u0002";
-  public static final String RECORD_END = "\u0003";
-  public static final String RECORD_START_GIT = "%x01";
+  public static final String RECORD_END = "\u0003\u0003";
+  public static final String RECORD_START_GIT = "%x01%x01";
   private static final String ITEMS_SEPARATOR_GIT = "%x02";
-  private static final String RECORD_END_GIT = "%x03";
+  private static final String RECORD_END_GIT = "%x03%x03";
 
   private final String myFormat;  // pretty custom format generated in the constructor
   private final GitLogOption[] myOptions;
@@ -84,7 +84,7 @@ public class GitLogParser {
    * 2c815939f45fbcfda9583f84b14fe9d393ada790<ITEM_SEPARATOR>sample commit<RECORD_END>
    * D       a.txt
    */
-  private static final Pattern ONE_RECORD = Pattern.compile(RECORD_START + "?(.*)" + RECORD_END + "\n*(.*)", Pattern.DOTALL);
+  private static final Pattern ONE_RECORD = Pattern.compile("(?:" + RECORD_START + ")?(.*)" + RECORD_END + "\n*(.*)", Pattern.DOTALL);
   private static final String SINGLE_PATH = "([^\t\r\n]+)"; // something not empty, not a tab or newline.
   private static final String EOL = "\\s*(?:\r|\n|\r\n)";
   private static final String PATHS =
