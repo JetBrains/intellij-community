@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.VcsConfiguration.getInstance;
+import static com.intellij.project.ProjectKt.guessProjectDir;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
@@ -676,7 +677,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     List<VcsDirectoryMapping> previousMappings = myVcsManager.getDirectoryMappings();
     myVcsConfiguration.addIgnoredUnregisteredRoots(previousMappings.stream()
         .filter(mapping -> !newMappings.contains(mapping))
-        .map(VcsDirectoryMapping::getDirectory)
+        .map(mapping -> mapping.isDefaultMapping() ? guessProjectDir(myProject).getPath() : mapping.getDirectory())
         .collect(Collectors.toList()));
     myVcsConfiguration.removeFromIgnoredUnregisteredRoots(map(newMappings, VcsDirectoryMapping::getDirectory));
   }
