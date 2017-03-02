@@ -304,8 +304,7 @@ public class PlatformTestUtil {
 
   @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
-    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
@@ -318,8 +317,7 @@ public class PlatformTestUtil {
 
   @TestOnly
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
-    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
-    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     //noinspection StatementWithEmptyBody
     while (dispatchNextEventIfAny(eventQueue) != null);
   }
