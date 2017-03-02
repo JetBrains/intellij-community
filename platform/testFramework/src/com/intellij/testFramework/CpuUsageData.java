@@ -34,32 +34,32 @@ class CpuUsageData {
   private static final List<GarbageCollectorMXBean> ourGcBeans = ManagementFactory.getGarbageCollectorMXBeans();
 
   final long durationMs;
-  private final TObjectLongHashMap<GarbageCollectorMXBean> myGcTimes;
-  private final TLongLongHashMap myThreadTimes;
+  private final long myFreeMb;
+  private final long myTotalMb;
+  private final List<Pair<Long, String>> myGcTimes = new ArrayList<>();
+  private final List<Pair<Long, String>> myThreadTimes = new ArrayList<>();
 
-  private CpuUsageData(long durationMs, TObjectLongHashMap<GarbageCollectorMXBean> gcTimes, TLongLongHashMap threadTimes) {
+  private CpuUsageData(long durationMs, TObjectLongHashMap<GarbageCollectorMXBean> gcTimes, TLongLongHashMap threadTimes, long freeMb, long totalMb) {
     this.durationMs = durationMs;
-    myGcTimes = gcTimes;
-    myThreadTimes = threadTimes;
+    myFreeMb = freeMb;
+    myTotalMb = totalMb;
+    gcTimes.forEachEntry((bean, gcTime) -> {
+      myGcTimes.add(Pair.create(gcTime, bean.getName()));
+      return true;
+    });
+    threadTimes.forEachEntry((id, time) -> {
+      ThreadInfo info = ourThreadMXBean.getThreadInfo(id);
+      myThreadTimes.add(Pair.create(toMillis(time), info == null ? "<unknown>" : info.getThreadName()));
+      return true;
+    });
   }
 
   String getGcStats() {
-    List<Pair<Long, String>> times = new ArrayList<>();
-    myGcTimes.forEachEntry((bean, time) -> {
-      times.add(Pair.create(time, bean.getName()));
-      return true;
-    });
-    return printLongestNames(times);
+    return printLongestNames(myGcTimes) + "; free " + myFreeMb + " of " + myTotalMb + "MB";
   }
 
   String getThreadStats() {
-    List<Pair<Long, String>> times = new ArrayList<>();
-    myThreadTimes.forEachEntry((id, time) -> {
-      ThreadInfo info = ourThreadMXBean.getThreadInfo(id);
-      times.add(Pair.create(toMillis(time), info == null ? "<unknown>" : info.getThreadName()));
-      return true;
-    });
-    return printLongestNames(times);
+    return printLongestNames(myThreadTimes);
   }
 
   @NotNull
@@ -77,6 +77,9 @@ class CpuUsageData {
   }
 
   static <E extends Throwable> CpuUsageData measureCpuUsage(ThrowableRunnable<E> runnable) throws E {
+    long free = toMb(Runtime.getRuntime().freeMemory());
+    long total = toMb(Runtime.getRuntime().totalMemory());
+
     TObjectLongHashMap<GarbageCollectorMXBean> gcTimes = new TObjectLongHashMap<>();
     for (GarbageCollectorMXBean bean : ourGcBeans) {
       gcTimes.put(bean, bean.getCollectionTime());
@@ -99,7 +102,10 @@ class CpuUsageData {
       gcTimes.put(bean, bean.getCollectionTime() - gcTimes.get(bean));
     }
 
-    return new CpuUsageData(duration, gcTimes, threadTimes);
+    return new CpuUsageData(duration, gcTimes, threadTimes, free, total);
   }
 
+  private static long toMb(long bytes) {
+    return bytes / 1024 / 1024;
+  }
 }
