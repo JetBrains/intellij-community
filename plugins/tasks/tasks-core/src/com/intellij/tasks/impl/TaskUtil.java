@@ -21,10 +21,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.tasks.CommitPlaceholderProvider;
+import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
@@ -71,7 +74,12 @@ public class TaskUtil {
     // empty
   }
 
-  public static String formatTask(@NotNull Task task, String format) {
+  public static String formatTask(@NotNull Task task, String format, boolean forCommit) {
+
+    if (forCommit && task instanceof LocalTask) {
+      format = formatFromExtensions((LocalTask)task, format);
+    }
+
     return format
       .replace("{id}", task.getPresentableId())
       .replace("{number}", task.getNumber())
@@ -79,13 +87,30 @@ public class TaskUtil {
       .replace("{summary}", task.getSummary());
   }
 
-  @Nullable
+  private static String formatFromExtensions(@NotNull LocalTask task, String format) {
+    for (CommitPlaceholderProvider extension : Extensions.getExtensions(CommitPlaceholderProvider.EXTENSION_POINT_NAME)) {
+      String[] placeholders = extension.getPlaceholders(task.getRepository());
+      for (String placeholder : placeholders) {
+        String value = extension.getPlaceholderValue(task, placeholder);
+        if (value != null) {
+          format = format.replace("{" + placeholder + "}", value);
+        }
+      }
+    }
+    return format;
+  }
+
   public static String getChangeListComment(Task task) {
+    return getChangeListComment(task, false);
+  }
+
+    @Nullable
+  public static String getChangeListComment(Task task, boolean forCommit) {
     final TaskRepository repository = task.getRepository();
     if (repository == null || !repository.isShouldFormatCommitMessage()) {
       return null;
     }
-    return formatTask(task, repository.getCommitMessageFormat());
+    return formatTask(task, repository.getCommitMessageFormat(), forCommit);
   }
 
   public static String getTrimmedSummary(Task task) {

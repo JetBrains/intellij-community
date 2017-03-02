@@ -30,6 +30,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -72,7 +73,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
         throw new Exception();
       }
     };
-    ((TaskManagerImpl)myTaskManager).setRepositories(Collections.singletonList(repository));
+    myTaskManager.setRepositories(Collections.singletonList(repository));
 
     myTaskManager.updateIssues(null);
 
@@ -86,7 +87,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testSharedServers() throws Exception {
     TaskRepository repository = new YouTrackRepository(new YouTrackRepositoryType());
     repository.setShared(true);
-    ((TaskManagerImpl)myTaskManager).setRepositories(Collections.singletonList(repository));
+    myTaskManager.setRepositories(Collections.singletonList(repository));
 
     TaskProjectConfiguration configuration = ServiceManager.getService(getProject(), TaskProjectConfiguration.class);
     TaskProjectConfiguration state = configuration.getState();
@@ -95,12 +96,12 @@ public class TaskManagerTest extends TaskManagerTestCase {
     Element element = XmlSerializer.serialize(state);
 
     configuration.servers.clear();
-    ((TaskManagerImpl)myTaskManager).setRepositories(Collections.emptyList());
+    myTaskManager.setRepositories(Collections.emptyList());
 
     configuration.loadState(XmlSerializer.deserialize(element, TaskProjectConfiguration.class));
     assertEquals(1, state.servers.size());
 
-    ((TaskManagerImpl)myTaskManager).projectOpened();
+    myTaskManager.projectOpened();
 
     TaskRepository[] repositories = myTaskManager.getAllRepositories();
     assertEquals(1, repositories.length);
@@ -116,7 +117,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
         return super.getIssues(query, max, since);
       }
     };
-    ((TaskManagerImpl)myTaskManager).setRepositories(Collections.singletonList(repository));
+    myTaskManager.setRepositories(Collections.singletonList(repository));
 
     List<Task> issues = myTaskManager.getIssues("");
     assertEquals(1, issues.size());
@@ -128,7 +129,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
   public void testTaskHistoryLength() throws Exception {
     TestRepository repository = new TestRepository();
-    int historyLength = ((TaskManagerImpl)myTaskManager).getState().taskHistoryLength;
+    int historyLength = myTaskManager.getState().taskHistoryLength;
     for (int i = 0; i < historyLength + 100; i++) {
       myTaskManager.addTask(new TaskTestUtil.TaskBuilder(Integer.toString(i), "", repository));
     }
@@ -138,7 +139,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
   public void testBranchNameSuggestion() throws Exception {
     TaskTestUtil.TaskBuilder task = new TaskTestUtil.TaskBuilder("IDEA-666", "Bad news", null);
-    TaskManagerImpl taskManager = (TaskManagerImpl)myTaskManager;
+    TaskManagerImpl taskManager = myTaskManager;
     assertEquals("IDEA-666", taskManager.suggestBranchName(task));
     String format = taskManager.getState().branchNameFormat;
     try {
@@ -150,5 +151,28 @@ public class TaskManagerTest extends TaskManagerTestCase {
     finally {
       taskManager.getState().branchNameFormat = format;
     }
+  }
+
+  public void testPreserveTaskUrl() {
+    String url = "http://server/foo";
+    myTaskManager.addTask(new TaskTestUtil.TaskBuilder("foo", "summary", null).withIssueUrl(url));
+    Element element = XmlSerializer.serialize(myTaskManager.getState());
+    TaskManagerImpl.Config config = XmlSerializer.deserialize(element, TaskManagerImpl.Config.class);
+    LocalTaskImpl task = config.tasks.get(1);
+    assertEquals(url, task.getIssueUrl());
+  }
+
+  public void testRestoreRepository() {
+    TestRepository repository = new TestRepository();
+    repository.setUrl("http://server");
+    myTaskManager.setRepositories(Arrays.asList(repository));
+
+    TaskTestUtil.TaskBuilder issue = new TaskTestUtil.TaskBuilder("foo", "summary", repository).withIssueUrl(repository.getUrl() + "/foo");
+    myTaskManager.activateTask(issue, false);
+    Element element = XmlSerializer.serialize(myTaskManager.getState());
+    TaskManagerImpl.Config config = XmlSerializer.deserialize(element, TaskManagerImpl.Config.class);
+    myTaskManager.loadState(config);
+
+    assertEquals(repository, myTaskManager.getActiveTask().getRepository());
   }
 }

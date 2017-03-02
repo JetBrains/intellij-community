@@ -810,6 +810,18 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     myLastSelectedListName = list.getName();
 
+    String listComment = getCommentFromChangelist(list);
+
+    myCommitMessageArea.setText(listComment);
+  }
+
+  private String getCommentFromChangelist(LocalChangeList list) {
+    CommitMessageProvider[] providers = Extensions.getExtensions(CommitMessageProvider.EXTENSION_POINT_NAME);
+    for (CommitMessageProvider provider : providers) {
+      String message = provider.getCommitMessage(list, getProject());
+      if (message != null) return message;
+    }
+
     String listComment = list.getComment();
     if (StringUtil.isEmptyOrSpaces(listComment)) {
       final String listTitle = list.getName();
@@ -821,8 +833,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         listComment = myLastKnownComment;
       }
     }
-
-    myCommitMessageArea.setText(listComment);
+    return listComment;
   }
 
 

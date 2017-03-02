@@ -571,15 +571,27 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public void loadState(Config config) {
     XmlSerializerUtil.copyBean(config, myConfig);
-    myTasks.clear();
-    for (LocalTaskImpl task : config.tasks) {
-      addTask(task);
-    }
 
     myRepositories.clear();
     Element element = config.servers;
     List<TaskRepository> repositories = loadRepositories(element);
     myRepositories.addAll(repositories);
+
+    myTasks.clear();
+    for (LocalTaskImpl task : config.tasks) {
+      if (task.getRepository() == null) {
+        // restore repository from url
+        String url = task.getIssueUrl();
+        if (url != null) {
+          for (TaskRepository repository : repositories) {
+            if (repository.getUrl() != null && url.startsWith(repository.getUrl())) {
+              task.setRepository(repository);
+            }
+          }
+        }
+      }
+      addTask(task);
+    }
   }
 
   public static ArrayList<TaskRepository> loadRepositories(Element element) {
@@ -948,7 +960,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public String getChangelistName(Task task) {
     String name = task.isIssue() && myConfig.changelistNameFormat != null
-                  ? TaskUtil.formatTask(task, myConfig.changelistNameFormat)
+                  ? TaskUtil.formatTask(task, myConfig.changelistNameFormat, false)
                   : task.getSummary();
     return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
@@ -964,7 +976,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @NotNull
   public String constructDefaultBranchName(@NotNull Task task) {
-    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat) : task.getSummary();
+    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat, false) : task.getSummary();
   }
 
   @TestOnly

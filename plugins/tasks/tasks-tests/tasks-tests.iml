@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="tasks-core" />
     <orderEntry type="module" module-name="tasks-java" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="vcs-impl" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
