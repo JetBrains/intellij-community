@@ -40,7 +40,6 @@ import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.swing.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
@@ -52,6 +51,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author yole
@@ -70,9 +70,9 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
   private volatile long myLastSampling = System.currentTimeMillis();
-  private volatile long myLastAliveEdt = System.currentTimeMillis();
   private long myLastDumpTime;
   private long myFreezeStart;
+  private final AtomicInteger myEdtRequestsQueued = new AtomicInteger(0);
 
   /**
    * If the product is unresponsive for UNRESPONSIVE_THRESHOLD_SECONDS, dump threads every UNRESPONSIVE_INTERVAL_SECONDS
@@ -190,13 +190,15 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
       diff -= SAMPLING_INTERVAL_MS;
     }
 
-    long sinceLastEdt = millis - myLastAliveEdt;
-    if (sinceLastEdt >= UNRESPONSIVE_THRESHOLD_SECONDS * 1000 + 10) {
+    int edtRequests = myEdtRequestsQueued.get();
+    if (edtRequests >= UNRESPONSIVE_THRESHOLD_SECONDS) {
       edtFrozen(millis);
     }
-    else if (sinceLastEdt <= SAMPLING_INTERVAL_MS) {
+    else if (edtRequests == 0) {
       edtResponds(millis);
     }
+
+    myEdtRequestsQueued.incrementAndGet();
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new SwingThreadRunnable(millis));
   }
@@ -205,7 +207,7 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
     if (currentMillis - myLastDumpTime >= UNRESPONSIVE_INTERVAL_SECONDS * 1000) {
       myLastDumpTime = currentMillis;
       if (myFreezeStart == 0) {
-        myFreezeStart = myLastAliveEdt;
+        myFreezeStart = currentMillis;
         myPublisher.uiFreezeStarted();
       }
       dumpThreads(getFreezeFolderName(myFreezeStart) + "/", false);
@@ -329,9 +331,8 @@ public class PerformanceWatcher extends ApplicationComponent.Adapter implements 
 
     @Override
     public void run() {
-      long millis = System.currentTimeMillis();
-      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, millis - myCreationMillis);
-      myLastAliveEdt = millis;
+      myEdtRequestsQueued.decrementAndGet();
+      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, System.currentTimeMillis() - myCreationMillis);
     }
   }
 
