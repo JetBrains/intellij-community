@@ -84,6 +84,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean FORCE_PUSH_ALLOWED = true;
     public GitPushTagMode PUSH_TAGS = null;
     public boolean SIGN_OFF_COMMIT = false;
+    public boolean SET_USER_NAME_GLOBALLY = true;
 
     @AbstractCollection(surroundWithTag = false)
     @Tag("push-targets")
@@ -314,6 +315,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public boolean isExcludedFromFavorites(@NotNull GitBranchType type, @Nullable Repository repository, @NotNull String branchName) {
     return myState.EXCLUDED_FAVORITES.contains(type.toString(), repository, branchName);
+  }
+
+  public boolean shouldSetUserNameGlobally() {
+    return myState.SET_USER_NAME_GLOBALLY;
+  }
+
+  public void setUserNameGlobally(boolean value) {
+    myState.SET_USER_NAME_GLOBALLY = value;
   }
 
 
