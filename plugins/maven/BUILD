@@ -7,7 +7,7 @@ iml_module(
         "maven2-server-impl/src",
         "src/main/java",
     ],
-    javacopts = ["-extra_checks:off"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["src/main/resources"],
     tags = ["managed"],
     test_srcs = [

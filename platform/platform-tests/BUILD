@@ -2,7 +2,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
     name = "platform-tests",
-    javacopts = ["-extra_checks:off"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

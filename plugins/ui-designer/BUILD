@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "ui-designer",
     srcs = ["src"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

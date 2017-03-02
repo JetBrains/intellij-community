@@ -32,7 +32,7 @@ iml_module(
         "platform/testFramework/src",
         "xml/xml-structure-view-impl/src",
     ],
-    javacopts = ["-extra_checks:off"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     package_prefixes = {
         "platform/credential-store/src": "com.intellij.credentialStore",
         "platform/configuration-store-impl/src": "com.intellij.configurationStore",
@@ -330,7 +330,7 @@ iml_module(
         "plugins/IntentionPowerPak/src",
         "plugins/generate-tostring/src",
     ],
-    javacopts = ["-extra_checks:off"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["plugins/generate-tostring/resources"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

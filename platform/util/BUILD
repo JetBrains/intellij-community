@@ -3,7 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "util",
     srcs = ["src"],
-    javacopts = ["-extra_checks:off"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -36,7 +36,7 @@ iml_module(
 
 iml_module(
     name = "util-tests",
-    javacopts = ["-extra_checks:off"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

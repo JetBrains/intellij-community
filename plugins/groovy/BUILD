@@ -3,7 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "jetgroovy",
     srcs = ["src"],
-    javacopts = ["-extra_checks:off"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["test"],

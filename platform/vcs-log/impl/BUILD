@@ -7,7 +7,7 @@ iml_module(
         "src",
         "gen",
     ],
-    javacopts = ["-extra_checks:off"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["test"],
