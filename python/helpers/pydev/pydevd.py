@@ -1060,9 +1060,9 @@ def set_debug(setup):
     setup['DEBUG_TRACE_LEVEL'] = 3
 
 
-def enable_qt_support():
+def enable_qt_support(qt_support_mode):
     from _pydev_bundle import pydev_monkey_qt
-    pydev_monkey_qt.patch_qt()
+    pydev_monkey_qt.patch_qt(qt_support_mode)
 
 
 def usage(doExit=0):
@@ -1384,7 +1384,7 @@ def apply_debugger_options(setup_options):
 
     :type setup_options: dict[str, bool]
     """
-    default_options = {'save-signatures': False, 'qt-support': False}
+    default_options = {'save-signatures': False, 'qt-support': ''}
     default_options.update(setup_options)
     setup_options = default_options
 
@@ -1398,7 +1398,7 @@ def apply_debugger_options(setup_options):
             debugger.signature_factory = SignatureFactory()
 
     if setup_options['qt-support']:
-        enable_qt_support()
+        enable_qt_support(setup_options['qt-support'])
 
 
 def patch_stdin(debugger):
