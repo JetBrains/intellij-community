@@ -149,7 +149,7 @@ public class LocalVariablesUtil {
 
   public static Map<DecompiledLocalVariable, Value> fetchValues(@NotNull StackFrameProxyImpl frameProxy,
                                                                 DebugProcess process,
-                                                                boolean computeNames) throws Exception {
+                                                                boolean full) throws Exception {
     Map<DecompiledLocalVariable, Value> map = new LinkedHashMap<>(); // LinkedHashMap for correct order
 
     Location location = frameProxy.location();
@@ -158,7 +158,7 @@ public class LocalVariablesUtil {
 
     // gather code variables names
     MultiMap<Integer, String> namesMap =
-      computeNames ? calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot) : MultiMap.empty();
+      full ? calcNames(new SimpleStackFrameContext(frameProxy, process), firstLocalVariableSlot) : MultiMap.empty();
 
     // first add arguments
     int slot = getFirstArgsSlot(method);
@@ -169,7 +169,7 @@ public class LocalVariablesUtil {
       slot += getTypeSlotSize(typeNames.get(i));
     }
 
-    if (!ourInitializationOk) {
+    if (!full || !ourInitializationOk) {
       return map;
     }
 

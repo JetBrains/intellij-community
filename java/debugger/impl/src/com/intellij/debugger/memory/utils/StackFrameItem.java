@@ -114,7 +114,7 @@ public class StackFrameItem {
                 if (e.getCause() instanceof AbsentInformationException) {
                   vars.add(JavaStackFrame.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(),
                                                             XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
-                  // trying to collect values from variable slots
+                  // only args for frames w/o debug info for now
                   try {
                     for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
                       .fetchValues(frame, suspendContext.getDebugProcess(), false).entrySet()) {
