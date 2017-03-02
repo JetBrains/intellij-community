@@ -18,7 +18,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, pydevd_check_frame_for_new_breakpoint
-from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, dict_pop, \
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, \
     STATE_RUN
 
 
@@ -538,11 +538,11 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if exception_type == 'python':
                     try:
                         cp = py_db.break_on_uncaught_exceptions.copy()
-                        dict_pop(cp, exception, None)
+                        cp.pop(exception, None)
                         py_db.break_on_uncaught_exceptions = cp
 
                         cp = py_db.break_on_caught_exceptions.copy()
-                        dict_pop(cp, exception, None)
+                        cp.pop(exception, None)
                         py_db.break_on_caught_exceptions = cp
                     except:
                         pydev_log.debug("Error while removing exception %s"%sys.exc_info()[0])
