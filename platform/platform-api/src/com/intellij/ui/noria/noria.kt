@@ -69,7 +69,7 @@ fun<T> longestCommonSubsequence(a: List<T>, b: List<T>) : List<T> {
 fun<Node> buildComponent(parent: Node, e: Element, r: Toolkit<Node>, update: () -> Unit): Pair<Component<Node>, List<Update<Node>>> =
   if (r.isPrimitive(e.type)) {
     val newNode = r.createNode(e)
-    val childComponents = e.children.mapIndexed { i, element -> buildComponent(newNode, element, r, update) }
+    val childComponents = e.children.map { element -> buildComponent(newNode, element, r, update) }
     PrimitiveComponent(node = newNode,
                        parentNode = parent,
                        element = e,
