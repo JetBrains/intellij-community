@@ -207,6 +207,44 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return myFrameCount;
   }
 
+  /**
+   * Same as frames(), but always force full frames refresh if not cached,
+   * this is useful when you need all frames but do not plan to invoke anything
+   * as only one request is sent
+   */
+  @NotNull
+  public List<StackFrameProxyImpl> forceFrames() throws EvaluateException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    final ThreadReference threadRef = getThreadReference();
+    try {
+      //LOG.assertTrue(threadRef.isSuspended());
+      checkValid();
+
+      if (myFrames == null) {
+        try {
+          List<StackFrame> frames = threadRef.frames();
+          myFrameCount = frames.size();
+          myFrames = new ArrayList<>(myFrameCount);
+          myFramesFromBottom.clear();
+          int idx = 0;
+          for (StackFrame frame : frames) {
+            StackFrameProxyImpl frameProxy = new StackFrameProxyImpl(this, frame, myFrameCount - idx);
+            myFrames.add(frameProxy);
+            myFramesFromBottom.addFirst(frameProxy);
+            idx++;
+          }
+        }
+        catch (IncompatibleThreadStateException | InternalException e) {
+          throw EvaluateExceptionUtil.createEvaluateException(e);
+        }
+      }
+    }
+    catch (ObjectCollectedException ignored) {
+      return Collections.emptyList();
+    }
+    return myFrames;
+  }
+
   @NotNull
   public List<StackFrameProxyImpl> frames() throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
