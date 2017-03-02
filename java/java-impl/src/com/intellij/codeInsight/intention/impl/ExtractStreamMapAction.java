@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.openapi.editor.Editor;
@@ -33,8 +34,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
@@ -46,7 +45,7 @@ public class ExtractStreamMapAction extends PsiElementBaseIntentionAction {
     PsiLocalVariable variable =
       PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class, false, PsiStatement.class, PsiLambdaExpression.class);
     if (!isApplicable(variable)) return false;
-    setText("Extract variable '" + Objects.requireNonNull(variable.getName()) + "' to separate stream step");
+    setText(CodeInsightBundle.message("intention.extract.map.step.text", variable.getName()));
     return true;
   }
 
@@ -167,6 +166,6 @@ public class ExtractStreamMapAction extends PsiElementBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Extract to separate stream step";
+    return CodeInsightBundle.message("intention.extract.map.step.family");
   }
 }
