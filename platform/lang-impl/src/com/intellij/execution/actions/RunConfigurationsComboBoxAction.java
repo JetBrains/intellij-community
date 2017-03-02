@@ -54,18 +54,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    if (e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY) == null) {
-      Project project = e.getProject();
-      IdeFrameImpl frame = project != null ? WindowManagerEx.getInstanceEx().getFrame(project) : null;
-      if (frame != null) {
-        e.getPresentation().putClientProperty(CUSTOM_COMPONENT_PROPERTY, frame.getComponent());
-      }
-    }
-    super.actionPerformed(e);
-  }
-
-  @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
