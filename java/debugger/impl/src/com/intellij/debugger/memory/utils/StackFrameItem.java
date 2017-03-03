@@ -81,7 +81,7 @@ public class StackFrameItem {
           Location location = frame.location();
           Method method = location.method();
           if (withVars) {
-            if (method.isNative() || method.isBridge() || method.isSynthetic()) {
+            if (method.isNative() || method.isBridge() || DefaultSyntheticProvider.checkIsSynthetic(method)) {
               vars = Collections.singletonList(
                 JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.not.captured"),
                                                  XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
