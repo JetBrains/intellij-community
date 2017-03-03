@@ -262,7 +262,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return ourSourceRoot;
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void setUp() throws Exception {
     EdtTestUtil.runInEdtAndWait(() -> {

@@ -83,7 +83,6 @@ public class CreateClassFixTest extends UsefulTestCase {
     }
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @After
   public void tearDown() throws Exception {
     final Ref<Exception> ex = new Ref<>();
