@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..6
   // TODO: Warn about unresolved `import typing` but still resolve it internally for type inference
-  val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types")
+  val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types", "datetime")
   private val BLACK_LIST = setOf<String>()
 
   /**
