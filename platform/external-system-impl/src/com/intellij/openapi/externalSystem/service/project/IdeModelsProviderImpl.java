@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -100,6 +101,13 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   }
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
+    if (ideModule.getProject().getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE) {
+      for (VirtualFile root : ModuleRootManager.getInstance(ideModule).getContentRoots()) {
+        if (pathsEqual(root.getPath(), moduleData.getLinkedExternalProjectPath())) {
+          return true;
+        }
+      }
+    }
     return isExternalSystemAwareModule(moduleData.getOwner(), ideModule) &&
            pathsEqual(getExternalProjectPath(ideModule), moduleData.getLinkedExternalProjectPath());
   }
