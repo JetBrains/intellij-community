@@ -847,7 +847,8 @@ public class PyUtil {
   }
 
   public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull NullableFunction<P, T> f) {
-    final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, () -> {
+    final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
+    final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () -> {
       // concurrent hash map is a null-hostile collection
       return CachedValueProvider.Result.create(Maps.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
     });
