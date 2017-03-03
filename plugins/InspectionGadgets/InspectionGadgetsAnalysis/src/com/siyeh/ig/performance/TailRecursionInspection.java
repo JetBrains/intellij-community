@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
@@ -410,10 +411,6 @@ public class TailRecursionInspection extends BaseInspection {
       }
       final PsiMethodCallExpression returnCall = (PsiMethodCallExpression)returnValue;
       final PsiReferenceExpression methodExpression = returnCall.getMethodExpression();
-      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
-      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
-        return;
-      }
       final PsiMethod containingMethod =
         PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (containingMethod == null) {
@@ -421,6 +418,10 @@ public class TailRecursionInspection extends BaseInspection {
       }
       final JavaResolveResult resolveResult = returnCall.resolveMethodGenerics();
       if (!resolveResult.isValidResult() || !containingMethod.equals(resolveResult.getElement())) {
+        return;
+      }
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression) && MethodUtils.isOverridden(containingMethod)) {
         return;
       }
       registerMethodCallError(returnCall, containingMethod);
