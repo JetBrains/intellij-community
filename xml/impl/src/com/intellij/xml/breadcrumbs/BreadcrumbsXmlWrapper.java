@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighli
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -73,6 +74,9 @@ import java.util.PriorityQueue;
  * @author spleaner
  */
 public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<BreadcrumbsPsiItem>, Disposable {
+
+  private final static Logger LOG = Logger.getInstance(BreadcrumbsXmlWrapper.class);
+
   private final BreadcrumbsComponent<BreadcrumbsPsiItem> myComponent;
   private final Project myProject;
   private Editor myEditor;
@@ -304,7 +308,19 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     if (file == null || !file.isValid()) return null;
 
     PriorityQueue<PsiElement> leafs =
-      new PriorityQueue<>(3, (o1, o2) -> o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset());
+      new PriorityQueue<>(3, (o1, o2) -> {
+        TextRange range1 = o1.getTextRange();
+        if (range1 == null) {
+          LOG.error(o1 + " returned null range");
+          return 1;
+        }
+        TextRange range2 = o2.getTextRange();
+        if (range2 == null) {
+          LOG.error(o2 + " returned null range");
+          return -1;
+        }
+        return range2.getStartOffset() - range1.getStartOffset();
+      });
     FileViewProvider viewProvider = findViewProvider(file, project);
     if (viewProvider == null) return null;
 
