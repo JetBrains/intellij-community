@@ -272,9 +272,12 @@ class GitRepositoryReader {
           String relativePath = FileUtil.getRelativePath(refsRootDir, file);
           if (relativePath != null) {
             String branchName = prefix + FileUtil.toSystemIndependentName(relativePath);
-            String hash = loadHashFromBranchFile(file);
-            if (hash != null && GitRefNameValidator.getInstance().checkInput(branchName)) {
-              result.put(branchName, hash);
+            boolean isBranchNameValid = GitRefNameValidator.getInstance().checkInput(branchName);
+            if (isBranchNameValid) {
+              String hash = loadHashFromBranchFile(file);
+              if (hash != null) {
+                result.put(branchName, hash);
+              }
             }
           }
         }
