@@ -31,7 +31,6 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNProperties;
 import org.tmatesoft.svn.core.SVNPropertyValue;
-import org.tmatesoft.svn.core.wc.ISVNPropertyValueProvider;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
@@ -310,13 +309,10 @@ public class SvnRollbackTest extends Svn17TestCase {
 
   private void setProperty(final File file, final String name, final String value) throws SVNException {
     final SVNWCClient client = myVcs.getSvnKitManager().createWCClient();
-    client.doSetProperty(file, new ISVNPropertyValueProvider() {
-      @Override
-      public SVNProperties providePropertyValues(File path, SVNProperties properties) throws SVNException {
-        final SVNProperties result = new SVNProperties();
-        result.put(name, SVNPropertyValue.create(value));
-        return result;
-      }
+    client.doSetProperty(file, (path, properties) -> {
+      final SVNProperties result = new SVNProperties();
+      result.put(name, SVNPropertyValue.create(value));
+      return result;
     }, true, SVNDepth.EMPTY, null, null);
   }
 

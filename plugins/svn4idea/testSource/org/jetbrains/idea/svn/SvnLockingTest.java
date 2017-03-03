@@ -25,8 +25,6 @@ import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.tmatesoft.sqljet.core.SqlJetException;
-import org.tmatesoft.sqljet.core.table.ISqlJetBusyHandler;
-import org.tmatesoft.sqljet.core.table.ISqlJetTransaction;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -278,25 +276,22 @@ public class SvnLockingTest extends TestCase {
       mySemaphore.down();
       try {
         System.out.println("starting read " + myName);
-        myLocks.wrapRead(myWorkingCopyRoot, new Runnable() {
-          @Override
-          public void run() {
-            System.out.println("inside read " + myName);
-            final SVNWCClient client = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
-            try {
-              client.doInfo(myWorkingCopyRoot, SVNRevision.BASE);
-            }
-            catch (SVNException e) {
-              e.printStackTrace();
-              throw new RuntimeException(e);
-            }
-            myIsRunning.set(true);
-            System.out.println("got status " + myName);
-            if (myWaitFor) {
-              mySemaphore.waitFor();
-            }
-            System.out.println("have read " + myName);
+        myLocks.wrapRead(myWorkingCopyRoot, () -> {
+          System.out.println("inside read " + myName);
+          final SVNWCClient client = new SVNWCClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
+          try {
+            client.doInfo(myWorkingCopyRoot, SVNRevision.BASE);
           }
+          catch (SVNException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+          }
+          myIsRunning.set(true);
+          System.out.println("got status " + myName);
+          if (myWaitFor) {
+            mySemaphore.waitFor();
+          }
+          System.out.println("have read " + myName);
         });
       }
       catch (SVNException e) {
@@ -370,27 +365,21 @@ public class SvnLockingTest extends TestCase {
         SqlJetDb open = null;
         try {
           open = SqlJetDb.open(SvnUtil.getWcDb(myWorkingCopyRoot), true);
-          open.setBusyHandler(new ISqlJetBusyHandler() {
-                      @Override
-                      public boolean call(int i) {
-                        if (myStopped) return false;
-                        System.out.println("busy " + myName);
-                        TimeoutUtil.sleep(10);
-                        return true;
-                      }
-                    });
+          open.setBusyHandler(i -> {
+            if (myStopped) return false;
+            System.out.println("busy " + myName);
+            TimeoutUtil.sleep(10);
+            return true;
+          });
           try {
             System.out.println("TRY OPEN FOR WRITE " + myName);
-            open.runWriteTransaction(new ISqlJetTransaction() {
-              @Override
-              public Object run(SqlJetDb db) throws SqlJetException {
-                System.out.println("OPENed FOR WRITE " + myName);
-                myInsideWrite.set(true);
-                if (shouldWait) {
-                  mySemaphore.waitFor();
-                }
-                return null;
+            open.runWriteTransaction(db -> {
+              System.out.println("OPENed FOR WRITE " + myName);
+              myInsideWrite.set(true);
+              if (shouldWait) {
+                mySemaphore.waitFor();
               }
+              return null;
             });
           } finally {
             myInsideWrite.set(false);
