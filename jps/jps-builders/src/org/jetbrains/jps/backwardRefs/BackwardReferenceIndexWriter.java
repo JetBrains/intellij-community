@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.InvertedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -49,12 +50,20 @@ public class BackwardReferenceIndexWriter {
     return myIndex.getRebuildRequestCause();
   }
 
-  public static void closeIfNeed() {
+  void setRebuildCause(Exception e) {
+    myIndex.setRebuildRequestCause(e);
+  }
+
+  public static void closeIfNeed(boolean clearIndex) {
     if (ourInstance != null) {
+      File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
       try {
         ourInstance.close();
       } finally {
         ourInstance = null;
+        if (dir != null) {
+          FileUtil.delete(dir);
+        }
       }
     }
   }
@@ -97,11 +106,11 @@ public class BackwardReferenceIndexWriter {
     return SystemProperties.getBooleanProperty(PROP_KEY, false);
   }
 
-  synchronized LightRef.JavaLightClassRef asClassUsage(JavacRef aClass) {
+  synchronized LightRef.JavaLightClassRef asClassUsage(JavacRef aClass) throws IOException {
     return new LightRef.JavaLightClassRef(id(aClass, myIndex.getByteSeqEum()));
   }
 
-  void processDeletedFiles(Collection<String> files) {
+  void processDeletedFiles(Collection<String> files) throws IOException {
     for (String file : files) {
       writeData(enumeratePath(new File(file).getPath()), null);
     }
@@ -113,13 +122,8 @@ public class BackwardReferenceIndexWriter {
     }
   }
 
-  synchronized int enumeratePath(String file) {
-    try {
-      return myIndex.getFilePathEnumerator().enumerate(file);
-    }
-    catch (IOException e) {
-      throw new BuildDataCorruptedException(e);
-    }
+  synchronized int enumeratePath(String file) throws IOException {
+    return myIndex.getFilePathEnumerator().enumerate(file);
   }
 
   private void close() {
@@ -127,7 +131,7 @@ public class BackwardReferenceIndexWriter {
   }
 
   @Nullable
-  LightRef enumerateNames(JavacRef ref) {
+  LightRef enumerateNames(JavacRef ref) throws IOException {
     NameEnumerator nameEnumerator = myIndex.getByteSeqEum();
     if (ref instanceof JavacRef.JavacClass) {
       if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
@@ -157,18 +161,12 @@ public class BackwardReferenceIndexWriter {
     return ref.getModifiers().contains(Modifier.PRIVATE);
   }
 
-  private int id(JavacRef ref, NameEnumerator nameEnumerator) {
+  private static int id(JavacRef ref, NameEnumerator nameEnumerator) throws IOException {
     return id(ref.getName(), nameEnumerator);
   }
 
-  private int id(String name, NameEnumerator nameEnumerator) {
-    try {
-      return nameEnumerator.enumerate(name);
-    }
-    catch (IOException ex) {
-      myIndex.setRebuildRequestCause(ex);
-      return 0;
-    }
+  private static int id(String name, NameEnumerator nameEnumerator) throws IOException {
+    return nameEnumerator.enumerate(name);
   }
 
   private static boolean isRebuildInAllJavaModules(CompileContext context) {
