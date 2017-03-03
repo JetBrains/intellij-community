@@ -36,7 +36,6 @@ import static com.intellij.testGuiFramework.matcher.TitleMatcher.withTitleMatche
  * @author Sergey Karashevich
  */
 @ParentPlugin(pluginId = "Git4Idea")
-@Ignore
 public class SimpleGitTest extends GitGuiTestCase {
 
   @Test
