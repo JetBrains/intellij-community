@@ -179,6 +179,7 @@ public class AllIcons {
     public static final Icon Unselectall = IconLoader.getIcon("/actions/unselectall.png"); // 16x16
     public static final Icon Unshare = IconLoader.getIcon("/actions/unshare.png"); // 14x14
     public static final Icon UP = IconLoader.getIcon("/actions/up.png"); // 16x16
+    public static final Icon Upload = IconLoader.getIcon("/actions/upload.png"); // 16x16
 
   }
   
