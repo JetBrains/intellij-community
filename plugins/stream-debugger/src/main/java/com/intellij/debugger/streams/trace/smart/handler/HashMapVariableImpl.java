@@ -18,7 +18,7 @@ public class HashMapVariableImpl extends VariableImpl {
     final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
 
     return "final Object[] " + arrayName + String.format(" = new Object[%s.size()];", getName()) +
-           System.lineSeparator() +
+           newLine +
            "{" + newLine +
            "int i = 0;" + newLine +
            "for (final " + myFromType + String.format(" key : %s.keySet()) {", getName()) + newLine +
