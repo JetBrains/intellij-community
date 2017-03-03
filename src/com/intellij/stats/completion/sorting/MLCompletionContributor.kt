@@ -28,7 +28,8 @@ import com.jetbrains.completion.ranker.features.CompletionState
 typealias RelevanceObjects = MutableList<Pair<String, Any>>
 typealias WeightedElement = Pair<LookupElement, Double>
 
-class PrefixCachedLookupWeight(val weight: Double, val prefixLength: Int)
+
+private class WeightCache(val weight: Double, val prefixLength: Int)
 
 
 class OrderingEmptyClassifer(next: Classifier<LookupElement>)
@@ -54,12 +55,10 @@ class MLClassifier(next: Classifier<LookupElement>,
                    private val lookup: LookupImpl,
                    private val ranker: Ranker) : Classifier<LookupElement>(next, "ml_rank") {
 
-  private val cachedScore = mutableMapOf<LookupElement, PrefixCachedLookupWeight>()
+  private val cachedScore = mutableMapOf<LookupElement, WeightCache>()
 
   override fun classify(source: MutableIterable<LookupElement>, context: ProcessingContext): MutableIterable<LookupElement> {
-    println("Classifing current prefix length: ${lookup.additionalPrefix}")
-    
-    val relevanceObjects: Map<LookupElement, MutableList<Pair<String, Any>>> = lookupArranger.getRelevanceObjects(source, false)
+    val relevanceObjects = lookupArranger.getRelevanceObjects(source, false)
     
     var position = 0 
     val elements = source.map {
@@ -111,20 +110,10 @@ class MLClassifier(next: Classifier<LookupElement>,
     val elementLength = element.lookupString.length
     
     val state = CompletionState(position, query_length = prefixLength, cerp_length = 0, result_length = elementLength)
-    
-    
     val relevanceMap = relevance.groupBy { it.first }
-    
-    
     val calculatedWeight = ranker.rank(state, relevanceMap)
     
-    
-    println("$element $state $calculatedWeight")
-    
-    
-    cachedScore[element] = PrefixCachedLookupWeight(calculatedWeight, prefixLength)
-
-
+    cachedScore[element] = WeightCache(calculatedWeight, prefixLength)
     return calculatedWeight
   }
 
