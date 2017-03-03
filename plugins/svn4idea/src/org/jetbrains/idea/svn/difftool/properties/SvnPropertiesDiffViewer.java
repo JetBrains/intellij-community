@@ -44,8 +44,10 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final WrapperRequest myWrapperRequest;
@@ -135,13 +137,10 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       }
     }
 
-    return new Runnable() {
-      @Override
-      public void run() {
-        for (DiffChange change : myDiffChanges) {
-          setupHighlighting(change, Side.LEFT);
-          setupHighlighting(change, Side.RIGHT);
-        }
+    return () -> {
+      for (DiffChange change : myDiffChanges) {
+        setupHighlighting(change, Side.LEFT);
+        setupHighlighting(change, Side.RIGHT);
       }
     };
   }
@@ -384,12 +383,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       records.add(createRecord(name, before.get(name), after.get(name)));
     }
 
-    ContainerUtil.sort(records, new Comparator<PropertyRecord>() {
-      @Override
-      public int compare(PropertyRecord o1, PropertyRecord o2) {
-        return StringUtil.naturalCompare(o1.getName(), o2.getName());
-      }
-    });
+    ContainerUtil.sort(records, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
 
     return records;
   }

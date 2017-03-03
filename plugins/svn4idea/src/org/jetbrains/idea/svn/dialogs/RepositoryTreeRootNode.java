@@ -21,7 +21,10 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.tree.TreeNode;
 import java.text.Collator;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 
 public class RepositoryTreeRootNode implements TreeNode, Disposable {
   private final List<TreeNode> myChildren;
@@ -36,22 +39,14 @@ public class RepositoryTreeRootNode implements TreeNode, Disposable {
       Disposer.register(this, rootNode);
       myChildren.add(rootNode);
     }
-    Collections.sort(myChildren, new Comparator<TreeNode>() {
-      public int compare(TreeNode o1, TreeNode o2) {
-        return Collator.getInstance().compare(o1.toString(), o2.toString());
-      }
-    });
+    Collections.sort(myChildren, (o1, o2) -> Collator.getInstance().compare(o1.toString(), o2.toString()));
   }
 
   public void addRoot(SVNURL url) {
     RepositoryTreeNode rootNode = new RepositoryTreeNode(myModel, this, url, url);
     Disposer.register(this, rootNode);
     myChildren.add(rootNode);
-    Collections.sort(myChildren, new Comparator<TreeNode>() {
-      public int compare(TreeNode o1, TreeNode o2) {
-        return Collator.getInstance().compare(o1.toString(), o2.toString());
-      }
-    });
+    Collections.sort(myChildren, (o1, o2) -> Collator.getInstance().compare(o1.toString(), o2.toString()));
     myModel.nodesWereInserted(this, new int[]{myChildren.indexOf(rootNode)});
   }
 

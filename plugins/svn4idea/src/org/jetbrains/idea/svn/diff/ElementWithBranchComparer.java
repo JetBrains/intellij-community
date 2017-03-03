@@ -141,23 +141,16 @@ public abstract class ElementWithBranchComparer {
   }
 
   protected void reportGeneralException(final Exception e) {
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(myProject, e.getMessage(),
-                                   SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-      }
-    }, null, myProject);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+      () -> Messages
+        .showMessageDialog(myProject, e.getMessage(), SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon()), null,
+      myProject);
     LOG.info(e);
   }
 
   private void reportNotFound() {
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(myProject,
-                                   SvnBundle
-                                     .message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
-                                   SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-      }
-    }, null, myProject);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
+      .showMessageDialog(myProject, SvnBundle.message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
+                         SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon()), null, myProject);
   }
 }

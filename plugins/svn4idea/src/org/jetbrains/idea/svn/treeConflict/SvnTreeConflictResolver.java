@@ -30,9 +30,7 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
-import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
@@ -135,15 +133,11 @@ public class SvnTreeConflictResolver {
     final Set<File> result = ContainerUtil.newHashSet();
     StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
 
-    statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false,
-                          new StatusConsumer() {
-                            @Override
-                            public void consume(Status status) throws SVNException {
-                              if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
-                                result.add(status.getFile());
-                              }
-                            }
-                          }, null);
+    statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false, status -> {
+      if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
+        result.add(status.getFile());
+      }
+    }, null);
 
     return result;
   }

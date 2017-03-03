@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -64,12 +63,7 @@ public class SvnBranchConfigurationNew {
 
   public List<String> getBranchUrls() {
     final ArrayList<String> result = new ArrayList<>(myBranchMap.keySet());
-    final List<String> cutList = ObjectsConvertor.convert(result, new Convertor<String, String>() {
-      @Override
-      public String convert(String s) {
-        return cutEndSlash(s);
-      }
-    });
+    final List<String> cutList = ObjectsConvertor.convert(result, s -> cutEndSlash(s));
     Collections.sort(cutList);
     return cutList;
   }

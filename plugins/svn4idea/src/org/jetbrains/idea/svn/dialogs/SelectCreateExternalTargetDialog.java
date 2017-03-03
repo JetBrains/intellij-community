@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
@@ -65,15 +63,13 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     myFollowRemoteTarget = true;
     setTitle("Select Target For External");
     setOKButtonText("Select");
-    getRepositoryBrowser().addChangeListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        if (getOKAction() != null) {
-          final String selectedURL = getRepositoryBrowser().getSelectedURL();
-          if (myFollowRemoteTarget && selectedURL != null) {
-            myFolderName.setText(SVNPathUtil.tail(selectedURL));
-          }
-          checkEnabled();
+    getRepositoryBrowser().addChangeListener(e -> {
+      if (getOKAction() != null) {
+        final String selectedURL = getRepositoryBrowser().getSelectedURL();
+        if (myFollowRemoteTarget && selectedURL != null) {
+          myFolderName.setText(SVNPathUtil.tail(selectedURL));
         }
+        checkEnabled();
       }
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
@@ -178,12 +174,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     });
 
     final JCheckBox checkout = new JCheckBox("Checkout");
-    checkout.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myCheckout = checkout.isSelected();
-      }
-    });
+    checkout.addActionListener(e -> myCheckout = checkout.isSelected());
     wrapper.add(checkout, gb);
     return wrapper;
   }

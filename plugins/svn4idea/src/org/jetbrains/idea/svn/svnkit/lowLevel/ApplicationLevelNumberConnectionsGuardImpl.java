@@ -59,16 +59,13 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
     myService = Executors.newSingleThreadScheduledExecutor(ConcurrencyUtil.newNamedThreadFactory("SVN connection"));
     myLock = new Object();
     myDisposed = false;
-    myRecheck = new Runnable() {
-      @Override
-      public void run() {
-        HashSet<CachingSvnRepositoryPool> pools = new HashSet<>();
-        synchronized (myLock) {
-          pools.addAll(mySet);
-        }
-        for (CachingSvnRepositoryPool pool : pools) {
-          pool.check();
-        }
+    myRecheck = () -> {
+      HashSet<CachingSvnRepositoryPool> pools = new HashSet<>();
+      synchronized (myLock) {
+        pools.addAll(mySet);
+      }
+      for (CachingSvnRepositoryPool pool : pools) {
+        pool.check();
       }
     };
     myCurrentlyActiveConnections = 0;

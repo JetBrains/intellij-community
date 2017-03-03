@@ -129,12 +129,9 @@ public class SvnRecursiveStatusWalker {
   }
 
   public boolean isIgnoredByVcs(@NotNull final VirtualFile vFile) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
-        return myVcsManager.isIgnored(vFile);
-      }
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      if (myVcs.getProject().isDisposed()) throw new ProcessCanceledException();
+      return myVcsManager.isIgnored(vFile);
     });
   }
 
@@ -204,48 +201,33 @@ public class SvnRecursiveStatusWalker {
     final Processor<File> processor;
     final Processor<File> directoryFilter;
     final Ref<File> lastIgnored = new Ref<>();
-    final Processor<File> checkDirProcessor = new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        FilePath path = VcsUtil.getFilePath(file, true);
-        VirtualFile vf = VfsUtil.findFileByIoFile(file, true);
-        if (vf != null && isIgnoredIdeaLevel(vf)) {
-          lastIgnored.set(file);
-          myReceiver.processIgnored(vf);
-        }
-        else if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
-          myQueue.add(createItem(path, newDepth, true));
-        }
-        else if (vf != null) {
-          myReceiver.processUnversioned(vf);
-        }
-        return true;
+    final Processor<File> checkDirProcessor = file -> {
+      FilePath path = VcsUtil.getFilePath(file, true);
+      VirtualFile vf = VfsUtil.findFileByIoFile(file, true);
+      if (vf != null && isIgnoredIdeaLevel(vf)) {
+        lastIgnored.set(file);
+        myReceiver.processIgnored(vf);
       }
+      else if (file.isDirectory() && new File(file, SVNFileUtil.getAdminDirectoryName()).exists()) {
+        myQueue.add(createItem(path, newDepth, true));
+      }
+      else if (vf != null) {
+        myReceiver.processUnversioned(vf);
+      }
+      return true;
     };
     if (Depth.EMPTY.equals(newDepth)) {
       // just process immediate children - so only root directory itself should satisfy filter
-      directoryFilter = new Processor<File>() {
-        @Override
-        public boolean process(File file) {
-          return FileUtil.filesEqual(ioFile, file);
-        }
-      };
-      processor = new Processor<File>() {
-        @Override
-        public boolean process(File file) {
-          // TODO: check if we should still call checkDirProcessor() here - or we really could not check ignore settings but just call
-          // TODO: myReceiver.processUnversioned() for all immediate children
-          // here we deal only with immediate children - so ignored on IDEA level for children is not important
-          return FileUtil.filesEqual(ioFile, file) || checkDirProcessor.process(file);
-        }
+      directoryFilter = file -> FileUtil.filesEqual(ioFile, file);
+      processor = file -> {
+        // TODO: check if we should still call checkDirProcessor() here - or we really could not check ignore settings but just call
+        // TODO: myReceiver.processUnversioned() for all immediate children
+        // here we deal only with immediate children - so ignored on IDEA level for children is not important
+        return FileUtil.filesEqual(ioFile, file) || checkDirProcessor.process(file);
       };
     } else {
-      directoryFilter = new Processor<File>() {
-        @Override
-        public boolean process(File file) {
-          return ! Comparing.equal(lastIgnored, file) && (myQueue.isEmpty() || ! FileUtil.filesEqual(myQueue.getLast().getPath().getIOFile(), file));
-        }
-      };
+      directoryFilter = file -> !Comparing.equal(lastIgnored, file) &&
+                                (myQueue.isEmpty() || !FileUtil.filesEqual(myQueue.getLast().getPath().getIOFile(), file));
       processor = checkDirProcessor;
     }
     FileUtil.processFilesRecursively(ioFile, processor, directoryFilter);

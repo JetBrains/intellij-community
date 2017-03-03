@@ -26,8 +26,6 @@ import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   private TextFieldWithBrowseButton myMergeText1;
@@ -51,16 +49,8 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
 
     myMergeText2.setEditable(true);
 
-    myMergeText1.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        chooseUrl(myMergeText1, vcs);
-      }
-    });
-    myMergeText2.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        chooseUrl2(vcs);
-      }
-    });
+    myMergeText1.addActionListener(e -> chooseUrl(myMergeText1, vcs));
+    myMergeText2.addActionListener(e -> chooseUrl2(vcs));
 
     myRevision1.setProject(vcs.getProject());
     myRevision2.setProject(vcs.getProject());
@@ -68,17 +58,9 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
     myRevision1.setRoot(myRoot.getVirtualFile());
     myRevision2.setRoot(myRoot.getVirtualFile());
 
-    myRevision1.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
-      public String getUrl() {
-        return myMergeText1.getText();
-      }
-    });
+    myRevision1.setUrlProvider(() -> myMergeText1.getText());
 
-    myRevision2.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
-      public String getUrl() {
-        return myMergeText2.getText();
-      }
-    });
+    myRevision2.setUrlProvider(() -> myMergeText2.getText());
 
   }
 

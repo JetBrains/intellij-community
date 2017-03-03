@@ -8,7 +8,6 @@ import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.ISVNLogEntryHandler;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNLogEntry;
 import org.tmatesoft.svn.core.wc.SVNLogClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -52,12 +51,7 @@ public class SvnKitHistoryClient extends BaseSvnClient implements HistoryClient 
     ISVNLogEntryHandler result = null;
 
     if (handler != null) {
-      result = new ISVNLogEntryHandler() {
-        @Override
-        public void handleLogEntry(SVNLogEntry logEntry) throws SVNException {
-          handler.consume(LogEntry.create(logEntry));
-        }
-      };
+      result = logEntry -> handler.consume(LogEntry.create(logEntry));
     }
 
     return result;

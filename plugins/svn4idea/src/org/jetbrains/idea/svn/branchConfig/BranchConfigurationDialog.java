@@ -122,19 +122,16 @@ public class BranchConfigurationDialog extends DialogWrapper {
           }
         }
       })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          int selectedIndex = myBranchLocationsList.getSelectedIndex();
-          for (String url : myBranchLocationsList.getSelectedValuesList()) {
-            int index = myBranchLocationsModel.getConfiguration().getBranchUrls().indexOf(url);
-            myBranchLocationsModel.getConfiguration().removeBranch(url);
-            myBranchLocationsModel.fireItemRemoved(index);
-          }
-          if (myBranchLocationsModel.getSize() > 0) {
-            selectedIndex = min(selectedIndex, myBranchLocationsModel.getSize() - 1);
-            myBranchLocationsList.setSelectedIndex(selectedIndex);
-          }
+      .setRemoveAction(button -> {
+        int selectedIndex = myBranchLocationsList.getSelectedIndex();
+        for (String url : myBranchLocationsList.getSelectedValuesList()) {
+          int index = myBranchLocationsModel.getConfiguration().getBranchUrls().indexOf(url);
+          myBranchLocationsModel.getConfiguration().removeBranch(url);
+          myBranchLocationsModel.fireItemRemoved(index);
+        }
+        if (myBranchLocationsModel.getSize() > 0) {
+          selectedIndex = min(selectedIndex, myBranchLocationsModel.getSize() - 1);
+          myBranchLocationsList.setSelectedIndex(selectedIndex);
         }
       })
       .disableUpDownActions()

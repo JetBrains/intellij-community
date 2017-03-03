@@ -35,8 +35,6 @@ import org.jetbrains.idea.svn.commandLine.SshTunnelRuntimeModule;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -75,12 +73,9 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     register(myPrivateKeyChoice, SvnConfiguration.SshConnectionType.PRIVATE_KEY);
     register(mySubversionConfigChoice, SvnConfiguration.SshConnectionType.SUBVERSION_CONFIG);
 
-    ItemListener connectionTypeChangedListener = new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          enableOptions(e.getSource());
-        }
+    ItemListener connectionTypeChangedListener = e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        enableOptions(e.getSource());
       }
     };
     myPasswordChoice.addItemListener(connectionTypeChangedListener);
@@ -100,15 +95,12 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration> {
       }
     });
 
-    myUpdateTunnelButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        String tunnel = mySshTunnelField.getText();
+    myUpdateTunnelButton.addActionListener(e -> {
+      String tunnel = mySshTunnelField.getText();
 
-        // remove tunnel from config in case it is null or empty
-        mySvnConfiguration.setSshTunnelSetting(StringUtil.nullize(tunnel));
-        setSshTunnelSetting(mySvnConfiguration.getSshTunnelSetting());
-      }
+      // remove tunnel from config in case it is null or empty
+      mySvnConfiguration.setSshTunnelSetting(StringUtil.nullize(tunnel));
+      setSshTunnelSetting(mySvnConfiguration.getSshTunnelSetting());
     });
   }
 
