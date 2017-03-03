@@ -1,6 +1,7 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
+import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,8 +18,8 @@ public class PeekTracerHandler extends HandlerBase {
 
   public PeekTracerHandler(int num, @NotNull String name) {
     final String variablePrefix = String.format("%sPeek%d", name, num);
-    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", "Integer", "Object", true);
-    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", "Integer", "Object", true);
+    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", GenericType.INT, GenericType.OBJECT, true);
+    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", GenericType.INT, GenericType.OBJECT, true);
   }
 
   @NotNull
@@ -38,8 +39,8 @@ public class PeekTracerHandler extends HandlerBase {
   @NotNull
   @Override
   public String prepareResult() {
-    final String beforeConversion = myBeforeVariable.convertToArray("beforeArray");
-    final String afterConversion = myAfterVariable.convertToArray("afterArray");
+    final String beforeConversion = myBeforeVariable.convertToArray("beforeArray", true, false);
+    final String afterConversion = myAfterVariable.convertToArray("afterArray", true, false);
     return beforeConversion + EvaluateExpressionTracerBase.LINE_SEPARATOR + afterConversion;
   }
 

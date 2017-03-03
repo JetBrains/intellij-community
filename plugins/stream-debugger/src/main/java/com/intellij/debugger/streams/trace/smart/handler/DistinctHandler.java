@@ -1,6 +1,8 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
+import com.intellij.debugger.streams.trace.smart.handler.type.ClassTypeImpl;
+import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,8 +22,9 @@ public class DistinctHandler extends HandlerBase {
     myPeekTracer = new PeekTracerHandler(callNumber, callName);
 
     final String variablePrefix = callName + callNumber;
-    myStoreMapVariable = new HashMapVariableImpl(variablePrefix + "Store", "Object", "Map<Integer, Object>", false);
-    myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", "Object", "Object", false);
+    myStoreMapVariable =
+      new HashMapVariableImpl(variablePrefix + "Store", GenericType.OBJECT, new ClassTypeImpl("Map<Integer, Object>"), false);
+    myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", GenericType.OBJECT, GenericType.OBJECT, false);
   }
 
   @NotNull
