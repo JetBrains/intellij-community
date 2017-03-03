@@ -651,14 +651,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
-
-    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gap 0 0 0 8"));
+    int existingGap = myCbCaseSensitive.getInsets().left + myCbCaseSensitive.getInsets().right;
+    int additionalGap = Math.max(0, 16 - existingGap);
+    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gapx " + additionalGap));
     add(myTitleLabel, "gapleft 4, sx 2, growx, pushx, growy");
     add(myCbCaseSensitive);
     add(myCbPreserveCase);
     add(myCbWholeWordsOnly);
     add(myCbRegularExpressions, "gapright 0");
-    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 16");
+    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 16, gapleft 0");
     add(myCbFileFilter, "gapright 0");
     add(myFileMaskField, "gapright 16");
     add(myFilterContextButton, "wrap");
