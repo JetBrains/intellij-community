@@ -719,6 +719,7 @@ public class CodeCompletionHandlerBase {
       if (cached != null && isCopyUpToDate(cached.second, cached.first, file)) {
         final PsiFile copy = cached.first;
         final Document document = cached.second;
+        CompletionAssertions.assertCorrectOriginalFile("Cached", file, copy);
         Document originalDocument = file.getViewProvider().getDocument();
         assert originalDocument != null;
         assert originalDocument.getTextLength() == file.getTextLength() : originalDocument;
@@ -731,6 +732,7 @@ public class CodeCompletionHandlerBase {
     if (copy.isPhysical() || copy.getViewProvider().isEventSystemEnabled()) {
       LOG.error("File copy should be non-physical and non-event-system-enabled! Language=" + file.getLanguage() + "; file=" + file + " of " + file.getClass());
     }
+    CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
 
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();

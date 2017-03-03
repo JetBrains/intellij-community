@@ -169,6 +169,20 @@ class CompletionAssertions {
     }
   }
 
+  static void assertCorrectOriginalFile(String prefix, PsiFile file, PsiFile copy) {
+    if (copy.getOriginalFile() != file) {
+      throw new AssertionError(prefix + " copied file doesn't have correct original: noOriginal=" + (copy.getOriginalFile() == copy) +
+                               "\n file " + fileInfo(file) +
+                               "\n copy " + fileInfo(copy));
+    }
+  }
+
+  private static String fileInfo(PsiFile file) {
+    return file + " of " + file.getClass() +
+           " in " + file.getViewProvider() + ", languages=" + file.getViewProvider().getLanguages() +
+           ", physical=" + file.isPhysical();
+  }
+
   static class WatchingInsertionContext extends InsertionContext {
     private RangeMarkerEx tailWatcher;
     String invalidateTrace;
