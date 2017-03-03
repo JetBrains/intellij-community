@@ -56,6 +56,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -191,7 +192,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          command = UpdateInstaller.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
+          File file = doDownloadPatch(indicator);
+          indicator.setText(IdeBundle.message("update.preparing.patch.progress"));
+          command = UpdateInstaller.preparePatchCommand(file);
         }
         catch (ProcessCanceledException e) { throw e; }
         catch (Exception e) {
@@ -222,6 +225,11 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
       }
     }.queue();
+  }
+
+  @NotNull
+  File doDownloadPatch(@NotNull ProgressIndicator indicator) throws IOException {
+    return UpdateInstaller.downloadPatchFile(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
   }
 
   private void openDownloadPage() {
