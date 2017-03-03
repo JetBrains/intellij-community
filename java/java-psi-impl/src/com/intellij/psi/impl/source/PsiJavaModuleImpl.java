@@ -140,6 +140,11 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
+  @Override
+  public int getTextOffset() {
+    return getNameIdentifier().getTextOffset();
+  }
+
   @NotNull
   @Override
   public PsiElement getNavigationElement() {
