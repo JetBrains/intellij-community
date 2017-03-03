@@ -59,6 +59,7 @@ public class ComponentSettings {
 
   // Returns whether "true smooth scrolling" is applicable to the particular component
   public boolean isTrueSmoothScrollingEligibleFor(Component component) {
+    if (ApplicationManager.getApplication() == null) return false;
     return isSmoothScrollingSupported() &&
            !ApplicationManager.getApplication().isUnitTestMode() &&
            mySmoothScrollingEnabled &&
