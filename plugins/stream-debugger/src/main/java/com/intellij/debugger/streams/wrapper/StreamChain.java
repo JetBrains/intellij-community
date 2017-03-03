@@ -82,7 +82,6 @@ public class StreamChain {
       final List<StreamCall> streamCalls = new ArrayList<>();
       final String name = resolveProducerCallName(call);
       final String args = resolveArguments(call);
-      if (name == null || args == null) return null;
       streamCalls.add(new ProducerStreamCall(name, args));
       PsiElement current = call.getParent();
       while (current != null) {
@@ -90,7 +89,7 @@ public class StreamChain {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)current;
           final String callName = resolveMethodName(methodCall);
           final String callArgs = resolveArguments(methodCall);
-          if (callName == null || callArgs == null) return null;
+          if (callName == null) return null;
           streamCalls.add(new StreamCallImpl(callName, callArgs, getType(callName)));
         }
 
@@ -207,11 +206,12 @@ public class StreamChain {
     });
   }
 
+  @NotNull
   private static String resolveProducerCallName(@NotNull PsiMethodCallExpression methodCall) {
     return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> methodCall.getChildren()[0].getText());
   }
 
-  @Nullable
+  @NotNull
   private static String resolveArguments(@NotNull PsiMethodCallExpression methodCall) {
     return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> methodCall.getArgumentList().getText());
   }
