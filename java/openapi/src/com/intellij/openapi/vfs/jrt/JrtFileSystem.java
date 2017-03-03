@@ -29,7 +29,7 @@ public abstract class JrtFileSystem extends ArchiveFileSystem {
   public static final String SEPARATOR = URLUtil.JAR_SEPARATOR;
 
   public static boolean isModularJdk(@NotNull String homePath) {
-    return new File(homePath, "lib/jrt-fs.jar").isFile() || new File(homePath, "jrt-fs.jar").isFile();
+    return new File(homePath, "lib/jrt-fs.jar").isFile();
   }
 
   public static boolean isRoot(@NotNull VirtualFile file) {
