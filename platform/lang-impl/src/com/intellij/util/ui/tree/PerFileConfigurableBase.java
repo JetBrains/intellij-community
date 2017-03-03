@@ -32,6 +32,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -216,7 +217,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       myDefaultVals.put(prop.first, prop.second.produce());
       JPanel p = createActionPanel(null, new Value<T>() {
         @Override
-        public void commit() {}
+        public void commit() {
+          myModel.fireTableDataChanged();
+        }
 
         @Override
         public T get() {
@@ -289,8 +292,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     for (Pair<Object, T> p : ContainerUtil.reverse(myModel.data)) {
       if (keyMatches(p.first, file, false) && p.second != null) return p.second;
     }
+    ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
     for (Trinity<String, Producer<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
-      if (prop.first.startsWith("Project ") || prop.first.startsWith("Global ")) {
+      if (prop.first.startsWith("Project ") && file != null && index.isInContent(file) || prop.first.startsWith("Global ")) {
         T t = myDefaultVals.get(prop.first);
         if (t != null) return t;
       }
