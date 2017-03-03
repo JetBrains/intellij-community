@@ -1253,11 +1253,15 @@ public class TemplateState implements Disposable {
     final PsiFile file = getPsiFile();
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
-        for (TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
-          optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
+      DumbService dumbService = DumbService.getInstance(myProject);
+      for (TemplateOptionalProcessor processor : dumbService.filterByDumbAwareness(Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME))) {
+        try {
+          processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
         }
-      });
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
       // for Python, we need to indent the template even if reformatting is enabled, because otherwise indents would be broken
       // and reformat wouldn't be able to fix them
