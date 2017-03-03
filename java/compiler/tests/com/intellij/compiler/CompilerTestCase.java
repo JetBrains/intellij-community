@@ -65,7 +65,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void setUp() throws Exception {
     //System.out.println("================BEGIN "+getName()+"====================");
@@ -428,7 +427,6 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     runnable.run();
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void tearDown() throws Exception {
     try {
