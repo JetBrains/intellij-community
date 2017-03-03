@@ -27,7 +27,8 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
   private JCheckBox focusApplicationOnBreakpointCheckBox;
   private JCheckBox myShowDebugWindowOnCheckBox;
   private JCheckBox myScrollExecutionPointToCheckBox;
-  private JCheckBox myDragToRemoveBreakpoint;
+  private JRadioButton myClickRadioButton;
+  private JRadioButton myDragToTheEditorRadioButton;
 
   @Override
   public void reset(@NotNull XDebuggerGeneralSettings settings) {
@@ -35,7 +36,8 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     hideDebugWindowCheckBox.setSelected(settings.isHideDebuggerOnProcessTermination());
     myShowDebugWindowOnCheckBox.setSelected(settings.isShowDebuggerOnBreakpoint());
     myScrollExecutionPointToCheckBox.setSelected(settings.isScrollToCenter());
-    myDragToRemoveBreakpoint.setSelected(Registry.is("debugger.click.disable.breakpoints"));
+    myClickRadioButton.setSelected(!Registry.is("debugger.click.disable.breakpoints"));
+    myDragToTheEditorRadioButton.setSelected(Registry.is("debugger.click.disable.breakpoints"));
   }
 
   @Override
@@ -44,7 +46,7 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
            hideDebugWindowCheckBox.isSelected() != settings.isHideDebuggerOnProcessTermination() ||
            myShowDebugWindowOnCheckBox.isSelected() != settings.isShowDebuggerOnBreakpoint() ||
            myScrollExecutionPointToCheckBox.isSelected() != settings.isScrollToCenter() ||
-           myDragToRemoveBreakpoint.isSelected() != Registry.is("debugger.click.disable.breakpoints");
+           myDragToTheEditorRadioButton.isSelected() != Registry.is("debugger.click.disable.breakpoints");
   }
 
   @Override
@@ -53,7 +55,7 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     settings.setHideDebuggerOnProcessTermination(hideDebugWindowCheckBox.isSelected());
     settings.setShowDebuggerOnBreakpoint(myShowDebugWindowOnCheckBox.isSelected());
     settings.setScrollToCenter(myScrollExecutionPointToCheckBox.isSelected());
-    Registry.get("debugger.click.disable.breakpoints").setValue(myDragToRemoveBreakpoint.isSelected());
+    Registry.get("debugger.click.disable.breakpoints").setValue(myDragToTheEditorRadioButton.isSelected());
   }
 
   @NotNull
