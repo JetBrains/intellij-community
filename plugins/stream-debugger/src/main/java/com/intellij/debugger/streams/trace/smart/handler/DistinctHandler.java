@@ -1,7 +1,7 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
-import com.intellij.debugger.streams.wrapper.MethodCall;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,8 +26,8 @@ public class DistinctHandler extends HandlerBase {
 
   @NotNull
   @Override
-  public List<MethodCall> additionalCallsBefore() {
-    final List<MethodCall> result = new ArrayList<>(myPeekTracer.additionalCallsBefore());
+  public List<StreamCall> additionalCallsBefore() {
+    final List<StreamCall> result = new ArrayList<>(myPeekTracer.additionalCallsBefore());
 
     final PeekCall storeCall = new PeekCall(createStoreLambda());
     result.add(storeCall);
@@ -36,10 +36,9 @@ public class DistinctHandler extends HandlerBase {
 
   @NotNull
   @Override
-  public List<MethodCall> additionalCallsAfter() {
-    final List<MethodCall> result = new ArrayList<>(myPeekTracer.additionalCallsAfter());
-    final MethodCall checkCall = new PeekCall(createResolveLambda());
-    result.add(checkCall);
+  public List<StreamCall> additionalCallsAfter() {
+    final List<StreamCall> result = new ArrayList<>(myPeekTracer.additionalCallsAfter());
+    result.add(new PeekCall(createResolveLambda()));
     return result;
   }
 
@@ -48,7 +47,8 @@ public class DistinctHandler extends HandlerBase {
   public String prepareResult() {
     final String peekPrepare = myPeekTracer.prepareResult();
     final String resolve2Array = myResolveMapVariable.convertToArray("resolveArray");
-    final String peekResult = "final Object peekResult = " + myPeekTracer.getResultExpression() + EvaluateExpressionTracerBase.LINE_SEPARATOR;
+    final String peekResult =
+      "final Object peekResult = " + myPeekTracer.getResultExpression() + EvaluateExpressionTracerBase.LINE_SEPARATOR;
     return peekPrepare + resolve2Array + peekResult;
   }
 

@@ -1,7 +1,7 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
-import com.intellij.debugger.streams.wrapper.MethodCall;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -23,14 +23,14 @@ public class PeekTracerHandler extends HandlerBase {
 
   @NotNull
   @Override
-  public List<MethodCall> additionalCallsBefore() {
+  public List<StreamCall> additionalCallsBefore() {
     final String beforeMapName = myBeforeVariable.getName();
     return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.get(), x)", beforeMapName)));
   }
 
   @NotNull
   @Override
-  public List<MethodCall> additionalCallsAfter() {
+  public List<StreamCall> additionalCallsAfter() {
     final String afterMapName = myBeforeVariable.getName();
     return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.incrementAndGet(), x)", afterMapName)));
   }

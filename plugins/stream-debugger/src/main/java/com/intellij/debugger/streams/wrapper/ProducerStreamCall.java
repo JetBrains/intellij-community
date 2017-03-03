@@ -15,23 +15,13 @@
  */
 package com.intellij.debugger.streams.wrapper;
 
-import com.intellij.psi.PsiMethodCallExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class ProducerStreamCall extends StreamCallImpl {
-  private final String myCallPrefix;
-
-  public ProducerStreamCall(@NotNull PsiMethodCallExpression expression) {
-    super(expression);
-    myCallPrefix = expression.getChildren()[0].getText();
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return myCallPrefix;
+  public ProducerStreamCall(@NotNull String name, @NotNull String args) {
+    super(name, args, StreamCallType.PRODUCER);
   }
 }

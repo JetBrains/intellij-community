@@ -15,34 +15,37 @@
  */
 package com.intellij.debugger.streams.wrapper;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class StreamCallImpl implements MethodCall {
-  private final PsiMethodCallExpression myMethodCall;
+public class StreamCallImpl implements StreamCall {
+  private final String myName;
+  private final String myArgs;
+  private final StreamCallType myType;
 
-  public StreamCallImpl(@NotNull PsiMethodCallExpression methodCallExpression) {
-    myMethodCall = methodCallExpression;
+  public StreamCallImpl(@NotNull String name, @NotNull String args, @NotNull StreamCallType type) {
+    myName = name;
+    myArgs = args;
+    myType = type;
   }
 
   @NotNull
   @Override
   public String getName() {
-    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
-      final PsiMethod method = myMethodCall.resolveMethod();
-      return method != null ? method.getName() : "";
-    });
+    return myName;
   }
 
   @NotNull
   @Override
   public String getArguments() {
-    return myMethodCall.getArgumentList().getText();
+    return myArgs;
+  }
+
+  @NotNull
+  @Override
+  public StreamCallType getType() {
+    return myType;
   }
 }

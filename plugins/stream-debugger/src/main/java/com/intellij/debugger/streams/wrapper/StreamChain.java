@@ -24,6 +24,8 @@ import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -63,17 +65,13 @@ public class StreamChain {
     }
   };
 
-  private final List<MethodCall> myCalls;
-
-  private enum CallType {
-    PRODUCER, INTERMEDIATE, TERMINATOR, UNKNOWN
-  }
+  private final List<StreamCall> myCalls;
 
   static {
     SEARCH_RESULT.set(new PsiMethodCallExpression[1]);
   }
 
-  public StreamChain(@NotNull List<MethodCall> calls) {
+  public StreamChain(@NotNull List<StreamCall> calls) {
     myCalls = calls;
   }
 
@@ -81,16 +79,19 @@ public class StreamChain {
   public static StreamChain tryBuildChain(@NotNull PsiElement elementAtCursor) {
     final PsiMethodCallExpression call = tryFindStreamCall(elementAtCursor);
     if (call != null) {
-      final List<MethodCall> streamCalls = new ArrayList<>();
-      streamCalls.add(new ProducerStreamCall(call));
+      final List<StreamCall> streamCalls = new ArrayList<>();
+      final String name = resolveProducerCallName(call);
+      final String args = resolveArguments(call);
+      if (name == null || args == null) return null;
+      streamCalls.add(new ProducerStreamCall(name, args));
       PsiElement current = call.getParent();
       while (current != null) {
         if (current instanceof PsiMethodCallExpression) {
-          final PsiMethod method = ((PsiMethodCallExpression)current).resolveMethod();
-          final String methodName = method != null ? method.getName() : null;
-          if (methodName != null && isSupportedStreamOp(method.getName())) {
-            streamCalls.add(new StreamCallImpl((PsiMethodCallExpression)current));
-          }
+          final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)current;
+          final String callName = resolveMethodName(methodCall);
+          final String callArgs = resolveArguments(methodCall);
+          if (callName == null || callArgs == null) return null;
+          streamCalls.add(new StreamCallImpl(callName, callArgs, getType(callName)));
         }
 
         current = current.getParent();
@@ -111,7 +112,8 @@ public class StreamChain {
     return tryFindStreamCall(elementAtCursor) != null;
   }
 
-  public List<MethodCall> getCalls() {
+  @NotNull
+  public List<StreamCall> getCalls() {
     return Collections.unmodifiableList(myCalls);
   }
 
@@ -125,7 +127,7 @@ public class StreamChain {
 
   @NotNull
   public String getText() {
-    final Iterator<MethodCall> iterator = myCalls.iterator();
+    final Iterator<StreamCall> iterator = myCalls.iterator();
     final StringBuilder builder = new StringBuilder();
 
     while (iterator.hasNext()) {
@@ -197,20 +199,33 @@ public class StreamChain {
     return SEARCH_RESULT.get()[0];
   }
 
-  private static boolean isSupportedStreamOp(@NotNull String name) {
-    return !getType(name).equals(CallType.UNKNOWN);
+  @Nullable
+  private static String resolveMethodName(@NotNull PsiMethodCallExpression methodCall) {
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+      final PsiMethod method = methodCall.resolveMethod();
+      return method == null ? null : method.getName();
+    });
   }
 
-  private static CallType getType(@NotNull String name) {
+  private static String resolveProducerCallName(@NotNull PsiMethodCallExpression methodCall) {
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> methodCall.getChildren()[0].getText());
+  }
+
+  @Nullable
+  private static String resolveArguments(@NotNull PsiMethodCallExpression methodCall) {
+    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> methodCall.getArgumentList().getText());
+  }
+
+  private static StreamCallType getType(@NotNull String name) {
     if (SUPPORTED_INTERMEDIATE.contains(name)) {
-      return CallType.INTERMEDIATE;
+      return StreamCallType.INTERMEDIATE;
     }
     if (SUPPORTED_PRODUCERS.contains(name)) {
-      return CallType.PRODUCER;
+      return StreamCallType.PRODUCER;
     }
 
     return SUPPORTED_TERMINATION.contains(name)
-           ? CallType.TERMINATOR
-           : CallType.UNKNOWN;
+           ? StreamCallType.TERMINATOR
+           : StreamCallType.UNKNOWN;
   }
 }
