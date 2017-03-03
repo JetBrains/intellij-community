@@ -28,7 +28,7 @@ import com.jetbrains.completion.ranker.features.CompletionState
 typealias RelevanceObjects = MutableList<Pair<String, Any>>
 typealias WeightedElement = Pair<LookupElement, Double>
 
-class PrefixCachedLookupWeight(val weight: Double, val prefix: String)
+class PrefixCachedLookupWeight(val weight: Double, val prefixLength: Int)
 
 
 class OrderingEmptyClassifer(next: Classifier<LookupElement>)
@@ -90,10 +90,10 @@ class MLClassifier(next: Classifier<LookupElement>,
   }
 
   private fun getCachedWeight(element: LookupElement): Double? {
-    val currentPrefix = lookup.additionalPrefix
+    val currentPrefixLength = lookup.getPrefixLength(element)
 
     val cached = cachedScore[element]
-    if (cached != null && currentPrefix == cached.prefix) {
+    if (cached != null && currentPrefixLength == cached.prefixLength) {
       return cached.weight
     }
 
@@ -106,15 +106,24 @@ class MLClassifier(next: Classifier<LookupElement>,
       return cachedWeight
     }
     
-    val currentPrefix = lookup.additionalPrefix
+    
+    val prefixLength = lookup.getPrefixLength(element)
     val elementLength = element.lookupString.length
-    val prefixLength = currentPrefix.length
     
     val state = CompletionState(position, query_length = prefixLength, cerp_length = 0, result_length = elementLength)
+    
+    
     val relevanceMap = relevance.groupBy { it.first }
     
+    
     val calculatedWeight = ranker.rank(state, relevanceMap)
-    cachedScore[element] = PrefixCachedLookupWeight(calculatedWeight, currentPrefix)
+    
+    
+    println("$element $state $calculatedWeight")
+    
+    
+    cachedScore[element] = PrefixCachedLookupWeight(calculatedWeight, prefixLength)
+
 
     return calculatedWeight
   }
