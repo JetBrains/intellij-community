@@ -14,6 +14,7 @@
 
   <depends>com.intellij.modules.platform</depends>
   <depends>com.jetbrains.edu.interactivelearning</depends>
+  <depends optional="true" config-file="course-creator-intellij.xml">com.intellij.modules.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>

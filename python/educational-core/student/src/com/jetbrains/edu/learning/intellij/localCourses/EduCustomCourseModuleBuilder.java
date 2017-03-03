@@ -28,16 +28,20 @@ class EduCustomCourseModuleBuilder extends JavaModuleBuilder {
   @Nullable
   @Override
   public Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
+    Module module = super.commitModule(project, model);
+    if (module == null) {
+      return null;
+    }
     String type = mySelectedCourse.getType();
     String languageName = type.substring("pycharm ".length());
     Language language = Language.findLanguageByID(languageName);
     if (language != null) {
       EduCourseConfigurator configurator = EduCourseConfigurator.INSTANCE.forLanguage(language);
       if (configurator != null) {
-        configurator.configureModule(project);
+        configurator.configureModule(module);
       }
     }
-    return super.commitModule(project, model);
+    return module;
   }
 
 

@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.intellij;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
@@ -14,7 +15,7 @@ public interface EduCourseConfigurator {
   String EP_NAME = "Edu.courseConfigurator";
   LanguageExtension<EduCourseConfigurator> INSTANCE = new LanguageExtension<>(EP_NAME);
 
-  default void configureModule(@NotNull final Project project) {
+  default void configureModule(@NotNull Module module) {
   }
 
   default void createCourseFromCourseInfo(@NotNull ModifiableModuleModel moduleModel,
