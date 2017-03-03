@@ -166,13 +166,13 @@ public class PathManager {
    * Same as {@link #getPossibleBinaryFileLocationsFile(String)}
    */
   @NotNull
-  public static String[] getPossibleBinaryFileLocationsString(@NotNull final String fileName) {
-    final List<String> pathsList = new ArrayList<String>();
+  private static String[] getPossibleBinaryFileLocationsString(@NotNull final String fileName) {
+    final Collection<String> pathsList = new ArrayList<String>();
     for (final File possibleFileLocation : getPossibleBinaryFileLocationsFile(fileName)) {
       pathsList.add(possibleFileLocation.getAbsolutePath());
     }
 
-    return pathsList.toArray(new String[pathsList.size()]);
+    return ArrayUtil.toStringArray(pathsList);
   }
 
   /**

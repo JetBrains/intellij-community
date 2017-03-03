@@ -20,11 +20,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 
@@ -94,12 +94,13 @@ public class RunnerMediator {
       }
       LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + " environment variable (" + path + ")");
     }
-    File runnerw = PathManager.tryFindBinFile(STANDARD_RUNNERW);
-    if (runnerw != null) {
-      return runnerw.getPath();
+    try {
+      return PathManager.findBinFile(STANDARD_RUNNERW).getPath();
     }
-    LOG.warn("Cannot locate " + StringUtil.join(PathManager.getPossibleBinaryFileLocationsString(STANDARD_RUNNERW),","));
-    return null;
+    catch (FileNotFoundException e) {
+      LOG.warn(e);
+      return null;
+    }
   }
 
   static boolean injectRunnerCommand(@NotNull GeneralCommandLine commandLine) {
