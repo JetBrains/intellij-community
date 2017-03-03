@@ -69,14 +69,14 @@ public abstract class StubTreeLoader {
   }
 
   @NotNull
-  public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String message, @NotNull ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+  public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message, @NotNull ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
     VirtualFile file = psiFile.getViewProvider().getVirtualFile();
     StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
     boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
-    String msg = message + "\nPlease report the problem to JetBrains with the files attached\n";
+    String msg = _message + "\nPlease report the problem to JetBrains with the files attached\n";
     if (upToDate) {
       msg += "INDEXED VERSION IS THE CURRENT ONE";
     }
@@ -128,7 +128,7 @@ public abstract class StubTreeLoader {
     Attachment[] attachments = createAttachments(stubTree, psiFile, file, stubTreeFromIndex);
 
     // separate methods and separate exception classes for EA to treat these situations differently
-    return upToDate ? handleUpToDateMismatch(message, attachments) : new RuntimeExceptionWithAttachments(msg, attachments);
+    return upToDate ? handleUpToDateMismatch(msg, attachments) : new RuntimeExceptionWithAttachments(msg, attachments);
   }
 
   private static UpToDateStubIndexMismatch handleUpToDateMismatch(@NotNull String message, Attachment[] attachments) {
