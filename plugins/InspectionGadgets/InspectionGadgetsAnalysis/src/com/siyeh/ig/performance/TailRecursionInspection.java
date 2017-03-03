@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ public class TailRecursionInspection extends BaseInspection {
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier == null) {
+        if (qualifier == null || qualifier instanceof PsiThisExpression) {
           return;
         }
         final PsiMethod method = expression.resolveMethod();
@@ -409,6 +409,11 @@ public class TailRecursionInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression returnCall = (PsiMethodCallExpression)returnValue;
+      final PsiReferenceExpression methodExpression = returnCall.getMethodExpression();
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+        return;
+      }
       final PsiMethod containingMethod =
         PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (containingMethod == null) {
