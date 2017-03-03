@@ -245,7 +245,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myCaretUpdateVShift;
 
   @Nullable
-  private final Project myProject;
+  private Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
   private final List<FocusChangeListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -861,6 +861,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     Disposer.dispose(myDisposable);
     myVerticalScrollBar.setUI(null); // clear error panel's cached image
+    myProject = null; // don't leak project
   }
 
   private void clearCaretThread() {
