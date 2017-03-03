@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -29,6 +30,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,51 +113,57 @@ public class QualifiedNameFinder {
    */
   @Nullable
   public static QualifiedName findCanonicalImportPath(@NotNull PsiElement symbol, @Nullable PsiElement foothold) {
-    return PyUtil.getParameterizedCachedValue(symbol, foothold, param -> {
-      PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? (PsiFileSystemItem)symbol : symbol.getContainingFile();
-      if (srcfile == null) {
-        return null;
-      }
-      VirtualFile virtualFile = srcfile.getVirtualFile();
-      if (virtualFile == null) {
-        return null;
-      }
-      if (srcfile instanceof PsiFile && symbol instanceof PsiNamedElement && !(symbol instanceof PsiFileSystemItem)) {
-        PsiElement toplevel = symbol;
-        if (symbol instanceof PyFunction) {
-          final PyClass containingClass = ((PyFunction)symbol).getContainingClass();
-          if (containingClass != null) {
-            toplevel = containingClass;
-          }
-        }
-        PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
-        while (dir != null) {
-          PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
-          if (initPy == null) {
-            break;
-          }
-          if (initPy instanceof PyFile) {
-            //noinspection ConstantConditions
-            final List<RatedResolveResult> resolved = ((PyFile)initPy).multiResolveName(((PsiNamedElement)toplevel).getName());
-            final PsiElement finalTopLevel = toplevel;
-            if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
-              virtualFile = dir.getVirtualFile();
-            }
-          }
-          dir = dir.getParentDirectory();
+    return PyUtil.getParameterizedCachedValue(symbol, Couple.of(symbol, foothold), QualifiedNameFinder::doFindCanonicalImportPath);
+  }
+
+  @Nullable
+  private static QualifiedName doFindCanonicalImportPath(@NotNull Couple<PsiElement> param) {
+    final PsiElement symbol = param.getFirst();
+    final PsiElement foothold = param.getSecond();
+
+    final PsiFileSystemItem srcfile = PyPsiUtils.getFileSystemItem(symbol);
+    if (srcfile == null) {
+      return null;
+    }
+    VirtualFile virtualFile = srcfile.getVirtualFile();
+    if (virtualFile == null) {
+      return null;
+    }
+    if (srcfile instanceof PsiFile && symbol instanceof PsiNamedElement && !(symbol instanceof PsiFileSystemItem)) {
+      PsiElement toplevel = symbol;
+      if (symbol instanceof PyFunction) {
+        final PyClass containingClass = ((PyFunction)symbol).getContainingClass();
+        if (containingClass != null) {
+          toplevel = containingClass;
         }
       }
-      final QualifiedName qname = findShortestImportableQName(param != null ? param : symbol, virtualFile);
-      if (qname != null) {
-        for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-          final QualifiedName restored = provider.getCanonicalPath(qname, param);
-          if (restored != null) {
-            return restored;
+      PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
+      while (dir != null) {
+        PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
+        if (initPy == null) {
+          break;
+        }
+        if (initPy instanceof PyFile) {
+          //noinspection ConstantConditions
+          final List<RatedResolveResult> resolved = ((PyFile)initPy).multiResolveName(((PsiNamedElement)toplevel).getName());
+          final PsiElement finalTopLevel = toplevel;
+          if (resolved.stream().anyMatch(r -> r.getElement() == finalTopLevel)) {
+            virtualFile = dir.getVirtualFile();
           }
         }
+        dir = dir.getParentDirectory();
       }
-      return qname;
-    });
+    }
+    final QualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
+    if (qname != null) {
+      for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
+        final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
+        if (restored != null) {
+          return restored;
+        }
+      }
+    }
+    return qname;
   }
 
   @Nullable
