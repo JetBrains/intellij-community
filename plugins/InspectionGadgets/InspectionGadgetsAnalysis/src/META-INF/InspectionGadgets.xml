@@ -1304,8 +1304,8 @@
                      key="for.can.be.foreach.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids5" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.migration.ForCanBeForeachInspection"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="IfCanBeSwitch" bundle="com.siyeh.InspectionGadgetsBundle" key="if.can.be.switch.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids5"
+    <localInspection groupPath="Java" language="JAVA" shortName="IfCanBeSwitch" bundle="com.siyeh.InspectionGadgetsBundle" key="if.can.be.switch.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.migration.IfCanBeSwitchInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="IndexOfReplaceableByContains" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="indexof.replaceable.by.contains.display.name" groupBundle="messages.InspectionsBundle"
