@@ -50,6 +50,8 @@ import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
@@ -70,9 +72,8 @@ import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
 import java.util.*;
 import java.util.List;
 
@@ -80,6 +81,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
 import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
+import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
 
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
@@ -87,7 +89,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
   private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;
   private static final int ROOT_NAME_MAX_WIDTH = 200;
-  private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
+  private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
   @NotNull private final AbstractVcsLogUi myUi;
@@ -97,7 +99,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
   @NotNull private final StringCellRenderer myStringCellRenderer;
-  private boolean myColumnsSizeInitialized = false;
+  private boolean myAuthorColumnInitialized = false;
 
   @Nullable private Selection mySelection = null;
 
@@ -107,8 +109,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                           @NotNull VcsLogData logData,
                           @NotNull VisiblePack initialDataPack) {
     super(new GraphTableModel(initialDataPack, logData, ui));
-    getEmptyText().setText("Changes Log");
-
     myUi = ui;
     myLogData = logData;
     GraphCellPainter graphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
@@ -120,7 +120,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this, true, false);
     myStringCellRenderer = new StringCellRenderer();
 
+    getEmptyText().setText("Changes Log");
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
+
+    initColumns();
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
@@ -142,14 +145,18 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
       }
     };
+  }
 
-    initColumnSize();
-    addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent e) {
-        updateCommitColumnWidth();
-      }
-    });
+  protected void initColumns() {
+    setColumnModel(new MyTableColumnModel(myUi.getProperties()));
+    createDefaultColumnsFromModel();
+    setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
+
+    setRootColumnSize();
+
+    for (int column = 0; column < getColumnCount(); column++) {
+      getColumnModel().getColumn(column).setResizable(column != ROOT_COLUMN);
+    }
   }
 
   protected boolean isSpeedSearchEnabled() {
@@ -158,6 +165,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
     VcsLogGraphTable.Selection previousSelection = getSelection();
+    boolean filtersChanged = !getModel().getVisiblePack().getFilters().equals(visiblePack.getFilters());
+
     getModel().setVisiblePack(visiblePack);
     previousSelection.restore(visiblePack.getVisibleGraph(), true, permGraphChanged);
     for (VcsLogHighlighter highlighter : myHighlighters) {
@@ -165,78 +174,118 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     setPaintBusy(false);
-    initColumnSize();
+    myAuthorColumnInitialized = myAuthorColumnInitialized && !filtersChanged;
+    reLayout();
   }
 
-  public void initColumnSize() {
-    if (!myColumnsSizeInitialized && getModel().getRowCount() > 0) {
-      myColumnsSizeInitialized = setColumnPreferredSize();
-      if (myColumnsSizeInitialized) {
-        setAutoCreateColumnsFromModel(false); // otherwise sizes are recalculated after each TableColumn re-initialization
-        for (int column = 0; column < getColumnCount(); column++) {
-          getColumnModel().getColumn(column).setResizable(column != GraphTableModel.ROOT_COLUMN);
-        }
-      }
+  public void reLayout() {
+    if (getTableHeader().getResizingColumn() == null) {
+      updateAuthorAndDataWidth();
+      super.doLayout();
+      repaint();
     }
   }
 
-  private boolean setColumnPreferredSize() {
-    boolean sizeCalculated = false;
-    Font tableFont = UIManager.getFont("Table.font");
-    for (int i = 0; i < getColumnCount(); i++) {
-      TableColumn column = getColumnModel().getColumn(i);
-      if (i == GraphTableModel.ROOT_COLUMN) { // thin stripe, or root name, or nothing
-        setRootColumnSize(column);
+  public void forceReLayout(int column) {
+    if (column == AUTHOR_COLUMN) myAuthorColumnInitialized = false;
+    reLayout();
+  }
+
+  @Override
+  public void doLayout() {
+    if (getTableHeader().getResizingColumn() == null) {
+      updateAuthorAndDataWidth();
+    }
+    super.doLayout();
+  }
+
+  public void resetColumnWidth(int column) {
+    if (CommonUiProperties.getColumnWidth(myUi.getProperties(), column) != -1) {
+      CommonUiProperties.saveColumnWidth(myUi.getProperties(), column, -1);
+    }
+    else {
+      forceReLayout(column);
+    }
+  }
+
+  private void updateAuthorAndDataWidth() {
+    for (int i : new int[]{AUTHOR_COLUMN, DATE_COLUMN}) {
+      int width = CommonUiProperties.getColumnWidth(myUi.getProperties(), i);
+      if (width <= 0 || width > getWidth()) {
+        if (i != AUTHOR_COLUMN || !myAuthorColumnInitialized) {
+          width = getColumnWidthFromData(i);
+        }
+        else {
+          width = -1;
+        }
       }
-      else if (i == GraphTableModel.AUTHOR_COLUMN) { // detect author with the longest name
+
+      if (width > 0 && width != getColumnModel().getColumn(i).getPreferredWidth()) {
+        getColumnModel().getColumn(i).setPreferredWidth(width);
+      }
+    }
+
+    updateCommitColumnWidth();
+  }
+
+  private int getColumnWidthFromData(int i) {
+    Font tableFont = getTableFont();
+    if (i == AUTHOR_COLUMN) {
+      int width = getColumnModel().getColumn(AUTHOR_COLUMN).getPreferredWidth();
+
+      // detect author with the longest name
+      if (getModel().getRowCount() > 0) {
         int maxRowsToCheck = Math.min(MAX_ROWS_TO_CALC_WIDTH, getRowCount());
-        int maxWidth = 0;
+        int maxAuthorWidth = 0;
         int unloaded = 0;
         for (int row = 0; row < maxRowsToCheck; row++) {
-          String value = getModel().getValueAt(row, i).toString();
+          String value = getModel().getValueAt(row, AUTHOR_COLUMN).toString();
           if (value.isEmpty()) {
             unloaded++;
             continue;
           }
           Font font = tableFont;
-          VcsLogHighlighter.TextStyle style = getStyle(row, i, false, false).getTextStyle();
+          VcsLogHighlighter.TextStyle style = getStyle(row, AUTHOR_COLUMN, false, false).getTextStyle();
           if (BOLD.equals(style)) {
             font = tableFont.deriveFont(Font.BOLD);
           }
           else if (ITALIC.equals(style)) {
             font = tableFont.deriveFont(Font.ITALIC);
           }
-          maxWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxWidth);
+          maxAuthorWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxAuthorWidth);
         }
-        int min = Math.min(maxWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
-        column.setPreferredWidth(min);
-        if (unloaded * 2 <= maxRowsToCheck) sizeCalculated = true;
+
+        width = Math.min(maxAuthorWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
+        if (unloaded * 2 <= maxRowsToCheck) myAuthorColumnInitialized = true;
       }
-      else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
-        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
-                  myStringCellRenderer.getHorizontalTextPadding();
-        column.setPreferredWidth(min);
-      }
+      return width;
     }
+    else if (i == DATE_COLUMN) {
+      // all dates have nearly equal sizes
+      return getFontMetrics(getTableFont().deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
+             myStringCellRenderer.getHorizontalTextPadding();
+    }
+    throw new IllegalArgumentException("Can only calculate author or date columns width from data, yet given column " + i);
+  }
 
-    updateCommitColumnWidth();
-
-    return sizeCalculated;
+  private static Font getTableFont() {
+    return UIManager.getFont("Table.font");
   }
 
   private void updateCommitColumnWidth() {
     int size = getWidth();
     for (int i = 0; i < getColumnCount(); i++) {
-      if (i == GraphTableModel.COMMIT_COLUMN) continue;
+      if (i == COMMIT_COLUMN) continue;
       TableColumn column = getColumnModel().getColumn(i);
       size -= column.getPreferredWidth();
     }
 
-    TableColumn commitColumn = getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN);
+    TableColumn commitColumn = getColumnModel().getColumn(COMMIT_COLUMN);
     commitColumn.setPreferredWidth(size);
   }
 
-  private void setRootColumnSize(@NotNull TableColumn column) {
+  private void setRootColumnSize() {
+    TableColumn column = getColumnModel().getColumn(ROOT_COLUMN);
     int rootWidth;
     if (!myUi.isMultipleRoots()) {
       rootWidth = 0;
@@ -245,7 +294,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       rootWidth = JBUI.scale(ROOT_INDICATOR_WIDTH);
     }
     else {
-      rootWidth = Math.min(calculateMaxRootWidth(), JBUI.scale(ROOT_NAME_MAX_WIDTH));
+      int width = 0;
+      for (VirtualFile file : myLogData.getRoots()) {
+        Font tableFont = getTableFont();
+        width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
+      }
+      rootWidth = Math.min(width, JBUI.scale(ROOT_NAME_MAX_WIDTH));
     }
 
     // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
@@ -254,13 +308,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     column.setPreferredWidth(rootWidth);
   }
 
-  private int calculateMaxRootWidth() {
-    int width = 0;
-    for (VirtualFile file : myLogData.getRoots()) {
-      Font tableFont = UIManager.getFont("Table.font");
-      width = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), width);
-    }
-    return width;
+  public void rootColumnUpdated() {
+    setRootColumnSize();
+    reLayout();
+    repaint();
   }
 
   @Override
@@ -270,7 +321,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (column < 0 || row < 0) {
       return null;
     }
-    if (column == GraphTableModel.ROOT_COLUMN) {
+    if (column == ROOT_COLUMN) {
       Object at = getValueAt(row, column);
       if (at instanceof VirtualFile) {
         return "<html><b>" +
@@ -316,7 +367,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
-        sb.append(getModel().getValueAt(selectedRows[i], GraphTableModel.COMMIT_COLUMN).toString());
+        sb.append(getModel().getValueAt(selectedRows[i], COMMIT_COLUMN).toString());
         if (i != selectedRows.length - 1) sb.append("\n");
       }
       return sb.toString();
@@ -331,7 +382,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     int[] selectedRows = getSelectedRows();
     for (int i = 0; i < Math.min(VcsLogUtil.MAX_SELECTED_COMMITS, selectedRows.length); i++) {
       int row = selectedRows[i];
-      for (int j = GraphTableModel.ROOT_COLUMN + 1; j < getModel().getColumnCount(); j++) {
+      for (int j = ROOT_COLUMN + 1; j < getModel().getColumnCount(); j++) {
         sb.append(getModel().getValueAt(row, j).toString());
         if (j < getModel().getRowCount() - 1) sb.append(" ");
       }
@@ -419,13 +470,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     viewport.addChangeListener(e -> {
       AbstractTableModel model = getModel();
       Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
-      model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, GraphTableModel.ROOT_COLUMN));
+      model.fireTableChanged(new TableModelEvent(model, visibleRows.first - 1, visibleRows.second, ROOT_COLUMN));
     });
-  }
-
-  public void rootColumnUpdated() {
-    setRootColumnSize(getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN));
-    updateCommitColumnWidth();
   }
 
   public static JBColor getRootBackgroundColor(@NotNull VirtualFile root, @NotNull VcsLogColorManager colorManager) {
@@ -590,24 +636,24 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   protected void paintFooter(@NotNull Graphics g, int x, int y, int width, int height) {
     int lastRow = getRowCount() - 1;
     if (lastRow >= 0) {
-      g.setColor(getStyle(lastRow, GraphTableModel.COMMIT_COLUMN, hasFocus(), false).getBackground());
+      g.setColor(getStyle(lastRow, COMMIT_COLUMN, hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
       if (myUi.isMultipleRoots()) {
         g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myUi.getColorManager()));
 
-        int rootWidth = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).getWidth();
+        int rootWidth = getColumnModel().getColumn(ROOT_COLUMN).getWidth();
         if (!myUi.isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
 
         g.fillRect(x, y, rootWidth, height);
       }
     }
     else {
-      g.setColor(getBaseStyle(lastRow, GraphTableModel.COMMIT_COLUMN, hasFocus(), false).getBackground());
+      g.setColor(getBaseStyle(lastRow, COMMIT_COLUMN, hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
     }
   }
 
-  boolean isResizingColumns() {
+  public boolean isResizingColumns() {
     return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
   }
 
@@ -624,7 +670,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     protected void paintComponent(Graphics g) {
-      setFont(UIManager.getFont("Table.font"));
+      setFont(getTableFont());
       g.setColor(myColor);
 
       int width = getWidth();
@@ -898,6 +944,34 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void progressStopped() {
       getEmptyText().setText(myText);
+    }
+  }
+
+  private class MyTableColumnModel extends DefaultTableColumnModel {
+    @NotNull private final VcsLogUiProperties myProperties;
+
+    public MyTableColumnModel(@NotNull VcsLogUiProperties properties) {
+      myProperties = properties;
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      // for some reason if I just add a PropertyChangeListener to a column it's not called
+      // and TableColumnModelListener.columnMarginChanged does not provide any information which column was changed
+      if (getTableHeader().getResizingColumn() == null) return;
+      if ("width".equals(evt.getPropertyName())) {
+        TableColumn authorColumn = getColumn(AUTHOR_COLUMN);
+        if (authorColumn.equals(evt.getSource())) {
+          CommonUiProperties.saveColumnWidth(myProperties, AUTHOR_COLUMN, authorColumn.getWidth());
+        }
+        else {
+          TableColumn dateColumn = getColumn(DATE_COLUMN);
+          if (dateColumn.equals(evt.getSource())) {
+            CommonUiProperties.saveColumnWidth(myProperties, DATE_COLUMN, dateColumn.getWidth());
+          }
+        }
+      }
+      super.propertyChange(evt);
     }
   }
 }

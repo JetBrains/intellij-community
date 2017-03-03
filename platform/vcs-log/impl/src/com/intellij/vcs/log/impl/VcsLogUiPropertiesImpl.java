@@ -29,7 +29,7 @@ import java.util.*;
 public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, MainVcsLogUiProperties {
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
   private static final Set<VcsLogUiProperties.VcsLogUiProperty> SUPPORTED_PROPERTIES =
-    ContainerUtil.newHashSet(MainVcsLogUiProperties.SHOW_DETAILS,
+    ContainerUtil.newHashSet(CommonUiProperties.SHOW_DETAILS,
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
                              MainVcsLogUiProperties.BEK_SORT_TYPE,
                              MainVcsLogUiProperties.SHOW_ROOT_NAMES,
@@ -51,6 +51,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
+    public Map<Integer, Integer> COLUMN_WIDTH = ContainerUtil.newHashMap();
   }
 
   @NotNull
@@ -61,7 +62,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @NotNull
   @Override
   public <T> T get(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    if (SHOW_DETAILS.equals(property)) {
+    if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_DETAILS_IN_CHANGES);
     }
     else if (SHOW_LONG_EDGES.equals(property)) {
@@ -90,12 +91,17 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       if (result == null) return (T)Boolean.TRUE;
       return (T)result;
     }
+    else if (property instanceof CommonUiProperties.TableColumnProperty) {
+      Integer savedWidth = getState().COLUMN_WIDTH.get(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      if (savedWidth == null) return (T)Integer.valueOf(-1);
+      return (T)savedWidth;
+    }
     throw new UnsupportedOperationException("Property " + property + " does not exist");
   }
 
   @Override
   public <T> void set(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property, @NotNull T value) {
-    if (SHOW_DETAILS.equals(property)) {
+    if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
       getState().SHOW_DETAILS_IN_CHANGES = (Boolean)value;
     }
     else if (SHOW_LONG_EDGES.equals(property)) {
@@ -122,6 +128,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (property instanceof VcsLogHighlighterProperty) {
       getState().HIGHLIGHTERS.put(((VcsLogHighlighterProperty)property).getId(), (Boolean)value);
     }
+    else if (property instanceof CommonUiProperties.TableColumnProperty) {
+      getState().COLUMN_WIDTH.put(((CommonUiProperties.TableColumnProperty)property).getColumn(), (Integer)value);
+    }
     else {
       throw new UnsupportedOperationException("Property " + property + " does not exist");
     }
@@ -130,7 +139,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @Override
   public <T> boolean exists(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    if (SUPPORTED_PROPERTIES.contains(property) || property instanceof VcsLogHighlighterProperty) {
+    if (SUPPORTED_PROPERTIES.contains(property) ||
+        property instanceof VcsLogHighlighterProperty ||
+        property instanceof CommonUiProperties.TableColumnProperty) {
       return true;
     }
     return false;
@@ -251,9 +262,11 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
     public abstract void onHighlighterChanged();
 
+    public abstract void onColumnWidthChanged(int column);
+
     @Override
     public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-      if (SHOW_DETAILS.equals(property)) {
+      if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
         onShowDetailsChanged();
       }
       else if (SHOW_LONG_EDGES.equals(property)) {
@@ -276,6 +289,9 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
       }
       else if (property instanceof VcsLogHighlighterProperty) {
         onHighlighterChanged();
+      }
+      else if (property instanceof CommonUiProperties.TableColumnProperty) {
+        onColumnWidthChanged(((CommonUiProperties.TableColumnProperty)property).getColumn());
       }
       else {
         throw new UnsupportedOperationException("Property " + property + " does not exist");

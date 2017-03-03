@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
-import com.intellij.lang.parameterInfo.*;
+import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport;
+import com.intellij.lang.parameterInfo.ParameterInfoUtils;
+import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -41,7 +44,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
@@ -90,65 +92,6 @@ public class ParameterInfoController implements Disposable {
     }
 
     return null;
-  }
-
-  public Object[] getSelectedElements() {
-    ParameterInfoContext context = new ParameterInfoContext() {
-      @Override
-      public Project getProject() {
-        return myProject;
-      }
-
-      @Override
-      public PsiFile getFile() {
-        return myComponent.getParameterOwner().getContainingFile();
-      }
-
-      @Override
-      public int getOffset() {
-        return myEditor.getCaretModel().getOffset();
-      }
-
-      @Override
-      @NotNull
-      public Editor getEditor() {
-        return myEditor;
-      }
-    };
-
-    if (!myHandler.tracksParameterIndex()) {
-      return myHandler.getParametersForDocumentation(myComponent.getObjects()[0],context);
-    }
-
-    final Object[] objects = myComponent.getObjects();
-    int selectedParameterIndex = myComponent.getCurrentParameterIndex();
-    List<Object> params = new ArrayList<>(objects.length);
-
-    final Object highlighted = myComponent.getHighlighted();
-    for(Object o:objects) {
-      if (highlighted != null && !o.equals(highlighted)) continue;
-      collectParams(context, selectedParameterIndex, params, o);
-    }
-
-    //choose anything when highlighted is not applicable
-    if (highlighted != null && params.isEmpty()) {
-      for (Object o : objects) {
-        collectParams(context, selectedParameterIndex, params, o);
-      }
-    }
-
-    return ArrayUtil.toObjectArray(params);
-  }
-
-  private void collectParams(ParameterInfoContext context, int selectedParameterIndex, List<Object> params, Object o) {
-    final Object[] availableParams = myHandler.getParametersForDocumentation(o, context);
-
-    if (availableParams != null &&
-        selectedParameterIndex < availableParams.length &&
-        selectedParameterIndex >= 0
-      ) {
-      params.add(availableParams[selectedParameterIndex]);
-    }
   }
 
   private static List<ParameterInfoController> getAllControllers(@NotNull Editor editor) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -606,31 +606,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
 
-    final List<PsiExpression> nonWrite = new ArrayList<>();
-    boolean cantReplaceAll = false;
-    boolean cantReplaceAllButWrite = false;
-    for (PsiExpression occurrence : occurrences) {
-      if (!RefactoringUtil.isAssignmentLHS(occurrence)) {
-        nonWrite.add(occurrence);
-      } else if (isFinalVariableOnLHS(occurrence)) {
-        cantReplaceAll = true;
-      } else if (!nonWrite.isEmpty()){
-        cantReplaceAllButWrite = true;
-        cantReplaceAll = true;
-      }
-    }
+    OccurrencesInfo occurrencesInfo = new OccurrencesInfo(occurrences);
+
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
-    final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = ContainerUtil.newLinkedHashMap();
-    occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(expr));
-    final boolean hasWriteAccess = occurrences.length > nonWrite.size() && occurrences.length > 1;
-    if (hasWriteAccess && !cantReplaceAllButWrite) {
-      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO_WRITE, nonWrite);
-    }
-
-    if (occurrences.length > 1 && !cantReplaceAll) {
-      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.asList(occurrences));
-    }
+    final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = occurrencesInfo.buildOccurrencesMap(expr);
 
     final boolean inFinalContext = occurrenceManager.isInFinalContext();
     final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurrenceManager);
@@ -639,32 +619,32 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
       @Override
       public void pass(final OccurrencesChooser.ReplaceChoice choice) {
+        boolean hasWriteAccess = occurrencesInfo.myHasWriteAccess;
+        List<PsiExpression> nonWrite = occurrencesInfo.myNonWrite;
         if (choice != null) {
-          final boolean replaceAll = choice == OccurrencesChooser.ReplaceChoice.ALL || choice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
+          final boolean noWriteChoice = choice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
+          final boolean allChoice = choice == OccurrencesChooser.ReplaceChoice.ALL;
+          final boolean replaceAll = allChoice || noWriteChoice;
           typeSelectorManager.setAllOccurrences(replaceAll);
 
-          final PsiElement chosenAnchor =
-            chooseAnchor(replaceAll, choice == OccurrencesChooser.ReplaceChoice.NO_WRITE, nonWrite, anchorStatementIfAll, anchorStatement);
+          final PsiElement chosenAnchor = chooseAnchor(replaceAll, noWriteChoice, nonWrite, anchorStatementIfAll, anchorStatement);
           final IntroduceVariableSettings settings =
-            getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, chosenAnchor, choice);
-          
-          final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && choice == OccurrencesChooser.ReplaceChoice.ALL;
+            getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, chosenAnchor,
+                        choice);
 
-          final boolean noWrite = choice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
-          final List<PsiExpression> allOccurrences = new ArrayList<>();
-          for (PsiExpression occurrence : occurrences) {
-            if (expr.equals(occurrence) && expr.getParent() instanceof PsiExpressionStatement) continue;
-            if (choice == OccurrencesChooser.ReplaceChoice.ALL || (noWrite && !PsiUtil.isAccessedForWriting(occurrence)) ||  expr.equals(occurrence)) {
-              allOccurrences.add(occurrence);
-            }
-          }
+          final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && allChoice;
+
+          PsiExpression[] allOccurrences = Arrays.stream(occurrences)
+            .filter(occurrence -> !(expr.equals(occurrence) && expr.getParent() instanceof PsiExpressionStatement))
+            .filter(occurrence -> allChoice || (noWriteChoice && !PsiUtil.isAccessedForWriting(occurrence)) || expr.equals(occurrence))
+            .toArray(PsiExpression[]::new);
           myInplaceIntroducer = new JavaVariableInplaceIntroducer(project,
-                                            settings,
-                                            chosenAnchor,
-                                            editor, expr, cantChangeFinalModifier,
-                                            allOccurrences.toArray(new PsiExpression[allOccurrences.size()]),
-                                            typeSelectorManager,
-                                            REFACTORING_NAME);
+                                                                  settings,
+                                                                  chosenAnchor,
+                                                                  editor, expr, cantChangeFinalModifier,
+                                                                  allOccurrences,
+                                                                  typeSelectorManager,
+                                                                  REFACTORING_NAME);
           if (myInplaceIntroducer.startInplaceIntroduceTemplate()) {
             return;
           }
@@ -683,7 +663,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             PsiVariable variable = null;
             try {
               final IntroduceVariableSettings settings =
-                getSettings(project, topLevelEditor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, anchorStatement, choice);
+                getSettings(project, topLevelEditor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator,
+                            anchorStatement, choice);
               if (!settings.isOK()) {
                 wasSucceed[0] = false;
                 return;
@@ -722,7 +703,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
     return wasSucceed[0];
   }
-  
+
   protected OccurrencesChooser.ReplaceChoice getOccurrencesChoice() {
     return null;
   }
@@ -1208,5 +1189,45 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   @Override
   public AbstractInplaceIntroducer getInplaceIntroducer() {
     return myInplaceIntroducer;
+  }
+
+  static class OccurrencesInfo {
+    List<PsiExpression> myOccurrences;
+    List<PsiExpression> myNonWrite;
+    boolean myCantReplaceAll;
+    boolean myCantReplaceAllButWrite;
+    boolean myHasWriteAccess;
+
+    public OccurrencesInfo(PsiExpression[] occurrences) {
+      myOccurrences = Arrays.asList(occurrences);
+      myNonWrite = new ArrayList<>();
+      myCantReplaceAll = false;
+      myCantReplaceAllButWrite = false;
+      for (PsiExpression occurrence : myOccurrences) {
+        if (!RefactoringUtil.isAssignmentLHS(occurrence)) {
+          myNonWrite.add(occurrence);
+        } else if (isFinalVariableOnLHS(occurrence)) {
+          myCantReplaceAll = true;
+        } else if (!myNonWrite.isEmpty()){
+          myCantReplaceAllButWrite = true;
+          myCantReplaceAll = true;
+        }
+      }
+      myHasWriteAccess = myOccurrences.size() > myNonWrite.size() && myOccurrences.size() > 1;
+    }
+
+    @NotNull
+    private LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> buildOccurrencesMap(PsiExpression expr) {
+      final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = ContainerUtil.newLinkedHashMap();
+      occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(expr));
+      if (myHasWriteAccess && !myCantReplaceAllButWrite) {
+        occurrencesMap.put(OccurrencesChooser.ReplaceChoice.NO_WRITE, myNonWrite);
+      }
+
+      if (myOccurrences.size() > 1 && !myCantReplaceAll) {
+        occurrencesMap.put(OccurrencesChooser.ReplaceChoice.ALL, myOccurrences);
+      }
+      return occurrencesMap;
+    }
   }
 }

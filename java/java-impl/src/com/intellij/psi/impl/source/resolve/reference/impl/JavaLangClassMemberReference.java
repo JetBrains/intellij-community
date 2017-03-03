@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
@@ -119,16 +119,19 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
           case DECLARED_FIELD:
             return Arrays.stream(psiClass.getFields())
+              .filter(field -> field.getName() != null)
               .sorted(Comparator.comparing(PsiField::getName))
               .map(field -> lookupField(field))
               .toArray();
 
-          case FIELD:
+          case FIELD: {
+            final Set<String> uniqueNames = new THashSet<>();
             return Arrays.stream(psiClass.getAllFields())
-              .filter(field -> isPotentiallyAccessible(field, psiClass))
+              .filter(field -> isPotentiallyAccessible(field, psiClass) && field.getName() != null && uniqueNames.add(field.getName()))
               .sorted(Comparator.comparingInt((PsiField field) -> isPublic(field) ? 0 : 1).thenComparing(PsiField::getName))
               .map(field -> withPriority(lookupField(field), isPublic(field)))
               .toArray();
+          }
 
           case DECLARED_METHOD:
             return Arrays.stream(psiClass.getMethods())
@@ -138,16 +141,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .toArray();
 
           case METHOD: {
-            final List<PsiMethod> methods = ContainerUtil.filter(
-              psiClass.getAllMethods(), method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
-
-            final Set<PsiMethod> superMethods = new THashSet<>();
-            for (PsiMethod method : methods) {
-              ContainerUtil.addAll(superMethods, method.findSuperMethods());
-            }
-
-            return methods.stream()
-              .filter(method -> !superMethods.contains(method))
+            return psiClass.getVisibleSignatures()
+              .stream()
+              .map(MethodSignatureBackedByPsiMethod::getMethod)
+              .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
               .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
               .map(method -> withPriority(lookupMethod(method), -getMethodSortOrder(method)))
               .toArray();

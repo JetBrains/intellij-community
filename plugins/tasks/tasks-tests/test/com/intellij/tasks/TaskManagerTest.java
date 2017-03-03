@@ -30,7 +30,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -165,7 +164,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testRestoreRepository() {
     TestRepository repository = new TestRepository();
     repository.setUrl("http://server");
-    myTaskManager.setRepositories(Arrays.asList(repository));
+    myTaskManager.setRepositories(Collections.singletonList(repository));
 
     TaskTestUtil.TaskBuilder issue = new TaskTestUtil.TaskBuilder("foo", "summary", repository).withIssueUrl(repository.getUrl() + "/foo");
     myTaskManager.activateTask(issue, false);

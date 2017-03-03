@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.util.SystemProperties;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,18 +34,6 @@ public class ComponentSettings {
 
   private static final RegistryValue PIXEL_PERFECT_SCROLLING = Registry.get("idea.true.smooth.scrolling.pixel.perfect");
 
-  private static final RegistryValue SCROLLING_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation");
-  private static final RegistryValue SCROLLBAR_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.scrollbar");
-  private static final RegistryValue MOUSE_WHEEL_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel");
-  private static final RegistryValue PRECISION_TOUCHPAD_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad");
-  private static final RegistryValue OTHER_SOURCES_INTERPOLATION = Registry.get("idea.true.smooth.scrolling.interpolation.other");
-
-  private static final RegistryValue SCROLLBAR_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.scrollbar.delay");
-  private static final RegistryValue MOUSE_WHEEL_MIN_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel.delay.min");
-  private static final RegistryValue MOUSE_WHEEL_MAX_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.mouse.wheel.delay.max");
-  private static final RegistryValue PRECISION_TOUCHPAD_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.precision.touchpad.delay");
-  private static final RegistryValue OTHER_SOURCES_DELAY = Registry.get("idea.true.smooth.scrolling.interpolation.other.delay");
-
   private boolean mySmoothScrollingEnabled = true;
   private boolean myRemoteDesktopConnected;
   private boolean myPowerSaveModeEnabled;
@@ -59,6 +46,7 @@ public class ComponentSettings {
 
   // Returns whether "true smooth scrolling" is applicable to the particular component
   public boolean isTrueSmoothScrollingEligibleFor(Component component) {
+    if (ApplicationManager.getApplication() == null) return false;
     return isSmoothScrollingSupported() &&
            !ApplicationManager.getApplication().isUnitTestMode() &&
            mySmoothScrollingEnabled &&
@@ -81,42 +69,6 @@ public class ComponentSettings {
   // Returns whether pixel-perfect scrolling events are enabled (requires high-precision events to be effective)
   public boolean isPixelPerfectScrollingEnabled() {
     return PIXEL_PERFECT_SCROLLING.asBoolean();
-  }
-
-  // Returns whether scrolling interpolation is enabled for particular input source
-  public boolean isInterpolationEnabledFor(InputSource source) {
-    if (!SystemProperties.isTrueSmoothScrollingEnabled()) {
-      return false;
-    }
-    if (!SCROLLING_INTERPOLATION.asBoolean()) {
-      return false;
-    }
-
-    switch (source) {
-      case SCROLLBAR:
-        return SCROLLBAR_INTERPOLATION.asBoolean();
-      case MOUSE_WHEEL:
-        return MOUSE_WHEEL_INTERPOLATION.asBoolean();
-      case PRECISION_TOUCHPAD:
-        return PRECISION_TOUCHPAD_INTERPOLATION.asBoolean();
-      default:
-        return OTHER_SOURCES_INTERPOLATION.asBoolean();
-    }
-  }
-
-  public int getInterpolationDelay(InputSource source, double rotation) {
-    switch (source) {
-      case SCROLLBAR:
-        return SCROLLBAR_DELAY.asInteger();
-      case MOUSE_WHEEL:
-        int min = MOUSE_WHEEL_MIN_DELAY.asInteger();
-        int max = MOUSE_WHEEL_MAX_DELAY.asInteger();
-        return Math.max(min, Math.min(max, (int)Math.round(max * Math.abs(rotation))));
-      case PRECISION_TOUCHPAD:
-        return PRECISION_TOUCHPAD_DELAY.asInteger();
-      default:
-        return OTHER_SOURCES_DELAY.asInteger();
-    }
   }
 
   /* A heuristics that disables scrolling interpolation in diff / merge windows.

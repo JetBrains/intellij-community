@@ -468,13 +468,14 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
+    boolean invokedOnEdt = ApplicationManager.getApplication().isDispatchThread();
     UIUtil.invokeLaterIfNeeded(() -> {
       if (isFlushingIdleRequests()) {
         myIdleRequests.add(runnable);
         return;
       }
 
-      if (myRunContext != null) {
+      if (myRunContext != null || invokedOnEdt && canFlushIdleRequests()) {
         flushRequest(runnable);
         return;
       }

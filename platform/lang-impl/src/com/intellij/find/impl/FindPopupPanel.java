@@ -266,10 +266,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myCbWholeWordsOnly.addItemListener(liveResultsPreviewUpdateListener);
     myCbRegularExpressions = new StateRestoringCheckBox(FindBundle.message("find.popup.regex"));
     myCbRegularExpressions.addItemListener(liveResultsPreviewUpdateListener);
-    myCbFileFilter = new StateRestoringCheckBox("File mask: ");
-    myCbFileFilter.setMnemonic('a');
-    myCbFileFilter.setToolTipText("<html>Use file m<u>a</u>sk(s)");
-    myCbFileFilter.setBorder(null);
+    myCbFileFilter = new StateRestoringCheckBox(FindBundle.message("find.popup.filemask"));
     myCbFileFilter.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -319,7 +316,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
-        
+
         ListPopup listPopup =
           JBPopupFactory.getInstance().createActionGroupPopup(null, switchContextGroup, e.getDataContext(), false, null, 10);
         listPopup.showUnderneathOf(myFilterContextButton);
@@ -432,8 +429,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         myReplaceComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
 
         if (myBalloon == null) return;
-
-        scheduleResultsUpdate();
+        if (e.getDocument() == mySearchComponent.getDocument()) {
+          scheduleResultsUpdate();
+        }
       }
     };
     mySearchComponent.getDocument().addDocumentListener(documentAdapter);
@@ -652,23 +650,24 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
-
-    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gap 0 0 0 8"));
+    int existingGap = myCbCaseSensitive.getInsets().left + myCbCaseSensitive.getInsets().right;
+    int additionalGap = Math.max(0, 16 - existingGap);
+    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 3, gapx " + additionalGap));
     add(myTitleLabel, "gapleft 4, sx 2, growx, pushx, growy");
     add(myCbCaseSensitive);
     add(myCbPreserveCase);
     add(myCbWholeWordsOnly);
     add(myCbRegularExpressions, "gapright 0");
-    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 16");
+    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 16, gapleft 0");
     add(myCbFileFilter, "gapright 0");
-    add(myFileMaskField, "gapright 16");
+    add(myFileMaskField, "gapleft 0");
     add(myFilterContextButton, "wrap");
     add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(myReplaceTextArea, "pushx, growx, sx 10, wrap");
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
     add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad 0 -4 0 4");
     add(bottomPanel, "pushx, growx, dock south, sx 10, pad 0 -4 0 4");
-    
+
     MnemonicHelper.init(this);
     setFocusCycleRoot(true);
   }
@@ -796,10 +795,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       return Scope.PROJECT;
     } else
     if (model.getDirectoryName() != null) {
-       return Scope.DIRECTORY;
+      return Scope.DIRECTORY;
     } else
     if (model.getModuleName() != null) {
-       return Scope.MODULE;
+      return Scope.MODULE;
     }
     return Scope.PROJECT;
   }

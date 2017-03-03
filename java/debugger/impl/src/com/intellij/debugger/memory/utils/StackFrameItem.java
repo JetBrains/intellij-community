@@ -20,12 +20,15 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
+import com.intellij.debugger.settings.CaptureConfigurable;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -45,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,6 +56,14 @@ import java.util.Map;
 
 public class StackFrameItem {
   private static final Logger LOG = Logger.getInstance(StackFrameItem.class);
+  private static final List<XNamedValue> VARS_CAPTURE_DISABLED = Collections.singletonList(
+    JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.capture.disabled"), null));
+  private static final List<XNamedValue> VARS_NOT_CAPTURED = Collections.singletonList(
+    JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.not.captured"),
+                                     XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
+  private static final XNamedValue VAR_NO_DEBUG_INFO =
+    JavaStackFrame.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(),
+                                     XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
 
   private final Location myLocation;
   private final List<XNamedValue> myVariables;
@@ -81,10 +93,11 @@ public class StackFrameItem {
           Location location = frame.location();
           Method method = location.method();
           if (withVars) {
-            if (method.isNative() || method.isBridge() || method.isSynthetic()) {
-              vars = Collections.singletonList(
-                JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.not.captured"),
-                                                 XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
+            if (!DebuggerSettings.getInstance().CAPTURE_VARIABLES) {
+              vars = VARS_CAPTURE_DISABLED;
+            }
+            else if (method.isNative() || method.isBridge() || DefaultSyntheticProvider.checkIsSynthetic(method)) {
+              vars = VARS_NOT_CAPTURED;
             }
             else {
               vars = new ArrayList<>();
@@ -112,8 +125,7 @@ public class StackFrameItem {
               }
               catch (EvaluateException e) {
                 if (e.getCause() instanceof AbsentInformationException) {
-                  vars.add(JavaStackFrame.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(),
-                                                            XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
+                  vars.add(VAR_NO_DEBUG_INFO);
                   // only args for frames w/o debug info for now
                   try {
                     for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil
@@ -251,9 +263,21 @@ public class StackFrameItem {
       }
     }
 
+    private static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
+      @Override
+      public void onClick(MouseEvent event) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(null, CaptureConfigurable.class);
+        event.consume();
+      }
+    };
+
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {
-      if (myVariables != null) {
+      if (myVariables == VARS_CAPTURE_DISABLED) {
+        node.setMessage(DebuggerBundle.message("message.node.local.variables.capture.disabled"), null,
+                        SimpleTextAttributes.REGULAR_ATTRIBUTES, CAPTURE_SETTINGS_OPENER);
+      }
+      else if (myVariables != null) {
         XValueChildrenList children = new XValueChildrenList();
         myVariables.forEach(children::add);
         node.addChildren(children, true);

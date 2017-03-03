@@ -74,7 +74,8 @@ public class TableWithProgress extends JBTable {
     @Override
     protected Rectangle calculateBounds(@NotNull JComponent container) {
       Dimension iconSize = getPreferredSize();
-      return new Rectangle((container.getWidth() - iconSize.width) / 2, container.getPreferredSize().height - iconSize.height, iconSize.width,
+      return new Rectangle((container.getWidth() - iconSize.width) / 2, container.getPreferredSize().height - iconSize.height,
+                           iconSize.width,
                            iconSize.height);
     }
   }

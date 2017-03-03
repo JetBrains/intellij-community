@@ -17,17 +17,14 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.ComponentSettings;
-import com.intellij.ui.InputSource;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.basic.BasicScrollPaneUI;
 import java.awt.*;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.lang.reflect.Field;
 
 import static java.lang.Math.*;
 
@@ -38,7 +35,7 @@ public class SmoothScrollPane extends JScrollPane {
   private static final Logger LOG = Logger.getInstance(SmoothScrollPane.class);
   private static final double EPSILON = 1E-5D;
 
-  private InputSource myInputSource = InputSource.UNKNOWN;
+  private ScrollSource myScrollSource = ScrollSource.UNKNOWN;
   private double myWheelRotation;
 
   public SmoothScrollPane() {
@@ -60,10 +57,10 @@ public class SmoothScrollPane extends JScrollPane {
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     boolean hasAbsoluteDelta = ComponentSettings.getInstance().isPixelPerfectScrollingEnabled() &&
                                MouseWheelEventEx.getAbsoluteDelta(e) != 0.0D;
-    myInputSource = hasAbsoluteDelta ? InputSource.PRECISION_TOUCHPAD : InputSource.MOUSE_WHEEL;
+    myScrollSource = hasAbsoluteDelta ? ScrollSource.TOUCHPAD : ScrollSource.MOUSE_WHEEL;
     myWheelRotation = e.getPreciseWheelRotation();
     super.processMouseWheelEvent(e);
-    myInputSource = InputSource.UNKNOWN;
+    myScrollSource = ScrollSource.UNKNOWN;
   }
 
   @Override
@@ -190,9 +187,8 @@ public class SmoothScrollPane extends JScrollPane {
   }
 
   int getInitialDelay(boolean valueIsAdjusting) {
-    InputSource source = valueIsAdjusting ? InputSource.SCROLLBAR : myInputSource;
-    ComponentSettings settings = ComponentSettings.getInstance();
-    return !settings.isInterpolationEnabledFor(source) ? 0 : settings.getInterpolationDelay(source, myWheelRotation);
+    ScrollSource source = valueIsAdjusting ? ScrollSource.SCROLLBAR : myScrollSource;
+    return source.getInterpolationDelay(myWheelRotation);
   }
 
   protected class SmoothScrollBar extends ScrollBar implements Interpolable, FinelyAdjustable {

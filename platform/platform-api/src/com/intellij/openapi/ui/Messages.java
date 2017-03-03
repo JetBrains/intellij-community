@@ -1823,7 +1823,7 @@ public class Messages {
         textLabel.setUI(new MultiLineLabelUI());
         textComponent = textLabel;
       }
-      textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+      textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 20));
       return textComponent;
     }
 

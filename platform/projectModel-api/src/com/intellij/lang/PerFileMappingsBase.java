@@ -19,10 +19,12 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -82,7 +84,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Nullable
-  protected static <T> T getMappingInner(@Nullable VirtualFile file, @Nullable Map<VirtualFile, T> mappings, @Nullable Key<T> pusherKey) {
+  protected T getMappingInner(@Nullable VirtualFile file, @Nullable Map<VirtualFile, T> mappings, @Nullable Key<T> pusherKey) {
     if (file instanceof VirtualFileWindow) {
       final VirtualFileWindow window = (VirtualFileWindow)file;
       file = window.getDelegate();
@@ -99,12 +101,19 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       if (pushedValue != null) return pushedValue;
     }
     if (mappings == null) return null;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (mappings) {
       T t = getMappingForHierarchy(file, mappings);
       if (t != null) return t;
       t = getMappingForHierarchy(originalFile, mappings);
       if (t != null) return t;
-      return mappings.get(null);
+      Project project = getProject();
+      if (project == null || file == null ||
+          file.getFileSystem() instanceof NonPhysicalFileSystem ||
+          ProjectFileIndex.getInstance(project).isInContent(file)) {
+        return mappings.get(null);
+      }
+      return null;
     }
   }
 

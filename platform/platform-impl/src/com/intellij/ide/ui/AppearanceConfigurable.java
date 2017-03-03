@@ -222,6 +222,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.getRightHorizontalSplit() != myComponent.myRightLayoutCheckBox.isSelected();
     settings.setRightHorizontalSplit(myComponent.myRightLayoutCheckBox.isSelected());
 
+    update |= settings.getSmoothScrolling() != myComponent.mySmoothScrollingCheckBox.isSelected();
+    settings.setSmoothScrolling(myComponent.mySmoothScrollingCheckBox.isSelected());
+
     update |= settings.getNavigateToPreview() != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
     settings.setNavigateToPreview(myComponent.myNavigateToPreviewCheckBox.isSelected());
 
@@ -346,6 +349,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
     myComponent.myLeftLayoutCheckBox.setSelected(settings.getLeftHorizontalSplit());
     myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
+    myComponent.mySmoothScrollingCheckBox.setSelected(settings.getSmoothScrolling());
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.getNavigateToPreview());
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
     myComponent.myColorBlindnessPanel.setColorBlindness(settings.getColorBlindness());
@@ -411,6 +415,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.getWideScreenSupport();
     isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
+    isModified |= myComponent.mySmoothScrollingCheckBox.isSelected() != settings.getSmoothScrolling();
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
     isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
 
@@ -485,6 +490,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myRightLayoutCheckBox;
     private JSlider myInitialTooltipDelaySlider;
     private ComboBox myPresentationModeFontSize;
+    private JCheckBox mySmoothScrollingCheckBox;
     private JCheckBox myNavigateToPreviewCheckBox;
     private ColorBlindnessPanel myColorBlindnessPanel;
     private JComboBox myAntialiasingInIDE;

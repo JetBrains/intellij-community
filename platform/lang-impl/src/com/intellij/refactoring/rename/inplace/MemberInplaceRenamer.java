@@ -132,7 +132,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected boolean isIdentifier(String newName, Language language) {
-    return RenameUtil.isValidName(myProject, myElementToRename, newName);
+    PsiNamedElement namedElement = getVariable();
+    return namedElement != null ? RenameUtil.isValidName(myProject, namedElement, newName) : super.isIdentifier(newName, language);
   }
 
   @Override

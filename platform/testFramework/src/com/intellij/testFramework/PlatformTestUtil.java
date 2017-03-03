@@ -302,10 +302,6 @@ public class PlatformTestUtil {
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  /**
-   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}.
-   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
-   */
   @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
@@ -319,10 +315,6 @@ public class PlatformTestUtil {
     }
   }
 
-  /**
-   * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
-   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
-   */
   @TestOnly
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
@@ -330,10 +322,6 @@ public class PlatformTestUtil {
     while (dispatchNextEventIfAny(eventQueue) != null);
   }
 
-  /**
-   * Dispatch one pending event (if any) in the {@link IdeEventQueue}.
-   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
-   */
   @TestOnly
   public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
@@ -543,7 +531,7 @@ public class PlatformTestUtil {
     private final ThrowableRunnable test; // runnable to measure
     private final int expectedMs;           // millis the test is expected to run
     private ThrowableRunnable setup;      // to run before each test
-    private boolean usesAllCPUCores;      // true if the test runs faster on multi-core
+    private int usedCpuCores = 1;
     private int attempts = 4;             // number of retries if performance failed
     private final String message;         // to print on fail
     private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
@@ -560,7 +548,9 @@ public class PlatformTestUtil {
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo usesAllCPUCores() { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usesAllCPUCores = true; return this; }
+    public TestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
+    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+    public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usedCpuCores = maxCores; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
@@ -598,8 +588,7 @@ public class PlatformTestUtil {
         int expectedOnMyMachine = expectedMs;
         if (adjustForCPU) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.ETALON_CPU_TIMING, useLegacyScaling);
-
-          expectedOnMyMachine = usesAllCPUCores ? expectedOnMyMachine * 8 : expectedOnMyMachine;
+          expectedOnMyMachine *= usedCpuCores;
         }
         if (adjustForIO) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING, useLegacyScaling);

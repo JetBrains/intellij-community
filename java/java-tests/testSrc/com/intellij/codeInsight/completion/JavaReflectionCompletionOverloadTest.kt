@@ -45,6 +45,18 @@ class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
                                       "gpMethod(A a,B b)", "method()", "pMethod(C c)",
                                       "equals(java.lang.Object obj)")
 
+  fun testShadowedMethod() = doTest(0,
+                                    "shadowed()",
+                                    "equals(java.lang.Object obj)")
+
+  fun testOverloadedMethod() = doTest(1,
+                                      "overloaded()", "overloaded(int n)",
+                                      "equals(java.lang.Object obj)")
+
+  fun testOverloadedInheritedMethod() = doTest(1,
+                                               "overloaded(int n)", "overloaded(java.lang.String s)",
+                                               "equals(java.lang.Object obj)")
+
 
   private fun doTest(index: Int, vararg expected: String) {
     configureByFile(getTestName(false) + ".java")

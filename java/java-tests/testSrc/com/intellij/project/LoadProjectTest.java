@@ -47,7 +47,6 @@ public class LoadProjectTest extends PlatformTestCase {
     ((ProjectImpl)getProject()).registerComponentImplementation(FileEditorManager.class, FileEditorManagerImpl.class);
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void tearDown() throws Exception {
     Project project = getProject();

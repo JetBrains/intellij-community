@@ -19,9 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ComponentSettings;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.InputSource;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
@@ -73,7 +71,7 @@ public class JBScrollPane extends JScrollPane {
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
-  private InputSource myInputSource = InputSource.UNKNOWN;
+  private ScrollSource myScrollSource = ScrollSource.UNKNOWN;
   private double myWheelRotation;
 
   private int myViewportBorderWidth = -1;
@@ -278,18 +276,16 @@ public class JBScrollPane extends JScrollPane {
 
   @Override
   protected void processMouseWheelEvent(MouseWheelEvent e) {
-    boolean hasAbsoluteDelta = ComponentSettings.getInstance().isPixelPerfectScrollingEnabled() &&
-                               MouseWheelEventEx.getAbsoluteDelta(e) != 0.0D;
-    myInputSource = hasAbsoluteDelta ? InputSource.PRECISION_TOUCHPAD : InputSource.MOUSE_WHEEL;
+    boolean hasAbsoluteDelta = ScrollSettings.isPixelPerfectEnabled();
+    myScrollSource = hasAbsoluteDelta ? ScrollSource.TOUCHPAD : ScrollSource.MOUSE_WHEEL;
     myWheelRotation = e.getPreciseWheelRotation();
     super.processMouseWheelEvent(e);
-    myInputSource = InputSource.UNKNOWN;
+    myScrollSource = ScrollSource.UNKNOWN;
   }
 
   int getInitialDelay(boolean valueIsAdjusting) {
-    InputSource source = valueIsAdjusting ? InputSource.SCROLLBAR : myInputSource;
-    ComponentSettings settings = ComponentSettings.getInstance();
-    return !settings.isInterpolationEnabledFor(source) ? 0 : settings.getInterpolationDelay(source, myWheelRotation);
+    ScrollSource source = valueIsAdjusting ? ScrollSource.SCROLLBAR : myScrollSource;
+    return source.getInterpolationDelay(myWheelRotation);
   }
 
   private static class Corner extends JPanel {
@@ -733,14 +729,9 @@ public class JBScrollPane extends JScrollPane {
     if (event.isConsumed()) return false;
     // any rotation expected (forward or backward)
     boolean ignore = event.getWheelRotation() == 0;
-    if (ignore) {
-      ComponentSettings settings = ComponentSettings.getInstance();
-      if (settings.isSmoothScrollingSupported()) {
-        if (settings.isPixelPerfectScrollingEnabled() || settings.isHighPrecisionScrollingEnabled()) {
-          double rotation = event.getPreciseWheelRotation();
-          ignore = rotation == 0.0D || !Double.isFinite(rotation);
-        }
-      }
+    if (ignore && (ScrollSettings.isPixelPerfectEnabled() || ScrollSettings.isHighPrecisionEnabled())) {
+      double rotation = event.getPreciseWheelRotation();
+      ignore = rotation == 0.0D || !Double.isFinite(rotation);
     }
     return !ignore && 0 == (SCROLL_MODIFIERS & event.getModifiers());
   }

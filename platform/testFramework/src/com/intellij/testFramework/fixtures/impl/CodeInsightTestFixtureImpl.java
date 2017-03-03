@@ -82,6 +82,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -1198,11 +1199,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private void closeOpenFiles() {
-    FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    for (VirtualFile openFile : editorManager.getOpenFiles()) {
-      editorManager.closeFile(openFile);
-    }
+    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
   }
 
   @NotNull

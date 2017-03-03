@@ -446,15 +446,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   protected void tearDown() throws Exception {
     Project project = myProject;
 
-    runTearDownActions(project);
-  }
-
-  private void runTearDownActions(Project project) {
     new RunAll()
       .append(this::disposeRootDisposable)
       .append(() -> {

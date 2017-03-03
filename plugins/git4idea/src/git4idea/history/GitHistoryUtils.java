@@ -1065,8 +1065,8 @@ public class GitHistoryUtils {
         int bodyEnd = line.indexOf(GitLogParser.RECORD_END);
         if (bodyEnd >= 0) {
           myIsInsideBody = false;
-          myOutput.append(line.substring(0, bodyEnd + 1));
-          processOutputLine(line.substring(bodyEnd + 1));
+          myOutput.append(line.substring(0, bodyEnd + GitLogParser.RECORD_END.length()));
+          processOutputLine(line.substring(bodyEnd + GitLogParser.RECORD_END.length()));
         }
         else {
           myOutput.append(line).append("\n");

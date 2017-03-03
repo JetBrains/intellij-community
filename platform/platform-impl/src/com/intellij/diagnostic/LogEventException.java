@@ -48,7 +48,7 @@ public class LogEventException extends RuntimeException implements ExceptionWith
     if (data instanceof LogMessageEx) {
       Attachment[] attachments = ((LogMessageEx)data).getAllAttachments().toArray(Attachment.EMPTY_ARRAY);
       Throwable throwable = myLogMessage.getThrowable();
-      return throwable == null ? attachments : ArrayUtil.prepend(new Attachment("details.trace", throwable), attachments);
+      return throwable == null ? attachments : ArrayUtil.prepend(new Attachment("details", throwable), attachments);
     }
     return Attachment.EMPTY_ARRAY;
   }

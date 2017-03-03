@@ -16,6 +16,7 @@
 package com.intellij.tasks;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,6 +26,7 @@ public interface CommitPlaceholderProvider {
 
   ExtensionPointName<CommitPlaceholderProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.tasks.commitPlaceholderProvider");
 
+  @NotNull
   String[] getPlaceholders(TaskRepository repository);
 
   @Nullable

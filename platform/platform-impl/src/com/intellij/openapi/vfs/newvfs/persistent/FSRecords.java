@@ -32,7 +32,6 @@ import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -48,7 +47,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -63,7 +61,6 @@ public class FSRecords {
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   private static final boolean lazyVfsDataCleaning = SystemProperties.getBooleanProperty("idea.lazy.vfs.data.cleaning", true);
   static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
-  public static final boolean persistentAttributesList = SystemProperties.getBooleanProperty("idea.persistent.attr.list", true);
   private static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
   static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
   static final boolean useSnappyForCompression = SystemProperties.getBooleanProperty("idea.use.snappy.for.vfs", false);
@@ -71,7 +68,7 @@ public class FSRecords {
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
 
   private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
-                                     (persistentAttributesList ? 31 : 0) + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
+                                     31 + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
                                      (useSnappyForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
                                      (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 21:0);
 
@@ -161,7 +158,6 @@ public class FSRecords {
 
   public static class DbConnection {
     private static boolean ourInitialized;
-    private static final ConcurrentMap<String, Integer> myAttributeIds = ContainerUtil.newConcurrentMap();
 
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
@@ -505,14 +501,7 @@ public class FSRecords {
     private static final int FIRST_ATTR_ID_OFFSET = bulkAttrReadSupport ? RESERVED_ATTR_ID : 0;
 
     private static int getAttributeId(@NotNull String attId) throws IOException {
-      if (persistentAttributesList) {
-        return myAttributesList.getId(attId) + FIRST_ATTR_ID_OFFSET;
-      }
-      Integer integer = myAttributeIds.get(attId);
-      if (integer != null) return integer.intValue();
-      int enumeratedId = myNames.enumerate(attId);
-      integer = myAttributeIds.putIfAbsent(attId, enumeratedId);
-      return integer == null ? enumeratedId:  integer.intValue();
+      return myAttributesList.getId(attId) + FIRST_ATTR_ID_OFFSET;
     }
 
     private static void handleError(@NotNull Throwable e) throws RuntimeException, Error {
@@ -2013,7 +2002,7 @@ public class FSRecords {
         int attId = DataInputOutputUtil.readINT(dataInputStream);
 
         if (!validAttributeIds.contains(attId)) {
-          assert persistentAttributesList || !getNames().valueOf(attId).isEmpty();
+          //assert !getNames().valueOf(attId).isEmpty();
           validAttributeIds.add(attId);
         }
 

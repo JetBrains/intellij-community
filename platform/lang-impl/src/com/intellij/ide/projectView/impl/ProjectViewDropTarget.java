@@ -23,6 +23,7 @@ import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -320,7 +321,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         if (!sourceElement.isValid()) return;
       }
 
-      getActionHandler().invoke(myProject, sourceElements, new DataContext() {
+      DataContext context = new DataContext() {
         @Override
         @Nullable
         public Object getData(@NonNls String dataId) {
@@ -334,7 +335,9 @@ class ProjectViewDropTarget implements DnDNativeTarget {
             return externalDrop ? null : dataContext.getData(dataId);
           }
         }
-      });
+      };
+      TransactionGuard.getInstance().submitTransactionAndWait(
+        () -> getActionHandler().invoke(myProject, sourceElements, context));
     }
 
     private RefactoringActionHandler getActionHandler() {

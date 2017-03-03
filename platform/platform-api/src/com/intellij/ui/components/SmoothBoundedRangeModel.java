@@ -15,9 +15,6 @@
  */
 package com.intellij.ui.components;
 
-import com.intellij.ui.ComponentSettings;
-import com.intellij.ui.InputSource;
-
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -40,7 +37,7 @@ public class SmoothBoundedRangeModel extends DefaultBoundedRangeModel {
    */
   @Override
   protected void fireStateChanged() {
-    if (!ComponentSettings.getInstance().isInterpolationEnabledFor(InputSource.SCROLLBAR)) {
+    if (!ScrollSource.SCROLLBAR.isInterpolationEnabled()) {
       super.fireStateChanged();
       return;
     }
