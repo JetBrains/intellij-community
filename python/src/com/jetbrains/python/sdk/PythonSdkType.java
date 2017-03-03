@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -195,7 +196,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   private static TreeSet<String> createVersionSet() {
-    return new TreeSet<>((o1, o2) -> findDigits(o1).compareTo(findDigits(o2)));
+    return new TreeSet<>(Comparator.comparing(PythonSdkType::findDigits));
   }
 
   private static String findDigits(String s) {
@@ -616,7 +617,7 @@ public final class PythonSdkType extends SdkType {
   public static List<String> getSysPathsFromScript(@NotNull String binaryPath) throws InvalidSdkException {
     // to handle the situation when PYTHONPATH contains ., we need to run the syspath script in the
     // directory of the script itself - otherwise the dir in which we run the script (e.g. /usr/bin) will be added to SDK path
-    GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.<String>newArrayList());
+    GeneralCommandLine cmd = PythonHelper.SYSPATH.newCommandLine(binaryPath, Lists.newArrayList());
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
                                                                getVirtualEnvExtraEnv(binaryPath), MINUTE);
     if (!runResult.checkSuccess(LOG)) {
@@ -740,7 +741,7 @@ public final class PythonSdkType extends SdkType {
     return homeDir != null && homeDir.isValid();
   }
 
-  public static boolean isStdLib(VirtualFile vFile, Sdk pythonSdk) {
+  public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
     if (pythonSdk != null) {
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
       if (libDir != null && VfsUtilCore.isAncestor(libDir, vFile, false)) {
@@ -753,6 +754,9 @@ public final class PythonSdkType extends SdkType {
       final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
       if (skeletonsDir != null &&
           Comparing.equal(vFile.getParent(), skeletonsDir)) {   // note: this will pick up some of the binary libraries not in packages
+        return true;
+      }
+      if (PyTypeShed.INSTANCE.isInStandardLibrary(vFile) && PyTypeShed.INSTANCE.isInside(vFile)) {
         return true;
       }
     }

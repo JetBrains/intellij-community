@@ -125,7 +125,7 @@ object PyTypeShed {
    */
   fun isInThirdPartyLibraries(file: VirtualFile) = "third_party" in file.path
 
-  private fun isInStandardLibrary(file: VirtualFile) = "stdlib" in file.path
+  fun isInStandardLibrary(file: VirtualFile) = "stdlib" in file.path
 
   private val LanguageLevel.major: Int
     get() = this.version / 10
