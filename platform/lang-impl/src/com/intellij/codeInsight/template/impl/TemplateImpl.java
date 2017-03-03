@@ -112,7 +112,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   public TemplateImpl(@NotNull String key, String string, @NotNull String group) {
-    this (key, string, group, true);
+    this(key, string, group, true);
   }
 
   public TemplateImpl(@NotNull String key, String string, @NotNull String group, boolean storeBuildingStacktrace) {
@@ -154,9 +154,6 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   @Override
   public Variable addVariable(@NotNull String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
-    if (mySegments != null) {
-      addVariableSegment(name);
-    }
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
     return variable;
