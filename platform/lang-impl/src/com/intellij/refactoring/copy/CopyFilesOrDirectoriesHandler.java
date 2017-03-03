@@ -319,9 +319,12 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                                   (ThrowableComputable<VirtualFile, IOException>)() -> subdirectory.getVirtualFile());
 
       PsiFile firstFile = null;
-      PsiElement[] children = directory.getChildren();
-      for (PsiElement child : children) {
-        PsiFileSystemItem item = (PsiFileSystemItem)child;
+      SmartPointerManager manager = SmartPointerManager.getInstance(directory.getProject());
+      SmartPsiElementPointer[] children = Arrays.stream(directory.getChildren())
+        .map(element -> manager.createSmartPsiElementPointer(element))
+        .toArray(SmartPsiElementPointer[]::new);
+      for (SmartPsiElementPointer child : children) {
+        PsiFileSystemItem item = (PsiFileSystemItem)child.getElement();
         PsiFile f = copyToDirectory(item, item.getName(), subdirectory, choice, title);
         if (firstFile == null) {
           firstFile = f;
