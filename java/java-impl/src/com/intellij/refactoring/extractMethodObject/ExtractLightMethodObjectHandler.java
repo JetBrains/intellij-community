@@ -302,7 +302,7 @@ public class ExtractLightMethodObjectHandler {
 
     @Override
     public boolean isMakeStatic() {
-      return false;
+      return myProcessor.getExtractProcessor().isCanBeStatic();
     }
 
     @Override
