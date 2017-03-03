@@ -39,7 +39,7 @@ class OffsetsInFile(val file: PsiFile, val offsets: OffsetMap) {
   }
 
   fun toFileCopy(copyFile: PsiFile): OffsetsInFile {
-    assert(copyFile.originalFile == file)
+    CompletionAssertions.assertCorrectOriginalFile("Given ", file, copyFile)
     assert(copyFile.viewProvider.document!!.textLength == file.viewProvider.document!!.textLength)
     return mapOffsets(copyFile) { it }
   }
