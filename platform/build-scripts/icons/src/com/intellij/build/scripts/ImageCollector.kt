@@ -18,7 +18,6 @@ package com.intellij.build.scripts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -74,7 +73,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       if (file.isDirectory) {
         val root = sourceRoot.file
         val childRobotData = robotData.fork(file, root)
-        val childPrefix = ContainerUtil.append(prefix, file.name)
+        val childPrefix = prefix + file.name
         processDirectory(file, sourceRoot, childRobotData, childPrefix)
       }
       else if (isImage(file, iconsOnly)) {
@@ -94,7 +93,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     if (skipped) return
 
     val iconPaths = result.computeIfAbsent(id, { ImagePaths(id, sourceRoot, used, deprecated) })
-    if (iconPaths.files[type] == null) {
+    if (type !in iconPaths.files) {
       iconPaths.files[type] = file
     }
     else {
@@ -103,7 +102,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
   }
 
   private fun upToProjectHome(dir: File): IconRobotsData {
-    if (dir == projectHome) return IconRobotsData()
+    if (FileUtil.filesEqual(dir, projectHome)) return IconRobotsData()
     val parent = dir.parentFile ?: return IconRobotsData()
     return upToProjectHome(parent).fork(parent, projectHome)
   }
@@ -126,37 +125,12 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       return childCommon
     }
     else if (isImage(file, iconsOnly)) {
-      return getCommonAncestor(common, file)
+      if (common == null) return file
+      return FileUtil.findAncestor(common, file)
     }
     else {
       return common
     }
-  }
-
-  private fun getCommonAncestor(file1: File?, file2: File?): File? {
-    if (file1 == null) return file2
-    if (file2 == null) return file1
-
-    val c1 = pathComponents(file1)
-    val c2 = pathComponents(file2)
-
-    val size = Math.min(c1.size, c2.size)
-    var cur: File? = null
-    for (i in 0..size - 1) {
-      if (c1[i] != c2[i]) break
-      cur = c1[i]
-    }
-    return cur
-  }
-
-  private fun pathComponents(file: File): List<File> {
-    val answer = ArrayList<File>()
-    var cur: File? = file
-    while (cur != null) {
-      answer.add(cur)
-      cur = cur.parentFile
-    }
-    return answer.reversed()
   }
 
   private inner class IconRobotsData(private val parent: IconRobotsData? = null) {

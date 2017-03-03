@@ -23,11 +23,9 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.BufferedReader
 import java.io.File
-import java.io.StringReader
 import java.util.*
-import java.util.function.Function
+import kotlin.comparisons.compareBy
 
 class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
   private var processedClasses = 0
@@ -81,8 +79,8 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     val text = generate(module, className, packageName, customLoad, copyrightComment)
     if (text != null) {
       processedClasses++
-      
-      if (!outFile.exists() || !sameLines(outFile.readText(), text)) {
+
+      if (!outFile.exists() || outFile.readText().lines() != text.lines()) {
         outFile.parentFile.mkdirs()
         outFile.writeText(text)
         println("Updated icons class: ${outFile.name}")
@@ -91,7 +89,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
   }
 
   fun printStats() {
-    println("")
+    println()
     println("Generated classes: $processedClasses. Processed icons: $processedIcons")
   }
 
@@ -112,18 +110,6 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
     if (i == -1) return ""
     val comment = text.substring(0, i)
     return if (comment.trim().endsWith("*/")) comment else ""
-  }
-
-  private fun sameLines(a: String, b: String): Boolean {
-    val ra = BufferedReader(StringReader(a))
-    val rb = BufferedReader(StringReader(b))
-
-    while (true) {
-      val la = ra.readLine()
-      val lb = rb.readLine()
-      if (la != lb) return false
-      if (la == null) return true
-    }
   }
 
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
@@ -302,5 +288,5 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
   }
 
   // legacy ordering
-  private val NAME_COMPARATOR: Comparator<String> = Comparator.comparing(Function<String, String> { it.toLowerCase() + "." })
+  private val NAME_COMPARATOR: Comparator<String> = compareBy { it.toLowerCase() + "." }
 }

@@ -47,7 +47,7 @@ class ImageSizeOptimizer(val projectHome: File) {
   }
 
   fun printStats() {
-    println("")
+    println()
     println("PNG size optimization: $optimizedTotal bytes in total")
   }
 

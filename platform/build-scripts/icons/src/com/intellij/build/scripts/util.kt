@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil
 import java.awt.*
 import java.io.File
 
-internal val File.children: List<File> get() = if (this.isDirectory) this.listFiles().toList() else emptyList()
+internal val File.children: List<File> get() = if (isDirectory) listFiles().toList() else emptyList()
 
 internal fun isImage(file: File, iconsOnly: Boolean): Boolean {
   if (!isImage(file.name)) return false
@@ -71,7 +71,7 @@ internal enum class ImageType(private val suffix: String) {
 
     fun stripSuffix(name: String): String {
       val type = fromName(name)
-      return StringUtil.trimEnd(name, type.suffix)
+      return name.removeSuffix(type.suffix)
     }
   }
 }

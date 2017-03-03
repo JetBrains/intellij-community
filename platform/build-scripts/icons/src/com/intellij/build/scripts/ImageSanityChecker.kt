@@ -38,17 +38,17 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
 
   private fun checkHaveRetinaVersion(images: List<ImagePaths>, module: JpsModule) {
     process(images, Severity.INFO, "image without retina version", module) { image ->
-      val hasRetina = image.files[RETINA] != null
-      val hasRetinaDarcula = image.files[RETINA_DARCULA] != null
+      val hasRetina = RETINA in image.files
+      val hasRetinaDarcula = RETINA_DARCULA in image.files
       return@process hasRetina || hasRetinaDarcula
     }
   }
 
   private fun checkHaveCompleteIconSet(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "image without complete set of additional icons", module) { image ->
-      val hasRetina = image.files[RETINA] != null
-      val hasDarcula = image.files[DARCULA] != null
-      val hasRetinaDarcula = image.files[RETINA_DARCULA] != null
+      val hasRetina = RETINA in image.files
+      val hasDarcula = DARCULA in image.files
+      val hasRetinaDarcula = RETINA_DARCULA in image.files
 
       if (hasRetinaDarcula) {
         return@process hasRetina && hasDarcula
@@ -109,14 +109,14 @@ class ImageSanityChecker(projectHome: File) : ImageSanityCheckerBase(projectHome
 
   fun printInfo() {
     if (infos.isNotEmpty()) {
-      println("")
+      println()
       println(infos)
     }
   }
 
   fun printWarnings() {
     if (warnings.isNotEmpty()) {
-      println("")
+      println()
       println(warnings)
     }
   }
