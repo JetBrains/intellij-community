@@ -43,7 +43,7 @@ public class TailRecursion {
     private TailRecursion getRootSO() {
         if (getParent() instanceof TailRecursion)
         {
-            return ((TailRecursion) getParent()).getRootSO();
+            return ((TailRecursion) getParent()).<warning descr="Tail recursive call 'getRootSO()'">getRootSO</warning>();
         }
         return this;
     }
@@ -62,7 +62,7 @@ class TailRecursion2
         if (something == null) {
             if (isDuplicate()) {
                 final TailRecursion2 recursion = getOriginal();
-                return recursion.getSomething();
+                return recursion.<warning descr="Tail recursive call 'getSomething()'">getSomething</warning>();
             } else {
                 something = new Something();
             }
@@ -74,7 +74,7 @@ class TailRecursion2
         if (!duplicate) {
             return something;
         } else {
-            return getOriginal().foo();
+            return getOriginal().<warning descr="Tail recursive call 'foo()'">foo</warning>();
         }
     }
 
@@ -86,4 +86,19 @@ class TailRecursion2
     }
 
     public static class Something {}
+}
+class IdeaBug2 {
+    interface Bug {
+        default boolean isThisBug(String name) {return this.getBugContainer().isThisBug(name);}
+        BugContainer getBugContainer();
+    }
+    interface BugContainer extends Bug {}
+    // not needed:
+    class MyBugContainer implements BugContainer {
+        @Override public boolean isThisBug(String name) {return false;}
+        @Override public BugContainer getBugContainer() {return this;}
+    }
+    class MyBug implements Bug {
+        @Override public BugContainer getBugContainer() {return new MyBugContainer();}
+    }
 }
