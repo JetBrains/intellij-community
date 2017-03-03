@@ -99,31 +99,46 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
       final ArrayReference resultArray = (ArrayReference)value;
       final ArrayReference info = (ArrayReference)resultArray.getValue(0);
       final Value streamResult = resultArray.getValue(1);
-      return new TracingResult() {
-        @Nullable
-        @Override
-        public Value getResult() {
-          return streamResult;
-        }
-
-        @NotNull
-        @Override
-        public List<TraceInfo> getTrace() {
-          final int callCount = chain.length();
-          final List<TraceInfo> result = new ArrayList<>(callCount);
-          for (int i = 0; i < callCount; i++) {
-            final String callName = chain.getCallName(i);
-            final Value trackingInfo = info.getValue(i);
-            final TraceInfo info = ResolverFactory.getInstance().getResolver(callName).resolve(trackingInfo);
-            result.add(info);
-          }
-
-          return result;
-        }
-      };
+      final List<TraceInfo> trace = getTrace(chain, info);
+      return new MyTracingResult(streamResult, trace);
     }
     else {
       throw new IllegalArgumentException("value in InvokeMethodProxy must be an ArrayReference");
+    }
+  }
+
+  private List<TraceInfo> getTrace(@NotNull StreamChain chain, @NotNull ArrayReference info) {
+    final int callCount = chain.length();
+    final List<TraceInfo> result = new ArrayList<>(callCount);
+    for (int i = 0; i < callCount; i++) {
+      final String callName = chain.getCallName(i);
+      final Value trackingInfo = info.getValue(i);
+      final TraceInfo traceInfo = ResolverFactory.getInstance().getResolver(callName).resolve(trackingInfo);
+      result.add(traceInfo);
+    }
+
+    return result;
+  }
+
+  private static class MyTracingResult implements TracingResult {
+    private final Value myStreamResult;
+    private final List<TraceInfo> myTrace;
+
+    MyTracingResult(Value streamResult, List<TraceInfo> trace) {
+      myStreamResult = streamResult;
+      myTrace = trace;
+    }
+
+    @Nullable
+    @Override
+    public Value getResult() {
+      return myStreamResult;
+    }
+
+    @NotNull
+    @Override
+    public List<TraceInfo> getTrace() {
+      return myTrace;
     }
   }
 }
