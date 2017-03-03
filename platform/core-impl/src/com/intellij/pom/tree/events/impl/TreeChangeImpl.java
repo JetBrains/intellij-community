@@ -17,7 +17,6 @@
 package com.intellij.pom.tree.events.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.tree.events.ChangeInfo;
@@ -37,7 +36,7 @@ public class TreeChangeImpl implements TreeChange {
   private final ASTNode myParent;
 
   @SuppressWarnings("FieldMayBeFinal")
-  private static boolean ourDoChecks = ApplicationManager.getApplication().isEAP();
+  private static boolean ourDoChecks = false;
 
   public TreeChangeImpl(ASTNode parent) {
     myParent = parent;
