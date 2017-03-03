@@ -247,15 +247,15 @@ class PyDB:
         self.mpl_hooks_in_debug_console = False
         self.mpl_modules_for_patching = {}
 
+        # this dict is used for frame evaluation, it holds thread_id -> set of frames
+        self.disable_tracing_after_exit_frames = {}
+
         self._filename_to_not_in_scope = {}
         self.first_breakpoint_reached = False
         self.is_filter_enabled = pydevd_utils.is_filter_enabled()
         self.is_filter_libraries = pydevd_utils.is_filter_libraries()
         self.show_return_values = False
         self.remove_return_values_flag = False
-
-        # this dict is used for frame evaluation, it holds thread_id -> set of frames
-        self.disable_tracing_after_exit_frames = {}
 
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
