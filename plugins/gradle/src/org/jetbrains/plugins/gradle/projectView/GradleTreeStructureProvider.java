@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -66,11 +67,11 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
           Module module = ((ProjectViewModuleNode)child).getValue();
           if (!showUnderModuleGroup(module)) continue;
 
-          GradleProjectViewModuleNode sourceSetNode = getGradleSourceSetNode(project, (ProjectViewModuleNode)child, settings);
+          GradleProjectViewModuleNode sourceSetNode = getGradleModuleNode(project, (ProjectViewModuleNode)child, settings);
           child = sourceSetNode != null ? sourceSetNode : child;
         }
         else if (child instanceof PsiDirectoryNode) {
-          GradleSourceSetDirectoryNode sourceSetNode = getGradleSourceSetNode(project, (PsiDirectoryNode)child, settings);
+          GradleModuleDirectoryNode sourceSetNode = getGradleModuleNode(project, (PsiDirectoryNode)child, settings);
           if (sourceSetNode != null && !showUnderModuleGroup(sourceSetNode.myModule)) continue;
           child = sourceSetNode != null ? sourceSetNode : child;
         }
@@ -102,7 +103,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
       Collection<AbstractTreeNode> modifiedChildren = ContainerUtil.newSmartList();
       for (AbstractTreeNode child : children) {
         if (child instanceof PsiDirectoryNode) {
-          GradleSourceSetDirectoryNode sourceSetNode = getGradleSourceSetNode(project, (PsiDirectoryNode)child, settings);
+          GradleModuleDirectoryNode sourceSetNode = getGradleModuleNode(project, (PsiDirectoryNode)child, settings);
           child = sourceSetNode != null ? sourceSetNode : child;
         }
         modifiedChildren.add(child);
@@ -172,19 +173,19 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
 
 
   @Nullable
-  private static GradleProjectViewModuleNode getGradleSourceSetNode(@NotNull Project project,
-                                                                    @NotNull ProjectViewModuleNode moduleNode,
-                                                                    ViewSettings settings) {
+  private static GradleProjectViewModuleNode getGradleModuleNode(@NotNull Project project,
+                                                                 @NotNull ProjectViewModuleNode moduleNode,
+                                                                 ViewSettings settings) {
     Module module = moduleNode.getValue();
-    String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
-    if (sourceSetName == null) return null;
-    return new GradleProjectViewModuleNode(project, module, settings);
+    final String moduleShortName = getGradleModuleShortName(module);
+    if (moduleShortName == null) return null;
+    return new GradleProjectViewModuleNode(project, module, settings, moduleShortName);
   }
 
   @Nullable
-  private static GradleSourceSetDirectoryNode getGradleSourceSetNode(@NotNull Project project,
-                                                                     @NotNull PsiDirectoryNode directoryNode,
-                                                                     ViewSettings settings) {
+  private static GradleModuleDirectoryNode getGradleModuleNode(@NotNull Project project,
+                                                               @NotNull PsiDirectoryNode directoryNode,
+                                                               ViewSettings settings) {
 
     PsiDirectory psiDirectory = directoryNode.getValue();
     if (psiDirectory == null) return null;
@@ -194,23 +195,37 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = fileIndex.getModuleForFile(virtualFile);
-    String sourceSetName = GradleProjectResolverUtil.getSourceSetName(module);
-    if (sourceSetName == null) return null;
-    return new GradleSourceSetDirectoryNode(project, psiDirectory, settings, module, sourceSetName, directoryNode.getFilter());
+    final String moduleShortName = getGradleModuleShortName(module);
+    if (moduleShortName == null) return null;
+    return new GradleModuleDirectoryNode(project, psiDirectory, settings, module, moduleShortName, directoryNode.getFilter());
   }
 
-  private static class GradleSourceSetDirectoryNode extends PsiDirectoryNode {
-    private String mySourceSetName;
+  @Nullable
+  private static String getGradleModuleShortName(Module module) {
+    final String moduleShortName;
+    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled()) {
+      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
+      moduleShortName = StringUtil.getShortName(module.getName());
+    }
+    else {
+      moduleShortName = GradleProjectResolverUtil.getSourceSetName(module);
+    }
+    return moduleShortName;
+  }
+
+
+  private static class GradleModuleDirectoryNode extends PsiDirectoryNode {
+    private String myModuleShortName;
     private Module myModule;
 
-    public GradleSourceSetDirectoryNode(Project project,
-                                        PsiDirectory psiDirectory,
-                                        ViewSettings settings,
-                                        Module module,
-                                        String sourceSetName,
-                                        PsiFileSystemItemFilter filter) {
+    public GradleModuleDirectoryNode(Project project,
+                                     PsiDirectory psiDirectory,
+                                     ViewSettings settings,
+                                     Module module,
+                                     String moduleShortName,
+                                     PsiFileSystemItemFilter filter) {
       super(project, psiDirectory, settings, filter);
-      mySourceSetName = sourceSetName;
+      myModuleShortName = moduleShortName;
       myModule = module;
     }
 
@@ -225,28 +240,27 @@ public class GradleTreeStructureProvider implements TreeStructureProvider {
       PsiDirectory psiDirectory = getValue();
       assert psiDirectory != null;
       VirtualFile directoryFile = psiDirectory.getVirtualFile();
-      if (StringUtil.isNotEmpty(mySourceSetName) &&
-          !StringUtil.equalsIgnoreCase(mySourceSetName.replace("-", ""), directoryFile.getName().replace("-", ""))) {
-        data.addText("[" + mySourceSetName + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      if (StringUtil.isNotEmpty(myModuleShortName) &&
+          !StringUtil.equalsIgnoreCase(myModuleShortName.replace("-", ""), directoryFile.getName().replace("-", ""))) {
+        data.addText("[" + myModuleShortName + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
     }
   }
 
   private static class GradleProjectViewModuleNode extends ProjectViewModuleNode {
+    @NotNull
+    private final String myModuleShortName;
 
-
-    public GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
+    public GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {
       super(project, value, viewSettings);
+      myModuleShortName = moduleShortName;
     }
 
     @Override
     public void update(PresentationData presentation) {
       super.update(presentation);
-      String sourceSetName = GradleProjectResolverUtil.getSourceSetName(getValue());
-      if (sourceSetName != null) {
-        presentation.setPresentableText(sourceSetName);
-        presentation.addText(sourceSetName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      }
+      presentation.setPresentableText(myModuleShortName);
+      presentation.addText(myModuleShortName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
 
     @Override
