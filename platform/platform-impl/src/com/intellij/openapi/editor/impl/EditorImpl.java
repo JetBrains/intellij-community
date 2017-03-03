@@ -245,7 +245,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int myCaretUpdateVShift;
 
   @Nullable
-  private Project myProject;
+  private final Project myProject;
   private long myMouseSelectionChangeTimestamp;
   private int mySavedCaretOffsetForDNDUndoHack;
   private final List<FocusChangeListener> myFocusListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -312,7 +312,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myDocumentChangeInProgress;
   private boolean myErrorStripeNeedsRepaint;
-  
+
   private String myContextMenuGroupId = IdeActions.GROUP_BASIC_EDITOR_POPUP;
 
   private boolean myUseEditorAntialiasing = true;
@@ -373,13 +373,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter), 
+        attributesChanged(highlighter, areRenderersInvolved(highlighter),
                           EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        attributesChanged(highlighter, areRenderersInvolved(highlighter), 
+        attributesChanged(highlighter, areRenderersInvolved(highlighter),
                           EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes()));
       }
 
@@ -390,15 +390,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (renderersChanged) {
           updateGutterSize();
         }
-        
+
         boolean errorStripeNeedsRepaint = renderersChanged || highlighter.getErrorStripeMarkColor() != null;
         if (myDocumentChangeInProgress) {
-          // postpone repaint request, as folding model can be in inconsistent state and so coordinate 
+          // postpone repaint request, as folding model can be in inconsistent state and so coordinate
           // conversions might give incorrect results
           myErrorStripeNeedsRepaint |= errorStripeNeedsRepaint;
           return;
         }
-        
+
         int textLength = myDocument.getTextLength();
 
         int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
@@ -850,7 +850,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusListeners.clear();
     myMouseListeners.clear();
     myMouseMotionListeners.clear();
-    
+
     myEditorComponent.removeMouseListener(myMouseListener);
     myGutterComponent.removeMouseListener(myMouseListener);
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
@@ -861,7 +861,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     Disposer.dispose(myDisposable);
     myVerticalScrollBar.setUI(null); // clear error panel's cached image
-    myProject = null; // don't leak project
   }
 
   private void clearCaretThread() {
