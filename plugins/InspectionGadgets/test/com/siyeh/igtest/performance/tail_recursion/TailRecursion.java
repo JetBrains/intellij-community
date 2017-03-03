@@ -3,13 +3,13 @@ package com.siyeh.igtest.performance;
 import java.awt.Container;
 import java.io.IOException;
 
-public class TailRecursionInspection {
-    public TailRecursionInspection() {
+public class TailRecursion {
+    public TailRecursion() {
     }
 
     public static int foo() throws IOException
     {
-        return foo();
+        return <warning descr="Tail recursive call 'foo()'">foo</warning>();
     }
 
     public int factorial(int val) {
@@ -20,7 +20,7 @@ public class TailRecursionInspection {
         if (val == 1) {
             return runningVal;
         } else {
-            return factorial(val - 1, runningVal * val);
+            return <warning descr="Tail recursive call 'factorial()'">factorial</warning>(val - 1, runningVal * val);
         }
     }
 
@@ -37,13 +37,13 @@ public class TailRecursionInspection {
             return true;
         }
 
-        return hasParent(child.getParent(), parent);
+        return <warning descr="Tail recursive call 'hasParent()'">hasParent</warning>(child.getParent(), parent);
     }
 
-    private TailRecursionInspection getRootSO() {
-        if (getParent() instanceof TailRecursionInspection)
+    private TailRecursion getRootSO() {
+        if (getParent() instanceof TailRecursion)
         {
-            return ((TailRecursionInspection) getParent()).getRootSO();
+            return ((TailRecursion) getParent()).getRootSO();
         }
         return this;
     }
@@ -52,16 +52,16 @@ public class TailRecursionInspection {
         return null;
     }
 }
-class TailRecursion
+class TailRecursion2
 {
     private boolean duplicate;
     private Something something;
-    private TailRecursion original;
+    private TailRecursion2 original;
 
     public Something getSomething() {
         if (something == null) {
             if (isDuplicate()) {
-                final TailRecursion recursion = getOriginal();
+                final TailRecursion2 recursion = getOriginal();
                 return recursion.getSomething();
             } else {
                 something = new Something();
@@ -78,7 +78,7 @@ class TailRecursion
         }
     }
 
-    private TailRecursion getOriginal() {
+    private TailRecursion2 getOriginal() {
         return original;
     }
     private boolean isDuplicate() {
