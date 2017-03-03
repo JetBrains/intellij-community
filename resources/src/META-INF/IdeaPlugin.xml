@@ -697,9 +697,12 @@
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsAndHashcode" bundle="messages.InspectionsBundle" key="inspection.equals.hashcode.display.name"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode"/>
+    <!--
+    Redundant in Android Studio: More accurate check in lint (the API check which uses SDK-specific API databases)
     <localInspection groupPath="Java" language="JAVA" shortName="Since15" bundle="messages.InspectionsBundle" key="inspection.1.5.display.name"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.java15api.Java15APIUsageInspection"/>
+     -->
     <localInspection groupPath="Java" language="JAVA" shortName="Dependency" displayName="Illegal package dependencies" groupKey="group.names.dependency.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.dependencyViolation.DependencyInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FieldCanBeLocal" bundle="messages.InspectionsBundle" key="inspection.field.can.be.local.display.name"
