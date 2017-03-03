@@ -1,5 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
+import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,17 +15,16 @@ public class HashMapVariableImpl extends VariableImpl {
   }
 
   public String convertToArray(@NotNull String arrayName) {
-    final StringBuilder builder = new StringBuilder();
-    final String newLine = System.lineSeparator();
-    builder.append("final Object[] ").append(arrayName).append(String.format(" = new Object[%s.size()];", getName())).append(System.lineSeparator());
-    builder.append("{").append(newLine);
-    builder.append("int i = 0;").append(newLine);
-    builder.append("for (final ").append(myFromType).append(String.format(" key : %s.keySet()) {", getName())).append(newLine);
-    builder.append("final Object value = ").append(String.format("%s.get(key);", getName())).append(newLine);
-    builder.append(String.format("%s[i] = ", arrayName)).append("new Object[] { key, value };").append(newLine);
-    builder.append("  }").append(newLine);
-    builder.append("}").append(newLine);
+    final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
 
-    return builder.toString();
+    return "final Object[] " + arrayName + String.format(" = new Object[%s.size()];", getName()) +
+           System.lineSeparator() +
+           "{" + newLine +
+           "int i = 0;" + newLine +
+           "for (final " + myFromType + String.format(" key : %s.keySet()) {", getName()) + newLine +
+           "final Object value = " + String.format("%s.get(key);", getName()) + newLine +
+           String.format("%s[i++] = ", arrayName) + "new Object[] { key, value };" + newLine +
+           "  }" + newLine +
+           "}" + newLine;
   }
 }

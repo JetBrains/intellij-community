@@ -1,5 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
+import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import com.intellij.debugger.streams.wrapper.MethodCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ public class PeekTracerHandler extends HandlerBase {
   public String prepareResult() {
     final String beforeConversion = myBeforeVariable.convertToArray("beforeArray");
     final String afterConversion = myAfterVariable.convertToArray("afterArray");
-    return beforeConversion + System.lineSeparator() + afterConversion;
+    return beforeConversion + EvaluateExpressionTracerBase.LINE_SEPARATOR + afterConversion;
   }
 
   @NotNull

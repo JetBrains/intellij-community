@@ -19,6 +19,7 @@ import com.intellij.debugger.streams.resolve.ResolvedCall;
 import com.intellij.debugger.streams.resolve.ResolvedCallImpl;
 import com.intellij.debugger.streams.resolve.ResolverFactoryImpl;
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
+import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
@@ -131,7 +132,7 @@ public class StreamChain {
       final MethodCall call = iterator.next();
       builder.append(call.getName()).append(call.getArguments());
       if (iterator.hasNext()) {
-        builder.append(System.lineSeparator()).append(".");
+        builder.append(EvaluateExpressionTracerBase.LINE_SEPARATOR).append(".");
       }
     }
 

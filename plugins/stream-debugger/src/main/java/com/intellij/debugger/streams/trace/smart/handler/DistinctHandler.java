@@ -1,5 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
+import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import com.intellij.debugger.streams.wrapper.MethodCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public class DistinctHandler extends HandlerBase {
   public String prepareResult() {
     final String peekPrepare = myPeekTracer.prepareResult();
     final String resolve2Array = myResolveMapVariable.convertToArray("resolveArray");
-    final String peekResult = "final Object peekResult = " + myPeekTracer.getResultExpression() + System.lineSeparator();
+    final String peekResult = "final Object peekResult = " + myPeekTracer.getResultExpression() + EvaluateExpressionTracerBase.LINE_SEPARATOR;
     return peekPrepare + resolve2Array + peekResult;
   }
 
@@ -66,7 +67,7 @@ public class DistinctHandler extends HandlerBase {
 
   @NotNull
   private String createResolveLambda() {
-    final String newLine = System.lineSeparator();
+    final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
     final String storeMap = myStoreMapVariable.getName();
     final String resolveMap = myResolveMapVariable.getName();
 
