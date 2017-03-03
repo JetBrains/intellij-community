@@ -185,7 +185,7 @@ class CompletionAssertions {
 
   static class WatchingInsertionContext extends InsertionContext {
     private RangeMarkerEx tailWatcher;
-    String invalidateTrace;
+    Throwable invalidateTrace;
     DocumentEvent killer;
     private RangeMarkerSpy spy;
 
@@ -217,7 +217,7 @@ class CompletionAssertions {
           }
 
           if (invalidateTrace == null) {
-            invalidateTrace = DebugUtil.currentStackTrace();
+            invalidateTrace = new Throwable();
             killer = e;
           }
         }
@@ -235,7 +235,7 @@ class CompletionAssertions {
     @Override
     public int getTailOffset() {
       if (!getOffsetMap().containsOffset(TAIL_OFFSET) && invalidateTrace != null) {
-        throw new RuntimeExceptionWithAttachments("Tail offset invalid", new Attachment("invalidated.trace", invalidateTrace));
+        throw new RuntimeExceptionWithAttachments("Tail offset invalid", new Attachment("invalidated", invalidateTrace));
       }
 
       int offset = super.getTailOffset();
