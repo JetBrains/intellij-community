@@ -653,7 +653,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
     int existingGap = myCbCaseSensitive.getInsets().left + myCbCaseSensitive.getInsets().right;
     int additionalGap = Math.max(0, 16 - existingGap);
-    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 2, gapx " + additionalGap));
+    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 3, gapx " + additionalGap));
     add(myTitleLabel, "gapleft 4, sx 2, growx, pushx, growy");
     add(myCbCaseSensitive);
     add(myCbPreserveCase);
