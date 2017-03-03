@@ -113,6 +113,8 @@ public final class NavigationUtil {
                                                                   @Nullable final String title,
                                                                   @NotNull final PsiElementProcessor<T> processor,
                                                                   @Nullable final T selection) {
+    assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
+
     final JList list = new JBList(elements);
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
     list.setCellRenderer(renderer);
