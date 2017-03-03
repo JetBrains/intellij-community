@@ -75,7 +75,12 @@ public class XDebuggerTestUtil {
   }
 
   public static void toggleBreakpoint(Project project, VirtualFile file, int line) {
-    XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
+    new WriteAction() {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
+      }
+    }.execute();
   }
 
   public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
