@@ -110,17 +110,21 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAUL_WIDTH;
-    setSize(JBUI.size(width, DEFAULT_HEIGHT));
+    getRootPane().setPreferredSize(JBUI.size(width, DEFAULT_HEIGHT));
     setResizable(false);
-    //int x = bounds.x + (bounds.width - getWidth()) / 2;
-    //int y = bounds.y + (bounds.height - getHeight()) / 2;
-    Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
-    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
-    setLocation(new Point(
-      screenBounds.x + (screenBounds.width - getWidth()) / 2,
-      screenBounds.y + (screenBounds.height - getHeight()) / 3
-    ));
 
+    addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentShown(ComponentEvent e) {
+        pack();
+        Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
+        Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+        setLocation(new Point(
+          screenBounds.x + (screenBounds.width - getWidth()) / 2,
+          screenBounds.y + (screenBounds.height - getHeight()) / 3
+        ));
+      }
+    });
     //setLocation(x, y);
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
@@ -947,7 +951,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return button;
     }
     JLabel back = new JLabel(AllIcons.Actions.Back);
-    back.setBorder(JBUI.Borders.empty(3, 7, 10, 7));
+    back.setBorder(JBUI.Borders.empty(3, 7, 3, 7));
     back.setHorizontalAlignment(SwingConstants.LEFT);
     new ClickListener() {
       @Override
