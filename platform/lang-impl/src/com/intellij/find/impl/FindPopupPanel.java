@@ -265,10 +265,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myCbWholeWordsOnly.addItemListener(liveResultsPreviewUpdateListener);
     myCbRegularExpressions = new StateRestoringCheckBox(FindBundle.message("find.popup.regex"));
     myCbRegularExpressions.addItemListener(liveResultsPreviewUpdateListener);
-    myCbFileFilter = new StateRestoringCheckBox("File mask: ");
-    myCbFileFilter.setMnemonic('a');
-    myCbFileFilter.setToolTipText("<html>Use file m<u>a</u>sk(s)");
-    myCbFileFilter.setBorder(null);
+    myCbFileFilter = new StateRestoringCheckBox(FindBundle.message("find.popup.filemask"));
     myCbFileFilter.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -318,7 +315,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext()) == null) return;
-        
+
         ListPopup listPopup =
           JBPopupFactory.getInstance().createActionGroupPopup(null, switchContextGroup, e.getDataContext(), false, null, 10);
         listPopup.showUnderneathOf(myFilterContextButton);
@@ -431,8 +428,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         myReplaceComponent.setRows(Math.max(1, Math.min(3, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
 
         if (myBalloon == null) return;
-
-        scheduleResultsUpdate();
+        if (e.getDocument() == mySearchComponent.getDocument()) {
+          scheduleResultsUpdate();
+        }
       }
     };
     mySearchComponent.getDocument().addDocumentListener(documentAdapter);
@@ -668,7 +666,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
     add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad 0 -4 0 4");
     add(bottomPanel, "pushx, growx, dock south, sx 10, pad 0 -4 0 4");
-    
+
     MnemonicHelper.init(this);
     setFocusCycleRoot(true);
   }
@@ -796,10 +794,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       return Scope.PROJECT;
     } else
     if (model.getDirectoryName() != null) {
-       return Scope.DIRECTORY;
+      return Scope.DIRECTORY;
     } else
     if (model.getModuleName() != null) {
-       return Scope.MODULE;
+      return Scope.MODULE;
     }
     return Scope.PROJECT;
   }
