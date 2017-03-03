@@ -55,7 +55,11 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
         final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
         final String name = field.getName();
         if (name == null || jvmOwnerName == null) return null;
-        return new LightRef.JavaLightFieldRef(names.enumerate(jvmOwnerName), names.enumerate(name));
+        final int ownerId = names.tryEnumerate(jvmOwnerName);
+        if (ownerId == 0) return null;
+        final int nameId = names.tryEnumerate(name);
+        if (nameId == 0) return null;
+        return new LightRef.JavaLightFieldRef(ownerId, nameId);
       }
       else if (element instanceof PsiMethod) {
         final PsiClass aClass = ((PsiMethod)element).getContainingClass();
@@ -65,12 +69,19 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
         final PsiMethod method = (PsiMethod)element;
         final String name = method.isConstructor() ? "<init>" : method.getName();
         final int parametersCount = method.getParameterList().getParametersCount();
-        return new LightRef.JavaLightMethodRef(names.enumerate(jvmOwnerName), names.enumerate(name), parametersCount);
+        final int ownerId = names.tryEnumerate(jvmOwnerName);
+        if (ownerId == 0) return null;
+        final int nameId = names.tryEnumerate(name);
+        if (nameId == 0) return null;
+        return new LightRef.JavaLightMethodRef(ownerId, nameId, parametersCount);
       }
       else if (element instanceof PsiClass) {
         final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)element);
         if (jvmClassName != null) {
-          return new LightRef.JavaLightClassRef(names.enumerate(jvmClassName));
+          final int nameId = names.tryEnumerate(jvmClassName);
+          if (nameId != 0) {
+            return new LightRef.JavaLightClassRef(nameId);
+          }
         }
       }
     }
@@ -92,7 +103,10 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
       String qName = ReadAction.compute(() -> c.getQualifiedName());
       if (qName == null) return true;
       try {
-        overridden.add(baseRef.override(names.enumerate(qName)));
+        final int nameId = names.tryEnumerate(qName);
+        if (nameId != 0) {
+          overridden.add(baseRef.override(nameId));
+        }
       }
       catch (IOException e) {
         exception[0] = e;
