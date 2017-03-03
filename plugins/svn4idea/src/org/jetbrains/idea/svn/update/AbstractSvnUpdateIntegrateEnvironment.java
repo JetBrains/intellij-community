@@ -95,7 +95,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
         .showErrorDialog(myVcs.getProject(), SvnBundle.message("message.text.update.no.directories.found"),
                          SvnBundle.message("messate.text.update.error")), null, myVcs.getProject());
-      return new UpdateSessionAdapter(Collections.<VcsException>emptyList(), true);
+      return new UpdateSessionAdapter(Collections.emptyList(), true);
     }
 
     return new MyUpdateSessionAdapter(contentRoots, updatedFiles, exceptions);

@@ -86,7 +86,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   private void addGroup(final ProxyGroup template) {
     final ProxyGroup group;
     if (template == null) {
-      group = new ProxyGroup(getNewName(), "", ContainerUtil.<String, String>newHashMap());
+      group = new ProxyGroup(getNewName(), "", ContainerUtil.newHashMap());
     } else {
       group = new ProxyGroup(getNewName(), template.getPatterns(), template.getProperties());
     }
@@ -256,7 +256,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     myRoot.removeAllChildren();
 
     DefaultProxyGroup defaultProxyGroup = myManager.getDefaultGroup();
-    defaultProxyGroup = (defaultProxyGroup == null) ? new DefaultProxyGroup(Collections.<String, String>emptyMap()) : defaultProxyGroup;
+    defaultProxyGroup = (defaultProxyGroup == null) ? new DefaultProxyGroup(Collections.emptyMap()) : defaultProxyGroup;
     final Map<String, ProxyGroup> userGroups = myManager.getGroups();
 
     myRoot.add(createNodeForObject(defaultProxyGroup));

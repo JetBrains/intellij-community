@@ -440,13 +440,13 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     public List<DiffContent> getContents() {
-      return ContainerUtil.<DiffContent>list(myContent1, myContent2);
+      return ContainerUtil.list(myContent1, myContent2);
     }
 
     @NotNull
     @Override
     public List<String> getContentTitles() {
-      return myEmbedded ? ContainerUtil.<String>list(null, null) : myRequest.getContentTitles();
+      return myEmbedded ? ContainerUtil.list(null, null) : myRequest.getContentTitles();
     }
 
     @Nullable

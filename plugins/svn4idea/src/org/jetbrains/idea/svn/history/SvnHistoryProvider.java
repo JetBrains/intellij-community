@@ -243,7 +243,7 @@ public class SvnHistoryProvider
     }
 
     final SvnHistorySession historySession =
-      new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
+      new SvnHistorySession(myVcs, Collections.emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
                             ! path.isNonLocal());
 
     final Ref<Boolean> sessionReported = new Ref<>();

@@ -335,7 +335,7 @@ public class BranchInfo {
       result = SvnMergeInfoCache.MergeCheckResult.getInstance(isAskedRevisionMerged);
     }
     else {
-      myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
+      myPathMergedMap.put(pathWithRevisionNumber, Collections.emptySet());
       result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
 

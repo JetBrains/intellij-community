@@ -103,7 +103,7 @@ public class NewRootBunch {
   }
 
   public void reloadBranches(@NotNull VirtualFile root, @Nullable SvnBranchConfigurationNew prev, @NotNull SvnBranchConfigurationNew next) {
-    final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<>(prev.getBranchUrls());
+    final Set<String> oldUrls = (prev == null) ? Collections.emptySet() : new HashSet<>(prev.getBranchUrls());
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     if (!vcs.isVcsBackgroundOperationsAllowed(root)) return;
 

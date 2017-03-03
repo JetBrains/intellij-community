@@ -118,7 +118,7 @@ public class SvnTreeConflictResolver {
       updateFile(ioFile, SVNRevision.HEAD);
       FileUtil.delete(ioFile);
     } else {
-      Set<File> usedToBeAdded = myPath.isDirectory() ? getDescendantsWithAddedStatus(ioFile) : ContainerUtil.<File>newHashSet();
+      Set<File> usedToBeAdded = myPath.isDirectory() ? getDescendantsWithAddedStatus(ioFile) : ContainerUtil.newHashSet();
 
       revert(ioFile);
       for (File wasAdded : usedToBeAdded) {
