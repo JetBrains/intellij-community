@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.build.scripts
+package org.jetbrains.intellij.build.images
 
-import com.intellij.build.scripts.ImageSanityCheckerBase.Severity.*
-import com.intellij.build.scripts.ImageType.*
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.intellij.build.images.ImageSanityCheckerBase.Severity.*
+import org.jetbrains.intellij.build.images.ImageType.*
 import org.jetbrains.jps.model.module.JpsModule
 import java.awt.Dimension
 import java.io.File
