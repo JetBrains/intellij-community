@@ -19,11 +19,9 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
@@ -36,8 +34,6 @@ import java.util.Map;
  * @author cdr
 */
 class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
-  private LeafElement prevElement;
-  private String prevElementTail;
   private int shredNo;
   private String hostText;
   private TextRange rangeInHost;
@@ -59,19 +55,10 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
 
     StringBuilder leafEncodedText = constructTextFromHostPSI(leafRange.getStartOffset(), leafRange.getEndOffset());
 
-    if (leaf.getElementType() == TokenType.WHITE_SPACE && prevElementTail != null) {
-      // optimization: put all garbage into whitespace
-      leafEncodedText.insert(0, prevElementTail);
-      newTexts.remove(prevElement);
-      storeUnescapedTextFor(prevElement, null);
-    }
     if (!Comparing.equal(leafText, leafEncodedText)) {
       newTexts.put(leaf, leafEncodedText.toString());
       storeUnescapedTextFor(leaf, leafText);
     }
-    prevElementTail = StringUtil.startsWith(leafEncodedText, leafText) && leafEncodedText.length() != leafText.length() ?
-                      leafEncodedText.substring(leafText.length()) : null;
-    prevElement = leaf;
   }
 
   private StringBuilder constructTextFromHostPSI(int startOffset, int endOffset) {

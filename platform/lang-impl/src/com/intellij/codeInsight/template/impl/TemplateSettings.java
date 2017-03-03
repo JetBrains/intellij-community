@@ -430,7 +430,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   @NotNull
   private static TemplateImpl createTemplate(@NotNull String key, String string, @NotNull String group, String description, @Nullable String shortcut, String id) {
-    TemplateImpl template = new TemplateImpl(key, string, group);
+    TemplateImpl template = new TemplateImpl(key, string, group, false);
     template.setId(id);
     template.setDescription(description);
     if (TAB.equals(shortcut)) {

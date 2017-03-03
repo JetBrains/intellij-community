@@ -27,12 +27,10 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nls;
@@ -48,7 +46,7 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
     if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag)) {
       return;
     }
-    PsiElement child = tag.getLastChild();
+    final PsiElement child = tag.getLastChild();
     if (child instanceof PsiErrorElement) {
       return;
     }
@@ -57,29 +55,12 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
       return;
     }
     final String tagName = tagNameElement.getText();
-    if (HtmlUtil.isSingleHtmlTag(tagName)) {
+    if (HtmlUtil.isSingleHtmlTag(tagName) || XmlTagUtil.getEndTagNameElement(tag) != null) {
       return;
-    }
-    if (isToken(child, XmlTokenType.XML_TAG_END)) {
-      child = child.getPrevSibling();
-      if (isToken(child, XmlTokenType.XML_NAME) && tagName.equals(child.getText())) {
-        child = child.getPrevSibling();
-        if (isToken(child, XmlTokenType.XML_END_TAG_START)) {
-          return;
-        }
-      }
     }
 
     holder.registerProblem(tagNameElement, XmlErrorMessages.message("element.missing.end.tag"),
                            new MissingClosingTagFix(tagName));
-  }
-
-  private static boolean isToken(PsiElement element, IElementType tokenType) {
-    if (!(element instanceof XmlToken)) {
-      return false;
-    }
-    final XmlToken token = (XmlToken)element;
-    return token.getTokenType() == tokenType;
   }
 
   private static class MissingClosingTagFix implements LocalQuickFix {

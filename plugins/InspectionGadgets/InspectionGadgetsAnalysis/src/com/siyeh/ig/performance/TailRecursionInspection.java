@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NonNls;
@@ -176,7 +177,7 @@ public class TailRecursionInspection extends BaseInspection {
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (qualifier == null) {
+        if (qualifier == null || qualifier instanceof PsiThisExpression) {
           return;
         }
         final PsiMethod method = expression.resolveMethod();
@@ -409,6 +410,7 @@ public class TailRecursionInspection extends BaseInspection {
         return;
       }
       final PsiMethodCallExpression returnCall = (PsiMethodCallExpression)returnValue;
+      final PsiReferenceExpression methodExpression = returnCall.getMethodExpression();
       final PsiMethod containingMethod =
         PsiTreeUtil.getParentOfType(statement, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (containingMethod == null) {
@@ -416,6 +418,10 @@ public class TailRecursionInspection extends BaseInspection {
       }
       final JavaResolveResult resolveResult = returnCall.resolveMethodGenerics();
       if (!resolveResult.isValidResult() || !containingMethod.equals(resolveResult.getElement())) {
+        return;
+      }
+      final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
+      if (qualifier != null && !(qualifier instanceof PsiThisExpression) && MethodUtils.isOverridden(containingMethod)) {
         return;
       }
       registerMethodCallError(returnCall, containingMethod);

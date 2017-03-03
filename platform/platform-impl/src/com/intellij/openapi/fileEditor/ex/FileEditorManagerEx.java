@@ -39,14 +39,14 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class FileEditorManagerEx extends FileEditorManager implements BusyObject {
-  protected final List<EditorDataProvider> myDataProviders = new ArrayList<>();
+  private final List<EditorDataProvider> myDataProviders = new ArrayList<>();
 
   public static FileEditorManagerEx getInstanceEx(@NotNull Project project) {
     return (FileEditorManagerEx)getInstance(project);
   }
 
   /**
-   * @return <code>JComponent</code> which represent the place where all editors are located
+   * @return {@code JComponent} which represent the place where all editors are located
    */
   public abstract JComponent getComponent();
 
@@ -74,7 +74,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract void updateFilePresentation(@NotNull VirtualFile file);
 
   /**
-   * Synchronous version of {@link #getActiveWindow()}. Will return <code>null</code> if invoked not from EDT.
+   * Synchronous version of {@link #getActiveWindow()}. Will return {@code null} if invoked not from EDT.
    * @return current window in splitters
    */
   public abstract EditorWindow getCurrentWindow();
@@ -106,8 +106,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract EditorWindow[] getWindows();
 
   /**
-   * @return arrays of all files (including <code>file</code> itself) that belong
-   * to the same tabbed container. The method returns empty array if <code>file</code>
+   * @return arrays of all files (including {@code file} itself) that belong
+   * to the same tabbed container. The method returns empty array if {@code file}
    * is not open. The returned files have the same order as they have in the
    * tabbed container.
    */
@@ -186,12 +186,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public void registerExtraEditorDataProvider(@NotNull final EditorDataProvider provider, Disposable parentDisposable) {
     myDataProviders.add(provider);
     if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          myDataProviders.remove(provider);
-        }
-      });
+      Disposer.register(parentDisposable, () -> myDataProviders.remove(provider));
     }
   }
 

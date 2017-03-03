@@ -169,7 +169,6 @@
   <action id="context.load"/>
   <action id="org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction"/>
   <action id="tasks.switch"/>
-  <action id="tasks.switch.toolbar"/>
 </keymap>
 
 

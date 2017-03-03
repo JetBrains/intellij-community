@@ -125,13 +125,13 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
       document.insertString(qualifierContext.getTailOffset(), space + ")");
     }
 
-    final char atTail = document.getCharsSequence().charAt(context.getTailOffset() - 1);
+    char atTail = document.getCharsSequence().charAt(qualifierContext.getTailOffset());
     if (atTail != ';') {
       return;
     }
-    document.replaceString(context.getTailOffset() - 1, context.getTailOffset(), ".");
+    document.replaceString(qualifierContext.getTailOffset(), qualifierContext.getTailOffset() + 1, ".");
 
-    CompletionUtil.emulateInsertion(getDelegate(), context.getTailOffset(), context);
+    CompletionUtil.emulateInsertion(getDelegate(), qualifierContext.getTailOffset() + 1, context);
     context.commitDocument();
 
     int formatStart = context.getOffset(oldStart);

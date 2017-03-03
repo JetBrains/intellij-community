@@ -308,7 +308,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           runnable.run();
         }
         catch (ProcessCanceledException e) {
-          LOG.error("Task canceled: " + runnable, new Attachment("pce.trace", ExceptionUtil.getThrowableText(e)));
+          LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
         }
         catch (Throwable e) {
           LOG.error("Error executing task " + runnable, e);

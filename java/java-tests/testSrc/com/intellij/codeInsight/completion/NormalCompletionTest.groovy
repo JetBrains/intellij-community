@@ -1763,4 +1763,10 @@ class Bar {
     checkResultByFile(getTestName(false) + ".java")
   }
 
+  void testChainInLambdaBinary() {
+    codeStyleSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    myFixture.addClass("package pkg; public class PathUtil { public static String toSystemDependentName() {} }")
+    doTest('\n')
+  }
+
 }

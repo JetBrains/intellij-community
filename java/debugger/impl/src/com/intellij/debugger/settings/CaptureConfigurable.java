@@ -35,6 +35,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.xmlb.XmlSerializer;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
@@ -56,6 +58,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(CaptureConfigurable.class);
 
   private MyTableModel myTableModel;
+  private JCheckBox myCaptureVariables;
 
   @NotNull
   @Override
@@ -188,7 +191,12 @@ public class CaptureConfigurable implements SearchableConfigurable {
       }
     });
 
-    return decorator.createPanel();
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel();
+    panel.addToCenter(decorator.createPanel());
+
+    myCaptureVariables = new JCheckBox(DebuggerBundle.message("label.capture.configurable.capture.variables"));
+    panel.addToBottom(myCaptureVariables);
+    return panel;
   }
 
   private StreamEx<CapturePoint> selectedCapturePoints(JBTable table) {
@@ -303,16 +311,19 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    return !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
+    return DebuggerSettings.getInstance().CAPTURE_VARIABLES != myCaptureVariables.isSelected() ||
+           !DebuggerSettings.getInstance().getCapturePoints().equals(myTableModel.myCapturePoints);
   }
 
   @Override
   public void apply() throws ConfigurationException {
     DebuggerSettings.getInstance().setCapturePoints(myTableModel.myCapturePoints);
+    DebuggerSettings.getInstance().CAPTURE_VARIABLES = myCaptureVariables.isSelected();
   }
 
   @Override
   public void reset() {
+    myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
     myTableModel.fireTableDataChanged();
   }
