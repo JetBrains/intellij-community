@@ -200,7 +200,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule) {
               if (!packagePrefix.isEmpty()) root_prefix = "/" + packagePrefix.replace('.', '/')
             }
 
-            val size = imageSize(file)
+            val size = imageSize(file) ?: error("Can't get icon size: $file")
             val method = if (customLoad) "load" else "IconLoader.getIcon"
             val relativePath = root_prefix + "/" + FileUtil.getRelativePath(sourceRoot.file, file)!!.replace('\\', '/')
             append(answer,

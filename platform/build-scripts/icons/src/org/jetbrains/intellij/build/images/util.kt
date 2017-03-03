@@ -28,22 +28,22 @@ internal fun isImage(file: File, iconsOnly: Boolean): Boolean {
 
 internal fun isIcon(file: File): Boolean {
   if (!isImage(file.name)) return false
-  val size = imageSize(file)
+  val size = imageSize(file) ?: return false
   return size.height == size.width || size.height <= 100 && size.width <= 100
 }
 
 private fun isImage(name: String) = name.endsWith(".png") || name.endsWith(".gif")
 
-internal fun imageSize(file: File): Dimension {
-  val image = loadImage(file)
+internal fun imageSize(file: File): Dimension? {
+  val image = loadImage(file) ?: return null
   val width = image.getWidth(null)
   val height = image.getHeight(null)
   return Dimension(width, height)
 }
 
-internal fun loadImage(path: File): Image {
-  val image = Toolkit.getDefaultToolkit().createImage(path.absolutePath)
-  waitForImage(image)
+private fun loadImage(file: File): Image? {
+  val image = Toolkit.getDefaultToolkit().createImage(file.absolutePath)
+  if (!waitForImage(image)) return null
   return image
 }
 
