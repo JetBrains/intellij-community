@@ -200,10 +200,9 @@ class CompilerReferenceReader {
   @NotNull
   private DefCount getDefinitionCount(LightRef def) throws StorageException {
     DefCount[] result = new DefCount[]{DefCount.NONE};
-    //TODO might be improved
-    myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach(new ValueContainer.ContainerAction<Boolean>() {
+    myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach(new ValueContainer.ContainerAction<Void>() {
       @Override
-      public boolean perform(int id, Boolean value) {
+      public boolean perform(int id, Void value) {
         if (result[0] == DefCount.NONE) {
           result[0] = DefCount.ONE;
           return true;

@@ -42,8 +42,7 @@ public class CompilerIndices {
 
   public final static ID<LightRef, Integer> BACK_USAGES = ID.create("back.refs");
   public final static ID<LightRef, Collection<LightRef>> BACK_HIERARCHY = ID.create("back.hierarchy");
-  //TODO looks like a hack
-  public final static ID<LightRef, Boolean> BACK_CLASS_DEF = ID.create("back.class.def");
+  public final static ID<LightRef, Void> BACK_CLASS_DEF = ID.create("back.class.def");
 
   public static List<IndexExtension<LightRef, ?, CompiledFileData>> getIndices() {
     return ContainerUtil.list(createBackwardClassDefinitionExtension(), createBackwardUsagesExtension(), createBackwardHierarchyExtension());
@@ -155,24 +154,24 @@ public class CompilerIndices {
     };
   }
 
-  private static IndexExtension<LightRef, Boolean, CompiledFileData> createBackwardClassDefinitionExtension() {
-    return new IndexExtension<LightRef, Boolean, CompiledFileData>() {
+  private static IndexExtension<LightRef, Void, CompiledFileData> createBackwardClassDefinitionExtension() {
+    return new IndexExtension<LightRef, Void, CompiledFileData>() {
       @Override
       public int getVersion() {
         return VERSION;
       }
 
       @NotNull
-      public ID<LightRef, Boolean> getName() {
+      public ID<LightRef, Void> getName() {
         return BACK_CLASS_DEF;
       }
 
       @NotNull
-      public DataIndexer<LightRef, Boolean, CompiledFileData> getIndexer() {
-        return new DataIndexer<LightRef, Boolean, CompiledFileData>() {
+      public DataIndexer<LightRef, Void, CompiledFileData> getIndexer() {
+        return new DataIndexer<LightRef, Void, CompiledFileData>() {
           @NotNull
           @Override
-          public Map<LightRef, Boolean> map(@NotNull CompiledFileData inputData) {
+          public Map<LightRef, Void> map(@NotNull CompiledFileData inputData) {
             return inputData.getDefinitions();
           }
         };
@@ -184,18 +183,8 @@ public class CompilerIndices {
       }
 
       @NotNull
-      public DataExternalizer<Boolean> getValueExternalizer() {
-        return new DataExternalizer<Boolean>() {
-          @Override
-          public void save(@NotNull DataOutput out, Boolean value) throws IOException {
-            out.writeBoolean(value);
-          }
-
-          @Override
-          public Boolean read(@NotNull DataInput in) throws IOException {
-            return in.readBoolean();
-          }
-        };
+      public DataExternalizer<Void> getValueExternalizer() {
+        return VoidDataExternalizer.INSTANCE;
       }
     };
   }
