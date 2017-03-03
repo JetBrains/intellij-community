@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class AppScheduledExecutorServiceTest extends TestCase {
   private static class LogInfo {
@@ -36,6 +37,14 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     private LogInfo(int runnable) {
       this.runnable = runnable;
       currentThread = Thread.currentThread();
+    }
+
+    @Override
+    public String toString() {
+      return "LogInfo{" +
+             "runnable=" + runnable +
+             ", currentThread=" + currentThread +
+             '}';
     }
   }
 
@@ -63,22 +72,10 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     int delay = 1000;
     long start = System.currentTimeMillis();
     List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
-    ScheduledFuture<?> f1 = service.schedule(() -> {
-      log.add(new LogInfo(1));
-      TimeoutUtil.sleep(10);
-    }, delay, TimeUnit.MILLISECONDS);
-    assertFalse(service.isShutdown());
-    assertFalse(service.isTerminated());
-    ScheduledFuture<?> f2 = service.schedule(() -> {
-      log.add(new LogInfo(2));
-      TimeoutUtil.sleep(10);
-    }, delay, TimeUnit.MILLISECONDS);
-    assertFalse(service.isShutdown());
-    assertFalse(service.isTerminated());
-    ScheduledFuture<?> f3 = service.schedule(() -> {
-      log.add(new LogInfo(3));
-      TimeoutUtil.sleep(10);
-    }, delay, TimeUnit.MILLISECONDS);
+    List<ScheduledFuture<?>> f = IntStream.range(1, 4).mapToObj(i -> service.schedule(() -> {
+      log.add(new LogInfo(i));
+      TimeoutUtil.sleep(1000);
+    }, delay, TimeUnit.MILLISECONDS)).collect(Collectors.toList());
 
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
@@ -86,27 +83,20 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
-    assertFalse(f1.isDone());
-    assertFalse(f2.isDone());
-    assertFalse(f3.isDone());
+    assertTrue(f.stream().noneMatch(Future::isDone));
 
     TimeoutUtil.sleep(delay/2);
     long elapsed = System.currentTimeMillis() - start; // can be > delay/2 on overloaded agent
-    assertEquals(String.valueOf(f1.isDone()), elapsed > delay, f1.isDone());
-    assertEquals(String.valueOf(f2.isDone()), elapsed > delay, f2.isDone());
-    assertEquals(String.valueOf(f3.isDone()), elapsed > delay, f3.isDone());
+    f.forEach(f1->assertEquals(String.valueOf(f1.isDone()), elapsed > delay, f1.isDone()));
     assertTrue(f4.isDone());
 
     TimeoutUtil.sleep(delay/2);
-    waitFor(f1::isDone);
-    waitFor(f2::isDone);
-    waitFor(f3::isDone);
-    waitFor(f4::isDone);
+    f.forEach(f1->waitFor(f1::isDone));
 
     assertEquals(4, log.size());
     assertEquals(4, log.get(0).runnable);
     List<Thread> threads = Arrays.asList(log.get(1).currentThread, log.get(2).currentThread, log.get(3).currentThread);
-    assertEquals(threads.toString(), 3, new HashSet<>(threads).size()); // must be executed in parallel
+    assertEquals(log.toString(), 3, new HashSet<>(threads).size()); // must be executed in parallel
   }
 
   public void testMustNotBeAbleToShutdown() {
@@ -254,12 +244,12 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertEquals(log.toString(), N, log.size());
   }
 
-  private static void waitFor(@NotNull BooleanSupplier runnable) throws TimeoutException {
+  private static void waitFor(@NotNull BooleanSupplier runnable) throws RuntimeException {
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() < start + 60000) {
       if (runnable.getAsBoolean()) return;
       TimeoutUtil.sleep(1);
     }
-    throw new TimeoutException();
+    throw new RuntimeException(new TimeoutException());
   }
 }
