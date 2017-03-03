@@ -15,7 +15,6 @@
  */
 package org.jetbrains.intellij.build.images
 
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.images.ImageSanityCheckerBase.Severity.*
 import org.jetbrains.intellij.build.images.ImageType.*
 import org.jetbrains.jps.model.module.JpsModule
@@ -60,15 +59,8 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   }
 
   private fun checkHaveValidSize(images: List<ImagePaths>, module: JpsModule) {
-    val excludedPaths = arrayOf(
-      "/tips/images/",
-      "/ide/ui/laf/icons/"
-    )
-
     process(images, WARNING, "icon with suspicious size", module) { image ->
       if (!isIcon(image.file!!)) return@process true
-      val path = FileUtil.normalize(image.file!!.path)
-      if (excludedPaths.any { path.contains(it) }) return@process true
       val sizes = image.files.mapValues { imageSize(it.value) }
 
       val sizeBasic = sizes[BASIC]!!

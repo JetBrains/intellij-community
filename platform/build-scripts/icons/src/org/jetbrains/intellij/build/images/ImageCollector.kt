@@ -70,6 +70,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
 
   private fun processDirectory(dir: File, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>) {
     dir.children.forEach { file ->
+      if (robotData.isSkipped(file)) return@forEach
       if (file.isDirectory) {
         val root = sourceRoot.file
         val childRobotData = robotData.fork(file, root)
