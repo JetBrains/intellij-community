@@ -29,10 +29,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.Type;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -60,7 +57,7 @@ public abstract class EvaluateExpressionTracerBase implements StreamTracer {
             Value reference = ((JavaValue)result).getDescriptor().getValue();
             final Type type = reference.type();
             final EvaluationContextImpl context = ((JavaValue)result).getEvaluationContext();
-            if (type instanceof ClassType && reference instanceof ObjectReference) {
+            if (type instanceof ArrayType) {
               final DebugProcess process =
                 DebuggerManager.getInstance(mySession.getProject()).getDebugProcess(mySession.getDebugProcess().getProcessHandler());
               final RemoteMethodInvoker invoker = new RemoteMethodInvoker(process, context, (ObjectReference)reference);
