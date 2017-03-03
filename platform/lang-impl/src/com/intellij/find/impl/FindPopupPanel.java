@@ -661,7 +661,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(myCbRegularExpressions, "gapright 0");
     add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 16, gapleft 0");
     add(myCbFileFilter, "gapright 0");
-    add(myFileMaskField, "gapright 16");
+    add(myFileMaskField, "gapleft 0");
     add(myFilterContextButton, "wrap");
     add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(myReplaceTextArea, "pushx, growx, sx 10, wrap");
