@@ -18,7 +18,6 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
-import com.intellij.ui.ComponentSettings;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
@@ -33,8 +32,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-
-import static com.intellij.util.SystemProperties.isTrueSmoothScrollingEnabled;
 
 /**
  * Our implementation of a scroll bar with the custom UI.
@@ -67,7 +64,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
 
   public JBScrollBar(@JdkConstants.AdjustableOrientation int orientation, int value, int extent, int min, int max) {
     super(orientation, value, extent, min, max);
-    if (isTrueSmoothScrollingEnabled()) setModel(new Model(value, extent, min, max));
+    setModel(new Model(value, extent, min, max));
     putClientProperty("JScrollBar.fastWheelScrolling", Boolean.TRUE); // fast scrolling for JDK 6
   }
 
@@ -164,11 +161,8 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     if (parent instanceof JBScrollPane) {
       JBScrollPane pane = (JBScrollPane)parent;
       JViewport viewport = pane.getViewport();
-      if (viewport != null) {
-        ComponentSettings settings = ComponentSettings.getInstance();
-        if (settings.isTrueSmoothScrollingEligibleFor(viewport.getView()) && settings.isInterpolationEligibleFor(this)) {
-          delay = pane.getInitialDelay(getValueIsAdjusting());
-        }
+      if (viewport != null && ScrollSettings.isEligibleFor(viewport.getView()) && ScrollSettings.isInterpolationEligibleFor(this)) {
+        delay = pane.getInitialDelay(getValueIsAdjusting());
       }
     }
     if (delay > 0) {
@@ -204,9 +198,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
   public boolean handleMouseWheelEvent(MouseWheelEvent event) {
     if (MouseWheelEvent.WHEEL_UNIT_SCROLL != event.getScrollType()) return false;
     if (event.isShiftDown() == (orientation == VERTICAL)) return false;
-
-    ComponentSettings settings = ComponentSettings.getInstance();
-    if (!settings.isTrueSmoothScrollingEligibleFor(this)) return false;
+    if (!ScrollSettings.isEligibleFor(this)) return false;
 
     double delta = getPreciseDelta(event);
     if (!Double.isFinite(delta)) return false;
@@ -250,8 +242,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
    */
   private double getPreciseDelta(MouseWheelEvent event) {
     double rotation = event.getPreciseWheelRotation();
-    ComponentSettings settings = ComponentSettings.getInstance();
-    if (settings.isPixelPerfectScrollingEnabled()) {
+    if (ScrollSettings.isPixelPerfectEnabled()) {
       // calculate an absolute delta if possible
       if (SystemInfo.isMac) {
         // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
@@ -263,7 +254,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       int size = font == null ? JBUI.scale(10) : font.getSize(); // assume an unit size
       return size * rotation * event.getScrollAmount();
     }
-    if (settings.isHighPrecisionScrollingEnabled()) {
+    if (ScrollSettings.isHighPrecisionEnabled()) {
       // calculate a relative delta if possible
       int direction = rotation < 0 ? -1 : 1;
       int unitIncrement = getUnitIncrement(direction);
