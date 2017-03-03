@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
 import com.intellij.ui.ComponentSettings;
-import com.intellij.ui.InputSource;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
@@ -291,7 +290,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
      */
     @Override
     protected void fireStateChanged() {
-      if (getValueIsAdjusting() && ComponentSettings.getInstance().isInterpolationEnabledFor(InputSource.SCROLLBAR)) {
+      if (getValueIsAdjusting() && ScrollSource.SCROLLBAR.isInterpolationEnabled()) {
         Object[] listeners = listenerList.getListenerList();
         for (int i = listeners.length - 2; i >= 0; i -= 2) {
           if (listeners[i] == ChangeListener.class) {
