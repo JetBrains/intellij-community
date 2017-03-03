@@ -21,6 +21,7 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -106,12 +107,14 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   private static void doCopyAsFiles(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project) {
-    PsiDirectory targetDirectory = null;
-    String newName = null;
-    boolean openInEditor = true;
+    PsiDirectory targetDirectory;
+    String newName;
+    boolean openInEditor;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       targetDirectory = defaultTargetDirectory;
+      newName = null;
+      openInEditor = true;
     }
     else {
       CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(elements, defaultTargetDirectory, project, false);
@@ -119,6 +122,9 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
         newName = elements.length == 1 ? dialog.getNewName() : null;
         targetDirectory = dialog.getTargetDirectory();
         openInEditor = dialog.openInEditor();
+      }
+      else {
+        return;
       }
     }
 
@@ -137,9 +143,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       }
 
       SmartPointerManager manager = SmartPointerManager.getInstance(project);
-      copyImpl(Arrays.stream(elements)
-                 .map(el -> manager.createSmartPsiElementPointer(el))
-                 .toArray(SmartPsiElementPointer[]::new), newName, targetDirectory, false, openInEditor);
+      CommandProcessor.getInstance().executeCommand(project, () -> copyImpl(Arrays.stream(elements).map(el -> manager.createSmartPsiElementPointer(el)).toArray(SmartPsiElementPointer[]::new),
+                                                                            newName, targetDirectory, false, openInEditor),
+                                                    RefactoringBundle.message("copy.handler.copy.files.directories"), null);
+
     }
   }
 
