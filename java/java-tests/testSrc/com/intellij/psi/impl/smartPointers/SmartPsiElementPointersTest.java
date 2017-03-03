@@ -22,6 +22,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -58,7 +59,10 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @PlatformTestCase.WrapInCommand
@@ -951,6 +955,20 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     });
     assertEquals(file.getImportList(), pointer.getElement());
     assertSize(1, file.getImportList().getImportStatements());
+  }
+
+  public void testNoAstLoadingOnFileRename() throws Exception {
+    PsiFile psiFile = createFile("a.java", "class A {}");
+    SmartPointerEx<PsiClass> pointer = createPointer(((PsiJavaFile)psiFile).getClasses()[0]);
+    assertFalse(((PsiFileImpl)psiFile).isContentsLoaded());
+
+    VirtualFile file = psiFile.getVirtualFile();
+    WriteAction.run(() -> file.rename(this, "b.java"));
+
+    assertTrue(psiFile.isValid());
+    assertEquals(((PsiJavaFile)psiFile).getClasses()[0], pointer.getElement());
+    
+    assertFalse(((PsiFileImpl)psiFile).isContentsLoaded());
   }
 
 }
