@@ -21,11 +21,10 @@ import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +57,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
   @Override
   public PsiElement resolve() {
-    Object value = myElement.getValue();
+    final Object value = myElement.getValue();
     if (value instanceof String) {
       final String name = (String)value;
-      final String type = getMemberType();
+      final String type = getMemberType(myElement);
 
       if (type != null) {
         final PsiClass psiClass = getPsiClass();
@@ -73,7 +72,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
             }
 
             case DECLARED_FIELD: {
-              PsiField field = psiClass.findFieldByName(name, false);
+              final PsiField field = psiClass.findFieldByName(name, false);
               return isPotentiallyAccessible(field, psiClass) ? field : null;
             }
 
@@ -102,16 +101,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return getReflectiveClass(myContext);
   }
 
-  @Nullable
-  private String getMemberType() {
-    final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
-    return methodCall != null ? methodCall.getMethodExpression().getReferenceName() : null;
-  }
-
   @NotNull
   @Override
   public Object[] getVariants() {
-    final String type = getMemberType();
+    final String type = getMemberType(myElement);
     if (type != null) {
       final PsiClass psiClass = getPsiClass();
       if (psiClass != null) {
@@ -155,13 +148,13 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return EMPTY_ARRAY;
   }
 
-  private static int getMethodSortOrder(PsiMethod method) {
-    return isJavaLangObject(method.getContainingClass()) ? 1 : isPublic(method) ? -1 : 0;
-  }
 
-  @NotNull
-  private static LookupElement lookupField(PsiField field) {
-    return JavaLookupElementBuilder.forField(field);
+  /**
+   * Non-public members of superclass/superinterface can't be obtained via reflection, they need to be filtered out.
+   */
+  @Contract("null, _ -> false")
+  private static boolean isPotentiallyAccessible(PsiMember member, PsiClass psiClass) {
+    return member != null && (member.getContainingClass() == psiClass || isPublic(member));
   }
 
   @NotNull
@@ -173,15 +166,9 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   public void handleInsert(InsertionContext context, LookupElement item) {
     final Object object = item.getObject();
     if (object instanceof PsiMethod) {
-      final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
-      final int start = newElement.getTextRange().getEndOffset();
-      final PsiElement params = newElement.getParent().getParent();
-      final int end = params.getTextRange().getEndOffset() - 1;
-      String types = getParameterTypesText((PsiMethod)object);
-      if (!types.isEmpty()) types = ", " + types;
-      context.getDocument().replaceString(start, end, types);
-      context.commitDocument();
-      shortenArgumentsClassReferences(context);
+      String text = getParameterTypesText((PsiMethod)object);
+
+      replaceText(context, text.isEmpty() ? "" : ", " + text);
     }
   }
 }

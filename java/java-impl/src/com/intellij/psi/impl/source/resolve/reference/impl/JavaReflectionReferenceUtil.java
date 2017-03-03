@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
@@ -45,8 +46,11 @@ class JavaReflectionReferenceUtil {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
   @Nullable
-  static PsiClass getReflectiveClass(PsiExpression context) {
+  static PsiClass getReflectiveClass(@Nullable PsiExpression context) {
     context = ParenthesesUtils.stripParentheses(context);
+    if (context == null) {
+      return null;
+    }
     if (context instanceof PsiClassObjectAccessExpression) { // special case for JDK 1.4
       PsiTypeElement operand = ((PsiClassObjectAccessExpression)context).getOperand();
       return PsiTypesUtil.getPsiClass(operand.getType());
@@ -136,25 +140,17 @@ class JavaReflectionReferenceUtil {
     return DeclarationSearchUtils.findDefinition(referenceExpression, variable);
   }
 
-  static boolean isJavaLangClass(PsiClass aClass) {
+  static boolean isJavaLangClass(@Nullable PsiClass aClass) {
     return aClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(aClass.getQualifiedName());
   }
 
-  static boolean isJavaLangObject(PsiClass aClass) {
+  static boolean isJavaLangObject(@Nullable PsiClass aClass) {
     return aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName());
   }
 
   @Contract("null -> false")
-  static boolean isRegularMethod(PsiMethod method) {
+  static boolean isRegularMethod(@Nullable PsiMethod method) {
     return method != null && !method.isConstructor();
-  }
-
-  /**
-   * Non-public members of superclass/superinterface can't be obtained via reflection, they need to be filtered out.
-   */
-  @Contract("null, _ -> false")
-  static boolean isPotentiallyAccessible(PsiMember member, PsiClass psiClass) {
-    return member != null && (member.getContainingClass() == psiClass || isPublic(member));
   }
 
   static boolean isPublic(@NotNull PsiMember member) {
@@ -179,12 +175,38 @@ class JavaReflectionReferenceUtil {
   }
 
   @NotNull
-  static LookupElement withPriority(LookupElement lookupElement, boolean hasPriority) {
+  static LookupElement withPriority(@NotNull LookupElement lookupElement, boolean hasPriority) {
     return hasPriority ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, -1);
   }
 
   @NotNull
-  static LookupElement withPriority(LookupElement lookupElement, int priority) {
+  static LookupElement withPriority(@NotNull LookupElement lookupElement, int priority) {
     return priority == 0 ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
+  }
+
+  static int getMethodSortOrder(@NotNull PsiMethod method) {
+    return isJavaLangObject(method.getContainingClass()) ? 1 : isPublic(method) ? -1 : 0;
+  }
+
+  @Nullable
+  static String getMemberType(@Nullable PsiElement element) {
+    final PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+    return methodCall != null ? methodCall.getMethodExpression().getReferenceName() : null;
+  }
+
+  @NotNull
+  static LookupElement lookupField(@NotNull PsiField field) {
+    return JavaLookupElementBuilder.forField(field);
+  }
+
+  static void replaceText(@NotNull InsertionContext context, @NotNull String text) {
+    final PsiElement newElement = PsiUtilCore.getElementAtOffset(context.getFile(), context.getStartOffset());
+    final int start = newElement.getTextRange().getEndOffset();
+    final PsiElement params = newElement.getParent().getParent();
+    final int end = params.getTextRange().getEndOffset() - 1;
+
+    context.getDocument().replaceString(start, end, text);
+    context.commitDocument();
+    shortenArgumentsClassReferences(context);
   }
 }

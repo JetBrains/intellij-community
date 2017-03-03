@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
@@ -27,6 +28,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaLangInvokeHandleReference.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -43,6 +45,14 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
     psiLiteral().methodCallParameter(or(
       psiMethod().withName(string().equalTo("forName")).definedInClass(JAVA_LANG_CLASS),
       psiMethod().withName(string().equalTo("loadClass")).definedInClass("java.lang.ClassLoader")));
+
+  private static final ElementPattern<? extends PsiElement> METHOD_HANDLE_PATTERN = psiLiteral()
+    .methodCallParameter(1, psiMethod()
+      .withName(FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,
+                FIND_GETTER, FIND_SETTER,
+                FIND_STATIC_GETTER, FIND_STATIC_SETTER,
+                FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE)
+      .definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP));
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -72,5 +82,7 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
         return null;
       }
     });
+
+    registrar.registerReferenceProvider(METHOD_HANDLE_PATTERN, new JavaLangInvokeHandleReferenceProvider());
   }
 }
