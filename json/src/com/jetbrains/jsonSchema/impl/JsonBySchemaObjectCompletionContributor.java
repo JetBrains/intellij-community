@@ -116,11 +116,12 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
             final boolean hasValue = myWalker.isPropertyWithValue(myPosition.getParent().getParent());
 
             final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(myOriginalPosition);
+            final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
 
             JsonSchemaPropertyProcessor.process(new JsonSchemaPropertyProcessor.PropertyProcessor() {
               @Override
               public boolean process(String name, JsonSchemaObject schema) {
-                if (properties.contains(name)) {
+                if (properties.contains(name) && (adapter == null || !name.equals(adapter.getName()))) {
                   return true;
                 }
 
