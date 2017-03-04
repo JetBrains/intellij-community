@@ -3,6 +3,8 @@ package com.intellij.debugger.streams.trace.smart.resolve.impl;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
+import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueException;
+import com.sun.jdi.ArrayReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,15 +22,16 @@ public class DistinctResolver implements TraceResolver {
   @NotNull
   @Override
   public TraceInfo resolve(@NotNull Value value) {
-    // TODO: prepare value to peek resolver
-    // ...
+    if (value instanceof ArrayReference) {
+      final Value peekTrace = ((ArrayReference)value).getValue(0);
+      final Value distinctTrace = ((ArrayReference)value).getValue(1);
+      final TraceInfo order = myPeekResolver.resolve(peekTrace);
+      final Map<TraceElement, List<TraceElement>> direct = resolveDirect(distinctTrace);
+      final Map<TraceElement, List<TraceElement>> reverse = resolveReverse(distinctTrace);
+      return new MyDistinctInfo(order.getValuesOrder(), direct, reverse);
+    }
 
-    final TraceInfo order = myPeekResolver.resolve(value);// TODO: extract correct value
-
-    final Map<TraceElement, List<TraceElement>> direct = resolveDirect(value);// TODO: correct it!
-    final Map<TraceElement, List<TraceElement>> reverse = resolveReverse(value);// TODO: correct it too
-
-    return new MyDistinctInfo(order.getValuesOrder(), direct, reverse);
+    throw new UnexpectedValueException("distinct trace must be an array value");
   }
 
   private Map<TraceElement, List<TraceElement>> resolveDirect(@NotNull Value value) {
