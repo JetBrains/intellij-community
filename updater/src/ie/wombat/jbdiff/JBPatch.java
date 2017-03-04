@@ -38,10 +38,12 @@ import java.util.zip.GZIPInputStream;
  * @author Joe Desbonnet, jdesbonnet@gmail.com
  */
 public class JBPatch {
+  private static final int block_size = 2 * 1024 * 1024;
+
   public static void bspatch(InputStream oldFileIn, OutputStream newFileOut, InputStream diffFileIn)
     throws IOException {
 
-    int oldpos, newpos;
+    int newpos;
 
     byte[] diffData = Utils.readBytes(diffFileIn);
 
@@ -75,67 +77,67 @@ public class JBPatch {
     in.skip(diffBlockLen + ctrlBlockLen + 32);
     GZIPInputStream extraBlockIn = new GZIPInputStream(in);
 
-    /*
-                 * Read in old file (file to be patched) to oldBuf
-                 */
-    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream();
-    try {
-      Utils.copyStream(oldFileIn, oldFileByteOut);
-    }
-    finally {
-      oldFileByteOut.close();
-    }
-    byte[] oldBuf = oldFileByteOut.toByteArray();
-    int oldsize = oldBuf.length;
-
-    byte[] newBuf = new byte[newsize + 1];
-
-    oldpos = 0;
+    byte[] oldBuf = new byte[block_size];
+    byte[] newBuf = new byte[block_size];
+    
     newpos = 0;
-    int[] ctrl = new int[3];
-    int nbytes;
+
     while (newpos < newsize) {
+      final int bytesToReadFromDiffAndOld = diffIn.readInt();
+      final int bytesToReadFromExtraBlockIn = diffIn.readInt();
+      final int bytesToSkipFromOld = diffIn.readInt();
 
-      for (int i = 0; i <= 2; i++) {
-        ctrl[i] = diffIn.readInt();
-        //System.err.println ("  ctrl[" + i + "]=" + ctrl[i]);
-      }
-
-      if (newpos + ctrl[0] > newsize) {
-        System.err.println("Corrupt patch\n");
+      if (newpos + bytesToReadFromDiffAndOld > newsize) {
+        System.err.println("Corrupted patch\n");
         return;
       }
 
-      /*
-                         * Read ctrl[0] bytes from diffBlock stream
-                         */
+      int totalBytesRead = 0;
 
-      if (!Util.readFromStream(diffBlockIn, newBuf, newpos, ctrl[0])) {
-        System.err.println("error reading from extraIn");
-        return;
+      while (totalBytesRead < bytesToReadFromDiffAndOld) {
+        int nBytesFromDiff = diffBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromDiffAndOld - totalBytesRead));
+        if (nBytesFromDiff < 0) {
+          System.err.println("error reading from diffBlockIn");
+          return;
+        }
+        int nbytesFromOld = oldFileIn.read(oldBuf, 0, Math.min(oldBuf.length, bytesToReadFromDiffAndOld - totalBytesRead));
+        if (nbytesFromOld < 0) {
+          System.err.println ("oldFileIn read failed prematurely. Read " + totalBytesRead + " bytes");
+          return;
+        }
+
+        for (int i = 0; i < nbytesFromOld; ++i) {
+          newBuf[i] += oldBuf[i];
+        }
+
+        totalBytesRead+=nbytesFromOld;
+        newpos += nbytesFromOld;
+        newFileOut.write(newBuf, 0, nbytesFromOld);
       }
 
-      for (int i = 0; i < ctrl[0]; i++) {
-        if ((oldpos + i >= 0) && (oldpos + i < oldsize)) {
-          newBuf[newpos + i] += oldBuf[oldpos + i];
+      if (bytesToReadFromExtraBlockIn > 0) {
+        if (newpos + bytesToReadFromExtraBlockIn > newsize) {
+          System.err.println("Corrupted patch");
+          return;
+        }
+
+        totalBytesRead = 0;
+        while (totalBytesRead < bytesToReadFromExtraBlockIn) {
+          int nBytesFromExtraBlockIn = extraBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromExtraBlockIn - totalBytesRead));
+          if (nBytesFromExtraBlockIn < 0) {
+            System.err.println("error reading from extraBlockIn");
+            return;
+          }
+
+          totalBytesRead += nBytesFromExtraBlockIn;
+          newpos += nBytesFromExtraBlockIn;
+          newFileOut.write(newBuf, 0, nBytesFromExtraBlockIn);
         }
       }
 
-      newpos += ctrl[0];
-      oldpos += ctrl[0];
-
-      if (newpos + ctrl[1] > newsize) {
-        System.err.println("Corrupt patch");
-        return;
+      if (newpos < newsize && oldFileIn.skip(bytesToSkipFromOld) != bytesToSkipFromOld) {
+        System.err.println("error skipping in oldFileIn");
       }
-
-      if (!Util.readFromStream(extraBlockIn, newBuf, newpos, ctrl[1])) {
-        System.err.println("error reading from extraIn");
-        return;
-      }
-
-      newpos += ctrl[1];
-      oldpos += ctrl[2];
     }
 
     // TODO: Check if at end of ctrlIn
@@ -145,9 +147,5 @@ public class JBPatch {
     diffBlockIn.close();
     extraBlockIn.close();
     diffIn.close();
-
-    oldBuf = null;
-
-    Utils.writeBytes(newBuf, newBuf.length - 1, newFileOut);
   }
 }
