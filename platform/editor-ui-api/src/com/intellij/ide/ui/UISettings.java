@@ -89,7 +89,11 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public int ANIMATION_SPEED = 4000; // Pixels per second
   public int ANIMATION_DURATION = 300; // Milliseconds
   public boolean SHOW_TOOL_WINDOW_NUMBERS = true;
-  public boolean HIDE_TOOL_STRIPES = true;
+  /*
+   * Android Studio: Changed default for "Show Tool Window Bars" setting from false to true to make the
+   * functionality more discoverable. (The internal setting has the inverse logic: hide=false.)
+   */
+  public boolean HIDE_TOOL_STRIPES = false;
   public boolean WIDESCREEN_SUPPORT = false;
   public boolean LEFT_HORIZONTAL_SPLIT = false;
   public boolean RIGHT_HORIZONTAL_SPLIT = false;
