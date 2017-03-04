@@ -401,7 +401,9 @@ public class TemplateImpl extends Template implements SchemeElement {
    */
   public void setString(@NotNull String string) {
     myString = StringUtil.convertLineSeparators(string);
-    removeAllParsed();
+    mySegments = null;
+    toParseSegments = true;
+    myBuildingTemplateTrace = new Throwable();
   }
 
   @Override
