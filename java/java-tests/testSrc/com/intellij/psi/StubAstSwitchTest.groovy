@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes
+import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiJavaFileImpl
@@ -316,5 +318,15 @@ class B {
         }
       }
     }
+  }
+
+  void "test DummyHolder calcStubTree does not fail"() {
+    def text = "{ new Runnable() { public void run() {} }; }"
+    def file = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(text, null).containingFile
+
+    // main thing is it doesn't fail; DummyHolder.calcStubTree can be changed to null in future if we decide we don't need it
+    def stubTree = assertInstanceOf(file, DummyHolder).calcStubTree()
+
+    assert stubTree.plainList.find { it.stubType == JavaStubElementTypes.ANONYMOUS_CLASS }
   }
 }

@@ -213,6 +213,24 @@ public Foo() {
     """
   }
 
+  void "test delegate to a method calling local class constructor"() {
+    myFixture.addClass("""
+class Another { 
+  static Object method() {
+    class LocalClass {
+      LocalClass() { launchMissiles(); }
+    }
+    return new LocalClass();
+  } 
+}
+  """)
+    assertPure false, """
+    Object smth() {
+        return Another.method();
+    }
+    """
+  }
+
   private void assertPure(boolean expected, String classBody) {
     def clazz = myFixture.addClass("final class Foo { $classBody }")
     assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
