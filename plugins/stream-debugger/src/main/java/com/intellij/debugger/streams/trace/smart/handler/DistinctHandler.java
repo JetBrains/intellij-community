@@ -51,7 +51,7 @@ public class DistinctHandler extends HandlerBase {
     final String peekPrepare = myPeekTracer.prepareResult();
     final String resolve2Array = myResolveMapVariable.convertToArray("resolveArray");
     final String peekResult =
-      "final Object peekResult = " + myPeekTracer.getResultExpression() + EvaluateExpressionTracerBase.LINE_SEPARATOR;
+      "final Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
     return peekPrepare + resolve2Array + peekResult;
   }
 
@@ -64,8 +64,7 @@ public class DistinctHandler extends HandlerBase {
   @NotNull
   private String createStoreLambda() {
     final String storeMap = myStoreMapVariable.getName();
-    return "x -> " +
-           String.format("%s.computeIfAbsent(x, () -> new LinkedHashMap<Object>).put(time.get(), x)", storeMap);
+    return "x -> " + String.format("%s.computeIfAbsent(x, y -> new LinkedHashMap<>()).put(time.get(), x)", storeMap);
   }
 
   @NotNull
@@ -76,10 +75,10 @@ public class DistinctHandler extends HandlerBase {
 
     return "x -> {" + newLine +
            "final Map<Integer, Object> objects = " + String.format("%s.get(x);", storeMap) + newLine +
-           "for (final int key: objects) {" + newLine +
+           "for (final int key: objects.keySet()) {" + newLine +
            "final Object value = objects.get(key);" + newLine +
            "if (value == x) {" + newLine +
-           String.format("%s.put(key, time.get())", resolveMap) + newLine +
+           String.format("%s.put(key, time.get());", resolveMap) + newLine +
            "    }" + newLine +
            "  }" + newLine +
            "}" + newLine;

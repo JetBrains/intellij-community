@@ -30,10 +30,10 @@ public class HashMapVariableImpl extends VariableImpl {
 
     return "final Object[] " + arrayName + ";" + newLine +
            "{" + newLine +
-           "int i = 0;" + newLine +
            "final int size = " + getName() + ".size();" + newLine +
-           "final " + keysType + "[] keys = new Object[size];" + newLine +
-           "final " + valuesType + "[] values = new Object[size];" + newLine +
+           "final " + keysType + "[] keys = new " + keysType + "[size];" + newLine +
+           "final " + valuesType + "[] values = new " + valuesType + "[size];" + newLine +
+           "int i = 0;" + newLine +
            "for (final " + keysType + String.format(" key : %s.keySet()) {", getName()) + newLine +
            "final " + valuesType + " value = " + String.format("%s.get(key);", getName()) + newLine +
            "keys[i] = key;" + newLine +
