@@ -53,6 +53,8 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
+
 /**
  * Processes mouse clicks and moves on the table
  */
@@ -146,7 +148,7 @@ public class GraphTableController {
     int width = 0;
     for (int i = 0; i < myTable.getColumnModel().getColumnCount(); i++) {
       TableColumn column = myTable.getColumnModel().getColumn(i);
-      if (column.getModelIndex() == GraphTableModel.COMMIT_COLUMN) break;
+      if (column.getModelIndex() == COMMIT_COLUMN) break;
       width += column.getWidth();
     }
     return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
@@ -217,7 +219,7 @@ public class GraphTableController {
     TableColumn rootColumn = myTable.getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
     Point point = new Point(rootColumn.getWidth() + myCommitRenderer.getTooltipXCoordinate(row),
                             row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
-    showTooltip(row, GraphTableModel.COMMIT_COLUMN, point, true);
+    showTooltip(row, COMMIT_COLUMN, point, true);
   }
 
   private void performRootColumnAction() {
@@ -251,25 +253,34 @@ public class GraphTableController {
 
       int c = myTable.columnAtPoint(e.getPoint());
       int column = myTable.convertColumnIndexToModel(c);
-      // if clicked on the left of column border, c2 is the column to the right of the border
-      // we resize it first
-      int c2 = myTable.columnAtPoint(new Point(e.getPoint().x + BORDER_THICKNESS, e.getPoint().y));
-      int column2 = myTable.convertColumnIndexToModel(c2);
-      if (e.getClickCount() == 2 && isOnBorder(e, c)) {
-        if (isOnBorder(e, c2) && (column2 == GraphTableModel.AUTHOR_COLUMN || column2 == GraphTableModel.DATE_COLUMN)) {
-          myTable.resetColumnWidth(column2);
-        }
-        else if (column == GraphTableModel.AUTHOR_COLUMN || column == GraphTableModel.DATE_COLUMN) {
+      if (e.getClickCount() == 2) {
+        // when we reset column width, commit column eats all the remaining space
+        // (or gives the required space)
+        // so it is logical that we reset column width by right border if it is on the left of the commit column
+        // and by the left border otherwise
+        int commitColumnIndex = myTable.convertColumnIndexToView(COMMIT_COLUMN);
+        boolean useLeftBorder = c > commitColumnIndex;
+        if ((useLeftBorder ? isOnLeftBorder(e, c) : isOnRightBorder(e, c)) && (column == AUTHOR_COLUMN || column == DATE_COLUMN)) {
           myTable.resetColumnWidth(column);
+        }
+        else {
+          // user may have clicked just outside of the border
+          // in that case, c is not the column we are looking for
+          int c2 =
+            myTable.columnAtPoint(new Point(e.getPoint().x + (useLeftBorder ? 1 : -1) * JBUI.scale(BORDER_THICKNESS), e.getPoint().y));
+          int column2 = myTable.convertColumnIndexToModel(c2);
+          if ((useLeftBorder ? isOnLeftBorder(e, c2) : isOnRightBorder(e, c2)) && (column2 == AUTHOR_COLUMN || column2 == DATE_COLUMN)) {
+            myTable.resetColumnWidth(column2);
+          }
         }
       }
 
       int row = myTable.rowAtPoint(e.getPoint());
       if ((row >= 0 && row < myTable.getRowCount()) && e.getClickCount() == 1) {
-        if (column == GraphTableModel.ROOT_COLUMN) {
+        if (column == ROOT_COLUMN) {
           performRootColumnAction();
         }
-        else if (column == GraphTableModel.COMMIT_COLUMN) {
+        else if (column == COMMIT_COLUMN) {
           PrintElement printElement = findPrintElement(row, e);
           if (printElement != null) {
             performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
@@ -278,13 +289,20 @@ public class GraphTableController {
       }
     }
 
-    public boolean isOnBorder(@NotNull MouseEvent e, int column) {
+    public boolean isOnLeftBorder(@NotNull MouseEvent e, int column) {
       int x = 0;
       for (int i = 0; i < column; i++) {
         x += myTable.getColumnModel().getColumn(i).getWidth();
       }
-      return Math.abs(x - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS) ||
-             Math.abs(x + myTable.getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
+      return Math.abs(x - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
+    }
+
+    public boolean isOnRightBorder(@NotNull MouseEvent e, int column) {
+      int x = 0;
+      for (int i = 0; i < column; i++) {
+        x += myTable.getColumnModel().getColumn(i).getWidth();
+      }
+      return Math.abs(x + myTable.getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
     }
 
     @Override
@@ -300,11 +318,11 @@ public class GraphTableController {
       int row = myTable.rowAtPoint(e.getPoint());
       if (row >= 0 && row < myTable.getRowCount()) {
         int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
-        if (column == GraphTableModel.ROOT_COLUMN) {
+        if (column == ROOT_COLUMN) {
           myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           return;
         }
-        else if (column == GraphTableModel.COMMIT_COLUMN) {
+        else if (column == COMMIT_COLUMN) {
           PrintElement printElement = findPrintElement(row, e);
           performGraphAction(printElement, e,
                              GraphAction.Type.MOUSE_OVER); // if printElement is null, still need to unselect whatever was selected in a graph
