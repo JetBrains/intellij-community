@@ -19,7 +19,6 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.EqualityPolicy;
@@ -146,15 +145,11 @@ public abstract class LookupArranger implements WeighingContext {
 
   protected boolean isPrefixItem(LookupElement item, final boolean exactly) {
     final String pattern = itemPattern(item);
-    if (Comparing.strEqual(pattern, item.getLookupString(), item.isCaseSensitive())) {
-      return true;
-    }
+    for (String s : item.getAllLookupStrings()) {
+      if (!s.equalsIgnoreCase(pattern)) continue;
 
-    if (!exactly) {
-      for (String s : item.getAllLookupStrings()) {
-        if (s.equalsIgnoreCase(pattern)) {
-          return true;
-        }
+      if (!item.isCaseSensitive() || !exactly || s.equals(pattern)) {
+        return true;
       }
     }
     return false;

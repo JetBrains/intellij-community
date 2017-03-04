@@ -776,4 +776,9 @@ class ContainerUtil extends ContainerUtilRt {
     assert LookupElementPresentation.renderElement(myFixture.lookupElements[3]).tailText.contains('int index')
   }
 
+  void testPreferExpectedTypeConstantOverSameNamedClass() {
+    myFixture.addClass("package another; public class JSON {}")
+    checkPreferredItems 0, 'Point.JSON', 'JSON'
+  }
+
 }
