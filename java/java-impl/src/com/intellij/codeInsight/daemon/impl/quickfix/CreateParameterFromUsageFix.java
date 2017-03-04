@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -69,7 +70,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected void invokeImpl(PsiClass targetClass) {
-    ApplicationManager.getApplication().invokeLater(() -> {
+    TransactionGuard.getInstance().submitTransactionLater(targetClass.getProject(), () -> {
       if (!myReferenceExpression.isValid()) return;
       if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false)) return;
 
@@ -136,7 +137,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
           throw new RuntimeException(e);
         }
       }
-    }, targetClass.getProject().getDisposed());
+    });
   }
 
   @Override
