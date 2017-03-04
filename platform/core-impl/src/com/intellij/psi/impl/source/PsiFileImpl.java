@@ -131,7 +131,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return null;
   }
 
-  private FileElement derefTreeElement() {
+  protected FileElement derefTreeElement() {
     return myTrees.derefTreeElement();
   }
 
