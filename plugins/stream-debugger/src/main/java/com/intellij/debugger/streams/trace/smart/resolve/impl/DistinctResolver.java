@@ -25,17 +25,21 @@ public class DistinctResolver implements TraceResolver {
   public TraceInfo resolve(@NotNull Value value) {
     if (value instanceof ArrayReference) {
       final Value peekTrace = ((ArrayReference)value).getValue(0);
-      final Value distinctTrace = ((ArrayReference)value).getValue(1);
+      final Value distinctDirectTrace = ((ArrayReference)value).getValue(1);
+      final Value distinctReverseTrace = ((ArrayReference)value).getValue(2);
+
       final TraceInfo order = myPeekResolver.resolve(peekTrace);
-      final Map<TraceElement, List<TraceElement>> direct = resolveDirect(distinctTrace, order);
-      final Map<TraceElement, List<TraceElement>> reverse = resolveReverse(distinctTrace, order);
+
+      final Map<TraceElement, List<TraceElement>> direct = resolveDirect(distinctDirectTrace, order);
+      final Map<TraceElement, List<TraceElement>> reverse = resolveReverse(distinctReverseTrace, order);
+
       return new MyDistinctInfo(order, direct, reverse);
     }
 
     throw new UnexpectedValueException("distinct trace must be an array value");
   }
 
-  private Map<TraceElement, List<TraceElement>> resolveDirect(@NotNull Value value,
+  private static Map<TraceElement, List<TraceElement>> resolveDirect(@NotNull Value value,
                                                               @NotNull TraceInfo order) {
     if (value instanceof ArrayReference) {
       final ArrayReference convertedMap = (ArrayReference)value;
@@ -52,7 +56,7 @@ public class DistinctResolver implements TraceResolver {
   }
 
   @NotNull
-  private Map<TraceElement, List<TraceElement>> resolveDirectTrace(@NotNull ArrayReference keys,
+  private static Map<TraceElement, List<TraceElement>> resolveDirectTrace(@NotNull ArrayReference keys,
                                                                    @NotNull ArrayReference values,
                                                                    @NotNull TraceInfo order) {
     final int size = keys.length();
@@ -74,9 +78,42 @@ public class DistinctResolver implements TraceResolver {
   }
 
   @NotNull
-  private Map<TraceElement, List<TraceElement>> resolveReverse(@NotNull Value value,
+  private static Map<TraceElement, List<TraceElement>> resolveReverse(@NotNull Value value,
                                                                @NotNull TraceInfo order) {
-    return Collections.emptyMap();
+    if (value instanceof ArrayReference) {
+      final Value keys = ((ArrayReference)value).getValue(0);
+      final Value values = ((ArrayReference)value).getValue(1);
+      if (keys instanceof ArrayReference && values instanceof ArrayReference) {
+        return resolveReverseTrace((ArrayReference)keys, (ArrayReference)values, order);
+      }
+
+      throw new UnexpectedValueException("keys and values arrays must be arrays");
+    }
+
+    throw new UnexpectedValueException("value must be an array reference");
+  }
+
+  private static Map<TraceElement, List<TraceElement>> resolveReverseTrace(@NotNull ArrayReference keys,
+                                                                    @NotNull ArrayReference values,
+                                                                    @NotNull TraceInfo order) {
+    final int size = keys.length();
+    if (size != values.length()) {
+      throw new UnexpectedArrayLengthException("length of keys array should be same with values array");
+    }
+
+    final Map<TraceElement, List<TraceElement>> result = new HashMap<>();
+
+    final Map<Integer, TraceElement> before = order.getValuesOrderBefore();
+    final Map<Integer, TraceElement> after = order.getValuesOrderAfter();
+    for (int i = 0; i < size; i++) {
+      final int fromTime = extractIntValue(keys.getValue(i));
+      final int afterTime = extractIntValue(values.getValue(i));
+      final TraceElement beforeElement = before.get(fromTime);
+      final TraceElement afterElement = after.get(afterTime);
+      result.computeIfAbsent(beforeElement, x -> new ArrayList<>()).add(afterElement);
+    }
+
+    return result;
   }
 
   private static class MyDistinctInfo extends ValuesOrderInfo {
