@@ -74,7 +74,7 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
       map.keySet().stream().filter(x -> x >= 0)
         .map(x -> map.get(x).keySet().stream()
           .collect(Collectors.toMap(k -> k, k -> (TraceElement)new TraceElementImpl(k, map.get(x).get(k)))))
-        .forEach(x -> trace.add(new ValuesOrderInfo(x)));
+        .forEach(x -> trace.add(new ValuesOrderInfo(Collections.emptyMap(), x)));
       final Value res = map.get(-1).get(-1);
       return new MyResult(res, trace);
     }

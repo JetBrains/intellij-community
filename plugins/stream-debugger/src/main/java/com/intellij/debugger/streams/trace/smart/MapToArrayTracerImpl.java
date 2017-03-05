@@ -25,7 +25,7 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
-  private static final TraceInfo EMPTY_INFO = new ValuesOrderInfo(Collections.emptyMap());
+  private static final TraceInfo EMPTY_INFO = new ValuesOrderInfo(Collections.emptyMap(), Collections.emptyMap());
   private static final Logger LOG = Logger.getInstance(MapToArrayTracerImpl.class);
 
   private static final String RETURN_EXPRESSION = "new java.lang.Object[]{ info, streamResult };" + LINE_SEPARATOR;
