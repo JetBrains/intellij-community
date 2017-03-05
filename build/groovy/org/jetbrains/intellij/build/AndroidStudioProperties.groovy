@@ -79,7 +79,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                            "google-cloud-tools-core-as",
                                            "google-samples",
                                            "google-services",
-                                           "ndk-workspace",
                                            "test-recorder",
                                            "url-assistant",
                                          ]
