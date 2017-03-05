@@ -154,8 +154,8 @@ public class StreamChain {
 
     Map<TraceElement, List<TraceElement>> prevResolved = Collections.emptyMap();
     for (int i = 1; i < myCalls.size() - 1; i++) {
-      final Map<Integer, TraceElement> prev = trace.get(i - 1).getValuesOrder();
-      final Map<Integer, TraceElement> next = trace.get(i).getValuesOrder();
+      final Map<Integer, TraceElement> prev = trace.get(i - 1).getValuesOrderAfter();
+      final Map<Integer, TraceElement> next = trace.get(i).getValuesOrderAfter();
       final MethodCall previousCall = myCalls.get(i - 1);
       final MethodCall currentCall = myCalls.get(i);
 

@@ -12,7 +12,10 @@ import java.util.Map;
  */
 public interface TraceInfo {
   @NotNull
-  Map<Integer, TraceElement> getValuesOrder();
+  Map<Integer, TraceElement> getValuesOrderBefore();
+
+  @NotNull
+  Map<Integer, TraceElement> getValuesOrderAfter();
 
   @Nullable
   Map<TraceElement, List<TraceElement>> getDirectTrace();

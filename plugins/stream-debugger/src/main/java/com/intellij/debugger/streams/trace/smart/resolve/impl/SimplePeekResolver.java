@@ -24,9 +24,11 @@ public class SimplePeekResolver implements TraceResolver {
     if (value instanceof ArrayReference) {
       final ArrayReference trace = (ArrayReference)value;
       final Value before = trace.getValue(0);
-      // todo: do something with 'after' trace array
-      if (before instanceof ArrayReference) {
-        return new ValuesOrderInfo(resolveTrace((ArrayReference)before));
+      final Value after = trace.getValue(1);
+      if (before instanceof ArrayReference && after instanceof ArrayReference) {
+        final Map<Integer, TraceElement> beforeTrace = resolveTrace((ArrayReference)before);
+        final Map<Integer, TraceElement> afterTrace = resolveTrace((ArrayReference)after);
+        return new ValuesOrderInfo(beforeTrace, afterTrace);
       }
     }
 
