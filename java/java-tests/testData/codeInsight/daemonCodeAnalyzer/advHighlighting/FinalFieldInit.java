@@ -234,7 +234,7 @@ class IDEA100237 {
         }
     
         final Object baz = new Object() {
-            final int qux = bar.<error descr="Cannot resolve method 'hashCode()'">hashCode</error>() + 1;
+            final int qux = <error descr="Variable 'bar' might not have been initialized">bar</error>.hashCode() + 1;
         };
     }
 
@@ -316,5 +316,70 @@ class StaticInitializedUsedInAnotherStaticField {
 
   static {
     STRINGS1 = "";
+  }
+}
+
+class InsideAnAnonymousClass {
+  static class Foo1 {
+    private final String _s;
+
+    public Foo1(String s) {
+      _s = s;
+    }
+
+    private final Bar _ss = new Bar(<error descr="Variable '_s' might not have been initialized">_s</error>) {
+    };
+  }
+
+  static class Foo2 {
+    private final String _s;
+
+    public Foo2(String s) {
+      _s = s;
+    }
+
+    private final Bar _ss = new Bar("") {
+      {
+        String inInitializer = <error descr="Variable '_s' might not have been initialized">_s</error>;
+      }
+    };
+  }
+
+  static class Foo3 {
+    private final String _s;
+
+    public Foo3(String s) {
+      _s = s;
+    }
+
+    private final Bar _ss = new Bar("") {
+      String inField = <error descr="Variable '_s' might not have been initialized">_s</error>;
+
+      void inMethod() {
+        String inMethodFoo = _s;
+      }
+    };
+  }
+
+  static class Foo4 {
+    private final String _s;
+
+    public Foo4(String s) {
+      _s = s;
+    }
+
+    private final Bar _ss = new Bar("") {
+      void inMethod() {
+        String inMethodFoo = _s;
+      }
+    };
+  }
+
+  static class Bar {
+    private final String _s;
+
+    public Bar(String s) {
+      _s = s;
+    }
   }
 }
