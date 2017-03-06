@@ -29,7 +29,7 @@ class EventSerializeDeserializeTest {
 
     @Test
     fun `completion started event`() {
-        var event = CompletionStartedEvent(Fixtures.userId, "xx", true, 1, Fixtures.lookupList, 0)
+        val event = CompletionStartedEvent(Fixtures.userId, "xx", "Java", true, 1, Fixtures.lookupList, 0)
         serializeDeserializeAndCheck(event)
     }
 
@@ -74,14 +74,14 @@ class EventSerializeDeserializeTest {
     
     @Test
     fun `backspace event`() {
-        var event: LogEvent = BackspaceEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 3)
+        val event: LogEvent = BackspaceEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 3)
         serializeDeserializeAndCheck(event)
     }
     
     
     @Test
     fun `type event`() {
-        var event = TypeEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 1)
+        val event = TypeEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 1)
         serializeDeserializeAndCheck(event)
     }
     
