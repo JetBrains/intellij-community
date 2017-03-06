@@ -55,6 +55,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.AppIcon;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.content.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.MessageCategory;
@@ -306,8 +307,10 @@ public class CompilerTask extends Task.Backgroundable {
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
         updateProgressText();
-        UIUtil.invokeLaterIfNeeded(
-          () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true));
+        GuiUtils.invokeLaterIfNeeded(
+          () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true),
+          ModalityState.any()
+        );
       }
 
       @Override
