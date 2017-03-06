@@ -251,6 +251,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private void initComponents() {
     myTitleLabel = new JBLabel(FindBundle.message("find.in.path.dialog.title"), UIUtil.ComponentStyle.REGULAR);
     myTitleLabel.setFont(myTitleLabel.getFont().deriveFont(Font.BOLD));
+    myTitleLabel.setBorder(JBUI.Borders.empty(0, 4, 0, 16));
     myCbCaseSensitive = new StateRestoringCheckBox(FindBundle.message("find.popup.case.sensitive"));
     ItemListener liveResultsPreviewUpdateListener = new ItemListener() {
       @Override
@@ -650,17 +651,18 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
-    int existingGap = myCbCaseSensitive.getInsets().left + myCbCaseSensitive.getInsets().right;
-    int additionalGap = Math.max(0, 16 - existingGap);
-    setLayout(new MigLayout("flowx, ins 4, fillx, hidemode 3, gapx " + additionalGap));
-    add(myTitleLabel, "gapleft 4, sx 2, growx, pushx, growy");
-    add(myCbCaseSensitive);
-    add(myCbPreserveCase);
-    add(myCbWholeWordsOnly);
+    setLayout(new MigLayout("flowx, ins 0, gap 0, fillx, hidemode 3"));
+    int cbGapLeft = myCbCaseSensitive.getInsets().left;
+    int cbGapRight = myCbCaseSensitive.getInsets().right;
+    String cbGap = cbGapLeft + cbGapRight < 16 ? "gapright " + (16 - cbGapLeft - cbGapRight) : "";
+    add(myTitleLabel, "sx 2, growx, pushx, growy");
+    add(myCbCaseSensitive, cbGap);
+    add(myCbPreserveCase, cbGap);
+    add(myCbWholeWordsOnly, cbGap);
     add(myCbRegularExpressions, "gapright 0");
-    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright 16, gapleft 0");
-    add(myCbFileFilter, "gapright 0");
-    add(myFileMaskField, "gapleft 0");
+    add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), "gapright " + (16-cbGapLeft));
+    add(myCbFileFilter);
+    add(myFileMaskField, "gapright 16");
     add(myFilterContextButton, "wrap");
     add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(myReplaceTextArea, "pushx, growx, sx 10, wrap");
