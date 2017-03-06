@@ -137,10 +137,6 @@ public class IpnbConfigurable implements SearchableConfigurable {
     setWarningLabelText();
   }
 
-  @Override
-  public void disposeUIResources() {
-  }
-
   @NotNull
   @Override
   public String getId() {
