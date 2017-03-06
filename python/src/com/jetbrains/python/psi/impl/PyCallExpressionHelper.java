@@ -645,20 +645,20 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                                 @NotNull PyCallable callable,
-                                                                 @NotNull List<PyParameter> parameters,
-                                                                 @NotNull TypeEvalContext context) {
+  public static ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                    @NotNull PyCallable callable,
+                                                    @NotNull List<PyParameter> parameters,
+                                                    @NotNull TypeEvalContext context) {
     final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, callable);
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
-    return analyzeArguments(arguments, explicitParameters).getMappedParameters();
+    return analyzeArguments(arguments, explicitParameters);
   }
 
   @NotNull
-  public static Map<PyExpression, PyNamedParameter> mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                                 @NotNull PyCallable callable,
-                                                                 @NotNull TypeEvalContext context) {
+  public static ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                    @NotNull PyCallable callable,
+                                                    @NotNull TypeEvalContext context) {
     final List<PyParameter> parameters = PyUtil.getParameters(callable, context);
     return mapArguments(callSite, callable, parameters, context);
   }
