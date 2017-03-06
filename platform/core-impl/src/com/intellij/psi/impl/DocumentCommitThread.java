@@ -396,22 +396,22 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
     if (!success && task != null) {
       final Project finalProject = project;
-      PsiDocumentManager documentManager = ReadAction.compute(() -> finalProject.isDisposed() ? null : PsiDocumentManager.getInstance(finalProject));
-      if (documentManager.isUncommited(document)) { // sync commit has not intervened
-        final Document finalDocument = document;
-        final CharSequence[] lastCommittedText = {null};
-        List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes =
-          ApplicationManager.getApplication().runReadAction((Computable<List<Pair<PsiFileImpl, FileASTNode>>>)() -> {
-            if (finalProject.isDisposed()) return null;
-            lastCommittedText[0] = PsiDocumentManager.getInstance(finalProject).getLastCommittedText(finalDocument);
-            PsiFile file = documentManager.getPsiFile(finalDocument);
-            return file == null ? null : getAllFileNodes(file);
-          });
+      final Document finalDocument = document;
+      Object finalFailureReason = failureReason;
+      CommitTask finalTask = task;
+      ReadAction.run(() -> {
+        if (finalProject.isDisposed()) return;
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(finalProject);
+        if (documentManager.isCommitted(finalDocument)) return; // sync commit hasn't intervened
+        CharSequence lastCommittedText = documentManager.getLastCommittedText(finalDocument);
+        PsiFile file = documentManager.getPsiFile(finalDocument);
+        List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes = file == null ? null : getAllFileNodes(file);
         if (oldFileNodes != null) {
-          doQueue(project, document, oldFileNodes, "re-added on failure: " + failureReason, task.myCreationModalityState,
-                  lastCommittedText[0]);
+          doQueue(finalProject, finalDocument, oldFileNodes, "re-added on failure: " + finalFailureReason,
+                  finalTask.myCreationModalityState,
+                  lastCommittedText);
         }
-      }
+      });
     }
     synchronized (lock) {
       currentTask = null; // do not cancel, it's being invokeLatered
