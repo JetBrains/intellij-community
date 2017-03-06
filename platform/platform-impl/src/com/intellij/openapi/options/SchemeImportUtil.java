@@ -19,11 +19,17 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -67,5 +73,30 @@ public class SchemeImportUtil {
     virtualFiles[0].refresh(false, false);
     return virtualFiles[0];
   }
-  
+
+  @NotNull
+  public static Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
+    InputStream inputStream = null;
+    try {
+      inputStream = file.getInputStream();
+      final Document document = JDOMUtil.loadDocument(inputStream);
+      final Element root = document.getRootElement();
+      inputStream.close();
+      return root;
+    }
+    catch (IOException | JDOMException e) {
+      throw new SchemeImportException("Can't read from" + file.getName() + ", " + e.getMessage());
+    }
+    finally {
+      if (inputStream != null) {
+        try {
+          inputStream.close();
+        }
+        catch (IOException e) {
+          // ignore
+        }
+      }
+    }
+  }
+
 }

@@ -227,7 +227,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   public boolean saveSchemeAs(@NotNull EditorColorsScheme editorScheme, @NotNull String name) {
     if (editorScheme instanceof MyColorScheme) {
       MyColorScheme scheme = (MyColorScheme)editorScheme;
-      EditorColorsScheme clone = (EditorColorsScheme)scheme.getOriginalScheme().clone();
+      EditorColorsScheme clone = (EditorColorsScheme)scheme.getParentScheme().clone();
       scheme.apply(clone);
       if (clone instanceof AbstractColorsScheme) {
         ((AbstractColorsScheme)clone).setSaveNeeded(true);
@@ -304,13 +304,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       List<EditorColorsScheme> result = new ArrayList<>(mySchemes.values().size());
       boolean activeSchemeModified = false;
-      EditorColorsScheme activeOriginalScheme = mySelectedScheme.getOriginalScheme();
+      EditorColorsScheme activeOriginalScheme = mySelectedScheme.getParentScheme();
       for (MyColorScheme scheme : mySchemes.values()) {
         boolean isModified = scheme.apply();
-        if (isModified && !activeSchemeModified && activeOriginalScheme == scheme.getOriginalScheme()) {
+        if (isModified && !activeSchemeModified && activeOriginalScheme == scheme.getParentScheme()) {
           activeSchemeModified = true;
         }
-        result.add(scheme.getOriginalScheme());
+        result.add(scheme.getParentScheme());
       }
 
       // refresh only if scheme is not switched
@@ -1192,11 +1192,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public Object clone() {
       return null;
-    }
-
-    @NotNull
-    public EditorColorsScheme getOriginalScheme() {
-      return myParentScheme;
     }
 
     public void setIsNew() {

@@ -903,6 +903,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return null;
   }
 
+  public EditorColorsScheme getParentScheme() {
+    return myParentScheme;
+  }
+
   @NotNull
   @Override
   public Element writeScheme() {
