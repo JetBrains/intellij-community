@@ -70,6 +70,8 @@ public class ChainCallInplaceIntroducer extends JavaVariableInplaceIntroducer {
         PsiParameter parameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
         myParameter = parameter;
         myCall = PsiTreeUtil.getParentOfType(lambda, PsiMethodCallExpression.class);
+        myOccurrences = PsiExpression.EMPTY_ARRAY;
+        myOccurrenceMarkers = null;
         myExprMarker = null;
         myExpr = null;
         setAdvertisementText(null);
