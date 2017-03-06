@@ -17,7 +17,7 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
-public class ExtractStreamMapActionTest extends LightIntentionActionTestCase {
+public class ExtractChainedMapActionTest extends LightIntentionActionTestCase {
 
   public void test() throws Exception { doAllTests(); }
 

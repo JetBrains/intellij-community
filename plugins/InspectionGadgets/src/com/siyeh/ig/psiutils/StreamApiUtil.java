@@ -102,25 +102,46 @@ public class StreamApiUtil {
         return ".asDoubleStream()";
       }
     }
-    String operationName = "map";
-    if(outType instanceof PsiPrimitiveType) {
-      if(!outType.equals(inType)) {
-        if(PsiType.INT.equals(outType)) {
-          operationName = "mapToInt";
-        } else if(PsiType.LONG.equals(outType)) {
-          operationName = "mapToLong";
-        } else if(PsiType.DOUBLE.equals(outType)) {
-          operationName = "mapToDouble";
-        }
-      }
-    } else if(inType instanceof PsiPrimitiveType) {
-      operationName = "mapToObj";
-    }
+    String operationName = getMapOperationName(inType, outType);
     if(outType != null && mapper instanceof PsiArrayInitializerExpression) {
       mapper = RefactoringUtil.convertInitializerToNormalExpression((PsiExpression)mapper, outType);
     }
     String typeArgument = mapper instanceof PsiExpression ? OptionalUtil.getMapTypeArgument((PsiExpression)mapper, outType) : "";
     return "." + typeArgument + operationName +
            "(" + variable.getName() + "->" + mapper.getText() + ")";
+  }
+
+  @NotNull
+  public static String getMapOperationName(PsiType inType, @Nullable PsiType outType) {
+    if(outType instanceof PsiPrimitiveType) {
+      if(!outType.equals(inType)) {
+        if(PsiType.INT.equals(outType)) {
+          return "mapToInt";
+        } else if(PsiType.LONG.equals(outType)) {
+          return "mapToLong";
+        } else if(PsiType.DOUBLE.equals(outType)) {
+          return "mapToDouble";
+        }
+      }
+    } else if(inType instanceof PsiPrimitiveType) {
+      return "mapToObj";
+    }
+    return "map";
+  }
+
+  @Nullable
+  public static String getFlatMapOperationName(PsiType inType, PsiType outType) {
+    if (!(inType instanceof PsiPrimitiveType)) {
+      if (PsiType.INT.equals(outType)) {
+        return "flatMapToInt";
+      }
+      else if (PsiType.LONG.equals(outType)) {
+        return "flatMapToLong";
+      }
+      else if (PsiType.DOUBLE.equals(outType)) {
+        return "flatMapToDouble";
+      }
+    } else if (!inType.equals(outType)) return null;
+    return "flatMap";
   }
 }

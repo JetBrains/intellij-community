@@ -329,6 +329,8 @@
     <extensionPoint name="documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
 
     <extensionPoint name="java.inspection.bulkMethodInfo" interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider"/>
+
+    <extensionPoint name="java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -939,7 +941,7 @@
       <category>Java/Streams</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.ExtractStreamMapAction</className>
+      <className>com.intellij.codeInsight.intention.impl.ExtractChainedMapAction</className>
       <category>Java/Streams</category>
     </intentionAction>
     <intentionAction>
@@ -1896,6 +1898,9 @@
     <importTestOutput implementation="com.intellij.execution.AntTestContentHandler$AntTestOutputExtension"/>
 
     <java.inspection.bulkMethodInfo implementation="com.intellij.codeInspection.bulkOperation.JdkBulkMethodInfoProvider"/>
+
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.StreamChainCallExtractor"/>
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CompletionStageChainCallExtractor"/>
 
     <diff.lang.DiffIgnoredRangeProvider implementation="com.intellij.diff.lang.JavaDiffIgnoredRangeProvider"/>
   </extensions>

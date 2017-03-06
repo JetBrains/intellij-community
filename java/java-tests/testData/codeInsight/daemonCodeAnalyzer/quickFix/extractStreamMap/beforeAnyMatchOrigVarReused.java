@@ -1,4 +1,4 @@
-// "Extract variable 'lowerCase' to separate stream step" "false"
+// "Extract variable 'lowerCase' to separate mapping method" "false"
 import java.util.*;
 import java.util.stream.*;
 

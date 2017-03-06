@@ -1,4 +1,4 @@
-// "Extract variable 'i' to separate stream step" "false"
+// "Extract variable 'i' to separate mapping method" "false"
 import java.util.*;
 import java.util.stream.*;
 
