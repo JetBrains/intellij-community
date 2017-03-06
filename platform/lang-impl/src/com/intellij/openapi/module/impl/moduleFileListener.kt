@@ -47,12 +47,15 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
   }
 
   private fun propertyChanged(event: VFilePropertyChangeEvent) {
-    if (event.requestor is StateStorage || VirtualFile.PROP_NAME != event.propertyName) {
+    if (!event.file.isDirectory || event.requestor is StateStorage || event.propertyName != VirtualFile.PROP_NAME) {
       return
     }
 
+    val roots = THashSet<String>()
+
     val parentPath = event.file.parent?.path ?: return
     var someModulePathIsChanged = false
+    val newAncestorPath = "${parentPath}/${event.newValue}"
     for (module in moduleManager.modules) {
       if (!module.isLoaded || module.isDisposed) {
         continue
@@ -61,9 +64,11 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
       val ancestorPath = "$parentPath/${event.oldValue}"
       val moduleFilePath = module.moduleFilePath
       if (FileUtil.isAncestor(ancestorPath, moduleFilePath, true)) {
-        setModuleFilePath(module, "$parentPath/${event.newValue}/${FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/')}")
+        setModuleFilePath(module, "$newAncestorPath/${FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/')}")
         someModulePathIsChanged = true
       }
+
+      checkRootModification(module, newAncestorPath, roots)
     }
 
     if (someModulePathIsChanged) {
@@ -91,17 +96,20 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
         setModuleFilePath(module, "${event.newParent.path}/$dirName/${FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/')}")
       }
 
-      // https://youtrack.jetbrains.com/issue/IDEA-168933
-      roots.clear()
+      checkRootModification(module, newAncestorPath, roots)
+    }
+  }
 
-      val moduleRootManager = module.rootManager as? ModuleRootManagerImpl ?: continue
-      ProjectRootManagerComponent.addRootsToTrack(moduleRootManager.contentRootUrls, roots, roots)
-      ProjectRootManagerComponent.addRootsToTrack(moduleRootManager.sourceRootUrls, roots, roots)
+  // https://youtrack.jetbrains.com/issue/IDEA-168933
+  private fun checkRootModification(module: Module, newAncestorPath: String, roots: THashSet<String>) {
+    roots.clear()
 
-      if (roots.contains(newAncestorPath)) {
-        moduleRootManager.stateChanged()
-        break
-      }
+    val moduleRootManager = module.rootManager as? ModuleRootManagerImpl ?: return
+    ProjectRootManagerComponent.addRootsToTrack(moduleRootManager.contentRootUrls, roots, roots)
+    ProjectRootManagerComponent.addRootsToTrack(moduleRootManager.sourceRootUrls, roots, roots)
+
+    if (roots.contains(newAncestorPath)) {
+      moduleRootManager.stateChanged()
     }
   }
 
