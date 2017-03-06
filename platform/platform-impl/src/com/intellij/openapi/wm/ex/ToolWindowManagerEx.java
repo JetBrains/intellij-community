@@ -40,13 +40,13 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   public abstract void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener);
 
   /**
-   * @return <code>ID</code> of tool window that was activated last time.
+   * @return {@code ID} of tool window that was activated last time.
    */
   @Nullable
   public abstract String getLastActiveToolWindowId();
 
   /**
-   * @return <code>ID</code> of tool window which was last activated among tool windows satisfying the current condition
+   * @return {@code ID} of tool window which was last activated among tool windows satisfying the current condition
    */
   @Nullable
   public abstract String getLastActiveToolWindowId(@Nullable Condition<JComponent> condition);
@@ -61,7 +61,7 @@ public abstract class ToolWindowManagerEx extends ToolWindowManager {
   public abstract DesktopLayout getLayoutToRestoreLater();
 
   /**
-   * Copied <code>layout</code> into internal layout and rearranges tool windows.
+   * Copied {@code layout} into internal layout and rearranges tool windows.
    */
   public abstract void setLayout(@NotNull DesktopLayout layout);
 

@@ -91,12 +91,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public static void setTemplateTesting(Project project, Disposable parentDisposable) {
     final TemplateManagerImpl instance = (TemplateManagerImpl)getInstance(project);
     instance.myTemplateTesting = true;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        instance.myTemplateTesting = false;
-      }
-    });
+    Disposer.register(parentDisposable, () -> instance.myTemplateTesting = false);
   }
 
   private static void disposeState(@NotNull TemplateState state) {
@@ -389,11 +384,11 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     };
   }
 
-  public static List<TemplateImpl> findMatchingTemplates(CharSequence text,
-                                                         int caretOffset,
-                                                         @Nullable Character shortcutChar,
-                                                         TemplateSettings settings,
-                                                         boolean hasArgument) {
+  private static List<TemplateImpl> findMatchingTemplates(CharSequence text,
+                                                          int caretOffset,
+                                                          @Nullable Character shortcutChar,
+                                                          TemplateSettings settings,
+                                                          boolean hasArgument) {
     List<TemplateImpl> candidates = Collections.emptyList();
     for (int i = settings.getMaxKeyLength(); i >= 1; i--) {
       int wordStart = caretOffset - i;

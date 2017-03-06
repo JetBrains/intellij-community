@@ -651,7 +651,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   public void testUndoShouldAddToCommitQueue() throws IOException {
     VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", ""));
     PsiFile file = findFile(virtualFile);
-    assertTrue(file.getFileType().getName().equals("JAVA"));
+    assertEquals("JAVA", file.getFileType().getName());
 
     assertNotNull(file);
     assertTrue(file.isPhysical());
@@ -766,9 +766,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(pdm.isCommitted(document));
     assertFalse(file.isValid());
 
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      document.replaceString(0, document.getTextLength(), "xxxxxxxxxxxxxxxxxxxx");
-    });
+    WriteCommandAction.runWriteCommandAction(null, () ->
+      document.replaceString(0, document.getTextLength(), "xxxxxxxxxxxxxxxxxxxx"));
     pdm.commitAllDocuments();
     assertTrue(pdm.isCommitted(document));
 
@@ -789,7 +788,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     return StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);
   }
 
-  private static abstract class FileTooBigExceptionCase extends AbstractExceptionCase {
+  private abstract static class FileTooBigExceptionCase extends AbstractExceptionCase {
     @Override
     public Class getExpectedExceptionClass() {
       return FileTooBigException.class;

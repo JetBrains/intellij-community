@@ -27,7 +27,7 @@ import javax.swing.event.HyperlinkListener;
 
 /**
  * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link ToolWindowManager}'s
- * registration methods which have 'canWorkInDumMode' parameter.
+ * registration methods which have 'canWorkInDumbMode' parameter.
  */
 public abstract class ToolWindowManager {
 

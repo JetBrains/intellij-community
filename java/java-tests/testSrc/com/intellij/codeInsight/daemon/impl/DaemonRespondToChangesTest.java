@@ -1732,7 +1732,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     long max = Arrays.stream(interruptTimes).max().getAsLong();
     long min = Arrays.stream(interruptTimes).min().getAsLong();
     System.out.println("Average among the N/3 median times: " + mean + "ms; max: "+max+"; min:"+min+"; avg: "+avg);
-    assertTrue(mean < 10);
+    assertTrue(String.valueOf(mean), mean < 10);
   }
 
   @NotNull
