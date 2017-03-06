@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
@@ -365,7 +364,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    boolean declareFinalIfAll,
                                                    boolean anyAssignmentLHS,
                                                    InputValidator validator,
-                                                   PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                                   PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
         assertTrue(type.getPresentableText(), type.getPresentableText().equals(expectedTypeName));
         assertEquals("path", IntroduceVariableBase.getSuggestedName(type, expr).names[0]);
@@ -384,7 +383,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    boolean declareFinalIfAll,
                                                    boolean anyAssignmentLHS,
                                                    InputValidator validator,
-                                                   PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                                   PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
         assertTrue(type.getPresentableText(), type.getPresentableText().equals("B"));
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
@@ -552,7 +551,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    boolean declareFinalIfAll,
                                                    boolean anyAssignmentLHS,
                                                    InputValidator validator,
-                                                   PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                                   PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType[] types = typeSelectorManager.getTypesForAll();
         assertTrue(types[0].getPresentableText(), types[0].getPresentableText().equals("B"));
         assertTrue(types[1].getPresentableText(), types[1].getPresentableText().equals("A"));

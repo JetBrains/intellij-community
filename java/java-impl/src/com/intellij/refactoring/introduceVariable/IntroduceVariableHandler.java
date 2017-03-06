@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -51,9 +50,9 @@ public class IntroduceVariableHandler extends IntroduceVariableBase {
                                                boolean declareFinalIfAll,
                                                boolean anyAssignmentLHS,
                                                final InputValidator validator,
-                                               PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                               PsiElement anchor, JavaReplaceChoice replaceChoice) {
     if (replaceChoice == null && ApplicationManager.getApplication().isUnitTestMode()) {
-      replaceChoice = OccurrencesChooser.ReplaceChoice.NO;
+      replaceChoice = JavaReplaceChoice.NO;
     }
     if (replaceChoice != null) {
       return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS, validator,

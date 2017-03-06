@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
 import static org.junit.Assert.assertTrue;
@@ -66,7 +64,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
                                                final boolean declareFinalIfAll,
                                                boolean anyAssignmentLHS,
                                                InputValidator validator,
-                                               PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                               PsiElement anchor, final JavaReplaceChoice replaceChoice) {
     final PsiType type = myLookForType ? findType(typeSelectorManager.getTypesForAll(), typeSelectorManager.getDefaultType())
                                        : typeSelectorManager.getDefaultType();
     assertTrue(type.getInternalCanonicalText(), type.getInternalCanonicalText().equals(myExpectedTypeCanonicalName));
