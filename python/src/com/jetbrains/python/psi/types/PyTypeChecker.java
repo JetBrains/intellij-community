@@ -65,13 +65,16 @@ public class PyTypeChecker {
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
                                @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive) {
     // TODO: subscriptable types?, module types?, etc.
+    final PyClassType expectedClassType = as(expected, PyClassType.class);
+    final PyClassType actualClassType = as(actual, PyClassType.class);
+    
     // Special cases: object and type
-    if (expected instanceof PyClassType) {
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(((PyClassType)expected).getPyClass());
-      if (expected.equals(builtinCache.getObjectType())) {
+    if (expectedClassType != null && ArrayUtil.contains(expectedClassType.getName(), PyNames.OBJECT, PyNames.TYPE)) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(expectedClassType.getPyClass());
+      if (expectedClassType.equals(builtinCache.getObjectType())) {
         return true;
       }
-      if (expected.equals(builtinCache.getTypeType()) &&
+      if (expectedClassType.equals(builtinCache.getTypeType()) &&
           actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition()) {
         return true;
       }
@@ -80,9 +83,9 @@ public class PyTypeChecker {
         && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
       return false;
     }
-    if (actual instanceof PyClassType) {
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(((PyClassType)actual).getPyClass());
-      if (actual.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
+    if (actualClassType != null && PyNames.BASESTRING.equals(actualClassType.getName())) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(actualClassType.getPyClass());
+      if (actualClassType.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
         return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
       }
     }
@@ -153,9 +156,9 @@ public class PyTypeChecker {
       }
       return false;
     }
-    if (expected instanceof PyClassType && actual instanceof PyClassType) {
-      final PyClass superClass = ((PyClassType)expected).getPyClass();
-      final PyClass subClass = ((PyClassType)actual).getPyClass();
+    if (expectedClassType != null && actualClassType != null) {
+      final PyClass superClass = expectedClassType.getPyClass();
+      final PyClass subClass = actualClassType.getPyClass();
       if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
         final PyTupleType subTupleType = (PyTupleType)actual;
@@ -224,15 +227,15 @@ public class PyTypeChecker {
       else if (matchClasses(superClass, subClass, context)) {
         return true;
       }
-      else if (((PyClassType)actual).isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
+      else if (actualClassType.isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
         return true;
       }
       if (expected.equals(actual)) {
         return true;
       }
     }
-    if (actual instanceof PyFunctionTypeImpl && expected instanceof PyClassType) {
-      final PyClass superClass = ((PyClassType)expected).getPyClass();
+    if (actual instanceof PyFunctionTypeImpl && expectedClassType != null) {
+      final PyClass superClass = expectedClassType.getPyClass();
       if (PyNames.CALLABLE.equals(superClass.getName())) {
         return true;
       }
@@ -248,16 +251,15 @@ public class PyTypeChecker {
       }
       return expectedStructural.getAttributeNames().containsAll(actualStructural.getAttributeNames());
     }
-    if (expected instanceof PyStructuralType && actual instanceof PyClassType) {
-      final PyClassType actualClassType = (PyClassType)actual;
+    if (expected instanceof PyStructuralType && actualClassType != null) {
       if (overridesGetAttr(actualClassType.getPyClass(), context)) {
         return true;
       }
       final Set<String> actualAttributes = actualClassType.getMemberNames(true, context);
       return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
     }
-    if (actual instanceof PyStructuralType && expected instanceof PyClassType) {
-      final Set<String> expectedAttributes = ((PyClassType)expected).getMemberNames(true, context);
+    if (actual instanceof PyStructuralType && expectedClassType != null) {
+      final Set<String> expectedAttributes = expectedClassType.getMemberNames(true, context);
       return expectedAttributes.containsAll(((PyStructuralType)actual).getAttributeNames());
     }
     if (actual instanceof PyCallableType && expected instanceof PyCallableType) {
