@@ -165,6 +165,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
         is LightRef.JavaLightFieldRef -> "${this.owner.name.asName(nameEnumerator)}.${this.name.asName(nameEnumerator)}"
         is LightRef.JavaLightClassRef -> this.name.asName(nameEnumerator)
         is LightRef.JavaLightFunExprDef -> "fun_expr(id=${this.id})"
+        is LightRef.JavaLightAnonymousClassRef -> "anonymous(id=${this.name})"
         else -> throw UnsupportedOperationException()
       }
 

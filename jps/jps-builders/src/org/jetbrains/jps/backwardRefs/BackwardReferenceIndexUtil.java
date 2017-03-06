@@ -40,10 +40,19 @@ public class BackwardReferenceIndexUtil {
     final Map<LightRef, Void> definitions = new HashMap<>(defs.size());
     final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
 
+    final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
+
     for (JavacDef def : defs) {
       if (def instanceof JavacDef.JavacClassDef) {
         JavacRef.JavacClass sym = (JavacRef.JavacClass)def.getDefinedElement();
-        final LightRef.JavaLightClassRef aClass = writer.asClassUsage(sym);
+
+        final LightRef.LightClassHierarchyElementDef aClass;
+        if (sym.isAnonymous()) {
+          final JavacRef[] classes = ((JavacDef.JavacClassDef)def).getSuperClasses();
+          aClass = anonymousClassEnumerator.addAnonymous(sym.getName(), writer.asClassUsage(classes[0]));
+        } else {
+          aClass = writer.asClassUsage(sym);
+        }
         definitions.put(aClass, null);
 
         final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
@@ -64,14 +73,36 @@ public class BackwardReferenceIndexUtil {
       }
     }
 
+    //reenumerate
     Map<LightRef, Integer> convertedRefs = new THashMap<>();
     refs.forEachEntry((ref, count) -> {
-      final LightRef lightRef = writer.enumerateNames(ref);
+      final LightRef lightRef = writer.enumerateNames(ref, name -> {
+        final LightRef.LightClassHierarchyElementDef ref1 = anonymousClassEnumerator.getLightRefIfAnonymous(name);
+        return ref1 == null ? null : ref1.getName();
+      });
       if (lightRef != null) {
         convertedRefs.put(lightRef, count);
       }
       return true;
     });
     writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
+  }
+
+  private static class AnonymousClassEnumerator {
+    private THashMap<String, LightRef.LightClassHierarchyElementDef> myAnonymousName2Id = null;
+    private int myFreeId = 0;
+
+    private LightRef.JavaLightAnonymousClassRef addAnonymous(String internalName,
+                                                             LightRef.JavaLightClassRef base) {
+      if (myAnonymousName2Id == null) {
+        myAnonymousName2Id = new THashMap<>();
+      }
+      myAnonymousName2Id.put(internalName, base);
+      return new LightRef.JavaLightAnonymousClassRef(myFreeId++);
+    }
+
+    private LightRef.LightClassHierarchyElementDef getLightRefIfAnonymous(String className) {
+      return myAnonymousName2Id == null ? null : myAnonymousName2Id.get(className);
+    }
   }
 }

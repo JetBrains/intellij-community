@@ -112,7 +112,7 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
   @NotNull
   @Override
   public Class<? extends LightRef.LightClassHierarchyElementDef> getHierarchyObjectClass() {
-    return LightRef.JavaLightClassRef.class;
+    return LightRef.LightClassHierarchyElementDef.class;
   }
 
   @NotNull
@@ -123,7 +123,7 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
 
   @NotNull
   @Override
-  public PsiClass[] findDirectInheritorCandidatesInFile(@NotNull String[] internalNames,
+  public PsiClass[] findDirectInheritorCandidatesInFile(@NotNull Object[] internalNames,
                                                         @NotNull PsiFileWithStubSupport file,
                                                         @NotNull PsiNamedElement superClass) {
     return JavaCompilerElementRetriever.retrieveClassesByInternalNames(internalNames, superClass, file);

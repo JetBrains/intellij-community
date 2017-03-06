@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.InvertedIndex;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +128,7 @@ public class BackwardReferenceIndexWriter {
   }
 
   @Nullable
-  LightRef enumerateNames(JavacRef ref) {
+  LightRef enumerateNames(JavacRef ref, Function<String, Integer> parentReplacer) {
     NameEnumerator nameEnumerator = myIndex.getByteSeqEum();
     if (ref instanceof JavacRef.JavacClass) {
       if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
@@ -139,12 +140,13 @@ public class BackwardReferenceIndexWriter {
       if (isPrivate(ref)) {
         return null;
       }
+      final Integer ownerPrecalculatedId = parentReplacer.fun(ownerName);
       if (ref instanceof JavacRef.JavacField) {
-        return new LightRef.JavaLightFieldRef(id(ownerName, nameEnumerator), id(ref, nameEnumerator));
+        return new LightRef.JavaLightFieldRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator));
       }
       else if (ref instanceof JavacRef.JavacMethod) {
         int paramCount = ((JavacRef.JavacMethod) ref).getParamCount();
-        return new LightRef.JavaLightMethodRef(id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
+        return new LightRef.JavaLightMethodRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
       }
       else {
         throw new AssertionError("unexpected symbol: " + ref + " class: " + ref.getClass());

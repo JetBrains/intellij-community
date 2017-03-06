@@ -30,7 +30,7 @@ enum CompilerHierarchySearchType {
                                      PsiNamedElement baseElement,
                                      PsiFileWithStubSupport file,
                                      LanguageLightRefAdapter adapter) {
-      return adapter.findDirectInheritorCandidatesInFile((String[])definitions, file, baseElement);
+      return adapter.findDirectInheritorCandidatesInFile(definitions, file, baseElement);
     }
 
     @Override
@@ -40,7 +40,7 @@ enum CompilerHierarchySearchType {
 
     @Override
     Object[] convertToIds(Collection<LightRef> lightRef, NameEnumerator nameEnumerator) {
-      return lightRef.stream().map(r -> nameEnumerator.getName(((LightRef.LightClassHierarchyElementDef)r).getName())).toArray(String[]::new);
+      return lightRef.stream().map(r -> r instanceof LightRef.JavaLightAnonymousClassRef ? ((LightRef.JavaLightAnonymousClassRef)r).getName() : nameEnumerator.getName(((LightRef.LightClassHierarchyElementDef)r).getName())).toArray(String[]::new);
     }
   },
   FUNCTIONAL_EXPRESSION {

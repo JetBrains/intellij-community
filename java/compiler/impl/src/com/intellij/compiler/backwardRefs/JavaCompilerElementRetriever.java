@@ -82,7 +82,7 @@ public class JavaCompilerElementRetriever {
   }
 
   @NotNull
-  static PsiClass[] retrieveClassesByInternalNames(@NotNull String[] internalNames,
+  static PsiClass[] retrieveClassesByInternalNames(@NotNull Object[] internalNames,
                                                    @NotNull PsiNamedElement baseClass,
                                                    @NotNull PsiFileWithStubSupport psiFile) {
     Collection<InternalClassMatcher> matchers = createClassMatcher(internalNames, baseClass);
@@ -120,10 +120,10 @@ public class JavaCompilerElementRetriever {
     return false;
   }
 
-  private static Collection<InternalClassMatcher> createClassMatcher(@NotNull String[] internalNames, @NotNull PsiNamedElement baseClass) {
+  private static Collection<InternalClassMatcher> createClassMatcher(@NotNull Object[] internalNames, @NotNull PsiNamedElement baseClass) {
     boolean matcherBySuperNameAdded = false;
     final List<InternalClassMatcher> matchers = new ArrayList<>(internalNames.length);
-    for (String internalName : internalNames) {
+    for (Object internalName : internalNames) {
       int curLast = internalName.length() - 1;
       while (true) {
         int lastIndex = internalName.lastIndexOf('$', curLast);

@@ -77,7 +77,7 @@ public interface LanguageLightRefAdapter  {
    * found elements really inheritors.
    */
   @NotNull
-  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull String[] internalNames,
+  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull Object[] internalNames,
                                                    @NotNull PsiFileWithStubSupport file,
                                                    @NotNull PsiNamedElement superClass);
 
