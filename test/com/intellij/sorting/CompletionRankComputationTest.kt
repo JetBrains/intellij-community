@@ -4,7 +4,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.stats.completion.sorting.Ranker
+import com.intellij.sorting.Ranker
 import com.jetbrains.completion.ranker.features.CompletionState
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
