@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Verifier;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
@@ -34,20 +35,32 @@ import static org.junit.Assert.*;
 public class StringUtilTest {
   @Test
   public void testTrimLeadingChar() throws Exception {
-    assertEquals("", StringUtil.trimLeading("", ' '));
-    assertEquals("", StringUtil.trimLeading(" ", ' '));
-    assertEquals("", StringUtil.trimLeading("    ", ' '));
-    assertEquals("a  ", StringUtil.trimLeading("a  ", ' '));
-    assertEquals("a  ", StringUtil.trimLeading("  a  ", ' '));
+    doTestTrimLeading("", "");
+    doTestTrimLeading("", " ");
+    doTestTrimLeading("", "    ");
+    doTestTrimLeading("a  ", "a  ");
+    doTestTrimLeading("a  ", "  a  ");
   }
 
   @Test
   public void testTrimTrailingChar() throws Exception {
-    assertEquals("", StringUtil.trimTrailing("", ' '));
-    assertEquals("", StringUtil.trimTrailing(" ", ' '));
-    assertEquals("", StringUtil.trimTrailing("    ", ' '));
-    assertEquals("  a", StringUtil.trimTrailing("  a", ' '));
-    assertEquals("  a", StringUtil.trimTrailing("  a  ", ' '));
+    doTestTrimTrailing("", "");
+    doTestTrimTrailing("", " ");
+    doTestTrimTrailing("", "    ");
+    doTestTrimTrailing("  a", "  a");
+    doTestTrimTrailing("  a", "  a  ");
+  }
+
+  private static void doTestTrimLeading(@NotNull String expected, @NotNull String string) {
+    assertEquals(expected, StringUtil.trimLeading(string));
+    assertEquals(expected, StringUtil.trimLeading(string, ' '));
+    assertEquals(expected, StringUtil.trimLeading(new StringBuilder(string), ' ').toString());
+  }
+
+  private static void doTestTrimTrailing(@NotNull String expected, @NotNull String string) {
+    assertEquals(expected, StringUtil.trimTrailing(string));
+    assertEquals(expected, StringUtil.trimTrailing(string, ' '));
+    assertEquals(expected, StringUtil.trimTrailing(new StringBuilder(string), ' ').toString());
   }
 
   @Test
