@@ -17,13 +17,21 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptor;
+import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -369,7 +377,52 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    * @see SchemeExporter
    * @see SchemeExporterEP
    */
-  protected abstract void exportScheme(@NotNull T scheme, @NotNull String exporterName);
+  protected void exportScheme(@NotNull T scheme, @NotNull String exporterName) {
+    SchemeExporter<T> exporter = SchemeExporterEP.getExporter(exporterName, getSchemeType());
+    if (exporter != null) {
+      String ext = exporter.getExtension();
+      FileSaverDialog saver =
+        FileChooserFactory.getInstance()
+          .createSaveFileDialog(new FileSaverDescriptor(
+            ApplicationBundle.message("scheme.exporter.ui.file.chooser.title"),
+            ApplicationBundle.message("scheme.exporter.ui.file.chooser.message"),
+            ext), getSchemesPanel());
+      VirtualFileWrapper target = saver.save(null, SchemeManager.getDisplayName(scheme) + "." + ext);
+      if (target != null) {
+        VirtualFile targetFile = target.getVirtualFile(true);
+        String message;
+        MessageType messageType;
+        if (targetFile != null) {
+          try {
+            WriteAction.run(() -> {
+              OutputStream outputStream = targetFile.getOutputStream(this);
+              try {
+                exporter.exportScheme(scheme, outputStream);
+              }
+              finally {
+                outputStream.close();
+              }
+            });
+            message = ApplicationBundle
+              .message("scheme.exporter.ui.scheme.exported.message",
+                       scheme.getName(),
+                       getSchemesPanel().getSchemeTypeName(),
+                       targetFile.getPresentableUrl());
+            messageType = MessageType.INFO;
+          }
+          catch (Exception e) {
+            message = ApplicationBundle.message("scheme.exporter.ui.export.failed", e.getMessage());
+            messageType = MessageType.ERROR;
+          }
+        }
+        else {
+          message = ApplicationBundle.message("scheme.exporter.ui.cannot.write.message");
+          messageType = MessageType.ERROR;
+        }
+        getSchemesPanel().showStatus(message, messageType);
+      }
+    }
+  }
 
   /**
    * Make necessary configurable updates when another scheme has been selected.
