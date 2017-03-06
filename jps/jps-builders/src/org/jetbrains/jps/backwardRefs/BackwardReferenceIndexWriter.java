@@ -86,7 +86,7 @@ public class BackwardReferenceIndexWriter {
       }
 
       if (CompilerBackwardReferenceIndex.exist(buildDir) || isRebuild) {
-        ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir));
+        ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir, false));
       }
     } else {
       CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
