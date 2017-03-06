@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import org.jetbrains.annotations.NotNull;
 public interface VirtualFilePointerListener {
   Topic<VirtualFilePointerListener> TOPIC = Topic.create("VirtualFilePointer", VirtualFilePointerListener.class);
 
-  void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers);
-  void validityChanged(@NotNull VirtualFilePointer[] pointers);
+  default void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+  }
+
+  default void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+  }
 }

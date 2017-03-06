@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -585,13 +585,6 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
     Disposable disposable = Disposer.newDisposable();
     final VirtualFilePointer pointer = myVirtualFilePointerManager.create(vFile, disposable, new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-      }
     });
 
 
@@ -886,15 +879,6 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertNotNull(fileToCreatePointer);
 
     VirtualFilePointerListener listener = new VirtualFilePointerListener() {
-      @Override
-      public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-
-      }
-
-      @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-
-      }
     };
     long start = System.currentTimeMillis();
     int i;
