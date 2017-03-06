@@ -107,11 +107,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
     synchronized (state) {
       state.myIndexIdToVersionMap.put(indexKey, version);
     }
-    final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
-    final boolean versionFileExisted = versionFile.exists();
+
     final File indexRootDir = IndexInfrastructure.getIndexRootDir(indexKey);
     boolean needRebuild = false;
-    if (forceClean || IndexingStamp.versionDiffers(versionFile, version)) {
+
+    if (forceClean || IndexingStamp.versionDiffers(indexKey, version)) {
+      final File versionFile = IndexInfrastructure.getVersionFile(indexKey);
+      final boolean versionFileExisted = versionFile.exists();
+
       final String[] children = indexRootDir.list();
       // rebuild only if there exists what to rebuild
       boolean indexRootHasChildren = children != null && children.length > 0;
@@ -120,7 +123,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
         LOG.info("Version has changed for stub index " + extension.getKey() + ". The index will be rebuilt.");
       }
       if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
-      IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
+      IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices
     }
 
     for (int attempt = 0; attempt < 2; attempt++) {
@@ -172,21 +175,24 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
       }
       catch (IOException e) {
         needRebuild = true;
-        onExceptionInstantiatingIndex(version, versionFile, indexRootDir, e);
+        onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       } catch (RuntimeException e) {
         //noinspection ThrowableResultOfMethodCallIgnored
         Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
         if (cause == null) throw e;
-        onExceptionInstantiatingIndex(version, versionFile, indexRootDir, e);
+        onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
     }
     return needRebuild;
   }
 
-  private static void onExceptionInstantiatingIndex(int version, File versionFile, File indexRootDir, Exception e) throws IOException {
+  private static <K> void onExceptionInstantiatingIndex(StubIndexKey<K, ?> indexKey,
+                                                        int version,
+                                                        File indexRootDir,
+                                                        Exception e) throws IOException {
     LOG.info(e);
     FileUtil.deleteWithRenaming(indexRootDir);
-    IndexingStamp.rewriteVersion(versionFile, version); // todo snapshots indices
+    IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices
   }
 
   public long getIndexModificationStamp(StubIndexKey<?, ?> indexId, @NotNull Project project) {

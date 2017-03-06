@@ -329,9 +329,11 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final int version = extension.getVersion();
 
     final File versionFile = IndexInfrastructure.getVersionFile(name);
-    final boolean versionFileExisted = versionFile.exists();
     boolean versionChanged = false;
-    if (IndexingStamp.versionDiffers(versionFile, version)) {
+    
+    if (IndexingStamp.versionDiffers(name, version)) {
+      final boolean versionFileExisted = versionFile.exists();
+
       if (versionFileExisted) {
         versionChanged = true;
         LOG.info("Version has changed for index " + name + ". The index will be rebuilt.");
@@ -341,15 +343,17 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       }
       File rootDir = IndexInfrastructure.getIndexRootDir(name);
       if (versionFileExisted) FileUtil.deleteWithRenaming(rootDir);
-      IndexingStamp.rewriteVersion(versionFile, version);
+      IndexingStamp.rewriteVersion(name, version);
     }
 
-    initIndexStorage(extension, version, versionFile, state);
+    initIndexStorage(extension, version, state);
 
     return versionChanged;
   }
 
-  private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension, int version, @NotNull File versionFile, IndexConfiguration state)
+  private static <K, V> void initIndexStorage(@NotNull FileBasedIndexExtension<K, V> extension,
+                                              int version,
+                                              IndexConfiguration state)
     throws IOException {
     VfsAwareMapIndexStorage<K, V> storage = null;
     final ID<K, V> name = extension.getName();
@@ -401,7 +405,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         if (extension.hasSnapshotMapping() && (!contentHashesEnumeratorOk || instantiatedStorage)) {
           FileUtil.deleteWithRenaming(IndexInfrastructure.getPersistentIndexRootDir(name)); // todo there is possibility of corruption of storage and content hashes
         }
-        IndexingStamp.rewriteVersion(versionFile, version);
+        IndexingStamp.rewriteVersion(name, version);
       }
     }
   }
@@ -1137,7 +1141,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private void advanceIndexVersion(ID<?, ?> indexId) {
     try {
-      IndexingStamp.rewriteVersion(IndexInfrastructure.getVersionFile(indexId), myState.getIndexVersion(indexId));
+      IndexingStamp.rewriteVersion(indexId, myState.getIndexVersion(indexId));
     }
     catch (IOException e) {
       LOG.error(e);

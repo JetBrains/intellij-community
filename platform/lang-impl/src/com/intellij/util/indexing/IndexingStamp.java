@@ -71,7 +71,8 @@ public class IndexingStamp {
 
   private IndexingStamp() {}
 
-  public static synchronized void rewriteVersion(@NotNull final File file, final int version) throws IOException {
+  public static synchronized void rewriteVersion(@NotNull ID<?,?> indexId, final int version) throws IOException {
+    File file = IndexInfrastructure.getVersionFile(indexId);
     if (FileBasedIndexImpl.LOG.isDebugEnabled()) {
       FileBasedIndexImpl.LOG.debug("Rewriting " + file + "," + version);
     }
@@ -122,7 +123,8 @@ public class IndexingStamp {
 
   private static final int OUR_INDICES_TIMESTAMP_INCREMENT = SystemProperties.getIntProperty("idea.indices.timestamp.resolution", 1);
 
-  public static boolean versionDiffers(@NotNull File versionFile, final int currentIndexVersion) {
+  public static boolean versionDiffers(@NotNull ID<?,?> indexId, final int currentIndexVersion) {
+    File versionFile = IndexInfrastructure.getVersionFile(indexId);
     try {
       ourLastStamp = Math.max(ourLastStamp, versionFile.lastModified());
       final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
