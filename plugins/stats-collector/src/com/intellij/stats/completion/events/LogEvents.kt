@@ -1,7 +1,6 @@
 package com.intellij.stats.completion.events
 
 import com.google.gson.Gson
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.stats.completion.Action
 
 object JsonSerializer {

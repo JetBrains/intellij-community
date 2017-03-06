@@ -3,12 +3,14 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.events.*
+import com.jetbrains.completion.ranker.CompletionRanker
 import java.util.*
 
 class CompletionFileLoggerProvider(private val logFileManager: LogFileManager) : CompletionLoggerProvider() {
@@ -77,10 +79,10 @@ class CompletionFileLogger(private val installationUID: String,
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
         }
     }
-    
+
     override fun completionStarted(lookup: LookupImpl, isExperimentPerformed: Boolean, experimentVersion: Int) {
         val lookupItems = lookup.items
-        
+
         lookupItems.forEach { registerElement(it) }
         val relevanceObjects = lookup.getRelevanceObjects(lookupItems, false)
 
@@ -89,20 +91,30 @@ class CompletionFileLogger(private val installationUID: String,
             val relevanceMap = relevanceObjects[it]?.map { Pair(it.first, it.second?.toString()) }?.toMap()
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
         }
-        
+
         val language = getLanguage(lookup)
+
+        val ideVersion = PluginManager.BUILD_NUMBER ?: "ideVersion"
+        val pluginVersion = calcPluginVersion() ?: "pluginVersion"
+        val mlRankingVersion = CompletionRanker.rankerVersion
+
         val event = CompletionStartedEvent(
-                installationUID, 
-                completionUID,
+                ideVersion, pluginVersion, mlRankingVersion,
+                installationUID, completionUID,
                 language?.displayName,
-                isExperimentPerformed, 
-                experimentVersion, 
-                lookupEntryInfos, 
-                selectedPosition = 0)
-        
+                isExperimentPerformed, experimentVersion,
+                lookupEntryInfos, selectedPosition = 0)
+
         logEvent(event)
     }
 
+    private fun calcPluginVersion(): String? {
+        val className = CompletionStartedEvent::class.java.name
+        val id = PluginManager.getPluginByClassName(className)
+        val plugin = PluginManager.getPlugin(id)
+        return plugin?.version
+    }
+    
     private fun getLanguage(lookup: LookupImpl): Language? {
         val editor = lookup.editor
         val offset = editor.caretModel.offset
