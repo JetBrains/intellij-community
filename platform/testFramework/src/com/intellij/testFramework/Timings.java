@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.util.Arrays;
 
 /**
  * @author peter
@@ -40,6 +41,7 @@ public class Timings {
   public static final long ETALON_CPU_TIMING = 200;
   public static final long ETALON_IO_TIMING = 100;
 
+  private static final long[] CPU_TIMING_DATA;
 
   static {
     int N = 20;
@@ -50,6 +52,7 @@ public class Timings {
     for (int i=0; i< N; i++) {
       elapsed[i] = measureCPU();
     }
+    CPU_TIMING_DATA = elapsed;
     CPU_TIMING = ArrayUtil.averageAmongMedians(elapsed, 2);
 
     long start = System.currentTimeMillis();
@@ -124,6 +127,6 @@ public class Timings {
       " Timings: CPU=" + CPU_TIMING + " (" + (int)(CPU_TIMING*1.0/ ETALON_CPU_TIMING*100) + "% of the etalon)" +
       ", I/O=" + IO_TIMING + " (" + (int)(IO_TIMING*1.0/ ETALON_IO_TIMING*100) + "% of the etalon)" +
       ", total=" + MACHINE_TIMING + " ("+(int)(MACHINE_TIMING*1.0/ ETALON_TIMING*100) + "% of the etalon) " +
-      Runtime.getRuntime().availableProcessors() + " cores.";
+      Runtime.getRuntime().availableProcessors() + " cores.\nRaw timings data: " + Arrays.toString(CPU_TIMING_DATA);
   }
 }
