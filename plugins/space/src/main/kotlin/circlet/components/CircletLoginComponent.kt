@@ -1,6 +1,7 @@
 package circlet.components
 
 import circlet.*
+import circlet.api.client.*
 import circlet.utils.*
 import com.intellij.ide.passwordSafe.*
 import com.intellij.openapi.components.*

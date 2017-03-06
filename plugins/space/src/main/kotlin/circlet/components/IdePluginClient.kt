@@ -113,6 +113,7 @@ class IdePluginClient(val project: Project) :
     private fun connectWithToken(lifetime: Lifetime, token: String) {
         val clientLocal = CircletClient(lifetime, "ws://localhost:8084/api/v1/connect", token)
         client.value = clientLocal
+/*
         clientLocal.services.user.isMyProfileReady()
             .flatMap {
                 if (!it) {
@@ -130,6 +131,7 @@ class IdePluginClient(val project: Project) :
             .failure {
                 log.debug { "Error: $it" }
             }
+*/
     }
 
     fun disconnect() {
