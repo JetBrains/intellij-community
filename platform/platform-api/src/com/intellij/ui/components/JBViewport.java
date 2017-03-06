@@ -20,8 +20,6 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.MethodInvocator;
@@ -47,7 +45,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
   private static final MethodInvocator ourGetUseTrueDoubleBufferingMethod = new MethodInvocator(JRootPane.class, "getUseTrueDoubleBuffering");
 
-  private static final RegistryValue CAPABILITIES_DEBUG = Registry.get("idea.true.smooth.scrolling.debug");
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("scrolling-capabilities-debug");
   private static final int NOTIFICATION_TIMEOUT = 1500;
 
@@ -108,7 +105,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   @Override
   public void setViewPosition(Point p) {
-    if (CAPABILITIES_DEBUG.asBoolean() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
+    if (ScrollSettings.isDebugEnabled() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
       checkScrollingCapabilities();
     }
 
@@ -248,7 +245,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   public Color getBackground() {
     Color color = super.getBackground();
-    if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView()) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getView();
         if (child != null) {
@@ -377,8 +374,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   }
 
   private static boolean isAlignmentNeeded(JComponent view, boolean horizontal) {
-    return (!SystemInfo.isMac || horizontal && Registry.is("mac.scroll.horizontal.gap")) &&
-           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && Registry.is("ide.scroll.align.component")));
+    return (!SystemInfo.isMac || horizontal && ScrollSettings.isHorizontalGapNeededOnMac()) &&
+           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && ScrollSettings.isGapNeededForAnyComponent()));
   }
 
   static Insets getViewInsets(JComponent view) {
@@ -541,7 +538,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             if (vsb != null && vsb.isVisible()) {
               boolean opaque = vsb.isOpaque();
               if (viewport == pane.getColumnHeader()
-                  ? (!opaque || Registry.is("ide.scroll.layout.header.over.corner"))
+                  ? (!opaque || ScrollSettings.isHeaderOverCorner())
                   : (!opaque && viewport == pane.getViewport())) {
                 Alignment va = UIUtil.getClientProperty(vsb, Alignment.class);
                 if (va == Alignment.LEFT) {
@@ -557,7 +554,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             if (hsb != null && hsb.isVisible()) {
               boolean opaque = hsb.isOpaque();
               if (viewport == pane.getRowHeader()
-                  ? (!opaque || Registry.is("ide.scroll.layout.header.over.corner"))
+                  ? (!opaque || ScrollSettings.isHeaderOverCorner())
                   : (!opaque && viewport == pane.getViewport())) {
                 Alignment ha = UIUtil.getClientProperty(hsb, Alignment.class);
                 if (ha == Alignment.TOP) {

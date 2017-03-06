@@ -18,7 +18,6 @@ package com.intellij.ui.components;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
@@ -105,7 +104,7 @@ public class JBScrollPane extends JScrollPane {
   @Override
   public Color getBackground() {
     Color color = super.getBackground();
-    if (!myBackgroundRequested && EventQueue.isDispatchThread() && Registry.is("ide.scroll.background.auto")) {
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView()) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getViewport();
         if (child != null) {
@@ -562,7 +561,7 @@ public class JBScrollPane extends JScrollPane {
         if (hsbOpaque) {
           Component corner = hsbOnTop ? (vsbOnLeft ? upperRight : upperLeft) : (vsbOnLeft ? lowerRight : lowerLeft);
           fillLowerCorner = corner == null && UIManager.getBoolean("ScrollPane.fillLowerCorner");
-          if (!fillLowerCorner && Registry.is("ide.scroll.layout.header.over.corner")) {
+          if (!fillLowerCorner && ScrollSettings.isHeaderOverCorner()) {
             if (hsbOnTop) rowHeadBounds.y -= hsbBounds.height;
             rowHeadBounds.height += hsbBounds.height;
           }
@@ -578,7 +577,7 @@ public class JBScrollPane extends JScrollPane {
         if (vsbOpaque) {
           Component corner = vsbOnLeft ? (hsbOnTop ? lowerLeft : upperLeft) : (hsbOnTop ? lowerRight : upperRight);
           fillUpperCorner = corner == null && UIManager.getBoolean("ScrollPane.fillUpperCorner");
-          if (!fillUpperCorner && Registry.is("ide.scroll.layout.header.over.corner")) {
+          if (!fillUpperCorner && ScrollSettings.isHeaderOverCorner()) {
             if (vsbOnLeft) colHeadBounds.x -= vsbBounds.width;
             colHeadBounds.width += vsbBounds.width;
           }
