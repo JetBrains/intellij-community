@@ -18,6 +18,8 @@ package com.intellij.openapi.module.impl
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
+import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -25,6 +27,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.project.rootManager
+import gnu.trove.THashSet
 
 /**
  * Why this class is required if we have StorageVirtualFileTracker?
@@ -50,7 +54,7 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
     val parentPath = event.file.parent?.path ?: return
     var someModulePathIsChanged = false
     for (module in moduleManager.modules) {
-      if (!module.isLoaded) {
+      if (!module.isLoaded || module.isDisposed) {
         continue
       }
 
@@ -72,16 +76,31 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
       return
     }
 
+    val roots = THashSet<String>()
+
     val dirName = event.file.nameSequence
     val ancestorPath = "${event.oldParent.path}/$dirName"
+    val newAncestorPath = "${event.newParent.path}/$dirName"
     for (module in moduleManager.modules) {
-      if (!module.isLoaded) {
+      if (!module.isLoaded || module.isDisposed) {
         continue
       }
 
       val moduleFilePath = module.moduleFilePath
       if (FileUtil.isAncestor(ancestorPath, moduleFilePath, true)) {
         setModuleFilePath(module, "${event.newParent.path}/$dirName/${FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/')}")
+      }
+
+      // https://youtrack.jetbrains.com/issue/IDEA-168933
+      roots.clear()
+
+      val moduleRootManager = module.rootManager as? ModuleRootManagerImpl ?: continue
+      ProjectRootManagerComponent.addRootsToTrack(moduleRootManager.contentRootUrls, roots, roots)
+      ProjectRootManagerComponent.addRootsToTrack(moduleRootManager.sourceRootUrls, roots, roots)
+
+      if (roots.contains(newAncestorPath)) {
+        moduleRootManager.stateChanged()
+        break
       }
     }
   }
