@@ -32,6 +32,7 @@ public class DeleteNameDescriptionLocation extends ElementDescriptionLocation {
   public static DeleteNameDescriptionLocation INSTANCE = new DeleteNameDescriptionLocation();
   private static final ElementDescriptionProvider ourDefaultProvider = new DefaultProvider();
 
+  @NotNull
   @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return ourDefaultProvider;
