@@ -29,7 +29,7 @@ class EventSerializeDeserializeTest {
 
     @Test
     fun `completion started event`() {
-        val event = CompletionStartedEvent(Fixtures.userId, "xx", "Java", true, 1, Fixtures.lookupList, 0)
+        val event = CompletionStartedEvent("", "", "", Fixtures.userId, "xx", "Java", true, 1, Fixtures.lookupList, 0)
         serializeDeserializeAndCheck(event)
     }
 
