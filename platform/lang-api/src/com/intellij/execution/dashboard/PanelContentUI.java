@@ -39,12 +39,8 @@ class PanelContentUI implements ContentUI {
   public void setManager(@NotNull ContentManager manager) {
     manager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void contentAdded(ContentManagerEvent event) {
-        initUI();
-      }
-
-      @Override
       public void selectionChanged(final ContentManagerEvent event) {
+        initUI();
         if (ContentManagerEvent.ContentOperation.add == event.getOperation()) {
           showContent(event.getContent());
         }
