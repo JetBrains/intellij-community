@@ -74,20 +74,25 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
+  @Override
   public void setDisplayName(String s) {
     myCopyrightProfile.setName(s);
   }
 
+  @Override
   public CopyrightProfile getEditableObject() {
     return myCopyrightProfile;
   }
 
+  @Override
   public String getBannerSlogan() {
     return myCopyrightProfile.getName();
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     myValidateButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         try {
           VelocityHelper.verify(myEditor.getDocument().getText());
@@ -101,17 +106,20 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     return myWholePanel;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return myCopyrightProfile.getName();
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public boolean isModified() {
     return myModified ||
            !Comparing.strEqual(EntityUtil.encode(myEditor.getDocument().getText()), myCopyrightProfile.getNotice()) ||
@@ -120,6 +128,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
            !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText()));
     myCopyrightProfile.setKeyword(validateRegexpAndGet(myKeywordTf.getText().trim(), "Detect copyright regexp is incorrect: "));
@@ -143,15 +152,13 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     return regexp;
   }
 
+  @Override
   public void reset() {
     myDisplayName = myCopyrightProfile.getName();
     SwingUtilities.invokeLater(() -> DocumentUtil.writeInRunUndoTransparentAction(
       () -> myEditor.getDocument().setText(EntityUtil.decode(myCopyrightProfile.getNotice()))));
     myKeywordTf.setText(myCopyrightProfile.getKeyword());
     myAllowReplaceTextField.setText(myCopyrightProfile.getAllowReplaceRegexp());
-  }
-
-  public void disposeUIResources() {
   }
 
   public void setModified(boolean modified) {
