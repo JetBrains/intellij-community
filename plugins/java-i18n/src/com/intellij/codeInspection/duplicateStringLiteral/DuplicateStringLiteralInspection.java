@@ -120,10 +120,10 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   @NotNull
-  private List<PsiAnchor> findDuplicateLiterals(String stringToFind, Project project) {
+  private List<PsiLiteralExpression> findDuplicateLiterals(String stringToFind, Project project) {
     Set<PsiFile> resultFiles = getCandidateFiles(stringToFind, project);
     if (resultFiles.isEmpty()) return Collections.emptyList();
-    List<PsiAnchor> foundExpr = new ArrayList<>();
+    List<PsiLiteralExpression> foundExpr = new ArrayList<>();
 
     for (final PsiFile file : resultFiles) {
       ProgressManager.checkCanceled();
@@ -138,7 +138,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         if (element == null || !(element.getParent() instanceof PsiLiteralExpression)) return true;
         PsiLiteralExpression expression = (PsiLiteralExpression)element.getParent();
         if (Comparing.equal(stringToFind, expression.getValue()) && shouldCheck(expression)) {
-          foundExpr.add(PsiAnchor.create(expression));
+          foundExpr.add(expression);
         }
         return true;
       });
@@ -157,10 +157,8 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     List<PsiLiteralExpression> foundExpr = getDuplicateLiterals(stringToFind, originalExpression);
     if (foundExpr.isEmpty()) return;
     Set<PsiClass> classes = new THashSet<>();
-    for (PsiLiteralExpression expr : foundExpr) {
-      if (expr == originalExpression) continue;
+    for (PsiElement aClass : foundExpr) {
       ProgressManager.checkCanceled();
-      PsiElement aClass = expr;
       do {
         aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
       }
@@ -208,15 +206,12 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   @NotNull
   private List<PsiLiteralExpression> getDuplicateLiterals(String stringToFind, PsiLiteralExpression place) {
     Project project = place.getProject();
-    Map<String, List<PsiAnchor>> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      Map<String, List<PsiAnchor>> value = ConcurrentFactoryMap.createConcurrentMap(
+    Map<String, List<PsiLiteralExpression>> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      Map<String, List<PsiLiteralExpression>> value = ConcurrentFactoryMap.createConcurrentMap(
         s -> Collections.unmodifiableList(findDuplicateLiterals(s, project)));
       return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
     });
-    return ContainerUtil.mapNotNull(map.get(stringToFind), anchor -> {
-      PsiLiteralExpression literal = (PsiLiteralExpression)anchor.retrieve();
-      return literal == place ? null : literal;
-    });
+    return ContainerUtil.filter(map.get(stringToFind), literal -> literal != place);
   }
 
   private boolean shouldCheck(@NotNull PsiLiteralExpression expression) {
