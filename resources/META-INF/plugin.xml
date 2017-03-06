@@ -54,6 +54,8 @@
                             implementationClass="com.intellij.sorting.MLCompletionContributor"
                             order="first, before liveTemplates"/>
 
+    <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+
   </extensions>
 
   <actions>
