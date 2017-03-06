@@ -20,10 +20,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.SuppressiveDiffTool;
-import com.intellij.diff.comparison.ByWord;
-import com.intellij.diff.comparison.ComparisonManager;
-import com.intellij.diff.comparison.ComparisonPolicy;
-import com.intellij.diff.comparison.ComparisonUtil;
+import com.intellij.diff.comparison.*;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DiffPsiFileSupport;
 import com.intellij.diff.contents.DocumentContent;
@@ -1027,7 +1024,8 @@ public class DiffUtil {
 
   @NotNull
   public static MergeConflictType getMergeType(@NotNull Condition<ThreeSide> emptiness,
-                                               @NotNull Equality<ThreeSide> equality) {
+                                               @NotNull Equality<ThreeSide> equality,
+                                               @NotNull BooleanGetter conflictResolver) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
     boolean isRightEmpty = emptiness.value(ThreeSide.RIGHT);
@@ -1042,12 +1040,17 @@ public class DiffUtil {
       }
       else { // =-=
         boolean equalModifications = equality.equals(ThreeSide.LEFT, ThreeSide.RIGHT);
-        return new MergeConflictType(equalModifications ? TextDiffType.INSERTED : TextDiffType.CONFLICT);
+        if (equalModifications) {
+          return new MergeConflictType(TextDiffType.INSERTED, true, true);
+        }
+        else {
+          return new MergeConflictType(TextDiffType.CONFLICT, true, true, false);
+        }
       }
     }
     else {
       if (isLeftEmpty && isRightEmpty) { // -=-
-        return new MergeConflictType(TextDiffType.DELETED);
+        return new MergeConflictType(TextDiffType.DELETED, true, true);
       }
       else { // -==, ==-, ===
         boolean unchangedLeft = equality.equals(ThreeSide.BASE, ThreeSide.LEFT);
@@ -1058,7 +1061,13 @@ public class DiffUtil {
         if (unchangedRight) return new MergeConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
 
         boolean equalModifications = equality.equals(ThreeSide.LEFT, ThreeSide.RIGHT);
-        return new MergeConflictType(equalModifications ? TextDiffType.MODIFIED : TextDiffType.CONFLICT);
+        if (equalModifications) {
+          return new MergeConflictType(TextDiffType.MODIFIED, true, true);
+        }
+        else {
+          boolean canBeResolved = !isLeftEmpty && !isRightEmpty && conflictResolver.get();
+          return new MergeConflictType(TextDiffType.CONFLICT, true, true, canBeResolved);
+        }
       }
     }
   }
@@ -1069,7 +1078,17 @@ public class DiffUtil {
                                                    @NotNull List<LineOffsets> lineOffsets,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isLineMergeIntervalEmpty(fragment, side),
-                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2));
+                        (side1, side2) -> compareLineMergeContents(fragment, sequences, lineOffsets, policy, side1, side2),
+                        () -> canResolveLineConflict(fragment, sequences, lineOffsets));
+  }
+
+  private static boolean canResolveLineConflict(@NotNull MergeLineFragment fragment,
+                                                @NotNull List<? extends CharSequence> sequences,
+                                                @NotNull List<LineOffsets> lineOffsets) {
+    List<? extends CharSequence> contents = ThreeSide.map(side -> {
+      return getLinesContent(side.select(sequences), side.select(lineOffsets), fragment.getStartLine(side), fragment.getEndLine(side));
+    });
+    return ComparisonMergeUtil.tryResolveConflict(contents.get(0), contents.get(1), contents.get(2)) != null;
   }
 
   private static boolean compareLineMergeContents(@NotNull MergeLineFragment fragment,
@@ -1111,7 +1130,8 @@ public class DiffUtil {
                                                    @NotNull List<? extends CharSequence> texts,
                                                    @NotNull ComparisonPolicy policy) {
     return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
-                        (side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2));
+                        (side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2),
+                        BooleanGetter.FALSE);
   }
 
   private static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
