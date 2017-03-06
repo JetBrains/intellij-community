@@ -40,6 +40,7 @@ public class DistinctResolver implements TraceResolver {
     throw new UnexpectedValueException("distinct trace must be an array value");
   }
 
+  @NotNull
   private static Map<TraceElement, List<TraceElement>> resolveDirect(@NotNull Value value,
                                                                      @NotNull TraceInfo order) {
     if (value instanceof ArrayReference) {
@@ -94,6 +95,7 @@ public class DistinctResolver implements TraceResolver {
     throw new UnexpectedValueException("value must be an array reference");
   }
 
+  @NotNull
   private static Map<TraceElement, List<TraceElement>> resolveReverseTrace(@NotNull ArrayReference keys,
                                                                            @NotNull ArrayReference values,
                                                                            @NotNull TraceInfo order) {
@@ -107,11 +109,11 @@ public class DistinctResolver implements TraceResolver {
     final Map<Integer, TraceElement> before = order.getValuesOrderBefore();
     final Map<Integer, TraceElement> after = order.getValuesOrderAfter();
     for (int i = 0; i < size; i++) {
-      final int fromTime = extractIntValue(keys.getValue(i));
-      final int afterTime = extractIntValue(values.getValue(i));
+      final int afterTime = extractIntValue(keys.getValue(i));
+      final int fromTime = extractIntValue(values.getValue(i));
       final TraceElement beforeElement = before.get(fromTime);
       final TraceElement afterElement = after.get(afterTime);
-      result.computeIfAbsent(beforeElement, x -> new ArrayList<>()).add(afterElement);
+      result.computeIfAbsent(afterElement, x -> new ArrayList<>()).add(beforeElement);
     }
 
     return result;
