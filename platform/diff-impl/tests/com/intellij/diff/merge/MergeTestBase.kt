@@ -169,6 +169,11 @@ abstract class MergeTestBase : DiffTestCase() {
       }
     }
 
+    fun Int.canResolveConflict(): Boolean {
+      val change = change(this)
+      return viewer.canResolveConflictedChange(change)
+    }
+
     //
     // Text modification
     //

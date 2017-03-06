@@ -386,6 +386,53 @@ class MergeTest : MergeTestBase() {
 
       assertContent("y z_Y_y")
     }
+
+    test1("y z", "x y z", "x y") {
+      assertTrue(0.canResolveConflict())
+
+      replaceText(2, 3, "U")
+      assertContent("x U z")
+
+      assertFalse(0.canResolveConflict())
+    }
+
+    test2("y z_Y_x y", "x y z_Y_x y z", "x y_Y_y z") {
+      assertTrue(0.canResolveConflict())
+      assertTrue(1.canResolveConflict())
+
+
+      replaceText(2, 3, "U")
+
+      assertFalse(0.canResolveConflict())
+      assertTrue(1.canResolveConflict())
+      assertContent("x U z_Y_x y z")
+
+
+      checkUndo(1) {
+        1.resolve()
+      }
+      1.assertResolved(BOTH)
+      1.assertContent("y")
+
+      assertFalse(0.canResolveConflict())
+      assertFalse(1.canResolveConflict())
+      assertContent("x U z_Y_y")
+
+
+      replaceText(2, 3, "y")
+
+      assertTrue(0.canResolveConflict())
+      assertFalse(1.canResolveConflict())
+
+
+      checkUndo(1) {
+        0.resolve()
+      }
+
+      assertFalse(0.canResolveConflict())
+      assertFalse(1.canResolveConflict())
+      assertContent("y_Y_y")
+    }
   }
 
   fun testUndoSimple() {
@@ -630,6 +677,51 @@ class MergeTest : MergeTestBase() {
                     modify both
                     5 ======
                     modify right
+                    6 ======
+                    delete modify
+                    7 ======""".trimIndent())
+    }
+
+    testN(text1, text2, text3) {
+      replaceText(!5 - 0, !5 - 0, "USER ")
+
+      checkUndo(1) {
+        runApplyNonConflictsAction(ThreeSide.BASE)
+      }
+
+      assertChangesCount(2)
+      assertContent("""
+                    1 ======
+                    insert left
+                    2 ======
+                    3 ======
+                    new both
+                    4 ======
+                    USER modify
+                    5 ======
+                    modify right
+                    6 ======
+                    delete modify
+                    7 ======""".trimIndent())
+    }
+
+    testN(text1, text2, text3) {
+      replaceText(!7 - 0, !7 - 0, "USER ")
+
+      checkUndo(1) {
+        runApplyNonConflictsAction(ThreeSide.RIGHT)
+      }
+
+      assertChangesCount(3)
+      assertContent("""
+                    1 ======
+                    2 ======
+                    3 ======
+                    new both
+                    4 ======
+                    modify both
+                    5 ======
+                    USER modify
                     6 ======
                     delete modify
                     7 ======""".trimIndent())

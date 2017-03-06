@@ -878,7 +878,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         }
         else {
           return !change.isResolved() &&
-                 change.isChange(side);
+                 change.isChange(side) &&
+                 !isChangeRangeModified(change);
         }
       });
     }
@@ -903,6 +904,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       else {
         if (change.isResolved(side)) return;
         if (!change.isChange(side)) return;
+        if (isChangeRangeModified(change)) return;
         Side masterSide = side.select(Side.LEFT,
                                       change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT,
                                       Side.RIGHT);
@@ -1157,7 +1159,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           return canResolveConflictedChange(change);
         }
         else {
-          return !change.isResolved();
+          return !change.isResolved() &&
+                 !isChangeRangeModified(change);
         }
       }
 
