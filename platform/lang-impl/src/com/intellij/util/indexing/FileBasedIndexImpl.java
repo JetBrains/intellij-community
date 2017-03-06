@@ -1982,6 +1982,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     private final List<VirtualFile> myFiles = new ArrayList<>();
     @Nullable
     private final ProgressIndicator myProgressIndicator;
+    private final boolean myDoTraceForFilesToBeIndexed = LOG.isDebugEnabled();
 
     private UnindexedFilesFinder(@Nullable ProgressIndicator indicator) {
       myProgressIndicator = indicator;
@@ -2037,6 +2038,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             final ID<?, ?> indexId = affectedIndexCandidates.get(i);
             try {
               if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
+                if (myDoTraceForFilesToBeIndexed) {
+                  LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
+                }
                 synchronized (myFiles) {
                   myFiles.add(file);
                 }

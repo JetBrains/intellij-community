@@ -72,6 +72,9 @@ public class IndexingStamp {
   private IndexingStamp() {}
 
   public static synchronized void rewriteVersion(@NotNull final File file, final int version) throws IOException {
+    if (FileBasedIndexImpl.LOG.isDebugEnabled()) {
+      FileBasedIndexImpl.LOG.debug("Rewriting " + file + "," + version);
+    }
     SharedIndicesData.beforeSomeIndexVersionInvalidation();
     final long prevLastModifiedValue = file.lastModified();
     if (file.exists()) {
