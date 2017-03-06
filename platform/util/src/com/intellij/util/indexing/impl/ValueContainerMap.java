@@ -29,15 +29,18 @@ import java.io.*;
 class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValueContainer<Value>> {
   @NotNull private final DataExternalizer<Value> myValueExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
+  private final boolean myReadOnly;
 
   ValueContainerMap(@NotNull final File file,
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
-                    boolean keyIsUniqueForIndexedFile
+                    boolean keyIsUniqueForIndexedFile,
+                    boolean readOnly
                     ) throws IOException {
     super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
+    myReadOnly = readOnly;
   }
 
   @NotNull
@@ -66,6 +69,11 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
         super.doPut(key, valueContainer);
       }
     }
+  }
+
+  @Override
+  protected boolean isReadOnly() {
+    return myReadOnly;
   }
 
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
