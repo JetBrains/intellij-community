@@ -64,7 +64,7 @@ public class DistinctHandler extends HandlerBase {
                                     "      " + myResolveDirectMapVariable.getName() + ".put(timeBefore, timeAfter);" + newLine +
                                     "    }" + newLine +
                                     "  }" + newLine +
-                                    "}";
+                                    "}" + newLine;
 
     final String peekResult =
       "final Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
@@ -91,11 +91,11 @@ public class DistinctHandler extends HandlerBase {
     final String resolveReverseMap = myResolveReverseMapVariable.getName();
 
     return "x -> {" + newLine +
-           "final Map<Integer, Object> objects = " + String.format("%s.get(x);", storeMap) + newLine +
-           "for (final int key: objects.keySet()) {" + newLine +
-           "final Object value = objects.get(key);" + newLine +
-           "if (value == x && !" + resolveReverseMap + ".containsKey(key)) {" + newLine +
-           String.format("%s.put(time.get(), key);", resolveReverseMap) + newLine +
+           "  final Map<Integer, Object> objects = " + String.format("%s.get(x);", storeMap) + newLine +
+           "  for (final int key: objects.keySet()) {" + newLine +
+           "    final Object value = objects.get(key);" + newLine +
+           "    if (value == x && !" + resolveReverseMap + ".containsKey(key)) {" + newLine +
+           "      " + String.format("%s.put(time.get(), key);", resolveReverseMap) + newLine +
            "    }" + newLine +
            "  }" + newLine +
            "}" + newLine;
