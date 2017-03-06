@@ -119,8 +119,4 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
       }
     });
   }
-
-  public void testInsertStringProperty() throws Exception {
-
-  }
 }
