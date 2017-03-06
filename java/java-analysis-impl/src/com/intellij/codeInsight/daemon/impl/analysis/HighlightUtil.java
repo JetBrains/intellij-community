@@ -301,72 +301,69 @@ public class HighlightUtil extends HighlightUtilBase {
    * ( ReferenceType {AdditionalBound} ) expression, where AdditionalBound: & InterfaceType then all must be true
    *  • ReferenceType must denote a class or interface type.
    *  • The erasures of all the listed types must be pairwise different.
-   *  • No two listed types may be subtypes of different parameterizations of the same generic interface.
+   *  • No two listed types may be subtypes of different parameterization of the same generic interface.
    */
   @Nullable
-  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression, @NotNull LanguageLevel languageLevel) {
-    final PsiTypeElement castTypeElement = expression.getCastType();
-    if (castTypeElement == null) return null;
-    PsiType castType = castTypeElement.getType();
-    if (isIntersection(castTypeElement, castType)) {
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
-        if (conjuncts != null) {
-          final Set<PsiType> erasures = new HashSet<>(conjuncts.length);
-          erasures.add(TypeConversionUtil.erasure(conjuncts[0].getType()));
-          final List<PsiTypeElement> conjList = new ArrayList<>(Arrays.asList(conjuncts));
-          for (int i = 1; i < conjuncts.length; i++) {
-            final PsiTypeElement conjunct = conjuncts[i];
-            final PsiType conjType = conjunct.getType();
-            if (conjType instanceof PsiClassType) {
-              final PsiClass aClass = ((PsiClassType)conjType).resolve();
-              if (aClass != null && !aClass.isInterface()) {
-                final HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                  .range(conjunct)
-                  .descriptionAndTooltip(JavaErrorMessages.message("interface.expected")).create();
-                QuickFixAction.registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement), null);
-                return errorResult;
-              }
-            }
-            else {
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression,
+                                                   @NotNull LanguageLevel languageLevel,
+                                                   @NotNull PsiFile file) {
+    PsiTypeElement castTypeElement = expression.getCastType();
+    if (castTypeElement != null && isIntersection(castTypeElement, castTypeElement.getType())) {
+      HighlightInfo info = checkFeature(expression, Feature.INTERSECTION_CASTS, languageLevel, file);
+      if (info != null) return info;
+
+      final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
+      if (conjuncts != null) {
+        final Set<PsiType> erasures = new HashSet<>(conjuncts.length);
+        erasures.add(TypeConversionUtil.erasure(conjuncts[0].getType()));
+        final List<PsiTypeElement> conjList = new ArrayList<>(Arrays.asList(conjuncts));
+        for (int i = 1; i < conjuncts.length; i++) {
+          final PsiTypeElement conjunct = conjuncts[i];
+          final PsiType conjType = conjunct.getType();
+          if (conjType instanceof PsiClassType) {
+            final PsiClass aClass = ((PsiClassType)conjType).resolve();
+            if (aClass != null && !aClass.isInterface()) {
+              final HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(conjunct)
-                .descriptionAndTooltip("Unexpected type: class is expected").create();
-            }
-            if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
-              final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(conjunct)
-                .descriptionAndTooltip("Repeated interface").create();
-              QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct, conjList), null);
-              return highlightInfo;
+                .descriptionAndTooltip(JavaErrorMessages.message("interface.expected")).create();
+              QuickFixAction.registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement), null);
+              return errorResult;
             }
           }
-
-          final List<PsiType> typeList = ContainerUtil.map(conjList, PsiTypeElement::getType);
-          final Ref<String> differentArgumentsMessage = new Ref<>();
-          final PsiClass sameGenericParameterization =
-            InferenceSession.findParameterizationOfTheSameGenericClass(typeList, pair -> {
-              if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
-                return true;
-              }
-              differentArgumentsMessage.set(pair.first.getPresentableText() + " and " + pair.second.getPresentableText());
-              return false;
-            });
-          if (sameGenericParameterization != null) {
-            final String message = formatClass(sameGenericParameterization) + " cannot be inherited with different arguments: " +
-                                   differentArgumentsMessage.get();
+          else {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-              .range(expression)
-              .descriptionAndTooltip(message).create();
+              .range(conjunct)
+              .descriptionAndTooltip("Unexpected type: class is expected").create();
+          }
+          if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
+            final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(conjunct)
+              .descriptionAndTooltip("Repeated interface").create();
+            QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct, conjList), null);
+            return highlightInfo;
           }
         }
-      } else {
-        String description = extendUnsupportedLanguageLevelDescription("Intersection types in cast are not supported at this language level", expression, languageLevel, expression.getContainingFile(), LanguageLevel.JDK_1_8);
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(expression)
-          .descriptionAndTooltip(description).create();
+
+        final List<PsiType> typeList = ContainerUtil.map(conjList, PsiTypeElement::getType);
+        final Ref<String> differentArgumentsMessage = new Ref<>();
+        final PsiClass sameGenericParameterization =
+          InferenceSession.findParameterizationOfTheSameGenericClass(typeList, pair -> {
+            if (!TypesDistinctProver.provablyDistinct(pair.first, pair.second)) {
+              return true;
+            }
+            differentArgumentsMessage.set(pair.first.getPresentableText() + " and " + pair.second.getPresentableText());
+            return false;
+          });
+        if (sameGenericParameterization != null) {
+          final String message = formatClass(sameGenericParameterization) + " cannot be inherited with different arguments: " +
+                                 differentArgumentsMessage.get();
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(expression)
+            .descriptionAndTooltip(message).create();
+        }
       }
     }
+
     return null;
   }
 
@@ -3003,13 +3000,15 @@ public class HighlightUtil extends HighlightUtilBase {
     LAMBDA_EXPRESSIONS(LanguageLevel.JDK_1_8, "feature.lambda.expressions"),
     TYPE_ANNOTATIONS(LanguageLevel.JDK_1_8, "feature.type.annotations"),
     RECEIVERS(LanguageLevel.JDK_1_8, "feature.type.receivers"),
+    INTERSECTION_CASTS(LanguageLevel.JDK_1_8, "feature.intersections.in.casts"),
+    STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules");
 
     private final LanguageLevel level;
     private final String key;
 
-    Feature(@NotNull LanguageLevel level, @NotNull @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
+    Feature(LanguageLevel level, @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key) {
       this.level = level;
       this.key = key;
     }
@@ -3021,9 +3020,7 @@ public class HighlightUtil extends HighlightUtilBase {
                                     @NotNull LanguageLevel level,
                                     @NotNull PsiFile file) {
     if (file.getManager().isInProject(file) && !level.isAtLeast(feature.level)) {
-      String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
-
-      message = extendUnsupportedLanguageLevelDescription(message, element, level, file, feature.level);
+      String message = getUnsupportedFeatureMessage(element, feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(feature.level));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createShowModulePropertiesFix(element));
@@ -3033,18 +3030,17 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  static String extendUnsupportedLanguageLevelDescription(@NotNull String message,
-                                                          @NotNull PsiElement element,
-                                                          @NotNull LanguageLevel fileLanguageLevel,
-                                                          @NotNull PsiFile file,
-                                                          @NotNull LanguageLevel featureLevel) {
+  private static String getUnsupportedFeatureMessage(PsiElement element, Feature feature, LanguageLevel level, PsiFile file) {
+    String name = JavaErrorMessages.message(feature.key);
+    String message = JavaErrorMessages.message("insufficient.language.level", name, level.getCompilerComplianceDefaultOption());
+
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (moduleLanguageLevel.isAtLeast(featureLevel)) {
+      if (moduleLanguageLevel.isAtLeast(feature.level)) {
         for (FilePropertyPusher pusher : FilePropertyPusher.EP_NAME.getExtensions()) {
           if (pusher instanceof JavaLanguageLevelPusher) {
-            String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, element, fileLanguageLevel, file);
+            String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, element, level, file);
             if (newMessage != null) {
               return newMessage;
             }
@@ -3052,6 +3048,7 @@ public class HighlightUtil extends HighlightUtilBase {
         }
       }
     }
+
     return message;
   }
 }

@@ -40,6 +40,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.UIUtil;
@@ -50,9 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Highlight method problems
@@ -344,7 +343,8 @@ public class HighlightMethodUtil {
   static HighlightInfo checkMethodCall(@NotNull PsiMethodCallExpression methodCall,
                                        @NotNull PsiResolveHelper resolveHelper,
                                        @NotNull LanguageLevel languageLevel,
-                                       @NotNull JavaSdkVersion javaSdkVersion) {
+                                       @NotNull JavaSdkVersion javaSdkVersion,
+                                       @NotNull PsiFile file) {
     PsiExpressionList list = methodCall.getArgumentList();
     PsiReferenceExpression referenceToMethod = methodCall.getMethodExpression();
     JavaResolveResult[] results = referenceToMethod.multiResolve(true);
@@ -359,31 +359,37 @@ public class HighlightMethodUtil {
     if (resolved instanceof PsiMethod && resolveResult.isValidResult()) {
       TextRange fixRange = getFixRange(methodCall);
       highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, fixRange);
-      if (highlightInfo == null) {
-        String invalidCallMessage =
-          LambdaUtil.getInvalidQualifier4StaticInterfaceMethodMessage((PsiMethod)resolved, methodCall.getMethodExpression(), resolveResult.getCurrentFileResolveScope(), languageLevel);
-        if (invalidCallMessage != null) {
-          invalidCallMessage = HighlightUtil.extendUnsupportedLanguageLevelDescription(invalidCallMessage, methodCall, languageLevel, methodCall.getContainingFile(), LanguageLevel.JDK_1_8);
-          highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(invalidCallMessage).range(fixRange).create();
-          if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_8));
-          }
-        } else {
-          highlightInfo = GenericsHighlightUtil.checkInferredIntersections(substitutor, fixRange);
-        }
-        
-        if (highlightInfo == null) {
-          highlightInfo = checkVarargParameterErasureToBeAccessible((MethodCandidateInfo)resolveResult, methodCall);
-        }
 
-        if (highlightInfo == null) {
-          final String errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
-          if (errorMessage != null) {
-            highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
-            if (highlightInfo != null) {
-              registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
-              registerMethodReturnFixAction(highlightInfo, (MethodCandidateInfo)resolveResult, methodCall);
+      if (highlightInfo == null && ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = ((PsiMethod)resolved).getContainingClass();
+        if (containingClass != null && containingClass.isInterface()) {
+          PsiReferenceExpression methodRef = methodCall.getMethodExpression();
+          PsiElement element = ObjectUtils.notNull(methodRef.getReferenceNameElement(), methodRef);
+          highlightInfo = HighlightUtil.checkFeature(element, HighlightUtil.Feature.STATIC_INTERFACE_CALLS, languageLevel, file);
+          if (highlightInfo == null) {
+            String message = checkStaticInterfaceMethodCallQualifier(methodRef, resolveResult.getCurrentFileResolveScope(), containingClass);
+            if (message != null) {
+              highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(fixRange).create();
             }
+          }
+        }
+      }
+
+      if (highlightInfo == null) {
+        highlightInfo = GenericsHighlightUtil.checkInferredIntersections(substitutor, fixRange);
+      }
+
+      if (highlightInfo == null) {
+        highlightInfo = checkVarargParameterErasureToBeAccessible((MethodCandidateInfo)resolveResult, methodCall);
+      }
+
+      if (highlightInfo == null) {
+        String errorMessage = ((MethodCandidateInfo)resolveResult).getInferenceErrorMessage();
+        if (errorMessage != null) {
+          highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(errorMessage).range(fixRange).create();
+          if (highlightInfo != null) {
+            registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
+            registerMethodReturnFixAction(highlightInfo, (MethodCandidateInfo)resolveResult, methodCall);
           }
         }
       }
@@ -460,10 +466,41 @@ public class HighlightMethodUtil {
       }
     }
     if (highlightInfo == null) {
-      highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor,
-                                                                                     javaSdkVersion);
+      highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor, javaSdkVersion);
     }
     return highlightInfo;
+  }
+
+  /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
+  @Nullable
+  private static String checkStaticInterfaceMethodCallQualifier(PsiReferenceExpression ref, PsiElement scope, PsiClass containingClass) {
+    PsiExpression qualifierExpression = ref.getQualifierExpression();
+    if (qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, ref, true))) {
+      return null;
+    }
+
+    if (qualifierExpression instanceof PsiReferenceExpression) {
+      PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+      if (resolve == containingClass) {
+        return null;
+      }
+
+      if (resolve instanceof PsiTypeParameter) {
+        Set<PsiClass> classes = new HashSet<>();
+        for (PsiClassType type : ((PsiTypeParameter)resolve).getExtendsListTypes()) {
+          PsiClass aClass = type.resolve();
+          if (aClass != null) {
+            classes.add(aClass);
+          }
+        }
+
+        if (classes.size() == 1 && classes.contains(containingClass)) {
+          return null;
+        }
+      }
+    }
+
+    return JavaErrorMessages.message("static.interface.method.call.qualifier");
   }
 
   private static void registerMethodReturnFixAction(HighlightInfo highlightInfo,
@@ -557,12 +594,14 @@ public class HighlightMethodUtil {
 
   @Nullable
   static HighlightInfo checkAmbiguousMethodCallIdentifier(@NotNull PsiReferenceExpression referenceToMethod,
-                                                @NotNull JavaResolveResult[] resolveResults,
-                                                @NotNull PsiExpressionList list,
-                                                final PsiElement element,
-                                                @NotNull JavaResolveResult resolveResult,
-                                                @NotNull PsiMethodCallExpression methodCall,
-                                                @NotNull PsiResolveHelper resolveHelper) {
+                                                          @NotNull JavaResolveResult[] resolveResults,
+                                                          @NotNull PsiExpressionList list,
+                                                          final PsiElement element,
+                                                          @NotNull JavaResolveResult resolveResult,
+                                                          @NotNull PsiMethodCallExpression methodCall,
+                                                          @NotNull PsiResolveHelper resolveHelper,
+                                                          @NotNull LanguageLevel languageLevel,
+                                                          @NotNull PsiFile file) {
     MethodCandidateInfo methodCandidate1 = null;
     MethodCandidateInfo methodCandidate2 = null;
     for (JavaResolveResult result : resolveResults) {
@@ -591,19 +630,21 @@ public class HighlightMethodUtil {
       elementToHighlight = referenceToMethod.getReferenceNameElement();
     }
     else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
-      final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(referenceToMethod);
-      final String staticInterfaceMethodMessage = 
-        element instanceof PsiMethod 
-        ? LambdaUtil.getInvalidQualifier4StaticInterfaceMethodMessage((PsiMethod)element, referenceToMethod, 
-                                                                      resolveResult.getCurrentFileResolveScope(), languageLevel) 
-        : null;
-      if (staticInterfaceMethodMessage != null) {
-        description = HighlightUtil.extendUnsupportedLanguageLevelDescription(staticInterfaceMethodMessage, methodCall, languageLevel, referenceToMethod.getContainingFile(), LanguageLevel.JDK_1_8);
+      description = null;
+      elementToHighlight = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
+
+      if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+        if (containingClass != null && containingClass.isInterface()) {
+          HighlightInfo info = HighlightUtil.checkFeature(elementToHighlight, HighlightUtil.Feature.STATIC_INTERFACE_CALLS, languageLevel, file);
+          if (info != null) return info;
+          description = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
+        }
       }
-      else {
+
+      if (description == null) {
         description = HighlightUtil.buildProblemWithStaticDescription(element);
       }
-      elementToHighlight = referenceToMethod.getReferenceNameElement();
     }
     else {
       String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
@@ -616,6 +657,7 @@ public class HighlightMethodUtil {
         return null;
       }
     }
+
     String toolTip = XmlStringUtil.escapeString(description);
     HighlightInfo info =
       HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight).description(description).escapedToolTip(toolTip).create();

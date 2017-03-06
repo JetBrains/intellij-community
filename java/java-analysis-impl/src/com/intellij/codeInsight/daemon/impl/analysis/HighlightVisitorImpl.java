@@ -879,7 +879,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     // in case of JSP synthetic method call, do not check
     if (myFile.isPhysical() && !myHolder.hasErrorResults()) {
       try {
-        myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper, myLanguageLevel,myJavaSdkVersion));
+        myHolder.add(HighlightMethodUtil.checkMethodCall(expression, myResolveHelper, myLanguageLevel, myJavaSdkVersion, myFile));
       }
       catch (IndexNotReadyException ignored) { }
     }
@@ -1257,7 +1257,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!HighlightMethodUtil.isDummyConstructorCall(methodCallExpression, myResolveHelper, list, expression)) {
         try {
           myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallIdentifier(
-            expression, results, list, resolved, result, methodCallExpression, myResolveHelper));
+            expression, results, list, resolved, result, methodCallExpression, myResolveHelper, myLanguageLevel, myFile));
 
           if (!PsiTreeUtil.findChildrenOfType(methodCallExpression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
             PsiElement nameElement = expression.getReferenceNameElement();
@@ -1596,7 +1596,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
     super.visitTypeCastExpression(typeCast);
     try {
-      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIntersectionInTypeCast(typeCast, myLanguageLevel));
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIntersectionInTypeCast(typeCast, myLanguageLevel, myFile));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
     }
     catch (IndexNotReadyException ignored) { }
