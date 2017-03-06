@@ -112,7 +112,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
                             @NotNull VirtualFile schemaFile,
                             @NotNull List<JsonSchemaWalker.Step> steps) {
           if (isName) {
-            final boolean insertComma = myWalker.hasPropertiesBehind(myPosition);
+            final boolean insertComma = myWalker.hasPropertiesBehindAndNoComma(myPosition);
             final boolean hasValue = myWalker.isPropertyWithValue(myPosition.getParent().getParent());
 
             final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(myOriginalPosition);
@@ -222,7 +222,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
 
       final JsonSchemaType type = jsonSchemaObject.getType();
       final List<Object> values = jsonSchemaObject.getEnum();
-      if (type != null || !ContainerUtil.isEmpty(values)) {
+      if (type != null || !ContainerUtil.isEmpty(values) || jsonSchemaObject.getDefault() != null) {
         builder = builder.withInsertHandler(createPropertyInsertHandler(jsonSchemaObject, hasValue, insertComma));
       } else if (!hasValue) {
         builder = builder.withInsertHandler(createDefaultPropertyInsertHandler(hasValue, insertComma));
@@ -261,7 +261,8 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       final List<Object> values = jsonSchemaObject.getEnum();
       if (type == null && values != null && !values.isEmpty()) type = detectType(values);
       final Object defaultValue = jsonSchemaObject.getDefault();
-      final String defaultValueAsString = defaultValue == null ? null : String.valueOf(defaultValue);
+      final String defaultValueAsString = defaultValue == null ? null : defaultValue instanceof String ? "\"" + defaultValue + "\"" :
+                                                                        String.valueOf(defaultValue);
       JsonSchemaType finalType = type;
       return new InsertHandler<LookupElement>() {
         @Override
@@ -355,18 +356,19 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
                                             String defaultValue,
                                             List<Object> values,
                                             JsonSchemaType type, String comma) {
-    final boolean isNumber = JsonSchemaType._integer.equals(type) || JsonSchemaType._number.equals(type);
-    String start = isNumber ? ":" : ":\"";
-    String end = isNumber ? "" : "\"" + comma;
+    final boolean isNumber = type != null && (JsonSchemaType._integer.equals(type) || JsonSchemaType._number.equals(type)) ||
+      type == null && (defaultValue != null &&
+                       !StringUtil.isQuotedString(defaultValue) || values != null && ContainerUtil.and(values, v -> !(v instanceof String)));
     boolean hasValues = !ContainerUtil.isEmpty(values);
     boolean hasDefaultValue = !StringUtil.isEmpty(defaultValue);
-    String stringToInsert = start + (hasDefaultValue ? defaultValue : "") + end;
-    EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, start.length() - comma.length());
-    if (hasDefaultValue) {
+    String stringToInsert = ":" + (hasDefaultValue ? defaultValue : (isNumber ? "" : "\"\"")) + comma;
+    EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true, 1);
+    if (!isNumber || hasDefaultValue) {
       SelectionModel model = editor.getSelectionModel();
       int caretStart = model.getSelectionStart();
-      int newOffset = caretStart + defaultValue.length();
-      model.setSelection(caretStart, newOffset);
+      int newOffset = caretStart + (hasDefaultValue ? defaultValue.length() : 1);
+      if (hasDefaultValue && !isNumber) newOffset--;
+      model.setSelection(isNumber ? caretStart : (caretStart + 1), newOffset);
       editor.getCaretModel().moveToOffset(newOffset);
     }
 
