@@ -112,6 +112,11 @@ public class StreamChain {
   }
 
   @NotNull
+  public StreamCall getCall(int ix) {
+    return myCalls.get(ix);
+  }
+
+  @NotNull
   public List<StreamCall> getCalls() {
     return Collections.unmodifiableList(myCalls);
   }

@@ -1,5 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.resolve;
 
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,5 +9,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface TraceResolver {
   @NotNull
-  TraceInfo resolve(@NotNull Value value);
+  TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value);
 }

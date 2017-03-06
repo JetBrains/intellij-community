@@ -6,6 +6,7 @@ import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedArrayLengthException;
 import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueException;
 import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueTypeException;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.IntegerValue;
 import com.sun.jdi.Value;
@@ -22,13 +23,13 @@ public class DistinctResolver implements TraceResolver {
 
   @NotNull
   @Override
-  public TraceInfo resolve(@NotNull Value value) {
+  public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (value instanceof ArrayReference) {
       final Value peekTrace = ((ArrayReference)value).getValue(0);
       final Value distinctDirectTrace = ((ArrayReference)value).getValue(1);
       final Value distinctReverseTrace = ((ArrayReference)value).getValue(2);
 
-      final TraceInfo order = myPeekResolver.resolve(peekTrace);
+      final TraceInfo order = myPeekResolver.resolve(call, peekTrace);
 
       final Map<TraceElement, List<TraceElement>> direct = resolveDirect(distinctDirectTrace, order);
       final Map<TraceElement, List<TraceElement>> reverse = resolveReverse(distinctReverseTrace, order);
@@ -40,7 +41,7 @@ public class DistinctResolver implements TraceResolver {
   }
 
   private static Map<TraceElement, List<TraceElement>> resolveDirect(@NotNull Value value,
-                                                              @NotNull TraceInfo order) {
+                                                                     @NotNull TraceInfo order) {
     if (value instanceof ArrayReference) {
       final ArrayReference convertedMap = (ArrayReference)value;
       final Value keys = convertedMap.getValue(0);
@@ -57,8 +58,8 @@ public class DistinctResolver implements TraceResolver {
 
   @NotNull
   private static Map<TraceElement, List<TraceElement>> resolveDirectTrace(@NotNull ArrayReference keys,
-                                                                   @NotNull ArrayReference values,
-                                                                   @NotNull TraceInfo order) {
+                                                                          @NotNull ArrayReference values,
+                                                                          @NotNull TraceInfo order) {
     final int size = keys.length();
     if (size != values.length()) {
       throw new UnexpectedArrayLengthException("length of keys array should be same with values array");
@@ -79,7 +80,7 @@ public class DistinctResolver implements TraceResolver {
 
   @NotNull
   private static Map<TraceElement, List<TraceElement>> resolveReverse(@NotNull Value value,
-                                                               @NotNull TraceInfo order) {
+                                                                      @NotNull TraceInfo order) {
     if (value instanceof ArrayReference) {
       final Value keys = ((ArrayReference)value).getValue(0);
       final Value values = ((ArrayReference)value).getValue(1);
@@ -94,8 +95,8 @@ public class DistinctResolver implements TraceResolver {
   }
 
   private static Map<TraceElement, List<TraceElement>> resolveReverseTrace(@NotNull ArrayReference keys,
-                                                                    @NotNull ArrayReference values,
-                                                                    @NotNull TraceInfo order) {
+                                                                           @NotNull ArrayReference values,
+                                                                           @NotNull TraceInfo order) {
     final int size = keys.length();
     if (size != values.length()) {
       throw new UnexpectedArrayLengthException("length of keys array should be same with values array");
@@ -120,10 +121,10 @@ public class DistinctResolver implements TraceResolver {
     private final Map<TraceElement, List<TraceElement>> myDirectTrace;
     private final Map<TraceElement, List<TraceElement>> myReverseTrace;
 
-    private MyDistinctInfo(@NotNull TraceInfo order,
+    private MyDistinctInfo(@NotNull TraceInfo info,
                            @NotNull Map<TraceElement, List<TraceElement>> directTrace,
                            @NotNull Map<TraceElement, List<TraceElement>> reverseTrace) {
-      super(order.getValuesOrderBefore(), order.getValuesOrderAfter());
+      super(info.getCall(), info.getValuesOrderBefore(), info.getValuesOrderAfter());
       myDirectTrace = directTrace;
       myReverseTrace = reverseTrace;
     }

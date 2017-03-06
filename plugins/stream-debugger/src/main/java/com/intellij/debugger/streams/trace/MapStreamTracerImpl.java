@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -71,10 +70,16 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
     try {
       map = convertToLocalMap(result);
       final ArrayList<TraceInfo> trace = new ArrayList<>(map.size());
-      map.keySet().stream().filter(x -> x >= 0)
-        .map(x -> map.get(x).keySet().stream()
-          .collect(Collectors.toMap(k -> k, k -> (TraceElement)new TraceElementImpl(k, map.get(x).get(k)))))
-        .forEach(x -> trace.add(new ValuesOrderInfo(Collections.emptyMap(), x)));
+      for (int callNumber = 0, callCount = chain.length(); callNumber < callCount; callNumber++) {
+        final Map<Integer, Value> callTrace = map.get(callNumber);
+        final Map<Integer, TraceElement> traceResult = new HashMap<>();
+        for (final int time : callTrace.keySet()) {
+          final Value value = callTrace.get(time);
+          traceResult.put(time, new TraceElementImpl(time, value));
+        }
+
+        trace.add(new ValuesOrderInfo(chain.getCall(callNumber), Collections.emptyMap(), traceResult));
+      }
       final Value res = map.get(-1).get(-1);
       return new MyResult(res, trace);
     }

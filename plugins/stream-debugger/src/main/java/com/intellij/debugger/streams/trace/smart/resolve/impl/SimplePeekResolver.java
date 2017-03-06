@@ -5,6 +5,7 @@ import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueException;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.IntegerValue;
 import com.sun.jdi.Value;
@@ -20,7 +21,7 @@ import java.util.Map;
 public class SimplePeekResolver implements TraceResolver {
   @NotNull
   @Override
-  public TraceInfo resolve(@NotNull Value value) {
+  public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (value instanceof ArrayReference) {
       final ArrayReference trace = (ArrayReference)value;
       final Value before = trace.getValue(0);
@@ -28,7 +29,7 @@ public class SimplePeekResolver implements TraceResolver {
       if (before instanceof ArrayReference && after instanceof ArrayReference) {
         final Map<Integer, TraceElement> beforeTrace = resolveTrace((ArrayReference)before);
         final Map<Integer, TraceElement> afterTrace = resolveTrace((ArrayReference)after);
-        return new ValuesOrderInfo(beforeTrace, afterTrace);
+        return new ValuesOrderInfo(call, beforeTrace, afterTrace);
       }
     }
 

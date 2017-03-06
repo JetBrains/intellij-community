@@ -2,9 +2,11 @@ package com.intellij.debugger.streams.trace.smart.resolve.impl;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -12,12 +14,20 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class ValuesOrderInfo implements TraceInfo {
+  private final StreamCall myStreamCall;
   private final Map<Integer, TraceElement> myValuesOrderAfter;
   private final Map<Integer, TraceElement> myValuesOrderBefore;
 
-  public ValuesOrderInfo(@NotNull Map<Integer, TraceElement> before, @NotNull Map<Integer, TraceElement> after) {
+  public ValuesOrderInfo(@NotNull StreamCall call, @NotNull Map<Integer, TraceElement> before, @NotNull Map<Integer, TraceElement> after) {
+    myStreamCall = call;
     myValuesOrderBefore = before;
     myValuesOrderAfter = after;
+  }
+
+  @NotNull
+  @Override
+  public StreamCall getCall() {
+    return myStreamCall;
   }
 
   @NotNull
@@ -42,5 +52,9 @@ public class ValuesOrderInfo implements TraceInfo {
   @Override
   public Map<TraceElement, List<TraceElement>> getReverseTrace() {
     return null;
+  }
+
+  public static TraceInfo empty(@NotNull StreamCall call) {
+    return new ValuesOrderInfo(call, Collections.emptyMap(), Collections.emptyMap());
   }
 }
