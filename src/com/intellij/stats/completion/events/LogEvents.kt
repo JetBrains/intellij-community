@@ -1,7 +1,9 @@
 package com.intellij.stats.completion.events
 
 import com.google.gson.Gson
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.stats.completion.Action
+import com.jetbrains.completion.ranker.CompletionRanker
 
 object JsonSerializer {
     private val gson = Gson()
@@ -166,10 +168,20 @@ class CompletionStartedEvent(
         var performExperiment: Boolean,
         var experimentVersion: Int,
         completionList: List<LookupEntryInfo>,
-        selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.COMPLETION_STARTED, completionList.map { it.id }, completionList, selectedPosition) 
-
+        selectedPosition: Int) : LookupStateLogData(userId, sessionId, Action.COMPLETION_STARTED, completionList.map { it.id }, completionList, selectedPosition)
 {
+    var ideVersion = PluginManager.BUILD_NUMBER
+    var pluginVersion = calcPluginVersion()
+    var mlRankingVersion = CompletionRanker.rankerVersion
+    
     var completionListLength: Int = completionList.size
+    
+    fun calcPluginVersion(): String? {
+        val className = CompletionStartedEvent::class.java.name
+        val id = PluginManager.getPluginByClassName(className)
+        val plugin = PluginManager.getPlugin(id)
+        return plugin?.version
+    }
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
