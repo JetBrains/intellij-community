@@ -164,14 +164,14 @@ abstract class MergeTestBase : DiffTestCase() {
     fun Int.resolve() {
       val change = change(this)
       command(change) {
-        assertTrue(viewer.canResolveConflictedChange(change))
-        viewer.resolveConflictedChange(change)
+        assertTrue(change.isConflict && viewer.canApplyNonConflictedChange(change, ThreeSide.BASE))
+        viewer.applyNonConflictedChange(change, ThreeSide.BASE)
       }
     }
 
     fun Int.canResolveConflict(): Boolean {
       val change = change(this)
-      return viewer.canResolveConflictedChange(change)
+      return viewer.canApplyNonConflictedChange(change, ThreeSide.BASE)
     }
 
     //
