@@ -32,8 +32,18 @@ public class PeekTracerHandler extends HandlerBase {
   @NotNull
   @Override
   public List<StreamCall> additionalCallsAfter() {
-    final String afterMapName = myBeforeVariable.getName();
+    final String afterMapName = myAfterVariable.getName();
     return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.incrementAndGet(), x)", afterMapName)));
+  }
+
+  @NotNull
+  public String getBeforeMapName() {
+    return myBeforeVariable.getName();
+  }
+
+  @NotNull
+  public String getAfterMapName() {
+    return myAfterVariable.getName();
   }
 
   @NotNull
