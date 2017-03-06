@@ -78,18 +78,23 @@ public class SetupTaskChooserAction extends AnAction {
   }
 
   public static void runSetupTask(String taskName, Module module) {
-    final PyFile setupPy = PyPackageUtil.findSetupPy(module);
-    try {
-      final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, taskName);
-      List<String> parameters = new ArrayList<>();
-      parameters.add(taskName);
-      if (options != null) {
-        SetupTaskDialog dialog = new SetupTaskDialog(module.getProject(), taskName, options);
-        if (!dialog.showAndGet()) {
-          return;
-        }
-        parameters.addAll(dialog.getCommandLine());
+    final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, taskName);
+    List<String> parameters = new ArrayList<>();
+    parameters.add(taskName);
+    if (options != null) {
+      SetupTaskDialog dialog = new SetupTaskDialog(module.getProject(), taskName, options);
+      if (!dialog.showAndGet()) {
+        return;
       }
+      parameters.addAll(dialog.getCommandLine());
+    }
+    runSetupTask(taskName, module, parameters);
+  }
+
+  public static void runSetupTask(String taskName, Module module, List<String> parameters) {
+    try {
+      final PyFile setupPy = PyPackageUtil.findSetupPy(module);
+      if (setupPy == null) return;
       final PythonTask task = new PythonTask(module, taskName);
       final VirtualFile virtualFile = setupPy.getVirtualFile();
       task.setRunnerScript(virtualFile.getPath());
