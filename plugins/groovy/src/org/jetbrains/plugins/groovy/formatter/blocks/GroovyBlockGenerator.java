@@ -626,7 +626,7 @@ public class GroovyBlockGenerator {
 
   private static void addChildNodes(PsiElement elem, ArrayList<ASTNode> childNodes, TextRange range, PsiElement root) {
     ASTNode node = elem.getNode();
-    if (range.contains(elem.getTextRange()) && node != null && elem != root) {
+    if (range.contains(elem.getTextRange()) && node != null && elem != root && !(elem instanceof PsiFile)) {
       childNodes.add(node);
     } else {
       for (PsiElement child : elem.getChildren()) {
