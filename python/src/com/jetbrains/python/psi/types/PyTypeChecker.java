@@ -619,7 +619,7 @@ public class PyTypeChecker {
     final List<AnalyzeCallResults> results = new ArrayList<>();
     for (PyCallable callable : multiResolveCallee(callSite, context)) {
       final PyExpression receiver = getReceiver(callSite, callable);
-      final Map<PyExpression, PyNamedParameter> mapping = PyCallExpressionHelper.mapArguments(callSite, callable, context);
+      final PyCallExpressionHelper.ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(callSite, callable, context);
       results.add(new AnalyzeCallResults(callable, receiver, mapping));
     }
     return results;
@@ -817,13 +817,13 @@ public class PyTypeChecker {
   public static class AnalyzeCallResults {
     @NotNull private final PyCallable myCallable;
     @Nullable private final PyExpression myReceiver;
-    @NotNull private final Map<PyExpression, PyNamedParameter> myArguments;
+    @NotNull private final PyCallExpressionHelper.ArgumentMappingResults myMapping;
 
     public AnalyzeCallResults(@NotNull PyCallable callable, @Nullable PyExpression receiver,
-                              @NotNull Map<PyExpression, PyNamedParameter> arguments) {
+                              @NotNull PyCallExpressionHelper.ArgumentMappingResults mapping) {
       myCallable = callable;
       myReceiver = receiver;
-      myArguments = arguments;
+      myMapping = mapping;
     }
 
     @NotNull
@@ -837,8 +837,8 @@ public class PyTypeChecker {
     }
 
     @NotNull
-    public Map<PyExpression, PyNamedParameter> getArguments() {
-      return myArguments;
+    public PyCallExpressionHelper.ArgumentMappingResults getMapping() {
+      return myMapping;
     }
   }
 }
