@@ -263,7 +263,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     return Pair.create(recursive, flat);
   }
 
-  private static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {
+  public static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {
     for (String url : urls) {
       if (url != null) {
         final String protocol = VirtualFileManager.extractProtocol(url);
