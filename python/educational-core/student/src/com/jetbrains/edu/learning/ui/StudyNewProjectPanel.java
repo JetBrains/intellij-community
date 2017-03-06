@@ -123,8 +123,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       addCoursesToCombobox(myAvailableCourses);
       final CourseInfo selectedCourse = StudyUtils.getFirst(myAvailableCourses);
       if (selectedCourse == null) return;
-      final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
-      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
+      setAuthors(selectedCourse);
       myDescriptionPane.setText(selectedCourse.getDescription());
       myDescriptionPane.setEditable(false);
       //setting the first course in list as selected
@@ -251,6 +250,11 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     myAnchor = anchor;
   }
 
+  public void updateInfoPanel(@NotNull CourseInfo selectedCourseInfo) {
+    setAuthors(selectedCourseInfo);
+    myDescriptionPane.setText(selectedCourseInfo.getDescription());
+  }
+
   /**
    * Handles refreshing courses
    * Old courses added to new courses only if their
@@ -307,10 +311,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
         setError(INVALID_COURSE);
         return;
       }
-      final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
-      myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
+      updateInfoPanel(selectedCourse);
       myCoursesComboBox.removeItem(CourseInfo.INVALID_COURSE);
-      myDescriptionPane.setText(selectedCourse.getDescription());
       myGenerator.setSelectedCourse(selectedCourse);
 
       setOK();
@@ -320,6 +322,11 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
         }
       }
     }
+  }
+
+  private void setAuthors(CourseInfo selectedCourse) {
+    final String authorsString = Course.getAuthorsString(selectedCourse.getAuthors());
+    myAuthorLabel.setText(!StringUtil.isEmptyOrSpaces(authorsString) ? "Author: " + authorsString : "");
   }
 
   public JComboBox<CourseInfo> getCoursesComboBox() {
