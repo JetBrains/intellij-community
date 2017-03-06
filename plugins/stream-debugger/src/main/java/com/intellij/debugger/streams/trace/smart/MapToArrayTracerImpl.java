@@ -62,8 +62,7 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     declarationBuilder.append(String.format("final Object[] info = new Object[%d];\n", callCount))
       .append("final java.util.concurrent.atomic.AtomicInteger time = new java.util.concurrent.atomic.AtomicInteger(0);")
       .append(LINE_SEPARATOR);
-    tracingChainCalls.add(calls.get(0));
-    for (int i = 1; i < callCount - 1; i++) {
+    for (int i = 0; i < callCount - 1; i++) {
       final StreamCall call = calls.get(i);
       final String name = call.getName();
 

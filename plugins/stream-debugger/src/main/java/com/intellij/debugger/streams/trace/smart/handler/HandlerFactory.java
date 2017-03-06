@@ -7,8 +7,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Vitaliy.Bibaev
  */
 public class HandlerFactory {
-  @NotNull
+  private static final MapToArrayTracerImpl.StreamCallTraceHandler PRODUCER_HANDLER = new ProducerHandler();
+
   public static MapToArrayTracerImpl.StreamCallTraceHandler create(int number, @NotNull String name) {
+    if (number == 0) {
+      return PRODUCER_HANDLER;
+    }
+
     switch (name) {
       case "distinct":
         return new DistinctHandler(number, name);
