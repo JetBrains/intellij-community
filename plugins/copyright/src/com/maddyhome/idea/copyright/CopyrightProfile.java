@@ -13,72 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maddyhome.idea.copyright;
+package com.maddyhome.idea.copyright
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.ProfileEx;
-import com.intellij.util.xmlb.SmartSerializer;
-import com.maddyhome.idea.copyright.pattern.EntityUtil;
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.profile.ProfileEx
+import com.intellij.util.xmlb.SmartSerializer
+import com.maddyhome.idea.copyright.pattern.EntityUtil
 
-public class CopyrightProfile extends ProfileEx {
-  @SuppressWarnings("SpellCheckingInspection")
-  public static final String DEFAULT_COPYRIGHT_NOTICE =
-    EntityUtil.encode("Copyright (c) $today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
-                      "Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan. \n" +
-                      "Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna. \n" +
-                      "Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus. \n" +
-                      "Vestibulum commodo. Ut rhoncus gravida arcu. ");
-
-  private String notice = DEFAULT_COPYRIGHT_NOTICE;
-  private String keyword = EntityUtil.encode("Copyright");
-  private String allowReplaceRegexp = "";
-
-  //read external
-  public CopyrightProfile() {
-    this("");
+class CopyrightProfile @JvmOverloads constructor(profileName: String = "") : ProfileEx(profileName, SmartSerializer()) {
+  companion object {
+    @JvmField
+    val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
+      "Copyright (c) \$today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
+      "Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan. \n" +
+      "Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna. \n" +
+      "Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus. \n" +
+      "Vestibulum commodo. Ut rhoncus gravida arcu. ")
   }
 
-  public CopyrightProfile(String profileName) {
-    super(profileName, new SmartSerializer());
-  }
+  var notice = DEFAULT_COPYRIGHT_NOTICE
+  var keyword = EntityUtil.encode("Copyright")
 
-  public String getNotice() {
-    return notice;
-  }
-
-  public String getKeyword() {
-    return keyword;
-  }
-
-  public void setNotice(String text) {
-    notice = text;
-  }
-
-  public void setKeyword(String keyword) {
-    this.keyword = keyword;
-  }
-
-  /**
-   * @deprecated use {@link #getAllowReplaceRegexp()} instead
-   */
-  @Deprecated
-  public String getAllowReplaceKeyword() {
-    return "";
-  }
-
-  /**
-   * @deprecated use {@link #setAllowReplaceRegexp(String)} instead
-   */
-  @Deprecated
-  public void setAllowReplaceKeyword(String allowReplaceKeyword) {
-    allowReplaceRegexp = StringUtil.escapeToRegexp(allowReplaceKeyword);
-  }
-
-  public String getAllowReplaceRegexp() {
-    return allowReplaceRegexp;
-  }
-
-  public void setAllowReplaceRegexp(final String allowReplaceRegexp) {
-    this.allowReplaceRegexp = allowReplaceRegexp;
-  }
-}
+  var allowReplaceRegexp: String? = null
+    set(allowReplaceRegexp) {
+      field = StringUtil.nullize(allowReplaceRegexp)
+    }
+}//read external
