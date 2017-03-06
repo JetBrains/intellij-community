@@ -48,7 +48,7 @@ class CompilerReferenceReader {
   private final File myBuildDir;
 
   private CompilerReferenceReader(File buildDir) {
-    myIndex = new CompilerBackwardReferenceIndex(buildDir);
+    myIndex = new CompilerBackwardReferenceIndex(buildDir, true);
     myBuildDir = buildDir;
   }
 
