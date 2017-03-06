@@ -28,10 +28,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
@@ -1266,7 +1263,14 @@ public class BuildManager implements Disposable {
         // re-translate builder's output to idea.log
         final String text = event.getText();
         if (!StringUtil.isEmptyOrSpaces(text)) {
-          LOG.info("BUILDER_PROCESS [" + outputType.toString() + "]: " + text.trim());
+          if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("BUILDER_PROCESS [" + outputType.toString() + "]: " + text.trim());
+            }
+          }
+          else {
+            LOG.info("BUILDER_PROCESS [" + outputType.toString() + "]: " + text.trim());
+          }
         }
       }
     });
