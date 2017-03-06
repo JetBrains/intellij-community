@@ -226,9 +226,7 @@ public class GenerateMembersUtil {
         final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
         final boolean generateFinals = CodeStyleSettingsManager.getSettings(aClass.getProject()).GENERATE_FINAL_PARAMETERS;
         for (final PsiParameter parameter : parameters) {
-          final PsiModifierList modifierList = parameter.getModifierList();
-          assert modifierList != null;
-          modifierList.setModifierProperty(PsiModifier.FINAL, generateFinals);
+          PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, generateFinals);
         }
       }
     }
