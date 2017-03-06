@@ -863,7 +863,6 @@ public class AllIcons {
     public static final Icon DataView = IconLoader.getIcon("/nodes/dataView.png"); // 16x16
     public static final Icon Deploy = IconLoader.getIcon("/nodes/deploy.png"); // 16x16
     public static final Icon Desktop = IconLoader.getIcon("/nodes/desktop.png"); // 16x16
-    public static final Icon DisabledPointcut = IconLoader.getIcon("/nodes/disabledPointcut.png"); // 16x16
     public static final Icon Ejb = IconLoader.getIcon("/nodes/ejb.png"); // 16x16
     public static final Icon EjbBusinessMethod = IconLoader.getIcon("/nodes/ejbBusinessMethod.png"); // 16x16
     public static final Icon EjbCmpField = IconLoader.getIcon("/nodes/ejbCmpField.png"); // 16x16
@@ -1264,6 +1263,8 @@ public class AllIcons {
     public static final Icon Merge = IconLoader.getIcon("/vcs/merge.png"); // 12x12
     public static final Icon MergeSourcesTree = IconLoader.getIcon("/vcs/mergeSourcesTree.png"); // 16x16
     public static final Icon Not_equal = IconLoader.getIcon("/vcs/not_equal.png"); // 16x16
+    public static final Icon Patch = IconLoader.getIcon("/vcs/patch.png"); // 16x16
+    public static final Icon Patch_applied = IconLoader.getIcon("/vcs/patch_applied.png"); // 16x16
     public static final Icon Push = IconLoader.getIcon("/vcs/push.png"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/vcs/remove.png"); // 16x16
     public static final Icon ResetStrip = IconLoader.getIcon("/vcs/resetStrip.png"); // 16x16
