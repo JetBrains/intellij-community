@@ -69,6 +69,9 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     myMoveShelvesCheckBox = new JBCheckBox(VcsBundle.message("vcs.shelf.move.text"));
     setOKButtonText("_Change Location");
     initComponents();
+    updateOkAction();
+    getOKAction().putValue(DEFAULT_ACTION, null);
+    getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     init();
     initValidation();
   }
@@ -87,7 +90,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     myUseCustomShelfDirectory.setSelected(myVcsConfiguration.USE_CUSTOM_SHELF_PATH);
     myMoveShelvesCheckBox.setSelected(myVcsConfiguration.MOVE_SHELVES);
     myShelfDirectoryPath
-      .setText(FileUtil.toSystemDependentName(chooseNotNull(myVcsConfiguration.CUSTOM_SHELF_PATH, getDefaultShelfPresentationPath(myProject))));
+      .setText(
+        FileUtil.toSystemDependentName(chooseNotNull(myVcsConfiguration.CUSTOM_SHELF_PATH, getDefaultShelfPresentationPath(myProject))));
     setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected());
     myUseCustomShelfDirectory.addChangeListener(e -> setEnabledCustomShelfDirectoryComponents(myUseCustomShelfDirectory.isSelected()));
   }
@@ -95,9 +99,6 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
   private void setEnabledCustomShelfDirectoryComponents(boolean enabled) {
     myShelfDirectoryPath.setEnabled(enabled);
     myShelfDirectoryPath.setEditable(enabled);
-    if (enabled && myProject.isDefault() && myVcsConfiguration.CUSTOM_SHELF_PATH == null) {
-      myShelfDirectoryPath.setText("");
-    }
   }
 
   @Nullable
@@ -162,17 +163,15 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     myVcsConfiguration.USE_CUSTOM_SHELF_PATH = nowCustom;
     myVcsConfiguration.CUSTOM_SHELF_PATH = customPath;
     myVcsConfiguration.MOVE_SHELVES = myMoveShelvesCheckBox.isSelected();
-    if (!myProject.isDefault()) {
-      File fromFile = new File(wasCustom ? prevPath : getDefaultShelfPath(myProject));
-      File toFile = new File(nowCustom ? customPath : getDefaultShelfPath(myProject));
-      
-      if (!FileUtil.filesEqual(fromFile, toFile)) {
-        myProject.save();
-        if (wasCustom) {
-          ApplicationManager.getApplication().saveSettings();
-        }
-        ShelveChangesManager.getInstance(myProject).checkAndMigrateUnderProgress(fromFile, toFile, wasCustom);
+    File fromFile = new File(wasCustom ? prevPath : getDefaultShelfPath(myProject));
+    File toFile = new File(nowCustom ? customPath : getDefaultShelfPath(myProject));
+
+    if (!FileUtil.filesEqual(fromFile, toFile)) {
+      myProject.save();
+      if (wasCustom) {
+        ApplicationManager.getApplication().saveSettings();
       }
+      ShelveChangesManager.getInstance(myProject).checkAndMigrateUnderProgress(fromFile, toFile, wasCustom);
     }
     super.doOKAction();
   }
@@ -214,7 +213,6 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
 
   private boolean isModified() {
     if (myVcsConfiguration.USE_CUSTOM_SHELF_PATH != myUseCustomShelfDirectory.isSelected()) return true;
-    if (myVcsConfiguration.MOVE_SHELVES != myMoveShelvesCheckBox.isSelected()) return true;
     return myUseCustomShelfDirectory.isSelected() &&
            !StringUtil.equals(myVcsConfiguration.CUSTOM_SHELF_PATH, myShelfDirectoryPath.getText());
   }
