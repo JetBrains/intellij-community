@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -679,12 +678,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
 
     if (class1 != class2) {
-      if (class2.isInheritor(class1, true) || class1.isInterface() && !class2.isInterface()) {
+      if (class2.isInheritor(class1, true)) {
         if (isSubSignature(method1, method2, classSubstitutor1, classSubstitutor2, boxingHappened)) {
           return Specifics.SECOND;
         }
       }
-      else if (class1.isInheritor(class2, true) || class2.isInterface()) {
+      else if (class1.isInheritor(class2, true)) {
         if (isSubSignature(method2, method1, classSubstitutor2, classSubstitutor1, boxingHappened)) {
           return Specifics.FIRST;
         }
