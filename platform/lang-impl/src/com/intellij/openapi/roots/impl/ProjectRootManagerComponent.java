@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,33 +332,37 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private class MyVirtualFilePointerListener implements VirtualFilePointerListener {
     @Override
     public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
-      if (!myProject.isDisposed()) {
-        if (myInsideRefresh == 0) {
-          if (affectsRoots(pointers)) {
-            beforeRootsChange(false);
-            if (myDoLogCachesUpdate) LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
-          }
+      if (myProject.isDisposed()) {
+        return;
+      }
+
+      if (myInsideRefresh == 0) {
+        if (affectsRoots(pointers)) {
+          beforeRootsChange(false);
+          if (myDoLogCachesUpdate) LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
         }
-        else if (!myPointerChangesDetected) {
-          //this is the first pointer changing validity
-          if (affectsRoots(pointers)) {
-            myPointerChangesDetected = true;
-            myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
-            if (myDoLogCachesUpdate) LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
-          }
+      }
+      else if (!myPointerChangesDetected) {
+        //this is the first pointer changing validity
+        if (affectsRoots(pointers)) {
+          myPointerChangesDetected = true;
+          myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, false));
+          if (myDoLogCachesUpdate) LOG.debug(new Throwable(pointers.length > 0 ? pointers[0].getPresentableUrl():""));
         }
       }
     }
 
     @Override
     public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
-      if (!myProject.isDisposed()) {
-        if (myInsideRefresh > 0) {
-          clearScopesCaches();
-        }
-        else if (affectsRoots(pointers)) {
-          rootsChanged(false);
-        }
+      if (myProject.isDisposed()) {
+        return;
+      }
+
+      if (myInsideRefresh > 0) {
+        clearScopesCaches();
+      }
+      else if (affectsRoots(pointers)) {
+        rootsChanged(false);
       }
     }
   }
