@@ -791,7 +791,17 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       if (changeFragment.getStartLine(ThreeSide.BASE) == changeFragment.getEndLine(ThreeSide.BASE)) return null;
       if (changeFragment.getStartLine(ThreeSide.RIGHT) == changeFragment.getEndLine(ThreeSide.RIGHT)) return null;
 
+      if (isChangeRangeModified(change)) return null;
 
+      List<CharSequence> texts = ThreeSide.map(side -> {
+        return DiffUtil.getLinesContent(getEditor(side).getDocument(), change.getStartLine(side), change.getEndLine(side));
+      });
+
+      return ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
+    }
+
+    private boolean isChangeRangeModified(@NotNull TextMergeChange change) {
+      MergeLineFragment changeFragment = change.getFragment();
       int baseStartLine = changeFragment.getStartLine(ThreeSide.BASE);
       int baseEndLine = changeFragment.getEndLine(ThreeSide.BASE);
       DiffContent baseDiffContent = ThreeSide.BASE.select(myMergeRequest.getContents());
@@ -803,14 +813,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       CharSequence baseContent = DiffUtil.getLinesContent(baseDocument, baseStartLine, baseEndLine);
       CharSequence resultContent = DiffUtil.getLinesContent(resultDocument, resultStartLine, resultEndLine);
-      if (!StringUtil.equals(baseContent, resultContent)) return null;
-
-
-      List<CharSequence> texts = ThreeSide.map((side) -> {
-        return DiffUtil.getLinesContent(getEditor(side).getDocument(), change.getStartLine(side), change.getEndLine(side));
-      });
-
-      return ComparisonMergeUtil.tryResolveConflict(texts.get(0), texts.get(1), texts.get(2));
+      return !StringUtil.equals(baseContent, resultContent);
     }
 
     public boolean canResolveConflictedChange(@NotNull TextMergeChange change) {
