@@ -475,7 +475,11 @@ UAC_Success:
     StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
     goto UAC_Elevate
 UAC_Admin:
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${If} ${RunningX64}
+      StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${Else}
+      StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${EndIf}
     SetShellVarContext all
     StrCpy $baseRegKey "HKLM"
 UAC_Done:
@@ -720,7 +724,11 @@ continue_enum_versions_hklm:
 end_enum_versions_hklm:
 
   StrCmp $INSTDIR "" 0 skip_default_instdir
-  StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+  ${If} ${RunningX64}
+    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+  ${Else}
+    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+  ${EndIf}
 skip_default_instdir:
 
   Pop $5
@@ -935,7 +943,11 @@ HKLM:
   goto Done
 cant_find_installation:
   ;admin perm. is required to uninstall?
-  ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+  ${If} ${RunningX64}
+    ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
+  ${Else}
+    ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+  ${EndIf}
   StrCmp $R0 $INSTDIR HKLM HKCU
 Done:
 FunctionEnd
