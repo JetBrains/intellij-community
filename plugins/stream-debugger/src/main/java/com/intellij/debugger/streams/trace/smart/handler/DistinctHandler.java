@@ -50,12 +50,26 @@ public class DistinctHandler extends HandlerBase {
   @NotNull
   @Override
   public String prepareResult() {
+    final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
     final String peekPrepare = myPeekTracer.prepareResult();
-    final String resolveDirect2Array = myResolveDirectMapVariable.convertToArray("resolveDirect", true, true);
+
     final String resolveReverse2Array = myResolveReverseMapVariable.convertToArray("resolveReverse", true, true);
+    final String storeMapName = myStoreMapVariable.getName();
+    final String afterMapName = myPeekTracer.getAfterMapName();
+    final String prepareDirectMap = "{" + newLine +
+                                    "  for (final int timeAfter : " + myResolveReverseMapVariable.getName() + ".keySet()) {" + newLine +
+                                    "    final Object afterValue = " + afterMapName + ".get(timeAfter);" + newLine +
+                                    "    final Map<Integer, Object> valuesBefore = " + storeMapName + ".get(afterValue);" + newLine +
+                                    "    for (final int timeBefore : valuesBefore.keySet()) {" + newLine +
+                                    "      " + myResolveDirectMapVariable.getName() + ".put(timeBefore, timeAfter);" + newLine +
+                                    "    }" + newLine +
+                                    "  }" + newLine +
+                                    "}";
+
     final String peekResult =
       "final Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
-    return peekPrepare + resolveDirect2Array + resolveReverse2Array + peekResult;
+    final String resolveDirect2Array = myResolveDirectMapVariable.convertToArray("resolveDirect", true, true);
+    return peekPrepare + prepareDirectMap + resolveDirect2Array + resolveReverse2Array + peekResult;
   }
 
   @NotNull
@@ -74,16 +88,14 @@ public class DistinctHandler extends HandlerBase {
   private String createResolveLambda() {
     final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
     final String storeMap = myStoreMapVariable.getName();
-    final String resolveDirectMap = myResolveDirectMapVariable.getName();
     final String resolveReverseMap = myResolveReverseMapVariable.getName();
 
     return "x -> {" + newLine +
            "final Map<Integer, Object> objects = " + String.format("%s.get(x);", storeMap) + newLine +
            "for (final int key: objects.keySet()) {" + newLine +
            "final Object value = objects.get(key);" + newLine +
-           resolveReverseMap + ".put(key, time.get());" + newLine +
-           "if (value == x && !" + resolveDirectMap + ".containsKey(key)) {" + newLine +
-           String.format("%s.put(key, time.get());", resolveDirectMap) + newLine +
+           "if (value == x && !" + resolveReverseMap + ".containsKey(key)) {" + newLine +
+           String.format("%s.put(time.get(), key);", resolveReverseMap) + newLine +
            "    }" + newLine +
            "  }" + newLine +
            "}" + newLine;
