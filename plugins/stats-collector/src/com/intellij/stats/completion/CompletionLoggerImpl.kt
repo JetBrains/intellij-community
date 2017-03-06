@@ -4,7 +4,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.lang.Language
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.events.*
 import java.util.*
 
@@ -86,9 +89,25 @@ class CompletionFileLogger(private val installationUID: String,
             val relevanceMap = relevanceObjects[it]?.map { Pair(it.first, it.second?.toString()) }?.toMap()
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
         }
-
-        val event = CompletionStartedEvent(installationUID, completionUID, isExperimentPerformed, experimentVersion, lookupEntryInfos, 0)
+        
+        val language = getLanguage(lookup)
+        val event = CompletionStartedEvent(
+                installationUID, 
+                completionUID,
+                language?.displayName,
+                isExperimentPerformed, 
+                experimentVersion, 
+                lookupEntryInfos, 
+                selectedPosition = 0)
+        
         logEvent(event)
+    }
+
+    private fun getLanguage(lookup: LookupImpl): Language? {
+        val editor = lookup.editor
+        val offset = editor.caretModel.offset
+        val file = PsiDocumentManager.getInstance(lookup.project).getPsiFile(editor.document) ?: return null
+        return  PsiUtilCore.getLanguageAtOffset(file, offset)
     }
 
     override fun customMessage(message: String) {

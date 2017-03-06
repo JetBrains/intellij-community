@@ -162,6 +162,7 @@ class TypeEvent(
 class CompletionStartedEvent(
         userId: String,
         sessionId: String,
+        var language: String?,
         var performExperiment: Boolean,
         var experimentVersion: Int,
         completionList: List<LookupEntryInfo>,
