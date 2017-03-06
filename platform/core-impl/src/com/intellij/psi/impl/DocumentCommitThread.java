@@ -394,21 +394,23 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       failureReason = ExceptionUtil.getThrowableText(e);
     }
 
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    if (!success && task != null && documentManager.isUncommited(document)) { // sync commit has not intervened
-      final Document finalDocument = document;
+    if (!success && task != null) {
       final Project finalProject = project;
-      final CharSequence[] lastCommittedText = {null};
-      List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes =
-        ApplicationManager.getApplication().runReadAction((Computable<List<Pair<PsiFileImpl, FileASTNode>>>)() -> {
-          if (finalProject.isDisposed()) return null;
-          lastCommittedText[0] = PsiDocumentManager.getInstance(finalProject).getLastCommittedText(finalDocument);
-          PsiFile file = documentManager.getPsiFile(finalDocument);
-          return file == null ? null : getAllFileNodes(file);
-        });
-      if (oldFileNodes != null) {
-        doQueue(project, document, oldFileNodes, "re-added on failure: " + failureReason, task.myCreationModalityState,
-                lastCommittedText[0]);
+      PsiDocumentManager documentManager = ReadAction.compute(() -> finalProject.isDisposed() ? null : PsiDocumentManager.getInstance(finalProject));
+      if (documentManager.isUncommited(document)) { // sync commit has not intervened
+        final Document finalDocument = document;
+        final CharSequence[] lastCommittedText = {null};
+        List<Pair<PsiFileImpl, FileASTNode>> oldFileNodes =
+          ApplicationManager.getApplication().runReadAction((Computable<List<Pair<PsiFileImpl, FileASTNode>>>)() -> {
+            if (finalProject.isDisposed()) return null;
+            lastCommittedText[0] = PsiDocumentManager.getInstance(finalProject).getLastCommittedText(finalDocument);
+            PsiFile file = documentManager.getPsiFile(finalDocument);
+            return file == null ? null : getAllFileNodes(file);
+          });
+        if (oldFileNodes != null) {
+          doQueue(project, document, oldFileNodes, "re-added on failure: " + failureReason, task.myCreationModalityState,
+                  lastCommittedText[0]);
+        }
       }
     }
     synchronized (lock) {
