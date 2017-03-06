@@ -18,7 +18,7 @@ package com.intellij.diff.merge
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType.*
-import com.intellij.idea.ActionsBundle
+import com.intellij.diff.util.ThreeSide
 
 class MergeTest : MergeTestBase() {
   fun testChangeTypes() {
@@ -534,109 +534,105 @@ class MergeTest : MergeTestBase() {
   }
 
   fun testNonConflictsActions() {
-    val applyAllTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts")
-    val applyLeftTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts.Left")
-    val applyRightTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts.Right")
-
-    val text1 =
-      "1 ======\n" +
-      "insert left\n" +
-      "2 ======\n" +
-      "remove right\n" +
-      "3 ======\n" +
-      "new both\n" +
-      "4 ======\n" +
-      "modify both\n" +
-      "5 ======\n" +
-      "modify\n" +
-      "6 ======\n" +
-      "7 ======"
-    val text2 =
-      "1 ======\n" +
-      "2 ======\n" +
-      "remove right\n" +
-      "3 ======\n" +
-      "4 ======\n" +
-      "modify\n" +
-      "5 ======\n" +
-      "modify\n" +
-      "6 ======\n" +
-      "delete modify\n" +
-      "7 ======"
-    val text3 =
-      "1 ======\n" +
-      "2 ======\n" +
-      "3 ======\n" +
-      "new both\n" +
-      "4 ======\n" +
-      "modify both\n" +
-      "5 ======\n" +
-      "modify right\n" +
-      "6 ======\n" +
-      "modify\n" +
-      "7 ======"
+    val text1 = """
+                1 ======
+                insert left
+                2 ======
+                remove right
+                3 ======
+                new both
+                4 ======
+                modify both
+                5 ======
+                modify
+                6 ======
+                7 ======""".trimIndent()
+    val text2 = """
+                1 ======
+                2 ======
+                remove right
+                3 ======
+                4 ======
+                modify
+                5 ======
+                modify
+                6 ======
+                delete modify
+                7 ======""".trimIndent()
+    val text3 = """
+                1 ======
+                2 ======
+                3 ======
+                new both
+                4 ======
+                modify both
+                5 ======
+                modify right
+                6 ======
+                modify
+                7 ======""".trimIndent()
 
     testN(text1, text2, text3) {
       checkUndo(1) {
-        runActionByTitle(applyAllTitle)
+        runApplyNonConflictsAction(ThreeSide.BASE)
       }
 
       assertChangesCount(1)
-      assertContent(
-        "1 ======\n" +
-        "insert left\n" +
-        "2 ======\n" +
-        "3 ======\n" +
-        "new both\n" +
-        "4 ======\n" +
-        "modify both\n" +
-        "5 ======\n" +
-        "modify right\n" +
-        "6 ======\n" +
-        "delete modify\n" +
-        "7 ======")
+      assertContent("""
+                    1 ======
+                    insert left
+                    2 ======
+                    3 ======
+                    new both
+                    4 ======
+                    modify both
+                    5 ======
+                    modify right
+                    6 ======
+                    delete modify
+                    7 ======""".trimIndent())
     }
 
     testN(text1, text2, text3) {
       checkUndo(1) {
-        runActionByTitle(applyLeftTitle)
+        runApplyNonConflictsAction(ThreeSide.LEFT)
       }
 
       assertChangesCount(3)
-      assertContent(
-        "1 ======\n" +
-        "insert left\n" +
-        "2 ======\n" +
-        "remove right\n" +
-        "3 ======\n" +
-        "new both\n" +
-        "4 ======\n" +
-        "modify both\n" +
-        "5 ======\n" +
-        "modify\n" +
-        "6 ======\n" +
-        "delete modify\n" +
-        "7 ======")
+      assertContent("""
+                    1 ======
+                    insert left
+                    2 ======
+                    remove right
+                    3 ======
+                    new both
+                    4 ======
+                    modify both
+                    5 ======
+                    modify
+                    6 ======
+                    delete modify
+                    7 ======""".trimIndent())
     }
 
     testN(text1, text2, text3) {
       checkUndo(1) {
-        runActionByTitle(applyRightTitle)
+        runApplyNonConflictsAction(ThreeSide.RIGHT)
       }
 
       assertChangesCount(2)
-      assertContent(
-        "1 ======\n" +
-        "2 ======\n" +
-        "3 ======\n" +
-        "new both\n" +
-        "4 ======\n" +
-        "modify both\n" +
-        "5 ======\n" +
-        "modify right\n" +
-        "6 ======\n" +
-        "delete modify\n" +
-        "7 ======")
+      assertContent("""
+                    1 ======
+                    2 ======
+                    3 ======
+                    new both
+                    4 ======
+                    modify both
+                    5 ======
+                    modify right
+                    6 ======
+                    delete modify
+                    7 ======""".trimIndent())
     }
   }
 }

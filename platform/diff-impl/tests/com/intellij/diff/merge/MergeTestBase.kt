@@ -23,6 +23,8 @@ import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType
+import com.intellij.diff.util.ThreeSide
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -114,10 +116,14 @@ abstract class MergeTestBase : DiffTestCase() {
     // Actions
     //
 
-    fun runActionByTitle(name: String): Boolean {
-      val action = actions.filter { name == it.templatePresentation.text }
-      assertTrue(action.size == 1, action.toString())
-      return runAction(action[0])
+    fun runApplyNonConflictsAction(side: ThreeSide) {
+      runActionById(side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right")!!)
+    }
+
+    private fun runActionById(id: String): Boolean {
+      val text = ActionsBundle.actionText(id)
+      val action = actions.filter { text == it.templatePresentation.text }.single()
+      return runAction(action)
     }
 
     private fun runAction(action: AnAction): Boolean {
@@ -378,8 +384,8 @@ abstract class MergeTestBase : DiffTestCase() {
     LEFT, RIGHT, BOTH, NONE
   }
 
-  private data class ViewerState private constructor(private val content: CharSequence,
-                                                     private val changes: List<ViewerState.ChangeState>) {
+  private data class ViewerState constructor(private val content: CharSequence,
+                                             private val changes: List<ViewerState.ChangeState>) {
     companion object {
       fun recordState(viewer: MyThreesideViewer): ViewerState {
         val content = viewer.editor.document.immutableCharSequence
