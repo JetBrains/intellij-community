@@ -156,6 +156,11 @@ abstract class BaseIdeaProperties extends ProductProperties {
       fileset(file: "$context.paths.communityHome/jps/lib/optimizedFileManager.jar")
     }
 
+    // Android Studio: trove4j has JetBrains patches, we must ship its sources
+    context.ant.copy(todir: "$targetDirectory/lib/src") {
+      fileset(file: "$context.paths.communityHome/lib/src/trove4j_src.jar")
+    }
+
 // Android Studio: skip these
 //    context.ant.copy(todir: "$targetDirectory/lib/ant") {
 //      fileset(dir: "$context.paths.communityHome/lib/ant") {

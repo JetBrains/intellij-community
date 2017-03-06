@@ -107,13 +107,15 @@ class LibraryLicensesListGenerator {
     finally {
       out.close()
     }
+
+    // Android Studio: enforce licenses for all libraries used by the modules we're actually distributing.
+    checkLibLicenses(usedModules)
   }
 
-  void checkLibLicenses() {
+  void checkLibLicenses(Set<JpsModule> usedModules) {
     def libraries = new HashSet<JpsLibrary>()
     def lib2Module = new HashMap<JpsLibrary, JpsModule>();
-    Set<String> nonPublicModules = ["buildScripts", "build"] as Set
-    project.modules.findAll { !nonPublicModules.contains(it.name) }.each { JpsModule module ->
+    usedModules.each { JpsModule module ->
       JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each {
         lib2Module[it] = module
         libraries << it

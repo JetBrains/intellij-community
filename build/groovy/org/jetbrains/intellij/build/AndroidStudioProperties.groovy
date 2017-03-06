@@ -41,6 +41,20 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
+    allLibraryLicenses.addAll(AndroidStudioLibraryLicenses.LICENSES_LIST)
+    // TODO: This doesn't cover all used libraries, but it's exactly what ShowLicensesUsedAction is checking.
+    additionalDirectoriesWithLicenses.addAll(
+      "$home/../adt/idea/android/lib/licenses",
+      "$home/../studio/google/appindexing/lib/licenses",
+      "$home/../studio/google/cloud/testing/firebase-testing/lib/licenses",
+      "$home/../studio/google/cloud/testing/test-recorder/lib/licenses",
+      "$home/../studio/google/cloud/tools/android-studio-plugin/lib/licenses",
+      "$home/../studio/google/cloud/tools/core-plugin/lib/licenses",
+      "$home/../studio/google/cloud/tools/google-login-plugin/lib/licenses",
+      "$home/../studio/google/services/lib/licenses",
+      "$home/../vendor/google/firebase/lib/licenses",
+    )
+
     productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + JAVA_API_MODULES
     productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + JAVA_IMPLEMENTATION_MODULES +
                                                   [
