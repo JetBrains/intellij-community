@@ -255,16 +255,16 @@ public class LambdaUtil {
   }
 
   @NotNull
-  private static List<HierarchicalMethodSignature> hasSubsignature(List<HierarchicalMethodSignature> signatures) {
+  private static List<HierarchicalMethodSignature> hasSubSignature(List<HierarchicalMethodSignature> signatures) {
     for (HierarchicalMethodSignature signature : signatures) {
-      boolean subsignature = true;
+      boolean subSignature = true;
       for (HierarchicalMethodSignature methodSignature : signatures) {
         if (!signature.equals(methodSignature) && !skipMethod(signature, methodSignature)) {
-          subsignature = false;
+          subSignature = false;
           break;
         }
       }
-      if (subsignature) return Collections.singletonList(signature);
+      if (subSignature) return Collections.singletonList(signature);
     }
     return signatures;
   }
@@ -307,7 +307,7 @@ public class LambdaUtil {
       }
     }
 
-    return hasSubsignature(methods);
+    return hasSubSignature(methods);
   }
 
 
@@ -554,12 +554,6 @@ public class LambdaUtil {
            typeByExpression instanceof PsiLambdaParameterType;
   }
 
-  public static boolean isLambdaReturnExpression(PsiElement element) {
-    final PsiElement parent = element.getParent();
-    return parent instanceof PsiLambdaExpression ||
-           parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) != null;
-  }
-  
   public static PsiReturnStatement[] getReturnStatements(PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
     return body instanceof PsiCodeBlock ? PsiUtil.findReturnStatements((PsiCodeBlock)body) : PsiReturnStatement.EMPTY_ARRAY;

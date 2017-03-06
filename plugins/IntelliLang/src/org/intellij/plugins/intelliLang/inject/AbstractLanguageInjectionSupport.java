@@ -56,6 +56,11 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     return false;
   }
 
+  @Override
+  public boolean useDefaultCommentInjector() {
+    return true;
+  }
+
   @Nullable
   @Override
   public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {

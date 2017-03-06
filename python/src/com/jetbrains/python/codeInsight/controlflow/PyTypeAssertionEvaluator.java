@@ -68,7 +68,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
         final PyExpression typeElement = args[1];
 
-        pushAssertion(target, myPositive, context -> context.getType(typeElement));
+        // TODO support tuple of types as the second argument of isinstance()
+        pushAssertion(target, myPositive, context -> {
+          final PyType type = context.getType(typeElement);
+          return type instanceof PyClassType ? ((PyClassType)type).toInstance() : type;
+        });
       }
     }
     else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
@@ -183,7 +187,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         final PyType initial = context.getType(target);
         final PyType suggested = suggestedType.apply(context);
 
-        if (!PyUnionType.class.isInstance(initial) &&
+        if (!(initial instanceof PyUnionType) &&
             !PyTypeChecker.isUnknown(initial) &&
             PyTypeChecker.match(suggested, initial, context)) {
           return initial;

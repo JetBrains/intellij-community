@@ -20,11 +20,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.chainCall.ChainCallExtractor;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.ArrayUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author Tagir Valeev
@@ -59,23 +63,28 @@ public class ChainCallInplaceIntroducer extends JavaVariableInplaceIntroducer {
     return myCall;
   }
 
-  @Nullable
   @Override
-  protected PsiVariable introduceVariable() {
-    PsiVariable variable = super.introduceVariable();
+  protected PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType) {
+    PsiVariable variable = introduceVariable();
     if (variable instanceof PsiLocalVariable) {
       PsiLambdaExpression lambda = ApplicationManager.getApplication().runWriteAction(
         (Computable<PsiLambdaExpression>)() -> ChainCallExtractor.extractMappingStep(myProject, (PsiLocalVariable)variable));
       if (lambda != null) {
-        PsiParameter parameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
+        PsiParameter parameter = Objects.requireNonNull(ArrayUtil.getFirstElement(lambda.getParameterList().getParameters()));
         myParameter = parameter;
         myCall = PsiTreeUtil.getParentOfType(lambda, PsiMethodCallExpression.class);
-        myOccurrences = PsiExpression.EMPTY_ARRAY;
-        myOccurrenceMarkers = null;
         myExprMarker = null;
         myExpr = null;
+        myOccurrences = StreamEx.of(ReferencesSearch.search(parameter).findAll()).map(PsiReference::getElement).select(PsiExpression.class)
+          .toArray(PsiExpression[]::new);
+        myOccurrenceMarkers = null;
+        final PsiIdentifier identifier = variable.getNameIdentifier();
+        if (identifier != null) {
+          myEditor.getCaretModel().moveToOffset(identifier.getTextOffset());
+        }
         setAdvertisementText(null);
         PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+        initOccurrencesMarkers();
         return parameter;
       }
       else if (!variable.isValid()) {

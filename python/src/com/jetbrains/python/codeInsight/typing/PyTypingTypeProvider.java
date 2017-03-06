@@ -36,6 +36,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
@@ -62,6 +63,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String COROUTINE = "typing.Coroutine";
   public static final String NAMEDTUPLE = "typing.NamedTuple";
   public static final String GENERIC = "typing.Generic";
+  public static final String TYPE = "typing.Type";
+  public static final String ANY = "typing.Any";
 
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
@@ -470,6 +473,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (callableType != null) {
         return Ref.create(callableType);
       }
+      final Ref<PyType> classObjType = getClassObjectType(resolved, context);
+      if (classObjType != null) {
+        return classObjType;
+      }
       final PyType parameterizedType = getParameterizedType(resolved, context);
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
@@ -502,12 +509,47 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static Ref<PyType> getAnyType(@NotNull PsiElement element) {
-    final PyQualifiedNameOwner qualifiedNameOwner = as(element, PyQualifiedNameOwner.class);
-    if (qualifiedNameOwner != null && "typing.Any".equals(qualifiedNameOwner.getQualifiedName())) {
-      return Ref.create();
+  private static Ref<PyType> getClassObjectType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PySubscriptionExpression) {
+      final PySubscriptionExpression subsExpr = (PySubscriptionExpression)resolved;
+      final PyExpression operand = subsExpr.getOperand();
+      final Collection<String> operandNames = resolveToQualifiedNames(operand, context.getTypeContext());
+      if (operandNames.contains(TYPE)) {
+        final PyExpression indexExpr = subsExpr.getIndexExpression();
+        if (indexExpr != null) {
+          if (resolveToQualifiedNames(indexExpr, context.getTypeContext()).contains(ANY)) {
+            return Ref.create(PyBuiltinCache.getInstance(resolved).getTypeType());
+          }
+          final PyType type = Ref.deref(getType(indexExpr, context));
+          final PyClassType classType = as(type, PyClassType.class);
+          if (classType != null && !classType.isDefinition()) {
+            return Ref.create(new PyClassTypeImpl(classType.getPyClass(), true));
+          }
+          final PyGenericType typeVar = as(type, PyGenericType.class);
+          if (typeVar != null && !typeVar.isDefinition()) {
+            return Ref.create(new PyGenericType(typeVar.getName(), typeVar.getBound(), true));
+          }
+          // Represent Type[Union[str, int]] internally as Union[Type[str], Type[int]]
+          final PyUnionType unionType = as(type, PyUnionType.class);
+          if (unionType != null &&
+              unionType.getMembers().stream().allMatch(t -> t instanceof PyClassType && !((PyClassType)t).isDefinition())) {
+            return Ref.create(PyUnionType.union(ContainerUtil.map(unionType.getMembers(), t -> ((PyClassType)t).toClass())));
+          }
+        }
+        // Map Type[Something] with unsupported type parameter to Any, instead of generic type for the class "type"
+        return Ref.create();
+      }
+    }
+    // Replace plain non-parametrized Type with its builtin counterpart
+    else if (TYPE.equals(getQualifiedName(resolved))) {
+      return Ref.create(PyBuiltinCache.getInstance(resolved).getTypeType());
     }
     return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getAnyType(@NotNull PsiElement element) {
+    return ANY.equals(getQualifiedName(element)) ? Ref.create() : null;
   }
 
   @Nullable

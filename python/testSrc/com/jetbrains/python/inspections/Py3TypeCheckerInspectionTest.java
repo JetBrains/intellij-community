@@ -198,4 +198,24 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testBuiltinInputPy3() {
     doTest();
   }
+  
+  // PY-200057
+  public void testClassObjectType() {
+    doTest();
+  }
+
+  // PY-20057
+  public void testTypeAndClassObjectTypesCompatibility() {
+    doTest();
+  }
+
+  // PY-20057
+  public void testClassObjectTypeWithUnion() {
+    doTest();
+  }
+
+  // PY-22730
+  public void testOptionalOfBoundTypeVarInWarnings() {
+    doTest();
+  }
 }

@@ -398,8 +398,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   protected PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType) {
     PsiVariable variable = introduceVariable();
 
-    if (variable == null) return null;
-
     final PsiVariable restoredVar = getVariable();
     if (restoredVar != null) {
       variable = restoredVar;
@@ -429,7 +427,6 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     return variable;
   }
 
-  @Nullable
   protected PsiVariable introduceVariable() {
     PsiVariable variable = IntroduceVariableBase
       .introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings);

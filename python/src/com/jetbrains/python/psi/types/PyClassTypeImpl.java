@@ -107,11 +107,18 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return myIsDefinition;
   }
 
+  @NotNull
   @Override
   public PyClassType toInstance() {
     return myIsDefinition ? withUserDataCopy(new PyClassTypeImpl(myClass, false)) : this;
   }
 
+  @NotNull
+  @Override
+  public PyClassLikeType toClass() {
+    return myIsDefinition ? this : new PyClassTypeImpl(myClass, true);
+  }
+  
   /**
    * Wrap new instance to copy user data to it
    */

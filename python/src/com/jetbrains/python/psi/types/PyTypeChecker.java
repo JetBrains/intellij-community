@@ -65,18 +65,38 @@ public class PyTypeChecker {
   private static boolean match(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context,
                                @Nullable Map<PyGenericType, PyType> substitutions, boolean recursive) {
     // TODO: subscriptable types?, module types?, etc.
-    if (actual instanceof PyClassType) {
-      final PyClassType classType = (PyClassType)actual;
-      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(classType.getPyClass());
-
-      if (actual == builtinCache.getObjectType(PyNames.BASESTRING)) {
+    final PyClassType expectedClassType = as(expected, PyClassType.class);
+    final PyClassType actualClassType = as(actual, PyClassType.class);
+    
+    // Special cases: object and type
+    if (expectedClassType != null && ArrayUtil.contains(expectedClassType.getName(), PyNames.OBJECT, PyNames.TYPE)) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(expectedClassType.getPyClass());
+      if (expectedClassType.equals(builtinCache.getObjectType())) {
+        return true;
+      }
+      if (expectedClassType.equals(builtinCache.getTypeType()) &&
+          actual instanceof PyInstantiableType && ((PyInstantiableType)actual).isDefinition()) {
+        return true;
+      }
+    }
+    if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType
+        && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
+      return false;
+    }
+    if (actualClassType != null && PyNames.BASESTRING.equals(actualClassType.getName())) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(actualClassType.getPyClass());
+      if (actualClassType.equals(builtinCache.getObjectType(PyNames.BASESTRING))) {
         return match(expected, builtinCache.getStrOrUnicodeType(), context, substitutions, recursive);
       }
     }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);
-      final PyType bound = generic.getBound();
+      PyType bound = generic.getBound();
+      // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
+      if (generic.isDefinition() && bound instanceof PyInstantiableType) {
+        bound = ((PyInstantiableType)bound).toClass();
+      }
       if (!match(bound, actual, context, substitutions, recursive)) {
         return false;
       }
@@ -101,12 +121,6 @@ public class PyTypeChecker {
     }
     if (expected == null || actual == null) {
       return true;
-    }
-    if (expected instanceof PyClassType) {
-      final PyClass c = ((PyClassType)expected).getPyClass();
-      if ("object".equals(c.getName())) {
-        return true;
-      }
     }
     if (isUnknown(actual)) {
       return true;
@@ -142,9 +156,9 @@ public class PyTypeChecker {
       }
       return false;
     }
-    if (expected instanceof PyClassType && actual instanceof PyClassType) {
-      final PyClass superClass = ((PyClassType)expected).getPyClass();
-      final PyClass subClass = ((PyClassType)actual).getPyClass();
+    if (expectedClassType != null && actualClassType != null) {
+      final PyClass superClass = expectedClassType.getPyClass();
+      final PyClass subClass = actualClassType.getPyClass();
       if (expected instanceof PyTupleType && actual instanceof PyTupleType) {
         final PyTupleType superTupleType = (PyTupleType)expected;
         final PyTupleType subTupleType = (PyTupleType)actual;
@@ -213,15 +227,15 @@ public class PyTypeChecker {
       else if (matchClasses(superClass, subClass, context)) {
         return true;
       }
-      else if (((PyClassType)actual).isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
+      else if (actualClassType.isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
         return true;
       }
       if (expected.equals(actual)) {
         return true;
       }
     }
-    if (actual instanceof PyFunctionTypeImpl && expected instanceof PyClassType) {
-      final PyClass superClass = ((PyClassType)expected).getPyClass();
+    if (actual instanceof PyFunctionTypeImpl && expectedClassType != null) {
+      final PyClass superClass = expectedClassType.getPyClass();
       if (PyNames.CALLABLE.equals(superClass.getName())) {
         return true;
       }
@@ -237,16 +251,15 @@ public class PyTypeChecker {
       }
       return expectedStructural.getAttributeNames().containsAll(actualStructural.getAttributeNames());
     }
-    if (expected instanceof PyStructuralType && actual instanceof PyClassType) {
-      final PyClassType actualClassType = (PyClassType)actual;
+    if (expected instanceof PyStructuralType && actualClassType != null) {
       if (overridesGetAttr(actualClassType.getPyClass(), context)) {
         return true;
       }
       final Set<String> actualAttributes = actualClassType.getMemberNames(true, context);
       return actualAttributes.containsAll(((PyStructuralType)expected).getAttributeNames());
     }
-    if (actual instanceof PyStructuralType && expected instanceof PyClassType) {
-      final Set<String> expectedAttributes = ((PyClassType)expected).getMemberNames(true, context);
+    if (actual instanceof PyStructuralType && expectedClassType != null) {
+      final Set<String> expectedAttributes = expectedClassType.getMemberNames(true, context);
       return expectedAttributes.containsAll(((PyStructuralType)actual).getAttributeNames());
     }
     if (actual instanceof PyCallableType && expected instanceof PyCallableType) {
@@ -338,13 +351,17 @@ public class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type) {
-    if (type == null || type instanceof PyGenericType) {
+    return isUnknown(type, true);
+  }
+
+  public static boolean isUnknown(@Nullable PyType type, boolean genericsAreUnknown) {
+    if (type == null || (genericsAreUnknown && type instanceof PyGenericType)) {
       return true;
     }
     if (type instanceof PyUnionType) {
       final PyUnionType union = (PyUnionType)type;
       for (PyType t : union.getMembers()) {
-        if (isUnknown(t)) {
+        if (isUnknown(t, genericsAreUnknown)) {
           return true;
         }
       }
@@ -416,7 +433,22 @@ public class PyTypeChecker {
                                   @NotNull TypeEvalContext context) {
     if (hasGenerics(type, context)) {
       if (type instanceof PyGenericType) {
-        final PyType substitution = substitutions.get((PyGenericType)type);
+        final PyGenericType typeVar = (PyGenericType)type;
+        PyType substitution = substitutions.get(typeVar);
+        if (substitution == null) {
+          if (!typeVar.isDefinition()) {
+            final PyInstantiableType<?> classType = as(substitutions.get(typeVar.toClass()), PyInstantiableType.class);
+            if (classType != null) {
+              substitution = classType.toInstance();
+            }
+          }
+          else {
+            final PyInstantiableType<?> instanceType = as(substitutions.get(typeVar.toInstance()), PyInstantiableType.class);
+            if (instanceType != null) {
+              substitution = instanceType.toClass();
+            }
+          }
+        }
         if (substitution instanceof PyGenericType && substitution != type) {
           final PyType recursive = substitute(substitution, substitutions, context);
           if (recursive != null) {
