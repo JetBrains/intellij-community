@@ -340,6 +340,8 @@ public class GitHistoryUtils {
               resultAdapter.consume(record);
             }
           }
+          catch (ProcessCanceledException ignored) {
+          }
           catch (Throwable t) {
             LOG.error(t);
             exceptionConsumer.consume(new VcsException("Internal error " + t.getMessage(), t));
