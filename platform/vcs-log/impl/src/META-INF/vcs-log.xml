@@ -88,7 +88,7 @@
             icon="AllIcons.Actions.DiffWithCurrent"/>
     <action class="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryAction" id="Vcs.Log.CreatePatchFromHistory"
             use-shortcut-of="ChangesView.CreatePatch" text="Create Patch..." description="Create patch for selected changes"
-            icon="AllIcons.Actions.CreatePatch"/>
+            icon="AllIcons.Vcs.Patch"/>
     <action class="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction" id="Vcs.Log.GetVersion"
             use-shortcut-of="Vcs.GetVersion"
             text="Get" description="Get version from repository" icon="AllIcons.Actions.Get"/>
