@@ -73,7 +73,7 @@ public class DiffCalculator {
     return result;
   }
 
-  private static int compareRootFolders(String[] dirs, String[] others){
+  private static int compareRootFolders(String[] dirs, String[] others) {
     int matches = 0;
     for (int i = 0; i < dirs.length && i < others.length; i++) {
       if (dirs[i].equals(others[i])) {
@@ -87,9 +87,10 @@ public class DiffCalculator {
   }
 
   private static String findBestCandidateForMove(List<String> paths, String path) {
-    int common = 0;
     String best = "";
+
     String[] dirs = path.split("/");
+    int common = 0;
     for (String other : paths) {
       String[] others = other.split("/");
       for (int i = 0; i < dirs.length && i < others.length; i++) {
@@ -97,17 +98,18 @@ public class DiffCalculator {
           if (i + 1 > common) {
             best = other;
             common = i + 1;
-          // check root folders of candidates with the same matches
-          } else if (i + 1 == common) {
-            if (compareRootFolders(dirs, best.split("/")) < compareRootFolders (dirs, other.split("/"))){
-              best = other;
-            }
+            // check root folders of candidates with the same matches
           }
-        } else {
+          else if (i + 1 == common && compareRootFolders(dirs, best.split("/")) < compareRootFolders(dirs, other.split("/"))) {
+            best = other;
+          }
+        }
+        else {
           break;
         }
       }
     }
+
     return best;
   }
 
@@ -117,17 +119,14 @@ public class DiffCalculator {
       if (!path.endsWith("/")) {
         String name = new File(path).getName();
         List<String> paths = result.get(name);
-        if (paths == null) {
-          paths = new LinkedList<>();
-          result.put(name, paths);
-        }
+        if (paths == null) result.put(name, (paths = new LinkedList<>()));
         paths.add(path);
       }
     }
     return result;
   }
 
-  public static Map<Long,String> inverse(Map<String, Long> map) {
+  public static Map<Long, String> inverse(Map<String, Long> map) {
     Map<Long, String> inv = new LinkedHashMap<>();
     for (Map.Entry<String, Long> entry : map.entrySet()) {
       inv.put(entry.getValue(), entry.getKey());
