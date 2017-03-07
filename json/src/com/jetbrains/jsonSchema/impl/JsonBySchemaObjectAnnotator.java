@@ -39,7 +39,7 @@ import java.util.*;
 /**
  * @author Irina.Chernushina on 8/31/2015.
  */
-class JsonBySchemaObjectAnnotator implements Annotator {
+public class JsonBySchemaObjectAnnotator implements Annotator {
   private final static Logger LOG = Logger.getInstance("#com.jetbrains.jsonSchema.JsonBySchemaAnnotator");
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
   @NotNull private final VirtualFile mySchemaFile;
