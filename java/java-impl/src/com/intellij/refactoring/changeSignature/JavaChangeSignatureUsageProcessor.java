@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
@@ -359,11 +360,15 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           anchor = PsiTreeUtil.getParentOfType(ref, PsiStatement.class);
         }
         LOG.assertTrue(anchor != null);
-        tryStatement.getTryBlock().add(anchor);
-        tryStatement = (PsiTryStatement)anchor.getParent().addAfter(tryStatement, anchor);
+        PsiElement container = anchor.getParent();
+        PsiElement[] elements = SurroundWithUtil.moveDeclarationsOut(container, new PsiElement[]{anchor}, true);
+        tryStatement = (PsiTryStatement)container.addAfter(tryStatement, elements[elements.length - 1]);
+        PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+        LOG.assertTrue(tryBlock != null);
+        tryBlock.addRange(elements[0], elements[elements.length - 1]);
 
         addExceptions(newExceptions, tryStatement);
-        anchor.delete();
+        container.deleteChildRange(elements[0], elements[elements.length - 1]);
         tryStatement.getCatchSections()[0].delete(); //Delete dummy catch section
       }
     }
