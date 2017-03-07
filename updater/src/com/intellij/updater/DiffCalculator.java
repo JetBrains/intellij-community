@@ -44,20 +44,19 @@ public class DiffCalculator {
     }
 
     if (lookForMoved) {
-      Map<Long, String> byContent = inverse(result.filesToDelete);
+      Map<Long, List<String>> byContent = groupFilesByContent(result.filesToDelete);
       Map<String, List<String>> byName = groupFilesByName(result.filesToDelete);
 
       for (Map.Entry<String, Long> create : toCreate.entrySet()) {
         if (Digester.isFile(create.getValue())) {
-          String source = byContent.get(create.getValue());
+          List<String> sameContent = byContent.get(create.getValue());
+          String source = findBestCandidateForMove(sameContent, create.getKey());
           boolean move = true;
 
-          if (source == null || create.getKey().startsWith("jre")) {
+          if (source == null) {
             List<String> sameName = byName.get(new File(create.getKey()).getName());
-            if (sameName != null) {
-              source = findBestCandidateForMove(sameName, create.getKey());
-              move = false;
-            }
+            source = findBestCandidateForMove(sameName, create.getKey());
+            move = false;
           }
 
           if (source != null && !critical.contains(source)) {
@@ -87,6 +86,8 @@ public class DiffCalculator {
   }
 
   private static String findBestCandidateForMove(List<String> paths, String path) {
+    if (paths == null) return null;
+
     String best = "";
 
     String[] dirs = path.split("/");
@@ -113,6 +114,20 @@ public class DiffCalculator {
     return best;
   }
 
+  public static Map<Long, List<String>> groupFilesByContent(Map<String, Long> map) {
+    Map<Long, List<String>> result = new HashMap<>();
+    for (Map.Entry<String, Long> entry : map.entrySet()) {
+      String path = entry.getKey();
+      if (!path.endsWith("/")) {
+        Long hash = entry.getValue();
+        List<String> paths = result.get(hash);
+        if (paths == null) result.put(hash, (paths = new LinkedList<>()));
+        paths.add(path);
+      }
+    }
+    return result;
+  }
+
   private static Map<String, List<String>> groupFilesByName(Map<String, Long> toDelete) {
     Map<String, List<String>> result = new HashMap<>();
     for (String path : toDelete.keySet()) {
@@ -124,14 +139,6 @@ public class DiffCalculator {
       }
     }
     return result;
-  }
-
-  public static Map<Long, String> inverse(Map<String, Long> map) {
-    Map<Long, String> inv = new LinkedHashMap<>();
-    for (Map.Entry<String, Long> entry : map.entrySet()) {
-      inv.put(entry.getValue(), entry.getKey());
-    }
-    return inv;
   }
 
   private static Map<String, Long> withAllRemoved(Map<String, Long> from, Map<String, Long> toRemove) {

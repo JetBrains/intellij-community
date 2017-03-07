@@ -226,6 +226,24 @@ public class PatchTest extends PatchTestCase {
   }
 
   @Test
+  public void testZipFileMoveWithAlternatives() throws Exception {
+    FileUtil.copy(new File(myOlderDir, "lib/annotations.jar"), new File(myOlderDir, "lib64/annotations.jar"));
+    FileUtil.delete(myNewerDir);
+    FileUtil.copyDir(myOlderDir, myNewerDir);
+    FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+    FileUtil.rename(new File(myNewerDir, "lib64/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.jar"));
+
+    Patch patch = createPatch();
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib64/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new CreateAction(patch, "lib/redist/"),
+      new CreateAction(patch, "lib64/redist/"),
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.jar", "lib64/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, true));
+  }
+
+  @Test
   public void testSaveLoad() throws Exception {
     Patch original = createPatch();
     File f = getTempFile("file");
