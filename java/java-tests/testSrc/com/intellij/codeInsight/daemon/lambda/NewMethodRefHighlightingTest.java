@@ -537,6 +537,10 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testMethodInInheritorFoundBySecondSearch() throws Exception {
+    doTest();
+  }
+
   public void testNonExactMethodReferenceOnRawClassType() throws Exception {
     doTest();
   }
