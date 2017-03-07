@@ -98,7 +98,7 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       myOriginalPosition = originalPosition;
       myResultConsumer = resultConsumer;
       myVariants = new ArrayList<>();
-      myWalker = JsonSchemaWalker.getWalker(myPosition);
+      myWalker = JsonSchemaWalker.getWalker(myPosition, myRootSchema);
       myWrapInQuotes = myWalker.isNameQuoted() && !(position.getParent() instanceof JsonStringLiteral);
       myInsideStringLiteral = position.getParent() instanceof JsonStringLiteral;
     }
