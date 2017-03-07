@@ -2,8 +2,8 @@
 """
 Tools to implement runners (https://confluence.jetbrains.com/display/~link/PyCharm+test+runners+protocol)
 """
-import argparse
 import atexit
+import _jb_utils
 import imp
 import os
 import re
@@ -159,7 +159,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         # Intellij may fail to process message if it has char just before it.
         # Space before message has no visible affect, but saves from such cases
         print(" ")
-        if messageName in {"enteredTheMatrix", "testCount"}:
+        if messageName in set(["enteredTheMatrix", "testCount"]):
             _old_service_messages.message(self, messageName, **properties)
             return
 
@@ -237,7 +237,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
                 "details": details}
         self.message("testFailed", **args)
 
-    def testFinished(self, testName, testDuration=None, flowId=None,  is_suite=False):
+    def testFinished(self, testName, testDuration=None, flowId=None, is_suite=False):
         testName = ".".join(self._test_to_list(testName))
 
         def _write_finished_message():
@@ -342,10 +342,11 @@ def jb_start_tests():
         del sys.argv[index:]
     except ValueError:
         pass
-    parser = argparse.ArgumentParser(description='PyCharm test runner')
-    parser.add_argument('--path', help='Path to file or folder to run')
-    parser.add_argument('--target', help='Python target to run', action="append")
-    namespace = parser.parse_args()
+    utils = _jb_utils.VersionAgnosticUtils()
+
+    namespace = utils.get_options(
+        _jb_utils.OptionDescription('--path', 'Path to file or folder to run'),
+        _jb_utils.OptionDescription('--target', 'Python target to run', "append"))
     del sys.argv[1:]  # Remove all args
     NewTeamcityServiceMessages().message('enteredTheMatrix')
     return namespace.path, namespace.target, additional_args
