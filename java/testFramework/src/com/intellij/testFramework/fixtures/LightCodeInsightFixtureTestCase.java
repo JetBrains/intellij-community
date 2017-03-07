@@ -79,7 +79,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   public static final LightProjectDescriptor JAVA_9 = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk18();
+      return IdeaTestUtil.getMockJdk9();
     }
 
     @Override

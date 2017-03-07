@@ -240,6 +240,6 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+    return JAVA_8;
   }
 }
