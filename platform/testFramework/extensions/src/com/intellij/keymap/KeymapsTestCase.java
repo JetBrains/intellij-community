@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control ADD",              "ExpandAll", "ExpandRegion"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
-    { "control DOWN",             "EditorScrollDown", "EditorLookupDown"},
+    { "control DOWN",             "EditorScrollDown", "EditorLookupDown", "MethodOverloadSwitchDown"},
     { "control ENTER",            "EditorSplitLine", "ViewSource", "Console.Execute.Multiline"},
     { "control EQUALS",           "ExpandAll", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
@@ -106,7 +106,7 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control R",                "Replace", "Console.TableResult.Reload", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
     { "control U",                "GotoSuperMethod", "CommanderSwapPanels"},
-    { "control UP",               "EditorScrollUp", "EditorLookupUp"},
+    { "control UP",               "EditorScrollUp", "EditorLookupUp", "MethodOverloadSwitchUp"},
     { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
@@ -162,6 +162,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
     { "meta N",                   "FileChooser.NewFolder", "Generate", "NewElement"},
     { "meta O",                   "GotoClass", "GotoChangedFile"},
+    { "meta UP",                  "ShowNavBar", "MethodOverloadSwitchUp"},
+    { "meta DOWN",                "EditSource", "MethodOverloadSwitchDown"},
     { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindPrevious"},
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft", },
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight", },
@@ -211,8 +213,8 @@ public abstract class KeymapsTestCase extends PlatformTestCase {
     { "control X",                "GotoFile", "SaveAll", "NextTab", "PreviousTab", "CloseContent", "CloseAllEditors", "NextSplitter",
                                   "GotoNextError", "NextProjectWindow", "EditorSwapSelectionBoundaries", "SplitVertically",
                                   "SplitHorizontally", "UnsplitAll", "Switcher", "$SelectAll"},
-    { "control UP",               "EditorBackwardParagraph", "EditorLookupUp"},
-    { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown"},
+    { "control UP",               "EditorBackwardParagraph", "EditorLookupUp", "MethodOverloadSwitchUp"},
+    { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown", "MethodOverloadSwitchDown"},
     { "control alt A",            "MethodUp", "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "MethodDown", "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
