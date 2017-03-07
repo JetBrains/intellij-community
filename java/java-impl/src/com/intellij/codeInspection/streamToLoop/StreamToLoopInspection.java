@@ -182,9 +182,8 @@ public class StreamToLoopInspection extends BaseJavaBatchLocalInspectionTool {
       return false;
     }
     if(elementType instanceof PsiImmediateClassType) {
-      PsiType typeFromText =
-        JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(elementType.getCanonicalText(), context);
-      if(!(typeFromText instanceof PsiClassType) || ((PsiClassType)typeFromText).resolve() == null) {
+      PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(context.getProject());
+      if (helper.resolveReferencedClass(elementType.getCanonicalText(), context) == null) {
         return false;
       }
     }
