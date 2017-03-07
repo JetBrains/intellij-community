@@ -64,7 +64,7 @@ public class CommandLineUtil {
         }
       }
 
-      if (winShell && StringUtil.containsAnyChar(parameter, WIN_SHELL_SPECIALS)) {
+      if (winShell && isSpecialQuoteNeeded(parameter)) {
         parameter = quote(parameter, SPECIAL_QUOTE);
       }
 
@@ -117,5 +117,9 @@ public class CommandLineUtil {
     }
 
     return new File(StringUtil.unquoteString(execName)).getName();
+  }
+
+  public static boolean isSpecialQuoteNeeded(String parameter) {
+    return StringUtil.containsAnyChar(parameter, WIN_SHELL_SPECIALS);
   }
 }
