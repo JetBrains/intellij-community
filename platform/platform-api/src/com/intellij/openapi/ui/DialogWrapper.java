@@ -1526,7 +1526,7 @@ public abstract class DialogWrapper {
   /**
    * @return the help identifier or null if no help is available.
    */
-  @Nullable
+  @Nullable @NonNls
   protected String getHelpId() {
     return null;
   }

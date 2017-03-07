@@ -18,6 +18,7 @@ package com.intellij.ide.wizard;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +98,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
   @Nullable
   public abstract JComponent getPreferredFocusedComponent();
 
+  @NonNls
   public String getHelpId() {
     return null;
   }

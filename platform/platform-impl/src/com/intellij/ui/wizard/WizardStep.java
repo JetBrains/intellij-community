@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.wizard;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public abstract class WizardStep<T extends WizardModel> {
     myIcon = icon;
   }
 
-  public WizardStep(String title, String explanation, Icon icon, String helpId) {
+  public WizardStep(String title, String explanation, Icon icon, @NonNls String helpId) {
     myTitle = title;
     myExplanation = explanation;
     myIcon = icon;
@@ -90,6 +91,7 @@ public abstract class WizardStep<T extends WizardModel> {
     return myIcon;
   }
 
+  @NonNls
   public String getHelpId() {
     return myHelpId;
   }
