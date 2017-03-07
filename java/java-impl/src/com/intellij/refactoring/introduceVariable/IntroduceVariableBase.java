@@ -87,15 +87,27 @@ import java.util.*;
  * Date: Nov 15, 2002
  */
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
-  public enum JavaReplaceChoice implements OccurrencesChooser.BaseReplaceChoice {
-    NO("Replace this occurrence only"), NO_WRITE("Replace all occurrences but write"), ALL("Replace all {0} occurrences"),
-    NO_CHAIN("Create variable inside current lambda"), CHAIN("Extract as separate step"),
-    CHAIN_ALL("Replace all {0} occurrences and extract as separate step");
+  public static class JavaReplaceChoice implements OccurrencesChooser.BaseReplaceChoice {
+    public static final JavaReplaceChoice NO = new JavaReplaceChoice(OccurrencesChooser.ReplaceChoice.NO);
+    public static final JavaReplaceChoice NO_WRITE = new JavaReplaceChoice(OccurrencesChooser.ReplaceChoice.NO_WRITE);
+    public static final JavaReplaceChoice ALL = new JavaReplaceChoice(OccurrencesChooser.ReplaceChoice.ALL);
+    public static final JavaReplaceChoice NO_CHAIN = new JavaReplaceChoice("Create variable inside current lambda", false, false, false);
+    public static final JavaReplaceChoice CHAIN = new JavaReplaceChoice("Extract as a separate operation", false, false, true);
+    public static final JavaReplaceChoice CHAIN_ALL =
+      new JavaReplaceChoice("Replace all occurrences and extract as a separate operation", true, true, true);
 
     private final String myDescription;
+    private final boolean myAll, myMultiple, myChain;
 
-    JavaReplaceChoice(String description) {
+    JavaReplaceChoice(OccurrencesChooser.ReplaceChoice choice) {
+      this(choice.getDescription(), choice.isAll(), choice.isMultiple(), false);
+    }
+
+    JavaReplaceChoice(String description, boolean all, boolean multiple, boolean chain) {
       myDescription = description;
+      myAll = all;
+      myMultiple = multiple;
+      myChain = chain;
     }
 
     public String getDescription() {
@@ -104,12 +116,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     @Override
     public boolean isMultiple() {
-      return this == NO_WRITE || this == ALL || this == CHAIN_ALL;
+      return myMultiple;
     }
 
     @Override
     public boolean isAll() {
-      return this == ALL || this == CHAIN_ALL;
+      return myAll;
+    }
+
+    public boolean isChain() {
+      return myChain;
     }
 
     @Override
@@ -673,7 +689,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             .filter(occurrence -> !(expr.equals(occurrence) && expr.getParent() instanceof PsiExpressionStatement))
             .filter(occurrence -> allChoice || (noWriteChoice && !PsiUtil.isAccessedForWriting(occurrence)) || expr.equals(occurrence))
             .toArray(PsiExpression[]::new);
-          if (choice == JavaReplaceChoice.CHAIN || choice == JavaReplaceChoice.CHAIN_ALL) {
+          if (choice.isChain()) {
             myInplaceIntroducer = new ChainCallInplaceIntroducer(project,
                                                                  settings,
                                                                  chosenAnchor,
@@ -747,7 +763,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       if (choice != null) {
         callback.pass(choice);
       } else {
-        String title = occurrencesInfo.myChainCallCandidate && occurrences.length == 1
+        String title = occurrencesInfo.myChainMethodName != null && occurrences.length == 1
                        ? "Lambda chain detected"
                        : OccurrencesChooser.DEFAULT_CHOOSER_TITLE;
         OccurrencesChooser.<PsiExpression>simpleChooser(editor).showChooser(callback, occurrencesMap, title);
@@ -1250,7 +1266,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     boolean myCantReplaceAll;
     boolean myCantReplaceAllButWrite;
     boolean myHasWriteAccess;
-    boolean myChainCallCandidate;
+    final String myChainMethodName;
 
     public OccurrencesInfo(PsiExpression[] occurrences) {
       myOccurrences = Arrays.asList(occurrences);
@@ -1268,35 +1284,42 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
       }
       myHasWriteAccess = myOccurrences.size() > myNonWrite.size() && myOccurrences.size() > 1;
-      myChainCallCandidate = CHAIN_ALLOWED && isChainCallCandidate();
+      myChainMethodName = CHAIN_ALLOWED ? getChainCallExtractor() : null;
     }
 
-    private boolean isChainCallCandidate() {
-      if (myHasWriteAccess || myOccurrences.isEmpty()) return false;
-      // The whole lambda body selected
+    private String getChainCallExtractor() {
+      if (myHasWriteAccess || myOccurrences.isEmpty()) return null;
       PsiExpression expression = myOccurrences.get(0);
-      if (myOccurrences.size() == 1 && expression.getParent() instanceof PsiLambdaExpression) return false;
+      // The whole lambda body selected
+      if (myOccurrences.size() == 1 && expression.getParent() instanceof PsiLambdaExpression) return null;
       PsiElement parent = PsiTreeUtil.findCommonParent(myOccurrences);
-      if (parent == null) return false;
+      if (parent == null) return null;
       PsiType type = expression.getType();
       PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiStatement.class);
-      if (ChainCallExtractor.findExtractor(lambda, expression, type) == null) return false;
+      ChainCallExtractor extractor = ChainCallExtractor.findExtractor(lambda, expression, type);
+      if (extractor == null) return null;
       PsiParameter parameter = lambda.getParameterList().getParameters()[0];
-      return ReferencesSearch.search(parameter).forEach((Processor<PsiReference>)ref ->
-        myOccurrences.stream().anyMatch(expr -> PsiTreeUtil.isAncestor(expr, ref.getElement(), false)));
+      if (!ReferencesSearch.search(parameter).forEach((Processor<PsiReference>)ref ->
+        myOccurrences.stream().anyMatch(expr -> PsiTreeUtil.isAncestor(expr, ref.getElement(), false)))) {
+        return null;
+      }
+      return extractor.getMethodName(parameter, expression, type);
     }
 
     @NotNull
     LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> buildOccurrencesMap(PsiExpression expr) {
       final LinkedHashMap<JavaReplaceChoice, List<PsiExpression>> occurrencesMap = ContainerUtil.newLinkedHashMap();
-      if (myChainCallCandidate) {
+      if (myChainMethodName != null) {
         if (myOccurrences.size() > 1 && !myCantReplaceAll) {
           occurrencesMap.put(JavaReplaceChoice.NO, Collections.singletonList(expr));
           occurrencesMap.put(JavaReplaceChoice.ALL, myOccurrences);
-          occurrencesMap.put(JavaReplaceChoice.CHAIN_ALL, myOccurrences);
+          occurrencesMap.put(
+            new JavaReplaceChoice("Replace all {0} occurrences and extract as ''" + myChainMethodName + "'' operation", true, true, true),
+            myOccurrences);
         } else {
           occurrencesMap.put(JavaReplaceChoice.NO_CHAIN, Collections.singletonList(expr));
-          occurrencesMap.put(JavaReplaceChoice.CHAIN, Collections.singletonList(expr));
+          occurrencesMap.put(new JavaReplaceChoice("Extract as ''" + myChainMethodName + "'' operation", false, false, true),
+                             Collections.singletonList(expr));
         }
       } else {
         occurrencesMap.put(JavaReplaceChoice.NO, Collections.singletonList(expr));

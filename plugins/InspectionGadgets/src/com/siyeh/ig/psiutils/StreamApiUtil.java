@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author Tagir Valeev
  */
@@ -87,21 +89,9 @@ public class StreamApiUtil {
 
   @NotNull
   public static String generateMapOperation(PsiVariable variable, @Nullable PsiType outType, PsiElement mapper) {
+    String shortcutMappingMethod = getShortcutMappingMethod(variable, outType, mapper);
+    if (shortcutMappingMethod != null) return shortcutMappingMethod.isEmpty() ? "" : "." + shortcutMappingMethod + "()";
     PsiType inType = variable.getType();
-    if (mapper instanceof PsiExpression && ExpressionUtils.isReferenceTo((PsiExpression)mapper, variable)) {
-      if (!(outType instanceof PsiPrimitiveType)) {
-        return inType instanceof PsiPrimitiveType ? ".boxed()" : "";
-      }
-      if(outType.equals(inType)) {
-        return "";
-      }
-      if (PsiType.LONG.equals(outType) && PsiType.INT.equals(inType)) {
-        return ".asLongStream()";
-      }
-      if (PsiType.DOUBLE.equals(outType) && (PsiType.LONG.equals(inType) || PsiType.INT.equals(inType))) {
-        return ".asDoubleStream()";
-      }
-    }
     String operationName = getMapOperationName(inType, outType);
     if(outType != null && mapper instanceof PsiArrayInitializerExpression) {
       mapper = RefactoringUtil.convertInitializerToNormalExpression((PsiExpression)mapper, outType);
@@ -109,6 +99,40 @@ public class StreamApiUtil {
     String typeArgument = mapper instanceof PsiExpression ? OptionalUtil.getMapTypeArgument((PsiExpression)mapper, outType) : "";
     return "." + typeArgument + operationName +
            "(" + variable.getName() + "->" + mapper.getText() + ")";
+  }
+
+  /**
+   * Returns the shortcut mapping method name
+   *
+   * @param variable mapper input variable
+   * @param outType  output type of the mapper
+   * @param mapper   mapper code
+   * @return shortcut mapping name ("boxed", "asLongStream", "asDoubleStream") if applicable, empty string if it's
+   * ditto mapping (no mapping is necessary at all) and null if no shortcut is applicable for given mapper
+   */
+  @Nullable
+  public static String getShortcutMappingMethod(PsiVariable variable, @Nullable PsiType outType, PsiElement mapper) {
+    if (!(mapper instanceof PsiExpression)) return null;
+    PsiExpression expression = PsiUtil.skipParenthesizedExprDown(((PsiExpression)mapper));
+    if (expression instanceof PsiTypeCastExpression && Objects.equals(expression.getType(), outType)) {
+      expression = ((PsiTypeCastExpression)expression).getOperand();
+    }
+    if (ExpressionUtils.isReferenceTo(expression, variable)) {
+      PsiType inType = variable.getType();
+      if (!(outType instanceof PsiPrimitiveType)) {
+        return inType instanceof PsiPrimitiveType ? "boxed" : "";
+      }
+      if (outType.equals(inType)) {
+        return "";
+      }
+      if (PsiType.LONG.equals(outType) && PsiType.INT.equals(inType)) {
+        return "asLongStream";
+      }
+      if (PsiType.DOUBLE.equals(outType) && (PsiType.LONG.equals(inType) || PsiType.INT.equals(inType))) {
+        return "asDoubleStream";
+      }
+    }
+    return null;
   }
 
   @NotNull

@@ -62,6 +62,13 @@ public class StreamChainCallExtractor implements ChainCallExtractor {
   }
 
   @Override
+  public String getMethodName(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
+    String shortcutMappingMethod = StreamApiUtil.getShortcutMappingMethod(variable, expressionType, expression);
+    if(shortcutMappingMethod != null) return shortcutMappingMethod;
+    return StreamApiUtil.getMapOperationName(variable.getType(), expressionType);
+  }
+
+  @Override
   public String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
     return StreamApiUtil.generateMapOperation(variable, expressionType, expression);
   }
