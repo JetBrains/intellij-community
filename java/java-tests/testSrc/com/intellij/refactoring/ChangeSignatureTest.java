@@ -328,6 +328,15 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     );
   }
 
+  public void testLessSpecificException() {
+    doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
+           method -> new ThrownExceptionInfo[]{
+             new JavaThrownExceptionInfo(0, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+           },
+           false
+    );
+  }
+
   public void testReorderWithVarargs() {  // IDEADEV-26977
     doTest(null, new ParameterInfoImpl[]{
       new ParameterInfoImpl(1),
