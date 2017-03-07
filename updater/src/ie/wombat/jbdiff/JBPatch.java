@@ -86,6 +86,7 @@ public class JBPatch {
       oldFileByteOut.close();
     }
     byte[] oldBuf = oldFileByteOut.toByteArray();
+    oldFileByteOut = null; // workaround for OOME, necessary since we are loading whole file in memory
     int oldsize = oldBuf.length;
 
     byte[] newBuf = new byte[newsize + 1];
