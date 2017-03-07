@@ -19,6 +19,7 @@ package com.intellij.codeInspection.htmlInspections;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlTag;
@@ -52,7 +53,7 @@ public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final TextRange range = XmlTagUtil.getEndTagRange(tag);
 
-    if (range != null && tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag.getName())) {
+    if (range != null && tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag.getName()) && tag.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
       holder.registerProblem(tag, XmlErrorMessages.message("extra.closing.tag.for.empty.element"),
                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, range.shiftRight(-tag.getTextRange().getStartOffset()), new RemoveExtraClosingTagIntentionAction());
     }
