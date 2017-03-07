@@ -78,8 +78,7 @@ public interface LanguageLightRefAdapter  {
    */
   @NotNull
   PsiElement[] findDirectInheritorCandidatesInFile(@NotNull Object[] internalNames,
-                                                   @NotNull PsiFileWithStubSupport file,
-                                                   @NotNull PsiNamedElement superClass);
+                                                   @NotNull PsiFileWithStubSupport file);
 
   /**
    * @param indices - ordinal-numbers (corresponding to compiler tree index visitor) of required functional expressions.

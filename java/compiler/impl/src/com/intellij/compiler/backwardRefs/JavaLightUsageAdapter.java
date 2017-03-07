@@ -124,9 +124,8 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
   @NotNull
   @Override
   public PsiClass[] findDirectInheritorCandidatesInFile(@NotNull Object[] internalNames,
-                                                        @NotNull PsiFileWithStubSupport file,
-                                                        @NotNull PsiNamedElement superClass) {
-    return JavaCompilerElementRetriever.retrieveClassesByInternalNames(internalNames, superClass, file);
+                                                        @NotNull PsiFileWithStubSupport file) {
+    return JavaCompilerElementRetriever.retrieveClassesByInternalIds(internalNames, file);
   }
 
   @NotNull
