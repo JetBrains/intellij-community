@@ -1,4 +1,4 @@
-// "Extract variable 'l' to separate mapping method" "true"
+// "Extract variable 'l' to 'asLongStream' operation" "true"
 import java.util.*;
 import java.util.stream.*;
 

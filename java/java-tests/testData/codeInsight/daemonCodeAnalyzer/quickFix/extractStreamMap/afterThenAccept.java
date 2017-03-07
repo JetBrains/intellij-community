@@ -1,4 +1,4 @@
-// "Extract variable 'lc' to separate mapping method" "true"
+// "Extract variable 'lc' to 'thenApply' operation" "true"
 import java.util.concurrent.CompletableFuture;
 
 public class Test {

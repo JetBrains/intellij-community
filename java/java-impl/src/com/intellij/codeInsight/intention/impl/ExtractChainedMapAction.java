@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.chainCall.ChainCallExtractor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,13 +38,6 @@ public class ExtractChainedMapAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiLocalVariable variable =
       PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class, false, PsiStatement.class, PsiLambdaExpression.class);
-    if (!isApplicable(variable)) return false;
-    setText(CodeInsightBundle.message("intention.extract.map.step.text", variable.getName()));
-    return true;
-  }
-
-  @Contract("null -> false")
-  private static boolean isApplicable(PsiLocalVariable variable) {
     if (variable == null || variable.getName() == null) return false;
     PsiExpression initializer = variable.getInitializer();
     if (initializer == null) return false;
@@ -54,10 +46,16 @@ public class ExtractChainedMapAction extends PsiElementBaseIntentionAction {
     PsiCodeBlock block = tryCast(declaration.getParent(), PsiCodeBlock.class);
     if (block == null) return false;
     PsiLambdaExpression lambda = tryCast(block.getParent(), PsiLambdaExpression.class);
-    if (ChainCallExtractor.findExtractor(lambda, initializer, variable.getType()) == null) return false;
+    ChainCallExtractor extractor = ChainCallExtractor.findExtractor(lambda, initializer, variable.getType());
+    if (extractor == null) return false;
     PsiParameter parameter = lambda.getParameterList().getParameters()[0];
-    return ReferencesSearch.search(parameter).forEach(
-      (Processor<PsiReference>)ref -> PsiTreeUtil.isAncestor(initializer, ref.getElement(), false));
+    if (!ReferencesSearch.search(parameter).forEach(
+      (Processor<PsiReference>)ref -> PsiTreeUtil.isAncestor(initializer, ref.getElement(), false))) {
+      return false;
+    }
+    setText(CodeInsightBundle.message("intention.extract.map.step.text", variable.getName(),
+                                      extractor.getMethodName(parameter, initializer, variable.getType())));
+    return true;
   }
 
   @Override

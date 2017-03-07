@@ -1,4 +1,4 @@
-// "Extract variable 'y' to separate mapping method" "true"
+// "Extract variable 'y' to 'map' operation" "true"
 import java.util.*;
 import java.util.stream.*;
 

@@ -1,4 +1,4 @@
-// "Extract variable 'fn' to separate mapping method" "true"
+// "Extract variable 'fn' to 'map' operation" "true"
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;

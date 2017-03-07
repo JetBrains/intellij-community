@@ -1,4 +1,4 @@
-// "Extract variable 'lowerCase' to separate mapping method" "true"
+// "Extract variable 'lowerCase' to 'map' operation" "true"
 import java.util.*;
 import java.util.stream.*;
 

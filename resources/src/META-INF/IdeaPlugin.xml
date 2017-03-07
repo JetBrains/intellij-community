@@ -1902,6 +1902,7 @@
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.StreamChainCallExtractor"/>
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CollectionChainCallExtractor"/>
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CompletionStageChainCallExtractor"/>
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.GuavaFluentIterableChainCallExtractor"/>
 
     <diff.lang.DiffIgnoredRangeProvider implementation="com.intellij.diff.lang.JavaDiffIgnoredRangeProvider"/>
   </extensions>
