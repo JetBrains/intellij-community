@@ -71,6 +71,11 @@ public abstract class BaseUpdateAction extends PatchAction {
     out.writeBoolean(myIsMove);
   }
 
+  @Override
+  public boolean calculate(File olderDir, File newerDir) throws IOException {
+    return doCalculate(getSource(olderDir), getFile(newerDir));
+  }
+
   protected File getSource(File toDir) {
     return new File(toDir, mySource);
   }

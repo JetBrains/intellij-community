@@ -195,6 +195,37 @@ public class PatchTest extends PatchTestCase {
   }
 
   @Test
+  public void testZipFileMove() throws Exception {
+    FileUtil.delete(myNewerDir);
+    FileUtil.copyDir(myOlderDir, myNewerDir);
+    FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+
+    Patch patch = createPatch();
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new CreateAction(patch, "lib/redist/"),
+      new UpdateAction(patch, "lib/redist/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR));
+  }
+
+  @Test
+  public void testZipFileMoveWithUpdate() throws Exception {
+    FileUtil.delete(myNewerDir);
+    FileUtil.copyDir(myOlderDir, myNewerDir);
+    FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
+    FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+
+    Patch patch = createPatch();
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new CreateAction(patch, "lib/redist/"),
+      new UpdateZipAction(patch, "lib/redist/annotations.jar",
+                          Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
+                          Collections.singletonList("org/jetbrains/annotations/Nullable.class"),
+                          Collections.singletonList("org/jetbrains/annotations/TestOnly.class"),
+                          CHECKSUMS.ANNOTATIONS_JAR));
+  }
+
+  @Test
   public void testSaveLoad() throws Exception {
     Patch original = createPatch();
     File f = getTempFile("file");

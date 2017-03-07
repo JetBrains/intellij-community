@@ -470,6 +470,27 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
     assertAppliedAndRevertedCorrectly();
   }
 
+  @Test
+  public void testZipFileMove() throws Exception {
+    myPatchSpec.setStrict(true);
+    FileUtil.delete(myNewerDir);
+    FileUtil.copyDir(myOlderDir, myNewerDir);
+    FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+
+    assertAppliedAndRevertedCorrectly();
+  }
+
+  @Test
+  public void testZipFileMoveWithUpdate() throws Exception {
+    myPatchSpec.setStrict(true);
+    FileUtil.delete(myNewerDir);
+    FileUtil.copyDir(myOlderDir, myNewerDir);
+    FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
+    FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
+
+    assertAppliedAndRevertedCorrectly();
+  }
+
   private void assertAppliedAndRevertedCorrectly() throws Exception {
     assertAppliedAndRevertedCorrectly(createPatch(), PatchFileCreator.prepareAndValidate(myFile, myOlderDir, TEST_UI));
   }

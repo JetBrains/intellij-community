@@ -86,8 +86,8 @@ public class Patch {
 
     for (Map.Entry<String, DiffCalculator.Update> each : diff.filesToUpdate.entrySet()) {
       DiffCalculator.Update update = each.getValue();
-      if (!spec.isBinary() && Utils.isZipFile(each.getKey())) {
-        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum, update.move));
+      if (!spec.isBinary() && !update.move && Utils.isZipFile(each.getKey())) {
+        tempActions.add(new UpdateZipAction(this, each.getKey(), update.source, update.checksum));
       }
       else {
         tempActions.add(new UpdateAction(this, each.getKey(), update.source, update.checksum, update.move));
