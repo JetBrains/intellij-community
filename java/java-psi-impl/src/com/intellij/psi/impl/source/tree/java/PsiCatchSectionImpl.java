@@ -124,15 +124,11 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
         return thrownType;
       });
       // ... and T is assignable to Ej ...
-      boolean passed = true;
-      for (PsiType type : uncaughtTypes) {
-        if (!declaredType.isAssignableFrom(type) && !(type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type))) {
-          passed = false;
-          break;
-        }
-      }
       // ... the throw statement throws precisely the set of exception types T.
-      if (passed) return uncaughtTypes;
+      if (uncaughtTypes.stream().anyMatch(type -> declaredType.isAssignableFrom(type) ||
+                                                  type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type))) {
+        return uncaughtTypes;
+      }
     }
 
     return Collections.singletonList(declaredType);
