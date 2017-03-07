@@ -757,7 +757,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public boolean isCommitted(@NotNull Document document) {
     if (document instanceof DocumentWindow) document = ((DocumentWindow)document).getDelegate();
     if (getSynchronizer().isInSynchronization(document)) return true;
-    return !((DocumentEx)document).isInEventsHandling() && !isInUncommittedSet(document);
+    return (!(document instanceof DocumentEx) || !((DocumentEx)document).isInEventsHandling())
+           && !isInUncommittedSet(document);
   }
 
   @Override
