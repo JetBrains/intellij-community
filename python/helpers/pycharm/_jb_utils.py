@@ -37,6 +37,15 @@ def jb_escape_output(output):
     return "##[jetbrains{0}".format(output)
 
 
+class OptionDescription(object):
+    """
+    Wrapper for argparse/optparse option (see VersionAgnosticUtils#get_options)
+    """
+    def __init__(self, name, description, action=None):
+        self.name = name
+        self.description = description
+        self.action = action
+
 class VersionAgnosticUtils(object):
     """
     "six" emulator: this class fabrics appropriate tool to use regardless python version.
@@ -60,6 +69,15 @@ class VersionAgnosticUtils(object):
 
         raise NotImplementedError()
 
+    def get_options(self, *args):
+        """
+        Hides agrparse/optparse difference
+        
+        :param args:  OptionDescription
+        :return: options namespace
+        """
+        raise NotImplementedError()
+
 
 class _Py2Utils(VersionAgnosticUtils):
     """
@@ -75,6 +93,17 @@ class _Py2Utils(VersionAgnosticUtils):
             return unicode(str(obj).decode("utf-8")) # or it may have __str__
 
 
+    def get_options(self, *args):
+        import optparse
+
+        parser = optparse.OptionParser()
+        for option in args:
+            assert isinstance(option, OptionDescription)
+            parser.add_option(option.name, help=option.description, action=option.action)
+        (options, _) = parser.parse_args()
+        return options
+
+
 class _Py3KUtils(VersionAgnosticUtils):
     """
     Util for Py3
@@ -82,3 +111,12 @@ class _Py3KUtils(VersionAgnosticUtils):
 
     def to_unicode(self, obj):
         return str(obj)
+
+    def get_options(self, *args):
+        import argparse
+
+        parser = argparse.ArgumentParser()
+        for option in args:
+            assert isinstance(option, OptionDescription)
+            parser.add_argument(option.name, help=option.description, action=option.action)
+        return parser.parse_args()
