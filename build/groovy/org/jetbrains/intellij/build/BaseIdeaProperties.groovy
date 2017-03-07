@@ -161,17 +161,17 @@ abstract class BaseIdeaProperties extends ProductProperties {
       fileset(file: "$context.paths.communityHome/lib/src/trove4j_src.jar")
     }
 
-// Android Studio: skip these
-//    context.ant.copy(todir: "$targetDirectory/lib/ant") {
-//      fileset(dir: "$context.paths.communityHome/lib/ant") {
-//        exclude(name: "**/src/**")
-//      }
-//    }
-//    context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
-//      fileset(dir: "$context.paths.communityHome/build/kotlinc/plugin/Kotlin")
-//    }
+    context.ant.copy(todir: "$targetDirectory/lib/ant") {
+      fileset(dir: "$context.paths.communityHome/lib/ant") {
+        exclude(name: "**/src/**")
+      }
+    }
 
     /* Disabled in Android Studio:
+    context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
+      fileset(dir: "$context.paths.communityHome/build/kotlinc/plugin/Kotlin")
+    }
+
     context.ant.move(file: "$targetDirectory/lib/annotations-java8.jar", tofile: "$targetDirectory/redist/annotations-java8.jar")
     */
   }
