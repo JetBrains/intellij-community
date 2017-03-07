@@ -16,8 +16,7 @@
 package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.intellij.openapi.util.Pair;
-import com.sun.jdi.Value;
+import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,6 +27,29 @@ import java.util.Map;
  */
 public interface ValuesOrderResolver {
   @NotNull
-  Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
-                                                                                             @NotNull Map<Integer, TraceElement> nextCalls);
+  Result resolve(@NotNull TraceInfo info);
+
+  interface Result {
+    @NotNull
+    Map<TraceElement, List<TraceElement>> getDirectOrder();
+
+    @NotNull
+    Map<TraceElement, List<TraceElement>> getReverseOrder();
+
+    static Result of(@NotNull Map<TraceElement, List<TraceElement>> direct, @NotNull Map<TraceElement, List<TraceElement>> reverse) {
+      return new Result() {
+        @NotNull
+        @Override
+        public Map<TraceElement, List<TraceElement>> getDirectOrder() {
+          return direct;
+        }
+
+        @NotNull
+        @Override
+        public Map<TraceElement, List<TraceElement>> getReverseOrder() {
+          return reverse;
+        }
+      };
+    }
+  }
 }

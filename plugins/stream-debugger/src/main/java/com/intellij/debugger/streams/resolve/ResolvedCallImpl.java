@@ -33,11 +33,11 @@ public class ResolvedCallImpl implements ResolvedCall {
   private final Map<TraceElement, List<TraceElement>> myNext;
 
   public ResolvedCallImpl(@NotNull MethodCall call,
-                          @NotNull Map<TraceElement, List<TraceElement>> input,
-                          @NotNull Map<TraceElement, List<TraceElement>> output) {
+                          @NotNull Map<TraceElement, List<TraceElement>> toPrev,
+                          @NotNull Map<TraceElement, List<TraceElement>> toNext) {
     myMethodCall = call;
-    myPrevious = input;
-    myNext = output;
+    myPrevious = toPrev;
+    myNext = toNext;
   }
 
   @NotNull

@@ -16,7 +16,7 @@
 package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.intellij.openapi.util.Pair;
+import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -30,10 +30,10 @@ import java.util.Map;
 public class FilterResolver implements ValuesOrderResolver {
   @NotNull
   @Override
-  public Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
-                                                                                                    @NotNull Map<Integer, TraceElement> nextCalls) {
-
-    assert previousCalls.size() >= nextCalls.size();
+  public Result resolve(@NotNull TraceInfo info) {
+    final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
+    final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
+    assert before.size() >= after.size();
     final Map<TraceElement, List<TraceElement>> forward = new LinkedHashMap<>();
     final Map<TraceElement, List<TraceElement>> backward = new LinkedHashMap<>();
 
@@ -53,8 +53,8 @@ public class FilterResolver implements ValuesOrderResolver {
     //}
 
     // this is O(n^2) solution
-    for (TraceElement leftValue : previousCalls.values()) {
-      if (nextCalls.containsValue(leftValue)) {
+    for (TraceElement leftValue : before.values()) {
+      if (after.containsValue(leftValue)) {
         forward.put(leftValue, Collections.singletonList(leftValue));
         backward.put(leftValue, Collections.singletonList(leftValue));
       }
@@ -63,6 +63,6 @@ public class FilterResolver implements ValuesOrderResolver {
       }
     }
 
-    return Pair.create(forward, backward);
+    return Result.of(forward, backward);
   }
 }

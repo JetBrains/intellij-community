@@ -16,7 +16,7 @@
 package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.intellij.openapi.util.Pair;
+import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,25 +30,26 @@ import java.util.Map;
 public class FlatMapResolver implements ValuesOrderResolver {
   @NotNull
   @Override
-  public Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
-                                                                                                    @NotNull Map<Integer, TraceElement> nextCalls) {
+  public Result resolve(@NotNull TraceInfo info) {
+    final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
+    final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
     final Map<TraceElement, List<TraceElement>> forward = new LinkedHashMap<>();
     final Map<TraceElement, List<TraceElement>> backward = new LinkedHashMap<>();
 
-    nextCalls.values().stream().distinct().forEach(x -> backward.put(x, new ArrayList<>()));
+    after.values().stream().distinct().forEach(x -> backward.put(x, new ArrayList<>()));
 
-    final Integer[] beforeTimes = new Integer[previousCalls.size()];
-    final Integer[] afterTimes = new Integer[nextCalls.size()];
-    previousCalls.keySet().toArray(beforeTimes);
-    nextCalls.keySet().toArray(afterTimes);
+    final Integer[] beforeTimes = new Integer[before.size()];
+    final Integer[] afterTimes = new Integer[after.size()];
+    before.keySet().toArray(beforeTimes);
+    after.keySet().toArray(afterTimes);
 
     int rightIndex = 0;
     for (int i = 0; i < beforeTimes.length; i++) {
-      final TraceElement leftValue = previousCalls.get(beforeTimes[i]);
+      final TraceElement leftValue = before.get(beforeTimes[i]);
       final List<TraceElement> right = new ArrayList<>();
       final int nextLeftTime = i + 1 < beforeTimes.length ? beforeTimes[i + 1] : Integer.MAX_VALUE;
       while (rightIndex < afterTimes.length && afterTimes[rightIndex] < nextLeftTime) {
-        final TraceElement rightValue = nextCalls.get(afterTimes[rightIndex]);
+        final TraceElement rightValue = after.get(afterTimes[rightIndex]);
 
         right.add(rightValue);
         backward.get(rightValue).add(leftValue);
@@ -58,6 +59,6 @@ public class FlatMapResolver implements ValuesOrderResolver {
       forward.put(leftValue, right);
     }
 
-    return Pair.create(forward, backward);
+    return Result.of(forward, backward);
   }
 }

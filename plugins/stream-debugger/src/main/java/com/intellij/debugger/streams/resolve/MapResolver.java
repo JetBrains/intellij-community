@@ -16,8 +16,7 @@
 package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.intellij.openapi.util.Pair;
-import com.sun.jdi.Value;
+import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -28,11 +27,12 @@ import java.util.*;
 public class MapResolver implements ValuesOrderResolver {
   @NotNull
   @Override
-  public Pair<Map<TraceElement, List<TraceElement>>, Map<TraceElement, List<TraceElement>>> resolve(@NotNull Map<Integer, TraceElement> previousCalls,
-                                                                               @NotNull Map<Integer, TraceElement> nextCalls) {
-    assert previousCalls.size() == nextCalls.size();
-    final Iterator<TraceElement> leftIterator = previousCalls.values().iterator();
-    final Iterator<TraceElement> rightIterator = nextCalls.values().iterator();
+  public Result resolve(@NotNull TraceInfo info) {
+    final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
+    final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
+    assert before.size() == after.size();
+    final Iterator<TraceElement> leftIterator = before.values().iterator();
+    final Iterator<TraceElement> rightIterator = after.values().iterator();
 
     final Map<TraceElement, List<TraceElement>> forward = new LinkedHashMap<>();
     final Map<TraceElement, List<TraceElement>> backward = new LinkedHashMap<>();
@@ -44,6 +44,6 @@ public class MapResolver implements ValuesOrderResolver {
       backward.put(right, Collections.singletonList(left));
     }
 
-    return Pair.create(forward, backward);
+    return Result.of(forward, backward);
   }
 }
