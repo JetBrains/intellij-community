@@ -1,7 +1,7 @@
 <idea-plugin version="2">
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.42</version>
+  <version>0.0.45</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -9,7 +9,7 @@
     ]]></description>
   
   <change-notes><![CDATA[
-      fixed memory leak
+      - completion reranking initial
     ]]>
   </change-notes>
   
@@ -53,8 +53,12 @@
     <completion.contributor language="any"
                             implementationClass="com.intellij.sorting.MLCompletionContributor"
                             order="first, before liveTemplates"/>
+    
+    <search.topHitProvider implementation="com.intellij.sorting.MlToggleSortingTopHitProvider"/>
 
     <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+
+    <applicationConfigurable instance="com.intellij.settings.PluginSettingsConfigurable"/>
 
   </extensions>
 

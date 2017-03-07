@@ -15,12 +15,14 @@
  */
 package com.intellij.sorting
 
-import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.ide.ui.OptionsTopHitProvider
+import com.intellij.ide.ui.search.BooleanOptionDescription
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.util.ProcessingContext
 import com.jetbrains.completion.ranker.features.CompletionState
@@ -146,7 +148,9 @@ open class MLCompletionContributor : CompletionContributor() {
   }
   
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val oldSorter = getSorter(result)
+    if (!isMlSortingEnabled()) return
+    
+    val oldSorter = getSorter(parameters, result)
     val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl
 
     val mlClassifierFactory = newClassifierFactory(lookup)
@@ -163,9 +167,25 @@ open class MLCompletionContributor : CompletionContributor() {
   
 }
 
+fun isMlSortingEnabled(): Boolean = PropertiesComponent.getInstance().getBoolean("ml.sorting.enabled", true)
+fun setMlSortingEnabled(value: Boolean) = PropertiesComponent.getInstance().setValue("ml.sorting.enabled", value, true)
 
-fun getSorter(result: CompletionResultSet): CompletionSorterImpl {
-  val field = result::class.java.getDeclaredField("mySorter")
-  field.isAccessible = true
-  return field.get(result) as CompletionSorterImpl
+
+class MlToggleSortingTopHitProvider: OptionsTopHitProvider() {
+  
+  override fun getId() = "completion"
+
+  override fun getOptions(project: Project?): Collection<BooleanOptionDescription> { 
+    val option = object : BooleanOptionDescription("ML completion sorting", "vcs.Git") {
+      override fun setOptionState(value: Boolean) = setMlSortingEnabled(value)
+      override fun isOptionEnabled() = isMlSortingEnabled()
+    }
+    
+    return listOf(option)
+  }
+}
+
+
+fun getSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionSorterImpl {
+  return CompletionSorter.defaultSorter(parameters, result.prefixMatcher) as CompletionSorterImpl
 }
