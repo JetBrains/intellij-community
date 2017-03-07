@@ -48,15 +48,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
@@ -341,19 +338,16 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
 
   private void commitToOriginal(final DocumentEvent e) {
-    VirtualFile origVirtualFile = PsiUtilCore.getVirtualFile(myNewFile.getContext());
     myCommittingToOriginal = true;
     try {
-      if (origVirtualFile == null || !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(origVirtualFile).hasReadonlyFiles()) {
-        PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> {
-          if (myAltFullRange != null) {
-            altCommitToOriginal(e);
-            return;
-          }
-          commitToOriginalInner();
-        });
-        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
-      }
+      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> {
+        if (myAltFullRange != null) {
+          altCommitToOriginal(e);
+          return;
+        }
+        commitToOriginalInner();
+      });
+      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
     }
     finally {
       myCommittingToOriginal = false;
