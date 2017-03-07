@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,14 +79,13 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   val options = Options()
 
   private val schemeWriter = { scheme: CopyrightProfile ->
-    val element = Element("copyright")
-    scheme.writeExternal(element)
+    val element = scheme.writeScheme()
     if (project.isDirectoryBased) wrapScheme(element) else element
   }
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("copyright")
 
-  val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>() {
+  val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>("myName") {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
                               attributeProvider: Function<String, String?>,
@@ -264,7 +263,8 @@ private class CopyrightLazySchemeWrapper(name: String,
       element = element.getChild(subStateTagName)
     }
 
-    scheme.readExternal(element)
+    element.deserializeInto(scheme)
+    scheme.resetModificationCount()
     dataHolder.updateDigest(writer(scheme))
     scheme
   }
