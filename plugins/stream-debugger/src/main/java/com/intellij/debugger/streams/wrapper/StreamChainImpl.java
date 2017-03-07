@@ -90,7 +90,7 @@ public class StreamChainImpl implements StreamChain {
       return myProducer;
     }
 
-    if (index < myIntermediateCalls.size()) {
+    if (index <= myIntermediateCalls.size()) {
       return myIntermediateCalls.get(index - 1);
     }
 
