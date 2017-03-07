@@ -26,8 +26,8 @@ public class UpdateZipAction extends BaseUpdateAction {
   private Set<String> myFilesToUpdate;
   private Set<String> myFilesToDelete;
 
-  public UpdateZipAction(Patch patch, String path, String source, long checksum, boolean move) {
-    super(patch, path, source, checksum, move);
+  public UpdateZipAction(Patch patch, String path, String source, long checksum) {
+    super(patch, path, source, checksum, false);
   }
 
   // test support
