@@ -39,9 +39,10 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
  * @author yole
@@ -62,7 +63,7 @@ public class SelectBranchPopup {
 
   public static void show(Project project, VirtualFile file, BranchSelectedCallback callback, final String title, final Component component) {
     final SvnFileUrlMapping urlMapping = SvnVcs.getInstance(project).getSvnFileUrlMapping();
-    final SVNURL svnurl = urlMapping.getUrlForFile(new File(file.getPath()));
+    final SVNURL svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
     if (svnurl == null) {
       return;
     }

@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnMapping {
   private final List<VirtualFile> myLonelyRoots;
   private final TreeMap<String, RootUrlInfo> myFile2UrlMap;
@@ -58,7 +60,7 @@ public class SvnMapping {
   public void addAll(final Collection<RootUrlInfo> roots) {
     for (RootUrlInfo rootInfo : roots) {
       final VirtualFile file = rootInfo.getVirtualFile();
-      final File ioFile = new File(file.getPath());
+      final File ioFile = virtualToIoFile(file);
       
       myRootsDifferFromSettings |= ! rootInfo.getRoot().getPath().equals(file.getPath());
 
@@ -69,7 +71,7 @@ public class SvnMapping {
 
   public void add(final RootUrlInfo rootInfo) {
     final VirtualFile file = rootInfo.getVirtualFile();
-    final File ioFile = new File(file.getPath());
+    final File ioFile = virtualToIoFile(file);
 
     myRootsDifferFromSettings |= ! rootInfo.getRoot().getPath().equals(file.getPath());
 

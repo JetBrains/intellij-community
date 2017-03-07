@@ -35,6 +35,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
 * @author Konstantin Kolosovsky.
 */
@@ -103,7 +105,7 @@ public class SvnRootsDetector {
 
       for (NestedCopyInfo info : myNestedCopiesHolder.getAndClear()) {
         if (NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType())) {
-          RootUrlInfo topRoot = findTopRoot(VfsUtilCore.virtualToIoFile(info.getFile()));
+          RootUrlInfo topRoot = findTopRoot(virtualToIoFile(info.getFile()));
 
           if (topRoot != null) {
             // TODO: Seems that type is not set in ForNestedRootChecker as we could not determine it for sure. Probably, for the case
@@ -152,7 +154,7 @@ public class SvnRootsDetector {
 
     // TODO: No checked exceptions are thrown - remove catch/LOG.error/rethrow to fix real cause if any
     try {
-      final File infoFile = VfsUtilCore.virtualToIoFile(info.getFile());
+      final File infoFile = virtualToIoFile(info.getFile());
       final Status svnStatus = SvnUtil.getStatus(myVcs, infoFile);
 
       if (svnStatus != null && svnStatus.getURL() != null) {
@@ -202,7 +204,7 @@ public class SvnRootsDetector {
       }
       // TODO: Seems that RepositoryRoots class should be removed. And necessary repository root should be determined explicitly
       // TODO: using info command.
-      final SVNURL newUrl = SvnUtil.getRepositoryRoot(myVcs, new File(file.getPath()));
+      final SVNURL newUrl = SvnUtil.getRepositoryRoot(myVcs, virtualToIoFile(file));
       if (newUrl != null) {
         myRoots.add(newUrl);
         return newUrl;

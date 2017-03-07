@@ -33,6 +33,8 @@ import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnBranchConfigurationNew {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew");
   private String myTrunkUrl;
@@ -209,7 +211,7 @@ public class SvnBranchConfigurationNew {
 
     public boolean accept(final String url) throws SVNException {
       if (myRootUrl != null) {
-        final File baseDir = new File(myRoot.getPath());
+        final File baseDir = virtualToIoFile(myRoot);
         final String baseUrl = myRootUrl.getPath();
 
         final SVNURL branchUrl = SVNURL.parseURIEncoded(url);

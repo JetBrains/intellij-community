@@ -42,6 +42,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
  * @author lesya
  * @author yole
@@ -91,7 +93,7 @@ public class SvnMergeProvider implements MergeProvider {
         ByteArrayOutputStream bos = getBaseRevisionContents(vcs, file);
         data.ORIGINAL = bos.toByteArray();
         data.LAST = bos.toByteArray();
-        data.CURRENT = readFile(new File(file.getPath()));
+        data.CURRENT = readFile(virtualToIoFile(file));
       }
       else {
         data.ORIGINAL = readFile(oldFile);
@@ -116,7 +118,7 @@ public class SvnMergeProvider implements MergeProvider {
   private ByteArrayOutputStream getBaseRevisionContents(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     try {
-      byte[] contents = SvnUtil.getFileContents(vcs, SvnTarget.fromFile(new File(file.getPath())), SVNRevision.BASE, SVNRevision.UNDEFINED);
+      byte[] contents = SvnUtil.getFileContents(vcs, SvnTarget.fromFile(virtualToIoFile(file)), SVNRevision.BASE, SVNRevision.UNDEFINED);
       bos.write(contents);
     }
     catch (VcsException | IOException e) {
@@ -137,7 +139,7 @@ public class SvnMergeProvider implements MergeProvider {
   public void conflictResolvedForFile(@NotNull VirtualFile file) {
     // TODO: Add possibility to resolve content conflicts separately from property conflicts.
     SvnVcs vcs = SvnVcs.getInstance(myProject);
-    File path = new File(file.getPath());
+    File path = virtualToIoFile(file);
     try {
       // TODO: Probably false should be passed to "resolveTree", but previous logic used true implicitly
       vcs.getFactory(path).createConflictClient().resolve(path, Depth.EMPTY, false, true, true);
@@ -156,7 +158,7 @@ public class SvnMergeProvider implements MergeProvider {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
 
     try {
-      File ioFile = new File(file.getPath());
+      File ioFile = virtualToIoFile(file);
       PropertyClient client = vcs.getFactory(ioFile).createPropertyClient();
 
       PropertyValue value = client.getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_MIME_TYPE, false, SVNRevision.WORKING);

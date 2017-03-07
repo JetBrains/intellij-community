@@ -43,6 +43,8 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private JPanel contentPane;
   private JCheckBox myDryRunCheckbox;
@@ -111,7 +113,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       public void actionPerformed(final AnActionEvent e) {
         final VirtualFile vFile = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject, null);
         if (vFile != null) {
-          final File file = new File(vFile.getPath());
+          final File file = virtualToIoFile(vFile);
           if (hasDuplicate(file)) {
             return; // silently do not add duplicate
           }

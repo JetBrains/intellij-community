@@ -55,6 +55,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
   private static final Object MERGED_KEY = new Object();
   private final SvnVcs myVcs;
@@ -93,7 +95,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
     Runnable command = () -> {
       final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-      final File ioFile = new File(file.getPath()).getAbsoluteFile();
+      final File ioFile = virtualToIoFile(file).getAbsoluteFile();
       Info info = null;
       try {
 

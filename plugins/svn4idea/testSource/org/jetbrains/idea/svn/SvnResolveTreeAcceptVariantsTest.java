@@ -44,6 +44,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
  * @author Irina.Chernushina
  * @since 3.05.2012
@@ -266,7 +268,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
           Assert.assertTrue("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath(),
                         exists);
         }
-        final File theirsFile = new File(file.getPath());
+        final File theirsFile = virtualToIoFile(file);
         Info theirsInfo = myVcs.getInfo(theirsFile);
         Info thisInfo = myVcs.getInfo(workingFile);
         if (theirsInfo != null) {

@@ -526,7 +526,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     Map<String, Pair<PropertyValue, Trinity<Long, Long, Long>>> cachedMap = myPropertyCache.get(keyForVf(file));
     final Pair<PropertyValue, Trinity<Long, Long, Long>> cachedValue = cachedMap == null ? null : cachedMap.get(propName);
 
-    final File ioFile = new File(file.getPath());
+    final File ioFile = virtualToIoFile(file);
     final Trinity<Long, Long, Long> tsTrinity = getTimestampForPropertiesChange(ioFile, file.isDirectory());
 
     if (cachedValue != null) {
@@ -584,7 +584,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @Nullable
   public Info getInfo(@NotNull final VirtualFile file) {
-    return getInfo(new File(file.getPath()));
+    return getInfo(virtualToIoFile(file));
   }
 
   @Nullable
@@ -787,7 +787,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       final VirtualFile vf = convertor.convert(s);
       if (vf == null) continue;
 
-      final File ioFile = new File(vf.getPath());
+      final File ioFile = virtualToIoFile(vf);
       SVNURL url = mapping.getUrlForFile(ioFile);
       if (url == null) {
         url = SvnUtil.getUrl(this, ioFile);

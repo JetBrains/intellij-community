@@ -53,6 +53,8 @@ import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
  * Created by IntelliJ IDEA.
  * User: alex
@@ -400,7 +402,7 @@ public class PropertiesComponent extends JPanel {
       }
       VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
       if (vf != null) {
-        File f = new File(vf.getPath());
+        File f = virtualToIoFile(vf);
         if (!f.equals(myFile)) {
           setFile(myVcs, f);
           Project p = e.getProject();

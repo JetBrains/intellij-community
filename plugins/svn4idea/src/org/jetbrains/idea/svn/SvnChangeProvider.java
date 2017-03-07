@@ -51,6 +51,8 @@ import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
  * @author max
  * @author yole
@@ -126,7 +128,7 @@ public class SvnChangeProvider implements ChangeProvider {
     for (NestedCopyInfo info : pointInfos) {
       if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) && ! NestedCopyType.switched.equals(info.getType())) {
         final VirtualFile root = info.getFile();
-        lfs.refreshIoFiles(Collections.singletonList(SvnUtil.getWcDb(new File(root.getPath()))), true, false, null);
+        lfs.refreshIoFiles(Collections.singletonList(SvnUtil.getWcDb(virtualToIoFile(root))), true, false, null);
       }
     }
   }

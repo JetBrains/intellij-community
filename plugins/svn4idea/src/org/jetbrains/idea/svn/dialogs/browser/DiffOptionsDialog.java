@@ -45,6 +45,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
 
   private final SVNURL myURL;
@@ -170,7 +172,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     if (file == null) {
       return null;
     }
-    return new File(file.getPath());
+    return virtualToIoFile(file);
   }
 
   public void actionPerformed(ActionEvent e) {

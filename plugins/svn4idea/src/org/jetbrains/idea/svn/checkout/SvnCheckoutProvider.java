@@ -66,6 +66,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.any;
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
@@ -175,7 +176,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
     final VirtualFile[] files = vcs.getSvnFileUrlMapping().getNotFilteredRoots();
     for (VirtualFile file : files) {
-      if (FileUtil.isAncestor(new File(file.getPath()), directory, false)) {
+      if (FileUtil.isAncestor(virtualToIoFile(file), directory, false)) {
         // todo: should be done like auto detection
         plVcsManager.fireDirectoryMappingsChanged();
         return;

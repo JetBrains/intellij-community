@@ -69,6 +69,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.junit.Assert.*;
 
 /**
@@ -285,7 +286,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     checkin();
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    final File rootFile = new File(subTree.myRootDir.getPath());
+    final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
     assertTrue(!rootFile.exists());
@@ -419,7 +420,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     checkin();
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    final File rootFile = new File(subTree.myRootDir.getPath());
+    final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
     assertTrue(!rootFile.exists());

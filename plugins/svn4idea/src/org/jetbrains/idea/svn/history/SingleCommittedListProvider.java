@@ -38,7 +38,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import java.io.File;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -80,7 +80,7 @@ public class SingleCommittedListProvider {
   private boolean setup() {
     boolean result = false;
 
-    RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(new File(file.getPath()));
+    RootUrlInfo rootUrlInfo = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
     if (rootUrlInfo != null) {
       changeList = new SvnChangeList[1];
       revisionBefore = ((SvnRevisionNumber)number).getRevision();

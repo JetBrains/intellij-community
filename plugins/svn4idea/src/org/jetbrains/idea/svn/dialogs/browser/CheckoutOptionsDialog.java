@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class CheckoutOptionsDialog extends DialogWrapper {
   private JCheckBox myExternalsCheckbox;
   private JLabel myUrlLabel;
@@ -74,7 +76,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
       if (file == null) {
         return;
       }
-      fillTargetList(new File(file.getPath()));
+      fillTargetList(virtualToIoFile(file));
       validateTargetSelected();
     });
     myLocalTargetList.addListSelectionListener(e -> validateTargetSelected());

@@ -62,6 +62,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnFileSystemListener extends CommandAdapter implements LocalFileOperationsHandler, Disposable {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileSystemListener");
   private final LocalFileSystem myLfs;
@@ -158,8 +160,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       return null;
     }
 
-    File srcFile = new File(file.getPath());
-    File destFile = new File(new File(toDir.getPath()), copyName);
+    File srcFile = virtualToIoFile(file);
+    File destFile = new File(virtualToIoFile(toDir), copyName);
     if (!SvnUtil.isSvnVersioned(vcs, destFile.getParentFile()) && !isPendingAdd(vcs.getProject(), toDir)) {
       return null;
     }
@@ -208,7 +210,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         final Info info1 = new RepeatSvnActionThroughBusy() {
           @Override
           protected void executeImpl() {
-            myT = myVcs.getInfo(new File(dir.getPath()));
+            myT = myVcs.getInfo(virtualToIoFile(dir));
           }
         }.compute();
         if (info1 == null || info1.getRepositoryUUID() == null) {
@@ -559,8 +561,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       }
     }
     final File tmpFile = FileUtil.findSequentNonexistentFile(myStorageForUndo, "tmp", "");
-    myUndoStorageContents.add(0, Couple.of(new File(file.getPath()), tmpFile));
-    new File(file.getPath()).renameTo(tmpFile);
+    myUndoStorageContents.add(0, Couple.of(virtualToIoFile(file), tmpFile));
+    virtualToIoFile(file).renameTo(tmpFile);
   }
 
   /**
@@ -782,7 +784,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
                                final List<VcsException> exceptions) {
     return () -> {
       for (VirtualFile file : filesToProcess) {
-        final File ioFile = new File(file.getPath());
+        final File ioFile = virtualToIoFile(file);
         try {
           final File copyFrom = copyFromMap.get(file);
           if (copyFrom != null) {
@@ -1017,7 +1019,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
 
   private static File getIOFile(VirtualFile vf) {
-    return new File(vf.getPath()).getAbsoluteFile();
+    return virtualToIoFile(vf).getAbsoluteFile();
   }
 
   @Nullable

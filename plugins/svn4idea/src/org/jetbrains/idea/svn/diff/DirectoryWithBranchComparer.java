@@ -20,7 +20,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -33,6 +32,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -55,14 +56,14 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
                                           FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
 
     SvnTarget target1 = SvnTarget.fromURL(myElementUrl);
-    SvnTarget target2 = SvnTarget.fromFile(new File(myVirtualFile.getPath()));
+    SvnTarget target2 = SvnTarget.fromFile(virtualToIoFile(myVirtualFile));
 
     changes.addAll(getClientFactory().createDiffClient().compare(target1, target2));
   }
 
   @NotNull
   private ClientFactory getClientFactory() {
-    return getClientFactory(myVcs, VfsUtilCore.virtualToIoFile(myVirtualFile));
+    return getClientFactory(myVcs, virtualToIoFile(myVirtualFile));
   }
 
   @NotNull

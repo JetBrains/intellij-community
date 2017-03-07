@@ -38,6 +38,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnChangesCorrectlyRefreshedTest extends Svn17TestCase {
   private ChangeListManager clManager;
 
@@ -63,7 +65,7 @@ public class SvnChangesCorrectlyRefreshedTest extends Svn17TestCase {
     Assert.assertEquals("new content", text1.toString());
 
     sleep(100);
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(subTree.myS1File.getPath()));
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(virtualToIoFile(subTree.myS1File));
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     final VcsException updateException = ((ChangeListManagerImpl)clManager).getUpdateException();

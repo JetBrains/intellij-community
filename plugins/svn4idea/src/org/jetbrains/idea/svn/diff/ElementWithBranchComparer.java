@@ -35,6 +35,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
 * @author Konstantin Kolosovsky.
 */
@@ -106,7 +108,7 @@ public abstract class ElementWithBranchComparer {
   @Nullable
   protected SVNURL resolveElementUrl() throws SVNException {
     final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
-    final File file = new File(myVirtualFile.getPath());
+    final File file = virtualToIoFile(myVirtualFile);
     final SVNURL fileUrl = urlMapping.getUrlForFile(file);
     if (fileUrl == null) {
       return null;
