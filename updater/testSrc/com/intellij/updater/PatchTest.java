@@ -204,7 +204,7 @@ public class PatchTest extends PatchTestCase {
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, true));
   }
 
   @Test
@@ -218,7 +218,7 @@ public class PatchTest extends PatchTestCase {
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
-      new UpdateZipAction(patch, "lib/redist/annotations.jar",
+      new UpdateZipAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar",
                           Collections.singletonList("org/jetbrains/annotations/NewClass.class"),
                           Collections.singletonList("org/jetbrains/annotations/Nullable.class"),
                           Collections.singletonList("org/jetbrains/annotations/TestOnly.class"),
