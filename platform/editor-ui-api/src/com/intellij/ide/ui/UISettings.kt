@@ -53,7 +53,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")
-  var fontSize by storedProperty(10)
+  var fontSize by storedProperty(12)
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SCALE")
