@@ -46,6 +46,7 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -66,9 +67,11 @@ public class FSRecords {
   static final boolean useSnappyForCompression = SystemProperties.getBooleanProperty("idea.use.snappy.for.vfs", false);
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
+  private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
   private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
                                      31 + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
+                                     (ourStoreRootsSeparately ? 0x63 : 0) +
                                      (useSnappyForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
                                      (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 21:0);
 
@@ -164,6 +167,7 @@ public class FSRecords {
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
+    private static File myRootsFile;
     private static final VfsDependentEnum<String> myAttributesList =
       new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
@@ -242,6 +246,7 @@ public class FSRecords {
       final File contentsFile = new File(basePath, "content" + VFS_FILES_EXTENSION);
       final File contentsHashesFile = new File(basePath, "contentHashes" + VFS_FILES_EXTENSION);
       final File recordsFile = new File(basePath, "records" + VFS_FILES_EXTENSION);
+      myRootsFile = ourStoreRootsSeparately ? new File(basePath, "roots" + VFS_FILES_EXTENSION) : null;
 
       final File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
 
@@ -305,6 +310,7 @@ public class FSRecords {
           deleted &= IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(recordsFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
+          deleted &= myRootsFile == null || IOUtil.deleteAllFilesStartingWith(myRootsFile);
 
           if (!deleted) {
             throw new IOException("Cannot delete filesystem storage files");
@@ -713,11 +719,30 @@ public class FSRecords {
     setFlags(id, FREE_RECORD_FLAG, false);
   }
 
+  private static final int ROOT_RECORD_ID = 1;
+
   static int[] listRoots() {
     try {
       r.lock();
       try {
-        final DataInputStream input = readAttribute(1, ourChildrenAttr);
+        if (ourStoreRootsSeparately) {
+          TIntArrayList result = new TIntArrayList();
+
+          try {
+            try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+              String str;
+              while((str = stream.readLine()) != null) {
+                int index = str.indexOf(' ');
+                int id = Integer.parseInt(str.substring(0, index));
+                result.add(id);
+              }
+            }
+          } catch (FileNotFoundException ignored) {}
+
+          return result.toNativeArray();
+        }
+
+        final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
         if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
         try {
@@ -771,9 +796,29 @@ public class FSRecords {
 
     try {
       DbConnection.markDirty();
+      if (ourStoreRootsSeparately) {
+        try {
+          try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+            String str;
+            while((str = stream.readLine()) != null) {
+              int index = str.indexOf(' ');
+
+              if (str.substring(index + 1).equals(rootUrl)) {
+                return Integer.parseInt(str.substring(0, index));
+              }
+            }
+          }
+        } catch (FileNotFoundException ignored) {}
+        try (Writer stream = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile, true)))) {
+          int id = createRecord();
+          stream.write(id + " " + rootUrl + "\n");
+          return id;
+        }
+      }
+
       final int root = getNames().enumerate(rootUrl);
 
-      final DataInputStream input = readAttribute(1, ourChildrenAttr);
+      final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
       int[] names = ArrayUtil.EMPTY_INT_ARRAY;
       int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
 
@@ -802,7 +847,7 @@ public class FSRecords {
       }
 
       int id;
-      try (DataOutputStream output = writeAttribute(1, ourChildrenAttr)) {
+      try (DataOutputStream output = writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
         id = createRecord();
 
         int index = Arrays.binarySearch(ids, id);
@@ -828,7 +873,31 @@ public class FSRecords {
 
     try {
       DbConnection.markDirty();
-      final DataInputStream input = readAttribute(1, ourChildrenAttr);
+      if (ourStoreRootsSeparately) {
+        java.util.List<String> rootsThatLeft = new ArrayList<>();
+        try {
+          try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+            String str;
+            while((str = stream.readLine()) != null) {
+              int index = str.indexOf(' ');
+              int rootId = Integer.parseInt(str.substring(0, index));
+              if (rootId != id) {
+                rootsThatLeft.add(str);
+              }
+            }
+          }
+        } catch (FileNotFoundException ignored) {}
+
+        try (Writer stream = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile)))) {
+          for(String line:rootsThatLeft) {
+            stream.write(line);
+            stream.write("\n");
+          }
+        }
+        return;
+      }
+
+      final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
       assert input != null;
       int[] names;
       int[] ids;
@@ -856,7 +925,7 @@ public class FSRecords {
       names = ArrayUtil.remove(names, index);
       ids = ArrayUtil.remove(ids, index);
 
-      try (DataOutputStream output = writeAttribute(1, ourChildrenAttr)) {
+      try (DataOutputStream output = writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
         saveNameIdSequenceWithDeltas(names, ids, output);
       }
     }
