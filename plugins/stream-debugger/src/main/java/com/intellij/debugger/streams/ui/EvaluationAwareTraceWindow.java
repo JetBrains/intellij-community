@@ -1,17 +1,19 @@
 package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.streams.trace.TracingResult;
+import com.intellij.debugger.streams.resolve.ResolvedCall;
+import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.ui.components.JBPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
@@ -22,13 +24,14 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   private final JPanel myCenterPane;
 
-  public EvaluationAwareTraceWindow(@Nullable Project project) {
+  public EvaluationAwareTraceWindow(@Nullable Project project, @NotNull StreamChain chain) {
     super(project, false);
     setModal(false);
     setTitle("Stream Trace");
-    myCenterPane = new BorderLayoutPanel();
-    myCenterPane.add(EMPTY_CONTENT);
-    myCenterPane.setPreferredSize(new JBDimension(100, 100));
+    myCenterPane = new JBPanel(new GridLayout(1, chain.length()));
+    for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
+      //myCenterPane.add();
+    }
     init();
   }
 
@@ -38,7 +41,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return "#com.intellij.debugger.streams.ui.EvaluationAwareTraceWindow";
   }
 
-  public void setTrace(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
+  public void setTrace(@NotNull List<ResolvedCall> calls, @NotNull EvaluationContextImpl context) {
     clear();
     myCenterPane.add(new JBLabel("Done!", SwingConstants.CENTER));
     myCenterPane.revalidate();
