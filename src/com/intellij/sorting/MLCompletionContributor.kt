@@ -51,14 +51,13 @@ class OrderingEmptyClassifer(next: Classifier<LookupElement>)
 
 
 class MLClassifier(next: Classifier<LookupElement>,
-                   private val lookupArranger: LookupArranger,
                    private val lookup: LookupImpl,
                    private val ranker: Ranker) : Classifier<LookupElement>(next, "ml_rank") {
 
   private val cachedScore = mutableMapOf<LookupElement, WeightCache>()
 
   override fun classify(source: MutableIterable<LookupElement>, context: ProcessingContext): MutableIterable<LookupElement> {
-    val relevanceObjects = lookupArranger.getRelevanceObjects(source, false)
+    val relevanceObjects = lookup.getRelevanceObjects(source, false)
     
     var position = 0 
     val elements = source.map {
@@ -130,14 +129,11 @@ class PreservingOrderClassifierFactory: ClassifierFactory<LookupElement>("before
 }
 
 
-class MLClassifierFactory(
-        private val lookupArranger: LookupArranger,
-        private val lookup: LookupImpl
-) : ClassifierFactory<LookupElement>("ml_rank") {
+class MLClassifierFactory(private val lookup: LookupImpl) : ClassifierFactory<LookupElement>("ml_rank") {
   
   override fun createClassifier(next: Classifier<LookupElement>): Classifier<LookupElement> {
     val ranker = Ranker.getInstance()
-    return MLClassifier(next, lookupArranger, lookup, ranker)
+    return MLClassifier(next, lookup, ranker)
   }
   
 }
@@ -145,16 +141,15 @@ class MLClassifierFactory(
 
 open class MLCompletionContributor : CompletionContributor() {
 
-  open fun newClassifierFactory(lookupArranger: LookupArranger, lookup: LookupImpl): ClassifierFactory<LookupElement> {
-    return MLClassifierFactory(lookupArranger, lookup)
+  open fun newClassifierFactory(lookup: LookupImpl): ClassifierFactory<LookupElement> {
+    return MLClassifierFactory(lookup)
   }
   
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val oldSorter = getSorter(result)
-    val lookupArranger = getLookupArranger(parameters)
     val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl
 
-    val mlClassifierFactory = newClassifierFactory(lookupArranger, lookup)
+    val mlClassifierFactory = newClassifierFactory(lookup)
     val newSorter = oldSorter
             .withClassifier("templates", true, mlClassifierFactory)
             .withClassifier("ml_rank", false, PreservingOrderClassifierFactory())
@@ -173,12 +168,4 @@ fun getSorter(result: CompletionResultSet): CompletionSorterImpl {
   val field = result::class.java.getDeclaredField("mySorter")
   field.isAccessible = true
   return field.get(result) as CompletionSorterImpl
-}
-
-fun getLookupArranger(parameters: CompletionParameters): LookupArranger {
-  val lookup = LookupManager.getActiveLookup(parameters.editor) as LookupImpl
-  val arrangerField = lookup::class.java.getDeclaredField("myArranger")
-  arrangerField.isAccessible = true
-  val arranger = arrangerField.get(lookup) as LookupArranger
-  return arranger
 }
