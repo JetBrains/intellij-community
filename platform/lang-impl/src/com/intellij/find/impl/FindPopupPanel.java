@@ -162,6 +162,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(this, mySearchComponent);
       myBalloon = builder
         .setProject(myHelper.getProject())
+        .setMovable(true)
         .setResizable(true)
         .setMayBeParent(true)
         .setCancelOnClickOutside(true)
@@ -651,7 +652,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     JPanel scopesPanel = new JPanel(new MigLayout("flowx, gap 26, ins 0"));
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
-    setLayout(new MigLayout("flowx, ins 0, gap 0, fillx, hidemode 3"));
+    setLayout(new MigLayout("flowx, ins 4, gap 0, fillx, hidemode 3"));
     int cbGapLeft = myCbCaseSensitive.getInsets().left;
     int cbGapRight = myCbCaseSensitive.getInsets().right;
     String cbGap = cbGapLeft + cbGapRight < 16 ? "gapright " + (16 - cbGapLeft - cbGapRight) : "";
@@ -665,10 +666,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     add(myFileMaskField, "gapright 16");
     add(myFilterContextButton, "wrap");
     add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
-    add(myReplaceTextArea, "pushx, growx, sx 10, wrap");
+    add(myReplaceTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
-    add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad 0 -4 0 4");
-    add(bottomPanel, "pushx, growx, dock south, sx 10, pad 0 -4 0 4");
+    add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad -4 -4 4 4");
+    add(bottomPanel, "pushx, growx, dock south, sx 10");
 
     MnemonicHelper.init(this);
     setFocusCycleRoot(true);
