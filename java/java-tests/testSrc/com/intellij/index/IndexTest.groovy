@@ -668,11 +668,16 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   void "test read-only index access"() {
     StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true)
-    assertFalse(index.update("qwe/asd", "some_string", null))
-    def rebuildException = index.getRebuildException()
-    assertInstanceOf(rebuildException, StorageException.class)
-    def rebuildCause = rebuildException.getCause()
-    assertInstanceOf(rebuildCause, IncorrectOperationException.class)
+
+    try {
+      assertFalse(index.update("qwe/asd", "some_string", null))
+      def rebuildException = index.getRebuildException()
+      assertInstanceOf(rebuildException, StorageException.class)
+      def rebuildCause = rebuildException.getCause()
+      assertInstanceOf(rebuildCause, IncorrectOperationException.class)
+    } finally {
+      index.dispose()
+    }
   }
 
   @CompileStatic
