@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,31 +90,28 @@ public abstract class MavenTestCase extends UsefulTestCase {
       getMavenGeneralSettings().setMavenHome(home);
     }
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        restoreSettingsFile();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      ApplicationManager.getApplication().runWriteAction(() -> {
         try {
-          restoreSettingsFile();
+          setUpInWriteAction();
         }
-        catch (IOException e) {
+        catch (Throwable e) {
+          try {
+            tearDown();
+          }
+          catch (Exception e1) {
+            e1.printStackTrace();
+          }
           throw new RuntimeException(e);
         }
-
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          try {
-            setUpInWriteAction();
-          }
-          catch (Throwable e) {
-            try {
-              tearDown();
-            }
-            catch (Exception e1) {
-              e1.printStackTrace();
-            }
-            throw new RuntimeException(e);
-          }
-        });
-      }
+      });
     });
 
   }
@@ -125,15 +122,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
       MavenServerManager.getInstance().shutdown(true);
       MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS);
       myProject = null;
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            tearDownFixtures();
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          tearDownFixtures();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
         }
       });
 
