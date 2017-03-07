@@ -79,10 +79,8 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private int myCommandTimestamp = 1;
 
   private int myCommandLevel;
-  private static final int NONE = 0;
-  private static final int UNDO = 1;
-  private static final int REDO = 2;
-  private int myCurrentOperationState = NONE;
+  private enum OperationState { NONE, UNDO, REDO }
+  private OperationState myCurrentOperationState = OperationState.NONE;
 
   private DocumentReference myOriginatorReference;
 
@@ -129,16 +127,19 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
       @Override
       public void commandStarted(CommandEvent event) {
+        if (myProject != null && myProject.isDisposed()) return;
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
       }
 
       @Override
       public void commandFinished(CommandEvent event) {
+        if (myProject != null && myProject.isDisposed()) return;
         onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
       }
 
       @Override
       public void undoTransparentActionStarted() {
+        if (myProject != null && myProject.isDisposed()) return;
         if (!isInsideCommand()) {
           myStarted = true;
           onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT, true);
@@ -147,6 +148,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
       @Override
       public void undoTransparentActionFinished() {
+        if (myProject != null && myProject.isDisposed()) return;
         if (myStarted) {
           myStarted = false;
           onCommandFinished(myProject, "", null);
@@ -277,14 +279,16 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   @Override
   public void nonundoableActionPerformed(@NotNull final DocumentReference ref, final boolean isGlobal) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject != null && myProject.isDisposed()) return;
     undoableActionPerformed(new NonUndoableAction(ref, isGlobal));
   }
 
   @Override
   public void undoableActionPerformed(@NotNull UndoableAction action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myProject != null && myProject.isDisposed()) return;
 
-    if (myCurrentOperationState != NONE) return;
+    if (myCurrentOperationState != OperationState.NONE) return;
 
     if (myCommandLevel == 0) {
       LOG.assertTrue(action instanceof NonUndoableAction,
@@ -355,7 +359,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   private void undoOrRedo(final FileEditor editor, final boolean isUndo) {
-    myCurrentOperationState = isUndo ? UNDO : REDO;
+    myCurrentOperationState = isUndo ? OperationState.UNDO : OperationState.REDO;
 
     final RuntimeException[] exception = new RuntimeException[1];
     Runnable executeUndoOrRedoAction = () -> {
@@ -370,7 +374,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
         exception[0] = ex;
       }
       finally {
-        myCurrentOperationState = NONE;
+        myCurrentOperationState = OperationState.NONE;
       }
     };
 
@@ -382,12 +386,12 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   @Override
   public boolean isUndoInProgress() {
-    return myCurrentOperationState == UNDO;
+    return myCurrentOperationState == OperationState.UNDO;
   }
 
   @Override
   public boolean isRedoInProgress() {
-    return myCurrentOperationState == REDO;
+    return myCurrentOperationState == OperationState.REDO;
   }
 
   @Override
@@ -518,7 +522,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   protected void compact() {
-    if (myCurrentOperationState == NONE && myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
+    if (myCurrentOperationState == OperationState.NONE && myCommandTimestamp % COMMAND_TO_RUN_COMPACT == 0) {
       doCompact();
     }
   }
@@ -597,6 +601,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   @TestOnly
   private void flushMergers() {
+    assert myProject == null || !myProject.isDisposed();
     // Run dummy command in order to flush all mergers...
     CommandProcessor.getInstance().executeCommand(myProject, EmptyRunnable.getInstance(), CommonBundle.message("drop.undo.history.command.name"), null);
   }

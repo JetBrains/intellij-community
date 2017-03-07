@@ -423,10 +423,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
       append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
+      append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).
-      append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
       append(() -> CompletionProgressIndicator.cleanupForNextTest()).
       append(() -> UIUtil.dispatchAllInvocationEvents()).
       append(() -> {

@@ -863,8 +863,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     public void run() {
       ApplicationManager.getApplication().assertIsDispatchThread();
       Project project = myProject;
-      DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-      if (project == null || !project.isInitialized() || project.isDisposed() || PowerSaveMode.isEnabled() || daemonCodeAnalyzer.myDisposed) {
+      DaemonCodeAnalyzerImpl daemonCodeAnalyzer;
+      if (project == null ||
+          !project.isInitialized() ||
+          project.isDisposed() ||
+          PowerSaveMode.isEnabled() ||
+          (daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).myDisposed) {
         return;
       }
 
