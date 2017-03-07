@@ -150,7 +150,7 @@ internal class ModuleStoreRenameTest {
     val rootManager = module.rootManager as ModuleRootManagerComponent
     val stateModificationCount = rootManager.stateModificationCount
 
-    runWriteAction { src.rename(null, UUID.randomUUID().toString()) }
+    runWriteAction { src.rename(null, "bar") }
 
     assertThat(stateModificationCount).isLessThan(rootManager.stateModificationCount)
   }
