@@ -313,6 +313,7 @@ public class Runner {
         Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
         return PatchFileCreator.apply(result, resolutions, ui);
       }
+      catch (OperationCancelledException ignored) { }
       catch (Throwable e) {
         printStackTrace(e);
         ui.showError(e);
