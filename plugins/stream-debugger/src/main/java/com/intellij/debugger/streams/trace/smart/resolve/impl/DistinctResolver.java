@@ -109,8 +109,8 @@ public class DistinctResolver implements TraceResolver {
     final Map<Integer, TraceElement> before = order.getValuesOrderBefore();
     final Map<Integer, TraceElement> after = order.getValuesOrderAfter();
     for (int i = 0; i < size; i++) {
-      final int afterTime = extractIntValue(keys.getValue(i));
-      final int fromTime = extractIntValue(values.getValue(i));
+      final int fromTime = extractIntValue(keys.getValue(i));
+      final int afterTime = extractIntValue(values.getValue(i));
       final TraceElement beforeElement = before.get(fromTime);
       final TraceElement afterElement = after.get(afterTime);
       result.computeIfAbsent(afterElement, x -> new ArrayList<>()).add(beforeElement);

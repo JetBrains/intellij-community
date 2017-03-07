@@ -16,8 +16,8 @@ import java.util.List;
 public class DistinctHandler extends HandlerBase {
   private final PeekTracerHandler myPeekTracer;
   private final HashMapVariableImpl myStoreMapVariable;
-  private final HashMapVariableImpl myResolveDirectMapVariable;
-  private final HashMapVariableImpl myResolveReverseMapVariable;
+  private final HashMapVariableImpl myResolveMapVariable;
+  private final HashMapVariableImpl myReverseUtilMapVariable;
 
   public DistinctHandler(int callNumber, @NotNull String callName) {
     myPeekTracer = new PeekTracerHandler(callNumber, callName);
@@ -25,8 +25,8 @@ public class DistinctHandler extends HandlerBase {
     final String variablePrefix = callName + callNumber;
     myStoreMapVariable =
       new HashMapVariableImpl(variablePrefix + "Store", GenericType.OBJECT, new ClassTypeImpl("Map<Integer, Object>"), false);
-    myResolveDirectMapVariable = new HashMapVariableImpl(variablePrefix + "ResolveDirect", GenericType.INT, GenericType.INT, false);
-    myResolveReverseMapVariable = new HashMapVariableImpl(variablePrefix + "ResolveReverse", GenericType.INT, GenericType.INT, false);
+    myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", GenericType.INT, GenericType.INT, false);
+    myReverseUtilMapVariable = new HashMapVariableImpl(variablePrefix + "ReverseUtil", GenericType.INT, GenericType.INT, false);
   }
 
   @NotNull
@@ -53,29 +53,28 @@ public class DistinctHandler extends HandlerBase {
     final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
     final String peekPrepare = myPeekTracer.prepareResult();
 
-    final String resolveReverse2Array = myResolveReverseMapVariable.convertToArray("resolveReverse", true, true);
     final String storeMapName = myStoreMapVariable.getName();
     final String afterMapName = myPeekTracer.getAfterMapName();
-    final String prepareDirectMap = "{" + newLine +
-                                    "  for (final int timeAfter : " + myResolveReverseMapVariable.getName() + ".keySet()) {" + newLine +
-                                    "    final Object afterValue = " + afterMapName + ".get(timeAfter);" + newLine +
-                                    "    final Map<Integer, Object> valuesBefore = " + storeMapName + ".get(afterValue);" + newLine +
-                                    "    for (final int timeBefore : valuesBefore.keySet()) {" + newLine +
-                                    "      " + myResolveDirectMapVariable.getName() + ".put(timeBefore, timeAfter);" + newLine +
-                                    "    }" + newLine +
-                                    "  }" + newLine +
-                                    "}" + newLine;
+    final String prepareResolveMap = "{" + newLine +
+                                     "  for (final int timeAfter : " + myReverseUtilMapVariable.getName() + ".keySet()) {" + newLine +
+                                     "    final Object afterValue = " + afterMapName + ".get(timeAfter);" + newLine +
+                                     "    final Map<Integer, Object> valuesBefore = " + storeMapName + ".get(afterValue);" + newLine +
+                                     "    for (final int timeBefore : valuesBefore.keySet()) {" + newLine +
+                                     "      " + myResolveMapVariable.getName() + ".put(timeBefore, timeAfter);" + newLine +
+                                     "    }" + newLine +
+                                     "  }" + newLine +
+                                     "}" + newLine;
 
     final String peekResult =
       "final Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
-    final String resolveDirect2Array = myResolveDirectMapVariable.convertToArray("resolveDirect", true, true);
-    return peekPrepare + prepareDirectMap + resolveDirect2Array + resolveReverse2Array + peekResult;
+    final String resolve2Array = myResolveMapVariable.convertToArray("resolveDirect", true, true);
+    return peekPrepare + prepareResolveMap + resolve2Array + peekResult;
   }
 
   @NotNull
   @Override
   public String getResultExpression() {
-    return "new Object[] { peekResult, resolveDirect, resolveReverse }";
+    return "new Object[] { peekResult, resolve }";
   }
 
   @NotNull
@@ -88,7 +87,7 @@ public class DistinctHandler extends HandlerBase {
   private String createResolveLambda() {
     final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
     final String storeMap = myStoreMapVariable.getName();
-    final String resolveReverseMap = myResolveReverseMapVariable.getName();
+    final String resolveReverseMap = myReverseUtilMapVariable.getName();
 
     return "x -> {" + newLine +
            "  final Map<Integer, Object> objects = " + String.format("%s.get(x);", storeMap) + newLine +
@@ -105,7 +104,7 @@ public class DistinctHandler extends HandlerBase {
   @Override
   protected List<Variable> getVariables() {
     final List<Variable> variables =
-      new ArrayList<>(Arrays.asList(myStoreMapVariable, myResolveDirectMapVariable, myResolveReverseMapVariable));
+      new ArrayList<>(Arrays.asList(myStoreMapVariable, myResolveMapVariable, myReverseUtilMapVariable));
     variables.addAll(myPeekTracer.getVariables());
     return variables;
   }
