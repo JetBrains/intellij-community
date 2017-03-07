@@ -15,27 +15,50 @@
  */
 package com.maddyhome.idea.copyright
 
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.profile.ProfileEx
-import com.intellij.util.xmlb.SmartSerializer
+import com.intellij.configurationStore.SerializableScheme
+import com.intellij.configurationStore.serializeInto
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.options.ExternalizableScheme
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Transient
 import com.maddyhome.idea.copyright.pattern.EntityUtil
+import org.jdom.Element
 
-class CopyrightProfile @JvmOverloads constructor(profileName: String = "") : ProfileEx(profileName, SmartSerializer()) {
-  companion object {
-    @JvmField
-    val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
-      "Copyright (c) \$today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
-      "Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan. \n" +
-      "Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna. \n" +
-      "Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus. \n" +
-      "Vestibulum commodo. Ut rhoncus gravida arcu. ")
+@JvmField
+val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
+  "Copyright (c) \$today.year. Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n" +
+  "Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan. \n" +
+  "Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna. \n" +
+  "Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus. \n" +
+  "Vestibulum commodo. Ut rhoncus gravida arcu. ")
+
+class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : ExternalizableScheme, BaseState(), SerializableScheme {
+  // ugly name to preserve compatibility
+  // must be not private because otherwise binding is not created for private accessor
+  @get:OptionTag("myName")
+  internal var profileName by string()
+
+  var notice by string(DEFAULT_COPYRIGHT_NOTICE)
+  var keyword by string(EntityUtil.encode("Copyright"))
+  var allowReplaceRegexp by string()
+
+  init {
+    // otherwise will be as default value and name will be not serialized
+    this.profileName = profileName
   }
 
-  var notice = DEFAULT_COPYRIGHT_NOTICE
-  var keyword = EntityUtil.encode("Copyright")
+  @Transient
+  override fun getName() = profileName ?: ""
 
-  var allowReplaceRegexp: String? = null
-    set(allowReplaceRegexp) {
-      field = StringUtil.nullize(allowReplaceRegexp)
-    }
-}//read external
+  override fun setName(value: String) {
+    profileName = value
+  }
+
+  override fun toString() = profileName ?: ""
+
+  override fun writeScheme(): Element {
+    val element = Element("copyright")
+    serializeInto(element)
+    return element
+  }
+}
