@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.editor.EditorColorSchemeTestCase;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -297,5 +299,58 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
     }
+  }
+
+  public void testWriteDefaultSemanticHighlighting() throws Exception {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
+    editorColorsScheme.setName("rainbow");
+
+    final String BEGIN =
+      "<scheme name=\"rainbow\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <metaInfo>\n" +
+      "    <property name=\"created\" />\n" +
+      "    <property name=\"ide\" />\n" +
+      "    <property name=\"ideVersion\" />\n" +
+      "    <property name=\"modified\" />\n" +
+      "    <property name=\"originalScheme\" />\n";
+    final String END =
+      "  </metaInfo>\n" +
+      "</scheme>";
+
+    boolean nonDefaultRainbow = !RainbowHighlighter.DEFAULT_RAINBOW_ON;
+    
+    RainbowHighlighter.setRainbowEnabled(editorColorsScheme, null, nonDefaultRainbow);
+    assertTrue(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, null) == nonDefaultRainbow);
+    assertXmlOutputEquals(
+      BEGIN +
+      "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
+      END,
+      serializeWithFixedMeta(editorColorsScheme));
+    
+    RainbowHighlighter.setRainbowEnabled(editorColorsScheme, Language.ANY, nonDefaultRainbow);
+    assertTrue(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY) == nonDefaultRainbow);
+    assertXmlOutputEquals(
+      BEGIN +
+      "    <property name=\"rainbow " + Language.ANY.getID() + "\">" + nonDefaultRainbow + "</property>\n" +
+      "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
+      END,
+      serializeWithFixedMeta(editorColorsScheme));
+
+    RainbowHighlighter.setRainbowEnabled(editorColorsScheme, Language.ANY, null);
+    assertNull(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY));
+    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY) == nonDefaultRainbow);
+    assertXmlOutputEquals(
+      BEGIN +
+      "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
+      END,
+      serializeWithFixedMeta(editorColorsScheme));
+
+    RainbowHighlighter.setRainbowEnabled(editorColorsScheme, null, RainbowHighlighter.DEFAULT_RAINBOW_ON);
+    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, null) == RainbowHighlighter.DEFAULT_RAINBOW_ON);
+    assertTrue(RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY) == RainbowHighlighter.DEFAULT_RAINBOW_ON);
+    assertXmlOutputEquals(
+      BEGIN + END,
+      serializeWithFixedMeta(editorColorsScheme));
   }
 }
