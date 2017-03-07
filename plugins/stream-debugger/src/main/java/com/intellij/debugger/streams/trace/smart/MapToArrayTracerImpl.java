@@ -11,6 +11,7 @@ import com.intellij.debugger.streams.trace.smart.resolve.impl.ResolverFactory;
 import com.intellij.debugger.streams.trace.smart.resolve.impl.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.StreamChainImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ArrayReference;
@@ -53,7 +54,7 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
   @NotNull
   @Override
   protected String getTraceExpression(@NotNull StreamChain chain) {
-    final List<StreamCall> calls = chain.getCalls();
+    final List<StreamCall> calls = chain.getIntermediateCalls();
     final List<StreamCall> tracingChainCalls = new ArrayList<>();
     final int callCount = calls.size();
     final StringBuilder declarationBuilder = new StringBuilder();
@@ -61,7 +62,9 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     declarationBuilder.append(String.format("final Object[] info = new Object[%d];\n", callCount))
       .append("final java.util.concurrent.atomic.AtomicInteger time = new java.util.concurrent.atomic.AtomicInteger(0);")
       .append(LINE_SEPARATOR);
-    for (int i = 0; i < callCount - 1; i++) {
+    final StreamCall timeCall = new PeekCall("x -> time.incrementAndGet()");
+    tracingChainCalls.add(timeCall);
+    for (int i = 0; i < callCount; i++) {
       final StreamCall call = calls.get(i);
       final String name = call.getName();
 
@@ -78,13 +81,12 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
 
       tracingChainCalls.addAll(callsBefore);
       tracingChainCalls.add(call);
-      tracingChainCalls.add(new PeekCall("x -> time.incrementAndGet()"));
+      tracingChainCalls.add(timeCall);
       tracingChainCalls.addAll(callsAfter);
     }
 
-    tracingChainCalls.add(calls.get(callCount - 1));
     resultBuilder.append(RETURN_EXPRESSION);
-    final StreamChain newChain = new StreamChain(tracingChainCalls);
+    final StreamChain newChain = new StreamChainImpl(chain.getProducerCall(), tracingChainCalls, chain.getTerminationCall());
     final String tracingCall = "final Object streamResult = " + newChain.getText() + ";" + LINE_SEPARATOR;
 
     final String result = declarationBuilder.toString() + tracingCall + resultBuilder.toString();

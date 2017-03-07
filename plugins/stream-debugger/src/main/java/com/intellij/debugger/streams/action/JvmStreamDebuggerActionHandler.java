@@ -21,11 +21,17 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.streams.resolve.ResolvedCall;
+import com.intellij.debugger.streams.resolve.ResolvedCallImpl;
+import com.intellij.debugger.streams.resolve.ResolverFactoryImpl;
+import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
 import com.intellij.debugger.streams.trace.MapStreamTracerImpl;
 import com.intellij.debugger.streams.trace.TracingCallback;
 import com.intellij.debugger.streams.trace.TracingResult;
+import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.debugger.streams.ui.TraceWindow;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +47,8 @@ import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -57,7 +65,7 @@ public class JvmStreamDebuggerActionHandler {
 
     final PsiElement elementAtCursor = findElementAtCursor(session);
     if (elementAtCursor != null) {
-      final StreamChain chain = StreamChain.tryBuildChain(elementAtCursor);
+      final StreamChain chain = StreamChainBuilder.tryBuildChain(elementAtCursor);
       if (chain != null) {
         handle(session, chain);
       }
@@ -68,7 +76,7 @@ public class JvmStreamDebuggerActionHandler {
     new MapStreamTracerImpl(session).trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-        final List<ResolvedCall> calls = chain.resolveCalls(result);
+        final List<ResolvedCall> calls = resolve(chain, result);
         ApplicationManager.getApplication()
           .invokeLater(() -> new TraceWindow(context, session.getProject(), calls).show());
       }
@@ -80,10 +88,42 @@ public class JvmStreamDebuggerActionHandler {
     });
   }
 
-  public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+  public boolean isEnabled(@NotNull Project project) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     final PsiElement elementAtCursor = session == null ? null : findElementAtCursor(session);
-    return elementAtCursor != null && StreamChain.checkStreamExists(elementAtCursor);
+    return elementAtCursor != null && StreamChainBuilder.checkStreamExists(elementAtCursor);
+  }
+
+  protected static List<ResolvedCall> resolve(@NotNull StreamChain chain, @NotNull TracingResult tracingResult) {
+    if (chain.length() == 0) {
+      return Collections.emptyList();
+    }
+
+    final List<ValuesOrderResolver.Result> resolvedMappings = new ArrayList<>();
+    final List<TraceInfo> trace = tracingResult.getTrace();
+    for (int i = 0, length = chain.length(); i < length; i++) {
+      final TraceInfo info = trace.get(i);
+      final StreamCall call = chain.getCall(i);
+      final String callName = call.getName();
+
+      final ValuesOrderResolver resolver = ResolverFactoryImpl.getInstance().getResolver(callName);
+      final ValuesOrderResolver.Result resolveResult = resolver.resolve(info);
+      resolvedMappings.add(resolveResult);
+    }
+
+    final List<ResolvedCall> result = new ArrayList<>();
+
+    final ResolvedCall sourceCall = new ResolvedCallImpl(chain.getCall(0), Collections.emptyMap(),
+                                                         resolvedMappings.get(0).getDirectOrder());
+    result.add(sourceCall);
+    for (int i = 1; i < chain.length(); i++) {
+      final StreamCall call = chain.getCall(i);
+      final ValuesOrderResolver.Result prev = resolvedMappings.get(i - 1);
+      final ValuesOrderResolver.Result current = resolvedMappings.get(i);
+      result.add(new ResolvedCallImpl(call, current.getReverseOrder(), prev.getDirectOrder()));
+    }
+
+    return result;
   }
 
   @Nullable

@@ -25,6 +25,7 @@ import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.debugger.streams.trace.smart.resolve.impl.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.StreamChainImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.BooleanValue;
@@ -90,16 +91,15 @@ public class MapStreamTracerImpl extends EvaluateExpressionTracerBase {
 
   @NotNull
   private static StreamChain insertPeeks(@NotNull StreamChain oldChain) {
-    final List<StreamCall> calls = oldChain.getCalls();
+    final List<StreamCall> calls = oldChain.getIntermediateCalls();
     final List<StreamCall> result = new ArrayList<>();
-    for (int i = 0; i < calls.size() - 1; i++) {
+    result.add(new PeekCall(String.format(PEEK_ACTION_FORMAT, 0)));
+    for (int i = 1; i < calls.size(); i++) {
       result.add(calls.get(i));
       result.add(new PeekCall(String.format(PEEK_ACTION_FORMAT, i)));
     }
 
-    result.add(calls.get(calls.size() - 1));
-
-    return new StreamChain(result);
+    return new StreamChainImpl(oldChain.getProducerCall(), result, oldChain.getTerminationCall());
   }
 
   @NotNull

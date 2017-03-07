@@ -1,6 +1,7 @@
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.streams.resolve.ResolvedCall;
 import com.intellij.debugger.streams.trace.TracingCallback;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.smart.MapToArrayTracerImpl;
@@ -11,6 +12,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -19,13 +22,14 @@ public class AdvancedStreamDebuggerHandler extends JvmStreamDebuggerActionHandle
 
   @Override
   public void handle(@NotNull XDebugSession session, @NotNull StreamChain chain) {
-    final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session.getProject());
+    final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session.getProject(), chain);
     ApplicationManager.getApplication().invokeLater(window::show);
     new MapToArrayTracerImpl(session).trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
+        final List<ResolvedCall> calls = resolve(chain, result);
         ApplicationManager.getApplication()
-          .invokeLater(() -> window.setTrace(result, context));
+          .invokeLater(() -> window.setTrace(calls, context));
       }
 
       @Override
