@@ -22,12 +22,13 @@ def log_error_once(msg):
 pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
 
 def _get_python_c_args(host, port, indC, args):
+    host_literal = "'" + host + "'" if host is not None else 'None'
     return ("import sys; sys.path.append(r'%s'); import pydevd; "
-            "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
+            "pydevd.settrace(host=%s, port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
             "%s"
             ) % (
                pydev_src_dir,
-               host,
+               host_literal,
                port,
                args[indC + 1])
 
