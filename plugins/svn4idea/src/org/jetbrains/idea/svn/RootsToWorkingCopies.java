@@ -57,14 +57,12 @@ public class RootsToWorkingCopies implements VcsListener {
     myRootMapping = new HashMap<>();
     myUnversioned = new HashSet<>();
     myVcs = vcs;
-    myRechecker = new Runnable() {
-      public void run() {
-        final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
-        synchronized (myLock) {
-          clear();
-          for (VirtualFile root : roots) {
-            addRoot(root);
-          }
+    myRechecker = () -> {
+      final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
+      synchronized (myLock) {
+        clear();
+        for (VirtualFile root : roots) {
+          addRoot(root);
         }
       }
     };

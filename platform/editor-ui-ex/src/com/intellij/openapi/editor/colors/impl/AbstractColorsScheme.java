@@ -35,7 +35,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -54,6 +53,7 @@ import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MA
 import static com.intellij.openapi.util.Couple.of;
 import static com.intellij.ui.ColorUtil.fromHex;
 
+@SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme implements EditorColorsScheme, SerializableScheme {
   private static final int CURR_VERSION = 142;
 
@@ -422,10 +422,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
         }
         continue;
       }
-
       TextAttributes attr = myValueReader.read(TextAttributes.class, valueElement);
-      myAttributesMap.put(key, attr);
-      migrateErrorStripeColorFrom14(key, attr);
+      if (attr != null) {
+        myAttributesMap.put(key, attr);
+        migrateErrorStripeColorFrom14(key, attr);
+      }
     }
   }
 
@@ -522,10 +523,11 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   }
 
   private int readFontSize(Element element, boolean isDefault, Float fontScale) {
-    Float size = (float)myValueReader.read(Integer.class, element);
-    if (size == null) {
+    Integer intSize = myValueReader.read(Integer.class, element);
+    if (intSize == null) {
       return -1;
     }
+    Float size = (float)intSize;
     if (!isDefault) {
       size = (fontScale != null) ? size / fontScale : DEFAULT_FONT_SIZE.getSize();
     }
@@ -562,7 +564,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     parentNode.setAttribute(NAME_ATTR, getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(myVersion));
 
-    /**
+    /*
      * FONT_SCALE is used to correctly identify the font size in both the JRE-managed HiDPI mode and
      * the IDE-managed HiDPI mode: {@link UIUtil#isJreHiDPIEnabled()}. Also, it helps to distinguish
      * the "hidpi-aware" scheme version from the previous one. Namely, the absence of the FONT_SCALE

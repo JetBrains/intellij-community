@@ -42,8 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.browse.DirectoryEntry;
-import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNException;
@@ -359,14 +357,11 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
 
     public SvnRepositoryContentRevision createRevisionLazily(final String path, final boolean isBeforeRevision) {
       final boolean knownAsDirectory = myKnownAsDirectories.contains(path);
-      final FilePath localPath = getLocalPath(path, new NotNullFunction<File, Boolean>() {
-        @NotNull
-        public Boolean fun(final File file) {
-          if (knownAsDirectory) return Boolean.TRUE;
-          // list will be next
-          myWithoutDirStatus.add(new Pair<>(myList.size(), isBeforeRevision));
-          return Boolean.FALSE;
-        }
+      final FilePath localPath = getLocalPath(path, file -> {
+        if (knownAsDirectory) return Boolean.TRUE;
+        // list will be next
+        myWithoutDirStatus.add(new Pair<>(myList.size(), isBeforeRevision));
+        return Boolean.FALSE;
       });
       long revision = getRevision(isBeforeRevision);
       return localPath == null
@@ -489,16 +484,12 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       SVNRevision revisionNumber = SVNRevision.create(getRevision(isBefore));
       SvnTarget target = SvnTarget.fromURL(fullPath, revisionNumber);
 
-      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, Depth.INFINITY, new DirectoryEntryConsumer() {
+      myVcs.getFactory(target).createBrowseClient().list(target, revisionNumber, Depth.INFINITY, entry -> {
+        final String childPath = path + '/' + entry.getRelativePath();
 
-        @Override
-        public void consume(final DirectoryEntry entry) throws SVNException {
-          final String childPath = path + '/' + entry.getRelativePath();
-
-          if (!duplicates.contains(Pair.create(isBefore, childPath))) {
-            final ContentRevision contentRevision = createRevision(childPath, isBefore, entry.isDirectory());
-            result.add(new Change(isBefore ? contentRevision : null, isBefore ? null : contentRevision));
-          }
+        if (!duplicates.contains(Pair.create(isBefore, childPath))) {
+          final ContentRevision contentRevision1 = createRevision(childPath, isBefore, entry.isDirectory());
+          result.add(new Change(isBefore ? contentRevision1 : null, isBefore ? null : contentRevision1));
         }
       });
 

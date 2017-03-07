@@ -41,8 +41,6 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -71,23 +69,17 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     setTitle(SvnBundle.message("diff.options.title"));
     mySourceUrlLabel.setText(myURL.toString());
     myBrowser.setRepositoryURL(myRootURL, false);
-    myBrowser.addChangeListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        update();
-      }
-    });
+    myBrowser.addChangeListener(e -> update());
     myUIDiffButton.addActionListener(this);
     myUnifiedDiffButton.addActionListener(this);
     init();
-    myFileBrowser.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        File f = selectFile("Patch File", "Select file to store unified diff");
-        if (f != null) {
-          if (f.exists() && f.isDirectory()) {
-            f = new File(f, DEFAULT_PATCH_NAME);
-          }
-          myFileBrowser.setText(f.getAbsolutePath());
+    myFileBrowser.addActionListener(e -> {
+      File f = selectFile("Patch File", "Select file to store unified diff");
+      if (f != null) {
+        if (f.exists() && f.isDirectory()) {
+          f = new File(f, DEFAULT_PATCH_NAME);
         }
+        myFileBrowser.setText(f.getAbsolutePath());
       }
     });
     myFileBrowser.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

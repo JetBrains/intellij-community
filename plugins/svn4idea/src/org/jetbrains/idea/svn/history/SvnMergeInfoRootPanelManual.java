@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.IntegratedSelectedOptionsDialog;
@@ -39,8 +38,6 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,39 +77,29 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   private void initWithData() {
-    myInclude.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myListener.run();
-      }
-    });
+    myInclude.addActionListener(e -> myListener.run());
     myUrlText.setText(myInfo.getUrl().toString());
-    myFixedSelectLocal.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        if (mySelectedBranch != null) {
-          Pair<WorkingCopyInfo, SVNURL> info =
-            IntegratedSelectedOptionsDialog.selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl(), false, null, null);
-          if (info != null) {
-            calculateBranchPathByBranch(mySelectedBranch.getUrl(), info.getFirst().getLocalPath());
-          }
-
-          myListener.run();
+    myFixedSelectLocal.addActionListener(e -> {
+      if (mySelectedBranch != null) {
+        Pair<WorkingCopyInfo, SVNURL> info =
+          IntegratedSelectedOptionsDialog.selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl(), false, null, null);
+        if (info != null) {
+          calculateBranchPathByBranch(mySelectedBranch.getUrl(), info.getFirst().getLocalPath());
         }
+
+        myListener.run();
       }
     });
 
     myBranchField.getTextField().setEditable(false);
-    myBranchField.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final VirtualFile vf = SvnUtil.getVirtualFile(myInfo.getPath());
-        if (vf != null) {
-          SelectBranchPopup.show(myProject, vf, new SelectBranchPopup.BranchSelectedCallback() {
-            public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
-              refreshSelectedBranch(new WCInfoWithBranches.Branch(url));
-              calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
-              myListener.run();
-            }
-          }, SvnBundle.message("select.branch.popup.general.title"));
-        }
+    myBranchField.addActionListener(e -> {
+      final VirtualFile vf = SvnUtil.getVirtualFile(myInfo.getPath());
+      if (vf != null) {
+        SelectBranchPopup.show(myProject, vf, (project, configuration, url, revision) -> {
+          refreshSelectedBranch(new WCInfoWithBranches.Branch(url));
+          calculateBranchPathByBranch(mySelectedBranch.getUrl(), null);
+          myListener.run();
+        }, SvnBundle.message("select.branch.popup.general.title"));
       }
     });
 

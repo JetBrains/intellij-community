@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -135,16 +134,8 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     final Project project = mySvnVcs.getProject();
     final String message = SvnBundle.message("status.text.comitted.revision", committedRevisions);
     if (feedback == null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                                        public void run() {
-                                                          new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run();
-                                                        }
-                                                      }, new Condition<Object>() {
-        @Override
-        public boolean value(Object o) {
-          return (! project.isOpen()) || project.isDisposed();
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run(),
+                                                      o -> (!project.isOpen()) || project.isDisposed());
     } else {
       feedback.add("Subversion: " + message);
     }
@@ -207,11 +198,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       doCommit(committables, preparedComment, exception, feedback);
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          doCommit(committables, preparedComment, exception, feedback);
-        }
-      }, SvnBundle.message("progress.title.commit"), false, mySvnVcs.getProject());
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> doCommit(committables, preparedComment, exception, feedback), SvnBundle.message("progress.title.commit"), false,
+        mySvnVcs.getProject());
     }
     else {
       doCommit(committables, preparedComment, exception, feedback);

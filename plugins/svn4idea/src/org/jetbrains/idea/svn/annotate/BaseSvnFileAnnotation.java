@@ -176,11 +176,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
   public List<VcsFileRevision> getRevisions() {
     final List<VcsFileRevision> result = new ArrayList<>(myRevisionMap.values());
-    Collections.sort(result, new Comparator<VcsFileRevision>() {
-      public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
-        return o2.getRevisionNumber().compareTo(o1.getRevisionNumber());
-      }
-    });
+    Collections.sort(result, (o1, o2) -> o2.getRevisionNumber().compareTo(o1.getRevisionNumber()));
     return result;
   }
 

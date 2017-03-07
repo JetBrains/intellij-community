@@ -62,7 +62,7 @@ public class DocumentUndoProvider implements Disposable {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       Document document = e.getDocument();
-      if (shouldBeIgnored(document)) return;
+      if (!shouldProcess(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
       if (undoManager.isActive() && isUndoable(document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) && 
@@ -74,7 +74,7 @@ public class DocumentUndoProvider implements Disposable {
     @Override
     public void documentChanged(final DocumentEvent e) {
       Document document = e.getDocument();
-      if (shouldBeIgnored(document)) return;
+      if (!shouldProcess(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
       if (undoManager.isActive() && isUndoable(document)) {
@@ -85,11 +85,12 @@ public class DocumentUndoProvider implements Disposable {
       }
     }
     
-    private boolean shouldBeIgnored(Document document) {
-      return UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
-                                              // for the same event twice (from original document too)
-                                              // and undo will work incorrectly
-             || !shouldRecordActions(document);
+    private boolean shouldProcess(Document document) {
+      if (myProject != null && myProject.isDisposed()) return false;
+      return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
+             // for the same event twice (from original document too)
+             // and undo will work incorrectly
+             && shouldRecordActions(document);
     }
 
     private boolean shouldRecordActions(final Document document) {
@@ -116,11 +117,7 @@ public class DocumentUndoProvider implements Disposable {
       if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
         return true;
       }
-      else {
-        if (!UndoManagerImpl.isRefresh()) return true;
-      }
-
-      return getUndoManager().isUndoOrRedoAvailable(ref);
+      return !UndoManagerImpl.isRefresh() || getUndoManager().isUndoOrRedoAvailable(ref);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
 
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    if (!ParameterInfoController.isShownForEditor(editor)) return false;
+    if (!ParameterInfoController.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
@@ -49,7 +49,7 @@ public class PrevNextParameterHandler extends EditorActionHandler {
     if (exprList == null) return false;
 
     int lbraceOffset = exprList.getTextRange().getStartOffset();
-    return ParameterInfoController.isAlreadyShown(editor, lbraceOffset) &&
+    return ParameterInfoController.findControllerAtOffset(editor, lbraceOffset) != null &&
            ParameterInfoController.hasPrevOrNextParameter(editor, lbraceOffset, myIsNextParameterHandler);
   }
 

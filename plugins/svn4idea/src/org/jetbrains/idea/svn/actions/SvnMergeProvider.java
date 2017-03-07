@@ -58,53 +58,53 @@ public class SvnMergeProvider implements MergeProvider {
   @NotNull
   public MergeData loadRevisions(@NotNull final VirtualFile file) throws VcsException {
     final MergeData data = new MergeData();
-    VcsRunnable runnable = new VcsRunnable() {
-      public void run() throws VcsException {
-        File oldFile = null;
-        File newFile = null;
-        File workingFile = null;
-        boolean mergeCase = false;
-        SvnVcs vcs = SvnVcs.getInstance(myProject);
-        Info info = vcs.getInfo(file);
+    VcsRunnable runnable = () -> {
+      File oldFile = null;
+      File newFile = null;
+      File workingFile = null;
+      boolean mergeCase = false;
+      SvnVcs vcs = SvnVcs.getInstance(myProject);
+      Info info = vcs.getInfo(file);
 
-        if (info != null) {
-          oldFile = info.getConflictOldFile();
-          newFile = info.getConflictNewFile();
-          workingFile = info.getConflictWrkFile();
-          mergeCase = workingFile == null || workingFile.getName().contains("working");
-          // for debug
-          if (workingFile == null) {
-            LOG.info("Null working file when merging text conflict for " + file.getPath() + " old file: " + oldFile + " new file: " + newFile);
-          }
-          if (mergeCase) {
-            // this is merge case
-            oldFile = info.getConflictNewFile();
-            newFile = info.getConflictOldFile();
-            workingFile = info.getConflictWrkFile();
-          }
-          data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
-        } else {
-          throw new VcsException("Could not get info for " + file.getPath());
-        }
-        if (oldFile == null || newFile == null || workingFile == null) {
-          ByteArrayOutputStream bos = getBaseRevisionContents(vcs, file);
-          data.ORIGINAL = bos.toByteArray();
-          data.LAST = bos.toByteArray();
-          data.CURRENT = readFile(new File(file.getPath()));
-        }
-        else {
-          data.ORIGINAL = readFile(oldFile);
-          data.LAST = readFile(newFile);
-          data.CURRENT = readFile(workingFile);
+      if (info != null) {
+        oldFile = info.getConflictOldFile();
+        newFile = info.getConflictNewFile();
+        workingFile = info.getConflictWrkFile();
+        mergeCase = workingFile == null || workingFile.getName().contains("working");
+        // for debug
+        if (workingFile == null) {
+          LOG
+            .info("Null working file when merging text conflict for " + file.getPath() + " old file: " + oldFile + " new file: " + newFile);
         }
         if (mergeCase) {
-          final ByteArrayOutputStream contents = getBaseRevisionContents(vcs, file);
-          if (! Arrays.equals(contents.toByteArray(), data.ORIGINAL)) {
-            // swap base and server: another order of merge arguments
-            byte[] original = data.ORIGINAL;
-            data.ORIGINAL = data.LAST;
-            data.LAST = original;
-          }
+          // this is merge case
+          oldFile = info.getConflictNewFile();
+          newFile = info.getConflictOldFile();
+          workingFile = info.getConflictWrkFile();
+        }
+        data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
+      }
+      else {
+        throw new VcsException("Could not get info for " + file.getPath());
+      }
+      if (oldFile == null || newFile == null || workingFile == null) {
+        ByteArrayOutputStream bos = getBaseRevisionContents(vcs, file);
+        data.ORIGINAL = bos.toByteArray();
+        data.LAST = bos.toByteArray();
+        data.CURRENT = readFile(new File(file.getPath()));
+      }
+      else {
+        data.ORIGINAL = readFile(oldFile);
+        data.LAST = readFile(newFile);
+        data.CURRENT = readFile(workingFile);
+      }
+      if (mergeCase) {
+        final ByteArrayOutputStream contents = getBaseRevisionContents(vcs, file);
+        if (!Arrays.equals(contents.toByteArray(), data.ORIGINAL)) {
+          // swap base and server: another order of merge arguments
+          byte[] original = data.ORIGINAL;
+          data.ORIGINAL = data.LAST;
+          data.LAST = original;
         }
       }
     };

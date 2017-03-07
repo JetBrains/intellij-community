@@ -27,8 +27,6 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -79,11 +77,9 @@ public class MkdirOptionsDialog extends DialogWrapper {
       myCommitMessage.setText(lastMessage);
       myCommitMessage.selectAll();
     }
-    myMessagesBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myCommitMessage.setText(myMessagesBox.getSelectedItem().toString());
-        myCommitMessage.selectAll();
-      }
+    myMessagesBox.addActionListener(e -> {
+      myCommitMessage.setText(myMessagesBox.getSelectedItem().toString());
+      myCommitMessage.selectAll();
     });
   }
 

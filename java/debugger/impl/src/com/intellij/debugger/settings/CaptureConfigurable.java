@@ -16,6 +16,9 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.jdi.DecompiledLocalVariable;
+import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,10 +30,16 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
@@ -42,6 +51,7 @@ import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,7 +224,92 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     static final String[] COLUMN_NAMES =
       new String[]{"", "Capture class name", "Capture method name", "Capture key expression", "Insert class name", "Insert method name", "Insert key expression"};
-    List<CapturePoint> myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    List<CapturePoint> myCapturePoints;
+
+    private MyTableModel() {
+      myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+      scanPoints();
+    }
+
+    private void scanPoints() {
+      if (Registry.is("debugger.capture.points.annotations")) {
+        scanPointsInt(true);
+        scanPointsInt(false);
+      }
+    }
+
+    private void scanPointsInt(boolean capture) {
+      try {
+        String annotationName = (capture ? Debugger.Capture.class : Debugger.Insert.class).getName().replace("$", ".");
+        Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+        GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+        PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationName, allScope);
+        if (annotationClass != null) {
+          AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class).forEach(e -> {
+            if (e instanceof PsiMethod) {
+              addCapturePointIfNeeded(e, (PsiMethod)e, annotationName, "this", capture);
+            }
+            else if (e instanceof PsiParameter) {
+              PsiParameter psiParameter = (PsiParameter)e;
+              PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
+              addCapturePointIfNeeded(psiParameter, psiMethod, annotationName,
+                                      DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
+                                      capture);
+            }
+          });
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    private void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
+                                         PsiMethod psiMethod,
+                                         String annotationName,
+                                         String defaultExpression,
+                                         boolean capture) {
+      CapturePoint capturePoint = new CapturePoint();
+      capturePoint.myEnabled = false;
+      if (capture) {
+        capturePoint.myClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
+        capturePoint.myMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
+      }
+      else {
+        capturePoint.myInsertClassName = JVMNameUtil.getNonAnonymousClassName(psiMethod.getContainingClass());
+        capturePoint.myInsertMethodName = JVMNameUtil.getJVMMethodName(psiMethod);
+      }
+
+      PsiModifierList modifierList = psiElement.getModifierList();
+      if (modifierList != null) {
+        PsiAnnotation annotation = modifierList.findAnnotation(annotationName);
+        if (annotation != null) {
+          PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("keyExpression");
+          String keyExpression = attributeValue != null ? StringUtil.unquoteString(attributeValue.getText()) : null;
+          if (StringUtil.isEmpty(keyExpression)) {
+            keyExpression = defaultExpression;
+          }
+          if (capture) {
+            capturePoint.myCaptureKeyExpression = keyExpression;
+          }
+          else {
+            capturePoint.myInsertKeyExpression = keyExpression;
+          }
+        }
+      }
+
+      CapturePoint clone = capturePoint;
+      try {
+        clone = capturePoint.clone();
+        clone.myEnabled = !clone.myEnabled;
+      }
+      catch (CloneNotSupportedException e) {
+        LOG.error(e);
+      }
+      if (!myCapturePoints.contains(capturePoint) && !myCapturePoints.contains(clone)) {
+        myCapturePoints.add(capturePoint);
+      }
+    }
 
     public String getColumnName(int column) {
       return COLUMN_NAMES[column];
@@ -325,6 +420,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
   public void reset() {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
+    myTableModel.scanPoints();
     myTableModel.fireTableDataChanged();
   }
 

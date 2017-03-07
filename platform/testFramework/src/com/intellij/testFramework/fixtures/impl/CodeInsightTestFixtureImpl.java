@@ -27,6 +27,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
+import com.intellij.codeInsight.hints.InlayInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
@@ -1703,6 +1704,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     finally {
       checker.tearDown();
     }
+  }
+
+  @Override
+  public void checkResultWithInlays(String text) {
+    Document checkDocument = new DocumentImpl(text);
+    InlayHintsChecker checker = new InlayHintsChecker(this);
+    List<InlayInfo> inlayInfos = checker.extractInlays(checkDocument);
+    checkResult(checkDocument.getText());
+    checker.verifyInlays(inlayInfos, text);
   }
 
   @Override

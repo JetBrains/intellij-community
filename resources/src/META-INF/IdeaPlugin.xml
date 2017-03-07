@@ -1905,6 +1905,8 @@
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.GuavaFluentIterableChainCallExtractor"/>
 
     <diff.lang.DiffIgnoredRangeProvider implementation="com.intellij.diff.lang.JavaDiffIgnoredRangeProvider"/>
+
+    <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchActionPromoter" />
   </extensions>
 
   <actions>
@@ -1926,6 +1928,10 @@
     <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
+
+    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
+    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
+
   </actions>
 
 </idea-plugin>

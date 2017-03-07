@@ -146,7 +146,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         String newText = myAnnotations.remove(offset);
         String oldText = presentationManager.getHintText(inlay);
         
-        if (delayRemoval(inlay, caretMap)) continue;
+        if (delayRemoval(inlay, caretMap) || presentationManager.isPinned(inlay)) continue;
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);
@@ -160,7 +160,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       for (Map.Entry<Integer, String> e : myAnnotations.entrySet()) {
         int offset = e.getKey();
         String text = e.getValue();
-        presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text));
+        presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text), false);
       }
       keeper.restoreOriginalLocation();
       myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);

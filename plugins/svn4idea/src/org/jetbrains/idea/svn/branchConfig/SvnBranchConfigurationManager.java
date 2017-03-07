@@ -62,18 +62,11 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     // TODO: for DefaultConfigLoader it would be better to run modal cancellable task - so branches structure could be detected and
     // TODO: shown in dialog. Currently when "Configure Branches" is invoked for the first time - no branches are shown.
     // TODO: If "Cancel" is pressed and "Configure Branches" invoked once again - already detected (in background) branches are shown.
-    ((ProjectLevelVcsManagerImpl) vcsManager).addInitializationRequest(VcsInitObject.BRANCHES, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            myBranchesLoader.start();
-          }
-        });
-      }
-    });
+    ((ProjectLevelVcsManagerImpl)vcsManager)
+      .addInitializationRequest(VcsInitObject.BRANCHES, () -> ApplicationManager.getApplication().runReadAction(() -> {
+        if (myProject.isDisposed()) return;
+        myBranchesLoader.start();
+      }));
     myBunch = new NewRootBunch(project, myBranchesLoader);
   }
 
@@ -189,22 +182,17 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   private void preloadBranches(@NotNull final Collection<Pair<VirtualFile, SvnBranchConfigurationNew>> branchPoints) {
-    ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.BRANCHES, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          public void run() {
-            try {
-              for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : branchPoints) {
-                myBunch.reloadBranches(pair.getFirst(), null, pair.getSecond());
-              }
-            }
-            catch (ProcessCanceledException e) {
-              //
-            }
+    ((ProjectLevelVcsManagerImpl)myVcsManager)
+      .addInitializationRequest(VcsInitObject.BRANCHES, () -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          for (Pair<VirtualFile, SvnBranchConfigurationNew> pair : branchPoints) {
+            myBunch.reloadBranches(pair.getFirst(), null, pair.getSecond());
           }
-        });
-      }
-    });
+        }
+        catch (ProcessCanceledException e) {
+          //
+        }
+      }));
   }
 
   private List<SvnBranchItem> getStored(String branchUrl) {

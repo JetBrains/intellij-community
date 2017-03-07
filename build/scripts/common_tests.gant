@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,12 @@ target(compile: "Compile project") {
 
   loadProject()
   prepareOutputFolder()
+
+  if (System.getProperty("tests.only")) {
+    ant.delete(dir: "$home/out")
+    ant.unzip(src: "$home/out.zip", dest: "$home/out")
+    return
+  }
 
   if (!isDefined("avoid.project.rebuild")) {
     clearBuildCaches()

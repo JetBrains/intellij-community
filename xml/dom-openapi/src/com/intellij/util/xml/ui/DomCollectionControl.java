@@ -145,7 +145,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
   }
 
-  @Nullable
+  @Nullable @NonNls
   protected String getHelpId() {
     return null;
   }

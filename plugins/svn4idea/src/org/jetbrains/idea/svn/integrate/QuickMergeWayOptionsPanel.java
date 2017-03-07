@@ -21,7 +21,6 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
@@ -59,12 +58,9 @@ public class QuickMergeWayOptionsPanel {
   }
 
   private ActionListener setCodeAndClose(@NotNull QuickMergeContentsVariants variant) {
-    return new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myVariant = variant;
-        close();
-      }
+    return e -> {
+      myVariant = variant;
+      close();
     };
   }
 

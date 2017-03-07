@@ -38,12 +38,9 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.Collection;
 import java.util.TreeSet;
@@ -126,13 +123,11 @@ public class SetPropertyDialog extends DialogWrapper {
     else {
       myPropertyNameBox.getEditor().setItem("");
     }
-    myPropertyNameBox.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          String name = getPropertyName();
-          updatePropertyValue(name);
-          getOKAction().setEnabled(name != null && !"".equals(name.trim()));
-        }
+    myPropertyNameBox.addItemListener(e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        String name = getPropertyName();
+        updatePropertyValue(name);
+        getOKAction().setEnabled(name != null && !"".equals(name.trim()));
       }
     });
     Component editor = myPropertyNameBox.getEditor().getEditorComponent();
@@ -188,14 +183,12 @@ public class SetPropertyDialog extends DialogWrapper {
       myPropertyNameBox.getEditor().setItem(myPropertyName);
       myPropertyNameBox.getEditor().selectAll();
     }
-    mySetPropertyButton.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        if (mySetPropertyButton.isSelected()) {
-          myValueText.setEnabled(true);
-        }
-        else {
-          myValueText.setEnabled(false);
-        }
+    mySetPropertyButton.addChangeListener(e -> {
+      if (mySetPropertyButton.isSelected()) {
+        myValueText.setEnabled(true);
+      }
+      else {
+        myValueText.setEnabled(false);
       }
     });
     myRecursiveButton.setEnabled(myIsRecursionAllowed);

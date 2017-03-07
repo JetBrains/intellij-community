@@ -44,8 +44,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.branchConfig.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.status.Status;
-import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -375,17 +373,14 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     File rootFile = root.getIOFile();
 
     myVcs.getFactory(rootFile).createStatusClient()
-      .doStatus(rootFile, SVNRevision.UNDEFINED, Depth.INFINITY, true, false, false, false, new StatusConsumer() {
-        @Override
-        public void consume(Status status) throws SVNException {
-          File file = status.getFile();
-          boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
-                                    isNotNone(status.getRemoteNodeStatus()) ||
-                                    isNotNone(status.getRemotePropertiesStatus());
+      .doStatus(rootFile, SVNRevision.UNDEFINED, Depth.INFINITY, true, false, false, false, status -> {
+        File file = status.getFile();
+        boolean changedOnServer = isNotNone(status.getRemoteContentsStatus()) ||
+                                  isNotNone(status.getRemoteNodeStatus()) ||
+                                  isNotNone(status.getRemotePropertiesStatus());
 
-          if (file != null && changedOnServer) {
-            result.add(VcsUtil.getFilePath(file));
-          }
+        if (file != null && changedOnServer) {
+          result.add(VcsUtil.getFilePath(file));
         }
       }, null);
 

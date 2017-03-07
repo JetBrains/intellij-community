@@ -197,12 +197,9 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       myWait.notifyAll();
 
       myGuard.connectionDestroyed(listForClose.size());
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          for (SVNRepository repository : listForClose) {
-            repository.closeSession();
-          }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        for (SVNRepository repository : listForClose) {
+          repository.closeSession();
         }
       });
     }

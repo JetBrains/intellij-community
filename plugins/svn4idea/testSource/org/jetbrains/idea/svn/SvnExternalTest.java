@@ -178,13 +178,8 @@ public class SvnExternalTest extends Svn17TestCase {
   }
 
   private void setNewDirectoryMappings(final File sourceDir) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-          Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
+      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName()))));
   }
 
   @Test

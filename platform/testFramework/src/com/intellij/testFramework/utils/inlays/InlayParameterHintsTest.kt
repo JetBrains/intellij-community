@@ -17,7 +17,6 @@ package com.intellij.testFramework.utils.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.InlayInfo
-import com.intellij.codeInsight.hints.InlayParameterHintsExtension
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
@@ -57,10 +56,17 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     val document = myFixture.getDocument(file)
     val originalText = document.text
     val expectedInlays: List<InlayInfo> = extractInlays(document)
+    myFixture.doHighlighting();
+    verifyInlays(expectedInlays, originalText)
+  }
+
+  fun verifyInlays(expectedInlays : List<InlayInfo>, originalText: String) {
+    val file = myFixture.file
+    val document = myFixture.getDocument(file)
     val actual: List<Pair<Int, String>> = getActualInlays()
-    
+
     val expected = expectedInlays.map { Pair(it.offset, it.text) }
-    
+
     if (expectedInlays.size != actual.size || actual.zip(expected).any { it.first != it.second }) {
       val proposedText = StringBuilder(document.text)
       actual.asReversed().forEach { proposedText.insert(it.first, "<hint text=\"${it.second}\" />") }
@@ -70,9 +76,8 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
       } ?: throw ComparisonFailure("Hints differ", originalText, proposedText.toString())
     }
   }
-  
+
   private fun getActualInlays(): List<Pair<Int, String>> {
-    myFixture.doHighlighting()
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
 

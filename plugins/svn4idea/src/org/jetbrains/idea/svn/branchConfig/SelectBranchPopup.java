@@ -168,25 +168,13 @@ public class SelectBranchPopup {
     @Override
     public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
       if (CONFIGURE_MESSAGE.equals(selectedValue)) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            BranchConfigurationDialog.configureBranches(myProject, myVcsRoot);
-          }
-        });
+        return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
       }
       else if (myTrunkString.equals(selectedValue)) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            myCallback.branchSelected(myProject, myConfiguration, myConfiguration.getTrunkUrl(), -1);
-          }
-        });
+        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, myConfiguration.getTrunkUrl(), -1));
       }
       else if (!myTopLevel || selectedValue.equals(myConfiguration.getTrunkUrl())) {
-        return doFinalStep(new Runnable() {
-          public void run() {
-            myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1);
-          }
-        });
+        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1));
       }
       else {
         showBranchPopup(selectedValue);
@@ -238,35 +226,18 @@ public class SelectBranchPopup {
         .setTitle(SVNPathUtil.tail(selectedValue))
         .setResizable(true)
         //.setDimensionServiceKey("Svn.CompareWithBranchPopup")
-        .setItemChoosenCallback(new Runnable() {
-          public void run() {
-            if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  loadBranches(selectedValue, new Runnable() {
-                    @Override
-                    public void run() {
-                      showBranchPopup(selectedValue);
-                    }
-                  });
-                }
-              });
-              return;
-            }
-            SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
-            if (item != null) {
-              myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
-            }
+        .setItemChoosenCallback(() -> {
+          if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
+            SwingUtilities.invokeLater(() -> loadBranches(selectedValue, () -> showBranchPopup(selectedValue)));
+            return;
+          }
+          SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
+          if (item != null) {
+            myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
           }
         })
-        .setFilteringEnabled(new NullableFunction<Object, String>() {
-          @Nullable
-          @Override
-          public String fun(Object item) {
-            return item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null;
-          }
-        })
+        .setFilteringEnabled(
+          (NullableFunction<Object, String>)item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
         .createPopup();
       showPopupAt(popup);
     }
