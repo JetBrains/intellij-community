@@ -37,7 +37,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
 
-private val chromeVersionFromUserAgent = Pattern.compile(" Chrome/([\\d.]+) ")
+val chromeVersionFromUserAgent: Pattern = Pattern.compile(" Chrome/([\\d.]+) ")
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
