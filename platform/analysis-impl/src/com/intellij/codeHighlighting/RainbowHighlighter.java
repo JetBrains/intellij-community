@@ -114,6 +114,25 @@ public class RainbowHighlighter {
     return RAINBOW_TYPE + " " + (language == null ? UIBundle.message("color.settings.common.default.language") : language.getID());
   }
 
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isRainbowKey(@Nullable Object key) {
+    return key instanceof String && ((String)key).startsWith(RAINBOW_TYPE);
+  }
+
+  public static void transferRainbowState(@NotNull SchemeMetaInfo dst, @NotNull SchemeMetaInfo src) {
+    final Properties dstProps = dst.getMetaProperties();
+    dstProps.keySet().forEach((key) -> {
+      if (isRainbowKey(key)) {
+        dstProps.remove(key);
+      }
+    });
+    src.getMetaProperties().forEach((Object key, Object value) -> {
+      if (isRainbowKey(key) && value instanceof String) {
+        dstProps.setProperty((String)key, (String)value);
+      }
+    });
+  }
+  
   @NotNull
   public static String generatePaletteExample(@NotNull String indent) {
     int stopCount = RAINBOW_COLOR_KEYS.length;

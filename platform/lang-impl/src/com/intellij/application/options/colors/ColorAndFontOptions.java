@@ -19,6 +19,7 @@ package com.intellij.application.options.colors;
 import com.intellij.application.options.OptionsContainingConfigurable;
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.LafManagerImpl;
@@ -593,7 +594,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
                                        @NotNull MyColorScheme scheme) {
     String group = provider.getDisplayName();
     List<AttributesDescriptor> attributeDescriptors = ColorSettingsUtil.getAllAttributeDescriptors(provider);
-    //todo: single point configuration?
     if (provider instanceof RainbowColorSettingsPage) {
       descriptions.add(new RainbowAttributeDescriptor(((RainbowColorSettingsPage)provider).getLanguage(),
                                                       group,
@@ -603,17 +603,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
     for (AttributesDescriptor descriptor : attributeDescriptors) {
       addSchemedDescription(descriptions, descriptor.getDisplayName(), group, descriptor.getKey(), scheme, null, null);
-    //  if (provider instanceof RainbowColorSettingsPage
-    //      && ((RainbowColorSettingsPage)provider).isRainbowType(descriptor.getKey())) {
-    //    //todo: joined sub-descriptor?
-    //    descriptions.add(new RainbowAttributeDescriptor(group,
-    //                                                    descriptor.getDisplayName()
-    //                                                    + EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR
-    //                                                    + ApplicationBundle.message("rainbow.option.panel.display.name"),
-    //                                                    scheme,
-    //                                                    scheme.getInitRainbowState(),
-    //                                                    scheme.getCurrentRainbowState()));
-    //  }
     }
 
     ColorDescriptor[] colorDescriptors = provider.getColorDescriptors();
@@ -1101,8 +1090,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
       myName = parentScheme.getName();
 
-      //noinspection UseOfPropertiesAsHashtable
-      getMetaProperties().putAll(parentScheme.getMetaProperties());
+      RainbowHighlighter.transferRainbowState(this, parentScheme);
       myRainbowState = new RainbowColorsInSchemeState(this, parentScheme);
 
       initFonts();

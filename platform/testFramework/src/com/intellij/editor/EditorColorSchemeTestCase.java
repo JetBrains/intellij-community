@@ -15,6 +15,7 @@
  */
 package com.intellij.editor;
 
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -23,6 +24,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.input.DOMBuilder;
 import org.jdom.output.Format;
@@ -88,6 +90,24 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
     ((AbstractColorsScheme)scheme).writeExternal(root);
     fixPlatformSpecificValues(root);
     root.removeChildren("metaInfo");
+    return root;
+  }
+
+  protected Element serializeWithFixedMeta(@NotNull EditorColorsScheme scheme) {
+    Element root = new Element("scheme");
+    ((AbstractColorsScheme)scheme).writeExternal(root);
+    fixPlatformSpecificValues(root);
+    Element metaInfo = root.getChild("metaInfo");
+    if (metaInfo != null) {
+      metaInfo.getChildren().forEach((child) -> {
+        Attribute name = child.getAttribute("name");
+        if (!child.getName().equals("property")
+            || name == null
+            || !RainbowHighlighter.isRainbowKey(name.getValue())) {
+          child.removeContent();
+        }
+      });
+    }
     return root;
   }
 
