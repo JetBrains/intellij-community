@@ -357,7 +357,7 @@ class PyDBFrame:
             line_cache_key = (frame_cache_key, line)
 
             if main_debugger._finish_debugging_session:
-                    return None
+                return None
 
             plugin_manager = main_debugger.plugin
 
