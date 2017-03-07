@@ -53,6 +53,7 @@ public class CompletionLookupArranger extends LookupArranger {
     return invariant.compareTo(PRESENTATION_INVARIANT.get(o2));
   };
   static final int MAX_PREFERRED_COUNT = 5;
+  public static final String OVERFLOW_MESSAGE = "Not all variants are shown, please type more letters to see the rest";
   public static final Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
@@ -189,7 +190,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     if (!myOverflow) {
       myOverflow = true;
-      myProcess.addAdvertisement("Not all variants are shown, please type more letters to see the rest", null);
+      myProcess.addAdvertisement(OVERFLOW_MESSAGE, null);
 
       // restart completion on any prefix change
       myProcess.addWatchedPrefix(0, StandardPatterns.string());
