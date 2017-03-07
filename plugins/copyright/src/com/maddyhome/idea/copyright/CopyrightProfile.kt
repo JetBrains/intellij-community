@@ -42,6 +42,9 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
   var keyword by string(EntityUtil.encode("Copyright"))
   var allowReplaceRegexp by string()
 
+  @Deprecated("use allowReplaceRegexp instead", ReplaceWith(""))
+  internal var allowReplaceKeyword by string()
+
   init {
     // otherwise will be as default value and name will be not serialized
     this.profileName = profileName

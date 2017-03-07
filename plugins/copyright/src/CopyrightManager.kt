@@ -264,6 +264,15 @@ private class CopyrightLazySchemeWrapper(name: String,
     }
 
     element.deserializeInto(scheme)
+
+    @Suppress("DEPRECATION")
+    val allowReplaceKeyword = scheme.allowReplaceKeyword
+    if (allowReplaceKeyword != null && scheme.allowReplaceRegexp == null) {
+      scheme.allowReplaceRegexp = StringUtil.escapeToRegexp(allowReplaceKeyword)
+      @Suppress("DEPRECATION")
+      scheme.allowReplaceKeyword = null
+    }
+
     scheme.resetModificationCount()
     dataHolder.updateDigest(writer(scheme))
     scheme
