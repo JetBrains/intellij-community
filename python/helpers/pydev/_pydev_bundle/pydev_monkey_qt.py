@@ -16,6 +16,10 @@ def patch_qt(qt_support_mode):
     if not qt_support_mode:
         return
 
+    if qt_support_mode is True or qt_support_mode == 'True':
+        # do not break backward compatibility
+        qt_support_mode = 'auto'
+
     # Avoid patching more than once
     global _patched_qt
     if _patched_qt:
