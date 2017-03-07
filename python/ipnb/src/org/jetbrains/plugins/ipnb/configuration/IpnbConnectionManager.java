@@ -410,7 +410,6 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
                         @Override
                         public void run(@NotNull ProgressIndicator indicator) {
                           try {
-                            PyPackageManager.getInstance(sdk).install("ipython");
                             PyPackageManager.getInstance(sdk).install("jupyter");
                             showMessage(fileEditor, "Jupyter successfully installed", null, MessageType.INFO);
                           }
