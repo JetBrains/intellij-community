@@ -4,6 +4,7 @@ import com.intellij.debugger.streams.remote.InvokeMethodProxy;
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.smart.handler.HandlerFactory;
+import com.intellij.debugger.streams.trace.smart.handler.PeekCall;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.impl.ResolverFactory;
@@ -77,6 +78,7 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
 
       tracingChainCalls.addAll(callsBefore);
       tracingChainCalls.add(call);
+      tracingChainCalls.add(new PeekCall("x -> time.incrementAndGet()"));
       tracingChainCalls.addAll(callsAfter);
     }
 

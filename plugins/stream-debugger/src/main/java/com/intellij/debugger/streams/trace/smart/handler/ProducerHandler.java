@@ -25,7 +25,7 @@ public class ProducerHandler extends HandlerBase {
   @NotNull
   @Override
   public List<StreamCall> additionalCallsAfter() {
-    return Collections.singletonList(new PeekCall("x -> time.incrementAndGet()"));
+    return Collections.emptyList();
   }
 
   @NotNull
