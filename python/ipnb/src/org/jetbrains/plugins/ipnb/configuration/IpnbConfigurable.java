@@ -144,7 +144,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
 
   private void createUIComponents() {
     // TODO: remove this hack
-    int gap = SystemInfo.isWindows ? 1 : 2;
+    int gap = SystemInfo.isWindows ? 4 : SystemInfo.isMac ? 8 : 16;
     mySpecificNotebookSettingsPanel = PlatformUtils.isPyCharmPro() ? new SettingsPanelPro() : new LocalSettingsPanel(true, 0, gap);
   }
   
@@ -171,7 +171,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
       myRemote = createModeRadioButton("Remote");
 
       myRemoteSettingsPanel = new RemoteSettingsPanel(isRemote);
-      myLocalSettingsPanel = new LocalSettingsPanel(!isRemote, DEFAULT_PADDING, 1);
+      myLocalSettingsPanel = new LocalSettingsPanel(!isRemote, DEFAULT_PADDING, 2);
       
       final ButtonGroup group = new ButtonGroup();
       myLocal.setSelected(!isRemote);
@@ -280,8 +280,8 @@ public class IpnbConfigurable implements SearchableConfigurable {
       myAdditionalOptions.addFocusListener(createInitialTextFocusAdapter(myAdditionalOptions, DEFAULT_PARAMETERS_TEXT));
       initFields();
       
-      setLayout(new MigLayout("insets 0", leftPadding + "unrel[]" + gap + "unrel[grow]", "[][]"));
-      add(myParametersLabel);
+      setLayout(new MigLayout("insets 0", leftPadding + "unrel[][grow]", "[][]"));
+      add(myParametersLabel, "gapafter " + gap);
       add(myAdditionalOptions, "growx");
       if (enabled) {
         enablePanel();
@@ -351,8 +351,8 @@ public class IpnbConfigurable implements SearchableConfigurable {
       myInterpreterSetupLinkLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
       createNavigateToInterpreterSettingsListener().installOn(myInterpreterSetupLinkLabel);
 
-     
-      setLayout(new MigLayout("insets 0", DEFAULT_PADDING + "unrel[]5unrel[grow]", "[][][]"));
+      int gap = SystemInfo.isMac ? 6 : 5;
+      setLayout(new MigLayout("insets 0", DEFAULT_PADDING + "unrel[]" + gap + "unrel[grow]", "[][][]"));
       myUsernameLabel = new JBLabel("Username:");
       myUsernameField = new JBTextField();
       myUsernameField.addFocusListener(createInitialTextFocusAdapter(myUsernameField, DEFAULT_USERNAME_TEXT));
