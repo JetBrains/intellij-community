@@ -196,11 +196,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @Nullable
   @Override
-  public Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element) {
+  public Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
     if (!isServiceEnabledFor(element)) return null;
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(calculateOccurrenceCount(element),
+                                                () -> CachedValueProvider.Result.create(calculateOccurrenceCount(element, isConstructorSuggestion),
                                                                                         PsiModificationTracker.MODIFICATION_COUNT,
                                                                                         this));
     }
@@ -209,17 +209,40 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     }
   }
 
-  private Integer calculateOccurrenceCount(@NotNull PsiElement element) {
-    final CompilerElementInfo searchElementInfo = asCompilerElements(element, false);
+  private Integer calculateOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
+    LanguageLightRefAdapter adapter = null;
+    if (isConstructorSuggestion) {
+      adapter = ReadAction.compute(() -> LanguageLightRefAdapter.findAdapter(element));
+      if (!adapter.isClass(element)) {
+        return null;
+      }
+    }
+    final CompilerElementInfo searchElementInfo = asCompilerElements(element, false, false);
     if (searchElementInfo == null) return null;
+
 
     myReadDataLock.lock();
     try {
       if (myReader == null) return null;
       try {
-        return myReader.getOccurrenceCount(searchElementInfo.searchElements[0]);
+        if (isConstructorSuggestion) {
+          int constructorOccurrences = 0;
+          for (PsiElement constructor : adapter.getInstantiableConstructors(element)) {
+            final LightRef lightConstructor = adapter.asLightUsage(constructor, myReader.getNameEnumerator());
+            if (lightConstructor != null) {
+              constructorOccurrences += myReader.getOccurrenceCount(lightConstructor);
+            }
+          }
+          final Integer anonymousCount = myReader.getAnonymousCount((LightRef.LightClassHierarchyElementDef)searchElementInfo.searchElements[0]);
+          return anonymousCount == null ? constructorOccurrences : (constructorOccurrences + anonymousCount);
+        } else {
+          return myReader.getOccurrenceCount(searchElementInfo.searchElements[0]);
+        }
       }
       catch (StorageException e) {
+        throw new RuntimeException(e);
+      }
+      catch (IOException e) {
         throw new RuntimeException(e);
       }
     } finally {
@@ -281,7 +304,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                @NotNull GlobalSearchScope useScope,
                                                                @NotNull FileType searchFileType,
                                                                @NotNull CompilerHierarchySearchType searchType) {
-    final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false);
+    final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false, true);
     if (searchElementInfo == null) return null;
     LightRef searchElement = searchElementInfo.searchElements[0];
 
@@ -311,7 +334,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @Nullable
   private TIntHashSet getReferentFileIds(@NotNull PsiElement element) {
-    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, true);
+    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, true, true);
     if (compilerElementInfo == null) return null;
 
     myReadDataLock.lock();
@@ -336,17 +359,21 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   @Nullable
-  private CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement, boolean buildHierarchyForLibraryElements) {
+  private CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement,
+                                                 boolean buildHierarchyForLibraryElements,
+                                                 boolean checkNotDirty) {
     myReadDataLock.lock();
     try {
       if (myReader == null) return null;
       VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
       if (file == null) return null;
       ElementPlace place = ElementPlace.get(file, myProjectFileIndex);
-      if (place == null || (place == ElementPlace.SRC && myDirtyScopeHolder.contains(file))) {
-        return null;
+      if (checkNotDirty) {
+        if (place == null || (place == ElementPlace.SRC && myDirtyScopeHolder.contains(file))) {
+          return null;
+        }
       }
-      final LanguageLightRefAdapter adapter = findAdapterForFileType(file.getFileType());
+      final LanguageLightRefAdapter adapter = LanguageLightRefAdapter.findAdapter(file);
       if (adapter == null) return null;
       final LightRef ref = adapter.asLightUsage(psiElement, myReader.getNameEnumerator());
       if (ref == null) return null;
@@ -410,15 +437,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return myProject;
   }
 
-  @Nullable
-  static LanguageLightRefAdapter findAdapterForFileType(@NotNull FileType fileType) {
-    for (LanguageLightRefAdapter adapter : LanguageLightRefAdapter.INSTANCES) {
-      if (adapter.getFileTypes().contains(fileType)) {
-        return adapter;
-      }
-    }
-    return null;
-  }
+
 
   private static void executeOnBuildThread(Runnable compilationFinished) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {

@@ -59,6 +59,17 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   @Override
+  public Tree visitNewClass(NewClassTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
+    if (node.getClassBody() == null) {
+      final Element element = collector.getReferencedElement(node);
+      if (element != null) {
+        collector.sinkReference(collector.asJavacRef(element));
+      }
+    }
+    return super.visitNewClass(node, collector);
+  }
+
+  @Override
   public Tree visitVariable(VariableTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null && element.getKind() == ElementKind.FIELD) {

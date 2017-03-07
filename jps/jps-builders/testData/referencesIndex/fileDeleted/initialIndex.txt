@@ -3,10 +3,10 @@ java.lang.Object -> Bar Foo
 
 Backward References:
 Bar in Bar Foo occurrences = 3
-Bar.<init>(0) in Bar occurrences = 1
+Bar.<init>(0) in Bar Foo occurrences = 2
 Bar.m(0) in Bar occurrences = 1
 Foo in Bar Foo occurrences = 3
-Foo.<init>(0) in Foo occurrences = 1
+Foo.<init>(0) in Bar Foo occurrences = 2
 Foo.m(0) in Foo occurrences = 1
 java.lang.Object.<init>(0) in Bar Foo occurrences = 2
 

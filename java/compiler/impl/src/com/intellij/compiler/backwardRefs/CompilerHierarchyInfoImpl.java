@@ -63,7 +63,7 @@ class CompilerHierarchyInfoImpl implements CompilerDirectHierarchyInfo {
   @NotNull
   public Stream<PsiElement> getHierarchyChildren() {
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    final LanguageLightRefAdapter adapter = ObjectUtils.notNull(CompilerReferenceServiceImpl.findAdapterForFileType(mySearchFileType));
+    final LanguageLightRefAdapter adapter = ObjectUtils.notNull(LanguageLightRefAdapter.findAdapter(mySearchFileType));
     return myCandidatePerFile
       .entrySet()
       .stream()

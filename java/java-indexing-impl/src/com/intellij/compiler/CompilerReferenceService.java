@@ -74,7 +74,7 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
    * @return count of references that were observed on compile-time (in the last compilation) or null if given element is not supported for some reason.
    */
   @Nullable
-  public abstract Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element);
+  public abstract Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element, boolean isConstructorCompletion);
 
   public abstract boolean isActive();
 

@@ -132,5 +132,9 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testOccurrences() {
     assertIndexOnRebuild("Foo.java", "Bar.java")
   }
+
+  fun testConstructors() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 

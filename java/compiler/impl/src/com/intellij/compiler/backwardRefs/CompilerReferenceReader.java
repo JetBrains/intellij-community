@@ -30,9 +30,9 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 
 import java.io.File;
@@ -80,7 +80,7 @@ class CompilerReferenceReader {
                                                  @NotNull FileType fileType,
                                                  @NotNull CompilerHierarchySearchType searchType) throws StorageException {
     GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
-    LanguageLightRefAdapter adapter = CompilerReferenceServiceImpl.findAdapterForFileType(fileType);
+    LanguageLightRefAdapter adapter = LanguageLightRefAdapter.findAdapter(fileType);
     LOG.assertTrue(adapter != null, "adapter is null for file type: " + fileType);
     Class<? extends LightRef> requiredLightRefClass = searchType.getRequiredClass(adapter);
 
@@ -97,6 +97,22 @@ class CompilerReferenceReader {
     return candidatesPerFile.isEmpty() ? Collections.emptyMap() : candidatesPerFile;
   }
 
+  @Nullable
+  Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef) throws StorageException {
+    if (hasMultipleDefinitions(classDef)) {
+      return null;
+    }
+    final int[] count = {0};
+    myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(classDef).forEach(new ValueContainer.ContainerAction<Collection<LightRef>>() {
+      @Override
+      public boolean perform(int id, Collection<LightRef> value) {
+        count[0] += value.size();
+        return true;
+      }
+    });
+    return count[0];
+  }
+
   @NotNull
   NameEnumerator getNameEnumerator() {
     return myIndex.getByteSeqEum();
@@ -110,12 +126,16 @@ class CompilerReferenceReader {
   }
 
   public int getOccurrenceCount(@NotNull LightRef element) throws StorageException {
-    final ValueContainer.ValueIterator<Integer> occurrenceIt = myIndex.get(CompilerIndices.BACK_USAGES).getData(element).getValueIterator();
-    int occurrenceCount = 0;
-    while (occurrenceIt.hasNext()) {
-      occurrenceCount += occurrenceIt.next();
-    }
-    return occurrenceCount;
+    int[] result = new int[]{0};
+    myIndex.get(CompilerIndices.BACK_USAGES).getData(element).forEach(
+      new ValueContainer.ContainerAction<Integer>() {
+        @Override
+        public boolean perform(int id, Integer value) {
+          result[0] += value;
+          return true;
+        }
+      });
+    return result[0];
   }
 
   static boolean exists(Project project) {
@@ -172,14 +192,7 @@ class CompilerReferenceReader {
       LightRef.NamedLightRef curClass = q.pullFirst();
       if (result.add(curClass)) {
         if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
-          DefCount count = getDefinitionCount(curClass);
-          if (count == DefCount.NONE) {
-            //diagnostic
-            String baseHierarchyElement = getNameEnumerator().getName(hierarchyElement.getName());
-            String curHierarchyElement = getNameEnumerator().getName(curClass.getName());
-            LOG.error("Can't get definition files for: " + curHierarchyElement + " base class: " + baseHierarchyElement);
-          }
-          if (count != DefCount.ONE) {
+          if (hasMultipleDefinitions(curClass)) {
             return null;
           }
         }
@@ -197,8 +210,7 @@ class CompilerReferenceReader {
   }
 
   private enum DefCount { NONE, ONE, MANY}
-  @NotNull
-  private DefCount getDefinitionCount(LightRef def) throws StorageException {
+  private boolean hasMultipleDefinitions(LightRef.NamedLightRef def) throws StorageException {
     DefCount[] result = new DefCount[]{DefCount.NONE};
     myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach(new ValueContainer.ContainerAction<Void>() {
       @Override
@@ -214,6 +226,11 @@ class CompilerReferenceReader {
         return false;
       }
     });
-    return result[0];
+    if (result[0] == DefCount.MANY) {
+      //diagnostic
+      String baseHierarchyElement = getNameEnumerator().getName(def.getName());
+      LOG.error("Can't get definition files for: " + baseHierarchyElement);
+    }
+    return result[0] == DefCount.MANY;
   }
 }

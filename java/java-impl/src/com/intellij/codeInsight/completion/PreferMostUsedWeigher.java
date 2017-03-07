@@ -18,14 +18,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.atomic.LongAdder;
 
 class PreferMostUsedWeigher extends LookupElementWeigher {
   private final CompilerReferenceService myCompilerReferenceService;
@@ -37,49 +33,23 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
     myConstructorSuggestion = constructorSuggestion;
   }
 
-  // optimization: do not event create weigher if compiler indices aren't available for now
+  // optimization: do not even create weigher if compiler indices aren't available for now
   @Nullable
   static PreferMostUsedWeigher create(@NotNull PsiElement position) {
     final CompilerReferenceService service = CompilerReferenceService.getInstance(position.getProject());
     return service.isActive() ? new PreferMostUsedWeigher(service, JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) : null;
   }
 
-  final static LongAdder l = new LongAdder();
-
   @Nullable
   @Override
   public Integer weigh(@NotNull LookupElement element) {
-    final long ms = System.currentTimeMillis();
     final PsiElement psi = ObjectUtils.tryCast(element.getObject(), PsiElement.class);
-    final Integer res;
     if (psi == null || !(psi.isPhysical())) {
-      res = null;
+      return null;
     }
     else {
-      if (myConstructorSuggestion && psi instanceof PsiClass) {
-        int _res = 0;
-        boolean add = true;
-        for (PsiMethod method : ((PsiClass)psi).getConstructors()) {
-          final Integer count = myCompilerReferenceService.getCompileTimeOccurrenceCount(method);
-          if (count != null) {
-            _res += count;
-          } else {
-            add = false;
-            break;
-          }
-        }
-        if (add) {
-          res = _res;
-        } else {
-          res = null;
-        }
-      }
-      else {
-        res = myCompilerReferenceService.getCompileTimeOccurrenceCount(psi);
-      }
+      final Integer occurrenceCount = myCompilerReferenceService.getCompileTimeOccurrenceCount(psi, myConstructorSuggestion);
+      return occurrenceCount == null ? null : - occurrenceCount;
     }
-    l.add(System.currentTimeMillis() - ms);
-    System.out.println("overhead " + l.longValue() + " for " + element);
-    return res;
   }
 }

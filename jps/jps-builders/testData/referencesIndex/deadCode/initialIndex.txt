@@ -11,6 +11,7 @@ java.lang.Object.<init>(0) in Bar occurrences = 1
 java.lang.System in Bar occurrences = 1
 java.lang.System.out in Bar occurrences = 1
 java.util.ArrayList in Bar occurrences = 1
+java.util.ArrayList.<init>(0) in Bar occurrences = 1
 
 Class Definitions:
 Bar in Bar

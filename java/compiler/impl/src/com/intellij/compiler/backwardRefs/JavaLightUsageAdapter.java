@@ -30,13 +30,14 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
   @NotNull
@@ -137,6 +138,25 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
       requiredIndices.add(funExpr);
     }
     return JavaCompilerElementRetriever.retrieveFunExpressionsByIndices(requiredIndices, file);
+  }
+
+  @Override
+  public boolean isClass(@NotNull PsiElement element) {
+    return element instanceof PsiClass;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement[] getInstantiableConstructors(@NotNull PsiElement aClass) {
+    if (!(aClass instanceof PsiClass)) {
+      throw new IllegalArgumentException("parameter should be an instance of PsiClass: " + aClass);
+    }
+    PsiClass theClass = (PsiClass)aClass;
+    if (theClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    return Stream.of(theClass.getConstructors()).filter(c -> !c.hasModifierProperty(PsiModifier.PRIVATE)).toArray(s -> PsiElement.ARRAY_FACTORY.create(s));
   }
 
   @Override
