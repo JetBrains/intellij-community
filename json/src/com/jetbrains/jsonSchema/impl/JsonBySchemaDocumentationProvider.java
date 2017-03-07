@@ -44,7 +44,7 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
   @Nullable
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element);
+    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element, myRootSchema);
     if (walker == null) return null;
 
     if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType())) {

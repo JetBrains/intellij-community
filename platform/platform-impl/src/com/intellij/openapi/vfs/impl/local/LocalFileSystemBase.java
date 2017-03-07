@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,10 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -643,6 +641,24 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
+  private static final List<String> ourRootPaths = new ArrayList<>();
+
+  {
+    List<String> persistentFsRoots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
+    sortRootsLongestFirst(persistentFsRoots);
+    for(String persistentFsRoot:persistentFsRoots) ourRootPaths.add(persistentFsRoot);
+  }
+
+  private static void sortRootsLongestFirst(List<String> persistentFsRoots) {
+    Collections.sort(persistentFsRoots, (o1, o2) -> o2.length() - o1.length());
+  }
+
+  @VisibleForTesting
+  public void registerCustomRootPath(@NotNull String path) {
+    ourRootPaths.add(path);
+    sortRootsLongestFirst(ourRootPaths);
+  }
+
   @NotNull
   @Override
   protected String extractRootPath(@NotNull final String path) {
@@ -653,6 +669,10 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    for(String customRootPath:ourRootPaths) {
+      if (path.startsWith(customRootPath)) return customRootPath;
     }
 
     if (SystemInfo.isWindows) {

@@ -16,11 +16,17 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.JavaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Pavel Dolgov
  */
 class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return LightCodeInsightFixtureTestCase.JAVA_9
+  }
 
   fun testVirtual() = doTestFirst(1, "m1", "pm1", "m2")
   fun testVirtualPrefixed() = doTest(1, "m1", "m2", "pm1")
@@ -33,9 +39,8 @@ class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
   fun testStaticGetter() = doTest(0, "psf1", "sf1", "sf2")
   fun testStaticSetter() = doTest(2, "psf1", "sf1", "sf2")
 
-  // TODO enable when the mock for jdk9 is available
-  fun _testVarHandle() = doTest(0, "f1", "pf1", "f2")
-  fun _testStaticVarHandle() = doTest(0, "psf1", "sf1", "sf2")
+  fun testVarHandle() = doTest(0, "f1", "pf1", "f2")
+  fun testStaticVarHandle() = doTest(0, "psf1", "sf1", "sf2")
 
   override fun getBasePath(): String {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/invokeHandle/"

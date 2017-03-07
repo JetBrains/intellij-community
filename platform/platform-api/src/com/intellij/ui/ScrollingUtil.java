@@ -606,18 +606,20 @@ public class ScrollingUtil {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        moveHome(table);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), target);
-    new MyScrollingAction(table) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        moveEnd(table);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), target);
+    if (!(focusParent instanceof JTextComponent)) {
+      new MyScrollingAction(table) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          moveHome(table);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), target);
+      new MyScrollingAction(table) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          moveEnd(table);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), target);
+    }
     new MyScrollingAction(table) {
       @Override
       public void actionPerformed(AnActionEvent e) {

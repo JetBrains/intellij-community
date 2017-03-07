@@ -52,7 +52,7 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element);
+    final JsonLikePsiWalker walker = JsonSchemaWalker.getWalker(element, myRootSchema);
     if (walker == null) return;
 
     final JsonPropertyAdapter firstProp = walker.getParentPropertyAdapter(element);
@@ -66,7 +66,7 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
     if (checkIfAlreadyProcessed(holder, firstProp.getDelegate())) return;
 
     final List<BySchemaChecker> checkers = new ArrayList<>();
-    JsonSchemaWalker.findSchemasForAnnotation(firstProp.getDelegate(), JsonSchemaWalker.getWalker(element), new JsonSchemaWalker.CompletionSchemesConsumer() {
+    JsonSchemaWalker.findSchemasForAnnotation(firstProp.getDelegate(), JsonSchemaWalker.getWalker(element, myRootSchema), new JsonSchemaWalker.CompletionSchemesConsumer() {
       @Override
       public void consume(boolean isName,
                           @NotNull JsonSchemaObject schema,

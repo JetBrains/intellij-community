@@ -27,6 +27,7 @@ import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.xmlb.annotations.Transient
+import org.jdom.Element
 
 const val DEFAULT_PROFILE_NAME = "Default"
 val BASE_PROFILE by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
@@ -120,6 +121,16 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   }
 
   protected abstract fun initialize(project: Project?)
+
+  fun copyFrom(profile: InspectionProfileImpl) {
+    var element = profile.writeScheme()
+    if (element.name == "component") {
+      element = element.getChild("profile")
+    }
+    readExternal(element)
+  }
+
+  abstract fun readExternal(element: Element)
 }
 
 fun createSimple(name: String, project: Project, toolWrappers: List<InspectionToolWrapper<*, *>>): InspectionProfileImpl {

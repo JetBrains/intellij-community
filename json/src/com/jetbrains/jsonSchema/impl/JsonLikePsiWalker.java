@@ -15,7 +15,6 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,6 @@ import java.util.Set;
  * @author Irina.Chernushina on 2/15/2017.
  */
 public interface JsonLikePsiWalker {
-  ExtensionPointName<JsonLikePsiWalker> EXTENSION_POINT_NAME = ExtensionPointName.create("Json.Like.Psi.Walker");
   boolean handles(@NotNull PsiElement element);
   boolean isName(PsiElement checkable);
   boolean isPropertyWithValue(@NotNull PsiElement element);

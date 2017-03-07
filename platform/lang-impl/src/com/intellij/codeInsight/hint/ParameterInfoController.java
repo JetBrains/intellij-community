@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
 
 public class ParameterInfoController implements Disposable {
   private final Project myProject;
@@ -431,14 +432,18 @@ public class ParameterInfoController implements Disposable {
           break;
         }
       }
-      if (hasPendingRequests) UIUtil.dispatchAllInvocationEvents();
+      if (hasPendingRequests) {
+        LockSupport.parkNanos(10_000_000);
+        UIUtil.dispatchAllInvocationEvents();
+      }
       else return;
+
     }
     throw new TimeoutException();
   }
 
   /**
-   * @return Point in layered pane coordinate system
+   * Returned Point is in layered pane coordinate system.
    */
   static Pair<Point, Short> chooseBestHintPosition(Project project,
                                                    Editor editor,

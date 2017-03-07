@@ -285,17 +285,18 @@ public class JsonSchemaWalker {
     return true;
   }
 
-  public static JsonLikePsiWalker getWalker(@NotNull final PsiElement element) {
-    return getJsonLikeThing(element, walker -> walker);
+  public static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
+    return getJsonLikeThing(element, walker -> walker, schemaObject);
   }
 
   @Nullable
   private static <T> T getJsonLikeThing(@NotNull final PsiElement element,
-                                        @NotNull Convertor<JsonLikePsiWalker, T> convertor) {
+                                        @NotNull Convertor<JsonLikePsiWalker, T> convertor,
+                                        JsonSchemaObject schemaObject) {
     final List<JsonLikePsiWalker> list = new ArrayList<>();
     list.add(JSON_ORIGINAL_PSI_WALKER);
-    final JsonLikePsiWalker[] extensions = Extensions.getExtensions(JsonLikePsiWalker.EXTENSION_POINT_NAME);
-    list.addAll(Arrays.asList(extensions));
+    final JsonLikePsiWalkerFactory[] extensions = Extensions.getExtensions(JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME);
+    list.addAll(Arrays.stream(extensions).map(extension -> extension.create(schemaObject)).collect(Collectors.toList()));
     for (JsonLikePsiWalker walker : list) {
       if (walker.handles(element)) return convertor.convert(walker);
     }

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ui.UIUtil;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
 
 public class CompletionHintsTest extends LightFixtureCompletionTestCase {
@@ -124,6 +125,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     long deadline = System.currentTimeMillis() + 60_000;
     while (ParameterHintsPresentationManager.getInstance().isAnimationInProgress(getEditor())) {
       if (System.currentTimeMillis() > deadline) fail("Too long waiting for animation to finish");
+      LockSupport.parkNanos(10_000_000);
       UIUtil.dispatchAllInvocationEvents();
     }
   }
