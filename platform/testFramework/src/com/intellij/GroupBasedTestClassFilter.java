@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -40,7 +42,7 @@ import java.util.regex.Pattern;
  *     {@link PatternListTestClassFilter#PatternListTestClassFilter(List) PatternListTestClassFilter};
  *   </li>
  *   <li>
- *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(java.io.Reader, java.util.List)};
+ *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(Reader, List)};
  *   </li>
  * </ul>
  */
