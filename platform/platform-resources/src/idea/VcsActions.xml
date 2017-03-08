@@ -83,8 +83,7 @@
     <group id="ChangesViewToolbar">
       <action id="ChangesView.Refresh" class="com.intellij.openapi.vcs.changes.actions.RefreshAction"
               icon="AllIcons.Actions.Refresh"/>
-      <action id="ChangesView.Commit" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction"
-              icon="AllIcons.Actions.Commit"/>
+      <reference ref="CheckinProject" />
       <reference ref="ChangesView.Revert"/>
       <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
               icon="AllIcons.General.Add"/>
@@ -105,7 +104,7 @@
     <group id="AlienCommitChangesDialog.AdditionalActions"/>
 
     <group id="ChangesViewPopupMenu">
-      <reference ref="ChangesView.Commit"/>
+      <reference ref="CheckinProject"/>
       <reference ref="ChangesView.Revert"/>
       <reference ref="ChangesView.Move"/>
       <reference ref="ChangesView.Diff"/>
@@ -344,7 +343,6 @@
       <reference ref="ChangesView.ApplyPatchFromClipboard"/>
       <reference ref="ChangesView.Revert"/>
       <reference ref="ChangesView.Refresh"/>
-      <reference ref="ChangesView.Commit"/>
       <reference ref="ChangesView.NewChangeList"/>
       <reference ref="ChangesView.RemoveChangeList"/>
       <reference ref="ChangesView.SetDefault"/>
