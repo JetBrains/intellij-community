@@ -43,7 +43,7 @@ public class JBPatch {
   public static void bspatch(InputStream oldFileIn, OutputStream newFileOut, InputStream diffFileIn)
     throws IOException {
 
-    int newpos;
+    int oldpos, newpos;
 
     byte[] diffData = Utils.readBytes(diffFileIn);
 
@@ -61,13 +61,6 @@ public class JBPatch {
     // size of new file at header offset 24 (length 8 bytes)
     int newsize = (int)diffIn.readLong();
 
-    /*
-                System.err.println ("newsize=" + newsize);
-                System.err.println ("ctrlBlockLen=" + ctrlBlockLen);
-                System.err.println ("diffBlockLen=" + diffBlockLen);
-                System.err.println ("newsize=" + newsize);
-                */
-
     InputStream in;
     in = new ByteArrayInputStream(diffData);
     in.skip(ctrlBlockLen + 32);
@@ -77,9 +70,21 @@ public class JBPatch {
     in.skip(diffBlockLen + ctrlBlockLen + 32);
     GZIPInputStream extraBlockIn = new GZIPInputStream(in);
 
-    byte[] oldBuf = new byte[block_size];
-    byte[] newBuf = new byte[block_size];
-    
+    ByteArrayOutputStream oldFileByteOut = new ByteArrayOutputStream();
+    try {
+      Utils.copyStream(oldFileIn, oldFileByteOut);
+    }
+    finally {
+      oldFileByteOut.close();
+    }
+
+    final byte[] oldBuf = oldFileByteOut.toByteArray();
+    final int oldsize = oldBuf.length;
+
+    oldFileByteOut = null; // avoid OOME, nullify reference to another large array with file content
+    final byte[] newBuf = new byte[block_size];
+
+    oldpos = 0;
     newpos = 0;
 
     while (newpos < newsize) {
@@ -92,27 +97,23 @@ public class JBPatch {
         return;
       }
 
-      int totalBytesRead = 0;
-
-      while (totalBytesRead < bytesToReadFromDiffAndOld) {
-        int nBytesFromDiff = diffBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromDiffAndOld - totalBytesRead));
+      int nbytes = 0;
+      while (nbytes < bytesToReadFromDiffAndOld) {
+        int nBytesFromDiff = diffBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromDiffAndOld - nbytes));
         if (nBytesFromDiff < 0) {
           System.err.println("error reading from diffBlockIn");
           return;
         }
-        int nbytesFromOld = oldFileIn.read(oldBuf, 0, Math.min(oldBuf.length, bytesToReadFromDiffAndOld - totalBytesRead));
-        if (nbytesFromOld < 0) {
-          System.err.println ("oldFileIn read failed prematurely. Read " + totalBytesRead + " bytes");
-          return;
-        }
 
+        int nbytesFromOld = Math.min(nBytesFromDiff, oldsize - oldpos);
         for (int i = 0; i < nbytesFromOld; ++i) {
-          newBuf[i] += oldBuf[i];
+          newBuf[i] += oldBuf[oldpos + i];
         }
 
-        totalBytesRead+=nbytesFromOld;
-        newpos += nbytesFromOld;
-        newFileOut.write(newBuf, 0, nbytesFromOld);
+        nbytes += nBytesFromDiff;
+        newpos += nBytesFromDiff;
+        oldpos += nBytesFromDiff;
+        Utils.writeBytes(newBuf, nBytesFromDiff, newFileOut);
       }
 
       if (bytesToReadFromExtraBlockIn > 0) {
@@ -121,23 +122,21 @@ public class JBPatch {
           return;
         }
 
-        totalBytesRead = 0;
-        while (totalBytesRead < bytesToReadFromExtraBlockIn) {
-          int nBytesFromExtraBlockIn = extraBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromExtraBlockIn - totalBytesRead));
+        nbytes = 0;
+        while (nbytes < bytesToReadFromExtraBlockIn) {
+          int nBytesFromExtraBlockIn = extraBlockIn.read(newBuf, 0, Math.min(newBuf.length, bytesToReadFromExtraBlockIn - nbytes));
           if (nBytesFromExtraBlockIn < 0) {
             System.err.println("error reading from extraBlockIn");
             return;
           }
 
-          totalBytesRead += nBytesFromExtraBlockIn;
+          nbytes += nBytesFromExtraBlockIn;
           newpos += nBytesFromExtraBlockIn;
-          newFileOut.write(newBuf, 0, nBytesFromExtraBlockIn);
+          Utils.writeBytes(newBuf, nBytesFromExtraBlockIn, newFileOut);
         }
       }
 
-      if (newpos < newsize && oldFileIn.skip(bytesToSkipFromOld) != bytesToSkipFromOld) {
-        System.err.println("error skipping in oldFileIn");
-      }
+      oldpos += bytesToSkipFromOld;
     }
 
     // TODO: Check if at end of ctrlIn

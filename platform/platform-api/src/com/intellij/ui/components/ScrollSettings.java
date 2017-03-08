@@ -37,6 +37,12 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 final class ScrollSettings {
   private static final RegistryValue PIXEL_PERFECT_SCROLLING = Registry.get("idea.true.smooth.scrolling.pixel.perfect");
   private static final RegistryValue HIGH_PRECISION_SCROLLING = Registry.get("idea.true.smooth.scrolling.high.precision");
+  private static final RegistryValue DEBUG_ENABLED = Registry.get("idea.true.smooth.scrolling.debug");
+  private static final RegistryValue BACKGROUND_FROM_VIEW = Registry.get("ide.scroll.background.auto");
+  private static final RegistryValue HEADER_OVER_CORNER = Registry.get("ide.scroll.layout.header.over.corner");
+  private static final RegistryValue GAP_NEEDED_FOR_ANY_COMPONENT = Registry.get("ide.scroll.align.component");
+  private static final RegistryValue HORIZONTAL_GAP_NEEDED_ON_MAC = Registry.get("mac.scroll.horizontal.gap");
+  private static final RegistryValue THUMB_SMALL_IF_OPAQUE = Registry.get("ide.scroll.thumb.small.if.opaque");
 
   static boolean isEligibleFor(Component component) {
     if (component == null || !component.isShowing()) return false;
@@ -56,6 +62,30 @@ final class ScrollSettings {
 
   static boolean isPixelPerfectEnabled() {
     return PIXEL_PERFECT_SCROLLING.asBoolean();
+  }
+
+  static boolean isDebugEnabled() {
+    return DEBUG_ENABLED.asBoolean();
+  }
+
+  static boolean isBackgroundFromView() {
+    return BACKGROUND_FROM_VIEW.asBoolean();
+  }
+
+  static boolean isHeaderOverCorner() {
+    return HEADER_OVER_CORNER.asBoolean();
+  }
+
+  static boolean isGapNeededForAnyComponent() {
+    return GAP_NEEDED_FOR_ANY_COMPONENT.asBoolean();
+  }
+
+  static boolean isHorizontalGapNeededOnMac() {
+    return HORIZONTAL_GAP_NEEDED_ON_MAC.asBoolean();
+  }
+
+  static boolean isThumbSmallIfOpaque() {
+    return THUMB_SMALL_IF_OPAQUE.asBoolean();
   }
 
   /* A heuristics that disables scrolling interpolation in diff / merge windows.

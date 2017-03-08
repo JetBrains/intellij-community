@@ -250,4 +250,16 @@ class C {
     if (i == 1) throw new E1();
     if (i == 2) throw new E2();
   }
+
+  private void m15() throws E1 {
+    try {
+      throw new E1();
+    }
+    catch (final E1 e1) {
+      throw e1;
+    }
+    catch (final E e) {
+      throw e;
+    }
+  }
 }

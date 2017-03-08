@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +38,6 @@ import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +55,10 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   @NonNls private static final String DIMENSION_SERVICE_KEY = "bookmarks";
 
   private JBPopup myPopup;
+
+  public BookmarksAction() {
+    setEnabledInModalContext(true);
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

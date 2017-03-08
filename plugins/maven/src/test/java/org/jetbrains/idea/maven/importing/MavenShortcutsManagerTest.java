@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.tasks;
+package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -24,6 +24,8 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
+import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 
 import java.util.Arrays;
 import java.util.List;

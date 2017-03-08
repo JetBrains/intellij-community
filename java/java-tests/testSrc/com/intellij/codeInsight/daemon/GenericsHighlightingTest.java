@@ -630,4 +630,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningWhenCastingFromCapturedWildcard() throws Exception {
     doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, true);
   }
+
+  public void testEnclosingRefInTopLevelClassExtendingInnerWhichExtendsItsOuter() throws Exception {
+    doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_8, true);
+  }
 }
