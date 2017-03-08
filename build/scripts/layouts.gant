@@ -154,16 +154,15 @@ def layout_aswb(String home, String target) {
       dir("aswb") {
         dir("lib") {
           jar("aswb.jar") {
-            module("blaze-aswb-google3")
-            module("blaze-base-google3")
             module("aswb")
             module("blaze-base")
             module("blaze-common")
             module("blaze-cpp")
             module("blaze-java")
             module("blaze-testing")
+            module("blaze-sdkcompat")
           }
-          fileset(dir: "$home/../vendor/google3/blaze/proto_deps") { include(name: "*.jar") }
+          fileset(dir: "$home/../vendor/google3/blaze/proto") { include(name: "*.jar") }
         }
       }
     }

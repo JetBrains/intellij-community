@@ -77,12 +77,12 @@ class AndroidStudioBuilder {
   }
 
   // TODO: publishing the ASwB plugin is complicated by the need to rewrite build numbers in plugin.xml and add some extra proto-deps jars.
-  // In theory, it should be as simple as adding productLayout.pluginModulesToPublish = ["blaze-aswb-google3"] etc.
+  // In theory, it should be as simple as adding productLayout.pluginModulesToPublish = ["aswb"] etc.
   private void layoutAswb(layouts) {
     buildContext.messages.block("Build ASwB plugin") {
       // Patches plugin.xml to replace the "SNAPSHOT" in the version with build number and product-build.txt to replace "PRODUCT_BUILD"
       // with the full build number.
-      def aswb = buildContext.projectBuilder.moduleOutput(buildContext.findModule("blaze-aswb-google3"))
+      def aswb = buildContext.projectBuilder.moduleOutput(buildContext.findModule("aswb"))
       def pluginFile = new File(aswb + "/META-INF/plugin.xml")
       if (pluginFile.isFile()) {
         def text = pluginFile.text
