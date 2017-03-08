@@ -90,12 +90,14 @@ public class SemVer implements Comparable<SemVer> {
   public static SemVer parseFromText(@NotNull String text) {
     int majorEndInd = text.indexOf('.');
     if (majorEndInd < 0) {
-      return null;
+      final int major = StringUtil.parseInt(text, -1);
+      return major < 0 ? null : new SemVer(text, major, 0, 0);
     }
     int major = StringUtil.parseInt(text.substring(0, majorEndInd), -1);
     int minorEndInd = text.indexOf('.', majorEndInd + 1);
     if (minorEndInd < 0) {
-      return null;
+      final int minor = StringUtil.parseInt(text.substring(majorEndInd + 1), -1);
+      return new SemVer(text, major, minor < 0 ? 0 : minor, 0);
     }
     int minor = StringUtil.parseInt(text.substring(majorEndInd + 1, minorEndInd), -1);
     final String patchStr;
