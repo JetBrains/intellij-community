@@ -59,6 +59,8 @@ class MLClassifier(next: Classifier<LookupElement>,
   private val cachedScore = mutableMapOf<LookupElement, WeightCache>()
 
   override fun classify(source: MutableIterable<LookupElement>, context: ProcessingContext): MutableIterable<LookupElement> {
+    if (!isMlSortingEnabled()) return source
+    
     val relevanceObjects = lookup.getRelevanceObjects(source, false)
     
     var position = 0 
@@ -90,6 +92,8 @@ class MLClassifier(next: Classifier<LookupElement>,
   }
 
   private fun getCachedWeight(element: LookupElement): Double? {
+    if (!isMlSortingEnabled()) return 777.7
+    
     val currentPrefixLength = lookup.getPrefixLength(element)
 
     val cached = cachedScore[element]
@@ -100,7 +104,7 @@ class MLClassifier(next: Classifier<LookupElement>,
     return null
   }
 
-  fun getWeight(element: LookupElement, position: Int, relevance: RelevanceObjects): Double {
+  private fun getWeight(element: LookupElement, position: Int, relevance: RelevanceObjects): Double {
     val cachedWeight = getCachedWeight(element)
     if (cachedWeight != null) {
       return cachedWeight
@@ -171,21 +175,8 @@ fun isMlSortingEnabled(): Boolean = PropertiesComponent.getInstance().getBoolean
 fun setMlSortingEnabled(value: Boolean) = PropertiesComponent.getInstance().setValue("ml.sorting.enabled", value, true)
 
 
-class MlToggleSortingTopHitProvider: OptionsTopHitProvider() {
-  
-  override fun getId() = "completion"
-
-  override fun getOptions(project: Project?): Collection<BooleanOptionDescription> { 
-    val option = object : BooleanOptionDescription("ML completion sorting", "vcs.Git") {
-      override fun setOptionState(value: Boolean) = setMlSortingEnabled(value)
-      override fun isOptionEnabled() = isMlSortingEnabled()
-    }
-    
-    return listOf(option)
-  }
-}
-
-
 fun getSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionSorterImpl {
-  return CompletionSorter.defaultSorter(parameters, result.prefixMatcher) as CompletionSorterImpl
+  val field = result::class.java.getDeclaredField("mySorter")
+  field.isAccessible = true
+  return field.get(result) as CompletionSorterImpl
 }
