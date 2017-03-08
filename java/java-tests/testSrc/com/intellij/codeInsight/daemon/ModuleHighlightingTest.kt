@@ -122,7 +122,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testWeakModule() {
-    highlight("""open module M { <error descr="'opens' only allowed in strong modules">opens pkg.missing;</error> }""")
+    highlight("""open module M { <error descr="'opens' is not allowed in an open module">opens pkg.missing;</error> }""")
   }
 
   fun testUses() {
