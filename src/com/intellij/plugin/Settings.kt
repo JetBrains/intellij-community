@@ -1,4 +1,4 @@
-package com.intellij.settings
+package com.intellij.plugin
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.sorting.isMlSortingEnabled
