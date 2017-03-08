@@ -150,6 +150,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/main/Impl6.java", "package pkg.main;\npublic class Impl6 implements C { }")
     addFile("pkg/main/Impl7.java", "package pkg.main;\npublic class Impl7 {\n public static void provider();\n}")
     addFile("pkg/main/Impl8.java", "package pkg.main;\npublic class Impl8 {\n public static C provider();\n}")
+    addFile("pkg/main/Impl9.java", "package pkg.main;\npublic class Impl9 {\n public class Inner implements C { }\n}")
     highlight("""
         module M {
           provides pkg.main.C with pkg.main.<error descr="Cannot resolve symbol 'NoImpl'">NoImpl</error>;
@@ -161,6 +162,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           provides pkg.main.C with pkg.main.Impl6, <error descr="Duplicate implementation: pkg.main.Impl6">pkg.main.Impl6</error>;
           provides pkg.main.C with pkg.main.<error descr="The 'provider' method return type must be a subtype of the service interface type: Impl7">Impl7</error>;
           provides pkg.main.C with pkg.main.Impl8;
+          provides pkg.main.C with pkg.main.Impl9.<error descr="The service implementation is an inner class: Inner">Inner</error>;
         }""".trimIndent())
   }
 
