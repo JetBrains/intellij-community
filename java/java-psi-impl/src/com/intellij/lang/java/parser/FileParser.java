@@ -106,9 +106,11 @@ public class FileParser {
 
   private static boolean stopImportListParsing(PsiBuilder b) {
     IElementType type = b.getTokenType();
-    String text = b.getTokenText();
     if (IMPORT_LIST_STOPPER_SET.contains(type)) return true;
-    if (type == JavaTokenType.IDENTIFIER && (PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text))) return true;
+    if (type == JavaTokenType.IDENTIFIER) {
+      String text = b.getTokenText();
+      if (PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text)) return true;
+    }
     return false;
   }
 
