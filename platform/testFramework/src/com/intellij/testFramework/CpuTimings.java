@@ -50,16 +50,23 @@ class CpuTimings {
     return "CpuTimings{" + average + ", raw=" + Arrays.toString(rawData) + ", sd=" + myStandardDeviation + '}';
   }
 
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static CpuTimings calcStableCpuTiming() {
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0;; i++) {
       CpuTimings timings = calcCpuTiming();
       if (timings.myStandardDeviation < 1.8) {
         return timings;
       }
-      //noinspection UseOfSystemOutOrSystemErr
-      System.out.println("Unstable timings: " + timings);
+      if (i == 100) {
+        System.out.println("Cannot calculate timings that are stable enough, giving up");
+        return timings;
+      }
+      if (i > 3) {
+        System.out.println(i + ": Unstable timings: " + timings);
+      }
+      System.gc();
     }
-    throw new IllegalStateException("Cannot calculate timings that are stable enough");
+
   }
 
   static CpuTimings calcCpuTiming() {
