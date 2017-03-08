@@ -155,11 +155,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       info.cleanup();
 
       if (containingFile == null) return;
+
+      assert containingFile.getProject() == myProject : "Project mismatch: expected " + myProject + ", got " + containingFile.getProject();
+
       VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
       SmartPointerTracker pointers = getTracker(vFile);
       SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
       if (pointers != null && reference != null) {
-        pointers.removeReference(reference);
+        pointers.removeReference(reference, POINTERS_KEY);
       }
     }
   }
