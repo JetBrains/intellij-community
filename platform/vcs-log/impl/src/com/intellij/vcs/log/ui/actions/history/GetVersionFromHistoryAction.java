@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.history.GetVersionAction;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.ui.history.FileHistoryUi;
+import com.intellij.vcs.log.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -25,8 +25,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ContentsUtil;
+import com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
-import com.intellij.vcs.log.ui.history.VcsLogFileHistoryProviderImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

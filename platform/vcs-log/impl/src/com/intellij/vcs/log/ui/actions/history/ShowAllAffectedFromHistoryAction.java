@@ -19,8 +19,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.history.FileHistoryUi;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAction {

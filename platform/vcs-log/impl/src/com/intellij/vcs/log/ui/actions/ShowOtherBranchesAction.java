@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.vcs.log.history.FileHistoryUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.history.FileHistoryUiProperties;
 import icons.VcsLogIcons;
 
 public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {

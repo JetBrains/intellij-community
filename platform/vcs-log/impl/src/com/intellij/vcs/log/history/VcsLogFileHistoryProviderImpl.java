@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.ui.history;
+package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
