@@ -104,11 +104,19 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   @Nullable
   public PsiFile getPsiFile(@NotNull Document document) {
+    if (document instanceof DocumentWindow && !((DocumentWindow)document).isValid()) {
+      return null;
+    }
+
     final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
-    if (userData != null) return userData;
+    if (userData != null) {
+      return ensureValidFile(userData, "From hard ref");
+    }
 
     PsiFile psiFile = getCachedPsiFile(document);
-    if (psiFile != null) return psiFile;
+    if (psiFile != null) {
+      return ensureValidFile(psiFile, "Cached PSI");
+    }
 
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
@@ -118,6 +126,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     fireFileCreated(document, psiFile);
 
+    return psiFile;
+  }
+
+  @NotNull
+  private static PsiFile ensureValidFile(@NotNull PsiFile psiFile, @NotNull String debugInfo) {
+    if (!psiFile.isValid()) throw new PsiInvalidElementAccessException(psiFile, debugInfo);
     return psiFile;
   }
 
