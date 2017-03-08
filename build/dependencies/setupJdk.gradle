@@ -13,71 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-task setupJdks(dependsOn: ['downloadJre', 'setupJdk18', 'setupJdk16'])
+task setupJdks(dependsOn: ['setupJdk18', 'setupJdk16'])
+cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
 
 def jdkRepo = inJetBrainsNetwork ? 'http://repo.labs.intellij.net' : 'https://dl.bintray.com/jetbrains/'
 
 def checkoutDir = intellijProjectDir()
 def jdkDir = "$checkoutDir/build/jdk"
 
-project.ext.platformToDirectory = [linux: 'linux', osx: 'mac', windows: 'win']
 project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "$jdkDir/1.8")}"
 project.ext.targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
-
-task downloadJre {}
-
-jrePlatformsToDownload(targetOs).each { platform ->
-  archToDownload(platform).each { arch ->
-    task("downloadJbrex_${platform}_$arch") {
-      def outputDir = "$jdkDir/${platformToDirectory[platform]}"
-      def artifactName = "jbrex8${jdkBuild}_${platform}_$arch"
-      
-      inputs.property('build', jdkBuild)
-      outputs.file("$outputDir/${artifactName}.tar.gz")
-      doLast {
-        logger.info("Setting up JRE 1.8 to bundle for ${platform}_$arch (usin $jdkRepo repo)")
-        downloadJdk(jdkRepo, artifactName, outputDir)
-      }
-    }
-    downloadJre.dependsOn("downloadJbrex_${platform}_$arch")
-    cleanDownloadJre.dependsOn("cleanDownloadJbrex_${platform}_$arch")
-    
-    task("untarJbre_${platform}_$arch", type: Copy) {
-      def downloadOutputs = tasks["downloadJbrex_${platform}_$arch"].outputs.files
-      from tarTree(downloadOutputs.singleFile)
-      exclude "**/tools.jar"
-      into { "${downloadOutputs.singleFile.parent}/${downloadOutputs.singleFile.name.replace("jbrex", "jbre") - '.tar.gz'}/" }
-    }
-    
-    task("tarJbre_${platform}_$arch", type: Tar) {
-      def untarOutputs = tasks["untarJbre_${platform}_$arch"].outputs.files
-      from untarOutputs
-      compression = Compression.GZIP
-      archiveName = "${untarOutputs.singleFile.name}.tar.gz"
-      destinationDir = untarOutputs.singleFile.parentFile
-    }
-    downloadJre.dependsOn("tarJbre_${platform}_$arch")
-    cleanDownloadJre.dependsOn("cleanTarJbre_${platform}_$arch")
-  }
-}
 
 task downloadJdk18 {
   def os = org.gradle.internal.os.OperatingSystem.current()
   def arch = !os.isWindows() || !os.nativePrefix.endsWith('x86') ? 'x64' : 'x86'
   def platform = currentPlatformName()
 
-  def outputDir = "$jdkDir/${platformToDirectory[platform]}"
-  def artifactName = "jbsdk8${jdkBuild}_${platform}_$arch"
+  def artifactName = "jbsdk8${jdkBuild}_${platform}_${arch}.tar.gz"
+  def outputFile = "$project.buildDir/jbsdk/${artifactName}"
 
   inputs.property('build', jdkBuild)
-  outputs.file("$outputDir/${artifactName}.tar.gz")
+  outputs.file(outputFile)
   doLast {
     logger.info("Downloading up JDK 1.8 to compile (using $jdkRepo repo)")
-    downloadJdk(jdkRepo, artifactName, outputDir)
+    download {
+      src "$jdkRepo/intellij-jdk/${artifactName}"
+      dest outputFile
+      onlyIfNewer true
+    }
   }
 }
 
-task setupJdk18() {
+task setupJdk18(dependsOn: downloadJdk18) {
   def outputDir = jdk18OutputDir
   def downloadOutputs = downloadJdk18.outputs.files
 
@@ -107,15 +74,6 @@ def unpackJdk(jdkArchive, outputDir) {
   }
 }
 
-def downloadJdk(jdkRepo, artifact, outputDir) {
-  logger.info("Downloading $artifact to $outputDir")
-  download {
-    src "$jdkRepo/intellij-jdk/${artifact}.tar.gz"
-    dest "$outputDir/${artifact}.tar.gz"
-    onlyIfNewer true
-  }
-}
-
 static def currentPlatformName() {
   def os = org.gradle.internal.os.OperatingSystem.current()
   if (os.isWindows()) {
@@ -127,19 +85,6 @@ static def currentPlatformName() {
   else {
     "linux"
   }
-}
-
-// see org.jetbrains.intellij.build.BuildOptions.targetOS
-static def jrePlatformsToDownload(targetOs) {
-  def jrePlatformToDownload = new HashSet<String>()
-  if (targetOs == 'all' || targetOs == 'linux') jrePlatformToDownload.add('linux')
-  if (targetOs == 'all' || targetOs == 'windows') jrePlatformToDownload.add('windows')
-  if (targetOs == 'all' || targetOs == 'mac') jrePlatformToDownload.add('osx')
-  jrePlatformToDownload
-}
-
-static def archToDownload(targetOs) {
-  targetOs == 'windows' ? ['x86', 'x64'] : ['x64']
 }
 
 // JDK 1.6

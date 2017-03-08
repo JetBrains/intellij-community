@@ -37,12 +37,12 @@ catch (UnknownHostException ignore) {
 }
 
 apply from: 'setupJdk.gradle'
+apply from: 'setupJbre.gradle'
 apply from: 'setupKotlin.gradle'
 apply from: 'setupJetSign.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupKotlinPlugin', 'setupJetSign'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupKotlinPlugin',
-                'cleanDownloadJre', 'downloadJdk18', 'cleanSetupJdk16', 'cleanSetupJdk18', 'cleanSetupJetSign')
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupJetSign'], group: 'dependencies')
+clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign')
 
 task wrapper(type: Wrapper) {
   // 2.14 is the latest version supports Java 6 (which is still present on TeamCity build agents)

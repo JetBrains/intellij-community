@@ -1,7 +1,5 @@
-import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
-
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +13,6 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
 target(default: "Unpack JDKs") {
   def workingDirectory = getDependenciesProjectDir()
@@ -33,5 +29,20 @@ target(default: "Unpack JDKs") {
 }
 
 private File getDependenciesProjectDir() {
+  String home = guessHome(this)
   return new File(home, new File(home).name == "community" ? "build/dependencies" : "community/build/dependencies")
+}
+
+static String guessHome(Script script) {
+  File home = new File(script["gant.file"].substring("file:".length()))
+
+  while (home != null) {
+    if (home.isDirectory()) {
+      if (new File(home, ".idea").exists()) return home.getCanonicalPath()
+    }
+
+    home = home.getParentFile()
+  }
+
+  return null
 }
