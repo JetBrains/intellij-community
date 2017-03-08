@@ -995,7 +995,8 @@ public class AbstractTreeUi {
         }
 
         eachParent = getTreeStructure().getParentElement(eachParent);
-        updateStructure = true; // always update children if element does not exist
+        // FIXME [Malenkov] Following line causes problems: IDEA-169292 and maybe IDEA-169061
+        // updateStructure = true; // always update children if element does not exist
       }
 
       if (eachParent == null) {
