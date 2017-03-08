@@ -29,11 +29,11 @@ import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
 import java.util.List;
 
-class CpuUsageData {
+public class CpuUsageData {
   private static final ThreadMXBean ourThreadMXBean = ManagementFactory.getThreadMXBean();
   private static final List<GarbageCollectorMXBean> ourGcBeans = ManagementFactory.getGarbageCollectorMXBeans();
 
-  final long durationMs;
+  public final long durationMs;
   private final long myFreeMb;
   private final long myTotalMb;
   private final List<Pair<Long, String>> myGcTimes = new ArrayList<>();
@@ -54,11 +54,11 @@ class CpuUsageData {
     });
   }
 
-  String getGcStats() {
+  public String getGcStats() {
     return printLongestNames(myGcTimes) + "; free " + myFreeMb + " of " + myTotalMb + "MB";
   }
 
-  String getThreadStats() {
+  public String getThreadStats() {
     return printLongestNames(myThreadTimes);
   }
 
@@ -76,7 +76,7 @@ class CpuUsageData {
     return timeNs / 1_000_000;
   }
 
-  static <E extends Throwable> CpuUsageData measureCpuUsage(ThrowableRunnable<E> runnable) throws E {
+  public static <E extends Throwable> CpuUsageData measureCpuUsage(ThrowableRunnable<E> runnable) throws E {
     long free = toMb(Runtime.getRuntime().freeMemory());
     long total = toMb(Runtime.getRuntime().totalMemory());
 

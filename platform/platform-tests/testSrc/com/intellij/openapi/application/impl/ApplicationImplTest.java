@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.testFramework.CpuUsageData;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -76,7 +77,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       Callable<String> runnable = () -> {
         try {
           assertFalse(application.isReadAccessAllowed());
-          long l2 = PlatformTestUtil.measure(() -> {
+          CpuUsageData dataAcq = CpuUsageData.measureCpuUsage(() -> {
             for (int i1 = 0; i1 < N; i1++) {
               AccessToken token = application.acquireReadActionLock();
               try {
@@ -87,18 +88,23 @@ public class ApplicationImplTest extends LightPlatformTestCase {
               }
             }
           });
-
-          long l1 = PlatformTestUtil.measure(() -> {
+          CpuUsageData dataRun = CpuUsageData.measureCpuUsage(() -> {
             for (int i1 = 0; i1 < N; i1++) {
               application.runReadAction(() -> {
               });
             }
           });
+          long l1 = dataRun.durationMs;
+          long l2 = dataAcq.durationMs;
 
           assertFalse(application.isReadAccessAllowed());
           int ratioPercent = (int)((l1 - l2) * 100.0 / l1);
           String msg = "acquireReadActionLock(" + l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: " + ratioPercent + "% (in "+(ratioPercent<0 ? "my" : "Maxim's") +" favor)";
-          System.out.println(msg);
+          System.out.println(msg +
+                             "\n gc(run): " + dataRun.getGcStats() +
+                             "\n gc(acq): " + dataAcq.getGcStats() +
+                             "\n threads(run): " + dataRun.getThreadStats() +
+                             "\n threads(acq): " + dataAcq.getThreadStats());
           if (Math.abs(ratioPercent) > 40) {
             return "Suspiciously different times for " + msg;
           }
