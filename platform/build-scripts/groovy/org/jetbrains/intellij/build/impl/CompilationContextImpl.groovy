@@ -125,7 +125,7 @@ class CompilationContextImpl implements CompilationContext {
     messages.info("Setting up dependencies")
     def workingDirectory = new File(communityHome, 'build/dependencies/')
     def gradleScript = SystemInfo.isWindows ? "gradlew.bat" : "gradlew"
-    def process = new ProcessBuilder("${workingDirectory.absolutePath}/$gradleScript", 'cleanDownloadJre', 'setupDependencies')
+    def process = new ProcessBuilder("${workingDirectory.absolutePath}/$gradleScript", 'cleanSetupJbre', 'setupDependencies')
       .directory(workingDirectory)
       .start()
     process.consumeProcessOutputStream((OutputStream)System.out)
