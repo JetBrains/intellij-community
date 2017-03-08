@@ -34,6 +34,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -361,6 +362,10 @@ public class ModuleHighlightUtil {
         if (InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
           if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
             String message = JavaErrorMessages.message("module.service.abstract", implClass.getName());
+            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
+          }
+          else if (!(ClassUtil.isTopLevelClass(implClass) || implClass.hasModifierProperty(PsiModifier.STATIC))) {
+            String message = JavaErrorMessages.message("module.service.inner", implClass.getName());
             results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).description(message).create());
           }
           else if (!PsiUtil.hasDefaultConstructor(implClass)) {
