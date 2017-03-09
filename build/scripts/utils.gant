@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,6 +206,7 @@ binding.setVariable("prepareOutputFolder", {
 
 binding.setVariable("clearBuildCaches", {
   //todo[nik] this is temporary solution until we update bootstrap jps-builders jars to the new version where cleaning is performed in JpsGantProjectBuilder#cleanOutput
+  if (projectBuilder.buildIncrementally && !Boolean.parseBoolean(p("jps.build.clear.incremental.caches", "false"))) return 
   def storageRoot = projectBuilder.dataStorageRoot
   if (storageRoot != null) {
     FileUtil.delete(storageRoot)
