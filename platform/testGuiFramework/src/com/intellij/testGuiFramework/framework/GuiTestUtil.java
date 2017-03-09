@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
+import com.intellij.testGuiFramework.impl.FirstStart;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
@@ -63,6 +64,7 @@ import org.fest.swing.timing.Timeout;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,6 +83,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
+import static com.intellij.openapi.util.text.StringUtil.first;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -113,6 +116,7 @@ GuiTestUtil {
 
   public static final String JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS";
   public static final String TEST_DATA_DIR = "GUI_TEST_DATA_DIR";
+  public static final String FIRST_START = "GUI_FIRST_START";
   private static final EventQueue SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().getSystemEventQueue();
   private static final File TMP_PROJECT_ROOT = createTempProjectCreationDir();
 
@@ -198,6 +202,8 @@ GuiTestUtil {
   // Called by IdeTestApplication via reflection.
   @SuppressWarnings("UnusedDeclaration")
   public static void waitForIdeToStart() {
+    String firstStart = getSystemPropertyOrEnvironmentVariable(FIRST_START);
+    boolean isFirstStart = firstStart != null && firstStart.toLowerCase().equals("true");
     GuiActionRunner.executeInEDT(false);
     Robot robot = null;
     try {
@@ -206,6 +212,8 @@ GuiTestUtil {
 
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
+
+      if(isFirstStart) (new FirstStart(robot)).completeBefore();
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
@@ -220,6 +228,8 @@ GuiTestUtil {
           return false;
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
+
+      if(isFirstStart) (new FirstStart(robot)).completeAfter();
 
       //TODO: clarify why we are skipping event here?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which
