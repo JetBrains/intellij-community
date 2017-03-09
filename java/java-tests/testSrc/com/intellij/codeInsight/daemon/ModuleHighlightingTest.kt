@@ -65,13 +65,15 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""
         module M {
           requires M2;
-          <error descr="Duplicate requires: M2">requires M2;</error>
+          <error descr="Duplicate 'requires': M2">requires M2;</error>
           exports pkg.main;
-          <error descr="Duplicate export: pkg.main">exports pkg. main;</error>
+          <error descr="Duplicate 'exports': pkg.main">exports pkg. main;</error>
+          opens pkg.main;
+          <error descr="Duplicate 'opens': pkg.main">opens pkg. main;</error>
           uses pkg.main.C;
-          <error descr="Duplicate uses: pkg.main.C">uses pkg. main . /*...*/ C;</error>
+          <error descr="Duplicate 'uses': pkg.main.C">uses pkg. main . /*...*/ C;</error>
           provides pkg .main .C with pkg.main.Impl;
-          <error descr="Duplicate provides: pkg.main.C">provides pkg.main.C with pkg. main. Impl;</error>
+          <error descr="Duplicate 'provides': pkg.main.C">provides pkg.main.C with pkg. main. Impl;</error>
         }""".trimIndent())
   }
 
@@ -105,7 +107,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         module M {
           exports <error descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</error>;
           exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
-          exports pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate export: M2">M2</error>;
+          exports pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate 'exports' target: M2">M2</error>;
         }""".trimIndent())
   }
 
@@ -117,7 +119,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         module M {
           opens <warning descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</warning>;
           opens <warning descr="Package is empty: pkg.empty">pkg.empty</warning>;
-          opens pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate export: M2">M2</error>;
+          opens pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate 'opens' target: M2">M2</error>;
         }""".trimIndent())
   }
 

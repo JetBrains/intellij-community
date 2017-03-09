@@ -149,7 +149,13 @@ public class ModuleHighlightUtil {
     checkDuplicateRefs(
       module.getExports(),
       st -> Optional.ofNullable(st.getPackageReference()).map(ModuleHighlightUtil::refText),
-      "module.duplicate.export",
+      "module.duplicate.exports",
+      results);
+
+    checkDuplicateRefs(
+      module.getOpens(),
+      st -> Optional.ofNullable(st.getPackageReference()).map(ModuleHighlightUtil::refText),
+      "module.duplicate.opens",
       results);
 
     checkDuplicateRefs(
@@ -303,8 +309,11 @@ public class ModuleHighlightUtil {
       PsiPolyVariantReference ref = refElement.getReference();
       assert ref != null : statement;
       if (!targets.add(refText)) {
-        String message = JavaErrorMessages.message("module.duplicate.export", refText);
-        results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create());
+        boolean exports = statement.getRole() == Role.EXPORTS;
+        String message = JavaErrorMessages.message(exports ? "module.duplicate.exports.target" : "module.duplicate.opens.target", refText);
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
+        QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(refElement, QuickFixBundle.message("delete.reference.fix.text")));
+        results.add(info);
       }
       else if (ref.multiResolve(true).length == 0) {
         String message = JavaErrorMessages.message("module.not.found", refElement.getReferenceText());
