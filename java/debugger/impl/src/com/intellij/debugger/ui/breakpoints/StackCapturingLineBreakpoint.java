@@ -196,42 +196,59 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   }
 
   @Nullable
-  public static List<StackFrameItem> getRelatedStack(@Nullable StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
-    if (frame != null) {
-      DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-      Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
-      if (ContainerUtil.isEmpty(capturedStacks)) {
-        return null;
-      }
-      List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
-      if (ContainerUtil.isEmpty(captureBreakpoints)) {
-        return null;
-      }
-      try {
-        Location location = frame.location();
-        String className = location.declaringType().name();
-        String methodName = location.method().name();
+  public static CapturePoint getMatchingDisabledInsertionPoint(@NotNull StackFrameProxyImpl frame) {
+    try {
+      Location location = frame.location();
+      String className = location.declaringType().name();
+      String methodName = location.method().name();
 
-        for (StackCapturingLineBreakpoint b : captureBreakpoints) {
-          String insertClassName = b.myCapturePoint.myInsertClassName;
-          if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
-              StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
-            try {
-              Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame));
-              if (key instanceof ObjectReference) {
-                return capturedStacks.get(getKey((ObjectReference)key));
-              }
+      for (CapturePoint c : DebuggerSettings.getInstance().getCapturePoints()) {
+        if (!c.myEnabled && StringUtil.equals(c.myInsertClassName, className) && StringUtil.equals(c.myInsertMethodName, methodName)) {
+          return c;
+        }
+      }
+    }
+    catch (EvaluateException e) {
+      LOG.debug(e);
+    }
+    return null;
+  }
+
+  @Nullable
+  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+    DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
+    Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
+    if (ContainerUtil.isEmpty(capturedStacks)) {
+      return null;
+    }
+    List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
+    if (ContainerUtil.isEmpty(captureBreakpoints)) {
+      return null;
+    }
+    try {
+      Location location = frame.location();
+      String className = location.declaringType().name();
+      String methodName = location.method().name();
+
+      for (StackCapturingLineBreakpoint b : captureBreakpoints) {
+        String insertClassName = b.myCapturePoint.myInsertClassName;
+        if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
+            StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
+          try {
+            Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame));
+            if (key instanceof ObjectReference) {
+              return capturedStacks.get(getKey((ObjectReference)key));
             }
-            catch (EvaluateException e) {
-              LOG.debug(e);
-              debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
-            }
+          }
+          catch (EvaluateException e) {
+            LOG.debug(e);
+            debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
           }
         }
       }
-      catch (EvaluateException e) {
-        LOG.debug(e);
-      }
+    }
+    catch (EvaluateException e) {
+      LOG.debug(e);
     }
     return null;
   }

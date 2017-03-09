@@ -61,6 +61,14 @@ public class StackFrameItem {
     JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.not.captured"),
                                      XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
 
+  public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
+    @Override
+    public void onClick(MouseEvent event) {
+      ShowSettingsUtil.getInstance().showSettingsDialog(null, CaptureConfigurable.class);
+      event.consume();
+    }
+  };
+
   private final Location myLocation;
   private final List<XNamedValue> myVariables;
 
@@ -263,14 +271,6 @@ public class StackFrameItem {
         component.append(String.format(" (%s)", packageName), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
       }
     }
-
-    private static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
-      @Override
-      public void onClick(MouseEvent event) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(null, CaptureConfigurable.class);
-        event.consume();
-      }
-    };
 
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {
