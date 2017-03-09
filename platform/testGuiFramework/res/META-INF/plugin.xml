@@ -1,0 +1,11 @@
+<idea-plugin>
+
+  <id>com.intellij.testGuiFramework</id>
+  <name>TestGuiFramework</name>
+  <vendor>JetBrains</vendor>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter implementation="com.intellij.testGuiFramework.impl.GuiTestStarter"/>
+  </extensions>
+
+</idea-plugin>
