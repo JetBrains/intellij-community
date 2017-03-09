@@ -303,7 +303,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     val shadowInstance: UISettings
       get() {
         val app = ApplicationManager.getApplication()
-        return (if (app == null) null else instance) ?: UISettings().withDefFont()
+        return (if (app == null) null else instanceOrNull) ?: UISettings().withDefFont()
       }
 
     private val systemFontFaceAndSize: Pair<String, Int>
