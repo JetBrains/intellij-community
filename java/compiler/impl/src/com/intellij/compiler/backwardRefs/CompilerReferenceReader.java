@@ -74,7 +74,7 @@ class CompilerReferenceReader {
    * 2nd map: candidates. One need to check that these classes are really direct inheritors
    */
   @NotNull
-  Map<VirtualFile, Object[]> getDirectInheritors(@NotNull LightRef searchElement,
+  Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull LightRef searchElement,
                                                  @NotNull GlobalSearchScope searchScope,
                                                  @NotNull GlobalSearchScope dirtyScope,
                                                  @NotNull FileType fileType,
@@ -84,7 +84,7 @@ class CompilerReferenceReader {
     LOG.assertTrue(adapter != null, "adapter is null for file type: " + fileType);
     Class<? extends LightRef> requiredLightRefClass = searchType.getRequiredClass(adapter);
 
-    Map<VirtualFile, Object[]> candidatesPerFile = new HashMap<>();
+    Map<VirtualFile, SearchId[]> candidatesPerFile = new HashMap<>();
     myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(searchElement).forEach((fileId, defs) -> {
         final List<LightRef> requiredCandidates = defs.stream().filter(requiredLightRefClass::isInstance).collect(toList());
         if (requiredCandidates.isEmpty()) return true;

@@ -124,18 +124,18 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
 
   @NotNull
   @Override
-  public PsiClass[] findDirectInheritorCandidatesInFile(@NotNull Object[] internalNames,
+  public PsiClass[] findDirectInheritorCandidatesInFile(@NotNull SearchId[] internalNames,
                                                         @NotNull PsiFileWithStubSupport file) {
     return JavaCompilerElementRetriever.retrieveClassesByInternalIds(internalNames, file);
   }
 
   @NotNull
   @Override
-  public PsiFunctionalExpression[] findFunExpressionsInFile(@NotNull Integer[] funExpressions,
+  public PsiFunctionalExpression[] findFunExpressionsInFile(@NotNull SearchId[] funExpressions,
                                                             @NotNull PsiFileWithStubSupport file) {
     TIntHashSet requiredIndices = new TIntHashSet(funExpressions.length);
-    for (int funExpr : funExpressions) {
-      requiredIndices.add(funExpr);
+    for (SearchId funExpr : funExpressions) {
+      requiredIndices.add(funExpr.getId());
     }
     return JavaCompilerElementRetriever.retrieveFunExpressionsByIndices(requiredIndices, file);
   }

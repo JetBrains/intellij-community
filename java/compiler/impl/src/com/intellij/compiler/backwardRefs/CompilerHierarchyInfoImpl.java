@@ -41,9 +41,9 @@ class CompilerHierarchyInfoImpl implements CompilerDirectHierarchyInfo {
   private final Project myProject;
   private final FileType mySearchFileType;
   private final CompilerHierarchySearchType mySearchType;
-  private final Map<VirtualFile, Object[]> myCandidatePerFile;
+  private final Map<VirtualFile, SearchId[]> myCandidatePerFile;
 
-  CompilerHierarchyInfoImpl(Map<VirtualFile, Object[]> candidatesPerFile,
+  CompilerHierarchyInfoImpl(Map<VirtualFile, SearchId[]> candidatesPerFile,
                             PsiNamedElement baseClass,
                             GlobalSearchScope dirtyScope,
                             GlobalSearchScope searchScope,
@@ -70,7 +70,7 @@ class CompilerHierarchyInfoImpl implements CompilerDirectHierarchyInfo {
       .filter(e -> mySearchScope.contains(e.getKey()))
       .flatMap(e -> {
         final VirtualFile file = e.getKey();
-        final Object[] definitions = e.getValue();
+        final SearchId[] definitions = e.getValue();
 
         final PsiElement[] hierarchyChildren = ReadAction.compute(() -> {
           final PsiFileWithStubSupport psiFile = (PsiFileWithStubSupport)psiManager.findFile(file);

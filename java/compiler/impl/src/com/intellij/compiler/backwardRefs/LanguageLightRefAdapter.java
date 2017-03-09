@@ -101,7 +101,7 @@ public interface LanguageLightRefAdapter  {
    * found elements really inheritors.
    */
   @NotNull
-  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull Object[] internalNames,
+  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull SearchId[] internalNames,
                                                    @NotNull PsiFileWithStubSupport file);
 
   /**
@@ -109,7 +109,7 @@ public interface LanguageLightRefAdapter  {
    * @return functional expressions for given functional type. Should return
    */
   @NotNull
-  PsiElement[] findFunExpressionsInFile(@NotNull Integer[] indices,
+  PsiElement[] findFunExpressionsInFile(@NotNull SearchId[] indices,
                                         @NotNull PsiFileWithStubSupport file);
 
   boolean isClass(@NotNull PsiElement element);

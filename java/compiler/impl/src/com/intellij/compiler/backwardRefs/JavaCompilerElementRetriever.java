@@ -81,7 +81,7 @@ public class JavaCompilerElementRetriever {
   }
 
   @NotNull
-  static PsiClass[] retrieveClassesByInternalIds(@NotNull Object[] internalIds,
+  static PsiClass[] retrieveClassesByInternalIds(@NotNull SearchId[] internalIds,
                                                  @NotNull PsiFileWithStubSupport psiFile) {
     ClassMatcher matcher = ClassMatcher.create(internalIds);
     return ReadAction.compute(() -> matcher.retrieveClasses(psiFile));
@@ -166,18 +166,18 @@ public class JavaCompilerElementRetriever {
       return false;
     }
 
-    private static ClassMatcher create(@NotNull Object[] internalIds) {
+    private static ClassMatcher create(@NotNull SearchId[] internalIds) {
       List<InternalNameMatcher> nameMatchers = new SmartList<>();
       TIntHashSet anonymousIndices = null;
-      for (Object internalId : internalIds) {
-        if (internalId instanceof Integer) {
+      for (SearchId internalId : internalIds) {
+        if (internalId.getId() != -1) {
           if (anonymousIndices == null) {
             anonymousIndices = new TIntHashSet();
           }
-          anonymousIndices.add((Integer)internalId);
+          anonymousIndices.add(internalId.getId());
         }
-        else if (internalId instanceof String) {
-          String internalName = (String)internalId;
+        else {
+          String internalName = internalId.getDeserializedName();
           int curLast = internalName.length() - 1;
           while (true) {
             int lastIndex = internalName.lastIndexOf('$', curLast);

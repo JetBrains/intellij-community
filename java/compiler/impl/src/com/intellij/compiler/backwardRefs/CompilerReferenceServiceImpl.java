@@ -259,13 +259,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
     try {
-      Map<VirtualFile, Object[]> candidatesPerFile = ReadAction.compute(() -> {
+      Map<VirtualFile, SearchId[]> candidatesPerFile = ReadAction.compute(() -> {
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
-          new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, Object[]>>() {
+          new ConcurrentFactoryMap<HierarchySearchKey, Map<VirtualFile, SearchId[]>>() {
             @Nullable
             @Override
-            protected Map<VirtualFile, Object[]> create(HierarchySearchKey key) {
+            protected Map<VirtualFile, SearchId[]> create(HierarchySearchKey key) {
               return calculateDirectInheritors(aClass,
                                                useScope,
                                                key.mySearchFileType,
@@ -300,7 +300,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return myReader != null && isEnabled();
   }
 
-  private Map<VirtualFile, Object[]> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
+  private Map<VirtualFile, SearchId[]> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
                                                                @NotNull GlobalSearchScope useScope,
                                                                @NotNull FileType searchFileType,
                                                                @NotNull CompilerHierarchySearchType searchType) {
