@@ -1799,7 +1799,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
-      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
         final MySelectInContext selectInContext = new MySelectInContext(file, editor);
 
         final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
