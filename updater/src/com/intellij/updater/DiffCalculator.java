@@ -87,6 +87,7 @@ public class DiffCalculator {
 
   private static String findBestCandidateForMove(List<String> paths, String path) {
     if (paths == null) return null;
+    if (paths.size() == 1) return paths.get(0);
 
     String best = "";
 
@@ -110,6 +111,8 @@ public class DiffCalculator {
         }
       }
     }
+
+    if (best.isEmpty()) throw new AssertionError("Failed to find a candidate for '" + path + "' in " + paths);
 
     return best;
   }
