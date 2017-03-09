@@ -302,6 +302,10 @@ public class PlatformTestUtil {
     UIUtil.dispatchAllInvocationEvents();
   }
 
+  /**
+   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
   @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
@@ -315,6 +319,10 @@ public class PlatformTestUtil {
     }
   }
 
+  /**
+   * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
   @TestOnly
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
@@ -322,6 +330,10 @@ public class PlatformTestUtil {
     while (dispatchNextEventIfAny(eventQueue) != null);
   }
 
+  /**
+   * Dispatch one pending event (if any) in the {@link IdeEventQueue}.
+   * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
+   */
   @TestOnly
   public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
