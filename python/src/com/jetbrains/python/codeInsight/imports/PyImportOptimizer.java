@@ -29,8 +29,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -88,13 +88,15 @@ public class PyImportOptimizer implements ImportOptimizer {
     private final PyCodeStyleSettings myPySettings;
     private final List<PyImportStatementBase> myImportBlock;
     private final Map<ImportPriority, List<PyImportStatementBase>> myGroups;
-    private final MultiMap<PyImportStatementBase, PsiComment> myImportToComments;
+    private final MultiMap<PyImportStatementBase, PsiComment> myImportToLineComments;
+    private final MultiMap<PyImportStatementBase, PsiComment> myTransformedImportToTrailingComments;
 
     private ImportSorter(@NotNull PyFile file) {
       myFile = file;
       myPySettings = CodeStyleSettingsManager.getSettings(myFile.getProject()).getCustomSettings(PyCodeStyleSettings.class);
       myImportBlock = myFile.getImportBlock();
-      myImportToComments = MultiMap.create();
+      myImportToLineComments = MultiMap.create();
+      myTransformedImportToTrailingComments = MultiMap.create();
       myGroups = new EnumMap<>(ImportPriority.class);
       for (ImportPriority priority : ImportPriority.values()) {
         myGroups.put(priority, new ArrayList<>());
@@ -136,6 +138,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       final MultiMap<String, PyFromImportStatement> fromImportSources = MultiMap.create();
       // Preserve line comments if any
       final MultiMap<PyImportStatementBase, PsiComment> precedingComments = MultiMap.create();
+      final Map<PyImportStatementBase, PsiComment> trailingComments = new HashMap<>();
       
       for (PyImportStatementBase statement : imports) {
         final PyFromImportStatement fromImport = as(statement, PyFromImportStatement.class);
@@ -143,6 +146,7 @@ public class PyImportOptimizer implements ImportOptimizer {
           fromImportSources.putValue(getNormalizedFromImportSource(fromImport), fromImport);
         }
         precedingComments.putValues(statement, collectPrecedingLineComments(statement));
+        ContainerUtil.putIfNotNull(statement, as(statement.getLastChild(), PsiComment.class), trailingComments);
       }
       
       for (PyImportStatementBase statement : imports) {
@@ -159,11 +163,15 @@ public class PyImportOptimizer implements ImportOptimizer {
             else {
               topmostImport = newImports.get(0);
             }
-            myImportToComments.putValues(topmostImport, precedingComments.get(statement));
+            myImportToLineComments.putValues(topmostImport, precedingComments.get(statement));
+            final PsiComment trailingComment = trailingComments.get(statement);
+            if (trailingComment != null) {
+              myTransformedImportToTrailingComments.putValue(topmostImport, trailingComment);
+            }
             result.addAll(newImports);
           }
           else {
-            myImportToComments.putValues(statement, precedingComments.get(statement));
+            myImportToLineComments.putValues(statement, precedingComments.get(statement));
             result.add(importStatement);
           }
         }
@@ -202,12 +210,16 @@ public class PyImportOptimizer implements ImportOptimizer {
             final String importedNames = StringUtil.join(newStatementElements, PsiElement::getText, ", ");
             final PyFromImportStatement combinedImport = generator.createFromImportStatement(langLevel, source, importedNames, null);
             ContainerUtil.map2LinkedSet(newStatementElements, e -> (PyImportStatementBase)e.getParent()).forEach(affected -> {
-              myImportToComments.putValues(combinedImport, precedingComments.get(affected));
+              myImportToLineComments.putValues(combinedImport, precedingComments.get(affected));
+              final PsiComment trailingComment = trailingComments.get(affected);
+              if (trailingComment != null) {
+                myTransformedImportToTrailingComments.putValue(combinedImport, trailingComment);
+              }
             });
             result.add(combinedImport);
           }
           else {
-            myImportToComments.putValues(fromImport, precedingComments.get(fromImport));
+            myImportToLineComments.putValues(fromImport, precedingComments.get(fromImport));
             result.add(fromImport);
           }
         }
@@ -278,11 +290,20 @@ public class PyImportOptimizer implements ImportOptimizer {
           content.append("\n");
         }
         for (PyImportStatementBase statement : imports) {
-          //StringUtil.join(myImportToComments.get(statement), PsiElement::getText, "\n", content);
-          for (PsiComment comment : myImportToComments.get(statement)) {
+          for (PsiComment comment : myImportToLineComments.get(statement)) {
             content.append(comment.getText()).append("\n");
           }
-          content.append(statement.getText()).append("\n");
+          content.append(statement.getText());
+          final Collection<PsiComment> trailingComments = myTransformedImportToTrailingComments.get(statement);
+          if (!trailingComments.isEmpty()) {
+            content.append("  ");
+            for (PsiComment comment : trailingComments) {
+              content.append(comment.getText()).append("\n");
+            }
+          }
+          else {
+            content.append("\n");
+          }
         }
       }
       
