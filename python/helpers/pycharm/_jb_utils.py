@@ -53,11 +53,15 @@ class VersionAgnosticUtils(object):
     """
 
     @staticmethod
+    def is_py3k():
+        return sys.version_info >= (3, 0)
+
+    @staticmethod
     def __new__(cls, *more):
         """
         Fabrics Py2 or Py3 instance based on py version
         """
-        real_class = _Py3KUtils if sys.version_info >= (3, 0) else _Py2Utils
+        real_class = _Py3KUtils if VersionAgnosticUtils.is_py3k() else _Py2Utils
         return super(cls, real_class).__new__(real_class, *more)
 
     def to_unicode(self, obj):
