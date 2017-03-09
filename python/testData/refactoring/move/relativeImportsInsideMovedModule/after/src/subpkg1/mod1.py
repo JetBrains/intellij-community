@@ -1,7 +1,9 @@
 import
+# malformed imports
 from
 from
 
+# absolute imports
 import pkg1.subpkg2 as foo
 from pkg1 import subpkg2
 from pkg1 import subpkg2 as bar
