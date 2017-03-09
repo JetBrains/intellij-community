@@ -2775,7 +2775,7 @@ public class AbstractTreeUi {
 
     maybeReady();
     if (reallyRemoved) {
-      myTreeModel.nodeStructureChanged(parent);
+      nodeStructureChanged(parent);
     }
   }
 
@@ -3504,6 +3504,15 @@ public class AbstractTreeUi {
     });
   }
 
+  private void nodeStructureChanged(final DefaultMutableTreeNode node) {
+    invokeLaterIfNeeded(true, new TreeRunnable("AbstractTreeUi.nodeStructureChanged") {
+      @Override
+      public void perform() {
+        myTreeModel.nodeStructureChanged(node);
+      }
+    });
+  }
+
   public DefaultTreeModel getTreeModel() {
     return myTreeModel;
   }
@@ -3552,7 +3561,7 @@ public class AbstractTreeUi {
             for (TreeNode each : all) {
               parentNode.add((MutableTreeNode)each);
             }
-            myTreeModel.nodeStructureChanged(parentNode);
+            nodeStructureChanged(parentNode);
 
             if (expanded != null) {
               while (expanded.hasMoreElements()) {
@@ -4793,7 +4802,7 @@ public class AbstractTreeUi {
       disposeNode((DefaultMutableTreeNode)copy.nextElement());
     }
     node.removeAllChildren();
-    myTreeModel.nodeStructureChanged(node);
+    nodeStructureChanged(node);
   }
 
   private void maybeUpdateSubtreeToUpdate(@NotNull final DefaultMutableTreeNode subtreeRoot) {
