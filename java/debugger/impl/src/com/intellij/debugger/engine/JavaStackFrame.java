@@ -391,6 +391,11 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
       }, false);
     }
+
+    @Override
+    public String toString() {
+      return myMessage;
+    }
   }
 
   protected void superBuildVariables(final EvaluationContextImpl evaluationContext, XValueChildrenList children) throws EvaluateException {

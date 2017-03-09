@@ -172,6 +172,11 @@ public class StackFrameItem {
     return new VariableItem(name, type, valueText, varType);
   }
 
+  @Override
+  public String toString() {
+    return myLocation.toString();
+  }
+
   private static class VariableItem extends XNamedValue {
     enum VarType {PARAM, OBJECT}
 
