@@ -67,7 +67,7 @@ public class DistinctHandler extends HandlerBase {
 
     final String peekResult =
       "final Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
-    final String resolve2Array = myResolveMapVariable.convertToArray("resolveDirect", true, true);
+    final String resolve2Array = myResolveMapVariable.convertToArray("resolve", true, true);
     return peekPrepare + prepareResolveMap + resolve2Array + peekResult;
   }
 

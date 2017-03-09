@@ -12,6 +12,7 @@ public class HandlerFactory {
   private static final MapToArrayTracerImpl.StreamCallTraceHandler PRODUCER_HANDLER = new ProducerHandler();
   private static final MapToArrayTracerImpl.StreamCallTraceHandler TERMINATOR_HANDLER = new TerminatorHandler();
 
+  @NotNull
   public static MapToArrayTracerImpl.StreamCallTraceHandler create(int number, @NotNull StreamCall call) {
     if (StreamCallType.PRODUCER.equals(call.getType())) {
       return PRODUCER_HANDLER;
