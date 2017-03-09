@@ -111,7 +111,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   public int getPertinentApplicabilityLevel() {
     if (myPertinentApplicabilityLevel == 0) {
       myPertinentApplicabilityLevel = getPertinentApplicabilityLevelInner();
-      pullInferenceErrorMessagesFromSubexpressions();
+      myPertinentApplicabilityLevel = pullInferenceErrorMessagesFromSubexpressions();
     }
     return myPertinentApplicabilityLevel;
   }
@@ -474,8 +474,9 @@ public class MethodCandidateInfo extends CandidateInfo{
     return errorMessage;
   }
 
-  private void pullInferenceErrorMessagesFromSubexpressions() {
-    if (myPertinentApplicabilityLevel == ApplicabilityLevel.NOT_APPLICABLE && myArgumentList instanceof PsiExpressionList) {
+  private int pullInferenceErrorMessagesFromSubexpressions() {
+    if (myArgumentList instanceof PsiExpressionList &&
+        (myPertinentApplicabilityLevel == ApplicabilityLevel.NOT_APPLICABLE || !isToInferApplicability())) {
       String errorMessage = null;
       for (PsiExpression expression : ((PsiExpressionList)myArgumentList).getExpressions()) {
         final String message = clearErrorMessageInSubexpressions(expression);
@@ -485,8 +486,10 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
       if (errorMessage != null) {
         setInferenceError(errorMessage);
+        return ApplicabilityLevel.NOT_APPLICABLE;
       }
     }
+    return myPertinentApplicabilityLevel;
   }
 
   private static String clearErrorMessageInSubexpressions(PsiExpression expression) {
