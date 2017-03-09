@@ -38,7 +38,7 @@
     </orderEntry>
     <orderEntry type="library" name="jsr305" level="project" />
     <orderEntry type="module-library" exported="">
-      <library name="commons-io">
+      <library name="commons-lang">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/commons-lang-2.6.jar!/" />
         </CLASSES>
