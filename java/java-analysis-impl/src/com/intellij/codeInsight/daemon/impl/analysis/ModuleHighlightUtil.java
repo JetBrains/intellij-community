@@ -359,6 +359,11 @@ public class ModuleHighlightUtil {
         PsiClass implClass = (PsiClass)implTarget;
         PsiMethod provider;
 
+        if (findModule(statement) != findModule(implClass)) {
+          String message = JavaErrorMessages.message("module.service.alien");
+          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+        }
+
         if (InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
           if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
             String message = JavaErrorMessages.message("module.service.abstract", implClass.getName());
