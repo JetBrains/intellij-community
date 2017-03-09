@@ -168,7 +168,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
       @Override
       public void actionPerformed(ActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup();
-        jdksModel.createAddActions(group, JdkComboBox.this, jdk -> {
+        jdksModel.createAddActions(group, JdkComboBox.this, getSelectedJdk(), jdk -> {
           if (project != null) {
             final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
             configurable.addJdkNode(jdk, false);
