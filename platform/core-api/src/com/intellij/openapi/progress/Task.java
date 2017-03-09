@@ -199,9 +199,7 @@ public abstract class Task implements TaskInfo, Progressive {
       this(project, title, true);
     }
 
-    public Backgroundable(@Nullable Project project,
-                          @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
-                          boolean canBeCancelled) {
+    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
       this(project, title, canBeCancelled, null);
     }
 
@@ -319,9 +317,7 @@ public abstract class Task implements TaskInfo, Progressive {
     private final Ref<T> myResult = Ref.create();
     private final Ref<Throwable> myError = Ref.create();
 
-    public WithResult(@Nullable Project project,
-                      @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
-                      boolean canBeCancelled) {
+    public WithResult(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
       super(project, title, canBeCancelled);
     }
 

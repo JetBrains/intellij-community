@@ -307,7 +307,8 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
       if (myProject.isDisposed()) {
         return;
       }
-      if (!aborted && myPerformHotswapAfterThisCompilation) {
+
+      if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
         for (HotSwapVetoableListener listener : myListeners) {
           if (!listener.shouldHotSwap(compileContext)) {
             return;

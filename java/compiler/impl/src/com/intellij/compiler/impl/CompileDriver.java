@@ -609,7 +609,7 @@ public class CompileDriver {
     }
     finally {
       progressIndicator.popState();
-      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
       if (statusBar != null) {
         statusBar.setInfo("");
       }

@@ -17,7 +17,6 @@ package git4idea.branch
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.InputDialog
-import com.intellij.openapi.ui.MessagesServiceImpl
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP

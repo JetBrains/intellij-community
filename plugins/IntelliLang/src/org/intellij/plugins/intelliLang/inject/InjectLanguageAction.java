@@ -189,7 +189,9 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
     minSize.height *= 4;
     list.setMinimumSize(minSize);
-    JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(list).setItemChoosenCallback(() -> {
+    JBPopup popup = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(list)
+      .setItemChoosenCallback(() -> {
       Injectable value = (Injectable)list.getSelectedValue();
       if (value != null) {
         onChosen.process(value);
