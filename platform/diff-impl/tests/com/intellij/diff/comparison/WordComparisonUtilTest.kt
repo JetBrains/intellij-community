@@ -338,6 +338,23 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
     }
   }
 
+  fun `test trailing punctuation`() {
+    lines_inner {
+      ("X = { };" - "X = { _ };")
+      ("        " - "     --   ").default()
+      ("        " - "          ").trim()
+      testAll()
+    }
+
+    // TODO
+    lines_inner {
+      ("X = { };_" - "X = { _ };_")
+      ("      -- " - "       ----").default()
+      ("      -- " - "        -- ").trim()
+      testAll()
+    }
+  }
+
   fun `test legacy cases from ByWordTest`() {
     lines_inner {
       ("abc def, 123" - "ab def, 12")
