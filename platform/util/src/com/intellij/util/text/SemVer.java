@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,13 +88,35 @@ public class SemVer implements Comparable<SemVer> {
 
   @Nullable
   public static SemVer parseFromText(@NotNull String text) {
-    return SemVerMatcher.parseFromText(text);
+    int majorEndInd = text.indexOf('.');
+    if (majorEndInd < 0) {
+      return null;
+    }
+    int major = StringUtil.parseInt(text.substring(0, majorEndInd), -1);
+    int minorEndInd = text.indexOf('.', majorEndInd + 1);
+    if (minorEndInd < 0) {
+      return null;
+    }
+    int minor = StringUtil.parseInt(text.substring(majorEndInd + 1, minorEndInd), -1);
+    final String patchStr;
+    int dashInd = text.indexOf('-', minorEndInd + 1);
+    if (dashInd >= 0) {
+      patchStr = text.substring(minorEndInd + 1, dashInd);
+    }
+    else {
+      patchStr = text.substring(minorEndInd + 1);
+    }
+    int patch = StringUtil.parseInt(patchStr, -1);
+    if (major >= 0 && minor >= 0 && patch >= 0) {
+      return new SemVer(text, major, minor, patch);
+    }
+    return null;
   }
 
   @NotNull
   public static SemVer parseFromTextNonNullize(@Nullable final String text) {
     if (text == null) return UNKNOWN;
-    final SemVer ver = SemVerMatcher.parseFromText(text);
+    final SemVer ver = parseFromText(text);
     return ver == null ? UNKNOWN : ver;
   }
 
