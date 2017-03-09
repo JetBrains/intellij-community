@@ -146,7 +146,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        DiffShelvedChangesAction.showShelvedChangesDiff(DataManager.getInstance().getDataContext(myTree));
+        DataContext dc = DataManager.getInstance().getDataContext(myTree);
+        if (getShelveChanges(dc).isEmpty() && getBinaryShelveChanges(dc).isEmpty()) return false;
+        DiffShelvedChangesAction.showShelvedChangesDiff(dc);
         return true;
       }
     }.installOn(myTree);
