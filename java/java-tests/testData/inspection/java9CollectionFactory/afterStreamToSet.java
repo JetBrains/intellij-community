@@ -5,5 +5,5 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Test {
-  public static final Set<Class<?>> MY_SET = Set.<Class<?>>of(String.class, int.class, Object.class);
+  public static final Set<Class<?>> MY_SET = Set.of(String.class, int.class, Object.class);
 }
