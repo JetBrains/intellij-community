@@ -22,7 +22,7 @@ public class StreamChainBuilder {
     StreamEx.of("limit", "flatMap", "distinct", "map", "filter", "mapToInt", "mapToLong", "MapToDouble", "sorted", "boxed", "peek").toSet();
 
   // TODO: termination - is any method which returns regular object (not subclass of Stream)
-  private static final Set<String> SUPPORTED_TERMINATION = StreamEx.of("collect", "sum", "reduce").toSet();
+  private static final Set<String> SUPPORTED_TERMINATION = StreamEx.of("collect", "sum", "reduce", "toArray").toSet();
 
   private static final ThreadLocal<PsiMethodCallExpression[]> SEARCH_RESULT = new ThreadLocal<>();
   private static final PsiElementVisitor STREAM_CALL_VISITOR = new JavaRecursiveElementWalkingVisitor() {
