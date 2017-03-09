@@ -85,6 +85,11 @@ public class SemVer implements Comparable<SemVer> {
     return myRawVersion;
   }
 
+  @Nullable
+  public static SemVer parseFromText(@NotNull String text) {
+    return SemVerMatcher.parseFromText(text);
+  }
+
   @NotNull
   public static SemVer parseFromTextNonNullize(@Nullable final String text) {
     if (text == null) return UNKNOWN;
