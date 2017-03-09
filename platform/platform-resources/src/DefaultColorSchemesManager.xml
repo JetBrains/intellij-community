@@ -23,10 +23,10 @@
       <option name="SELECTED_TEARLINE_COLOR" value="9C9C9C"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
 
-      <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="b6dea6" protanopia="b6dea6"/>
-      <option name="MODIFIED_LINES_COLOR" value="c3d6e8"/>
-      <option name="DELETED_LINES_COLOR" value="9f9f9f"/>
-      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="eddcbc" deuteranopia="f2e7d3" protanopia="f2e7d3"/>
+      <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
+      <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
+      <option name="DELETED_LINES_COLOR" value="9f9f9f" deuteranopia="7f7f7f" protanopia="7f7f7f"/>
+      <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="eddcbc" deuteranopia="c5cad4" protanopia="c5cad4"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
