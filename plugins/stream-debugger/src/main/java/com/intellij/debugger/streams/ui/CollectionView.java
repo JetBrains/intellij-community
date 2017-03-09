@@ -35,9 +35,8 @@ public class CollectionView extends JPanel {
   public CollectionView(@NotNull EvaluationContextImpl evaluationContext, @NotNull ResolvedCall call) {
     super(new BorderLayout());
     add(new JBLabel(stringLimit(call.getName() + call.getArguments())), BorderLayout.NORTH);
-    final Project project = evaluationContext.getProject();
 
-    myInstancesTree = new CollectionTree(project, call, evaluationContext);
+    myInstancesTree = new CollectionTree(call, evaluationContext);
 
     add(new JBScrollPane(myInstancesTree), BorderLayout.CENTER);
   }

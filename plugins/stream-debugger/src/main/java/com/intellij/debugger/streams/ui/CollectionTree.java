@@ -62,13 +62,12 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
   private ValuesHighlightingListener myForwardListener = EMPTY_LISTENER;
   private boolean myIgnoreSelectionEvents = false;
 
-  CollectionTree(@NotNull Project project,
-                 @NotNull ResolvedCall call,
+  CollectionTree(@NotNull ResolvedCall call,
                  @NotNull EvaluationContextImpl evaluationContext) {
-    super(project, new JavaDebuggerEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
+    super(evaluationContext.getProject(), new JavaDebuggerEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
-    myProject = project;
-    myNodeManager = new MyNodeManager(project);
+    myProject = evaluationContext.getProject();
+    myNodeManager = new MyNodeManager(myProject);
     myResolvedCall = call;
     final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(call.getValues(), evaluationContext));
     setRoot(root, false);
