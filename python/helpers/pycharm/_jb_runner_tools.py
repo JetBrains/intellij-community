@@ -4,7 +4,6 @@ Tools to implement runners (https://confluence.jetbrains.com/display/~link/PyCha
 """
 import atexit
 import _jb_utils
-import imp
 import os
 import re
 import sys
@@ -291,6 +290,50 @@ messages.TeamcityServiceMessages = NewTeamcityServiceMessages
 # Monkeypatched
 
 
+class _SymbolNameSplitter(object):
+    """
+    Strategy to split symbol name to package/module part and symbols part.
+        
+    """
+    def check_is_importable(self, parts, current_step, separator):
+        """
+        
+        Run this method for each name part. Method throws ImportError when name is not importable. 
+        That means previous name is where module name ends.
+        :param parts: list of module name parts
+        :param current_step: from 0 to len(parts)
+        :param separator: module name separator (".")
+        """
+        raise NotImplementedError()
+
+
+class _SymbolName2KSplitter(_SymbolNameSplitter):
+    """
+    Based on imp which works in 2, but not 3
+    """
+    def __init__(self):
+        super(_SymbolNameSplitter, self).__init__()
+        self._path = None
+
+    def check_is_importable(self, parts, current_step, separator):
+        import imp
+        module_to_import = parts[current_step]
+        (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
+        if desc[2] == imp.PKG_DIRECTORY:
+            # Package
+            self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
+
+
+class _SymbolName3KSplitter(_SymbolNameSplitter):
+    """
+    Based on importlib which works in 3, but not 2
+    """
+    def check_is_importable(self, parts, current_step, separator):
+        import importlib
+        module_to_import = separator.join(parts[:current_step + 1])
+        importlib.import_module(module_to_import)
+
+
 def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
     """
     Targets are always dot separated according to manual.
@@ -307,19 +350,18 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
         return []
 
     def _patch_target(target):
-        path = None
-        parts = target.split(".")
+        _jb_utils.VersionAgnosticUtils.is_py3k()
+        splitter = _SymbolName3KSplitter() if _jb_utils.VersionAgnosticUtils.is_py3k() else _SymbolName2KSplitter()
+
+        separator = "."
+        parts = target.split(separator)
         for i in range(0, len(parts)):
-            m = parts[i]
             try:
-                (fil, path, desc) = imp.find_module(m, [path] if path else None)
+                splitter.check_is_importable(parts, i, separator)
             except ImportError:
                 fs_part = fs_glue.join(parts[:i])
                 python_path = python_glue.join(parts[i:])
                 return fs_part + fs_to_python_glue + python_path if python_path else fs_part
-            if desc[2] == imp.PKG_DIRECTORY:
-                # Package
-                path = imp.load_module(m, fil, path, desc).__path__[0]
         return target
 
     return map(_patch_target, targets)
