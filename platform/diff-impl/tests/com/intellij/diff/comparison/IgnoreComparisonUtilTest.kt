@@ -122,6 +122,43 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
       .run()
   }
 
+  fun testTrim() {
+    Test("A B_", "",
+         "    ", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         "++++", "",
+         "    ", "")
+      .run()
+
+    Test("A B_", "",
+         "   +", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         "+++ ", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         "+  +", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         "+ ++", "",
+         "----", "")
+      .run()
+
+    Test("A B_", "",
+         " +++", "",
+         "----", "")
+      .run()
+  }
+
   fun testLines() {
     Test("X_", "X_Y_",
          "  ", "    ",
