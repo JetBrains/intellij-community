@@ -24,7 +24,6 @@ import com.intellij.debugger.settings.CaptureConfigurable;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,9 +60,6 @@ public class StackFrameItem {
   private static final List<XNamedValue> VARS_NOT_CAPTURED = Collections.singletonList(
     JavaStackFrame.createMessageNode(DebuggerBundle.message("message.node.local.variables.not.captured"),
                                      XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
-  private static final XNamedValue VAR_NO_DEBUG_INFO =
-    JavaStackFrame.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(),
-                                     XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
 
   private final Location myLocation;
   private final List<XNamedValue> myVariables;
@@ -125,7 +121,7 @@ public class StackFrameItem {
               }
               catch (EvaluateException e) {
                 if (e.getCause() instanceof AbsentInformationException) {
-                  vars.add(VAR_NO_DEBUG_INFO);
+                  vars.add(JavaStackFrame.LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
                   // only args for frames w/o debug info for now
                   try {
                     for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil

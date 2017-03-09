@@ -379,15 +379,15 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getFilePath(getScriptName()), 3);
-        toggleBreakpoint(getFilePath(getScriptName()), 9);
+        toggleBreakpoint(getFilePath(getScriptName()), 7);
+        toggleBreakpoint(getFilePath(getScriptName()), 14);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
         eval("x").hasValue("0");
-        runToLine(6);
+        runToLine(11);
         eval("x").hasValue("1");
         resume();
         waitForPause();
@@ -961,8 +961,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_return_values.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptName(), 7);
-        toggleBreakpoint(getScriptName(), 11);
+        toggleBreakpoint(getScriptName(), 2);
         final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
         debuggerSettings.setWatchReturnValues(true);
       }
@@ -976,8 +975,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
+        stepOver();
+        waitForPause();
         eval(PyDebugValue.RETURN_VALUES_PREFIX + "['bar'][0]").hasValue("1");
-        resume();
+        stepOver();
+        waitForPause();
+        stepOver();
         waitForPause();
         eval(PyDebugValue.RETURN_VALUES_PREFIX + "['foo']").hasValue("33");
         resume();
@@ -986,7 +989,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-iron");
+        return ImmutableSet.of("-iron", "-python36");
       }
     });
   }
@@ -1155,6 +1158,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void before() throws Exception {
         toggleBreakpoint(getScriptName(), 2);
+        toggleBreakpoint(getScriptName(), 3);
       }
 
       @Override
@@ -1162,6 +1166,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("a").hasValue("1");
         toggleBreakpoint(getScriptName(), 5);
+        resume();
+        waitForPause();
+        eval("b").hasValue("2");
         resume();
         waitForPause();
         eval("d").hasValue("4");

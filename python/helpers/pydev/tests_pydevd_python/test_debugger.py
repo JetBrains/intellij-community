@@ -5,7 +5,7 @@
 
     Note that it's a python script but it'll spawn a process to run as jython, ironpython and as python.
 '''
-from tests_python.debugger_unittest import get_free_port
+from tests_pydevd_python.debugger_unittest import get_free_port
 import threading
 
 
@@ -17,12 +17,16 @@ IRONPYTHON_EXE = None
 JYTHON_JAR_LOCATION = None
 JAVA_LOCATION = None
 
+try:
+    xrange
+except:
+    xrange = range
 
 import unittest
 import os
 import sys
 import time
-from tests_python import debugger_unittest
+from tests_pydevd_python import debugger_unittest
 
 TEST_DJANGO = False
 if sys.version_info[:2] == (2, 7):
@@ -239,10 +243,13 @@ class WriterThreadCase17a(debugger_unittest.AbstractWriterThread):
         self.write_make_initial_run()
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+        assert line == 2, 'Expected return to be in line 2, was: %s' % line
 
         self.write_step_in(thread_id)
-        thread_id, frame_id, line = self.wait_for_breakpoint_hit('107', True)
+        thread_id, frame_id, line, name = self.wait_for_breakpoint_hit('107', get_line=True, get_name=True)
+
         # Should Skip step into properties setter
+        assert name == 'm3'
         assert line == 10, 'Expected return to be in line 10, was: %s' % line
         self.write_run_thread(thread_id)
 
@@ -284,15 +291,17 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         self.wait_for_var('<var name="%27size%27')
 
         self.write_get_variable(thread_id, frame_id, 'bigarray')
+        # isContainer could be true on some numpy versions, so, we only check for the var begin.
         self.wait_for_var([
-            '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0" />',
-            '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0" />',
-            '<var name="size" type="int" qualifier="{}" value="int%3A 100000" />'.format(builtin_qualifier),
+            '<var name="min" type="int64" qualifier="numpy" value="int64%253A 0"',
+            '<var name="min" type="int64" qualifier="numpy" value="int64%3A 0"',
+            '<var name="size" type="int" qualifier="{}" value="int%3A 100000"'.format(builtin_qualifier),
         ])
         self.wait_for_var([
-            '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999" />',
-            '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999" />',
-            '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"'
+            '<var name="max" type="int64" qualifier="numpy" value="int64%253A 99999"',
+            '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
+            '<var name="max" type="int64" qualifier="numpy" value="int64%3A 99999"',
+            '<var name="max" type="int32" qualifier="numpy" value="int32%253A 99999"',
         ])
         self.wait_for_var('<var name="shape" type="tuple"')
         self.wait_for_var('<var name="dtype" type="dtype"')
@@ -306,10 +315,14 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         self.wait_for_var([
             '<var name="min" type="str" qualifier={} value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
             '<var name="min" type="str" qualifier={} value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier="{}" value="str%253A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="min" type="str" qualifier="{}" value="str%3A ndarray too big%252C calculating min would slow down debugging" />'.format(builtin_qualifier),
         ])
         self.wait_for_var([
             '<var name="max" type="str" qualifier={} value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
             '<var name="max" type="str" qualifier={} value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier="{}" value="str%253A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
+            '<var name="max" type="str" qualifier="{}" value="str%3A ndarray too big%252C calculating max would slow down debugging" />'.format(builtin_qualifier),
         ])
         self.wait_for_var('<var name="shape" type="tuple"')
         self.wait_for_var('<var name="dtype" type="dtype"')
@@ -487,7 +500,9 @@ class WriterThreadCase11(debugger_unittest.AbstractWriterThread):
         self.write_add_breakpoint(2, 'Method1')
         self.write_make_initial_run()
 
-        thread_id, frame_id = self.wait_for_breakpoint_hit('111')
+        thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+
+        assert line == 2, 'Expected return to be in line 2, was: %s' % line
 
         self.write_step_over(thread_id)
 
@@ -878,6 +893,37 @@ class WriterThreadCaseQThread3(debugger_unittest.AbstractWriterThread):
         self.finished_ok = True
 
 #=======================================================================================================================
+# WriterThreadCaseQThread4
+#=======================================================================================================================
+class WriterThreadCaseQThread4(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_qthread4.py')
+
+    def run(self):
+        self.start_socket()
+        breakpoint_id = self.write_add_breakpoint(24, 'on_start')
+        self.write_make_initial_run()
+
+        thread_id, frame_id = self.wait_for_breakpoint_hit()
+
+        self.write_remove_breakpoint(breakpoint_id)
+        self.write_run_thread(thread_id)
+
+        self.log.append('Checking sequence. Found: %s' % (self._sequence))
+        assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
+
+        self.log.append('Marking finished ok.')
+        self.finished_ok = True
+
+    def additional_output_checks(self, stdout, stderr):
+        if 'On start called' not in stdout:
+            raise AssertionError('Expected "On start called" to be in stdout:\n%s' % (stdout,))
+        if 'Done sleeping' not in stdout:
+            raise AssertionError('Expected "Done sleeping" to be in stdout:\n%s' % (stdout,))
+        if 'native Qt signal is not callable' in stderr:
+            raise AssertionError('Did not expect "native Qt signal is not callable" to be in stderr:\n%s' % (stderr,))
+
+#=======================================================================================================================
 # WriterThreadCase1
 #=======================================================================================================================
 class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
@@ -917,6 +963,162 @@ class WriterThreadCase1(debugger_unittest.AbstractWriterThread):
         self.log.append('asserted')
 
         self.finished_ok = True
+
+#=======================================================================================================================
+# WriterThreadCaseMSwitch
+#=======================================================================================================================
+class WriterThreadCaseMSwitch(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = 'tests_pydevd_python._debugger_case_m_switch'
+    IS_MODULE = True
+
+    def get_environ(self):
+        env = os.environ.copy()
+        curr_pythonpath = env.get('PYTHONPATH', '')
+
+        root_dirname = os.path.dirname(os.path.dirname(__file__))
+
+        curr_pythonpath += root_dirname + os.pathsep
+        env['PYTHONPATH'] = curr_pythonpath
+        return env
+
+    def get_main_filename(self):
+        return debugger_unittest._get_debugger_test_file('_debugger_case_m_switch.py')
+
+    def run(self):
+        self.start_socket()
+
+        self.log.append('writing add breakpoint')
+        breakpoint_id = self.write_add_breakpoint(1, None)
+
+        self.log.append('making initial run')
+        self.write_make_initial_run()
+
+        self.log.append('waiting for breakpoint hit')
+        thread_id, frame_id = self.wait_for_breakpoint_hit()
+
+        self.write_remove_breakpoint(breakpoint_id)
+
+        self.log.append('run thread')
+        self.write_run_thread(thread_id)
+
+        self.log.append('asserting')
+        try:
+            assert 9 == self._sequence, 'Expected 9. Had: %s' % self._sequence
+        except:
+            self.log.append('assert failed!')
+            raise
+        self.log.append('asserted')
+
+        self.finished_ok = True
+
+#=======================================================================================================================
+# WriterThreadCaseRemoteDebugger
+#=======================================================================================================================
+class WriterThreadCaseRemoteDebugger(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote.py')
+
+    def run(self):
+        self.start_socket(8787)
+
+        self.log.append('making initial run')
+        self.write_make_initial_run()
+
+        self.log.append('waiting for breakpoint hit')
+        thread_id, frame_id = self.wait_for_breakpoint_hit('105')
+
+        self.log.append('run thread')
+        self.write_run_thread(thread_id)
+
+        self.log.append('asserting')
+        try:
+            assert 5 == self._sequence, 'Expected 5. Had: %s' % self._sequence
+        except:
+            self.log.append('assert failed!')
+            raise
+        self.log.append('asserted')
+
+        self.finished_ok = True
+
+#=======================================================================================================================
+# _SecondaryMultiProcProcessWriterThread
+#=======================================================================================================================
+class _SecondaryMultiProcProcessWriterThread(debugger_unittest.AbstractWriterThread):
+
+    FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
+
+    def __init__(self, server_socket):
+        debugger_unittest.AbstractWriterThread.__init__(self)
+        self.server_socket = server_socket
+
+    def run(self):
+        print('waiting for second process')
+        self.sock, addr = self.server_socket.accept()
+        print('accepted second process')
+
+        from tests_pydevd_python.debugger_unittest import ReaderThread
+        self.reader_thread = ReaderThread(self.sock)
+        self.reader_thread.start()
+
+        self._sequence = -1
+        # initial command is always the version
+        self.write_version()
+        self.log.append('start_socket')
+        self.write_make_initial_run()
+        time.sleep(.5)
+        self.finished_ok = True
+
+#=======================================================================================================================
+# WriterThreadCaseRemoteDebuggerMultiProc
+#=======================================================================================================================
+class WriterThreadCaseRemoteDebuggerMultiProc(debugger_unittest.AbstractWriterThread):
+
+    # It seems sometimes it becomes flaky on the ci because the process outlives the writer thread...
+    # As we're only interested in knowing if a second connection was received, just kill the related
+    # process.
+    FORCE_KILL_PROCESS_WHEN_FINISHED_OK = True
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case_remote_1.py')
+
+    def run(self):
+        self.start_socket(8787)
+
+        self.log.append('making initial run')
+        self.write_make_initial_run()
+
+        self.log.append('waiting for breakpoint hit')
+        thread_id, frame_id = self.wait_for_breakpoint_hit('105')
+
+        self.secondary_multi_proc_process_writer_thread  = secondary_multi_proc_process_writer_thread = \
+            _SecondaryMultiProcProcessWriterThread(self.server_socket)
+        secondary_multi_proc_process_writer_thread.start()
+
+        self.log.append('run thread')
+        self.write_run_thread(thread_id)
+
+        for _i in xrange(400):
+            if secondary_multi_proc_process_writer_thread.finished_ok:
+                break
+            time.sleep(.1)
+        else:
+            self.log.append('Secondary process not finished ok!')
+            raise AssertionError('Secondary process not finished ok!')
+
+        self.log.append('Secondary process finished!')
+        try:
+            assert 5 == self._sequence, 'Expected 5. Had: %s' % self._sequence
+        except:
+            self.log.append('assert failed!')
+            raise
+        self.log.append('asserted')
+
+        self.finished_ok = True
+
+    def do_kill(self):
+        debugger_unittest.AbstractWriterThread.do_kill(self)
+        if hasattr(self, 'secondary_multi_proc_process_writer_thread'):
+            self.secondary_multi_proc_process_writer_thread.do_kill()
 
 #=======================================================================================================================
 # DebuggerBase
@@ -1015,6 +1217,29 @@ class DebuggerBase(debugger_unittest.DebuggerRunner):
     def test_case_qthread3(self):
         if self._has_qt():
             self.check_case(WriterThreadCaseQThread3)
+
+    def test_case_qthread4(self):
+        if self._has_qt():
+            self.check_case(WriterThreadCaseQThread4)
+
+    def test_m_switch(self):
+        self.check_case(WriterThreadCaseMSwitch)
+
+
+
+# class TestPythonRemoteDebugger(unittest.TestCase, debugger_unittest.DebuggerRunner):
+#
+#     def get_command_line(self):
+#         return [PYTHON_EXE, '-u']
+#
+#     def add_command_line_args(self, args):
+#         return args + [self.writer_thread.TEST_FILE]
+#
+#     def test_remote_debugger(self):
+#         self.check_case(WriterThreadCaseRemoteDebugger)
+#
+#     def test_remote_debugger2(self):
+#         self.check_case(WriterThreadCaseRemoteDebuggerMultiProc)
 
 
 class TestPython(unittest.TestCase, DebuggerBase):
@@ -1154,7 +1379,7 @@ if __name__ == '__main__':
         #
         #         suite.addTests(unittest.makeSuite(TestIronPython))
         #
-        suite.addTests(unittest.makeSuite(TestPython))
+        #         suite.addTests(unittest.makeSuite(TestPython))
 
 
 
@@ -1178,6 +1403,6 @@ if __name__ == '__main__':
         #         unittest.TextTestRunner(verbosity=3).run(suite)
         #     suite.addTest(TestPython('test_case_17'))
         #     suite.addTest(TestPython('test_case_18'))
-        #     suite.addTest(TestPython('test_case_19'))
+        suite.addTest(TestPython('test_case_qthread4'))
 
         unittest.TextTestRunner(verbosity=3).run(suite)

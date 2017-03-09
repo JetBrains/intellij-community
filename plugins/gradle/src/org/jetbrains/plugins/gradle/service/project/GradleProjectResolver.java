@@ -309,7 +309,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       throw new IllegalStateException("No modules found for the target project: " + ideaProject);
     }
 
-    Collection<IdeaModule> includedModules = exposeCompositeBuild(allModels, projectDataNode);
+    Collection<IdeaModule> includedModules = exposeCompositeBuild(allModels, resolverCtx, projectDataNode);
     final Map<String /* module id */, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap = ContainerUtilRt.newHashMap();
     final Map<String /* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetsMap = ContainerUtil.newHashMap();
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, sourceSetsMap);
@@ -421,8 +421,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   @NotNull
   private static Collection<IdeaModule> exposeCompositeBuild(ProjectImportAction.AllModels allModels,
+                                                             DefaultProjectResolverContext resolverCtx,
                                                              DataNode<ProjectData> projectDataNode) {
-    CompositeBuildData compositeBuildData = null;
+    if(resolverCtx.getSettings() != null && !resolverCtx.getSettings().getExecutionWorkspace().getBuildParticipants().isEmpty()) {
+      return Collections.emptyList();
+    }
+    CompositeBuildData compositeBuildData;
     List<IdeaModule> gradleIncludedModules = new SmartList<>();
     List<IdeaProject> includedBuilds = allModels.getIncludedBuilds();
     if (!includedBuilds.isEmpty()) {
@@ -432,9 +436,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (!project.getModules().isEmpty()) {
           String rootProjectName = project.getName();
           BuildParticipant buildParticipant = new BuildParticipant();
-          for (IdeaModule ideaModule : project.getModules()) {
-            gradleIncludedModules.add(ideaModule);
-          }
+          gradleIncludedModules.addAll(project.getModules());
           GradleProject gradleProject = project.getModules().getAt(0).getGradleProject();
           String projectPath = null;
           do {
