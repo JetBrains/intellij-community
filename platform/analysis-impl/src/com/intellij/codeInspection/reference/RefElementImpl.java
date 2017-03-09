@@ -26,8 +26,8 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -77,24 +77,25 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     myFlags = 0;
   }
 
+  protected boolean isDeleted() {
+    return myIsDeleted;
+  }
+
   @Override
   public boolean isValid() {
     if (myIsDeleted) return false;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (getRefManager().getProject().isDisposed()) return false;
+    return ReadAction.compute(() -> {
+      if (getRefManager().getProject().isDisposed()) return false;
 
-        final PsiFile file = myID.getContainingFile();
-        //no need to check resolve in offline mode
-        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          return file != null && file.isPhysical();
-        }
-
-        final PsiElement element = getElement();
-        return element != null && element.isPhysical();
+      final PsiFile file = myID.getContainingFile();
+      //no need to check resolve in offline mode
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        return file != null && file.isPhysical();
       }
-    }).booleanValue();
+
+      final PsiElement element = getElement();
+      return element != null && element.isPhysical();
+    });
   }
 
   @Override
