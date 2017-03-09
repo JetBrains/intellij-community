@@ -19,10 +19,10 @@ public class DistinctHandler extends HandlerBase {
   private final HashMapVariableImpl myResolveMapVariable;
   private final HashMapVariableImpl myReverseUtilMapVariable;
 
-  public DistinctHandler(int callNumber, @NotNull String callName) {
-    myPeekTracer = new PeekTracerHandler(callNumber, callName);
+  public DistinctHandler(int callNumber) {
+    myPeekTracer = new PeekTracerHandler(callNumber, "distinct");
 
-    final String variablePrefix = callName + callNumber;
+    final String variablePrefix = "distinct" + callNumber;
     myStoreMapVariable =
       new HashMapVariableImpl(variablePrefix + "Store", GenericType.OBJECT, new ClassTypeImpl("Map<Integer, Object>"), false);
     myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", GenericType.INT, GenericType.INT, false);

@@ -54,9 +54,8 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
   @NotNull
   @Override
   protected String getTraceExpression(@NotNull StreamChain chain) {
-    final List<StreamCall> calls = chain.getIntermediateCalls();
     final List<StreamCall> tracingChainCalls = new ArrayList<>();
-    final int callCount = calls.size();
+    final int callCount = chain.length();
     final StringBuilder declarationBuilder = new StringBuilder();
     final StringBuilder resultBuilder = new StringBuilder();
     declarationBuilder.append(String.format("final Object[] info = new Object[%d];\n", callCount))
@@ -65,10 +64,8 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     final StreamCall timeCall = new PeekCall("x -> time.incrementAndGet()");
     tracingChainCalls.add(timeCall);
     for (int i = 0; i < callCount; i++) {
-      final StreamCall call = calls.get(i);
-      final String name = call.getName();
-
-      final StreamCallTraceHandler handler = HandlerFactory.create(i, name);
+      final StreamCall call = chain.getCall(i);
+      final StreamCallTraceHandler handler = HandlerFactory.create(i, call);
 
       declarationBuilder.append(handler.additionalVariablesDeclaration());
       resultBuilder.append("{").append(LINE_SEPARATOR);
