@@ -32,6 +32,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.toObjectArray;
+
 public class TextDiffTypeFactory {
   @NotNull public static final TextDiffTypeImpl INSERTED =
     new TextDiffTypeImpl(DiffColors.DIFF_INSERTED, DiffBundle.message("diff.type.inserted.name"));
@@ -58,7 +60,7 @@ public class TextDiffTypeFactory {
   }
 
   public synchronized TextDiffTypeImpl[] getAllDiffTypes() {
-    return myTypes.toArray(new TextDiffTypeImpl[myTypes.size()]);
+    return toObjectArray(myTypes, TextDiffTypeImpl.class);
   }
 
   public static TextDiffTypeFactory getInstance() {

@@ -50,6 +50,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.util.ArrayUtil.toObjectArray;
+
 /**
  * This class allows to add custom foldings to hide unchanged regions in diff.
  * EditorSettings#isAutoCodeFoldingEnabled() should be true, to avoid collisions with language-specific foldings
@@ -181,7 +183,7 @@ public class FoldingModelSupport {
       }
 
       if (result.size() > 0) {
-        FoldedBlock[] block = ContainerUtil.toArray(result, new FoldedBlock[result.size()]);
+        FoldedBlock[] block = toObjectArray(result, FoldedBlock.class);
         for (FoldedBlock folding : block) {
           folding.installHighlighter(block);
         }
