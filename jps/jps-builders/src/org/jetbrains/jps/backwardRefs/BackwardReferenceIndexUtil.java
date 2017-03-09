@@ -89,15 +89,15 @@ public class BackwardReferenceIndexUtil {
 
   private static class AnonymousClassEnumerator {
     private THashMap<String, LightRef.LightClassHierarchyElementDef> myAnonymousName2Id = null;
-    private int myFreeId = 0;
 
     private LightRef.JavaLightAnonymousClassRef addAnonymous(String internalName,
                                                              LightRef.JavaLightClassRef base) {
       if (myAnonymousName2Id == null) {
         myAnonymousName2Id = new THashMap<>();
       }
+      final int anonymousIdx = myAnonymousName2Id.size();
       myAnonymousName2Id.put(internalName, base);
-      return new LightRef.JavaLightAnonymousClassRef(myFreeId++);
+      return new LightRef.JavaLightAnonymousClassRef(anonymousIdx);
     }
 
     private LightRef.LightClassHierarchyElementDef getLightRefIfAnonymous(String className) {
