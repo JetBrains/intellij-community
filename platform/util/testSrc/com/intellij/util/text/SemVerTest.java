@@ -47,7 +47,7 @@ public class SemVerTest extends TestCase {
   }
 
   private static void checkNotParsed(@NotNull String version) {
-    assertNull(SemVerMatcher.parseFromText(version));
+    assertNull(SemVer.parseFromText(version));
   }
 
   public void testCompare() throws Exception {
@@ -65,7 +65,7 @@ public class SemVerTest extends TestCase {
 
   @NotNull
   private static SemVer parseNotNull(@NotNull String text) {
-    SemVer semVer = SemVerMatcher.parseFromText(text);
+    SemVer semVer = SemVer.parseFromText(text);
     assertNotNull(semVer);
     return semVer;
   }
