@@ -112,9 +112,7 @@ public class DiffCalculator {
       }
     }
 
-    if (best.isEmpty()) throw new AssertionError("Failed to find a candidate for '" + path + "' in " + paths);
-
-    return best;
+    return !best.isEmpty() ? best : null;
   }
 
   public static Map<Long, List<String>> groupFilesByContent(Map<String, Long> map) {
