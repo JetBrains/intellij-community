@@ -513,12 +513,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     StatisticsUpdate.cancelLastCompletionStatisticsUpdate();
   }
 
-  boolean blockingWaitForFinish(int timeout) {
+  boolean blockingWaitForFinish(int timeoutMs) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
       assert myFinishSemaphore.waitFor(100 * 1000) : "Too long completion";
       return true;
     }
-    if (myFreezeSemaphore.waitFor(timeout)) {
+    if (myFreezeSemaphore.waitFor(timeoutMs)) {
       // the completion is really finished, now we may auto-insert or show lookup
       return !isRunning() && !isCanceled();
     }
