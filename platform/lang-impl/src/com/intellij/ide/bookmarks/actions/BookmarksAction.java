@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -88,7 +89,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     myPopup = new MasterDetailPopupBuilder(project).
       setList(list).
       setDelegate(this).
-      setDetailView(new DetailViewImpl(project)).
+      setDetailView(new MyDetailView(project)).
       setDimensionServiceKey(DIMENSION_SERVICE_KEY).
       setAddDetailViewToEast(true).
       setActionsGroup(actions).
@@ -290,5 +291,19 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     if (!(model1 instanceof FilteringListModel)) return true;
     final FilteringListModel model = (FilteringListModel)model1;
     return model.getOriginalModel().getSize() == model.getSize();
+  }
+
+  private static class MyDetailView extends DetailViewImpl {
+    public MyDetailView(Project project) {
+      super(project);
+    }
+
+    @NotNull
+    @Override
+    protected Editor createEditor(@Nullable Project project, Document document, VirtualFile file) {
+      Editor editor = super.createEditor(project, document, file);
+      editor.setBorder(IdeBorderFactory.createEmptyBorder());
+      return editor;
+    }
   }
 }
