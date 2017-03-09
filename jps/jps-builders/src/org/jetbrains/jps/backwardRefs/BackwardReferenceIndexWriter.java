@@ -128,7 +128,7 @@ public class BackwardReferenceIndexWriter {
   }
 
   @Nullable
-  LightRef enumerateNames(JavacRef ref, Function<String, Integer> parentReplacer) {
+  LightRef enumerateNames(JavacRef ref, Function<String, Integer> ownerIdReplacer) {
     NameEnumerator nameEnumerator = myIndex.getByteSeqEum();
     if (ref instanceof JavacRef.JavacClass) {
       if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
@@ -140,7 +140,7 @@ public class BackwardReferenceIndexWriter {
       if (isPrivate(ref)) {
         return null;
       }
-      final Integer ownerPrecalculatedId = parentReplacer.fun(ownerName);
+      final Integer ownerPrecalculatedId = ownerIdReplacer.fun(ownerName);
       if (ref instanceof JavacRef.JavacField) {
         return new LightRef.JavaLightFieldRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator));
       }

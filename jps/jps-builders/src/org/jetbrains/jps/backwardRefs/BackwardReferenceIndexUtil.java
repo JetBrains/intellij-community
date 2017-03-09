@@ -73,7 +73,6 @@ public class BackwardReferenceIndexUtil {
       }
     }
 
-    //reenumerate
     Map<LightRef, Integer> convertedRefs = new THashMap<>();
     refs.forEachEntry((ref, count) -> {
       final LightRef lightRef = writer.enumerateNames(ref, name -> {
