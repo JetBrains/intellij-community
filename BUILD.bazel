@@ -38,7 +38,6 @@ iml_module(
         "platform/configuration-store-impl/src": "com.intellij.configurationStore",
         "platform/credential-store/test": "com.intellij.credentialStore",
     },
-    res_zips = ["platform/platform-resources/keymaps.zip"],
     # do not sort: must match IML order
     resources = [
         "xml/xml-analysis-impl/resources",
