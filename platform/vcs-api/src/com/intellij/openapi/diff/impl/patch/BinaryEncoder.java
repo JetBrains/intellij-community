@@ -45,7 +45,7 @@ public class BinaryEncoder {
   }
 
   private static void checkLenIsValid(int len, @NotNull String errorMessage) throws BinaryPatchException {
-    if (len < 0 && len > 52) {
+    if (len < 0 || len > 52) {
       throw new BinaryPatchException(errorMessage);
     }
   }
