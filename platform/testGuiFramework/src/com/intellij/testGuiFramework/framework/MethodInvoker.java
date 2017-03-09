@@ -31,13 +31,13 @@ import static org.fest.reflect.core.Reflection.field;
 import static org.fest.reflect.core.Reflection.method;
 
 public class MethodInvoker extends Statement {
-  @NotNull private final GuiTestConfigurator myTestConfigurator;
+  @NotNull private final GuiTestConfiguratorBase myTestConfigurator;
   @NotNull private final FrameworkMethod myTestMethod;
   @NotNull private final Object myTest;
   @NotNull private final ScreenshotTaker myScreenshotTaker;
 
   MethodInvoker(@NotNull FrameworkMethod testMethod, @NotNull Object test, @NotNull ScreenshotTaker screenshotTaker) throws Throwable {
-    myTestConfigurator = GuiTestConfigurator.createNew(testMethod.getMethod(), test);
+    myTestConfigurator = GuiTestConfiguratorBase.createNew(testMethod.getMethod(), test);
     myTestMethod = testMethod;
     myTest = test;
     myScreenshotTaker = screenshotTaker;
