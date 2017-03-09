@@ -32,7 +32,6 @@ import com.intellij.debugger.streams.ui.TraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -57,7 +56,7 @@ import java.util.List;
 public class JvmStreamDebuggerActionHandler {
   private static final Logger LOG = Logger.getInstance(JvmStreamDebuggerActionHandler.class);
 
-  public void perform(@NotNull Project project, AnActionEvent event) {
+  void perform(@NotNull Project project) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null) {
       return;
@@ -88,7 +87,7 @@ public class JvmStreamDebuggerActionHandler {
     });
   }
 
-  public boolean isEnabled(@NotNull Project project) {
+  boolean isEnabled(@NotNull Project project) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     final PsiElement elementAtCursor = session == null ? null : findElementAtCursor(session);
     return elementAtCursor != null && StreamChainBuilder.checkStreamExists(elementAtCursor);
@@ -99,28 +98,12 @@ public class JvmStreamDebuggerActionHandler {
       return Collections.emptyList();
     }
 
-    final List<ValuesOrderResolver.Result> resolvedMappings = new ArrayList<>();
-    final List<TraceInfo> trace = tracingResult.getTrace();
-    for (int i = 0, length = chain.length(); i < length; i++) {
-      final TraceInfo info = trace.get(i);
-      final StreamCall call = chain.getCall(i);
-      final String callName = call.getName();
-
-      final ValuesOrderResolver resolver = ResolverFactoryImpl.getInstance().getResolver(callName);
-      final ValuesOrderResolver.Result resolveResult = resolver.resolve(info);
-      resolvedMappings.add(resolveResult);
-    }
-
     final List<ResolvedCall> result = new ArrayList<>();
-
-    final ResolvedCall sourceCall = new ResolvedCallImpl(chain.getCall(0), Collections.emptyMap(),
-                                                         resolvedMappings.get(0).getDirectOrder());
-    result.add(sourceCall);
-    for (int i = 1; i < chain.length(); i++) {
-      final StreamCall call = chain.getCall(i);
-      final ValuesOrderResolver.Result prev = resolvedMappings.get(i - 1);
-      final ValuesOrderResolver.Result current = resolvedMappings.get(i);
-      result.add(new ResolvedCallImpl(call, current.getReverseOrder(), prev.getDirectOrder()));
+    for (final TraceInfo info : tracingResult.getTrace()) {
+      final StreamCall call = info.getCall();
+      final String callName = call.getName();
+      final ValuesOrderResolver.Result resolve = ResolverFactoryImpl.getInstance().getResolver(callName).resolve(info);
+      result.add(new ResolvedCallImpl(call, resolve.getReverseOrder(), resolve.getDirectOrder()));
     }
 
     return result;
