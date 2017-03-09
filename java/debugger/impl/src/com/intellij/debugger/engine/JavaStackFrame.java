@@ -68,6 +68,8 @@ import java.util.*;
  */
 public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProvider {
   private static final Logger LOG = Logger.getInstance(JavaStackFrame.class);
+  public static final DummyMessageValueNode LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE =
+    new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
 
   private final DebugProcessImpl myDebugProcess;
   @Nullable private final XSourcePosition myXSourcePosition;
@@ -321,7 +323,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     }
     catch (EvaluateException e) {
       if (e.getCause() instanceof AbsentInformationException) {
-        children.add(new DummyMessageValueNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE.getLabel(), XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
+        children.add(LOCAL_VARIABLES_INFO_UNAVAILABLE_MESSAGE_NODE);
         // trying to collect values from variable slots
         try {
           for (Map.Entry<DecompiledLocalVariable, Value> entry : LocalVariablesUtil.fetchValues(getStackFrameProxy(), debugProcess, true).entrySet()) {
