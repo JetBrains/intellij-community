@@ -75,10 +75,7 @@ public class BackwardReferenceIndexUtil {
 
     Map<LightRef, Integer> convertedRefs = new THashMap<>();
     refs.forEachEntry((ref, count) -> {
-      final LightRef lightRef = writer.enumerateNames(ref, name -> {
-        final LightRef.LightClassHierarchyElementDef ref1 = anonymousClassEnumerator.getLightRefIfAnonymous(name);
-        return ref1 == null ? null : ref1.getName();
-      });
+      final LightRef lightRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
       if (lightRef != null) {
         convertedRefs.put(lightRef, count);
       }
@@ -100,8 +97,10 @@ public class BackwardReferenceIndexUtil {
       return new LightRef.JavaLightAnonymousClassRef(anonymousIdx);
     }
 
-    private LightRef.LightClassHierarchyElementDef getLightRefIfAnonymous(String className) {
-      return myAnonymousName2Id == null ? null : myAnonymousName2Id.get(className);
+    private Integer getLightRefIfAnonymous(String className) {
+      if (myAnonymousName2Id == null) return null;
+      final LightRef.LightClassHierarchyElementDef ref = myAnonymousName2Id.get(className);
+      return ref == null ? null : ref.getName();
     }
   }
 }
