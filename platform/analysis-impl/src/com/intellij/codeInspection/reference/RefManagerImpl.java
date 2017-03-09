@@ -252,7 +252,13 @@ public class RefManagerImpl extends RefManager {
 
     Element problem = new Element("problem");
 
-    if (refEntity instanceof RefElement) {
+    if (refEntity instanceof RefDirectory) {
+      Element fileElement = new Element("file");
+      VirtualFile virtualFile = ((PsiDirectory)((RefDirectory)refEntity).getElement()).getVirtualFile();
+      fileElement.addContent(virtualFile.getUrl());
+      problem.addContent(fileElement);
+    }
+    else if (refEntity instanceof RefElement) {
       final RefElement refElement = (RefElement)refEntity;
       final SmartPsiElementPointer pointer = refElement.getPointer();
       PsiFile psiFile = pointer.getContainingFile();
