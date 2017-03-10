@@ -305,7 +305,7 @@ public class ProcessListUtil {
   }
 
   private static File findNativeHelper() throws FileNotFoundException {
-    return PathManager.findBinFile(WIN_PROCESS_LIST_HELPER_FILENAME);
+    return PathManager.findBinFileWithException(WIN_PROCESS_LIST_HELPER_FILENAME);
   }
 
   @Nullable

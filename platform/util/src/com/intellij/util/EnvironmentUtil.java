@@ -162,7 +162,7 @@ public class EnvironmentUtil {
   public static class ShellEnvReader {
 
     public Map<String, String> readShellEnv() throws Exception {
-      File reader = PathManager.findBinFile("printenv.py");
+      File reader = PathManager.findBinFileWithException("printenv.py");
 
       File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
       try {

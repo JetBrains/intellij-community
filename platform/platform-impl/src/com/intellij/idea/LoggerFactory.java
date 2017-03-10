@@ -55,7 +55,7 @@ public class LoggerFactory implements Logger.Factory {
     try {
       System.setProperty("log4j.defaultInitOverride", "true");
 
-      File logXmlFile = PathManager.findBinFile("log.xml");
+      File logXmlFile = PathManager.findBinFileWithException("log.xml");
 
       String text = FileUtil.loadFile(logXmlFile);
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));

@@ -95,7 +95,7 @@ public class RunnerMediator {
       LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + " environment variable (" + path + ")");
     }
     try {
-      return PathManager.findBinFile(STANDARD_RUNNERW).getPath();
+      return PathManager.findBinFileWithException(STANDARD_RUNNERW).getPath();
     }
     catch (FileNotFoundException e) {
       LOG.warn(e);

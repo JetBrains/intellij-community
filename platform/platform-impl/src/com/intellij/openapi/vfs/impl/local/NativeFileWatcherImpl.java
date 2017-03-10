@@ -157,7 +157,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     if (names == null) return PLATFORM_NOT_SUPPORTED;
 
 
-    return Arrays.stream(names).map(PathManager::tryFindBinFile).filter(o -> o != null).findFirst().orElse(null);
+    return Arrays.stream(names).map(PathManager::findBinFile).filter(o -> o != null).findFirst().orElse(null);
   }
 
   /* internal stuff */

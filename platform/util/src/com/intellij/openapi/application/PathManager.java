@@ -178,35 +178,42 @@ public class PathManager {
   /**
    * Looks for file in all possible bin locations
    * @return first that exists or null if not found
-   * @see #findBinFile(String)
+   * @see #findBinFileWithException(String)
    */
   @Nullable
-  public static File tryFindBinFile(@NotNull final String fileName) {
-    try {
-      return findBinFile(fileName);
-    }catch (final FileNotFoundException ignored) {
-      return null;
-    }
+  public static File findBinFile(@NotNull final String fileName) {
+    return findBinFileInternal(fileName).first;
   }
 
   /**
    * Looks for file in all possible bin locations
    * @return first that exists
-   * @see #tryFindBinFile(String)
+   * @see #findBinFile(String)
    * @throws FileNotFoundException if no file found
    */
   @NotNull
-  public static File findBinFile(@NotNull final String fileName) throws FileNotFoundException {
-    final String[] paths = getPossibleBinaryFileLocationsString(fileName);
-    final File result = FileUtil.findFirstThatExist(paths);
-    if (result != null) {
-      return result;
+  public static File findBinFileWithException(@NotNull final String fileName) throws FileNotFoundException {
+    final Pair<File, String[]> pair = findBinFileInternal(fileName);
+    if (pair.first != null) {
+      return pair.first;
     }
-    throw new FileNotFoundException(String.format("None of these exist: %s", StringUtil.join(paths, ",")));
+    final String joinedPaths = StringUtil.join(pair.second, ",");
+    throw new FileNotFoundException(String.format("None of these exist: %s", joinedPaths));
   }
 
   /**
-   * Bin path may be incorrect when launched locally, use {@link #findBinFile(String)} if possible
+   * @see  #findBinFile(String)
+   * @return [file (may be null), paths where file was searched]
+   */
+  @NotNull
+  private static Pair<File, String[]>  findBinFileInternal(@NotNull final String fileName) {
+    final String[] paths = getPossibleBinaryFileLocationsString(fileName);
+    final File result = FileUtil.findFirstThatExist(paths);
+    return Pair.create(result, paths);
+  }
+
+  /**
+   * Bin path may be incorrect when launched locally, use {@link #findBinFileWithException(String)} if possible
    */
   @NotNull
   public static String getBinPath() {

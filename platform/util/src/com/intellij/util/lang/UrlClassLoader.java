@@ -323,7 +323,7 @@ public class UrlClassLoader extends ClassLoader {
     String libFileName = mapLibraryName(libName);
 
     final String libPath;
-    final File libFile = PathManager.tryFindBinFile(libFileName);
+    final File libFile = PathManager.findBinFile(libFileName);
 
     if (libFile != null) {
       libPath = libFile.getAbsolutePath();
