@@ -44,20 +44,26 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  * @author Pavel.Dolgov
  */
 public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
-  static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";
-  static final String JAVA_LANG_INVOKE_METHOD_TYPE = "java.lang.invoke.MethodType";
+  public static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";
+  public static final String JAVA_LANG_INVOKE_METHOD_TYPE = "java.lang.invoke.MethodType";
 
-  static final String FIND_VIRTUAL = "findVirtual";
-  static final String FIND_STATIC = "findStatic";
-  static final String FIND_SPECIAL = "findSpecial";
+  public static final String FIND_VIRTUAL = "findVirtual";
+  public static final String FIND_STATIC = "findStatic";
+  public static final String FIND_SPECIAL = "findSpecial";
 
-  static final String FIND_GETTER = "findGetter";
-  static final String FIND_SETTER = "findSetter";
-  static final String FIND_STATIC_GETTER = "findStaticGetter";
-  static final String FIND_STATIC_SETTER = "findStaticSetter";
+  public static final String FIND_GETTER = "findGetter";
+  public static final String FIND_SETTER = "findSetter";
+  public static final String FIND_STATIC_GETTER = "findStaticGetter";
+  public static final String FIND_STATIC_SETTER = "findStaticSetter";
 
-  static final String FIND_VAR_HANDLE = "findVarHandle";
-  static final String FIND_STATIC_VAR_HANDLE = "findStaticVarHandle";
+  public static final String FIND_VAR_HANDLE = "findVarHandle";
+  public static final String FIND_STATIC_VAR_HANDLE = "findStaticVarHandle";
+
+  public static final String[] HANDLE_FACTORY_METHOD_NAMES = {
+    FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,
+    FIND_GETTER, FIND_SETTER,
+    FIND_STATIC_GETTER, FIND_STATIC_SETTER,
+    FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE};
 
   private final PsiExpression myContext;
 
