@@ -231,7 +231,7 @@ public class EduStepicAuthorizedClient {
   }
 
   @Nullable
-  static StepicUser getCurrentUser(CloseableHttpClient client) {
+  public static StepicUser getCurrentUser(CloseableHttpClient client) {
     try {
       final StepicWrappers.AuthorWrapper wrapper = EduStepicClient.getFromStepic(EduStepicNames.CURRENT_USER, 
                                                                                  StepicWrappers.AuthorWrapper.class, 

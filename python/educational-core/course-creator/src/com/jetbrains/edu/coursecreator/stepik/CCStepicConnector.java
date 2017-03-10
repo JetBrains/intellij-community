@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.coursecreator.stepik;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,6 +19,7 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.stepic.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
@@ -101,8 +102,8 @@ public class CCStepicConnector {
         return;
       }
       final CourseInfo postedCourse = new Gson().fromJson(responseString, StepicWrappers.CoursesContainer.class).courses.get(0);
-      course.setId(postedCourse.id);
-      final int sectionId = postModule(postedCourse.id, 1, String.valueOf(postedCourse.getName()));
+      course.setId(postedCourse.getId());
+      final int sectionId = postModule(postedCourse.getId(), 1, String.valueOf(postedCourse.getName()));
       int position = 1;
       for (Lesson lesson : course.getLessons()) {
         indicator.checkCanceled();
@@ -110,7 +111,7 @@ public class CCStepicConnector {
         postUnit(lessonId, position, sectionId);
         position += 1;
       }
-      ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(project, postedCourse.id, indicator));
+      ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(project, postedCourse.getId(), indicator));
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
@@ -162,10 +163,11 @@ public class CCStepicConnector {
   public static void postUnit(int lessonId, int position, int sectionId) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.UNITS);
     final StepicWrappers.UnitWrapper unitWrapper = new StepicWrappers.UnitWrapper();
-    unitWrapper.unit = new StepicWrappers.Unit();
-    unitWrapper.unit.lesson = lessonId;
-    unitWrapper.unit.position = position;
-    unitWrapper.unit.section = sectionId;
+    final StepicWrappers.Unit unit = new StepicWrappers.Unit();
+    unit.setLesson(lessonId);
+    unit.setPosition(position);
+    unit.setSection(sectionId);
+    unitWrapper.setUnit(unit);
 
     String requestBody = new Gson().toJson(unitWrapper);
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
@@ -190,11 +192,11 @@ public class CCStepicConnector {
   private static int postModule(int courseId, int position, @NotNull final String title) {
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/sections");
     final StepicWrappers.Section section = new StepicWrappers.Section();
-    section.course = courseId;
-    section.title = title;
-    section.position = position;
+    section.setCourse(courseId);
+    section.setTitle(title);
+    section.setPosition(position);
     final StepicWrappers.SectionWrapper sectionContainer = new StepicWrappers.SectionWrapper();
-    sectionContainer.section = section;
+    sectionContainer.setSection(section);
     String requestBody = new Gson().toJson(sectionContainer);
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
@@ -211,8 +213,8 @@ public class CCStepicConnector {
         return -1;
       }
       final StepicWrappers.Section
-        postedSection = new Gson().fromJson(responseString, StepicWrappers.SectionContainer.class).sections.get(0);
-      return postedSection.id;
+        postedSection = new Gson().fromJson(responseString, StepicWrappers.SectionContainer.class).getSections().get(0);
+      return postedSection.getId();
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
