@@ -16,10 +16,8 @@
 package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.intellij.debugger.streams.wrapper.MethodCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,29 +25,17 @@ import java.util.Map;
 /**
  * @author Vitaliy.Bibaev
  */
-public class ResolvedCallImpl implements ResolvedCall {
-  private final MethodCall myMethodCall;
+public class ResolvedTraceImpl implements ResolvedTrace {
+  private final List<TraceElement> myValues;
   private final Map<TraceElement, List<TraceElement>> myPrevious;
   private final Map<TraceElement, List<TraceElement>> myNext;
 
-  public ResolvedCallImpl(@NotNull MethodCall call,
-                          @NotNull Map<TraceElement, List<TraceElement>> toPrev,
-                          @NotNull Map<TraceElement, List<TraceElement>> toNext) {
-    myMethodCall = call;
+  public ResolvedTraceImpl(@NotNull List<TraceElement> values,
+                           @NotNull Map<TraceElement, List<TraceElement>> toPrev,
+                           @NotNull Map<TraceElement, List<TraceElement>> toNext) {
+    myValues = values;
     myPrevious = toPrev;
     myNext = toNext;
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return myMethodCall.getName();
-  }
-
-  @NotNull
-  @Override
-  public String getArguments() {
-    return myMethodCall.getArguments();
   }
 
   @NotNull
@@ -67,7 +53,7 @@ public class ResolvedCallImpl implements ResolvedCall {
   @NotNull
   @Override
   public List<TraceElement> getValues() {
-    return Collections.unmodifiableList(new ArrayList<>(myNext.keySet()));
+    return Collections.unmodifiableList(myValues);
   }
 
   @NotNull

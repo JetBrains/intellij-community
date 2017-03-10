@@ -19,7 +19,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
 import com.intellij.debugger.memory.utils.InstanceValueDescriptor;
-import com.intellij.debugger.streams.resolve.ResolvedCall;
+import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
@@ -53,7 +53,7 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
 
   private final NodeManagerImpl myNodeManager;
   private final Project myProject;
-  private final ResolvedCall myResolvedCall;
+  private final ResolvedTrace myResolvedTrace;
   private final Map<TraceElement, TreePath> myValue2Path = new HashMap<>();
   private final Map<TreePath, TraceElement> myPath2Value = new HashMap<>();
   private Set<TreePath> myHighlighted = Collections.emptySet();
@@ -62,13 +62,13 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
   private ValuesHighlightingListener myForwardListener = EMPTY_LISTENER;
   private boolean myIgnoreSelectionEvents = false;
 
-  CollectionTree(@NotNull ResolvedCall call,
+  CollectionTree(@NotNull ResolvedTrace call,
                  @NotNull EvaluationContextImpl evaluationContext) {
     super(evaluationContext.getProject(), new JavaDebuggerEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
     myProject = evaluationContext.getProject();
     myNodeManager = new MyNodeManager(myProject);
-    myResolvedCall = call;
+    myResolvedTrace = call;
     final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(call.getValues(), evaluationContext));
     setRoot(root, false);
     root.setLeaf(false);
@@ -154,6 +154,7 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
       propagateForward(values);
     }
 
+    revalidate();
     repaint();
     myIgnoreSelectionEvents = false;
   }
@@ -168,7 +169,7 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
 
   private void propagateBackward(@NotNull List<TraceElement> values) {
     final List<TraceElement> prevValues = values.stream()
-      .flatMap(x -> myResolvedCall.getPreviousValues(x).stream())
+      .flatMap(x -> myResolvedTrace.getPreviousValues(x).stream())
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
 
@@ -177,7 +178,7 @@ public class CollectionTree extends XDebuggerTree implements ValuesHighlightingL
 
   private void propagateForward(@NotNull List<TraceElement> values) {
     final List<TraceElement> nextValues = values.stream()
-      .flatMap(x -> myResolvedCall.getNextValues(x).stream())
+      .flatMap(x -> myResolvedTrace.getNextValues(x).stream())
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
 

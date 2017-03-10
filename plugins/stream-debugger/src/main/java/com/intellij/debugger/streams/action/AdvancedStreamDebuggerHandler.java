@@ -1,7 +1,7 @@
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.streams.resolve.ResolvedCall;
+import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.TracingCallback;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.smart.MapToArrayTracerImpl;
@@ -27,9 +27,9 @@ public class AdvancedStreamDebuggerHandler extends JvmStreamDebuggerActionHandle
     new MapToArrayTracerImpl(session).trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-        final List<ResolvedCall> calls = resolve(chain, result);
+        final List<ResolvedTrace> calls = resolve(result.getTrace());
         ApplicationManager.getApplication()
-          .invokeLater(() -> window.setTrace(calls, context));
+          .invokeLater(() -> window.setTrace(calls, result.getResult(), context));
       }
 
       @Override

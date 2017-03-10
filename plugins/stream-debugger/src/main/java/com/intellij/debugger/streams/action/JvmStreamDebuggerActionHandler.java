@@ -20,8 +20,8 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.streams.resolve.ResolvedCall;
-import com.intellij.debugger.streams.resolve.ResolvedCallImpl;
+import com.intellij.debugger.streams.resolve.ResolvedTrace;
+import com.intellij.debugger.streams.resolve.ResolvedTraceImpl;
 import com.intellij.debugger.streams.resolve.ResolverFactoryImpl;
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
 import com.intellij.debugger.streams.trace.MapStreamTracerImpl;
@@ -75,7 +75,7 @@ public class JvmStreamDebuggerActionHandler {
     new MapStreamTracerImpl(session).trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-        final List<ResolvedCall> calls = resolve(chain, result);
+        final List<ResolvedTrace> calls = resolve(result.getTrace());
         ApplicationManager.getApplication()
           .invokeLater(() -> new TraceWindow(context, session.getProject(), calls).show());
       }
@@ -93,17 +93,28 @@ public class JvmStreamDebuggerActionHandler {
     return elementAtCursor != null && StreamChainBuilder.checkStreamExists(elementAtCursor);
   }
 
-  protected static List<ResolvedCall> resolve(@NotNull StreamChain chain, @NotNull TracingResult tracingResult) {
-    if (chain.length() == 0) {
+  protected static List<ResolvedTrace> resolve(@NotNull List<TraceInfo> trace) {
+    if (trace.size() == 0) {
       return Collections.emptyList();
     }
 
-    final List<ResolvedCall> result = new ArrayList<>();
-    for (final TraceInfo info : tracingResult.getTrace()) {
-      final StreamCall call = info.getCall();
-      final String callName = call.getName();
-      final ValuesOrderResolver.Result resolve = ResolverFactoryImpl.getInstance().getResolver(callName).resolve(info);
-      result.add(new ResolvedCallImpl(call, resolve.getReverseOrder(), resolve.getDirectOrder()));
+    final List<ResolvedTrace> result = new ArrayList<>();
+    final TraceInfo producerTrace = trace.get(0);
+    ValuesOrderResolver.Result prevResolved =
+      ResolverFactoryImpl.getInstance().getResolver(producerTrace.getCall().getName()).resolve(producerTrace);
+
+    for (int i = 1; i < trace.size(); i++) {
+      final TraceInfo traceInfo = trace.get(i);
+      final StreamCall currentCall = traceInfo.getCall();
+
+      final ValuesOrderResolver.Result currentResolve =
+        ResolverFactoryImpl.getInstance().getResolver(currentCall.getName()).resolve(traceInfo);
+
+      result.add(
+        new ResolvedTraceImpl(new ArrayList<>(currentResolve.getDirectOrder().keySet()), prevResolved.getReverseOrder(),
+                              currentResolve.getDirectOrder()));
+
+      prevResolved = currentResolve;
     }
 
     return result;

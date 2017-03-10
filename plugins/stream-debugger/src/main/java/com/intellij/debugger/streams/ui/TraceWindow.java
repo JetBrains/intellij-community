@@ -16,7 +16,7 @@
 package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.streams.resolve.ResolvedCall;
+import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -31,16 +31,16 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class TraceWindow extends DialogWrapper {
-  private final List<ResolvedCall> myCalls;
+  private final List<ResolvedTrace> myTrace;
   private final EvaluationContextImpl myEvaluationContext;
 
   public TraceWindow(@NotNull EvaluationContextImpl evaluationContext,
                      @Nullable Project project,
-                     @NotNull List<ResolvedCall> calls) {
+                     @NotNull List<ResolvedTrace> trace) {
     super(project, false);
     setModal(false);
     setTitle("Stream Trace");
-    myCalls = calls;
+    myTrace = trace;
     myEvaluationContext = evaluationContext;
 
     init();
@@ -49,14 +49,14 @@ public class TraceWindow extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new GridLayout(1, myCalls.size()));
+    final JPanel panel = new JPanel(new GridLayout(1, myTrace.size()));
     CollectionView prev = null;
-    for (final ResolvedCall call : myCalls) {
-      final CollectionView collectionView = new CollectionView(myEvaluationContext, call);
-      Disposer.register(myDisposable, collectionView.getTree());
+    for (final ResolvedTrace trace : myTrace) {
+      final CollectionView collectionView = new CollectionView(myEvaluationContext, trace);
+      Disposer.register(myDisposable, collectionView);
       if (prev != null) {
-        prev.getTree().setForwardListener(collectionView.getTree());
-        collectionView.getTree().setBackwardListener(prev.getTree());
+        prev.setForwardListener(collectionView);
+        collectionView.setBackwardListener(prev);
       }
       panel.add(collectionView);
       prev = collectionView;

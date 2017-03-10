@@ -1,14 +1,16 @@
 package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.streams.resolve.ResolvedCall;
+import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBTabsPaneImpl;
 import com.intellij.ui.components.JBLabel;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +40,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       tabs.insertTab(call.getName(), AllIcons.Debugger.Console, tab, call.getName() + call.getArguments(), i);
       myTabContents.add(tab);
     }
+
     init();
   }
 
@@ -47,12 +50,36 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return "#com.intellij.debugger.streams.ui.EvaluationAwareTraceWindow";
   }
 
-  public void setTrace(@NotNull List<ResolvedCall> calls, @NotNull EvaluationContextImpl context) {
-    assert calls.size() == myTabContents.size();
-    for (int i = 0, count = calls.size(); i < count; i++) {
+  public void setTrace(@NotNull List<ResolvedTrace> traces, @Nullable Value result, @NotNull EvaluationContextImpl context) {
+    assert myTabContents.size() == traces.size() + 1;
+    final List<CollectionView> views = new ArrayList<>();
+    for (final ResolvedTrace trace : traces) {
+      final CollectionView view = new CollectionView(context, trace);
+      Disposer.register(myDisposable, view);
+      views.add(view);
+    }
+
+    for (int i = 1; i < views.size(); i++) {
+      final CollectionView prev = views.get(i - 1);
+      final CollectionView current = views.get(i);
+
+      prev.setForwardListener(current);
+      current.setBackwardListener(prev);
+
       final MyTab tab = myTabContents.get(i);
-      final ResolvedCall call = calls.get(i);
-      tab.setTrace(call, context);
+      final JPanel panel = new JPanel(new GridLayout(1, 2));
+      panel.add(prev, 0);
+      panel.add(current, 1);
+      tab.setContent(panel);
+    }
+
+    //myTabContents.get(0).setContent(views.get(0));
+    final MyTab resultTab = myTabContents.get(myTabContents.size() - 1);
+    if (result != null) {
+      resultTab.setContent(new JBLabel("Reserved for result!"));
+    }
+    else {
+      resultTab.setContent(new JBLabel("There is no result of this stream chain"));
     }
   }
 
@@ -78,9 +105,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       add(EMPTY_CONTENT, BorderLayout.CENTER);
     }
 
-    void setTrace(@NotNull ResolvedCall call, @NotNull EvaluationContextImpl context) {
+    void setContent(@NotNull JComponent view) {
       Arrays.stream(getComponents()).forEach(this::remove);
-      add(new CollectionView(context, call), BorderLayout.CENTER);
+      add(view);
       revalidate();
       repaint();
     }
