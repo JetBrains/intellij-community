@@ -129,13 +129,27 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   @Override
-  public void highlight(@NotNull List<TraceElement> newSelection) {
+  public void highlight(@NotNull List<TraceElement> elements) {
     myIgnoreSelectionEvents = true;
     if (!myIgnoreClearSelection) {
       clearSelection();
     }
 
-    myHighlighted = newSelection.stream().map(myValue2Path::get).collect(Collectors.toSet());
+    myHighlighted = elements.stream().map(myValue2Path::get).collect(Collectors.toSet());
+
+    revalidate();
+    repaint();
+    myIgnoreSelectionEvents = false;
+  }
+
+  @Override
+  public void select(@NotNull List<TraceElement> elements) {
+    myIgnoreSelectionEvents = true;
+
+    final TreePath[] paths = elements.stream().map(myValue2Path::get).toArray(TreePath[]::new);
+    getSelectionModel().setSelectionPaths(paths);
+    myHighlighted.clear();
+    myHighlighted.addAll(Arrays.asList(paths));
 
     revalidate();
     repaint();

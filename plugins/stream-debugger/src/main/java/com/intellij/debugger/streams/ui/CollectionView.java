@@ -49,8 +49,13 @@ public class CollectionView extends JPanel implements Disposable, TraceContainer
   }
 
   @Override
-  public void highlight(@NotNull List<TraceElement> newSelection) {
-    myInstancesTree.highlight(newSelection);
+  public void highlight(@NotNull List<TraceElement> elements) {
+    myInstancesTree.highlight(elements);
+  }
+
+  @Override
+  public void select(@NotNull List<TraceElement> elements) {
+    myInstancesTree.select(elements);
   }
 
   @Override

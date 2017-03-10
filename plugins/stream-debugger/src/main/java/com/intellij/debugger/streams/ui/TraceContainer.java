@@ -9,7 +9,9 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface TraceContainer {
-  void highlight(@NotNull List<TraceElement> newSelection);
+  void highlight(@NotNull List<TraceElement> elements);
+
+  void select(@NotNull List<TraceElement> elements);
 
   void addSelectionListener(@NotNull ValuesSelectionListener listener);
 }

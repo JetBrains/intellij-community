@@ -24,7 +24,7 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
   TraceControllerImpl(@NotNull ResolvedTrace trace) {
     myResolvedTrace = trace;
     mySelectionListener = elements -> {
-      highlightAll(elements);
+      selectAll(elements);
       final List<TraceElement> nextValues =
         elements.stream().flatMap(x -> myResolvedTrace.getNextValues(x).stream()).collect(Collectors.toList());
       final List<TraceElement> prevValues =
@@ -67,6 +67,12 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
   private void highlightAll(@NotNull List<TraceElement> values) {
     for (final TraceContainer listener : myListeners) {
       listener.highlight(values);
+    }
+  }
+
+  private void selectAll(@NotNull List<TraceElement> values) {
+    for (final TraceContainer listener : myListeners) {
+      listener.select(values);
     }
   }
 }
