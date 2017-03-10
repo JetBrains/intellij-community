@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
-import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
@@ -40,6 +39,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -53,8 +53,7 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 3/14/13 5:09 PM
  */
-public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleExecutionSettings>
-  implements ExternalSystemTaskManager<GradleExecutionSettings> {
+public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
 
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
 
@@ -69,26 +68,24 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
   public void executeTasks(@NotNull final ExternalSystemTaskId id,
                            @NotNull final List<String> taskNames,
                            @NotNull String projectPath,
-                           @Nullable final GradleExecutionSettings settings,
-                           @NotNull final List<String> vmOptions,
-                           @NotNull final List<String> scriptParameters,
+                           @Nullable GradleExecutionSettings settings,
                            @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
     // TODO add support for external process mode
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if (gradleTaskManagerExtension.executeTasks(
-          id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, listener)) {
+        if (gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, debuggerSetup, listener)) {
           return;
         }
       }
     }
 
+    GradleExecutionSettings effectiveSettings =
+      settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
     Function<ProjectConnection, Void> f = connection -> {
-
       final List<String> initScripts = ContainerUtil.newArrayList();
-      final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(settings);
+      final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
       for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
            resolverExtension != null;
            resolverExtension = resolverExtension.getNext()) {
@@ -104,7 +101,7 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
         });
       }
 
-      final String initScript = settings == null ? null : settings.getUserData(INIT_SCRIPT_KEY);
+      final String initScript = effectiveSettings.getUserData(INIT_SCRIPT_KEY);
       if (StringUtil.isNotEmpty(initScript)) {
         ContainerUtil.addAll(
           initScripts,
@@ -117,7 +114,7 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
         try {
           File tempFile =
             GradleExecutionHelper.writeToFileGradleInitScript(StringUtil.join(initScripts, SystemProperties.getLineSeparator()));
-          ContainerUtil.addAll(scriptParameters, GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+          effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
         }
         catch (IOException e) {
           throw new ExternalSystemException(e);
@@ -130,13 +127,11 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
           id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
       }
 
-      if (settings != null) {
-        for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
-          ContainerUtil.addAll(scriptParameters, GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
-        }
+      for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
+        effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
       }
 
-      BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener, vmOptions, scriptParameters);
+      BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
       launcher.forTasks(ArrayUtil.toStringArray(taskNames));
 
       if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
@@ -155,7 +150,7 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
       }
       return null;
     };
-    myHelper.execute(projectPath, settings, f);
+    myHelper.execute(projectPath, effectiveSettings, f);
   }
 
   @Override
