@@ -185,14 +185,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   @Override
-  public void setFilter(@NotNull VcsLogFilter filter) {
+  public void setFilter(@Nullable VcsLogFilter filter) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (filter instanceof VcsLogBranchFilter) {
+    if (filter == null) {
+      myBranchFilterModel.setFilter(null);
+      myStructureFilterModel.setFilter(null);
+      myDateFilterModel.setFilter(null);
+      myTextFilterModel.setFilter(null);
+      myUserFilterModel.setFilter(null);
+    }
+    else if (filter instanceof VcsLogBranchFilter) {
       myBranchFilterModel.setFilter((VcsLogBranchFilter)filter);
     }
     else if (filter instanceof VcsLogStructureFilter) {
       myStructureFilterModel.setFilter(new VcsLogFileFilter((VcsLogStructureFilter)filter, null));
     }
+
     JComponent toolbar = myUi.getToolbar();
     toolbar.revalidate();
     toolbar.repaint();

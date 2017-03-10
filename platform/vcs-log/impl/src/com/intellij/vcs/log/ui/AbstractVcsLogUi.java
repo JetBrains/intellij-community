@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -192,22 +193,23 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       invokeOnChange(() -> jumpTo(commitId, rowGetter, future));
     }
     else {
-      commitNotFound(commitId.toString());
+
+      if (getFilters().isEmpty()) {
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit " + commitId.toString() + " not found.", MessageType.WARNING);
+      }
+      else {
+        String message = "Commit " + commitId.toString() + " does not exist or does not match active filters";
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING,
+                                                      new NamedRunnable("Reset filters and search again") {
+                                                        @Override
+                                                        public void run() {
+                                                          getFilterUi().setFilter(null);
+                                                          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
+                                                        }
+                                                      });
+      }
+
       future.set(false);
-    }
-  }
-
-  private void showMessage(@NotNull MessageType messageType, @NotNull String message) {
-    LOG.info(message);
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, message, messageType);
-  }
-
-  private void commitNotFound(@NotNull String commitHash) {
-    if (getFilters().isEmpty()) {
-      showMessage(MessageType.WARNING, "Commit " + commitHash + " not found");
-    }
-    else {
-      showMessage(MessageType.WARNING, "Commit " + commitHash + " doesn't exist or doesn't match the active filters");
     }
   }
 
