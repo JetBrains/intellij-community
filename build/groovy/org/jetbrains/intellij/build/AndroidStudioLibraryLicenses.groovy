@@ -71,6 +71,8 @@ class AndroidStudioLibraryLicenses {
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "google.gdt.eclipse.login.common.jar", libraryName: "google.gdt.eclipse.login.common.jar",
                        license: "Eclipse Public License 1.0", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html"),
+    new LibraryLicense(name: "google-gct-login-context-pg.jar", libraryName: "google-gct-login-context-pg.jar",
+                       license: "Eclipse Public License 1.0", licenseUrl: "http://www.eclipse.org/org/documents/epl-v10.html"),
     new LibraryLicense(name: "Gradle App Engine Tooling Model", version: "0.1.0",
                        libraryName: "gradle-appengine-builder-model-0.1.0.jar",
                        url: "https://github.com/GoogleCloudPlatform/gradle-appengine-plugin",
