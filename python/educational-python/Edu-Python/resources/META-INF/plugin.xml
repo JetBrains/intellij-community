@@ -1,12 +1,11 @@
 <!--suppress XmlUnboundNsPrefix -->
 <idea-plugin>
   <id>com.jetbrains.python.edu.interactivelearning.python</id>
-  <name>Educational plugin for PyCharm</name>
+  <name>Edu Python</name>
   <version>2.0.4</version>
   <idea-version since-build="162.75"/>
   <description><![CDATA[
-      Educational plugin for students. This plugin allows to learn Python
-       using intelligent PyCharm IDE.
+      Educational plugin for Python programming language
       ]]></description>
   <vendor>JetBrains</vendor>
 
