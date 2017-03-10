@@ -6,35 +6,22 @@ import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.ssl.CertificateManager;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URI;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.jetbrains.edu.learning.stepic.EduStepicClient.getBuilder;
 
 public class EduStepicAuthorizedClient {
   private static final Logger LOG = Logger.getInstance(EduStepicAuthorizedClient.class.getName());
@@ -119,45 +106,6 @@ public class EduStepicAuthorizedClient {
       return getBuilder().setDefaultHeaders(headers).build();
     }
     return null;
-  }
-
-  @NotNull
-  private static TrustManager[] trustAllCerts() {
-    // Create a trust manager that does not validate certificate for this connection
-    return new TrustManager[]{new X509TrustManager() {
-      public X509Certificate[] getAcceptedIssuers() {
-        return null;
-      }
-
-      public void checkClientTrusted(X509Certificate[] certs, String authType) {
-      }
-
-      public void checkServerTrusted(X509Certificate[] certs, String authType) {
-      }
-    }};
-  }
-
-  @NotNull
-  private static HttpClientBuilder getBuilder() {
-    final HttpClientBuilder builder = HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).
-      setMaxConnPerRoute(100000).setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
-
-    final HttpConfigurable proxyConfigurable = HttpConfigurable.getInstance();
-    final List<Proxy> proxies = proxyConfigurable.getOnlyBySettingsSelector().select(URI.create(EduStepicNames.STEPIC_URL));
-    final InetSocketAddress address = proxies.size() > 0 ? (InetSocketAddress)proxies.get(0).address() : null;
-    if (address != null) {
-      builder.setProxy(new HttpHost(address.getHostName(), address.getPort()));
-    }
-    final TrustManager[] trustAllCerts = trustAllCerts();
-    try {
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, trustAllCerts, new SecureRandom());
-      builder.setSslcontext(sslContext);
-    }
-    catch (NoSuchAlgorithmException | KeyManagementException e) {
-      LOG.error(e.getMessage());
-    }
-    return builder;
   }
 
   private static StepicUser login(@NotNull final StepicUser user) {
