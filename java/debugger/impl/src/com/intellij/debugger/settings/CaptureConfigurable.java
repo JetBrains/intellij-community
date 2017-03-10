@@ -18,6 +18,7 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -27,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
@@ -123,6 +126,44 @@ public class CaptureConfigurable implements SearchableConfigurable {
         });
       }
     });
+
+    decorator.addExtraAction(new DumbAwareActionButton("Enable Selected", "Enable Selected", PlatformIcons.SELECT_ALL_ICON) {
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = true);
+        table.repaint();
+      }
+    });
+    decorator.addExtraAction(new DumbAwareActionButton("Disable Selected", "Disable Selected", PlatformIcons.UNSELECT_ALL_ICON) {
+      @Override
+      public boolean isEnabled() {
+        return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = false);
+        table.repaint();
+      }
+    });
+
+    new DumbAwareAction("Toggle") {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(table.getSelectedRowCount() == 1);
+      }
+
+      @Override
+      public void actionPerformed(@NotNull final AnActionEvent e) {
+        selectedCapturePoints(table).forEach(c -> c.myEnabled = !c.myEnabled);
+        table.repaint();
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), table);
 
     decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
       @Override
