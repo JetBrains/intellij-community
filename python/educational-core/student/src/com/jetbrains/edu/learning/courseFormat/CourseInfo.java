@@ -1,8 +1,8 @@
-package com.jetbrains.edu.learning.stepic;
+package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.SerializedName;
-import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,5 +167,9 @@ public class CourseInfo {
 
   public void setCompatible(boolean compatible) {
     isCompatible = compatible;
+  }
+
+  public List<Integer> getInstructors() {
+    return instructors;
   }
 }
