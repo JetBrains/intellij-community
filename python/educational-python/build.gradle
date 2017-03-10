@@ -74,7 +74,7 @@ subprojects {
   buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
 }
 
-project(':student-python') {
+project(':Edu-Python') {
   sourceSets {
     main {
       resources.srcDirs '../resources'
@@ -97,7 +97,7 @@ project(':student-python') {
   compileKotlin.dependsOn(extractPyCharm)
 
   intellij {
-    pluginName 'student-python'
+    pluginName 'Edu-Python'
   }
 
   afterEvaluate {
