@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -68,7 +69,15 @@ public class ResolverFactoryImpl implements ResolverFactory {
     @NotNull
     @Override
     public Result resolve(@NotNull TraceInfo info) {
-      return Result.of(Collections.emptyMap(), Collections.emptyMap());
+      final Map<Integer, TraceElement> orderBefore = info.getValuesOrderBefore();
+      final Map<Integer, TraceElement> orderAfter = info.getValuesOrderAfter();
+
+      return Result.of(toEmptyMap(orderBefore), toEmptyMap(orderAfter));
+    }
+
+    @NotNull
+    private static Map<TraceElement, List<TraceElement>> toEmptyMap(@NotNull Map<Integer, TraceElement> order) {
+      return order.keySet().stream().sorted().collect(Collectors.toMap(order::get, x -> Collections.emptyList()));
     }
   }
 
