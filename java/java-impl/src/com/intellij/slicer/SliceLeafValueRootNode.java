@@ -61,7 +61,7 @@ class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRende
   public String toString() {
     Usage myLeafExpression = getValue();
     String text;
-    if (myLeafExpression instanceof UsageInfo2UsageAdapter) {
+    if (myLeafExpression != null) {
       PsiElement element = ((UsageInfo2UsageAdapter)myLeafExpression).getUsageInfo().getElement();
       text = element == null ? "" : element.getText();
     }
@@ -80,16 +80,16 @@ class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRende
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
-    Usage usage = getValue();
+    SliceUsage usage = getValue();
     renderer.append("Value: ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
-    if (usage instanceof UsageInfo2UsageAdapter) {
-      PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
+    if (usage != null) {
+      PsiElement element = usage.getElement();
       if (element == null) {
         renderer.append(UsageViewBundle.message("node.invalid") + " ", SliceUsageCellRendererBase.ourInvalidAttributes);
       }
       else {
-        appendElementText((UsageInfo2UsageAdapter)usage, element, renderer);
+        appendElementText(usage, element, renderer);
       }
     }
     else {
