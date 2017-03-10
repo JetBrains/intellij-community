@@ -200,7 +200,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
           Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
           if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            EditorImpl.handleDrop(myEditor, transferable);
+            EditorImpl.handleDrop(myEditor, transferable, e.getAction().getActionId());
           }
         }
         myDnDInProgress = false;

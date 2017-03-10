@@ -4196,7 +4196,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   }
 
-  static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t) {
+  static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t, int dropAction) {
     final EditorDropHandler dropHandler = editor.getDropHandler();
 
     if (Registry.is("debugger.click.disable.breakpoints")) {
@@ -4231,7 +4231,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-      dropHandler.handleDrop(t, editor.getProject(), null);
+      dropHandler.handleDrop(t, editor.getProject(), null, dropAction);
       return true;
     }
 
@@ -4288,8 +4288,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public boolean importData(@NotNull final JComponent comp, @NotNull final Transferable t) {
-      return handleDrop(getEditor(comp), t);
+    public boolean importData(TransferSupport support) {
+      Component comp = support.getComponent();
+      if (!(comp instanceof JComponent)) return false;
+      return handleDrop(getEditor((JComponent)comp), support.getTransferable(), support.getDropAction());
     }
     
     @Override
