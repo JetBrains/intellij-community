@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.SerializedName;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ public class CourseInfo {
 
   List<StepicUser> myAuthors = new ArrayList<>();
   @SerializedName("summary") private String myDescription;
-  @SerializedName("course_format") private String myType = "pycharm" + /*EduStepicConnector.CURRENT_VERSION +*/ " Python"; //course type in format "pycharm <language>"
+  @SerializedName("course_format") private String myType = "pycharm" + EduStepicConnector.CURRENT_VERSION + " Python"; //course type in format "pycharm<version> <language>"
   @Nullable private String username;
 
   @SerializedName("update_date") private Date updateDate;
