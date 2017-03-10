@@ -34,6 +34,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.browser.SHAHash;
+import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +44,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static java.util.Collections.emptySet;
 
 /**
  * Change related utilities
@@ -391,7 +393,7 @@ public class GitChangeUtils {
     String output = getDiffOutput(project, root, range, dirtyPaths);
 
     Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, newRev, oldRev, output, changes, Collections.emptySet());
+    parseChanges(project, root, newRev, oldRev, output, changes, emptySet());
     return changes;
   }
 
@@ -402,7 +404,7 @@ public class GitChangeUtils {
     String output = diff.run();
 
     Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes, Collections.emptySet());
+    parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes, emptySet());
     return changes;
   }
 
@@ -415,7 +417,7 @@ public class GitChangeUtils {
     Collection<Change> changes = new ArrayList<>();
     final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
     parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
-                 Collections.emptySet());
+                 emptySet());
     return changes;
   }
 
@@ -465,4 +467,30 @@ public class GitChangeUtils {
     return handler;
   }
 
+  /**
+   * Returns the changes between current working tree state and the given ref, or null if fails to get the diff.
+   */
+  @Nullable
+  public static Collection<Change> getDiffWithWorkingTree(@NotNull GitRepository repository, @NotNull String refToCompare) {
+    Collection<Change> changes;
+    try {
+      changes = getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), refToCompare, null, false);
+    }
+    catch (VcsException e) {
+      LOG.warn("Couldn't collect diff", e);
+      changes = null;
+    }
+    return changes;
+  }
+
+  @Nullable
+  public static Collection<Change> getDiff(@NotNull GitRepository repository, @NotNull String oldRevision, @NotNull String newRevision) {
+    try {
+      return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null);
+    }
+    catch (VcsException e) {
+      LOG.warn("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
+      return null;
+    }
+  }
 }

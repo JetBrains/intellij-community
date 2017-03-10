@@ -41,9 +41,7 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
     cd(myProjectPath)
   }
 
-  protected open fun makeInitialCommit(): Boolean {
-    return true
-  }
+  protected open fun makeInitialCommit() = true
 
   protected fun VcsConfiguration.StandardConfirmation.doSilently() =
     AbstractVcsTestCase.setStandardConfirmation(myProject, GitVcs.NAME, this, DO_ACTION_SILENTLY)
@@ -74,9 +72,7 @@ abstract class GitSingleRepoTest : GitPlatformTest() {
     updateChangeListManager()
   }
 
-  protected fun build(f: RepoBuilder.() -> Unit) {
-    build(myRepo, f)
-  }
+  protected fun build(f: RepoBuilder.() -> Unit) = build(myRepo, f)
 
   protected fun assertUnversioned(file: VirtualFile) {
     assertTrue("File should be unversioned! All changes: " + GitUtil.getLogString(myProjectPath, changeListManager.allChanges),

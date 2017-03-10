@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,6 +39,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
@@ -55,19 +57,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.coalesce;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
-import static com.intellij.util.containers.ContainerUtilRt.newLinkedHashSet;
-import static git4idea.GitUtil.getRootsFromRepositories;
+import static git4idea.GitUtil.*;
 import static java.util.Collections.singleton;
 
 public class GitRebaseProcess {
@@ -117,7 +116,6 @@ public class GitRebaseProcess {
     LOG.debug("Started rebase with the following spec: " + myRebaseSpec);
 
     Map<GitRepository, GitRebaseStatus> statuses = newLinkedHashMap(myRebaseSpec.getStatuses());
-    Collection<GitRepository> toRefresh = newLinkedHashSet();
     List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
     AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     try {
@@ -130,11 +128,13 @@ public class GitRebaseProcess {
           customMode = myCustomMode == null ? GitRebaseResumeMode.CONTINUE : myCustomMode;
         }
 
+        Collection<Change> changes = collectFutureChanges(repository);
+
         GitRebaseStatus rebaseStatus = rebaseSingleRoot(repository, customMode, getSuccessfulRepositories(statuses));
         repository.update(); // make the repo state info actual ASAP
         statuses.put(repository, rebaseStatus);
         if (shouldBeRefreshed(rebaseStatus)) {
-          toRefresh.add(repository);
+          refreshVfs(repository.getRoot(), changes);
         }
         if (rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS) {
           failed = repository;
@@ -146,7 +146,6 @@ public class GitRebaseProcess {
         LOG.debug("Rebase completed successfully.");
         mySaver.load();
       }
-      refresh(toRefresh);
       if (failed == null) {
         notifySuccess(getSuccessfulRepositories(statuses), getSkippedCommits(statuses));
       }
@@ -163,6 +162,28 @@ public class GitRebaseProcess {
     finally {
       token.finish();
     }
+  }
+
+  @Nullable
+  private Collection<Change> collectFutureChanges(@NotNull GitRepository repository) {
+    GitRebaseParams params = myRebaseSpec.getParams();
+    if (params == null) return null;
+
+    Collection<Change> changes = new ArrayList<>();
+    String branch = params.getBranch();
+    if (branch != null) {
+      Collection<Change> changesFromCheckout = GitChangeUtils.getDiff(repository, HEAD, branch);
+      if (changesFromCheckout == null) return null;
+      changes.addAll(changesFromCheckout);
+    }
+
+    String rev1 = coalesce(params.getNewBase(), branch, HEAD);
+    String rev2 = params.getUpstream();
+    Collection<Change> changesFromRebase = GitChangeUtils.getDiff(repository, rev1, rev2);
+    if (changesFromRebase == null) return null;
+
+    changes.addAll(changesFromRebase);
+    return changes;
   }
 
   private void saveUpdatedSpec(@NotNull Map<GitRepository, GitRebaseStatus> statuses) {
