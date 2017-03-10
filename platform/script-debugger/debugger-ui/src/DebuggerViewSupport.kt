@@ -75,7 +75,7 @@ open class PromiseDebuggerEvaluator(protected val context: VariableContext) : XD
     try {
       evaluate(expression, expressionPosition)
         .done { callback.evaluated(VariableView(VariableImpl(expression, it.value), context)) }
-        .rejected { callback.errorOccurred(it.toString()) }
+        .rejected { callback.errorOccurred(it.message ?: it.toString()) }
     }
     catch (e: Throwable) {
       LOG.error(e)
