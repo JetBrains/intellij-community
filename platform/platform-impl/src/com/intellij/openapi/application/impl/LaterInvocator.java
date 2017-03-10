@@ -399,7 +399,7 @@ public class LaterInvocator {
       }
     }
 
-    @Debugger.Insert(keyExpression = "lastInfo")
+    @Debugger.Insert(keyExpression = "lastInfo", group = "com.intellij.openapi.application.impl.LaterInvocator$RunnableInfo.<init>")
     private boolean runNextEvent() {
       final RunnableInfo lastInfo = getNextEvent(true);
       myLastInfo = lastInfo;

@@ -41,7 +41,7 @@ public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
     }
   }
 
-  @Debugger.Insert
+  @Debugger.Insert(group = "com.intellij.debugger.impl.InvokeThread.schedule")
   public final void run() throws Exception{
     try {
       action();

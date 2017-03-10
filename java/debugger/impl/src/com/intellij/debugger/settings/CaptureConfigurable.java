@@ -60,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -238,12 +239,27 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     private void scanPoints() {
       if (Registry.is("debugger.capture.points.annotations")) {
-        scanPointsInt(true);
-        scanPointsInt(false);
+        List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
+        scanPointsInt(true, capturePointsFromAnnotations);
+        scanPointsInt(false, capturePointsFromAnnotations);
+
+        capturePointsFromAnnotations.forEach(c -> {
+          CapturePoint clone = c;
+          try {
+            clone = c.clone();
+            clone.myEnabled = !clone.myEnabled;
+          }
+          catch (CloneNotSupportedException e) {
+            LOG.error(e);
+          }
+          if (!myCapturePoints.contains(c) && !myCapturePoints.contains(clone)) {
+            myCapturePoints.add(c);
+          }
+        });
       }
     }
 
-    private void scanPointsInt(boolean capture) {
+    private static void scanPointsInt(boolean capture, List<CapturePoint> capturePointsFromAnnotations) {
       try {
         String annotationName = (capture ? Debugger.Capture.class : Debugger.Insert.class).getName().replace("$", ".");
         Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
@@ -252,14 +268,14 @@ public class CaptureConfigurable implements SearchableConfigurable {
         if (annotationClass != null) {
           AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class).forEach(e -> {
             if (e instanceof PsiMethod) {
-              addCapturePointIfNeeded(e, (PsiMethod)e, annotationName, "this", capture);
+              addCapturePointIfNeeded(e, (PsiMethod)e, annotationName, "this", capture, capturePointsFromAnnotations);
             }
             else if (e instanceof PsiParameter) {
               PsiParameter psiParameter = (PsiParameter)e;
               PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
               addCapturePointIfNeeded(psiParameter, psiMethod, annotationName,
                                       DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
-                                      capture);
+                                      capture, capturePointsFromAnnotations);
             }
           });
         }
@@ -269,11 +285,12 @@ public class CaptureConfigurable implements SearchableConfigurable {
       }
     }
 
-    private void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
-                                         PsiMethod psiMethod,
-                                         String annotationName,
-                                         String defaultExpression,
-                                         boolean capture) {
+    private static void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
+                                                PsiMethod psiMethod,
+                                                String annotationName,
+                                                String defaultExpression,
+                                                boolean capture,
+                                                List<CapturePoint> capturePointsFromAnnotations) {
       CapturePoint capturePoint = new CapturePoint();
       capturePoint.myEnabled = false;
       if (capture) {
@@ -289,8 +306,8 @@ public class CaptureConfigurable implements SearchableConfigurable {
       if (modifierList != null) {
         PsiAnnotation annotation = modifierList.findAnnotation(annotationName);
         if (annotation != null) {
-          PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("keyExpression");
-          String keyExpression = attributeValue != null ? StringUtil.unquoteString(attributeValue.getText()) : null;
+          PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
+          String keyExpression = keyExpressionValue != null ? StringUtil.unquoteString(keyExpressionValue.getText()) : null;
           if (StringUtil.isEmpty(keyExpression)) {
             keyExpression = defaultExpression;
           }
@@ -300,20 +317,24 @@ public class CaptureConfigurable implements SearchableConfigurable {
           else {
             capturePoint.myInsertKeyExpression = keyExpression;
           }
+
+          PsiAnnotationMemberValue groupValue = annotation.findAttributeValue("group");
+          String group = groupValue != null ? StringUtil.unquoteString(groupValue.getText()) : null;
+          if (!StringUtil.isEmpty(group)) {
+            for (CapturePoint capturePointsFromAnnotation : capturePointsFromAnnotations) {
+              if (StringUtil.startsWith(group, capturePointsFromAnnotation.myClassName) &&
+                  StringUtil.endsWith(group, capturePointsFromAnnotation.myMethodName)) {
+                capturePointsFromAnnotation.myInsertClassName = capturePoint.myInsertClassName;
+                capturePointsFromAnnotation.myInsertMethodName = capturePoint.myInsertMethodName;
+                capturePointsFromAnnotation.myInsertKeyExpression = capturePoint.myInsertKeyExpression;
+                return;
+              }
+            }
+          }
         }
       }
 
-      CapturePoint clone = capturePoint;
-      try {
-        clone = capturePoint.clone();
-        clone.myEnabled = !clone.myEnabled;
-      }
-      catch (CloneNotSupportedException e) {
-        LOG.error(e);
-      }
-      if (!myCapturePoints.contains(capturePoint) && !myCapturePoints.contains(clone)) {
-        myCapturePoints.add(capturePoint);
-      }
+      capturePointsFromAnnotations.add(capturePoint);
     }
 
     public String getColumnName(int column) {

@@ -219,7 +219,7 @@ public class QueueProcessor<T> {
     return true;
   }
 
-  public static void runSafely(@Debugger.Insert @NotNull Runnable run) {
+  public static void runSafely(@Debugger.Insert(group = "com.intellij.util.Alarm._addRequest") @NotNull Runnable run) {
     try {
       run.run();
     }

@@ -47,5 +47,6 @@ public class Debugger {
   @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
   public @interface Insert {
     String keyExpression() default "";
+    String group() default "";
   }
 }
