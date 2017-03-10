@@ -327,7 +327,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       if (debugSession != null) {
         final DebugProcess debugProcess = DebuggerManager.getInstance(myProject)
           .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
-        if (debugProcess.isAttached()) {
+        if (debugProcess != null && debugProcess.isAttached()) {
           mySingleAlarm.cancelAndRequest();
         }
       }
