@@ -216,9 +216,9 @@ public class GraphTableController {
   }
 
   public void showTooltip(int row) {
-    TableColumn rootColumn = myTable.getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
-    Point point = new Point(rootColumn.getWidth() + myCommitRenderer.getTooltipXCoordinate(row),
-                            row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
+    Point point =
+      new Point(getColumnLeftXCoordinate(myTable.convertColumnIndexToView(COMMIT_COLUMN)) + myCommitRenderer.getTooltipXCoordinate(row),
+                row * myTable.getRowHeight() + myTable.getRowHeight() / 2);
     showTooltip(row, COMMIT_COLUMN, point, true);
   }
 
@@ -239,6 +239,14 @@ public class GraphTableController {
         VcsLogUtil.triggerUsage("GraphArrowClick");
       }
     }
+  }
+
+  protected int getColumnLeftXCoordinate(int viewColumnIndex) {
+    int x = 0;
+    for (int i = 0; i < viewColumnIndex; i++) {
+      x += myTable.getColumnModel().getColumn(i).getWidth();
+    }
+    return x;
   }
 
   private class MyMouseAdapter extends MouseAdapter {
@@ -290,19 +298,12 @@ public class GraphTableController {
     }
 
     public boolean isOnLeftBorder(@NotNull MouseEvent e, int column) {
-      int x = 0;
-      for (int i = 0; i < column; i++) {
-        x += myTable.getColumnModel().getColumn(i).getWidth();
-      }
-      return Math.abs(x - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
+      return Math.abs(getColumnLeftXCoordinate(column) - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
     }
 
     public boolean isOnRightBorder(@NotNull MouseEvent e, int column) {
-      int x = 0;
-      for (int i = 0; i < column; i++) {
-        x += myTable.getColumnModel().getColumn(i).getWidth();
-      }
-      return Math.abs(x + myTable.getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
+      return Math.abs(getColumnLeftXCoordinate(column) +
+                      myTable.getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUI.scale(BORDER_THICKNESS);
     }
 
     @Override
