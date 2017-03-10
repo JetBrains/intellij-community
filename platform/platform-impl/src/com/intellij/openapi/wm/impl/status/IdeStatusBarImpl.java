@@ -144,7 +144,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       WidgetBean eachBean = myWidgetMap.get(eachId);
       if (eachBean.widget instanceof StatusBarWidget.Multiframe) {
         StatusBarWidget copy = ((StatusBarWidget.Multiframe)eachBean.widget).copy();
-        bar.addWidget(copy, eachBean.position);
+        UIUtil.invokeLaterIfNeeded(() -> bar.addWidget(copy, eachBean.position, eachBean.anchor));
       }
     }
 
