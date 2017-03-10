@@ -17,6 +17,11 @@ package com.intellij.testFramework;
 
 import com.intellij.util.ArrayUtil;
 
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.stream.LongStream;
@@ -27,7 +32,7 @@ import java.util.stream.LongStream;
 class CpuTimings {
   final long[] rawData;
   long average;
-  private double myStandardDeviation;
+  private final double myStandardDeviation;
 
   private CpuTimings(long[] rawData) {
     this.rawData = rawData;
@@ -62,14 +67,13 @@ class CpuTimings {
         return timings;
       }
       if (i > 3) {
-        System.out.println(i + ": Unstable timings: " + timings);
+        System.out.println(i + ": Unstable timings: " + timings+" (getProcessCpuLoad() = " + getProcessCpuLoad()+"; getSystemCpuLoad() = " + getSystemCpuLoad()+")");
       }
       System.gc();
     }
-
   }
 
-  static CpuTimings calcCpuTiming() {
+  private static CpuTimings calcCpuTiming()  {
     int n = 20;
     long[] elapsed = new long[n];
     for (int i = 0; i < n; i++) {
@@ -87,6 +91,47 @@ class CpuTimings {
     }
 
     return System.currentTimeMillis() - start;
+  }
+
+  public static double getProcessCpuLoad() {
+    try {
+      MBeanServer mbs    = ManagementFactory.getPlatformMBeanServer();
+      ObjectName name    = ObjectName.getInstance("java.lang:type=OperatingSystem");
+      AttributeList list = mbs.getAttributes(name, new String[]{ "ProcessCpuLoad" });
+
+      if (list.isEmpty())     return Double.NaN;
+
+      Attribute att = (Attribute)list.get(0);
+      Double value  = (Double)att.getValue();
+
+      // usually takes a couple of seconds before we get real values
+      if (value == -1.0)      return Double.NaN;
+      // returns a percentage value with 1 decimal point precision
+      return ((int)(value * 1000) / 10.0);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+  public static double getSystemCpuLoad() {
+    try {
+      MBeanServer mbs    = ManagementFactory.getPlatformMBeanServer();
+      ObjectName name    = ObjectName.getInstance("java.lang:type=OperatingSystem");
+      AttributeList list = mbs.getAttributes(name, new String[]{ "SystemCpuLoad" });
+
+      if (list.isEmpty())     return Double.NaN;
+
+      Attribute att = (Attribute)list.get(0);
+      Double value  = (Double)att.getValue();
+
+      // usually takes a couple of seconds before we get real values
+      if (value == -1.0)      return Double.NaN;
+      // returns a percentage value with 1 decimal point precision
+      return ((int)(value * 1000) / 10.0);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }
