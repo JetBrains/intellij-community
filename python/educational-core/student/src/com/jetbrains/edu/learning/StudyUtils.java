@@ -25,7 +25,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -618,18 +617,6 @@ public class StudyUtils {
   public static boolean isStudentProject(@NotNull Project project) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     return course != null && EduNames.STUDY.equals(course.getCourseMode());
-  }
-
-  @Nullable
-  public static Project getStudyProject() {
-    Project studyProject = null;
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : openProjects) {
-      if (StudyTaskManager.getInstance(project).getCourse() != null) {
-         studyProject = project;
-      }
-    }
-    return studyProject;
   }
 
   @NotNull
