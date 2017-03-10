@@ -94,18 +94,8 @@ class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutio
 
       for (final String fileName : myFileNames) {
 
-        final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(fileName);
-        assert virtualFile != null : "Can't find " + fileName;
 
-        final PsiElement elementToRightClickOn;
-        // Configure context by folder in case of folder, or by element if file
-        if (virtualFile.isDirectory()) {
-          elementToRightClickOn = PsiDirectoryFactory.getInstance(getProject()).createDirectory(virtualFile);
-        }
-        else {
-          myFixture.configureByFile(fileName);
-          elementToRightClickOn = myFixture.getElementAtCaret();
-        }
+        final PsiElement elementToRightClickOn = getElementToRightClickOnByFile(fileName);
 
 
         final List<ConfigurationFromContext> configurationsFromContext =
@@ -134,6 +124,27 @@ class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutio
         checkConfiguration(typedConfiguration);
       }
     }), ModalityState.NON_MODAL);
+  }
+
+  /**
+   * @param fileName file or folder name provided by class instantiator
+   * @return element to right click on to generate test
+   */
+  @NotNull
+  protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {
+    final VirtualFile virtualFile = myFixture.getTempDirFixture().getFile(fileName);
+    assert virtualFile != null : "Can't find " + fileName;
+
+    // Configure context by folder in case of folder, or by element if file
+    final PsiElement elementToRightClickOn;
+    if (virtualFile.isDirectory()) {
+      elementToRightClickOn = PsiDirectoryFactory.getInstance(getProject()).createDirectory(virtualFile);
+    }
+    else {
+      myFixture.configureByFile(fileName);
+      elementToRightClickOn = myFixture.getElementAtCaret();
+    }
+    return elementToRightClickOn;
   }
 
   protected void checkConfiguration(@NotNull final T configuration) {

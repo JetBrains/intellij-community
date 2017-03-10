@@ -481,12 +481,17 @@ abstract class PyUniversalTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     when (element) {
-      is PyFile -> PythonUnitTestUtil.isUnitTestFile(element)
-      is PsiDirectory -> element.children.any { it is PyFile && PythonUnitTestUtil.isUnitTestFile(it) }
+      is PyFile -> isTestFile(element)
+      is PsiDirectory -> element.children.any { it is PyFile && isTestFile(it) }
       is PyFunction -> PythonUnitTestUtil.isTestCaseFunction(element, runBareFunctions)
       is PyClass -> PythonUnitTestUtil.isTestCaseClass(element, TypeEvalContext.userInitiated(element.project, element.containingFile))
       else -> false
     }
+}
+
+private fun isTestFile(file: PyFile): Boolean {
+  return PythonUnitTestUtil.isUnitTestFile(file) ||
+  PythonUnitTestUtil.getTestCaseClassesFromFile(file, TypeEvalContext.userInitiated(file.project, file)).isNotEmpty()
 }
 
 abstract class PyUniversalTestFactory<out CONF_T : PyUniversalTestConfiguration> : PythonConfigurationFactoryBase(
