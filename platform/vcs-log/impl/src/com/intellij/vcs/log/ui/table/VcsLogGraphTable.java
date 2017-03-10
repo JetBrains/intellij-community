@@ -129,6 +129,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
     setDefaultRenderer(String.class, myStringCellRenderer);
 
+    setShowVerticalLines(false);
     setShowHorizontalLines(false);
     setIntercellSpacing(JBUI.emptySize());
     setTableHeader(new InvisibleResizableHeader());
