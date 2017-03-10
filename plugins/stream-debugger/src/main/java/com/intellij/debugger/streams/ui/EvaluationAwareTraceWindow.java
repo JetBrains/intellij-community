@@ -7,7 +7,6 @@ import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBTabsPaneImpl;
 import com.intellij.ui.components.JBLabel;
 import com.sun.jdi.Value;
@@ -52,24 +51,37 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   public void setTrace(@NotNull List<ResolvedTrace> traces, @Nullable Value result, @NotNull EvaluationContextImpl context) {
     assert myTabContents.size() == traces.size() + 1;
-    final List<CollectionView> views = new ArrayList<>();
+
+    final List<TraceControllerImpl> controllers = new ArrayList<>();
+    TraceControllerImpl prev = null;
     for (final ResolvedTrace trace : traces) {
-      final CollectionView view = new CollectionView(context, trace);
-      Disposer.register(myDisposable, view);
-      views.add(view);
+      final TraceControllerImpl current = new TraceControllerImpl(trace);
+      if (prev != null) {
+        current.setPreviousListener(prev);
+        prev.setNextListener(current);
+      }
+
+      controllers.add(current);
+      prev = current;
     }
 
-    for (int i = 1; i < views.size(); i++) {
-      final CollectionView prev = views.get(i - 1);
-      final CollectionView current = views.get(i);
+    final CollectionView sourceView = new CollectionView(context, traces.get(0).getValues());
+    controllers.get(0).register(sourceView);
+    myTabContents.get(0).setContent(sourceView);
 
-      prev.setForwardListener(current);
-      current.setBackwardListener(prev);
-
+    for (int i = 1; i < myTabContents.size() - 1; i++) {
       final MyTab tab = myTabContents.get(i);
+      final TraceControllerImpl previous = controllers.get(i - 1);
+      final TraceControllerImpl current = controllers.get(i);
+
+      final CollectionView before = new CollectionView(context, previous.getValues());
+      final CollectionView after = new CollectionView(context, current.getValues());
+      previous.register(before);
+      current.register(after);
+
       final JPanel panel = new JPanel(new GridLayout(1, 2));
-      panel.add(prev, 0);
-      panel.add(current, 1);
+      panel.add(before);
+      panel.add(after);
       tab.setContent(panel);
     }
 

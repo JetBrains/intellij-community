@@ -16,7 +16,6 @@
 package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
@@ -31,31 +30,17 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class CollectionView extends JPanel implements ValuesHighlightingListener, Disposable {
-  private static final int MAX_STREAM_CALL_LENGTH = 60;
+public class CollectionView extends JPanel implements Disposable, TraceContainer {
   private CollectionTree myInstancesTree;
 
-  CollectionView(@NotNull EvaluationContextImpl evaluationContext, @NotNull ResolvedTrace call) {
+  CollectionView(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<TraceElement> values) {
     super(new BorderLayout());
     add(new JBLabel("stub"), BorderLayout.NORTH);
 
-    myInstancesTree = new CollectionTree(call, evaluationContext);
+    myInstancesTree = new CollectionTree(values, evaluationContext);
 
     add(new JBScrollPane(myInstancesTree), BorderLayout.CENTER);
     Disposer.register(this, myInstancesTree);
-  }
-
-  void setBackwardListener(@NotNull ValuesHighlightingListener listener) {
-    myInstancesTree.setBackwardListener(listener);
-  }
-
-  void setForwardListener(@NotNull ValuesHighlightingListener listener) {
-    myInstancesTree.setForwardListener(listener);
-  }
-
-  @Override
-  public void highlightingChanged(@NotNull List<TraceElement> values, @NotNull PropagationDirection direction) {
-    myInstancesTree.highlightingChanged(values, direction);
   }
 
   @Override
@@ -63,12 +48,13 @@ public class CollectionView extends JPanel implements ValuesHighlightingListener
 
   }
 
-  @NotNull
-  private static String stringLimit(@NotNull String str) {
-    if (str.length() < MAX_STREAM_CALL_LENGTH) {
-      return str;
-    }
+  @Override
+  public void highlight(@NotNull List<TraceElement> newSelection) {
+    myInstancesTree.highlight(newSelection);
+  }
 
-    return str.substring(0, MAX_STREAM_CALL_LENGTH).trim() + "...";
+  @Override
+  public void addSelectionListener(@NotNull ValuesSelectionListener listener) {
+    myInstancesTree.addSelectionListener(listener);
   }
 }
