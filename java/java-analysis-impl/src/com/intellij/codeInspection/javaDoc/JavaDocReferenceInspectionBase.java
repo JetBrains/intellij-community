@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,14 +106,18 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
   @Nullable
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (!PsiPackage.PACKAGE_INFO_FILE.equals(file.getName()) || !(file instanceof PsiJavaFile)) {
-      return null;
+    final String fileName = file.getName();
+    if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName)) {
+      final PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
+      return checkComment(docComment, file, manager, isOnTheFly);
     }
-    final PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
-    final PsiJavaFile javaFile = (PsiJavaFile)file;
-    final String packageName = javaFile.getPackageName();
-    final PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
-    return checkComment(docComment, aPackage, manager, isOnTheFly);
+    else if (PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
+      final PsiJavaModule module = PsiTreeUtil.getChildOfType(file, PsiJavaModule.class);
+      if (module != null) {
+        return checkComment(module.getDocComment(), file, manager, isOnTheFly);
+      }
+    }
+    return null;
   }
 
   @Override
@@ -139,7 +143,7 @@ public class JavaDocReferenceInspectionBase  extends BaseJavaBatchLocalInspectio
     return checkComment(docCommentOwner.getDocComment(), docCommentOwner, manager, isOnTheFly);
   }
 
-  private ProblemDescriptor[] checkComment(PsiDocComment docComment, PsiElement context, InspectionManager manager, boolean isOnTheFly) {
+  private ProblemDescriptor[] checkComment(@Nullable PsiDocComment docComment, PsiElement context, InspectionManager manager, boolean isOnTheFly) {
     if (docComment == null) return null;
 
     final List<ProblemDescriptor> problems = new ArrayList<>();
