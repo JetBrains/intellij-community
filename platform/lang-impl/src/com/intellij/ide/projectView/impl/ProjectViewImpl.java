@@ -1799,8 +1799,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
+      SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file);
       PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        final MySelectInContext selectInContext = new MySelectInContext(file, editor);
+        PsiFile restoredPsi = pointer.getElement();
+        if (restoredPsi == null) return;
+
+        final MySelectInContext selectInContext = new MySelectInContext(restoredPsi, editor);
 
         final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
         if (target != null && target.canSelect(selectInContext)) {
