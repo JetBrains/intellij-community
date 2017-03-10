@@ -9,6 +9,7 @@ MethodReference.main(1) in MethodReference occurrences = 1
 java.lang.Object.<init>(0) in MethodReference occurrences = 1
 java.lang.String in MethodReference occurrences = 1
 java.lang.Thread in MethodReference occurrences = 1
+java.lang.Thread.<init>(1) in MethodReference occurrences = 1
 java.util.Collections in MethodReference occurrences = 2
 java.util.Collections.emptyList(0) in MethodReference occurrences = 1
 

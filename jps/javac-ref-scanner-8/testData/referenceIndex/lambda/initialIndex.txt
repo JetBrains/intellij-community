@@ -9,6 +9,7 @@ Lambda.main(1) in Lambda occurrences = 1
 java.lang.Object.<init>(0) in Lambda occurrences = 1
 java.lang.String in Lambda occurrences = 1
 java.lang.Thread in Lambda occurrences = 1
+java.lang.Thread.<init>(1) in Lambda occurrences = 1
 
 Class Definitions:
 Lambda in Lambda
