@@ -317,10 +317,8 @@ public class StudyUtils {
       return false;
     }
     String testFileName = manager.getTestFileName();
-    if (name.equals(testFileName)) {
-      return true;
-    }
-    return name.startsWith(FileUtil.getNameWithoutExtension(testFileName)) && name.contains(EduNames.SUBTASK_MARKER);
+    return name.equals(testFileName) ||
+           name.startsWith(FileUtil.getNameWithoutExtension(testFileName)) && name.contains(EduNames.SUBTASK_MARKER);
   }
 
   @Nullable
@@ -485,10 +483,7 @@ public class StudyUtils {
       return false;
     }
 
-    if (!isRenameableOrMoveable(project, course, element)) {
-      return true;
-    }
-    return false;
+    return !isRenameableOrMoveable(project, course, element);
   }
 
   @Nullable
@@ -622,10 +617,7 @@ public class StudyUtils {
 
   public static boolean isStudentProject(@NotNull Project project) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
-    if (course == null) {
-      return false;
-    }
-    return EduNames.STUDY.equals(course.getCourseMode());
+    return course != null && EduNames.STUDY.equals(course.getCourseMode());
   }
 
   @Nullable
