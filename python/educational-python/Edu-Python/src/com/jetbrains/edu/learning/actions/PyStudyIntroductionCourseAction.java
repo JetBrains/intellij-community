@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep;
 import com.jetbrains.python.newProject.steps.PythonGenerateProjectCallback;
 import icons.InteractiveLearningPythonIcons;

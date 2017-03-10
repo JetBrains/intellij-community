@@ -25,7 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUpdateSettings;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;

@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
+import com.intellij.util.net.ssl.ConfirmingTrustManager;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -30,7 +30,6 @@ import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.List;
 
 public class EduStepicClient {
@@ -82,24 +81,8 @@ public class EduStepicClient {
   }
 
   @NotNull
-  private static TrustManager[] trustAllCerts() {
-    // Create a trust manager that does not validate certificate for this connection
-    return new TrustManager[]{new X509TrustManager() {
-      public X509Certificate[] getAcceptedIssuers() {
-        return null;
-      }
-
-      public void checkClientTrusted(X509Certificate[] certs, String authType) {
-      }
-
-      public void checkServerTrusted(X509Certificate[] certs, String authType) {
-      }
-    }};
-  }
-
-  @NotNull
-  private static HttpClientBuilder getBuilder() {
-    final HttpClientBuilder builder = HttpClients.custom().setSslcontext(CertificateManager.getInstance().getSslContext()).
+  static HttpClientBuilder getBuilder() {
+    final HttpClientBuilder builder = HttpClients.custom().setSSLContext(CertificateManager.getInstance().getSslContext()).
       setMaxConnPerRoute(100000).setConnectionReuseStrategy(DefaultConnectionReuseStrategy.INSTANCE);
 
     final HttpConfigurable proxyConfigurable = HttpConfigurable.getInstance();
@@ -108,11 +91,11 @@ public class EduStepicClient {
     if (address != null) {
       builder.setProxy(new HttpHost(address.getHostName(), address.getPort()));
     }
-    final TrustManager[] trustAllCerts = trustAllCerts();
+    final ConfirmingTrustManager trustManager = CertificateManager.getInstance().getTrustManager();
     try {
       SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(null, trustAllCerts, new SecureRandom());
-      builder.setSslcontext(sslContext);
+      sslContext.init(null, new TrustManager[]{trustManager}, new SecureRandom());
+      builder.setSSLContext(sslContext);
     }
     catch (NoSuchAlgorithmException | KeyManagementException e) {
       LOG.error(e.getMessage());

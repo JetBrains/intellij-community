@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;

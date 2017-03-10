@@ -28,6 +28,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.stepic.*;
 import icons.InteractiveLearningIcons;
