@@ -140,7 +140,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   private void createLocalSdk() {
-    SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, PythonSdkType.getInstance());
+    SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, false, PythonSdkType.getInstance());
   }
 
   private void createRemoteSdk() {

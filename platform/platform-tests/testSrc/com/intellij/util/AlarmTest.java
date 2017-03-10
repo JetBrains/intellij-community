@@ -149,20 +149,28 @@ public class AlarmTest extends PlatformTestCase {
   public void testWaitForAllExecutedMustWaitUntilExecutionFinish() throws Exception {
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
     StringBuffer sb = new StringBuffer();
-
+    long start = System.currentTimeMillis();
+    int delay = 100;
     alarm.addRequest(() -> {
       TimeoutUtil.sleep(1000);
       sb.append("1");
-    }, 1);
+    }, delay);
     alarm.addRequest(() -> {
       TimeoutUtil.sleep(1000);
       sb.append("2");
-    }, 5);
+    }, delay*2);
 
-    assertEquals("", sb.toString());
+    String s = sb.toString();
+    long elapsed = System.currentTimeMillis() - start;
+    if (elapsed > delay/2) {
+      System.out.println("No no no no this agent is so overloaded I quit");
+      return;
+    }
+    assertEquals(2, alarm.getActiveRequestCount());
+    assertEquals("", s);
     try {
       // started to execute but not finished yet
-      alarm.waitForAllExecuted(100, TimeUnit.MILLISECONDS);
+      alarm.waitForAllExecuted(1000, TimeUnit.MILLISECONDS);
       fail();
     }
     catch (TimeoutException ignored) {

@@ -125,7 +125,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public boolean isValid() {
-    return PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) || !getAllDirectories(true).isEmpty();
+    return !myManager.getProject().isDisposed() &&
+           (PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) ||
+            !getAllDirectories(true).isEmpty());
   }
 
   @Override

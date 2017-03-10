@@ -18,6 +18,7 @@ package com.intellij.util.concurrency;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class AppScheduledExecutorServiceTest extends TestCase {
   private static class LogInfo {
@@ -88,11 +90,16 @@ public class AppScheduledExecutorServiceTest extends TestCase {
     assertTrue(f.stream().noneMatch(Future::isDone));
 
     TimeoutUtil.sleep(delay/2);
+    Stream<Pair<? extends ScheduledFuture<?>, Boolean>> done = f.stream().map(f1 -> Pair.create(f1, f1.isDone()));
     long elapsed = System.currentTimeMillis() - start; // can be > delay/2 on overloaded agent
-    f.forEach(f1->assertEquals(String.valueOf(f1.isDone()), elapsed > delay, f1.isDone()));
+    if (elapsed < delay) {
+      // before delay tasks must not be completed for sure.
+      // after that - who knows if the task started execution but didn't finish yet
+      done.forEach(pair -> assertFalse(pair.first+": done: "+pair.first.isDone(), pair.second));
+    }
+
     assertTrue(f4.isDone());
 
-    TimeoutUtil.sleep(delay/2);
     f.forEach(f1->waitFor(f1::isDone));
 
     assertEquals(4, log.size());

@@ -4,6 +4,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.PathUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
@@ -86,6 +87,17 @@ public class PythonPyTestingTest extends PyEnvTestCase {
     runPythonTest(
       new CreateConfigurationTestTask.CreateConfigurationTestAndRenameFolderTask(PythonTestConfigurationsModel.PY_TEST_NAME,
                                                                                  PyUniversalPyTestConfiguration.class));
+  }
+
+  @Test
+  public void testProduceConfigurationOnFile() throws Exception {
+    runPythonTest(new CreateConfigurationTestTask(PythonTestConfigurationsModel.PY_TEST_NAME, PyUniversalPyTestConfiguration.class, "spam.py"){
+      @NotNull
+      @Override
+      protected PsiElement getElementToRightClickOnByFile(@NotNull final String fileName) {
+        return myFixture.configureByFile(fileName);
+      }
+    });
   }
 
   @Test
