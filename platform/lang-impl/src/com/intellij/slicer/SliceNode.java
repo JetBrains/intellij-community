@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.DuplicateNodeRenderer;
 import com.intellij.usageView.UsageViewBundle;
@@ -64,19 +65,19 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @Override
   @NotNull
-  public Collection<? extends AbstractTreeNode> getChildren() {
+  public Collection<SliceNode> getChildren() {
     ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
     ProgressIndicator indicator = current == null ? new ProgressIndicatorBase() : current;
     if (current == null) {
       indicator.start();
     }
-    final Collection[] nodes = new Collection[1];
+    Ref<Collection<SliceNode>> nodes = Ref.create();
     ProgressManager.getInstance().executeProcessUnderProgress(
-      () -> nodes[0] = getChildrenUnderProgress(ProgressManager.getInstance().getProgressIndicator()), indicator);
+      () -> nodes.set(getChildrenUnderProgress(ProgressManager.getInstance().getProgressIndicator())), indicator);
     if (current == null) {
       indicator.stop();
     }
-    return nodes[0];
+    return nodes.get();
   }
 
   SliceNode getNext(List parentChildren) {
@@ -88,7 +89,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @NotNull
-  protected List<? extends AbstractTreeNode> getChildrenUnderProgress(@NotNull final ProgressIndicator progress) {
+  protected Collection<SliceNode> getChildrenUnderProgress(@NotNull final ProgressIndicator progress) {
     if (isUpToDate()) return myCachedChildren == null ? Collections.emptyList() : myCachedChildren;
     final List<SliceNode> children = new ArrayList<>();
     final SliceManager manager = SliceManager.getInstance(getProject());
