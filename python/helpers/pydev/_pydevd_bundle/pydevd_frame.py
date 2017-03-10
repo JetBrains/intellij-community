@@ -706,13 +706,13 @@ class PyDBFrame:
                 else:
                     stop = False
 
-                    if is_return and hasattr(frame, "f_back"):
-                        f_code = getattr(frame.f_back, 'f_code', None)
-                        if f_code is not None:
-                            back_filename = os.path.basename(f_code.co_filename)
-                            file_type = get_file_type(back_filename)
-                            if file_type == PYDEV_FILE:
-                                stop = False
+                if step_cmd != -1 and is_return and IS_PY3K and hasattr(frame, "f_back"):
+                    f_code = getattr(frame.f_back, 'f_code', None)
+                    if f_code is not None:
+                        back_filename = os.path.basename(f_code.co_filename)
+                        file_type = get_file_type(back_filename)
+                        if file_type == PYDEV_FILE:
+                            stop = False
 
                 if plugin_stop:
                     stopped_on_plugin = plugin_manager.stop(main_debugger, frame, event, self._args, stop_info, arg, step_cmd)
