@@ -121,11 +121,7 @@ public class RainbowHighlighter {
 
   public static void transferRainbowState(@NotNull SchemeMetaInfo dst, @NotNull SchemeMetaInfo src) {
     final Properties dstProps = dst.getMetaProperties();
-    dstProps.keySet().forEach((key) -> {
-      if (isRainbowKey(key)) {
-        dstProps.remove(key);
-      }
-    });
+    dstProps.entrySet().removeIf((entry) -> isRainbowKey(entry.getKey()));
     src.getMetaProperties().forEach((Object key, Object value) -> {
       if (isRainbowKey(key) && value instanceof String) {
         dstProps.setProperty((String)key, (String)value);
