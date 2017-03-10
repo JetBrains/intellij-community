@@ -10,16 +10,18 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class TerminatorHandler extends HandlerBase {
+  private final PeekTracerHandler myPeekTracerHandler = new PeekTracerHandler(Integer.MAX_VALUE, "terminator");
+
   @NotNull
   @Override
   protected List<Variable> getVariables() {
-    return Collections.emptyList();
+    return myPeekTracerHandler.getVariables();
   }
 
   @NotNull
   @Override
   public List<StreamCall> additionalCallsBefore() {
-    return Collections.emptyList();
+    return myPeekTracerHandler.additionalCallsBefore();
   }
 
   @NotNull
@@ -31,12 +33,12 @@ public class TerminatorHandler extends HandlerBase {
   @NotNull
   @Override
   public String prepareResult() {
-    return "";
+    return myPeekTracerHandler.prepareResult();
   }
 
   @NotNull
   @Override
   public String getResultExpression() {
-    return "null";
+    return myPeekTracerHandler.getResultExpression();
   }
 }

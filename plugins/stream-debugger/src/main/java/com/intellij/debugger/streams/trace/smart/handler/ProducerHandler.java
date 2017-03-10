@@ -10,10 +10,12 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class ProducerHandler extends HandlerBase {
+  private final PeekTracerHandler myPeekTracerHandler = new PeekTracerHandler(0, "producer");
+
   @NotNull
   @Override
   protected List<Variable> getVariables() {
-    return Collections.emptyList();
+    return myPeekTracerHandler.getVariables();
   }
 
   @NotNull
@@ -25,18 +27,18 @@ public class ProducerHandler extends HandlerBase {
   @NotNull
   @Override
   public List<StreamCall> additionalCallsAfter() {
-    return Collections.emptyList();
+    return myPeekTracerHandler.additionalCallsAfter();
   }
 
   @NotNull
   @Override
   public String prepareResult() {
-    return "";
+    return myPeekTracerHandler.prepareResult();
   }
 
   @NotNull
   @Override
   public String getResultExpression() {
-    return "null";
+    return myPeekTracerHandler.getResultExpression();
   }
 }

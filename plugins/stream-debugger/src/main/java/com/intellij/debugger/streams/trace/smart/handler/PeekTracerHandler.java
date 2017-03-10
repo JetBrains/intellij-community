@@ -13,10 +13,13 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class PeekTracerHandler extends HandlerBase {
+  private static final String BEFORE_ARRAY_NAME = "beforeArray";
+  private static final String AFTER_ARRAY_NAME = "afterArray";
+
   private final HashMapVariableImpl myBeforeVariable;
   private final HashMapVariableImpl myAfterVariable;
 
-  public PeekTracerHandler(int num, @NotNull String name) {
+  PeekTracerHandler(int num, @NotNull String name) {
     final String variablePrefix = String.format("%sPeek%d", name, num);
     myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", GenericType.INT, GenericType.OBJECT, true);
     myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", GenericType.INT, GenericType.OBJECT, true);
@@ -37,20 +40,15 @@ public class PeekTracerHandler extends HandlerBase {
   }
 
   @NotNull
-  public String getBeforeMapName() {
-    return myBeforeVariable.getName();
-  }
-
-  @NotNull
-  public String getAfterMapName() {
+  String getAfterMapName() {
     return myAfterVariable.getName();
   }
 
   @NotNull
   @Override
   public String prepareResult() {
-    final String beforeConversion = myBeforeVariable.convertToArray("beforeArray", true, false);
-    final String afterConversion = myAfterVariable.convertToArray("afterArray", true, false);
+    final String beforeConversion = myBeforeVariable.convertToArray(BEFORE_ARRAY_NAME, true, false);
+    final String afterConversion = myAfterVariable.convertToArray(AFTER_ARRAY_NAME, true, false);
     return beforeConversion + EvaluateExpressionTracerBase.LINE_SEPARATOR + afterConversion;
   }
 
