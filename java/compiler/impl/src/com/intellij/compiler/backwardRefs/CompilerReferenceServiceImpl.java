@@ -200,9 +200,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     if (!isServiceEnabledFor(element)) return null;
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(calculateOccurrenceCount(element, isConstructorSuggestion),
+                                                () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<Boolean, Integer>() {
+                                                                                          @Nullable
+                                                                                          @Override
+                                                                                          protected Integer create(Boolean constructorSuggestion) {
+                                                                                            return calculateOccurrenceCount(element, constructorSuggestion.booleanValue());
+                                                                                          }
+                                                                                        },
                                                                                         PsiModificationTracker.MODIFICATION_COUNT,
-                                                                                        this));
+                                                                                        this)).get(Boolean.valueOf(isConstructorSuggestion));
     }
     catch (RuntimeException e) {
       return onException(e, "weighting for completion");
@@ -233,7 +239,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
               constructorOccurrences += myReader.getOccurrenceCount(lightConstructor);
             }
           }
-          final Integer anonymousCount = myReader.getAnonymousCount((LightRef.LightClassHierarchyElementDef)searchElementInfo.searchElements[0]);
+          final Integer anonymousCount = myReader.getAnonymousCount((LightRef.LightClassHierarchyElementDef)searchElementInfo.searchElements[0], searchElementInfo.place == ElementPlace.SRC);
           return anonymousCount == null ? constructorOccurrences : (constructorOccurrences + anonymousCount);
         } else {
           return myReader.getOccurrenceCount(searchElementInfo.searchElements[0]);

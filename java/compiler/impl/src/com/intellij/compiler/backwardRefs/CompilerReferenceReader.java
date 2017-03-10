@@ -98,8 +98,8 @@ class CompilerReferenceReader {
   }
 
   @Nullable
-  Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef) throws StorageException {
-    if (hasMultipleDefinitions(classDef)) {
+  Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions) throws StorageException {
+    if (checkDefinitions && hasMultipleDefinitions(classDef)) {
       return null;
     }
     final int[] count = {0};
