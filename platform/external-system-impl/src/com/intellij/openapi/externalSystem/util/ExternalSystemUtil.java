@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
+import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -231,8 +232,15 @@ public class ExternalSystemUtil {
    * @param specBuilder import specification builder
    */
   public static void refreshProjects(@NotNull final ImportSpecBuilder specBuilder) {
-    ImportSpec spec = specBuilder.build();
+    refreshProjects(specBuilder.build());
+  }
 
+  /**
+   * Asks to refresh all external projects of the target external system linked to the given ide project based on provided spec
+   *
+   * @param specBuilder import specification builder
+   */
+  public static void refreshProjects(@NotNull final ImportSpec spec) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(spec.getExternalSystemId());
     if (manager == null) {
       return;
@@ -256,7 +264,7 @@ public class ExternalSystemUtil {
     Set<String> toRefresh = ContainerUtilRt.newHashSet();
     for (ExternalProjectSettings setting : projectsSettings) {
       // don't refresh project when auto-import is disabled if such behavior needed (e.g. on project opening when auto-import is disabled)
-      if (!setting.isUseAutoImport() && spec.isWhenAutoImportEnabled()) continue;
+      if (!setting.isUseAutoImport() && spec.whenAutoImportEnabled()) continue;
       toRefresh.add(setting.getExternalProjectPath());
     }
 
@@ -323,14 +331,13 @@ public class ExternalSystemUtil {
   }
 
   /**
-   * TODO[Vlad]: refactor the method to use {@link ImportSpecBuilder}
    * <p>
-   * Queries slave gradle process to refresh target gradle project.
+   * Refresh target gradle project.
    *
    * @param project             target intellij project to use
-   * @param externalProjectPath path of the target gradle project's file
+   * @param externalProjectPath path of the target external project
    * @param callback            callback to be notified on refresh result
-   * @param isPreviewMode       flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param isPreviewMode       flag that identifies whether libraries should be resolved during the refresh
    * @param reportRefreshError  prevent to show annoying error notification, e.g. if auto-import mode used
    */
   public static void refreshProject(@NotNull final Project project,
@@ -340,6 +347,22 @@ public class ExternalSystemUtil {
                                     final boolean isPreviewMode,
                                     @NotNull final ProgressExecutionMode progressExecutionMode,
                                     final boolean reportRefreshError) {
+    ImportSpecBuilder builder = new ImportSpecBuilder(project, externalSystemId).callback(callback).use(progressExecutionMode);
+    if (isPreviewMode) builder.usePreviewMode();
+    if (!reportRefreshError) builder.dontReportRefreshErrors();
+    refreshProject(externalProjectPath, builder.build());
+  }
+
+  public static void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {
+    Project project = importSpec.getProject();
+    ProjectSystemId externalSystemId = importSpec.getExternalSystemId();
+    ExternalProjectRefreshCallback callback = importSpec.getCallback();
+    boolean isPreviewMode = importSpec.isPreviewMode();
+    ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
+    boolean reportRefreshError = importSpec.isReportRefreshError();
+    String arguments = importSpec.getArguments();
+    String vmOptions = importSpec.getVmOptions();
+
     File projectFile = new File(externalProjectPath);
     final String projectName;
     if (projectFile.isFile()) {
@@ -350,7 +373,7 @@ public class ExternalSystemUtil {
     }
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
       private final ExternalSystemResolveProjectTask myTask
-        = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, isPreviewMode);
+        = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, vmOptions, arguments, isPreviewMode);
 
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override
