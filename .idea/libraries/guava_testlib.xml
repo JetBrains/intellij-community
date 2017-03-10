@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="guava-testlib">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/guava-testlib-21.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/guava-testlib-21.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1113,3 +1113,11 @@ java_library(
         "//tools/idea/plugins/gradle/lib:gradle-reporting-3.2",
     ],
 )
+
+java_library(
+    name = "guava-testlib",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/adt/idea/android/lib:guava-testlib-21.0"],
+    runtime_deps = ["//tools/adt/idea/android/lib:guava-testlib-21.0"],
+)
