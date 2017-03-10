@@ -32,6 +32,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -320,6 +321,8 @@ public class CaptureConfigurable implements SearchableConfigurable {
             }
           });
         }
+      }
+      catch (IndexNotReadyException ignore) {
       }
       catch (Exception e) {
         LOG.error(e);
