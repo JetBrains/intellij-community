@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
@@ -126,7 +127,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
     decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
-        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, false) {
+        FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, true) {
           @Override
           public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
             return super.isFileVisible(file, showHiddenFiles) &&
@@ -141,19 +142,23 @@ public class CaptureConfigurable implements SearchableConfigurable {
         descriptor.setDescription("Please select a file to import.");
         descriptor.setTitle("Import Capture Points");
 
-        VirtualFile file = FileChooser.chooseFile(descriptor, e.getProject(), null);
-        if (file == null) return;
-        try {
-          Document document = JDOMUtil.loadDocument(file.getInputStream());
-          table.getSelectionModel().clearSelection();
-          int start = table.getRowCount();
-          List<Element> children = document.getRootElement().getChildren();
-          children.forEach(element -> myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class)));
-          table.getSelectionModel().addSelectionInterval(start, table.getRowCount() - 1);
-        }
-        catch (Exception ex) {
-          final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+        VirtualFile[] files = FileChooser.chooseFiles(descriptor, e.getProject(), null);
+        if (ArrayUtil.isEmpty(files)) return;
+
+        table.getSelectionModel().clearSelection();
+
+        for (VirtualFile file : files) {
+          try {
+            Document document = JDOMUtil.loadDocument(file.getInputStream());
+            int start = table.getRowCount();
+            List<Element> children = document.getRootElement().getChildren();
+            children.forEach(element -> myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class)));
+            table.getSelectionModel().addSelectionInterval(start, table.getRowCount() - 1);
+          }
+          catch (Exception ex) {
+            final String msg = ex.getLocalizedMessage();
+            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(), "Export Failed");
+          }
         }
       }
     });
