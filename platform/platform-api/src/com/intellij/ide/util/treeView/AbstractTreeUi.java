@@ -373,7 +373,7 @@ public class AbstractTreeUi {
       }
     };
 
-    if (!forceEdt && (isPassthroughMode() || !isEdt() && !isTreeShowing() && !myWasEverShown)) {
+    if (isPassthroughMode() || (!forceEdt && !isEdt() && !isTreeShowing() && !myWasEverShown)) {
       actual.run();
     }
     else {
