@@ -136,5 +136,9 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testConstructors() {
     assertIndexOnRebuild("Foo.java")
   }
+
+  fun testAnnotation() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 
