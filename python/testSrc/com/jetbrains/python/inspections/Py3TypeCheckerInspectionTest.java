@@ -223,4 +223,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testReplaceCalledOnUnionOfStrAndBytesWithStrArguments() {
     doTest();
   }
+
+  // PY-23053
+  public void testUnboundTypeVarsMatchClassObjectTypes() {
+    doTest();
+  }
 }
