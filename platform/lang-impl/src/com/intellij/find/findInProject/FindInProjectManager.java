@@ -64,6 +64,20 @@ public class FindInProjectManager {
     findModel.setOpenInNewTabVisible(true);
     findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     findModel.setOpenInNewTab(toOpenInNewTab);
+    initModel(findModel, dataContext);
+
+    findManager.showFindDialog(findModel, () -> {
+      findModel.setOpenInNewTabVisible(false);
+      if (isOpenInNewTabEnabled) {
+        FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
+      }
+      startFindInProject(findModel);
+      findModel.setOpenInNewTabVisible(false); //todo check it in both cases: dialog & popup
+    });
+  }
+
+  @SuppressWarnings("WeakerAccess")
+  protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
     String text = PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext);
@@ -73,15 +87,6 @@ public class FindInProjectManager {
     else {
       FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
     }
-
-    findManager.showFindDialog(findModel, () -> {
-      findModel.setOpenInNewTabVisible(false);
-      if (isOpenInNewTabEnabled) {
-        FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
-      }
-      startFindInProject(findModel);
-      findModel.setOpenInNewTabVisible(false);//todo check it in both cases: dialog & popup
-    });
   }
 
   public void startFindInProject(@NotNull FindModel findModel) {
