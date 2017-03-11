@@ -56,7 +56,6 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private final EventDispatcher<ValuesSelectionListener> myDispatcher = EventDispatcher.create(ValuesSelectionListener.class);
 
   private boolean myIgnoreSelectionEvents = false;
-  private boolean myIgnoreClearSelection = false;
 
   CollectionTree(@NotNull List<TraceElement> values, @NotNull EvaluationContextImpl evaluationContext) {
     super(evaluationContext.getProject(), new JavaDebuggerEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
@@ -119,9 +118,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
 
-      myIgnoreClearSelection = true;
       myDispatcher.getMulticaster().selectionChanged(selectedItems);
-      myIgnoreClearSelection = false;
     });
 
     setSelectionRow(0);
@@ -131,9 +128,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   @Override
   public void highlight(@NotNull List<TraceElement> elements) {
     myIgnoreSelectionEvents = true;
-    if (!myIgnoreClearSelection) {
-      clearSelection();
-    }
+    clearSelection();
 
     myHighlighted = elements.stream().map(myValue2Path::get).collect(Collectors.toSet());
 
@@ -148,8 +143,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
     final TreePath[] paths = elements.stream().map(myValue2Path::get).toArray(TreePath[]::new);
     getSelectionModel().setSelectionPaths(paths);
-    myHighlighted.clear();
-    myHighlighted.addAll(Arrays.asList(paths));
+    myHighlighted = new HashSet<>(Arrays.asList(paths));
 
     revalidate();
     repaint();

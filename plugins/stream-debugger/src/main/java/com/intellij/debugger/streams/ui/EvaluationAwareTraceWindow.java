@@ -85,7 +85,6 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       tab.setContent(panel);
     }
 
-    //myTabContents.get(0).setContent(views.get(0));
     final MyTab resultTab = myTabContents.get(myTabContents.size() - 1);
     if (result != null) {
       resultTab.setContent(new JBLabel("Reserved for result!"));

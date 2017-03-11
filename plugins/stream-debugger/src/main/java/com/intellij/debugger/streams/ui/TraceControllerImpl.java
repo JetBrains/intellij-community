@@ -25,12 +25,9 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
     myResolvedTrace = trace;
     mySelectionListener = elements -> {
       selectAll(elements);
-      final List<TraceElement> nextValues =
-        elements.stream().flatMap(x -> myResolvedTrace.getNextValues(x).stream()).collect(Collectors.toList());
-      final List<TraceElement> prevValues =
-        elements.stream().flatMap(x -> myResolvedTrace.getPreviousValues(x).stream()).collect(Collectors.toList());
-      myNextListener.highlightingChanged(nextValues, PropagationDirection.FORWARD);
-      myPrevListener.highlightingChanged(prevValues, PropagationDirection.BACKWARD);
+
+      propagateForward(elements);
+      propagateBackward(elements);
     };
   }
 
@@ -55,13 +52,29 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
   @Override
   public void highlightingChanged(@NotNull List<TraceElement> values, @NotNull PropagationDirection direction) {
     highlightAll(values);
+    propagate(values, direction);
+  }
 
+  private void propagate(@NotNull List<TraceElement> values, @NotNull PropagationDirection direction) {
     if (direction.equals(PropagationDirection.BACKWARD)) {
-      myPrevListener.highlightingChanged(values, PropagationDirection.BACKWARD);
+      propagateBackward(values);
     }
     else {
-      myPrevListener.highlightingChanged(values, PropagationDirection.FORWARD);
+      propagateForward(values);
     }
+  }
+
+  private void propagateForward(@NotNull List<TraceElement> values) {
+    final List<TraceElement> nextValues =
+      values.stream().flatMap(x -> myResolvedTrace.getNextValues(x).stream()).collect(Collectors.toList());
+
+    myNextListener.highlightingChanged(nextValues, PropagationDirection.FORWARD);
+  }
+
+  private void propagateBackward(@NotNull List<TraceElement> values) {
+    final List<TraceElement> prevValues =
+      values.stream().flatMap(x -> myResolvedTrace.getPreviousValues(x).stream()).collect(Collectors.toList());
+    myPrevListener.highlightingChanged(prevValues, PropagationDirection.BACKWARD);
   }
 
   private void highlightAll(@NotNull List<TraceElement> values) {
