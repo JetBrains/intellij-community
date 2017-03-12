@@ -15,54 +15,76 @@
  */
 package com.intellij;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.intellij.GroupBasedTestClassFilter.createOn;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TestClassesFilterTest {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.TestClassesFilterTest");
+  private static String FILTER_TEXT = "[Group1]\n" +
+                                      "com.intellij.package1.*\n" +
+                                      "com.intellij.package2.ExcludedTest\n" +
+                                      "com.intellij.package3.*package4\n" +
+                                      "\n" +
+                                      "[Group2]\n" +
+                                      "com.intellij.package5.*\n" +
+                                      "com.intellij.package6.ExcludedTest\n" +
+                                      "com.intellij.package7.*package8\n" +
+                                      "[Group3]\n" +
+                                      "org.jetbrains.*\n" +
+                                      "-org.jetbrains.excluded.*";
 
   @Test
-  public void test() throws Exception {
-    LOG.info("test");
+  public void excluded() throws Exception {
+    TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT), Collections.singletonList("Group3"));
+    assertTrue(classesFilter.matches("org.jetbrains.included"));
+    assertTrue(classesFilter.matches("org.jetbrains.included.Test1"));
+    assertFalse(classesFilter.matches("org.jetbrains.excluded.Test1"));
+    assertFalse(classesFilter.matches("org.jetbrains.excluded.sub.Test1"));
+    assertTrue(classesFilter.matches("org.jetbrains.excluded"));
+  }
 
-    String filterText = "[Group1]\n" +
-                        "com.intellij.package1.*\n" +
-                        "com.intellij.package2.ExcludedTest\n" +
-                        "com.intellij.package3.*package4\n" +
-                        "[Group2]\n" +
-                        "com.intellij.package5.*\n" +
-                        "com.intellij.package6.ExcludedTest\n" +
-                        "com.intellij.package7.*package8";
-
-    TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Collections.singletonList("Group1"));
+  @Test
+  public void group1AndAllExcludeDefined() throws Exception {
+    TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT),
+                                               Arrays.asList("Group1", GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
     assertTrue(classesFilter.matches("com.intellij.package1.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package1.Test2"));
-    assertFalse(classesFilter.matches("com.intellij.package2.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package2.ExcludedTest"));
-    assertTrue(classesFilter.matches("com.intellij.package3.package4"));
-    assertTrue(classesFilter.matches("com.intellij.package3.package5.package4"));
-    assertFalse(classesFilter.matches("com.intellij.package3"));
-    assertFalse(classesFilter.matches("com.intellij"));
-    assertFalse(classesFilter.matches("com.intellij.Test"));
     assertFalse(classesFilter.matches("com.intellij.package5.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package5.Test2"));
-    assertFalse(classesFilter.matches("com.intellij.package6.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package6.ExcludedTest"));
-    assertFalse(classesFilter.matches("com.intellij.package7.package8"));
-    assertFalse(classesFilter.matches("com.intellij.package7.package5.package8"));
-    assertFalse(classesFilter.matches("com.intellij.package7"));
+    assertTrue(classesFilter.matches("com.intellij.package4.Test"));
+  }
 
-    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Collections.singletonList("Group2"));
+  @Test
+  public void group1AndGroup2() throws IOException {
+    TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT),
+                                               Arrays.asList("Group1", "Group2"));
+    assertTrue(classesFilter.matches("com.intellij.package1.Test"));
+    assertTrue(classesFilter.matches("com.intellij.package5.Test"));
+    assertFalse(classesFilter.matches("com.intellij.package4.Test"));
+  }
+
+  @Test
+  public void emptyList() throws IOException {
+    checkForAllExcludedDefinedGroup(createOn(getReader(FILTER_TEXT), Collections.emptyList()));
+  }
+
+  @Test
+  public void allExcluded() throws IOException {
+    checkForAllExcludedDefinedGroup(createOn(getReader(FILTER_TEXT),
+                                             Collections.singletonList(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED)));
+  }
+
+  @Test
+  public void group2() throws IOException {
+    TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT), Collections.singletonList("Group2"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package2.Test"));
@@ -79,23 +101,27 @@ public class TestClassesFilterTest {
     assertTrue(classesFilter.matches("com.intellij.package7.package8"));
     assertTrue(classesFilter.matches("com.intellij.package7.package5.package8"));
     assertFalse(classesFilter.matches("com.intellij.package7"));
+  }
 
-    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText),
-                                                       Collections.singletonList(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
-    checkForAllExcludedDefinedGroup(classesFilter);
-
-    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Collections.<String>emptyList());
-    checkForAllExcludedDefinedGroup(classesFilter);
-
-    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Arrays.asList("Group1", "Group2"));
+  @Test
+  public void group1() throws Exception {
+    TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT), Collections.singletonList("Group1"));
     assertTrue(classesFilter.matches("com.intellij.package1.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package5.Test"));
-    assertFalse(classesFilter.matches("com.intellij.package4.Test"));
-
-    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), Arrays.asList("Group1", GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
-    assertTrue(classesFilter.matches("com.intellij.package1.Test"));
+    assertTrue(classesFilter.matches("com.intellij.package1.Test2"));
+    assertFalse(classesFilter.matches("com.intellij.package2.Test"));
+    assertTrue(classesFilter.matches("com.intellij.package2.ExcludedTest"));
+    assertTrue(classesFilter.matches("com.intellij.package3.package4"));
+    assertTrue(classesFilter.matches("com.intellij.package3.package5.package4"));
+    assertFalse(classesFilter.matches("com.intellij.package3"));
+    assertFalse(classesFilter.matches("com.intellij"));
+    assertFalse(classesFilter.matches("com.intellij.Test"));
     assertFalse(classesFilter.matches("com.intellij.package5.Test"));
-    assertTrue(classesFilter.matches("com.intellij.package4.Test"));
+    assertFalse(classesFilter.matches("com.intellij.package5.Test2"));
+    assertFalse(classesFilter.matches("com.intellij.package6.Test"));
+    assertFalse(classesFilter.matches("com.intellij.package6.ExcludedTest"));
+    assertFalse(classesFilter.matches("com.intellij.package7.package8"));
+    assertFalse(classesFilter.matches("com.intellij.package7.package5.package8"));
+    assertFalse(classesFilter.matches("com.intellij.package7"));
   }
 
   private static InputStreamReader getReader(String filterText) throws UnsupportedEncodingException {
