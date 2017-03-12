@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -210,20 +212,22 @@ public class PersistentFsTest extends PlatformTestCase {
     ++globalModCount;
 
     int finalGlobalModCount = globalModCount;
-    
-    WriteAction.run(() -> {
-      final long timestamp = vFile.getTimeStamp();
-      int finalInSessionModCount = managingFS.getModificationCount();
-      vFile.setWritable(true);  // 1 change
-      vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
 
-      // we check in write action to avoid observing background thread to index stuff
-      final int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
-      assertEquals(finalGlobalModCount + changesCount, managingFS.getModificationCount(vFile));
-      assertEquals(finalGlobalModCount + changesCount, managingFS.getFilesystemModificationCount());
-      assertEquals(finalInSessionModCount + changesCount, managingFS.getModificationCount());
-      assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
-    });
+    try (AccessToken ignore = HeavyProcessLatch.INSTANCE.processStarted("This test wants no indices flush")) {
+      WriteAction.run(() -> {
+        final long timestamp = vFile.getTimeStamp();
+        int finalInSessionModCount = managingFS.getModificationCount();
+        vFile.setWritable(true);  // 1 change
+        vFile.setBinaryContent("foo".getBytes(Charset.defaultCharset())); // content change + length change + maybe timestamp change
+
+        // we check in write action to avoid observing background thread to index stuff
+        final int changesCount = timestamp == vFile.getTimeStamp() ? 3 : 4;
+        assertEquals(finalGlobalModCount + changesCount, managingFS.getModificationCount(vFile));
+        assertEquals(finalGlobalModCount + changesCount, managingFS.getFilesystemModificationCount());
+        assertEquals(finalInSessionModCount + changesCount, managingFS.getModificationCount());
+        assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
+      });
+    }
   }
 
   @NotNull
