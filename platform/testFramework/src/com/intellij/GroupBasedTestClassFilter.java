@@ -56,7 +56,6 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
-  private final MultiMap<String, Pattern> myPatterns = MultiMap.create();
   private final List<Pattern> myAllPatterns = new ArrayList<>();
   private final List<Pattern> myIncludedTestGroupPatterns = ContainerUtil.newSmartList();
   private final List<Pattern> myExcludedTestGroupPatterns = ContainerUtil.newSmartList();
@@ -69,7 +68,6 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
     for (String groupName : filters.keySet()) {
       Collection<String> groupFilters = filters.get(groupName);
       List<Pattern> patterns = compilePatterns(ContainerUtil.filter(groupFilters, s -> !s.startsWith("-")));
-      myPatterns.putValues(groupName, patterns);
       myAllPatterns.addAll(patterns);
 
       if (testGroupNames.contains(groupName)) {
