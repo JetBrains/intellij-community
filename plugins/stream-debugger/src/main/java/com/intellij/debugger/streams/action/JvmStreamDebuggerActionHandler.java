@@ -107,8 +107,8 @@ public class JvmStreamDebuggerActionHandler {
       final TraceInfo traceInfo = trace.get(i);
       final StreamCall currentCall = traceInfo.getCall();
 
-      final ValuesOrderResolver.Result currentResolve =
-        ResolverFactoryImpl.getInstance().getResolver(currentCall.getName()).resolve(traceInfo);
+      final ValuesOrderResolver resolver = ResolverFactoryImpl.getInstance().getResolver(currentCall.getName());
+      final ValuesOrderResolver.Result currentResolve = resolver.resolve(traceInfo);
 
       result.add(
         new ResolvedTraceImpl(new ArrayList<>(currentResolve.getDirectOrder().keySet()), prevResolved.getReverseOrder(),

@@ -17,12 +17,10 @@ package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Vitaliy.Bibaev
@@ -37,29 +35,24 @@ public class FilterResolver implements ValuesOrderResolver {
     final Map<TraceElement, List<TraceElement>> forward = new LinkedHashMap<>();
     final Map<TraceElement, List<TraceElement>> backward = new LinkedHashMap<>();
 
-    // TODO: O(n) solution
-    //final Integer[] beforeTimes = new Integer[previousCalls.size()];
-    //final Integer[] afterTimes = new Integer[previousCalls.size()];
-    //previousCalls.keySet().toArray(beforeTimes);
-    //nextCalls.keySet().toArray(afterTimes);
-    //
-    //int rightIndex = 0;
-    //for (int i = 0; i < beforeTimes.length; i++) {
-    //  final int leftTime = beforeTimes[i];
-    //  final int nextLeftTime = i + 1 < beforeTimes.length ? beforeTimes[i + 1] : Integer.MAX_VALUE;
-    //  while (rightIndex < afterTimes.length && afterTimes[rightIndex] < nextLeftTime) {
-    //
-    //  }
-    //}
+    final int[] beforeTimes = before.keySet().stream().mapToInt(Integer::intValue).sorted().toArray();
+    final int[] afterTimes = after.keySet().stream().mapToInt(Integer::intValue).sorted().toArray();
 
-    // this is O(n^2) solution
-    for (TraceElement leftValue : before.values()) {
-      if (after.containsValue(leftValue)) {
-        forward.put(leftValue, Collections.singletonList(leftValue));
-        backward.put(leftValue, Collections.singletonList(leftValue));
-      }
-      else {
-        forward.put(leftValue, Collections.emptyList());
+    int beforeIndex = 0;
+    for (final int afterTime : afterTimes) {
+      final TraceElement afterElement = after.get(afterTime);
+      final Value afterValue = afterElement.getValue();
+      while (true) {
+        final TraceElement beforeElement = before.get(beforeTimes[beforeIndex]);
+        if (beforeElement.getValue().equals(afterValue)) {
+          forward.put(beforeElement, Collections.singletonList(afterElement));
+          backward.put(afterElement, Collections.singletonList(beforeElement));
+          beforeIndex++;
+          break;
+        }
+
+        forward.put(beforeElement, Collections.emptyList());
+        beforeIndex++;
       }
     }
 
