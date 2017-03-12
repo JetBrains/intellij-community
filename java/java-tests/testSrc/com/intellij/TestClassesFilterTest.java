@@ -19,9 +19,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -63,7 +61,7 @@ public class TestClassesFilterTest {
   }
 
   @Test
-  public void group1AndGroup2() throws IOException {
+  public void group1AndGroup2() throws Exception {
     TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT),
                                                Arrays.asList("Group1", "Group2"));
     assertTrue(classesFilter.matches("com.intellij.package1.Test"));
@@ -72,18 +70,18 @@ public class TestClassesFilterTest {
   }
 
   @Test
-  public void emptyList() throws IOException {
+  public void emptyList() throws Exception {
     checkForAllExcludedDefinedGroup(createOn(getReader(FILTER_TEXT), Collections.emptyList()));
   }
 
   @Test
-  public void allExcluded() throws IOException {
+  public void allExcluded() throws Exception {
     checkForAllExcludedDefinedGroup(createOn(getReader(FILTER_TEXT),
                                              Collections.singletonList(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED)));
   }
 
   @Test
-  public void group2() throws IOException {
+  public void group2() throws Exception {
     TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT), Collections.singletonList("Group2"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
@@ -124,7 +122,7 @@ public class TestClassesFilterTest {
     assertFalse(classesFilter.matches("com.intellij.package7"));
   }
 
-  private static InputStreamReader getReader(String filterText) throws UnsupportedEncodingException {
+  private static InputStreamReader getReader(String filterText) {
     return new InputStreamReader(new ByteArrayInputStream(filterText.getBytes(CharsetToolkit.UTF8_CHARSET)));
   }
 
