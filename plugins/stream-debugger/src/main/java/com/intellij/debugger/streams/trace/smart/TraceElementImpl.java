@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TraceElementImpl implements TraceElement {
+public class TraceElementImpl implements TraceElement, Comparable<TraceElement> {
   private final int myTime;
   private final Value myValue;
 
@@ -42,5 +42,10 @@ public class TraceElementImpl implements TraceElement {
   @Override
   public Value getValue() {
     return myValue;
+  }
+
+  @Override
+  public int compareTo(@NotNull TraceElement other) {
+    return Integer.compare(myTime, other.getTime());
   }
 }

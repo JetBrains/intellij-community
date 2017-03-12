@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -33,7 +34,7 @@ public class ResolvedTraceImpl implements ResolvedTrace {
   public ResolvedTraceImpl(@NotNull List<TraceElement> values,
                            @NotNull Map<TraceElement, List<TraceElement>> toPrev,
                            @NotNull Map<TraceElement, List<TraceElement>> toNext) {
-    myValues = values;
+    myValues = values.stream().sorted().collect(Collectors.toList());
     myPrevious = toPrev;
     myNext = toNext;
   }
