@@ -52,7 +52,7 @@ public class TraceWindow extends DialogWrapper {
     final JPanel panel = new JPanel(new GridLayout(1, myTrace.size()));
     CollectionView prev = null;
     for (final ResolvedTrace trace : myTrace) {
-      final CollectionView collectionView = new CollectionView(myEvaluationContext, trace.getValues());
+      final CollectionView collectionView = new CollectionView("Trace", myEvaluationContext, trace.getValues());
       Disposer.register(myDisposable, collectionView);
       //if (prev != null) {
       //prev.setForwardListener(collectionView);

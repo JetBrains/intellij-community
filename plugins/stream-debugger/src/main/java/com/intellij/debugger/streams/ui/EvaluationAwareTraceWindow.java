@@ -2,11 +2,13 @@ package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
+import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBTabsPaneImpl;
 import com.intellij.ui.components.JBLabel;
 import com.sun.jdi.Value;
@@ -15,23 +17,32 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class EvaluationAwareTraceWindow extends DialogWrapper {
-  private final JComponent myCenterPane;
+  private static final String FLAT_MODE_NAME = "Flat Mode";
+  private static final String OPERATION_MOVE_NAME = "Split Mode";
+  private final JPanel myCenterPane;
   private final List<MyTab> myTabContents;
 
+  private MyMode myMode = MyMode.SPLIT;
+
   public EvaluationAwareTraceWindow(@Nullable Project project, @NotNull StreamChain chain) {
-    super(project, false);
+    super(project, true);
     final JBTabsPaneImpl tabs = new JBTabsPaneImpl(project, SwingConstants.TOP, getDisposable());
     setModal(false);
     setTitle("Stream Trace");
-    myCenterPane = tabs.getComponent();
+    final JBCardLayout layout = new JBCardLayout();
+    myCenterPane = new JPanel(layout);
+    myCenterPane.add(tabs.getComponent());
+    myCenterPane.add(new JBLabel("flat!!!"));
     myTabContents = new ArrayList<>();
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
@@ -65,7 +76,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       prev = current;
     }
 
-    final CollectionView sourceView = new CollectionView(context, traces.get(0).getValues());
+    final CollectionView sourceView = new CollectionView("Source", context, traces.get(0).getValues());
     controllers.get(0).register(sourceView);
     myTabContents.get(0).setContent(sourceView);
 
@@ -74,8 +85,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final TraceControllerImpl previous = controllers.get(i - 1);
       final TraceControllerImpl current = controllers.get(i);
 
-      final CollectionView before = new CollectionView(context, previous.getValues());
-      final CollectionView after = new CollectionView(context, current.getValues());
+      final CollectionView before = new CollectionView("Before", context, previous.getValues());
+      final CollectionView after = new CollectionView("After", context, current.getValues());
       previous.register(before);
       current.register(after);
 
@@ -87,15 +98,31 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     final MyTab resultTab = myTabContents.get(myTabContents.size() - 1);
     if (result != null) {
-      resultTab.setContent(new JBLabel("Reserved for result!"));
+      final TraceElementImpl resultTraceElement = new TraceElementImpl(Integer.MAX_VALUE, result);
+      resultTab.setContent(new CollectionView("Result", context, Collections.singletonList(resultTraceElement)));
     }
     else {
-      resultTab.setContent(new JBLabel("There is no result of this stream chain"));
+      resultTab.setContent(new JBLabel("There is no result of such stream chain"));
     }
   }
 
   public void setFailMessage() {
     clear();
+  }
+
+  @NotNull
+  @Override
+  protected Action[] createLeftSideActions() {
+    return new Action[]{new DialogWrapperAction(FLAT_MODE_NAME) {
+      @Override
+      protected void doAction(ActionEvent e) {
+        toggleMode();
+      }
+    }};
+  }
+
+  private void toggleMode() {
+    ((JBCardLayout)myCenterPane.getLayout()).next(myCenterPane);
   }
 
   private void clear() {
@@ -122,5 +149,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       revalidate();
       repaint();
     }
+  }
+
+  private enum MyMode {
+    FLAT, SPLIT
   }
 }
