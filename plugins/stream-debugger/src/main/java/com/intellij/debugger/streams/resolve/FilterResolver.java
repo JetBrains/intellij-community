@@ -56,6 +56,12 @@ public class FilterResolver implements ValuesOrderResolver {
       }
     }
 
+    while (beforeIndex < beforeTimes.length) {
+      final int beforeTime = beforeTimes[beforeIndex];
+      forward.put(before.get(beforeTime), Collections.emptyList());
+      beforeIndex++;
+    }
+
     return Result.of(forward, backward);
   }
 }

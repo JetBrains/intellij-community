@@ -27,6 +27,7 @@ import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
 import com.intellij.debugger.streams.trace.MapStreamTracerImpl;
 import com.intellij.debugger.streams.trace.TracingCallback;
 import com.intellij.debugger.streams.trace.TracingResult;
+import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.debugger.streams.ui.TraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamCall;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -110,9 +112,9 @@ public class JvmStreamDebuggerActionHandler {
       final ValuesOrderResolver resolver = ResolverFactoryImpl.getInstance().getResolver(currentCall.getName());
       final ValuesOrderResolver.Result currentResolve = resolver.resolve(traceInfo);
 
-      result.add(
-        new ResolvedTraceImpl(new ArrayList<>(currentResolve.getDirectOrder().keySet()), prevResolved.getReverseOrder(),
-                              currentResolve.getDirectOrder()));
+      final Collection<TraceElement> values = traceInfo.getValuesOrderBefore().values();
+      final ResolvedTrace resolvedTrace = new ResolvedTraceImpl(values, prevResolved.getReverseOrder(), currentResolve.getDirectOrder());
+      result.add(resolvedTrace);
 
       prevResolved = currentResolve;
     }
