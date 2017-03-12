@@ -19,10 +19,7 @@ import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Vitaliy.Bibaev
@@ -33,30 +30,26 @@ public class FlatMapResolver implements ValuesOrderResolver {
   public Result resolve(@NotNull TraceInfo info) {
     final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
     final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
-    final Map<TraceElement, List<TraceElement>> forward = new LinkedHashMap<>();
-    final Map<TraceElement, List<TraceElement>> backward = new LinkedHashMap<>();
+    final Map<TraceElement, List<TraceElement>> forward = new HashMap<>();
+    final Map<TraceElement, List<TraceElement>> backward = new HashMap<>();
 
-    after.values().stream().distinct().forEach(x -> backward.put(x, new ArrayList<>()));
+    final int[] beforeTimes = before.keySet().stream().mapToInt(Integer::intValue).toArray();
+    final int[] afterTimes = after.keySet().stream().mapToInt(Integer::intValue).toArray();
 
-    final Integer[] beforeTimes = new Integer[before.size()];
-    final Integer[] afterTimes = new Integer[after.size()];
-    before.keySet().toArray(beforeTimes);
-    after.keySet().toArray(afterTimes);
-
-    int rightIndex = 0;
+    int beforeIndex = 0;
     for (int i = 0; i < beforeTimes.length; i++) {
-      final TraceElement leftValue = before.get(beforeTimes[i]);
-      final List<TraceElement> right = new ArrayList<>();
-      final int nextLeftTime = i + 1 < beforeTimes.length ? beforeTimes[i + 1] : Integer.MAX_VALUE;
-      while (rightIndex < afterTimes.length && afterTimes[rightIndex] < nextLeftTime) {
-        final TraceElement rightValue = after.get(afterTimes[rightIndex]);
+      final TraceElement afterElement = before.get(beforeTimes[i]);
+      final List<TraceElement> afterElements = new ArrayList<>();
+      final int nextBeforeTime = i + 1 < beforeTimes.length ? beforeTimes[i + 1] : Integer.MAX_VALUE;
+      while (beforeIndex < afterTimes.length && afterTimes[beforeIndex] < nextBeforeTime) {
+        final TraceElement beforeElement = after.get(afterTimes[beforeIndex]);
 
-        right.add(rightValue);
-        backward.get(rightValue).add(leftValue);
-        rightIndex++;
+        afterElements.add(beforeElement);
+        backward.put(beforeElement, Collections.singletonList(afterElement));
+        beforeIndex++;
       }
 
-      forward.put(leftValue, right);
+      forward.put(afterElement, afterElements);
     }
 
     return Result.of(forward, backward);
