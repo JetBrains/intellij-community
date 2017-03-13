@@ -12,8 +12,8 @@ class HashMapVariableImpl extends VariableImpl {
   private final GenericType myValueType;
 
   HashMapVariableImpl(@NotNull String name, @NotNull GenericType from, @NotNull GenericType to, boolean isLinked) {
-    super(String.format("Map<%s, %s>", from.getGenericTypeName(), to.getGenericTypeName()), name,
-          isLinked ? "new LinkedHashMap<>()" : "new HashMap<>()");
+    super(String.format("java.util.Map<%s, %s>", from.getGenericTypeName(), to.getGenericTypeName()), name,
+          isLinked ? "new java.util.LinkedHashMap<>()" : "java.util.new HashMap<>()");
     myKeyType = from;
     myValueType = to;
   }
@@ -24,7 +24,7 @@ class HashMapVariableImpl extends VariableImpl {
     final String keysType = usePrimitiveKeys ? myKeyType.getVariableName() : myKeyType.getGenericTypeName();
     final String valuesType = usePrimitiveValues ? myValueType.getVariableName() : myValueType.getGenericTypeName();
 
-    return "final Object[] " + arrayName + ";" + newLine +
+    return "final java.lang.Object[] " + arrayName + ";" + newLine +
            "{" + newLine +
            "  final int size = " + getName() + ".size();" + newLine +
            "  final " + keysType + "[] keys = new " + keysType + "[size];" + newLine +
@@ -36,7 +36,7 @@ class HashMapVariableImpl extends VariableImpl {
            "    values[i] = value;" + newLine +
            "    i++;" + newLine +
            "  }" + newLine +
-           "  " + arrayName + " = new Object[] { keys, values };" + newLine +
+           "  " + arrayName + " = new java.lang.Object[] { keys, values };" + newLine +
            "}" + newLine;
   }
 }

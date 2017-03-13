@@ -19,12 +19,13 @@ public class DistinctHandler extends HandlerBase {
   private final HashMapVariableImpl myResolveMapVariable;
   private final HashMapVariableImpl myReverseUtilMapVariable;
 
-  public DistinctHandler(int callNumber) {
+  DistinctHandler(int callNumber) {
     myPeekTracer = new PeekTracerHandler(callNumber, "distinct");
 
     final String variablePrefix = "distinct" + callNumber;
     myStoreMapVariable =
-      new HashMapVariableImpl(variablePrefix + "Store", GenericType.OBJECT, new ClassTypeImpl("Map<Integer, Object>"), false);
+      new HashMapVariableImpl(variablePrefix + "Store", GenericType.OBJECT,
+                              new ClassTypeImpl("java.util.Map<java.lang.Integer, java.lang.Object>"), false);
     myResolveMapVariable = new HashMapVariableImpl(variablePrefix + "Resolve", GenericType.INT, GenericType.INT, false);
     myReverseUtilMapVariable = new HashMapVariableImpl(variablePrefix + "ReverseUtil", GenericType.INT, GenericType.INT, false);
   }
@@ -57,8 +58,8 @@ public class DistinctHandler extends HandlerBase {
     final String afterMapName = myPeekTracer.getAfterMapName();
     final String prepareResolveMap = "{" + newLine +
                                      "  for (final int timeAfter : " + myReverseUtilMapVariable.getName() + ".keySet()) {" + newLine +
-                                     "    final Object afterValue = " + afterMapName + ".get(timeAfter);" + newLine +
-                                     "    final Map<Integer, Object> valuesBefore = " + storeMapName + ".get(afterValue);" + newLine +
+                                     "    final java.lang.Object afterValue = " + afterMapName + ".get(timeAfter);" + newLine +
+                                     "    final java.util.Map<java.lang.Integer, java.lang.Object> valuesBefore = " + storeMapName + ".get(afterValue);" + newLine +
                                      "    for (final int timeBefore : valuesBefore.keySet()) {" + newLine +
                                      "      " + myResolveMapVariable.getName() + ".put(timeBefore, timeAfter);" + newLine +
                                      "    }" + newLine +
@@ -66,7 +67,7 @@ public class DistinctHandler extends HandlerBase {
                                      "}" + newLine;
 
     final String peekResult =
-      "final Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
+      "final java.lang.Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
     final String resolve2Array = myResolveMapVariable.convertToArray("resolve", true, true);
     return peekPrepare + prepareResolveMap + resolve2Array + peekResult;
   }
@@ -74,13 +75,13 @@ public class DistinctHandler extends HandlerBase {
   @NotNull
   @Override
   public String getResultExpression() {
-    return "new Object[] { peekResult, resolve }";
+    return "new java.lang.Object[] { peekResult, resolve }";
   }
 
   @NotNull
   private String createStoreLambda() {
     final String storeMap = myStoreMapVariable.getName();
-    return "x -> " + String.format("%s.computeIfAbsent(x, y -> new LinkedHashMap<>()).put(time.get(), x)", storeMap);
+    return "x -> " + String.format("%s.computeIfAbsent(x, y -> new java.util.LinkedHashMap<>()).put(time.get(), x)", storeMap);
   }
 
   @NotNull
@@ -90,9 +91,9 @@ public class DistinctHandler extends HandlerBase {
     final String resolveReverseMap = myReverseUtilMapVariable.getName();
 
     return "x -> {" + newLine +
-           "  final Map<Integer, Object> objects = " + String.format("%s.get(x);", storeMap) + newLine +
+           "  final java.util.Map<java.lang.Integer, java.lang.Object> objects = " + String.format("%s.get(x);", storeMap) + newLine +
            "  for (final int key: objects.keySet()) {" + newLine +
-           "    final Object value = objects.get(key);" + newLine +
+           "    final java.lang.Object value = objects.get(key);" + newLine +
            "    if (value == x && !" + resolveReverseMap + ".containsKey(key)) {" + newLine +
            "      " + String.format("%s.put(time.get(), key);", resolveReverseMap) + newLine +
            "    }" + newLine +

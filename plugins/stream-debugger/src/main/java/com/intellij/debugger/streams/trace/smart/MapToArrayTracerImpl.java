@@ -59,7 +59,7 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     final int callCount = chain.length();
     final StringBuilder declarationBuilder = new StringBuilder();
     final StringBuilder resultBuilder = new StringBuilder();
-    declarationBuilder.append(String.format("final Object[] info = new Object[%d];\n", callCount))
+    declarationBuilder.append(String.format("final java.lang.Object[] info = new java.lang.Object[%d];\n", callCount))
       .append("final java.util.concurrent.atomic.AtomicInteger time = new java.util.concurrent.atomic.AtomicInteger(0);")
       .append(LINE_SEPARATOR);
     final StreamCall timeCall = new PeekCall("x -> time.incrementAndGet()");

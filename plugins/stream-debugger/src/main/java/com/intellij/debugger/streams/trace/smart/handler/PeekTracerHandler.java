@@ -55,7 +55,7 @@ public class PeekTracerHandler extends HandlerBase {
   @NotNull
   @Override
   public String getResultExpression() {
-    return "new Object[] {beforeArray, afterArray}";
+    return "new java.lang.Object[] {beforeArray, afterArray}";
   }
 
   @NotNull

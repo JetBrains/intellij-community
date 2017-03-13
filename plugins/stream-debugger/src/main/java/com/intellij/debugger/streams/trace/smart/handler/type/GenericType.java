@@ -12,6 +12,6 @@ public interface GenericType {
   @NotNull
   String getGenericTypeName();
 
-  GenericType INT = new GenericTypeImpl("int", "Integer");
-  GenericType OBJECT = new ClassTypeImpl("Object");
+  GenericType INT = new GenericTypeImpl("int", "java.lang.Integer");
+  GenericType OBJECT = new ClassTypeImpl("java.lang.Object");
 }
