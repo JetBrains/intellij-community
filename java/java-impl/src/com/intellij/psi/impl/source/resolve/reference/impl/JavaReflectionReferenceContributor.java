@@ -48,10 +48,7 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
 
   private static final ElementPattern<? extends PsiElement> METHOD_HANDLE_PATTERN = psiLiteral()
     .methodCallParameter(1, psiMethod()
-      .withName(FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,
-                FIND_GETTER, FIND_SETTER,
-                FIND_STATIC_GETTER, FIND_STATIC_SETTER,
-                FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE)
+      .withName(HANDLE_FACTORY_METHOD_NAMES)
       .definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP));
 
   @Override
