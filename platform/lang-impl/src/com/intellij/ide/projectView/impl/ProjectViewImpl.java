@@ -1738,7 +1738,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
         else {
           final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
-          if (file != null) {
+          if (file != null && file.isValid()) {
             final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
             if (psiFile != null) {
               final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
