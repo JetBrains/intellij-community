@@ -43,7 +43,7 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
   var allowReplaceRegexp by string()
 
   @Deprecated("use allowReplaceRegexp instead", ReplaceWith(""))
-  internal var allowReplaceKeyword by string()
+  var allowReplaceKeyword by string()
 
   init {
     // otherwise will be as default value and name will be not serialized
