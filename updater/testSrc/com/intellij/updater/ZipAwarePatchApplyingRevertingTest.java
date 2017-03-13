@@ -24,7 +24,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class PatchFileCreatorNotBinaryTest extends PatchFileCreatorTest {
+public class ZipAwarePatchApplyingRevertingTest extends PatchApplyingRevertingTest {
   @Test
   public void failOnEmptyTargetJar() throws Exception {
     File sourceJar = new File(myOlderDir, "lib/empty.jar");

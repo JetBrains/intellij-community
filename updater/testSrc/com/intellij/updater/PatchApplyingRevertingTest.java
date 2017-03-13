@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
-public abstract class PatchFileCreatorTest extends PatchTestCase {
+public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
   protected PatchSpec myPatchSpec;
 

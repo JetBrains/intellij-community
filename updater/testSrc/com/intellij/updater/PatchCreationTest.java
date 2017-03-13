@@ -31,7 +31,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PatchTest extends PatchTestCase {
+public class PatchCreationTest extends PatchTestCase {
   @Test
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
