@@ -312,6 +312,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   public void setBrowserPath(@NotNull WebBrowser browser, @Nullable String path, boolean isActive) {
     ((ConfigurableWebBrowser)browser).setPath(path);
     ((ConfigurableWebBrowser)browser).setActive(isActive);
+    incModificationCount();
   }
 
   public WebBrowser addBrowser(final @NotNull UUID id,
