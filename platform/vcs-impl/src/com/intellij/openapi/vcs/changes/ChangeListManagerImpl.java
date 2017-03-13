@@ -160,6 +160,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
         @Override
         public void projectClosing(Project project) {
+          //noinspection TestOnlyProblems
           waitEverythingDoneInTestMode();
         }
       });
@@ -1562,6 +1563,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     Future future = ourUpdateAlarm.get();
     if (future != null) {
       future.cancel(true);
+      ourUpdateAlarm.compareAndSet(future, null);
     }
   }
 
@@ -1582,7 +1584,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       catch (InterruptedException | ExecutionException e) {
         LOG.error(e);
       }
-      catch (TimeoutException ignore) {
+      catch (TimeoutException | CancellationException ignore) {
       }
     }
   }
