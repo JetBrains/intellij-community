@@ -17,7 +17,10 @@
 
   <actions>
     <action id="AdvancedStreamTracerAction"
-            class="com.intellij.debugger.streams.action.TraceStreamAction">
+            class="com.intellij.debugger.streams.action.TraceStreamAction"
+            icon="AllIcons.Debugger.Class_filter"
+            text="Trace Current Stream Chain">
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
       <keyboard-shortcut keymap="$default" first-keystroke="alt O"/>
     </action>
   </actions>
