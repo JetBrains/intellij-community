@@ -31,7 +31,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PatchTest extends PatchTestCase {
+public class PatchCreationTest extends PatchTestCase {
   @Test
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
@@ -196,8 +196,7 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testZipFileMove() throws Exception {
-    FileUtil.delete(myNewerDir);
-    FileUtil.copyDir(myOlderDir, myNewerDir);
+    resetNewerDir();
     FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
 
     Patch patch = createPatch();
@@ -209,8 +208,7 @@ public class PatchTest extends PatchTestCase {
 
   @Test
   public void testZipFileMoveWithUpdate() throws Exception {
-    FileUtil.delete(myNewerDir);
-    FileUtil.copyDir(myOlderDir, myNewerDir);
+    resetNewerDir();
     FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
     FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
 
@@ -228,8 +226,7 @@ public class PatchTest extends PatchTestCase {
   @Test
   public void testZipFileMoveWithAlternatives() throws Exception {
     FileUtil.copy(new File(myOlderDir, "lib/annotations.jar"), new File(myOlderDir, "lib64/annotations.jar"));
-    FileUtil.delete(myNewerDir);
-    FileUtil.copyDir(myOlderDir, myNewerDir);
+    resetNewerDir();
     FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
     FileUtil.rename(new File(myNewerDir, "lib64/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.jar"));
 

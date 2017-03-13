@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import java.util.*;
  * @author peter
  */
 class StateMerger {
+  public static final int MAX_RANGE_STATES = 100;
   private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
 
@@ -203,6 +205,57 @@ class StateMerger {
     return replacements.getMergeResult();
   }
 
+  @Nullable
+  List<DfaMemoryStateImpl> mergeByRanges(List<DfaMemoryStateImpl> states) {
+    // If the same variable has different range A and B in different memState and range A contains range B
+    // then range A is replaced with range B
+    Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = new LinkedHashMap<>();
+    for (DfaMemoryStateImpl state : states) {
+      Map<DfaVariableValue, DfaVariableState> variableStates = state.getVariableStates();
+      for (Map.Entry<DfaVariableValue, DfaVariableState> entry : variableStates.entrySet()) {
+        LongRangeSet range = entry.getValue().getRange();
+        if (range != null) {
+          ranges.computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(range, range);
+        }
+      }
+    }
+    boolean changed = false;
+    for (Map<LongRangeSet, LongRangeSet> map : ranges.values()) {
+      for (Map.Entry<LongRangeSet, LongRangeSet> entry : map.entrySet()) {
+        for(LongRangeSet candidate : map.values()) {
+          if(!entry.getValue().equals(candidate) && candidate.contains(entry.getValue())) {
+            entry.setValue(candidate);
+            changed = true;
+          }
+        }
+      }
+    }
+    if(changed) {
+      changed = false;
+      for (DfaMemoryStateImpl state : states) {
+        for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
+          DfaVariableState variableState = state.getVariableState(entry.getKey());
+          LongRangeSet range = variableState.getRange();
+          LongRangeSet boundingRange = entry.getValue().get(range);
+          if (boundingRange != null && !boundingRange.equals(range)) {
+            state.setRange(entry.getKey(), boundingRange);
+            changed = true;
+          }
+        }
+      }
+      if(changed) {
+        return new ArrayList<>(new LinkedHashSet<>(states));
+      }
+    }
+    if (states.size() <= MAX_RANGE_STATES || ranges.isEmpty()) return null;
+    // If there are too many states, try to drop range information from some variable
+    DfaVariableValue lastVar = Collections.max(ranges.keySet(), Comparator.comparingInt(DfaVariableValue::getID));
+    for (DfaMemoryStateImpl state : states) {
+      state.setRange(lastVar, null);
+    }
+    return new ArrayList<>(new HashSet<>(states));
+  }
+
   private static boolean mergeUnknowns(@NotNull Replacements replacements, @NotNull List<DfaMemoryStateImpl> complementary) {
     if (complementary.size() < 2) return false;
 
@@ -220,10 +273,7 @@ class StateMerger {
 
   @NotNull
   private DfaMemoryStateImpl copyWithoutVar(@NotNull DfaMemoryStateImpl state, @NotNull DfaVariableValue var) {
-    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.get(state);
-    if (map == null) {
-      myCopyCache.put(state, map = ContainerUtil.newIdentityHashMap());
-    }
+    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.computeIfAbsent(state, k -> ContainerUtil.newIdentityHashMap());
     DfaMemoryStateImpl copy = map.get(var);
     if (copy == null) {
       copy = state.createCopy();

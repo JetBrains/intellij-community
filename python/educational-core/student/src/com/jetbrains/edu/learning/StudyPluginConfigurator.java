@@ -34,12 +34,14 @@ public interface StudyPluginConfigurator {
   /**
    * @return parameter for CodeMirror script. Available languages: @see <@linktourl http://codemirror.net/mode/>
    */
-  @NotNull String getDefaultHighlightingMode();
+  @NotNull
+  default String getDefaultHighlightingMode(){return "";}
 
   @Nullable
   StudyAfterCheckAction[] getAfterCheckActions();
   
-  @NotNull String getLanguageScriptUrl();
+  @NotNull
+  default String getLanguageScriptUrl(){return "";}
 
   boolean accept(@NotNull final Project project);
 }

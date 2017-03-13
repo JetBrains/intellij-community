@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -52,6 +53,9 @@ public interface DfaMemoryState {
   boolean applyCondition(DfaValue dfaCond);
 
   ThreeState checkOptional(DfaValue value);
+
+  @Nullable
+  LongRangeSet getRange(DfaValue value);
 
   void flushFields();
 

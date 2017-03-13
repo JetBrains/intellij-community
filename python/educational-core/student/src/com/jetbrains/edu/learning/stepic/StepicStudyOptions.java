@@ -17,12 +17,9 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
-import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +35,6 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   private JPasswordField myPasswordField;
   private JPanel myPane;
   private JBCheckBox myEnableTestingFromSamples;
-  private final Project myProject;
 
   public StepicStudyOptions() {
     myLoginTextField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -47,10 +43,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
         erasePassword();
       }
     });
-    myProject = StudyUtils.getStudyProject();
-    if (myProject == null) {
-      myEnableTestingFromSamples.setEnabled(false);
-    }
+    myEnableTestingFromSamples.setEnabled(false);
   }
 
   private void erasePassword() {
@@ -86,12 +79,9 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @Override
   public void reset() {
-    Project project = StudyUtils.getStudyProject();
-    if (project != null) {
-      StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-      myEnableTestingFromSamples.setSelected(taskManager.isEnableTestingFromSamples());
-    }
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    final StepicUpdateSettings stepikSettings = StepicUpdateSettings.getInstance();
+    myEnableTestingFromSamples.setSelected(stepikSettings.isEnableTestingFromSamples());
+    final StepicUser user = stepikSettings.getUser();
     setLogin(user.getEmail());
     setPassword(user.getPassword());
   }
@@ -103,15 +93,12 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
   @Override
   public void apply() throws ConfigurationException {
-    if (myProject != null) {
-      StudyTaskManager taskManager = StudyTaskManager.getInstance(myProject);
-      
-      if (isTestingFromSamplesEnabled() != taskManager.isEnableTestingFromSamples()) {
-        taskManager.setEnableTestingFromSamples(isTestingFromSamplesEnabled());
-      }
+    final StepicUpdateSettings stepikSettings = StepicUpdateSettings.getInstance();
+    if (isTestingFromSamplesEnabled() != stepikSettings.isEnableTestingFromSamples()) {
+      stepikSettings.setEnableTestingFromSamples(isTestingFromSamplesEnabled());
     }
 
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    final StepicUser user = stepikSettings.getUser();
     final boolean isCredentialsModified = !getLogin().equals(user.getEmail()) || !getPassword().equals(user.getPassword());
     if (isCredentialsModified) {
       final String login = getLogin();
@@ -119,16 +106,15 @@ public class StepicStudyOptions implements StudyOptionsProvider {
       if (!StringUtil.isEmptyOrSpaces(login) && !StringUtil.isEmptyOrSpaces(password)) {
         // login to post credentials
         final StepicUser[] stepicUser = new StepicUser[1];
-        final Project project = myProject == null ? ProjectUtil.guessCurrentProject(myPane) : myProject;
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
           () -> {
             ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
             stepicUser[0] = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(login, password));
           }, "Logging In", true,
-          project);
+          null);
 
         if (stepicUser[0] != null && stepicUser[0].getAccessToken() != null) {
-          StepicUpdateSettings.getInstance().setUser(stepicUser[0]);
+          stepikSettings.setUser(stepicUser[0]);
         }
         else {
           throw new ConfigurationException("Unable to login");
@@ -152,13 +138,9 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   }
 
   public boolean isModified() {
-    final Project project = StudyUtils.getStudyProject();
-    boolean isTestOptionModified = false;
-    if (project != null) {
-      final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-      isTestOptionModified = !isTestingFromSamplesEnabled() == taskManager.isEnableTestingFromSamples();
-    }
-    final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    final StepicUpdateSettings stepikSettings = StepicUpdateSettings.getInstance();
+    boolean isTestOptionModified = !isTestingFromSamplesEnabled() == stepikSettings.isEnableTestingFromSamples();
+    final StepicUser user = stepikSettings.getUser();
 
     return !getLogin().equals(user.getEmail())
            || !getPassword().equals(user.getPassword())

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -29,6 +30,9 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.callMatcher.CallMapper;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -42,11 +46,18 @@ import static com.intellij.psi.JavaTokenType.*;
  * @author peter
  */
 public class StandardInstructionVisitor extends InstructionVisitor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
+  private static final Object ANY_VALUE = new Object();
+
   private static final Set<String> OPTIONAL_METHOD_NAMES =
     ContainerUtil.set("isPresent", "of", "ofNullable", "fromNullable", "empty", "absent",
                       "or", "orElseGet", "ifPresent", "map", "flatMap", "filter", "transform");
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
-  private static final Object ANY_VALUE = new Object();
+  private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
+              LongRangeSet.range(-1, Integer.MAX_VALUE))
+    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
+    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59));
+
   private final Set<BinopInstruction> myReachable = new THashSet<>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
@@ -451,6 +462,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
       return factory.createTypeValue(type, nullability);
     }
+    DfaRangeValue rangeValue = factory.getRangeFactory().create(type);
+    if (rangeValue != null) {
+      PsiCall call = instruction.getCallExpression();
+      if (call instanceof PsiMethodCallExpression) {
+        LongRangeSet range = KNOWN_METHOD_RANGES.mapFirst((PsiMethodCallExpression)call);
+        if (range != null) {
+          return rangeValue.intersect(range);
+        }
+      }
+      return rangeValue;
+    }
     return DfaUnknownValue.getInstance();
   }
 
@@ -476,6 +498,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final IElementType opSign = instruction.getOperationSign();
     if (opSign != null) {
       DfaInstructionState[] states = handleConstantComparison(instruction, runner, memState, dfaRight, dfaLeft, opSign);
+      if (states == null) {
+        states = handleRangeComparison(instruction, runner, memState, dfaRight, dfaLeft, opSign);
+      }
       if (states == null) {
         states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft);
       }
@@ -558,6 +583,27 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Nullable
+  private static DfaInstructionState[] handleRangeComparison(BinopInstruction instruction,
+                                                             DataFlowRunner runner,
+                                                             DfaMemoryState state,
+                                                             DfaValue right,
+                                                             DfaValue left, IElementType sign) {
+    LongRangeSet leftRange = state.getRange(left);
+    if (leftRange == null) return null;
+    LongRangeSet rightRange = state.getRange(right);
+    if (rightRange == null) return null;
+    LongRangeSet constraint = rightRange.fromRelation(sign);
+    if (constraint != null && !constraint.intersects(leftRange)) {
+      return alwaysFalse(instruction, runner, state);
+    }
+    LongRangeSet revConstraint = rightRange.fromRelation(ComparisonUtils.getNegatedComparisonTokenType(sign));
+    if (revConstraint != null && !revConstraint.intersects(leftRange)) {
+      return alwaysTrue(instruction, runner, state);
+    }
+    return null;
+  }
+
+  @Nullable
   private static DfaInstructionState[] handleConstantComparison(BinopInstruction instruction,
                                                                 DataFlowRunner runner,
                                                                 DfaMemoryState memState,
@@ -608,26 +654,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                   DfaMemoryState memState,
                                                                   DfaVariableValue var,
                                                                   IElementType opSign, Number comparedWith) {
-    Object knownValue = getKnownNumberValue(memState, var);
+    Number knownValue = getKnownNumberValue(memState, var);
     if (knownValue != null) {
-      return checkComparisonWithKnownValue(instruction, runner, memState, opSign, (Number)knownValue, comparedWith);
+      return checkComparisonWithKnownValue(instruction, runner, memState, opSign, knownValue, comparedWith);
     }
-
-    PsiType varType = var.getVariableType();
-    if (!(varType instanceof PsiPrimitiveType)) return null;
-    
-    if (PsiType.FLOAT.equals(varType) || PsiType.DOUBLE.equals(varType)) return null;
-
-    double minValue = PsiType.BYTE.equals(varType) ? Byte.MIN_VALUE : PsiType.SHORT.equals(varType)
-                                                                 ? Short.MIN_VALUE : PsiType.INT.equals(varType)
-                                                                   ? Integer.MIN_VALUE : PsiType.CHAR.equals(varType) ? Character.MIN_VALUE :
-                                                                                         Long.MIN_VALUE;
-    double maxValue = PsiType.BYTE.equals(varType) ? Byte.MAX_VALUE : PsiType.SHORT.equals(varType)
-                                                                 ? Short.MAX_VALUE : PsiType.INT.equals(varType)
-                                                                   ? Integer.MAX_VALUE : PsiType.CHAR.equals(varType) ? Character.MAX_VALUE :
-                                                                                         Long.MAX_VALUE;
-
-    return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, minValue, maxValue);
+    return null;
   }
 
   @Nullable
@@ -642,7 +673,28 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                      IElementType opSign,
                                                                      Number leftValue,
                                                                      Number rightValue) {
-    return checkComparisonWithKnownRange(instruction, runner, memState, opSign, rightValue, leftValue, leftValue);
+    int cmp = compare(leftValue, rightValue);
+    Boolean result = null;
+    if (cmp < 0 || cmp > 0) {
+      if(opSign == EQEQ) result = false;
+      else if (opSign == NE) result = true;
+    }
+    if (opSign == LT) {
+      result = cmp < 0;
+    }
+    else if (opSign == GT) {
+      result = cmp > 0;
+    }
+    else if (opSign == LE) {
+      result = cmp <= 0;
+    }
+    else if (opSign == GE) {
+      result = cmp >= 0;
+    }
+    if (result == null) {
+      return null;
+    }
+    return result ? alwaysTrue(instruction, runner, memState) : alwaysFalse(instruction, runner, memState);
   }
 
   private static int compare(Number a, Number b) {
@@ -651,32 +703,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (aLong != bLong) return aLong > bLong ? 1 : -1;
 
     return Double.compare(a.doubleValue(), b.doubleValue());
-  }
-
-  @Nullable
-  private static DfaInstructionState[] checkComparisonWithKnownRange(BinopInstruction instruction,
-                                                                     DataFlowRunner runner,
-                                                                     DfaMemoryState memState,
-                                                                     IElementType opSign,
-                                                                     Number comparedWith,
-                                                                     Number rangeMin,
-                                                                     Number rangeMax) {
-    if (compare(comparedWith, rangeMin) < 0 || compare(comparedWith, rangeMax) > 0) {
-      if (opSign == EQEQ) return alwaysFalse(instruction, runner, memState);
-      if (opSign == NE) return alwaysTrue(instruction, runner, memState);
-    }
-
-    if (opSign == LT && compare(comparedWith, rangeMin) <= 0) return alwaysFalse(instruction, runner, memState);
-    if (opSign == LT && compare(comparedWith, rangeMax) > 0) return alwaysTrue(instruction, runner, memState);
-    if (opSign == LE && compare(comparedWith, rangeMax) >= 0) return alwaysTrue(instruction, runner, memState);
-    if (opSign == LE && compare(comparedWith, rangeMin) < 0) return alwaysFalse(instruction, runner, memState);
-
-    if (opSign == GT && compare(comparedWith, rangeMax) >= 0) return alwaysFalse(instruction, runner, memState);
-    if (opSign == GT && compare(comparedWith, rangeMin) < 0) return alwaysTrue(instruction, runner, memState);
-    if (opSign == GE && compare(comparedWith, rangeMin) <= 0) return alwaysTrue(instruction, runner, memState);
-    if (opSign == GE && compare(comparedWith, rangeMax) > 0) return alwaysFalse(instruction, runner, memState);
-
-    return null;
   }
 
   private static DfaInstructionState[] alwaysFalse(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

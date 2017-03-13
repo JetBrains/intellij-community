@@ -177,7 +177,7 @@ public class DataFlowRunner {
           if (instruction instanceof BranchingInstruction) {
             BranchingInstruction branching = (BranchingInstruction)instruction;
             Collection<DfaMemoryState> processed = processedStates.get(branching);
-            if (processed.contains(instructionState.getMemoryState())) {
+            if (containsState(processed, instructionState)) {
               continue;
             }
             if (processed.size() > MAX_STATES_PER_BRANCH) {
@@ -198,8 +198,8 @@ public class DataFlowRunner {
             handleStepOutOfLoop(instruction, nextInstruction, loopNumber, processedStates, incomingStates, states, after, queue);
             if (nextInstruction instanceof BranchingInstruction) {
               BranchingInstruction branching = (BranchingInstruction)nextInstruction;
-              if (processedStates.get(branching).contains(state.getMemoryState()) ||
-                  incomingStates.get(branching).contains(state.getMemoryState())) {
+              if (containsState(processedStates.get(branching), state) ||
+                  containsState(incomingStates.get(branching), state)) {
                 continue;
               }
               if (loopNumber[branching.getIndex()] != 0) {
@@ -219,6 +219,19 @@ public class DataFlowRunner {
       LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  private static boolean containsState(Collection<DfaMemoryState> processed,
+                                       DfaInstructionState instructionState) {
+    if (processed.contains(instructionState.getMemoryState())) {
+      return true;
+    }
+    for (DfaMemoryState state : processed) {
+      if (((DfaMemoryStateImpl)state).isSuperStateOf((DfaMemoryStateImpl)instructionState.getMemoryState())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void handleStepOutOfLoop(@NotNull final Instruction prevInstruction,

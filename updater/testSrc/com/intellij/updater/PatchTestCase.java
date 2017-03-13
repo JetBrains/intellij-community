@@ -66,6 +66,11 @@ public abstract class PatchTestCase extends UpdaterTestCase {
     return new Patch(spec, TEST_UI);
   }
 
+  protected void resetNewerDir() throws IOException {
+    FileUtil.delete(myNewerDir);
+    FileUtil.copyDir(myOlderDir, myNewerDir);
+  }
+
   protected static List<PatchAction> sortActions(List<PatchAction> actions) {
     return sort(actions, a -> a.getClass().getSimpleName().charAt(0), Comparator.comparing(PatchAction::getPath));
   }

@@ -16,6 +16,7 @@
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.RefreshAction;
@@ -344,6 +345,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
 
     myProvider.registerExtraPanelActions(actionGroup, myBuilder);
+    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new SliceToTextFileExporter(myBuilder)));
 
     //actionGroup.add(new ContextHelpAction(HELP_ID));
 

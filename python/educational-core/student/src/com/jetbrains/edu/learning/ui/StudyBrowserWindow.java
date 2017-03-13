@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.jetbrains.edu.learning.StudyPluginConfigurator;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -134,7 +135,8 @@ public class StudyBrowserWindow extends JFrame {
     });
   }
 
-  public void loadContent(@NotNull final String content, @Nullable StudyPluginConfigurator configurator) {
+  public void loadContent(@NotNull final String content) {
+    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(myProject);
     if (configurator == null) {
       Platform.runLater(() -> myEngine.loadContent(content));
     }

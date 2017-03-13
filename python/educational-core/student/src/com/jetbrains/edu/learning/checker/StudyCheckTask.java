@@ -171,7 +171,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (testOutput != null) {
         // As tests in adaptive courses are created from
         // samples and stored in task, to disable it we should ignore local testing results
-        if (StudyTaskManager.getInstance(myProject).isEnableTestingFromSamples() && !testOutput.isSuccess()) {
+        if (StepicUpdateSettings.getInstance().isEnableTestingFromSamples() && !testOutput.isSuccess()) {
           onTaskFailed(testOutput.getMessage());
         }
         else {

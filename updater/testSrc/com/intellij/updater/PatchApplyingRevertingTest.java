@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
-public abstract class PatchFileCreatorTest extends PatchTestCase {
+public abstract class PatchApplyingRevertingTest extends PatchTestCase {
   private File myFile;
   protected PatchSpec myPatchSpec;
 
@@ -473,8 +473,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
   @Test
   public void testZipFileMove() throws Exception {
     myPatchSpec.setStrict(true);
-    FileUtil.delete(myNewerDir);
-    FileUtil.copyDir(myOlderDir, myNewerDir);
+    resetNewerDir();
     FileUtil.rename(new File(myNewerDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
 
     assertAppliedAndRevertedCorrectly();
@@ -483,8 +482,7 @@ public abstract class PatchFileCreatorTest extends PatchTestCase {
   @Test
   public void testZipFileMoveWithUpdate() throws Exception {
     myPatchSpec.setStrict(true);
-    FileUtil.delete(myNewerDir);
-    FileUtil.copyDir(myOlderDir, myNewerDir);
+    resetNewerDir();
     FileUtil.delete(new File(myNewerDir, "lib/annotations.jar"));
     FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myNewerDir, "lib/redist/annotations.jar"));
 
