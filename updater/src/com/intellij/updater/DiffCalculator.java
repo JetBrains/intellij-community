@@ -19,6 +19,10 @@ import java.io.File;
 import java.util.*;
 
 public class DiffCalculator {
+  public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
+    return calculate(oldChecksums, newChecksums, Collections.emptyList(), false);
+  }
+
   public static Result calculate(Map<String, Long> oldChecksums,
                                  Map<String, Long> newChecksums,
                                  List<String> critical,
