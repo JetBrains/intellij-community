@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -89,7 +90,7 @@ public class MappingsToRoots {
     Collections.sort(result, FilePathComparator.getInstance());
     if (addInnerModules) {
       final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);
-      final List<VirtualFile> modules = DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(myMappings, vcsName);
+      final Collection<VirtualFile> modules = DefaultVcsRootPolicy.getInstance(myProject).getDefaultVcsRoots(myMappings, vcsName);
       ApplicationManager.getApplication().runReadAction(() -> {
         Iterator<VirtualFile> iterator = modules.iterator();
         while (iterator.hasNext()) {
