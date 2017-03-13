@@ -584,10 +584,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 }
                 markedQualified = true;
               }
-              else if (isHasCustomMember(refName, type)) {
-                // We have dynamic members
-                return;
-              }
               else {
                 description = PyBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
                 markedQualified = true;
@@ -659,18 +655,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final List<PyRequirement> requirements = Collections.singletonList(new PyRequirement(packageName));
       final String name = "Install package " + packageName;
       actions.add(new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements));
-    }
-
-    /**
-     * Checks if type  is custom type  and has custom member with certain name
-     * @param refName name to check
-     * @param type type
-     * @return true if has one
-     */
-    private static boolean isHasCustomMember(@NotNull final String refName, @NotNull final PyType type) {
-      // TODO: check
-      return false;
-      /*return (type instanceof PyCustomType) && ((PyCustomType)type).hasMember(refName);*/
     }
 
     /**
@@ -1110,7 +1094,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               continue;
             }
           }
-          PsiElement importedElement;
+          PsiFileSystemItem importedElement;
           if (unusedImport instanceof PyImportElement) {
             final PyImportElement importElement = (PyImportElement)unusedImport;
             final PsiElement element = importElement.resolve();
@@ -1138,8 +1122,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               continue;
             }
           }
-          if (packageQName != null && importedElement instanceof PsiFileSystemItem) {
-            final QualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName((PsiFileSystemItem)importedElement);
+          if (packageQName != null && importedElement != null) {
+            final QualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName(importedElement);
             if (importedQName != null && importedQName.matchesPrefix(packageQName)) {
               continue;
             }

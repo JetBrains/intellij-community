@@ -403,7 +403,7 @@ public class PyDocumentationBuilder {
       // above could have not worked because inheritance is not searched down to 'object'.
       // for well-known methods, copy built-in doc string.
       // TODO: also handle predefined __xxx__ that are not part of 'object'.
-      if (PyNames.UnderscoredAttributes.contains(methodName)) {
+      if (PyNames.UNDERSCORED_ATTRIBUTES.contains(methodName)) {
         addPredefinedMethodDoc(pyFunction, methodName);
       }
     }

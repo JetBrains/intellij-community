@@ -216,7 +216,7 @@ public class PyNames {
   /**
    * Contains all known predefined names of "__foo__" form.
    */
-  public static ImmutableSet<String> UnderscoredAttributes = ImmutableSet.of(
+  public static final ImmutableSet<String> UNDERSCORED_ATTRIBUTES = ImmutableSet.of(
     "__all__",
     "__annotations__",
     "__author__",
@@ -245,7 +245,7 @@ public class PyNames {
     "__version__"
   );
 
-  public static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of(
+  public static final ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of(
     "__eq__",
     "__ne__",
     "__lt__",
@@ -256,7 +256,7 @@ public class PyNames {
     "__contains__"
   );
 
-  public static ImmutableSet<String> SUBSCRIPTION_OPERATORS = ImmutableSet.of(
+  public static final ImmutableSet<String> SUBSCRIPTION_OPERATORS = ImmutableSet.of(
     GETITEM,
     SETITEM,
     DELITEM
@@ -403,14 +403,14 @@ public class PyNames {
     .put("__xor__", _self_other_descr)
     .build();
 
-  public static ImmutableMap<String, BuiltinDescription> PY2_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+  public static final ImmutableMap<String, BuiltinDescription> PY2_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(BuiltinMethods)
     .put("__nonzero__", _only_self_descr)
     .put("__div__", _self_other_descr)
     .put(NEXT, _only_self_descr)
     .build();
 
-  public static ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+  public static final ImmutableMap<String, BuiltinDescription> PY3_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(BuiltinMethods)
     .put("__bool__", _only_self_descr)
     .put("__bytes__", _only_self_descr)
@@ -422,7 +422,7 @@ public class PyNames {
     .put(DUNDER_NEXT, _only_self_descr)
     .build();
 
-  public static ImmutableMap<String, BuiltinDescription> PY35_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+  public static final ImmutableMap<String, BuiltinDescription> PY35_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(PY3_BUILTIN_METHODS)
     .put("__imatmul__", _self_other_descr)
     .put("__matmul__", _self_other_descr)
@@ -502,7 +502,7 @@ public class PyNames {
   /**
    * Contains keywords as of CPython 2.5.
    */
-  public static ImmutableSet<String> Keywords = ImmutableSet.of(
+  public static final ImmutableSet<String> KEYWORDS = ImmutableSet.of(
     AND,
     DEL,
     FROM,
@@ -536,7 +536,7 @@ public class PyNames {
     TRY
   );
 
-  public static Set<String> BuiltinInterfaces = ImmutableSet.of(
+  public static final Set<String> BUILTIN_INTERFACES = ImmutableSet.of(
     CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, ABC_COMPLEX, ABC_REAL, ABC_RATIONAL, ABC_INTEGRAL,
     ABC_NUMBER
   );
@@ -548,7 +548,7 @@ public class PyNames {
    * @return true iff the name is either a keyword or a reserved name, like None.
    */
   public static boolean isReserved(@NonNls String name) {
-    return Keywords.contains(name) || NONE.equals(name);
+    return KEYWORDS.contains(name) || NONE.equals(name);
   }
 
   // NOTE: includes unicode only good for py3k
