@@ -40,7 +40,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -224,7 +223,15 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       myWrapperPanel.repaint();
     }
 
+    @Override
+    public void dispose() {
+      super.dispose();
+      DialogWrapper.cleanupRootPane(rootPane);
+      DialogWrapper.cleanupWindowListeners(this);
+    }
+
     public void close() {
+      if (myComponent == null) return;
       setHighlightingEnabled(false);
       myComponent = null;
       setVisible(false);
@@ -1009,7 +1016,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {
-    Map<Component, InspectorWindow> myComponentToInspector = new WeakKeyWeakValueHashMap<>();
 
     public UiInspector() {
       Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
@@ -1017,31 +1023,18 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
     public void dispose() {
       Toolkit.getDefaultToolkit().removeAWTEventListener(this);
-      for (InspectorWindow w : myComponentToInspector.values()) {
-        w.close();
+      for (Window window : Window.getWindows()) {
+        if (window instanceof InspectorWindow) {
+          ((InspectorWindow)window).close();
+        }
       }
-      myComponentToInspector.clear();
     }
 
     public void showInspector(@NotNull Component c) {
-      InspectorWindow window = myComponentToInspector.get(c);
-      if (window != null) {
-        window.myHierarchyTree.setModel(buildModel(c));
-        window.myHierarchyTree.setCellRenderer(new ComponentTreeCellRenderer(c));
-        window.myHierarchyTree.expandPath();
-
-        window.switchInfo(c);
-        window.setHighlightingEnabled(true);
-        window.setVisible(true);
-        window.toFront();
-      }
-      else {
-        window = new InspectorWindow(c);
-        myComponentToInspector.put(c, window);
-        window.pack();
-        window.setVisible(true);
-        window.toFront();
-      }
+      Window window = new InspectorWindow(c);
+      window.pack();
+      window.setVisible(true);
+      window.toFront();
     }
 
     public void eventDispatched(AWTEvent event) {
