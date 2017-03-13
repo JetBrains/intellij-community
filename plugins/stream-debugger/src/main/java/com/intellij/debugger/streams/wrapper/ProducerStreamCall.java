@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public class ProducerStreamCall extends StreamCallImpl {
-  public ProducerStreamCall(@NotNull String name, @NotNull String args) {
+class ProducerStreamCall extends StreamCallImpl {
+  ProducerStreamCall(@NotNull String name, @NotNull String args) {
     super(name, args, StreamCallType.PRODUCER);
   }
 }

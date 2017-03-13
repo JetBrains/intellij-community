@@ -31,7 +31,7 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class CollectionView extends JPanel implements Disposable, TraceContainer {
-  private CollectionTree myInstancesTree;
+  private final CollectionTree myInstancesTree;
 
   CollectionView(@NotNull String header, @NotNull EvaluationContextImpl evaluationContext, @NotNull List<TraceElement> values) {
     super(new BorderLayout());

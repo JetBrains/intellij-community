@@ -16,7 +16,6 @@
 package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;

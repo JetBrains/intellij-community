@@ -33,7 +33,7 @@ public class ResolverFactoryImpl implements ResolverFactory {
   private static final ValuesOrderResolver IDENTITY_RESOLVER = new MyIdentityResolver();
 
   private static class Holder {
-    private static ResolverFactoryImpl INSTANCE = new ResolverFactoryImpl();
+    private static final ResolverFactoryImpl INSTANCE = new ResolverFactoryImpl();
   }
 
   public static ResolverFactory getInstance() {

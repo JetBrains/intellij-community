@@ -14,9 +14,4 @@ public interface Variable {
 
   @NotNull
   String getInitialExpression();
-
-  @NotNull
-  static Variable of(@NotNull String type, @NotNull String name, @NotNull String initial) {
-    return new VariableImpl(type, name, initial);
-  }
 }

@@ -176,7 +176,6 @@ public class TraceTreeCellRenderer extends ColoredTreeCellRenderer {
                                       int row,
                                       boolean hasFocus) {}
 
-    @Override
     protected void doPaint(Graphics2D g) {
       super.doPaint(g);
     }

@@ -11,7 +11,7 @@ public class ResolverFactory {
   }
 
   private static class Holder {
-    private static ResolverFactory INSTANCE = new ResolverFactory();
+    private static final ResolverFactory INSTANCE = new ResolverFactory();
   }
 
   public static ResolverFactory getInstance() {

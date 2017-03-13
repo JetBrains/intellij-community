@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class FlatTraceView extends JPanel {
+class FlatTraceView extends JPanel {
   FlatTraceView(@NotNull List<TraceController> controllers, @NotNull EvaluationContextImpl context) {
     super(new GridLayout(1, controllers.size()));
     for (final TraceController controller : controllers) {

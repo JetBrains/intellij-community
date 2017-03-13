@@ -39,7 +39,7 @@ public abstract class EvaluateExpressionTracerBase implements StreamTracer {
   private final XDebugSession mySession;
   public static final String LINE_SEPARATOR = "\n";
 
-  public EvaluateExpressionTracerBase(@NotNull XDebugSession session) {
+  protected EvaluateExpressionTracerBase(@NotNull XDebugSession session) {
     mySession = session;
   }
 

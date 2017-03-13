@@ -7,22 +7,18 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public class HashMapVariableImpl extends VariableImpl {
+class HashMapVariableImpl extends VariableImpl {
   private final GenericType myKeyType;
   private final GenericType myValueType;
 
-  public HashMapVariableImpl(@NotNull String name, @NotNull GenericType from, @NotNull GenericType to, boolean isLinked) {
+  HashMapVariableImpl(@NotNull String name, @NotNull GenericType from, @NotNull GenericType to, boolean isLinked) {
     super(String.format("Map<%s, %s>", from.getGenericTypeName(), to.getGenericTypeName()), name,
           isLinked ? "new LinkedHashMap<>()" : "new HashMap<>()");
     myKeyType = from;
     myValueType = to;
   }
 
-  public String convertToArray(@NotNull String arrayName) {
-    return convertToArray(arrayName, false, false);
-  }
-
-  public String convertToArray(@NotNull String arrayName, boolean usePrimitiveKeys, boolean usePrimitiveValues) {
+  String convertToArray(@NotNull String arrayName, boolean usePrimitiveKeys, boolean usePrimitiveValues) {
     final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
 
     final String keysType = usePrimitiveKeys ? myKeyType.getVariableName() : myKeyType.getGenericTypeName();

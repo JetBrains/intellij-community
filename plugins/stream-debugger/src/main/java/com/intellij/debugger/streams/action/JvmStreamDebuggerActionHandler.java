@@ -98,7 +98,7 @@ public class JvmStreamDebuggerActionHandler {
     return elementAtCursor != null && StreamChainBuilder.checkStreamExists(elementAtCursor);
   }
 
-  protected static List<ResolvedTrace> resolve(@NotNull List<TraceInfo> trace) {
+  private static List<ResolvedTrace> resolve(@NotNull List<TraceInfo> trace) {
     if (trace.size() == 0) {
       return Collections.emptyList();
     }
