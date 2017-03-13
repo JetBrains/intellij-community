@@ -136,7 +136,7 @@ public class PsiUtil {
     return flag;
   }
 
-  public static boolean isPluginProject(final Project project) {
+  public static boolean isPluginProject(@NotNull final Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       boolean foundMarkerClass =
         JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS,
