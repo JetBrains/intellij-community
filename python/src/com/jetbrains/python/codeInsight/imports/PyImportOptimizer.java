@@ -28,9 +28,9 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -145,7 +145,9 @@ public class PyImportOptimizer implements ImportOptimizer {
         if (fromImport != null && !fromImport.isStarImport()) {
           fromImportSources.putValue(getNormalizedFromImportSource(fromImport), fromImport);
         }
-        precedingComments.putValues(statement, collectPrecedingLineComments(statement));
+        if (statement != myImportBlock.get(0)) {
+          precedingComments.putValues(statement, collectPrecedingLineComments(statement));
+        }
         ContainerUtil.putIfNotNull(statement, as(statement.getLastChild(), PsiComment.class), trailingComments);
       }
       
@@ -231,7 +233,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     private static List<PsiComment> collectPrecedingLineComments(@NotNull PyImportStatementBase statement) {
       final List<PsiComment> result = new ArrayList<>();
       PsiElement prev = PyPsiUtils.getPrevNonWhitespaceSibling(statement);
-      while ((prev instanceof PsiComment) && onItsOwnLine(prev) && !isShebangComment(((PsiComment)prev))) {
+      while (prev instanceof PsiComment && isFirstOnLine(prev)) {
         result.add((PsiComment)prev);
         prev = PyPsiUtils.getPrevNonWhitespaceSibling(prev);
       }
@@ -239,11 +241,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       return result;
     }
 
-    private static boolean isShebangComment(@NotNull PsiComment comment) {
-      return comment.getTextRange().getStartOffset() == 0 && comment.getText().startsWith("#!");
-    }
-
-    private static boolean onItsOwnLine(@NotNull PsiElement element) {
+    private static boolean isFirstOnLine(@NotNull PsiElement element) {
       if (element.getTextRange().getStartOffset() == 0) return true;
       final PsiWhiteSpace sibling = as(PsiTreeUtil.prevLeaf(element), PsiWhiteSpace.class);
       return sibling != null && (sibling.textContains('\n') || sibling.getTextRange().getStartOffset() == 0);
@@ -275,10 +273,8 @@ public class PyImportOptimizer implements ImportOptimizer {
         }
       }
       final PyImportStatementBase firstImport = myImportBlock.get(0);
-      final List<PsiComment> comments = collectPrecedingLineComments(firstImport);
-      final PsiElement topmostAnchor = ObjectUtils.notNull(ContainerUtil.getFirstItem(comments), firstImport);
-      addImportsBefore(topmostAnchor);
-      myFile.deleteChildRange(topmostAnchor, ContainerUtil.getLastItem(myImportBlock));
+      addImportsBefore(firstImport);
+      myFile.deleteChildRange(firstImport, ContainerUtil.getLastItem(myImportBlock));
     }
 
     private void addImportsBefore(@NotNull PsiElement anchor) {
