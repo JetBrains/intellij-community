@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,6 +170,7 @@ public class PyNames {
   public static final String ANEXT = "__anext__";
   public static final String AENTER = "__aenter__";
   public static final String AEXIT = "__aexit__";
+  public static final String DUNDER_AWAIT = "__await__";
   public static final String SIZEOF = "__sizeof__";
   public static final String INIT_SUBCLASS = "__init_subclass__";
   public static final String FSPATH = "__fspath__";
@@ -426,7 +427,7 @@ public class PyNames {
     .put("__imatmul__", _self_other_descr)
     .put("__matmul__", _self_other_descr)
     .put("__rmatmul__", _self_other_descr)
-    .put("__await__", _only_self_descr)
+    .put(DUNDER_AWAIT, _only_self_descr)
     .put(AENTER, _only_self_descr)
     .put(AEXIT, _exit_descr)
     .put(AITER, _only_self_descr)
