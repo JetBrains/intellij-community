@@ -16,13 +16,8 @@
   <idea-version since-build="171"/>
 
   <actions>
-    <action id="StreamTracerAction"
-            class="com.intellij.debugger.streams.action.StreamTracerAction">
-      <keyboard-shortcut keymap="$default" first-keystroke="alt P"/>
-    </action>
-
     <action id="AdvancedStreamTracerAction"
-            class="com.intellij.debugger.streams.action.AdvancedStreamTracerAction">
+            class="com.intellij.debugger.streams.action.TraceStreamAction">
       <keyboard-shortcut keymap="$default" first-keystroke="alt O"/>
     </action>
   </actions>
