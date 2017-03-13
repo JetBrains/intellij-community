@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,9 @@ public class PyDeprecationInspection extends PyInspection {
       if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON33) && decoratorList != null) {
         Arrays
           .stream(decoratorList.getDecorators())
-          .filter(decorator -> PyKnownDecoratorUtil.asKnownDecorator(decorator, myTypeEvalContext) == KnownDecorator.ABC_ABSTRACTPROPERTY)
+          .filter(
+            decorator -> PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext).contains(KnownDecorator.ABC_ABSTRACTPROPERTY)
+          )
           .forEach(
             decorator -> {
               final QualifiedName abcAbsPropertyQName = KnownDecorator.ABC_ABSTRACTPROPERTY.getQualifiedName();
