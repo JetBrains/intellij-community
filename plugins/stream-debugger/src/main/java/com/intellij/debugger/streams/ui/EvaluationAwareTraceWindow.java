@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class EvaluationAwareTraceWindow extends DialogWrapper {
   private static final String FLAT_MODE_NAME = "Flat Mode";
-  private static final String OPERATION_MOVE_NAME = "Split Mode";
+  private static final String TABBED_MODE_NAME = "Split Mode";
   private final JPanel myCenterPane;
   private final List<MyTab> myTabContents;
 
@@ -42,7 +42,6 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final JBCardLayout layout = new JBCardLayout();
     myCenterPane = new JPanel(layout);
     myCenterPane.add(tabs.getComponent());
-    myCenterPane.add(new JBLabel("flat!!!"));
     myTabContents = new ArrayList<>();
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
@@ -50,6 +49,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       tabs.insertTab(call.getName(), AllIcons.Debugger.Console, tab, call.getName() + call.getArguments(), i);
       myTabContents.add(tab);
     }
+
+    myCenterPane.add(new JBLabel("flat!!!"));
 
     init();
   }
@@ -113,16 +114,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createLeftSideActions() {
-    return new Action[]{new DialogWrapperAction(FLAT_MODE_NAME) {
-      @Override
-      protected void doAction(ActionEvent e) {
-        toggleMode();
-      }
-    }};
-  }
-
-  private void toggleMode() {
-    ((JBCardLayout)myCenterPane.getLayout()).next(myCenterPane);
+    return new Action[]{new MyToggleViewAction()};
   }
 
   private void clear() {
@@ -133,6 +125,33 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myCenterPane;
+  }
+
+  private class MyToggleViewAction extends DialogWrapperAction {
+    MyToggleViewAction() {
+      super(TABBED_MODE_NAME);
+    }
+
+    @Override
+    protected void doAction(ActionEvent e) {
+      final JButton button = getButton(this);
+      if (button != null) {
+        myMode = toggleMode(myMode);
+        button.setText(getButtonText(myMode));
+      }
+
+      ((JBCardLayout)myCenterPane.getLayout()).next(myCenterPane);
+    }
+
+    @NotNull
+    private String getButtonText(@NotNull MyMode mode) {
+      return MyMode.FLAT.equals(mode) ? FLAT_MODE_NAME : TABBED_MODE_NAME;
+    }
+
+    @NotNull
+    private MyMode toggleMode(@NotNull MyMode mode) {
+      return MyMode.FLAT.equals(mode) ? MyMode.SPLIT : MyMode.FLAT;
+    }
   }
 
   private static class MyTab extends JPanel {
