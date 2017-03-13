@@ -515,7 +515,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   boolean blockingWaitForFinish(int timeoutMs) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
-      assert myFinishSemaphore.waitFor(100 * 1000) : "Too long completion";
+      if (!myFinishSemaphore.waitFor(100 * 1000)) {
+        throw new AssertionError("Too long completion");
+      }
       return true;
     }
     if (myFreezeSemaphore.waitFor(timeoutMs)) {
