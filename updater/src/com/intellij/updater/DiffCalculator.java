@@ -49,14 +49,13 @@ public class DiffCalculator {
 
       for (Map.Entry<String, Long> create : toCreate.entrySet()) {
         if (Digester.isFile(create.getValue())) {
-          List<String> sameContent = byContent.get(create.getValue());
-          String source = findBestCandidateForMove(sameContent, create.getKey());
-          boolean move = true;
+          List<String> sameName = byName.get(new File(create.getKey()).getName());
+          String source = findBestCandidateForMove(sameName, create.getKey());
+          boolean move = false;
 
-          if (source == null) {
-            List<String> sameName = byName.get(new File(create.getKey()).getName());
-            source = findBestCandidateForMove(sameName, create.getKey());
-            move = false;
+          List<String> sameContent = byContent.get(create.getValue());
+          if (source != null && source.equals(findBestCandidateForMove(sameContent, create.getKey()))) {
+            move = true;
           }
 
           if (source != null && !critical.contains(source)) {
@@ -100,8 +99,8 @@ public class DiffCalculator {
           if (i + 1 > common) {
             best = other;
             common = i + 1;
-            // check root folders of candidates with the same matches
           }
+          // check root folders of candidates with the same matches
           else if (i + 1 == common && compareRootFolders(dirs, best.split("/")) < compareRootFolders(dirs, other.split("/"))) {
             best = other;
           }
