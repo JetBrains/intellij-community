@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
       super(factory);
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
         setVariableState(getFactory().getVarFactory().createVariableValue(parameter, false),
-                         new DfaVariableState(Collections.emptySet(), Collections.emptySet(), Nullness.NULLABLE, ThreeState.UNSURE));
+                         new DfaVariableState(Collections.emptySet(), Collections.emptySet(), Nullness.NULLABLE, ThreeState.UNSURE, null));
       }
     }
 

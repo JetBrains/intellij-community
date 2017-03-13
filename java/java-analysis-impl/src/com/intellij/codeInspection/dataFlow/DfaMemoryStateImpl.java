@@ -24,6 +24,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
@@ -40,6 +41,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,12 +209,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!myDistinctClasses.isEmpty()) {
       result.append("\n  distincts: ");
-      List<String> distincts = new ArrayList<>();
-      for (UnorderedPair<EqClass> pair : getDistinctClassPairs()) {
-        distincts.add("{" + pair.first + ", " + pair.second + "}");
-      }
-      Collections.sort(distincts);
-      result.append(StringUtil.join(distincts, " "));
+      String distincts =
+        StreamEx.of(getDistinctClassPairs()).map(pair -> "{" + pair.first + ", " + pair.second + "}").sorted().joining(" ");
+      result.append(distincts);
     }
 
     if (!myStack.isEmpty()) {
@@ -361,6 +360,28 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myIdToEqClassesIndices.remove(id);
   }
 
+  /**
+   * Returns true if current state describes all possible concrete program states described by {@code that} state.
+   *
+   * @param that a sub-state candidate
+   * @return true if current state is a super-state of the supplied state.
+   */
+  public boolean isSuperStateOf(DfaMemoryStateImpl that) {
+    if (!equalsSuperficially(that) ||
+        !equalsByUnknownVariables(that) ||
+        !getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses()) ||
+        !that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) {
+      return false;
+    }
+    if(myVariableStates.size() != that.myVariableStates.size()) return false;
+    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : myVariableStates.entrySet()) {
+      DfaVariableState thisState = entry.getValue();
+      DfaVariableState thatState = that.myVariableStates.get(entry.getKey());
+      if(Objects.equals(thisState, thatState)) continue;
+      if(thatState == null || thisState == null || !thisState.isSuperStateOf(thatState)) return false;
+    }
+    return true;
+  }
 
   private static boolean canBeInRelation(@NotNull DfaValue dfaValue) {
     DfaValue unwrapped = unwrap(dfaValue);
@@ -640,6 +661,27 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
+  void setRange(DfaVariableValue target, LongRangeSet range) {
+    if (!isUnknownState(target)) {
+      setVariableState(target, getVariableState(target).withRange(range));
+    }
+  }
+
+  public boolean applyRange(LongRangeSet range, DfaVariableValue target) {
+    if (!isUnknownState(target) && range != null) {
+      DfaVariableState state = getVariableState(target);
+      LongRangeSet oldRange = state.getRange();
+      if (oldRange == null) {
+        oldRange = LongRangeSet.fromType(target.getVariableType());
+        if (oldRange == null) return true;
+      }
+      LongRangeSet newRange = oldRange.intersect(range);
+      if (newRange.isEmpty()) return false;
+      setVariableState(target, state.withRange(newRange));
+    }
+    return true;
+  }
+
   static DfaValue unwrap(DfaValue value) {
     if (value instanceof DfaBoxedValue) {
       return ((DfaBoxedValue)value).getWrappedValue();
@@ -683,6 +725,25 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
 
     boolean isNegated = dfaRelation.isNegated();
+
+    if (dfaLeft instanceof DfaVariableValue) {
+      LongRangeSet right = getRange(dfaRight);
+      if (right != null) {
+        if (!applyRange(right.fromRelation(dfaRelation.getComparisonOperation()), (DfaVariableValue)dfaLeft)) {
+          return false;
+        }
+      }
+    }
+    if (dfaRight instanceof DfaVariableValue) {
+      LongRangeSet left = getRange(dfaLeft);
+      if (left != null) {
+        if (!applyRange(left.fromRelation(DfaRelationValue.getSymmetricOperation(dfaRelation.getComparisonOperation())),
+                        (DfaVariableValue)dfaRight)) {
+          return false;
+        }
+      }
+    }
+
     if (dfaLeft instanceof DfaTypeValue && ((DfaTypeValue)dfaLeft).isNotNull() && dfaRight == myFactory.getConstFactory().getNull()) {
       return isNegated;
     }
@@ -944,6 +1005,38 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return state.getOptionalPresense();
     }
     return value instanceof DfaOptionalValue ? ThreeState.fromBoolean(((DfaOptionalValue)value).isPresent()) : ThreeState.UNSURE;
+  }
+
+  /**
+   * Returns range of possible values for given DfaValue if possible
+   *
+   * @param value value to get the range from
+   * @return possible range or null if range is not known/non-applicable. Empty range indicates that no exact value is possible
+   * for given DfaValue (likely impossible code path).
+   */
+  @Nullable
+  @Override
+  public LongRangeSet getRange(DfaValue value) {
+    if (value instanceof DfaVariableValue) {
+      DfaVariableValue var = (DfaVariableValue)value;
+      DfaVariableState state = getVariableState(var);
+      LongRangeSet range = state.getRange();
+      if (range == null) {
+        DfaConstValue constValue = getConstantValue(var);
+        if (constValue != null) {
+          return LongRangeSet.fromConstant(constValue.getValue());
+        }
+        return LongRangeSet.fromType(var.getVariableType());
+      }
+      return range;
+    }
+    if (value instanceof DfaRangeValue) {
+      return ((DfaRangeValue)value).getValue();
+    }
+    if (value instanceof DfaConstValue) {
+      return LongRangeSet.fromConstant(((DfaConstValue)value).getValue());
+    }
+    return null;
   }
 
   @Nullable

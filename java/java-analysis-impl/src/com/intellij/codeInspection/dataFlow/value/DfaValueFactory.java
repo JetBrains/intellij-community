@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class DfaValueFactory {
     myRelationFactory = new DfaRelationValue.Factory(this);
     myExpressionFactory = new DfaExpressionFactory(this);
     myOptionalFactory = new DfaOptionalValue.Factory(this);
+    myRangeFactory = new DfaRangeValue.Factory(this);
   }
 
   public boolean isHonorFieldInitializers() {
@@ -137,6 +138,7 @@ public class DfaValueFactory {
   private final DfaRelationValue.Factory myRelationFactory;
   private final DfaExpressionFactory myExpressionFactory;
   private final DfaOptionalValue.Factory myOptionalFactory;
+  private final DfaRangeValue.Factory myRangeFactory;
 
   @NotNull
   public DfaVariableValue.Factory getVarFactory() {
@@ -165,5 +167,10 @@ public class DfaValueFactory {
   @NotNull
   public DfaOptionalValue.Factory getOptionalFactory() {
     return myOptionalFactory;
+  }
+
+  @NotNull
+  public DfaRangeValue.Factory getRangeFactory() {
+    return myRangeFactory;
   }
 }
