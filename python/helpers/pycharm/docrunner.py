@@ -180,11 +180,7 @@ class DocTestRunner(doctest.DocTestRunner):
         self.result.startTest(example)
         err = self._failure_header(test, example) +\
               self._checker.output_difference(example, got, self.optionflags)
-        expected = None
-        try:
-          expected = example.want
-        except KeyError:
-          pass
+        expected = getattr(example, "want", None)
         self.result.addFailure(example, err, expected=expected, actual=got)
 
       elif outcome is BOOM:
