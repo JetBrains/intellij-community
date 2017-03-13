@@ -1,7 +1,8 @@
 #!/usr/bin/python
+
+# comment for b
 # comment for a
 import a  # trailing comment for normal import 
-# comment for b
 import b
 # comment for c, d
 import c  # trailing comment for c, d
