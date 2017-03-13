@@ -929,13 +929,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private void doCommit(@Nullable CommitResultHandler customResultHandler) {
     CommitHelper helper =
       new CommitHelper(myProject, myBrowser.getSelectedChangeList(), getIncludedChanges(), TITLE, getCommitMessage(), myHandlers,
-                       myAllOfDefaultChangeListChangesIncluded, false, myAdditionalData, customResultHandler);
-
-    if (myIsAlien) {
-      helper.doAlienCommit(mySingleVcs);
-    } else {
-      helper.doCommit(mySingleVcs);
-    }
+                       myAllOfDefaultChangeListChangesIncluded, false, myAdditionalData, customResultHandler, myIsAlien, mySingleVcs);
+    helper.doCommit();
   }
 
   @NotNull

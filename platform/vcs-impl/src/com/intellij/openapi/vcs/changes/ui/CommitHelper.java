@@ -57,6 +57,7 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs;
 import static com.intellij.util.ArrayUtil.toObjectArray;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -84,7 +85,9 @@ public class CommitHelper {
   @NotNull private final List<Document> myCommittingDocuments = newArrayList();
   @NotNull private final VcsConfiguration myConfiguration;
   @NotNull private final HashSet<String> myFeedback = newHashSet();
+  @NotNull private final GeneralCommitProcessor myCommitProcessor;
 
+  @SuppressWarnings("unused") // Required for compatibility with external plugins.
   public CommitHelper(@NotNull Project project,
                       @NotNull ChangeList changeList,
                       @NotNull List<Change> includedChanges,
@@ -95,6 +98,22 @@ public class CommitHelper {
                       boolean synchronously,
                       @NotNull NullableFunction<Object, Object> additionalDataHolder,
                       @Nullable CommitResultHandler customResultHandler) {
+    this(project, changeList, includedChanges, actionName, commitMessage, handlers, allOfDefaultChangeListChangesIncluded, synchronously,
+         additionalDataHolder, customResultHandler, false, null);
+  }
+
+  public CommitHelper(@NotNull Project project,
+                      @NotNull ChangeList changeList,
+                      @NotNull List<Change> includedChanges,
+                      @NotNull String actionName,
+                      @NotNull String commitMessage,
+                      @NotNull List<CheckinHandler> handlers,
+                      boolean allOfDefaultChangeListChangesIncluded,
+                      boolean synchronously,
+                      @NotNull NullableFunction<Object, Object> additionalDataHolder,
+                      @Nullable CommitResultHandler customResultHandler,
+                      boolean isAlien,
+                      @Nullable AbstractVcs vcs) {
     myProject = project;
     myChangeList = changeList;
     myIncludedChanges = includedChanges;
@@ -106,27 +125,16 @@ public class CommitHelper {
     myAdditionalData = additionalDataHolder;
     myCustomResultHandler = customResultHandler;
     myConfiguration = VcsConfiguration.getInstance(myProject);
+    myCommitProcessor = isAlien ? new AlienCommitProcessor(notNull(vcs)) : new CommitProcessor(vcs);
   }
 
   public boolean doCommit() {
-    return doCommit((AbstractVcs)null);
-  }
-
-  public boolean doCommit(@Nullable AbstractVcs vcs) {
-    return doCommit(new CommitProcessor(vcs));
-  }
-
-  public void doAlienCommit(@NotNull AbstractVcs vcs) {
-    doCommit(new AlienCommitProcessor(vcs));
-  }
-
-  private boolean doCommit(@NotNull GeneralCommitProcessor processor) {
     Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
       public void run(@NotNull ProgressIndicator indicator) {
         ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
         vcsManager.startBackgroundVcsOperation();
         try {
-          delegateCommitToVcsThread(processor);
+          delegateCommitToVcsThread();
         }
         finally {
           vcsManager.stopBackgroundVcsOperation();
@@ -144,10 +152,10 @@ public class CommitHelper {
       }
     };
     ProgressManager.getInstance().run(task);
-    return hasOnlyWarnings(processor.getVcsExceptions());
+    return hasOnlyWarnings(myCommitProcessor.getVcsExceptions());
   }
 
-  private void delegateCommitToVcsThread(@NotNull GeneralCommitProcessor processor) {
+  private void delegateCommitToVcsThread() {
     ProgressIndicator indicator = new DelegatingProgressIndicator();
     Semaphore endSemaphore = new Semaphore();
 
@@ -157,7 +165,7 @@ public class CommitHelper {
       try {
         ProgressManager.getInstance().runProcess(() -> {
           indicator.checkCanceled();
-          generalCommit(processor);
+          generalCommit();
         }, indicator);
       }
       finally {
@@ -171,13 +179,13 @@ public class CommitHelper {
     }
   }
 
-  private void reportResult(@NotNull GeneralCommitProcessor processor) {
-    List<VcsException> errors = collectErrors(processor.getVcsExceptions());
+  private void reportResult() {
+    List<VcsException> errors = collectErrors(myCommitProcessor.getVcsExceptions());
     int errorsSize = errors.size();
-    int warningsSize = processor.getVcsExceptions().size() - errorsSize;
+    int warningsSize = myCommitProcessor.getVcsExceptions().size() - errorsSize;
 
     VcsNotifier notifier = VcsNotifier.getInstance(myProject);
-    String message = getCommitSummary(processor);
+    String message = getCommitSummary();
     if (errorsSize > 0) {
       String title = pluralize(message("message.text.commit.failed.with.error"), errorsSize);
       notifier.notifyError(title, message);
@@ -192,8 +200,8 @@ public class CommitHelper {
   }
 
   @NotNull
-  private String getCommitSummary(@NotNull GeneralCommitProcessor processor) {
-    StringBuilder content = new StringBuilder(getFileSummaryReport(processor.getChangesFailedToCommit()));
+  private String getCommitSummary() {
+    StringBuilder content = new StringBuilder(getFileSummaryReport(myCommitProcessor.getChangesFailedToCommit()));
     if (!isEmpty(myCommitMessage)) {
       content.append(": ").append(escape(myCommitMessage));
     }
@@ -201,7 +209,7 @@ public class CommitHelper {
       content.append("<br/>");
       content.append(join(myFeedback, "<br/>"));
     }
-    List<VcsException> exceptions = processor.getVcsExceptions();
+    List<VcsException> exceptions = myCommitProcessor.getVcsExceptions();
     if (!hasOnlyWarnings(exceptions)) {
       content.append("<br/>");
       content.append(join(exceptions, Throwable::getMessage, "<br/>"));
@@ -235,30 +243,30 @@ public class CommitHelper {
     return exceptions.stream().allMatch(VcsException::isWarning);
   }
 
-  private void generalCommit(@NotNull GeneralCommitProcessor processor) throws RuntimeException {
+  private void generalCommit() throws RuntimeException {
     try {
       ReadAction.run(() -> markCommittingDocuments());
       try {
-        processor.callSelf();
+        myCommitProcessor.callSelf();
       }
       finally {
         ReadAction.run(() -> unmarkCommittingDocuments());
       }
 
-      processor.doBeforeRefresh();
+      myCommitProcessor.doBeforeRefresh();
     }
     catch (ProcessCanceledException pce) {
       throw pce;
     }
     catch (Throwable e) {
       LOG.error(e);
-      processor.myVcsExceptions.add(new VcsException(e));
+      myCommitProcessor.myVcsExceptions.add(new VcsException(e));
       ExceptionUtil.rethrow(e);
     }
     finally {
-      commitCompleted(processor.getVcsExceptions(), processor);
-      processor.customRefresh();
-      runOrInvokeLaterAboveProgress(() -> processor.doPostRefresh(), null, myProject);
+      commitCompleted(myCommitProcessor.getVcsExceptions());
+      myCommitProcessor.customRefresh();
+      runOrInvokeLaterAboveProgress(() -> myCommitProcessor.doPostRefresh(), null, myProject);
     }
   }
 
@@ -504,20 +512,20 @@ public class CommitHelper {
     committingDocs.forEach(document -> document.putUserData(DOCUMENT_BEING_COMMITTED_KEY, null));
   }
 
-  private void commitCompleted(@NotNull List<VcsException> allExceptions, @NotNull GeneralCommitProcessor processor) {
+  private void commitCompleted(@NotNull List<VcsException> allExceptions) {
     List<VcsException> errors = collectErrors(allExceptions);
     boolean noErrors = errors.isEmpty();
     boolean noWarnings = allExceptions.isEmpty();
 
     if (noErrors) {
       myHandlers.forEach(CheckinHandler::checkinSuccessful);
-      processor.afterSuccessfulCheckIn();
+      myCommitProcessor.afterSuccessfulCheckIn();
 
       if (myCustomResultHandler != null) {
         myCustomResultHandler.onSuccess(myCommitMessage);
       }
       else {
-        reportResult(processor);
+        reportResult();
       }
 
       if (noWarnings) {
@@ -526,13 +534,13 @@ public class CommitHelper {
     }
     else {
       myHandlers.forEach(handler -> handler.checkinFailed(errors));
-      processor.afterFailedCheckIn();
+      myCommitProcessor.afterFailedCheckIn();
 
       if (myCustomResultHandler != null) {
         myCustomResultHandler.onFailure();
       }
       else {
-        reportResult(processor);
+        reportResult();
       }
     }
   }
