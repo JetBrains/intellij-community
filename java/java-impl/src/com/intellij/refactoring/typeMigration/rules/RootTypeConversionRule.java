@@ -118,8 +118,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
                   }
 
                   final PsiType migrationType = methodTypeParamsSubstitutor.substitute(type);
-                  if (!originalType.equals(migrationType) &&
-                      !TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[i])) {
+                  if (!originalType.equals(migrationType) && !areParametersAssignable(migrationType, i, actualParams)) {
                     labeler.migrateExpressionType(actualParams[i], migrationType, context, false, true);
                   }
                 }
@@ -137,6 +136,19 @@ public class RootTypeConversionRule extends TypeConversionRule {
       }
     }
     return null;
+  }
+
+  private static boolean areParametersAssignable(PsiType migrationType, int paramId, PsiExpression[] actualParams) {
+    if (migrationType instanceof PsiEllipsisType) {
+      for (int i = paramId; i < actualParams.length; i++) {
+        if (!TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[i])) {
+          return false;
+        }
+      }
+      return true;
+    } else {
+      return TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[paramId]);
+    }
   }
 
   private static class MyStaticMethodConversionDescriptor extends TypeConversionDescriptorBase {

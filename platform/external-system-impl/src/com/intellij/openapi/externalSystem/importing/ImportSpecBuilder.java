@@ -43,11 +43,17 @@ public class ImportSpecBuilder {
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   private boolean myUseDefaultCallback;
+  private boolean myCreateDirectoriesForEmptyContentRoots;
 
   public ImportSpecBuilder(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
     myExternalSystemId = id;
     myProgressExecutionMode = ProgressExecutionMode.IN_BACKGROUND_ASYNC;
+  }
+
+  public ImportSpecBuilder(ImportSpec importSpec) {
+    this(importSpec.getProject(), importSpec.getExternalSystemId());
+    apply(importSpec);
   }
 
   public ImportSpecBuilder whenAutoImportEnabled() {
@@ -79,6 +85,11 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  public ImportSpecBuilder createDirectoriesForEmptyContentRoots() {
+    myCreateDirectoriesForEmptyContentRoots = true;
+    return this;
+  }
+
   public ImportSpecBuilder dontReportRefreshErrors() {
     isReportRefreshError = false;
     return this;
@@ -104,6 +115,7 @@ public class ImportSpecBuilder {
     mySpec.setWhenAutoImportEnabled(myWhenAutoImportEnabled);
     mySpec.setProgressExecutionMode(myProgressExecutionMode);
     mySpec.setForceWhenUptodate(myForceWhenUptodate);
+    mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
     if (myUseDefaultCallback) {
       mySpec.setCallback(new ExternalProjectRefreshCallback() {
         @Override
@@ -128,5 +140,17 @@ public class ImportSpecBuilder {
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
     return mySpec;
+  }
+
+  private void apply(ImportSpec spec) {
+    myWhenAutoImportEnabled = spec.whenAutoImportEnabled();
+    myProgressExecutionMode = spec.getProgressExecutionMode();
+    myForceWhenUptodate = spec.isForceWhenUptodate();
+    myCreateDirectoriesForEmptyContentRoots = spec.shouldCreateDirectoriesForEmptyContentRoots();
+    myCallback = spec.getCallback();
+    isPreviewMode = spec.isPreviewMode();
+    isReportRefreshError = spec.isReportRefreshError();
+    myArguments = spec.getArguments();
+    myVmOptions = spec.getVmOptions();
   }
 }

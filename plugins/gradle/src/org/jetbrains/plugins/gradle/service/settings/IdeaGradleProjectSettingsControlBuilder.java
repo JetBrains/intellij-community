@@ -47,6 +47,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -496,6 +497,20 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   private void resetWrapperControls(String linkedProjectPath, @NotNull GradleProjectSettings settings, boolean isDefaultModuleCreation) {
+    if (isDefaultModuleCreation) {
+      JComponent[] toRemove = new JComponent[]{myUseWrapperWithVerificationButton, myUseWrapperVerificationLabel};
+      for (JComponent component : toRemove) {
+        if (component != null) {
+          Container parent = component.getParent();
+          if (parent != null) {
+            parent.remove(component);
+          }
+        }
+      }
+      myUseWrapperWithVerificationButton = null;
+      myUseWrapperVerificationLabel = null;
+    }
+
     if (StringUtil.isEmpty(linkedProjectPath) && !isDefaultModuleCreation) {
       if (myUseLocalDistributionButton != null) {
         myUseLocalDistributionButton.setSelected(true);

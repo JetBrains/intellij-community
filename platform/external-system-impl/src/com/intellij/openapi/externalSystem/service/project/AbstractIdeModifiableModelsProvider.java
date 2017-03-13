@@ -433,4 +433,10 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   public void setTestModuleProperties(Module testModule, String productionModuleName) {
     myProductionModulesForTestModules.put(testModule, productionModuleName);
   }
+
+  @Nullable
+  @Override
+  public String getProductionModuleName(Module module) {
+    return myProductionModulesForTestModules.get(module);
+  }
 }

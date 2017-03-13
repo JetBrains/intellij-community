@@ -100,14 +100,21 @@ public class JavaGenericsUtil {
     }
     PsiMethod psiMethod = (PsiMethod)resolve;
 
-    if (!psiMethod.isVarArgs()) {
+    PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+
+    int parametersCount = parameters.length;
+    if (parametersCount == 0) {
       return false;
     }
+    PsiParameter varargParameter = parameters[parametersCount - 1];
+    if (!varargParameter.isVarArgs()) {
+      return false;
+    }
+
     if (AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", false, false)) {
       return false;
     }
-    int parametersCount = psiMethod.getParameterList().getParametersCount();
-    PsiParameter varargParameter = psiMethod.getParameterList().getParameters()[parametersCount - 1];
+
     PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
     if (isReifiableType(resolveResult.getSubstitutor().substitute(componentType))) {
       return false;

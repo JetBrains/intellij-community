@@ -34,6 +34,7 @@ public class ImportSpecImpl implements ImportSpec {
   private boolean whenAutoImportEnabled;
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
+  private boolean createDirectoriesForEmptyContentRoots;
   private boolean isReportRefreshError;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
@@ -101,6 +102,15 @@ public class ImportSpecImpl implements ImportSpec {
 
   public void setPreviewMode(boolean isPreviewMode) {
     this.isPreviewMode = isPreviewMode;
+  }
+
+  @Override
+  public boolean shouldCreateDirectoriesForEmptyContentRoots() {
+    return createDirectoriesForEmptyContentRoots;
+  }
+
+  public void setCreateDirectoriesForEmptyContentRoots(boolean createDirectoriesForEmptyContentRoots) {
+    this.createDirectoriesForEmptyContentRoots = createDirectoriesForEmptyContentRoots;
   }
 
   @Override
