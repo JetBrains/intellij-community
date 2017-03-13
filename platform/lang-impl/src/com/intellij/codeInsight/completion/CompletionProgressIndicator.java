@@ -188,7 +188,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
-  OffsetMap getOffsetMap() {
+  public OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
