@@ -477,6 +477,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   private boolean isNonAnnotatedOverridingNotNull(PsiMethod method, PsiMethod superMethod) {
     return REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL &&
            !(method.getReturnType() instanceof PsiPrimitiveType) &&
+           !method.isConstructor() &&
            !getNullityManager(method).hasNullability(method) &&
            isNotNullNotInferred(superMethod, true, IGNORE_EXTERNAL_SUPER_NOTNULL);
   }
