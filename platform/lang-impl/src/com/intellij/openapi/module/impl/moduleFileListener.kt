@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.project.rootManager
+import com.intellij.util.PathUtilRt
 import gnu.trove.THashSet
 
 /**
@@ -68,7 +69,10 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
         someModulePathIsChanged = true
       }
 
-      checkRootModification(module, newAncestorPath, roots)
+      // if ancestor path is a direct parent of module file - root will be serialized as $MODULE_DIR$ and, so, we don't need to mark it as changed to save
+      if (PathUtilRt.getParentPath(moduleFilePath) != ancestorPath) {
+        checkRootModification(module, newAncestorPath, roots)
+      }
     }
 
     if (someModulePathIsChanged) {
