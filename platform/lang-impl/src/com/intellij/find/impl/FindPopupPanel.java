@@ -839,6 +839,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceTextArea.setVisible(isReplaceState);
     myCbPreserveCase.setVisible(isReplaceState);
     myOKHintLabel.setVisible(!isReplaceState);
+    myOKButton.setText(isReplaceState ? FindBundle.message("find.popup.replace.button") : FindBundle.message("find.popup.find.button"));
   }
 
   //public JComponent getPreferredFocusedComponent() {
