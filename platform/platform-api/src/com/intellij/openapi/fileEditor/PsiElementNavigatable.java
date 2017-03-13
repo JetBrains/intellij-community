@@ -26,6 +26,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.util.Conditions.or;
@@ -39,8 +40,9 @@ public class PsiElementNavigatable implements Navigatable {
 
   @Override
   public final void navigate(boolean requestFocus) {
-    PsiElement element = myPointer.getElement();
-    if (element != null && element.isValid()) {
+    PsiElement originalElement = myPointer.getElement();
+    if (originalElement != null && originalElement.isValid()) {
+      PsiElement element = ObjectUtils.notNull(originalElement.getNavigationElement(), originalElement);
       VirtualFile file = element.getContainingFile().getVirtualFile();
       if (file != null) {
         new Task.Modal(element.getProject(), EditorBundle.message("editor.open.file.progress", file.getName()), true) {
@@ -62,7 +64,7 @@ public class PsiElementNavigatable implements Navigatable {
   @Override
   public boolean canNavigate() {
     PsiElement element = myPointer.getElement();
-    return element != null && element.isValid() && element.getContainingFile().getVirtualFile() != null;
+    return element != null && element.isValid() && ObjectUtils.notNull(element.getNavigationElement(), element).getContainingFile().getVirtualFile() != null;
   }
 
   @Override
