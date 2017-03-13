@@ -17,9 +17,12 @@ package com.jetbrains.python.actions;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionHelper;
+import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -27,15 +30,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
-import com.jetbrains.python.console.PyCodeExecutor;
-import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.console.PythonConsoleRunnerFactory;
-import com.jetbrains.python.console.PythonConsoleToolWindow;
+import com.jetbrains.python.console.*;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -176,11 +177,20 @@ public class PyExecuteSelectionAction extends AnAction {
     ExecutionHelper
       .selectContentDescriptor(dataContext, project, consoles, "Select console to execute in", descriptor -> {
         if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
-          consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
-          final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
-          if (toolWindow != null && !toolWindow.getToolWindow().isVisible()) {
-            toolWindow.getToolWindow().show(null);
-            ContentManager contentManager = toolWindow.getToolWindow().getContentManager();
+          ExecutionConsole console = descriptor.getExecutionConsole();
+          consumer.consume((PyCodeExecutor)console);
+          ToolWindow toolWindow;
+          if (console instanceof PythonDebugLanguageConsoleView) {
+            RunContentManager runContentManager = ExecutionManager.getInstance(project).getContentManager();
+            toolWindow = runContentManager.getToolWindowByDescriptor(descriptor);
+          }
+          else {
+            PythonConsoleToolWindow consoleToolWindow = PythonConsoleToolWindow.getInstance(project);
+            toolWindow = consoleToolWindow != null ? consoleToolWindow.getToolWindow() : null;
+          }
+          if (toolWindow != null && !toolWindow.isVisible()) {
+            toolWindow.show(null);
+            ContentManager contentManager = toolWindow.getContentManager();
             Content content = contentManager.findContent(descriptor.getDisplayName());
             if (content != null) {
               contentManager.setSelectedContent(content);
