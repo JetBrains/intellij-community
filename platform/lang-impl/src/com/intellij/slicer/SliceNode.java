@@ -125,6 +125,10 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     return children;
   }
 
+  public List<SliceNode> getCachedChildren() {
+    return myCachedChildren;
+  }
+
   private boolean isUpToDate() {
     if (myCachedChildren != null || !isValid()/* || getTreeBuilder().splitByLeafExpressions*/) {
       return true;
@@ -228,6 +232,10 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       return null;
     }
     return LanguageSlicing.getProvider(psiElement);
+  }
+
+  public String getNodeText() {
+    return getValue().getPresentation().getPlainText().trim();
   }
 
   @Override
