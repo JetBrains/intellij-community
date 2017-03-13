@@ -87,7 +87,7 @@ public class JvmStreamDebuggerActionHandler {
       @Override
       public void failed(@NotNull String traceExpression, @NotNull String reason) {
         LOG.warn(reason + System.lineSeparator() + "expression:" + System.lineSeparator() + traceExpression);
-        ApplicationManager.getApplication().invokeLater(window::setFailMessage);
+        ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(reason));
       }
     });
   }

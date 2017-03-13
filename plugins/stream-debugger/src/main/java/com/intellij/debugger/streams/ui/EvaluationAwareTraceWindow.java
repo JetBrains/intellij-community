@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author Vitaliy.Bibaev
@@ -81,7 +82,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     final CollectionView sourceView = new CollectionView("Source", context, traces.get(0).getValues());
     controllers.get(0).register(sourceView);
-    myTabContents.get(0).setContent(sourceView);
+    myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
 
     for (int i = 1; i < myTabContents.size() - 1; i++) {
       final MyPlaceholder tab = myTabContents.get(i);
@@ -96,24 +97,26 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final JPanel panel = new JPanel(new GridLayout(1, 2));
       panel.add(before);
       panel.add(after);
-      tab.setContent(panel);
+      tab.setContent(panel, BorderLayout.CENTER);
     }
 
     final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
     if (result != null) {
       final TraceElementImpl resultTraceElement = new TraceElementImpl(Integer.MAX_VALUE, result);
-      resultTab.setContent(new CollectionView("Result", context, Collections.singletonList(resultTraceElement)));
+      final CollectionView view = new CollectionView("Result", context, Collections.singletonList(resultTraceElement));
+      resultTab.setContent(view, BorderLayout.CENTER);
     }
     else {
-      resultTab.setContent(new JBLabel("There is no result of such stream chain"));
+      resultTab.setContent(new JBLabel("There is no result of such stream chain", SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
     final FlatTraceView flatView = new FlatTraceView(controllers, context);
-    myFlatContent.setContent(flatView);
+    myFlatContent.setContent(flatView, BorderLayout.CENTER);
   }
 
-  public void setFailMessage() {
-    clear();
+  public void setFailMessage(@NotNull String reason) {
+    Stream.concat(Stream.of(myFlatContent), myTabContents.stream())
+      .forEach(x -> x.setContent(new JBLabel("Evaluation failed. Reason: " + reason, SwingConstants.CENTER), BorderLayout.CENTER));
   }
 
   @NotNull
@@ -126,10 +129,6 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   @Override
   protected Action[] createLeftSideActions() {
     return new Action[]{new MyToggleViewAction()};
-  }
-
-  private void clear() {
-    Arrays.stream(myCenterPane.getComponents()).forEach(myCenterPane::remove);
   }
 
   @Nullable
@@ -171,9 +170,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       add(new JBLabel("Evaluation in process", SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
-    void setContent(@NotNull JComponent view) {
+    void setContent(@NotNull JComponent view, String placement) {
       Arrays.stream(getComponents()).forEach(this::remove);
-      add(view);
+      add(view, placement);
       revalidate();
       repaint();
     }

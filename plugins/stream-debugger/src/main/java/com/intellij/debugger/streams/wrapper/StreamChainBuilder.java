@@ -19,7 +19,7 @@ public class StreamChainBuilder {
   // TODO: producer - any method, which returns Stream object. Pay attention - need to be sure, that this method is repeatable
   private static final Set<String> SUPPORTED_PRODUCERS = StreamEx.of("stream", "iterate", "generate", "range", "rangeClosed", "of").toSet();
   private static final Set<String> SUPPORTED_INTERMEDIATE =
-    StreamEx.of("limit", "flatMap", "distinct", "map", "filter", "mapToInt", "mapToLong", "MapToDouble", "sorted", "boxed", "peek").toSet();
+    StreamEx.of("limit", "flatMap", "distinct", "map", "filter", "mapToInt", "mapToLong", "mapToDouble", "sorted", "boxed", "peek").toSet();
 
   // TODO: termination - is any method which returns regular object (not subclass of Stream)
   private static final Set<String> SUPPORTED_TERMINATION = StreamEx.of("collect", "sum", "reduce", "toArray").toSet();
