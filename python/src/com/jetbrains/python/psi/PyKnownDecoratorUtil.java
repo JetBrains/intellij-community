@@ -15,11 +15,10 @@
  */
 package com.jetbrains.python.psi;
 
-import com.google.common.collect.Iterators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.newMapFromValues;
 import static com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -66,7 +64,9 @@ public class PyKnownDecoratorUtil {
     //ATEXIT_REGISTER("atexit.register", true),
     //ATEXIT_UNREGISTER("atexit.unregister", false),
 
-    ASYNCIO_COROUTINE("asyncio.tasks.coroutine"),
+    ASYNCIO_TASKS_COROUTINE("asyncio.tasks.coroutine"),
+    ASYNCIO_COROUTINES_COROUTINE("asyncio.coroutines.coroutine"),
+    TYPES_COROUTINE("types.coroutine"),
 
     UNITTEST_SKIP("unittest.case.skip"),
     UNITTEST_SKIP_IF("unittest.case.skipIf"),
@@ -112,13 +112,11 @@ public class PyKnownDecoratorUtil {
                                                                             DJANGO_UTILS_FUNCTIONAL_CACHED_PROPERTY,
                                                                             KOMBU_UTILS_CACHED_PROPERTY);
 
-  private static final Map<String, KnownDecorator> ourByShortName = newMapFromValues(Iterators.forArray(values()),
-                                                                                     new Convertor<KnownDecorator, String>() {
-                                                                                       @Override
-                                                                                       public String convert(KnownDecorator o) {
-                                                                                         return o.getShortName();
-                                                                                       }
-                                                                                     });
+  private static final Set<KnownDecorator> GENERATOR_BASED_COROUTINE_DECORATORS = EnumSet.of(ASYNCIO_TASKS_COROUTINE,
+                                                                                             ASYNCIO_COROUTINES_COROUTINE,
+                                                                                             TYPES_COROUTINE);
+
+  private static final Map<String, List<KnownDecorator>> BY_SHORT_NAME = StreamEx.of(values()).groupingBy(KnownDecorator::getShortName);
 
   /**
    * Map decorators of element to {@link PyKnownDecoratorUtil.KnownDecorator}.
@@ -137,16 +135,16 @@ public class PyKnownDecoratorUtil {
 
     return StreamEx
       .of(decoratorList.getDecorators())
-      .map(decorator -> asKnownDecorator(decorator, context))
+      .flatMap(decorator -> asKnownDecorators(decorator, context).stream())
       .nonNull()
       .toList();
   }
 
-  @Nullable
-  public static KnownDecorator asKnownDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
+  @NotNull
+  public static List<KnownDecorator> asKnownDecorators(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
     final QualifiedName qualifiedName = decorator.getQualifiedName();
     if (qualifiedName == null) {
-      return null;
+      return Collections.emptyList();
     }
 
     if (context.maySwitchToAST(decorator)) {
@@ -157,18 +155,16 @@ public class PyKnownDecoratorUtil {
 
       if (resolved != null && resolved.getQualifiedName() != null) {
         final QualifiedName resolvedName = QualifiedName.fromDottedString(resolved.getQualifiedName());
-        final KnownDecorator knownDecorator = ourByShortName.get(resolvedName.getLastComponent());
+        final List<KnownDecorator> knownDecorators = BY_SHORT_NAME.getOrDefault(resolvedName.getLastComponent(), Collections.emptyList());
 
-        if (knownDecorator != null && resolvedName.equals(knownDecorator.getQualifiedName())) {
-          return knownDecorator;
-        }
+        return ContainerUtil.filter(knownDecorators, knownDecorator -> resolvedName.equals(knownDecorator.getQualifiedName()));
       }
     }
     else {
-      return ourByShortName.get(qualifiedName.getLastComponent());
+      return BY_SHORT_NAME.getOrDefault(qualifiedName.getLastComponent(), Collections.emptyList());
     }
 
-    return null;
+    return Collections.emptyList();
   }
 
   @Nullable
@@ -231,7 +227,11 @@ public class PyKnownDecoratorUtil {
   }
 
   public static boolean isPropertyDecorator(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
-    return PROPERTY_DECORATORS.contains(asKnownDecorator(decorator, context));
+    return ContainerUtil.exists(asKnownDecorators(decorator, context), PROPERTY_DECORATORS::contains);
+  }
+
+  public static boolean hasGeneratorBasedCoroutineDecorator(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    return ContainerUtil.exists(getKnownDecorators(function, context), GENERATOR_BASED_COROUTINE_DECORATORS::contains);
   }
 
   private static boolean allDecoratorsAreKnown(@NotNull PyDecoratable element, @NotNull List<KnownDecorator> decorators) {
