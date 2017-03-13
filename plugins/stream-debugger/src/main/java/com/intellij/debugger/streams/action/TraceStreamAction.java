@@ -13,6 +13,16 @@ public class TraceStreamAction extends AnAction {
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    final Project project = e.getProject();
+    if (project != null) {
+      e.getPresentation().setEnabled(Holder.HANDLER.isEnabled(project));
+      return;
+    }
+    e.getPresentation().setEnabled(false);
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project != null && Holder.HANDLER.isEnabled(project)) {
