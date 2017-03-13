@@ -118,6 +118,12 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   @NotNull
   @Override
+  protected Action[] createActions() {
+    return new Action[]{new DialogWrapperExitAction("Close", CLOSE_EXIT_CODE)};
+  }
+
+  @NotNull
+  @Override
   protected Action[] createLeftSideActions() {
     return new Action[]{new MyToggleViewAction()};
   }
