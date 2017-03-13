@@ -91,11 +91,19 @@ public abstract class TreeTraversal {
     };
   }
 
+  /**
+   * Configures the traversal to skip already visited nodes.
+   * @see TreeTraversal#unique(Function)
+   */
   @NotNull
   public final TreeTraversal unique() {
     return unique(Function.ID);
   }
 
+  /**
+   * Configures the traversal to skip already visited nodes.
+   * @param identity function
+   */
   @NotNull
   public TreeTraversal unique(@NotNull final Function<?, ?> identity) {
     final TreeTraversal original = this;
@@ -127,6 +135,13 @@ public abstract class TreeTraversal {
     };
   }
 
+  /**
+   * Configures the traversal to expand and return the nodes within the range only.
+   * It is an optimized version of expand-and-filter operation.
+   * It skips all the nodes "before" the {@code rangeCondition} return true for the first time,
+   * processes as usual the nodes while the condition return true and
+   * stops when the {@code rangeCondition} return false after that.
+   */
   @NotNull
   public TreeTraversal onRange(@NotNull final Condition<?> rangeCondition) {
     final TreeTraversal original = this;
