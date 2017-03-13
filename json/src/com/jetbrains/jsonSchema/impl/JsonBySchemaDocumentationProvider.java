@@ -55,7 +55,7 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
         if (value instanceof JsonObject) {
           final JsonProperty description = ((JsonObject)value).findProperty("description");
           if (description != null && description.getValue() instanceof JsonStringLiteral) {
-            return StringUtil.unquoteString(description.getValue().getText());
+            return StringUtil.escapeXml(StringUtil.unquoteString(description.getValue().getText()));
           }
         }
         return null;
