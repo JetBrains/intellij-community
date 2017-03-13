@@ -644,12 +644,14 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(2, 8, 9, 10, 4), t.withRoot(1).expand(IS_ODD).traverse(TreeTraversal.LEAVES_DFS).toList());
   }
 
-  public void testInRange() {
+  public void testOnRange() {
     assertEquals(13, numberTraverser().withRoot(1).onRange(o -> true).traverse().size());
     JBTreeTraverser<TextRange> ranges = rangeTraverser();
     assertEquals(5, ranges.withRoot(TextRange.from(0, 8)).traverse().size());
     assertEquals(Arrays.asList("(0,64)", "(16,32)", "(28,32)", "(29,30)", "(30,31)", "(31,32)", "(32,48)", "(32,36)", "(32,33)", "(33,34)"),
-                 ranges.withRoot(TextRange.from(0, 64)).onRange(r -> r.intersects(30, 33)).traverse().map(Object::toString).toList());
+                 ranges.withRoot(TextRange.from(0, 64))
+                   .onRange(r -> r.intersects(30, 33))
+                   .preOrderDfsTraversal().map(Object::toString).toList());
   }
 
   public void testRangeChildrenLeavesDfs() {
