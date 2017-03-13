@@ -50,50 +50,51 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
     port = address.port
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostString}:${address.port}")
     val result = AsyncPromise<Vm>()
+    
+    var attemptNumber = 0
+    fun attempt() {
+      connectCancelHandler.set { result.setError("Closed explicitly") }
+
+      val connectionPromise = AsyncPromise<Any?>()
+      connectionPromise.rejected { result.setError(it) }
+
+      result
+        .done {
+          vm = it!!
+          setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
+          startProcessing()
+        }
+        .rejected {
+          if (it !is ConnectException) {
+            LOG.errorIfNotMessage(it)
+          }
+          setState(ConnectionStatus.CONNECTION_FAILED, it.message)
+        }
+        .processed { connectCancelHandler.set(null) }
+
+      createBootstrap(address, result)
+        .connect(address, connectionPromise,
+                 maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1,
+                 stopCondition = stopCondition)
+        ?.closeFuture()?.addListener {
+        if (result.isFulfilled) {
+          close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
+        }
+        else {
+          if (++attemptNumber > 10 || (stopCondition?.value(null) ?: false)) {
+            result.setError("Cannot establish connection - promptly closed after open")
+          }
+          else {
+            sleep(result, 300)
+            attempt()
+          }
+        }
+      }
+    }
+    
     val future = ApplicationManager.getApplication().executeOnPooledThread {
       if (Thread.interrupted()) {
         return@executeOnPooledThread
-      }
-      
-      var attemptNumber = 0
-      fun attempt() {
-        connectCancelHandler.set { result.setError("Closed explicitly") }
-
-        val connectionPromise = AsyncPromise<Any?>()
-        connectionPromise.rejected { result.setError(it) }
-
-        result
-          .done {
-            vm = it!!
-            setState(ConnectionStatus.CONNECTED, "Connected to ${connectedAddressToPresentation(address, it)}")
-            startProcessing()
-          }
-          .rejected {
-            if (it !is ConnectException) {
-              LOG.errorIfNotMessage(it)
-            }
-            setState(ConnectionStatus.CONNECTION_FAILED, it.message)
-          }
-          .processed { connectCancelHandler.set(null) }
-
-        createBootstrap(address, result)
-          .connect(address, connectionPromise,
-                   maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1,
-                   stopCondition = stopCondition)
-          ?.closeFuture()?.addListener {
-          if (result.isFulfilled) {
-            close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
-          }
-          else {
-            if (++attemptNumber > 10 || (stopCondition?.value(null) ?: false)) {
-              result.setError("Process disconnected unexpectedly")
-            }
-            else {
-              sleep(result, 300)
-              attempt()
-            }
-          }
-        }
       }
       
       attempt()
