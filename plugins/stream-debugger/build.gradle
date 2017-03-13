@@ -17,7 +17,7 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 
 group 'com.intellij.debugger.stream'
-version '1.0-SNAPSHOT'
+version '0.0.1'
 
 intellij {
     type = 'IC'
