@@ -113,7 +113,8 @@ public class JvmStreamDebuggerActionHandler {
       final ValuesOrderResolver.Result currentResolve = resolver.resolve(traceInfo);
 
       final Collection<TraceElement> values = traceInfo.getValuesOrderBefore().values();
-      final ResolvedTrace resolvedTrace = new ResolvedTraceImpl(values, prevResolved.getReverseOrder(), currentResolve.getDirectOrder());
+      final ResolvedTrace resolvedTrace =
+        new ResolvedTraceImpl(currentCall, values, prevResolved.getReverseOrder(), currentResolve.getDirectOrder());
       result.add(resolvedTrace);
 
       prevResolved = currentResolve;

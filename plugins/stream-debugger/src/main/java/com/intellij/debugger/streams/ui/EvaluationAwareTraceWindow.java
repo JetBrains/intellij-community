@@ -30,7 +30,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   private static final String FLAT_MODE_NAME = "Flat Mode";
   private static final String TABBED_MODE_NAME = "Split Mode";
   private final JPanel myCenterPane;
-  private final List<MyTab> myTabContents;
+  private final List<MyPlaceholder> myTabContents;
+  private final MyPlaceholder myFlatContent;
 
   private MyMode myMode = MyMode.SPLIT;
 
@@ -45,12 +46,13 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     myTabContents = new ArrayList<>();
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
-      final MyTab tab = new MyTab();
+      final MyPlaceholder tab = new MyPlaceholder();
       tabs.insertTab(call.getName(), AllIcons.Debugger.Console, tab, call.getName() + call.getArguments(), i);
       myTabContents.add(tab);
     }
 
-    myCenterPane.add(new JBLabel("flat!!!"));
+    myFlatContent = new MyPlaceholder();
+    myCenterPane.add(myFlatContent);
 
     init();
   }
@@ -64,7 +66,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   public void setTrace(@NotNull List<ResolvedTrace> traces, @Nullable Value result, @NotNull EvaluationContextImpl context) {
     assert myTabContents.size() == traces.size() + 1;
 
-    final List<TraceControllerImpl> controllers = new ArrayList<>();
+    List<TraceController> controllers = new ArrayList<>();
     TraceControllerImpl prev = null;
     for (final ResolvedTrace trace : traces) {
       final TraceControllerImpl current = new TraceControllerImpl(trace);
@@ -82,9 +84,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     myTabContents.get(0).setContent(sourceView);
 
     for (int i = 1; i < myTabContents.size() - 1; i++) {
-      final MyTab tab = myTabContents.get(i);
-      final TraceControllerImpl previous = controllers.get(i - 1);
-      final TraceControllerImpl current = controllers.get(i);
+      final MyPlaceholder tab = myTabContents.get(i);
+      final TraceController previous = controllers.get(i - 1);
+      final TraceController current = controllers.get(i);
 
       final CollectionView before = new CollectionView("Before", context, previous.getValues());
       final CollectionView after = new CollectionView("After", context, current.getValues());
@@ -97,7 +99,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       tab.setContent(panel);
     }
 
-    final MyTab resultTab = myTabContents.get(myTabContents.size() - 1);
+    final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
     if (result != null) {
       final TraceElementImpl resultTraceElement = new TraceElementImpl(Integer.MAX_VALUE, result);
       resultTab.setContent(new CollectionView("Result", context, Collections.singletonList(resultTraceElement)));
@@ -105,6 +107,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     else {
       resultTab.setContent(new JBLabel("There is no result of such stream chain"));
     }
+
+    final FlatTraceView flatView = new FlatTraceView(controllers, context);
+    myFlatContent.setContent(flatView);
   }
 
   public void setFailMessage() {
@@ -129,7 +134,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   private class MyToggleViewAction extends DialogWrapperAction {
     MyToggleViewAction() {
-      super(TABBED_MODE_NAME);
+      super(FLAT_MODE_NAME);
     }
 
     @Override
@@ -145,7 +150,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     @NotNull
     private String getButtonText(@NotNull MyMode mode) {
-      return MyMode.FLAT.equals(mode) ? FLAT_MODE_NAME : TABBED_MODE_NAME;
+      return MyMode.SPLIT.equals(mode) ? FLAT_MODE_NAME : TABBED_MODE_NAME;
     }
 
     @NotNull
@@ -154,10 +159,10 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }
   }
 
-  private static class MyTab extends JPanel {
+  private static class MyPlaceholder extends JPanel {
     private static final JComponent EMPTY_CONTENT = new JBLabel("Evaluation in process", SwingConstants.CENTER);
 
-    MyTab() {
+    MyPlaceholder() {
       super(new BorderLayout());
       add(EMPTY_CONTENT, BorderLayout.CENTER);
     }

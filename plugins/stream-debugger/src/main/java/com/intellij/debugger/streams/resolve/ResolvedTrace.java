@@ -16,6 +16,7 @@
 package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,6 +25,9 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface ResolvedTrace {
+  @NotNull
+  StreamCall getCall();
+
   @NotNull
   List<TraceElement> getPreviousValues(@NotNull TraceElement value);
 
