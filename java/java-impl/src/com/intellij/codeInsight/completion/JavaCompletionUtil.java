@@ -806,12 +806,16 @@ public class JavaCompletionUtil {
         PsiElement composite = leaf == null ? null : leaf.getParent();
         if (composite instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil.insertSemicolon(composite.getParent())) {
           insertAdditionalSemicolon = false;
-        } else if (composite instanceof PsiReferenceExpression) {
+        }
+        else if (composite instanceof PsiReferenceExpression) {
           PsiElement parent = composite.getParent();
           if (parent instanceof PsiMethodCallExpression) {
             parent = parent.getParent();
           }
           if (parent instanceof PsiLambdaExpression && !LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
+            insertAdditionalSemicolon = false;
+          }
+          if (parent instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil.insertSemicolon(parent.getParent())) {
             insertAdditionalSemicolon = false;
           }
         }
