@@ -76,20 +76,14 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
         continue;
       }
       final IProperty representative = properties.iterator().next();
-      final ResourceBundlePropertyStructureViewElement node = new ResourceBundlePropertyStructureViewElement(representative);
-      myElements.put(propKey, node);
+      myElements.put(propKey, new ResourceBundlePropertyStructureViewElement(representative));
     }
 
     for (String remain : remains) {
       myElements.remove(remain);
     }
 
-    StructureViewTreeElement[] result = new StructureViewTreeElement[propertyNames.size()];
-    int i = 0;
-    for (String key : propertyNames.keySet()) {
-      result[i++] = myElements.get(key);
-    }
-    return result;
+    return myElements.values().toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
 
   public static MultiMap<String, IProperty> getPropertiesMap(ResourceBundle resourceBundle, boolean onlyIncomplete) {
