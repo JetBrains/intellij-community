@@ -29,7 +29,7 @@ import java.util.stream.LongStream;
 /**
  * @author peter
  */
-class CpuTimings {
+public class CpuTimings {
   final long[] rawData;
   long average;
   private final double myStandardDeviation;
@@ -58,7 +58,7 @@ class CpuTimings {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static CpuTimings calcStableCpuTiming() {
     for (int i = 0;; i++) {
-      CpuTimings timings = calcCpuTiming();
+      CpuTimings timings = calcCpuTiming(20, CpuTimings::addBigIntegers);
       if (timings.myStandardDeviation < 1.8) {
         return timings;
       }
@@ -73,24 +73,47 @@ class CpuTimings {
     }
   }
 
-  private static CpuTimings calcCpuTiming()  {
-    int n = 20;
-    long[] elapsed = new long[n];
-    for (int i = 0; i < n; i++) {
-      elapsed[i] = measureCPU();
+  private static CpuTimings calcCpuTiming(int iterationCount, Runnable oneIteration)  {
+    long[] elapsed = new long[iterationCount];
+    for (int i = 0; i < iterationCount; i++) {
+      long start = System.currentTimeMillis();
+      oneIteration.run();
+      elapsed[i] = System.currentTimeMillis() - start;
     }
     return new CpuTimings(elapsed);
   }
 
-  private static long measureCPU() {
-    long start = System.currentTimeMillis();
-
+  private static void addBigIntegers() {
     BigInteger k = new BigInteger("1");
     for (int i = 0; i < 1000000; i++) {
       k = k.add(new BigInteger("1"));
     }
+  }
 
-    return System.currentTimeMillis() - start;
+  private static void mulDiv() {
+    long k = 241;
+    for (int i = 0; i < 22_222_222; i++) {
+      k = i % 10 == 3 ? k * 239 : k % 12342;
+    }
+    ensureOdd(k);
+  }
+
+  private static void ensureOdd(long k) {
+    if (k % 2 == 0) {
+      throw new AssertionError("Should be an odd value");
+    }
+  }
+
+  private static void mulDivMemAccess() {
+    int[] array = new int[240_000];
+    for (int i = 0; i < array.length; i++) {
+      array[i] = i * 42 + 1;
+    }
+    int k = 241;
+    for (int i = 0; i < 5_750_000; i++) {
+      k *= array[Math.abs(k) % array.length];
+    }
+    ensureOdd(k);
   }
 
   public static double getProcessCpuLoad() {
@@ -131,6 +154,16 @@ class CpuTimings {
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void main(String[] args) {
+    for (int i = 0; i < 20; i++) {
+      // each line can be uncommented alone, to check the results of different benchmarks
+      //System.out.println(calcCpuTiming(20, CpuTimings::addBigIntegers));
+      //System.out.println(calcCpuTiming(20, CpuTimings::mulDivMemAccess));
+      //System.out.println(calcCpuTiming(20, CpuTimings::mulDiv));
     }
   }
 
