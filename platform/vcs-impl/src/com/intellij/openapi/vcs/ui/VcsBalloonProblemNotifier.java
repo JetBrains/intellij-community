@@ -86,13 +86,12 @@ public class VcsBalloonProblemNotifier implements Runnable {
   public void run() {
     final Notification notification;
     if (myNotificationListener != null && myNotificationListener.length > 0) {
-      final NotificationType type = myMessageType.toNotificationType();
       final StringBuilder sb = new StringBuilder(myMessage);
       for (NamedRunnable runnable : myNotificationListener) {
         final String name = runnable.toString();
         sb.append("<br/><a href=\"").append(name).append("\">").append(name).append("</a>");
       }
-      notification = NOTIFICATION_GROUP.createNotification(type.name(), sb.toString(), myMessageType.toNotificationType(),
+      notification = NOTIFICATION_GROUP.createNotification("", sb.toString(), myMessageType.toNotificationType(),
         new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
