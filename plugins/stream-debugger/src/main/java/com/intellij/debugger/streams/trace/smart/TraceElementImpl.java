@@ -21,8 +21,7 @@ public class TraceElementImpl implements TraceElement, Comparable<TraceElement> 
   public boolean equals(Object obj) {
     if (obj instanceof TraceElement) {
       final int time = ((TraceElement)obj).getTime();
-      final Value value = ((TraceElement)obj).getValue();
-      return time == myTime && myValue.equals(value);
+      return time == myTime;
     }
 
     return false;
@@ -30,7 +29,7 @@ public class TraceElementImpl implements TraceElement, Comparable<TraceElement> 
 
   @Override
   public int hashCode() {
-    return Objects.hash(myTime, myValue);
+    return Objects.hash(myTime);
   }
 
   @Override

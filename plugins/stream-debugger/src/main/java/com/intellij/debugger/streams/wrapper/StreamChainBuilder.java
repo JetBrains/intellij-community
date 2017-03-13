@@ -17,7 +17,7 @@ import java.util.Set;
  */
 public class StreamChainBuilder {
   // TODO: producer - any method, which returns Stream object. Pay attention - need to be sure, that this method is repeatable
-  private static final Set<String> SUPPORTED_PRODUCERS = StreamEx.of("stream", "iterate", "generate", "range", "rangeClosed").toSet();
+  private static final Set<String> SUPPORTED_PRODUCERS = StreamEx.of("stream", "iterate", "generate", "range", "rangeClosed", "of").toSet();
   private static final Set<String> SUPPORTED_INTERMEDIATE =
     StreamEx.of("limit", "flatMap", "distinct", "map", "filter", "mapToInt", "mapToLong", "MapToDouble", "sorted", "boxed", "peek").toSet();
 
