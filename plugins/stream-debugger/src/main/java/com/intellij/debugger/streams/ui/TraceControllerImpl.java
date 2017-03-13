@@ -39,6 +39,8 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
     myNextListener = listener;
   }
 
+
+  @NotNull
   public List<TraceElement> getValues() {
     return myResolvedTrace.getValues();
   }
