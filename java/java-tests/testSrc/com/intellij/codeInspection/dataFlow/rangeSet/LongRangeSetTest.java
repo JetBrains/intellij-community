@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
 public class LongRangeSetTest {
   @Test
   public void testToString() {
-    assertEquals("{}", LongRangeSet.empty().toString());
+    assertEquals("{}", empty().toString());
     assertEquals("{10}", point(10).toString());
     assertEquals("{10}", range(10, 10).toString());
     assertEquals("{10, 11}", range(10, 11).toString());
@@ -40,19 +40,19 @@ public class LongRangeSetTest {
 
   @Test
   public void testFromType() {
-    assertNull(LongRangeSet.fromType(PsiType.FLOAT));
-    assertNull(LongRangeSet.fromType(PsiType.NULL));
-    assertEquals("{-128..127}", LongRangeSet.fromType(PsiType.BYTE).toString());
-    assertEquals("{0..65535}", LongRangeSet.fromType(PsiType.CHAR).toString());
-    assertEquals("{-32768..32767}", LongRangeSet.fromType(PsiType.SHORT).toString());
-    assertEquals("{-2147483648..2147483647}", LongRangeSet.fromType(PsiType.INT).toString());
-    assertEquals("{0..2147483647}", LongRangeSet.indexRange().toString());
-    assertEquals("{-9223372036854775808..9223372036854775807}", LongRangeSet.fromType(PsiType.LONG).toString());
+    assertNull(fromType(PsiType.FLOAT));
+    assertNull(fromType(PsiType.NULL));
+    assertEquals("{-128..127}", fromType(PsiType.BYTE).toString());
+    assertEquals("{0..65535}", fromType(PsiType.CHAR).toString());
+    assertEquals("{-32768..32767}", fromType(PsiType.SHORT).toString());
+    assertEquals("{-2147483648..2147483647}", fromType(PsiType.INT).toString());
+    assertEquals("{0..2147483647}", indexRange().toString());
+    assertEquals("{-9223372036854775808..9223372036854775807}", fromType(PsiType.LONG).toString());
   }
 
   @Test
   public void testEquals() {
-    assertEquals(LongRangeSet.empty(), LongRangeSet.empty());
+    assertEquals(empty(), empty());
     assertEquals(point(10), point(10));
     assertNotEquals(point(10), point(11));
     assertEquals(point(10), range(10, 10));
@@ -63,10 +63,10 @@ public class LongRangeSetTest {
 
   @Test
   public void testDiff() {
-    assertEquals(LongRangeSet.empty(), LongRangeSet.empty().subtract(point(10)));
-    assertEquals(point(10), point(10).subtract(LongRangeSet.empty()));
+    assertEquals(empty(), empty().subtract(point(10)));
+    assertEquals(point(10), point(10).subtract(empty()));
     assertEquals(point(10), point(10).subtract(point(11)));
-    assertEquals(LongRangeSet.empty(), point(10).subtract(point(10)));
+    assertEquals(empty(), point(10).subtract(point(10)));
     assertEquals(point(10), point(10).subtract(range(15, 20)));
     assertEquals(point(10), point(10).subtract(range(-10, -5)));
     assertTrue(point(10).subtract(range(10, 20)).isEmpty());
@@ -85,7 +85,7 @@ public class LongRangeSetTest {
     assertEquals("{9223372036854775807}", fullRange.ge(Long.MAX_VALUE).toString());
     assertEquals(fullRange, fullRange.ge(Long.MIN_VALUE));
     assertTrue(fullRange.gt(Long.MAX_VALUE).isEmpty());
-    assertEquals(LongRangeSet.indexRange(), LongRangeSet.fromType(PsiType.INT).gt(-1));
+    assertEquals(indexRange(), fromType(PsiType.INT).gt(-1));
     assertTrue(fullRange.subtract(fullRange).isEmpty());
 
     assertEquals(point(10), fullRange.eq(10));
@@ -116,26 +116,26 @@ public class LongRangeSetTest {
   @Test
   public void testHash() {
     HashMap<LongRangeSet, String> map = new HashMap<>();
-    map.put(LongRangeSet.empty(), "empty");
+    map.put(empty(), "empty");
     map.put(point(10), "10");
     map.put(range(10, 10), "10-10");
     map.put(range(10, 11), "10-11");
     map.put(range(10, 12), "10-12");
-    LongRangeSet longNotChar = LongRangeSet.fromType(PsiType.LONG).subtract(LongRangeSet.fromType(PsiType.CHAR));
+    LongRangeSet longNotChar = fromType(PsiType.LONG).subtract(fromType(PsiType.CHAR));
     map.put(longNotChar, "longNotChar");
 
-    assertEquals("empty", map.get(LongRangeSet.empty()));
+    assertEquals("empty", map.get(empty()));
     assertEquals("10-10", map.get(point(10)));
     assertEquals("10-11", map.get(range(10, 11)));
     assertEquals("10-12", map.get(range(10, 12)));
     assertNull(map.get(range(11, 11)));
-    assertEquals("longNotChar", map.get(LongRangeSet.fromType(PsiType.LONG).subtract(LongRangeSet.fromType(PsiType.CHAR))));
+    assertEquals("longNotChar", map.get(fromType(PsiType.LONG).subtract(fromType(PsiType.CHAR))));
   }
 
   @Test
   public void testIntersects() {
-    assertFalse(LongRangeSet.empty().intersects(LongRangeSet.fromType(PsiType.LONG)));
-    assertTrue(point(Long.MIN_VALUE).intersects(LongRangeSet.fromType(PsiType.LONG)));
+    assertFalse(empty().intersects(fromType(PsiType.LONG)));
+    assertTrue(point(Long.MIN_VALUE).intersects(fromType(PsiType.LONG)));
     assertFalse(point(10).intersects(point(11)));
     assertTrue(point(10).intersects(point(10)));
 
@@ -158,7 +158,7 @@ public class LongRangeSetTest {
     LongRangeSet rangeSet = range1020.subtract(range(12, 13)).subtract(range(17, 18));
     assertFalse(rangeSet.intersects(point(12)));
     assertFalse(point(12).intersects(rangeSet));
-    assertFalse(rangeSet.intersects(LongRangeSet.empty()));
+    assertFalse(rangeSet.intersects(empty()));
     assertFalse(rangeSet.intersects(range(12, 13)));
     assertFalse(range(12, 13).intersects(rangeSet));
     assertFalse(rangeSet.intersects(range(0, 9)));
@@ -184,7 +184,7 @@ public class LongRangeSetTest {
     assertEquals("{-1000..-501, -99..99, 501..1000}", rangeSet.toString());
     assertEquals(point(99), rangeSet.intersect(point(99)));
     assertTrue(rangeSet.intersect(point(100)).isEmpty());
-    assertEquals("{0..99, 501..1000}", rangeSet.intersect(LongRangeSet.indexRange()).toString());
+    assertEquals("{0..99, 501..1000}", rangeSet.intersect(indexRange()).toString());
   }
 
   @Test
@@ -205,8 +205,8 @@ public class LongRangeSetTest {
         assertTrue(message, intersection.min() >= Math.max(left.min(), right.min()));
         assertTrue(message, intersection.max() <= Math.min(left.max(), right.max()));
       }
-      assertEquals(message, intersection, right.subtract(LongRangeSet.fromType(PsiType.LONG).subtract(left)));
-      assertEquals(message, intersection, left.subtract(LongRangeSet.fromType(PsiType.LONG).subtract(right)));
+      assertEquals(message, intersection, right.subtract(fromType(PsiType.LONG).subtract(left)));
+      assertEquals(message, intersection, left.subtract(fromType(PsiType.LONG).subtract(right)));
       switch (r.nextInt(3)) {
         case 0:
           data[idx] = lDiff;
@@ -223,12 +223,12 @@ public class LongRangeSetTest {
 
   @Test
   public void testFromConstant() {
-    assertEquals("{0}", LongRangeSet.fromConstant(0).toString());
-    assertEquals("{0}", LongRangeSet.fromConstant(0L).toString());
-    assertEquals("{1}", LongRangeSet.fromConstant((byte)1).toString());
-    assertEquals("{97}", LongRangeSet.fromConstant('a').toString());
-    assertNull(LongRangeSet.fromConstant(null));
-    assertNull(LongRangeSet.fromConstant(1.0));
+    assertEquals("{0}", fromConstant(0).toString());
+    assertEquals("{0}", fromConstant(0L).toString());
+    assertEquals("{1}", fromConstant((byte)1).toString());
+    assertEquals("{97}", fromConstant('a').toString());
+    assertNull(fromConstant(null));
+    assertNull(fromConstant(1.0));
   }
 
   @Test

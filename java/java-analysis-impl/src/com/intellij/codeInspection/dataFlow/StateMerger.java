@@ -249,7 +249,7 @@ class StateMerger {
     }
     if (states.size() <= MAX_RANGE_STATES || ranges.isEmpty()) return null;
     // If there are too many states, try to drop range information from some variable
-    DfaVariableValue lastVar = Collections.max(ranges.keySet(), Comparator.comparing(DfaVariableValue::getID));
+    DfaVariableValue lastVar = Collections.max(ranges.keySet(), Comparator.comparingInt(DfaVariableValue::getID));
     for (DfaMemoryStateImpl state : states) {
       state.setRange(lastVar, null);
     }
