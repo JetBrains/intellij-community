@@ -94,22 +94,24 @@ public class BeanBinding extends NotNullDeserializeBinding {
         continue;
       }
 
-      if (filter != null) {
-        if (filter instanceof SkipDefaultsSerializationFilter) {
-          if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
+      Property property = accessor.getAnnotation(Property.class);
+      if (property == null || !property.alwaysWrite()) {
+        if (filter != null) {
+          if (filter instanceof SkipDefaultsSerializationFilter) {
+            if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
+              continue;
+            }
+          }
+          else if (!filter.accepts(accessor, o)) {
             continue;
           }
         }
-        else if (!filter.accepts(accessor, o)) {
+
+        //todo: optimize. Cache it.
+        if (property != null && property.filter() != SerializationFilter.class &&
+            !ReflectionUtil.newInstance(property.filter()).accepts(accessor, o)) {
           continue;
         }
-      }
-
-      //todo: optimize. Cache it.
-      Property property = accessor.getAnnotation(Property.class);
-      if (property != null && property.filter() != SerializationFilter.class &&
-          !ReflectionUtil.newInstance(property.filter()).accepts(accessor, o)) {
-        continue;
       }
 
       if (element == null) {
