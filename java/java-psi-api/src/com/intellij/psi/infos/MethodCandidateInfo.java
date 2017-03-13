@@ -110,8 +110,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevel() {
     if (myPertinentApplicabilityLevel == 0) {
-      myPertinentApplicabilityLevel = getPertinentApplicabilityLevelInner();
-      myPertinentApplicabilityLevel = pullInferenceErrorMessagesFromSubexpressions();
+      myPertinentApplicabilityLevel = pullInferenceErrorMessagesFromSubexpressions(getPertinentApplicabilityLevelInner());
     }
     return myPertinentApplicabilityLevel;
   }
@@ -119,6 +118,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   /**
    * 15.12.2.2 Identify Matching Arity Methods Applicable by Strict Invocation
    */
+  @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevelInner() {
     if (myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
       return getApplicabilityLevel();
@@ -474,9 +474,9 @@ public class MethodCandidateInfo extends CandidateInfo{
     return errorMessage;
   }
 
-  private int pullInferenceErrorMessagesFromSubexpressions() {
-    if (myArgumentList instanceof PsiExpressionList &&
-        (myPertinentApplicabilityLevel == ApplicabilityLevel.NOT_APPLICABLE || !isToInferApplicability())) {
+  @ApplicabilityLevelConstant
+  private int pullInferenceErrorMessagesFromSubexpressions(@ApplicabilityLevelConstant int level) {
+    if (myArgumentList instanceof PsiExpressionList && level == ApplicabilityLevel.NOT_APPLICABLE) {
       String errorMessage = null;
       for (PsiExpression expression : ((PsiExpressionList)myArgumentList).getExpressions()) {
         final String message = clearErrorMessageInSubexpressions(expression);
@@ -486,10 +486,9 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
       if (errorMessage != null) {
         setInferenceError(errorMessage);
-        return ApplicabilityLevel.NOT_APPLICABLE;
       }
     }
-    return myPertinentApplicabilityLevel;
+    return level;
   }
 
   private static String clearErrorMessageInSubexpressions(PsiExpression expression) {
