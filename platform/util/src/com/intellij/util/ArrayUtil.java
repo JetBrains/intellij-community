@@ -960,10 +960,12 @@ public class ArrayUtil extends ArrayUtilRt {
     int n = time.length;
     Arrays.sort(time);
     long total = 0;
-    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
+    int start = n / 2 - n / part / 2;
+    int end = n / 2 + n / part / 2;
+    for (int i = start; i < end; i++) {
       total += time[i];
     }
-    int middlePartLength = n / part;
+    int middlePartLength = end - start;
     return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
 
@@ -972,10 +974,12 @@ public class ArrayUtil extends ArrayUtilRt {
     int n = time.length;
     Arrays.sort(time);
     long total = 0;
-    for (int i= n /2- n / part /2; i< n /2+ n / part /2; i++) {
+    int start = n / 2 - n / part / 2;
+    int end = n / 2 + n / part / 2;
+    for (int i = start; i < end; i++) {
       total += time[i];
     }
-    int middlePartLength = n / part;
+    int middlePartLength = end - start;
     return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
 
