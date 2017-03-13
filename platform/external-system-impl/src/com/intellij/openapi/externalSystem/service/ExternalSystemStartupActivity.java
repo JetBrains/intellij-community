@@ -52,7 +52,8 @@ public class ExternalSystemStartupActivity implements StartupActivity {
         for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
           final boolean isNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
           if (isNewProject) {
-            ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, manager.getSystemId()));
+            ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, manager.getSystemId())
+                                                 .createDirectoriesForEmptyContentRoots());
           }
         }
       }

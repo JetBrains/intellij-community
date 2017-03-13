@@ -46,6 +46,8 @@ public interface ImportSpec {
 
   boolean isPreviewMode();
 
+  boolean shouldCreateDirectoriesForEmptyContentRoots();
+
   boolean isReportRefreshError();
 
   @Nullable

@@ -35,7 +35,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
-import com.intellij.openapi.externalSystem.importing.ImportSpecImpl;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -52,6 +51,7 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolv
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
+import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
@@ -238,7 +238,7 @@ public class ExternalSystemUtil {
   /**
    * Asks to refresh all external projects of the target external system linked to the given ide project based on provided spec
    *
-   * @param specBuilder import specification builder
+   * @param spec import specification
    */
   public static void refreshProjects(@NotNull final ImportSpec spec) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(spec.getExternalSystemId());
@@ -273,8 +273,7 @@ public class ExternalSystemUtil {
         .clearNotifications(null, NotificationSource.PROJECT_SYNC, spec.getExternalSystemId());
 
       for (String path : toRefresh) {
-        refreshProject(
-          spec.getProject(), spec.getExternalSystemId(), path, callback, false, spec.getProgressExecutionMode());
+        refreshProject(path, new ImportSpecBuilder(spec).callback(callback).build());
       }
     }
   }
@@ -394,7 +393,9 @@ public class ExternalSystemUtil {
 
         ExternalSystemProcessingManager processingManager = ServiceManager.getService(ExternalSystemProcessingManager.class);
         if (processingManager.findTask(ExternalSystemTaskType.RESOLVE_PROJECT, externalSystemId, externalProjectPath) != null) {
-          callback.onFailure(ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
+          if (callback != null) {
+            callback.onFailure(ExternalSystemBundle.message("error.resolve.already.running", externalProjectPath), null);
+          }
           return;
         }
 
@@ -413,7 +414,13 @@ public class ExternalSystemUtil {
 
         final Throwable error = myTask.getError();
         if (error == null) {
-          callback.onSuccess(myTask.getExternalProject());
+          if (callback != null) {
+            DataNode<ProjectData> externalProject = myTask.getExternalProject();
+            if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
+              externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
+            }
+            callback.onSuccess(externalProject);
+          }
           if (!isPreviewMode) {
             externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);
           }
@@ -430,7 +437,9 @@ public class ExternalSystemUtil {
           );
         }
 
-        callback.onFailure(message, extractDetails(error));
+        if (callback != null) {
+          callback.onFailure(message, extractDetails(error));
+        }
 
         ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
         if (manager == null) {
