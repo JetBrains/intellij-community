@@ -102,8 +102,11 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
         PsiExpression lastArg = args[args.length - 1];
         PsiParameter lastParameter = parameters[args.length - 1];
+        if (!lastParameter.isVarArgs()) {
+          return;
+        }
         PsiType lastParamType = lastParameter.getType();
-        LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
+        LOG.assertTrue(lastParamType instanceof PsiEllipsisType, lastParamType);
         if (!(lastArg instanceof PsiNewExpression)) {
           return;
         }
