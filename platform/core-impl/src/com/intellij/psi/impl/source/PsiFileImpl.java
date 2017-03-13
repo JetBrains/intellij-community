@@ -716,7 +716,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       // now stubs can be safely published
       for (PsiFileImpl eachPsiRoot : bindings.keySet()) {
-        eachPsiRoot.updateTrees(eachPsiRoot.myTrees.withExclusiveStub(bindings.get(eachPsiRoot)));
+        eachPsiRoot.updateTrees(eachPsiRoot.myTrees.withExclusiveStub(bindings.get(eachPsiRoot), bindings.keySet()));
       }
       return result;
     }
