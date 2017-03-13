@@ -42,7 +42,7 @@ public class FilterResolver implements ValuesOrderResolver {
     for (final int afterTime : afterTimes) {
       final TraceElement afterElement = after.get(afterTime);
       final Value afterValue = afterElement.getValue();
-      while (true) {
+      while (beforeIndex < beforeTimes.length) {
         final TraceElement beforeElement = before.get(beforeTimes[beforeIndex]);
         if (beforeElement.getValue().equals(afterValue)) {
           forward.put(beforeElement, Collections.singletonList(afterElement));
