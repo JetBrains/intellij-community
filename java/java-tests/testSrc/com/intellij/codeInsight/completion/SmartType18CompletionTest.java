@@ -156,6 +156,10 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testStaticMethodReference() { doTest(false); }
+  public void testStaticMethodReferenceInContextWithTypeArgs() {
+    configureByTestName();
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
 
   public void testOuterMethodReference() { doTest(true); }
   public void testNoAnonymousOuterMethodReference() { doAntiTest(); }

@@ -985,8 +985,8 @@ public class ExpectedTypesProvider {
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
-          substitutor = MethodCandidateInfo.ourOverloadGuard
-            .doPreventingRecursion(argumentList, false, () -> info.inferTypeArguments(policy, args, true));
+          substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false,
+                                                                                   () -> info.inferSubstitutorFromArgs(policy, args));
           if (!info.isStaticsScopeCorrect() && !method.hasModifierProperty(PsiModifier.STATIC)) continue;
         }
         else {
@@ -999,8 +999,7 @@ public class ExpectedTypesProvider {
 
         if (leftArgs != null && candidateInfo instanceof MethodCandidateInfo) {
           substitutor = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(argumentList, false,
-                                                                                   () -> ((MethodCandidateInfo)candidateInfo)
-                                                                                     .inferTypeArguments(policy, leftArgs, true));
+                                                                                   () -> ((MethodCandidateInfo)candidateInfo).inferSubstitutorFromArgs(policy, leftArgs));
           if (substitutor != null) {
             inferMethodCallArgumentTypes(argument, forCompletion, leftArgs, index, method, substitutor, array);
           }
