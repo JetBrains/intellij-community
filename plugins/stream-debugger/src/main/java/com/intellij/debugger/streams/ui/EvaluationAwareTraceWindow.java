@@ -160,11 +160,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   }
 
   private static class MyPlaceholder extends JPanel {
-    private static final JComponent EMPTY_CONTENT = new JBLabel("Evaluation in process", SwingConstants.CENTER);
-
     MyPlaceholder() {
       super(new BorderLayout());
-      add(EMPTY_CONTENT, BorderLayout.CENTER);
+      add(new JBLabel("Evaluation in process", SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
     void setContent(@NotNull JComponent view) {
