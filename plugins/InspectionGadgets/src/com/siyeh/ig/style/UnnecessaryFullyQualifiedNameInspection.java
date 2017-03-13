@@ -48,7 +48,7 @@ import java.util.List;
  */
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @SuppressWarnings("PublicField")
+  @SuppressWarnings({"PublicField", "unused"})
   public boolean m_ignoreJavadoc; // left here to prevent changes to project files.
 
   @Override
@@ -179,11 +179,6 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
   }
 
   @Override
-  public boolean shouldInspect(PsiFile file) {
-    return !"module-info.java".equals(file.getName());
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new UnnecessaryFullyQualifiedNameVisitor();
   }
@@ -275,16 +270,16 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         rParent = rParent.getParent();
       }
     }
-  }
 
-  private static boolean acceptFqnInJavadoc(PsiJavaFile javaFile, String fullyQualifiedName, CodeStyleSettings styleSettings) {
-    if ("package-info.java".equals(javaFile.getName())) {
-      return true;
+    private static boolean acceptFqnInJavadoc(PsiJavaFile javaFile, String fullyQualifiedName, CodeStyleSettings styleSettings) {
+      if ("package-info.java".equals(javaFile.getName())) {
+        return true;
+      }
+      final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+      if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
+        return !ImportHelper.isAlreadyImported(javaFile, fullyQualifiedName);
+      }
+      return javaSettings.useFqNamesInJavadocAlways();
     }
-    final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
-    if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
-      return !ImportHelper.isAlreadyImported(javaFile, fullyQualifiedName);
-    }
-    return javaSettings.useFqNamesInJavadocAlways();
   }
 }
