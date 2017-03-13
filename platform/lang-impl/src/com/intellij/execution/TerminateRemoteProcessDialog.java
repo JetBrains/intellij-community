@@ -25,13 +25,8 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,12 +70,11 @@ public class TerminateRemoteProcessDialog {
     };
 
     AtomicBoolean alreadyGone = new AtomicBoolean(false);
-    Window projectWindow = WindowManager.getInstance().suggestParentWindow(project);
+    Runnable dialogRemover = Messages.createMessageDialogRemover(project);
     ProcessAdapter listener = new ProcessAdapter() {
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
         alreadyGone.set(true);
-        UIUtil.invokeLaterIfNeeded(() -> makeCurrentMessageDialogGoAway(
-          projectWindow != null ? projectWindow.getOwnedWindows() : Window.getWindows()));
+        dialogRemover.run();
       }
     };
     processHandler.addProcessListener(listener);
@@ -99,17 +93,6 @@ public class TerminateRemoteProcessDialog {
       return GeneralSettings.ProcessCloseConfirmation.DISCONNECT;
     }
     return getConfirmation(exitCode, canDisconnect);
-  }
-
-  private static void makeCurrentMessageDialogGoAway(@NotNull Window[] checkWindows) {
-    for (Window w : checkWindows) {
-      JDialog dialog = w instanceof JDialog ? (JDialog)w : null;
-      if (dialog == null || !dialog.isModal()) continue;
-      JButton cancelButton = UIUtil.uiTraverser(dialog.getRootPane()).filter(JButton.class)
-        .filter(b -> CommonBundle.getCancelButtonText().equals(b.getText()))
-        .first();
-      if (cancelButton != null) cancelButton.doClick();
-    }
   }
 
   private static GeneralSettings.ProcessCloseConfirmation getConfirmation(int button, boolean withDisconnect) {
