@@ -253,7 +253,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           myCancellationMap.putValue(resolverCtx.getExternalSystemTaskId(), new UnsupportedCancellationToken());
         }
       }
-      resolverCtx.getListener().onStart(resolverCtx.getExternalSystemTaskId());
       allModels = buildActionExecutor.run();
       if (allModels == null) {
         throw new IllegalStateException("Unable to get project model for the project: " + resolverCtx.getProjectPath());

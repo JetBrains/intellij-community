@@ -83,7 +83,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
       (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
     ExternalSystemTaskId id = getId();
-    progressNotificationManager.onQueued(id, myProjectPath);
+    progressNotificationManager.onStart(id, myProjectPath);
     try {
       DataNode<ProjectData> project = resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings);
       if (project != null) {

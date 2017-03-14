@@ -48,9 +48,10 @@ public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionS
                            @NotNull String projectPath,
                            @Nullable S settings,
                            @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException {
-    myProgressManager.onQueued(id, projectPath);
+    myProgressManager.onStart(id, projectPath);
     try {
       getDelegate().executeTasks(id, taskNames, projectPath, settings, debuggerSetup);
+      myProgressManager.onSuccess(id);
     }
     catch (ExternalSystemException e) {
       myProgressManager.onFailure(id, e);
