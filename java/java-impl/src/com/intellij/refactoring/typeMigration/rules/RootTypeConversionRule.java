@@ -119,6 +119,9 @@ public class RootTypeConversionRule extends TypeConversionRule {
 
                   final PsiType migrationType = methodTypeParamsSubstitutor.substitute(type);
                   if (!originalType.equals(migrationType) && !areParametersAssignable(migrationType, i, actualParams)) {
+                    if (migrationType instanceof PsiEllipsisType && actualParams.length != migrationParams.length) {
+                      return null;
+                    }
                     labeler.migrateExpressionType(actualParams[i], migrationType, context, false, true);
                   }
                 }
