@@ -64,7 +64,6 @@ import org.fest.swing.timing.Timeout;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +82,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
-import static com.intellij.openapi.util.text.StringUtil.first;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -120,8 +118,6 @@ GuiTestUtil {
   private static final EventQueue SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().getSystemEventQueue();
   private static final File TMP_PROJECT_ROOT = createTempProjectCreationDir();
 
-  // Called by MethodInvoker via reflection
-  @SuppressWarnings("unused")
   public static void failIfIdeHasFatalErrors() {
     final MessagePool messagePool = MessagePool.getInstance();
     List<AbstractMessage> fatalErrors = messagePool.getFatalErrors(true, true);
@@ -191,7 +187,7 @@ GuiTestUtil {
         return path;
       }
     }
-    System.out.println("Please specify " + description + ", using system property " + quote(propertyName));
+    LOG.warn("Please specify " + description + ", using system property " + quote(propertyName));
     return null;
   }
 
@@ -338,7 +334,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -352,7 +348,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -366,7 +362,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Skip All and Set Defaults").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -670,7 +666,7 @@ GuiTestUtil {
   }
 
   public static void skip(@NotNull String testName) {
-    System.out.println("Skipping test '" + testName + "'");
+    LOG.info("Skipping test '" + testName + "'");
   }
 
   /**
