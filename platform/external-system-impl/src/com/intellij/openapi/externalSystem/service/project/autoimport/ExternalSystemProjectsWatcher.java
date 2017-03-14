@@ -404,7 +404,8 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
                           String projectPath) {
       super(systemId.getReadableName() + " Import",
             ExternalSystemBundle.message("import.needed", systemId.getReadableName()),
-            "<a href='reimport'>" + ExternalSystemBundle.message("import.importChanged") + "</a> " +
+            "<a href='reimport'>" + ExternalSystemBundle.message("import.importChanged") + "</a>" +
+            " &nbsp;&nbsp;" +
             "<a href='autoImport'>" + ExternalSystemBundle.message("import.enableAutoImport") + "</a>",
             NotificationType.INFORMATION, null);
 
