@@ -118,7 +118,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         Process process = new ProcessBuilder(javaExe, "-version").redirectErrorStream(true).start();
         VersionOutputReader reader = new VersionOutputReader(process.getInputStream(), runner);
         try {
-          process.waitFor();
+          reader.waitFor();
         }
         catch (InterruptedException e) {
           LOG.info(e);
