@@ -585,6 +585,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane == null) return false;
     newPane.setSubId(subId);
     showPane(newPane);
+    SelectInTarget target = mySelectInTargets.get(id);
+    if (target instanceof ProjectViewSelectInTarget) {
+      ((ProjectViewSelectInTarget)target).setSubId(subId);
+    }
     if (isAutoscrollFromSource(id)) {
       myAutoScrollFromSourceHandler.scrollFromSource();
     }
