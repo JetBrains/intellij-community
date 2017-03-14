@@ -31,7 +31,10 @@ public class StreamChainBuilder {
   private static final PsiElementVisitor STREAM_CALL_VISITOR = new JavaRecursiveElementWalkingVisitor() {
     @Override
     public void visitLambdaExpression(PsiLambdaExpression expression) {
-      // ignore lambda calls
+      // ignore lambda calls if stream call was found
+      if (SEARCH_RESULT.get()[0] == null) {
+        super.visitLambdaExpression(expression);
+      }
     }
 
     @Override
