@@ -178,7 +178,8 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     runActivities(myDumbAwarePostStartupActivities);
 
-    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+    DumbService dumbService = DumbService.getInstance(myProject);
+    dumbService.runWhenSmart(new Runnable() {
       @Override
       public void run() {
         app.assertIsDispatchThread();
@@ -186,12 +187,16 @@ public class StartupManagerImpl extends StartupManagerEx {
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
         runActivities(myDumbAwarePostStartupActivities);
 
-        List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
-        if (!dumbUnaware.isEmpty()) {
-          dumbUnaware.forEach(StartupManagerImpl.this::queueSmartModeActivity);
+        while (true) {
+          List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
+          if (dumbUnaware.isEmpty()) break;
 
-          // return here later to set myPostStartupActivitiesPassed
-          DumbService.getInstance(myProject).runWhenSmart(this);
+          dumbUnaware.forEach(StartupManagerImpl.this::queueSmartModeActivity);
+        }
+
+        if (dumbService.isDumb()) {
+          // return here later to process newly submitted activities (if any) and set myPostStartupActivitiesPassed
+          dumbService.runWhenSmart(this);
         }
         else {
           myPostStartupActivitiesPassed = true;
