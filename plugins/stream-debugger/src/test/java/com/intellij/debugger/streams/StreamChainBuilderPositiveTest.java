@@ -26,17 +26,14 @@ public class StreamChainBuilderPositiveTest extends StreamChainBuilderFixtureTes
   @NotNull
   @Override
   protected String getRelativeTestPath() {
-    return "chain/positive";
+    return "chain/positive/";
   }
 
   private void doTest() throws Exception {
-    final String name = getTestName(false) + ".java";
-    configureByFileWithMarker(getTestDataPath() + File.separator + name, "");
-
+    final String name = File.separator + getTestName(false) + ".java";
+    configureByFile(name);
     final PsiFile file = getFile();
-
-    final int offset = 335;
-    System.out.println(offset);
+    final int offset = getEditor().getCaretModel().getCurrentCaret().getOffset();
     final PsiElement elementAtCaret = DebuggerUtilsEx.findElementAt(file, offset);
     assertNotNull(elementAtCaret);
     final StreamChain chain = StreamChainBuilder.tryBuildChain(elementAtCaret);
