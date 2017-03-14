@@ -56,10 +56,6 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>

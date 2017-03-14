@@ -16,11 +16,6 @@
 package com.intellij.compiler.classFilesIndex.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
-import org.jetbrains.jps.classFilesIndex.AsmUtil;
-import org.jetbrains.jps.classFilesIndex.indexer.impl.EnumeratedMethodIncompleteSignature;
-
-import java.util.Comparator;
 
 /**
  * @author Dmitry Batkovich
@@ -36,15 +31,14 @@ public class MethodIncompleteSignature {
   private final String myName;
   private final boolean myStatic;
 
-  private MethodIncompleteSignature(@NotNull final String owner, @NotNull final String returnType, @NotNull final String name, final boolean aStatic) {
+  public MethodIncompleteSignature(@NotNull final String owner,
+                                   @NotNull final String returnType,
+                                   @NotNull final String name,
+                                   final boolean aStatic) {
     myOwner = owner;
     myReturnType = returnType;
     myName = name;
     myStatic = aStatic;
-  }
-
-  public static MethodIncompleteSignature denumerated(final EnumeratedMethodIncompleteSignature sign, final  String returnType, final Mappings mappings) {
-    return new MethodIncompleteSignature(AsmUtil.getQualifiedClassName(mappings.valueOf(sign.getOwner())), returnType, mappings.valueOf(sign.getName()), sign.isStatic());
   }
 
   @NotNull

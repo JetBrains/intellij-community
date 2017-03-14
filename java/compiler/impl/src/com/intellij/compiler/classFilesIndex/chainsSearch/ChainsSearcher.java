@@ -15,10 +15,10 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
 import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
-import com.intellij.compiler.classFilesIndex.impl.MethodsUsageIndexReader;
 import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,7 +27,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +49,7 @@ public final class ChainsSearcher {
                                           final Set<String> contextQNames,
                                           final int maxResultSize,
                                           final ChainCompletionContext context,
-                                          final MethodsUsageIndexReader methodsUsageIndexReader) {
+                                          final CompilerReferenceService methodsUsageIndexReader) {
     final SearchInitializer initializer = createInitializer(targetType, context.getExcludedQNames(), methodsUsageIndexReader, context);
     if (initializer == null) {
       return Collections.emptyList();
@@ -67,14 +66,14 @@ public final class ChainsSearcher {
   @Nullable
   private static SearchInitializer createInitializer(final TargetType target,
                                                      final Set<String> excludedParamsTypesQNames,
-                                                     final MethodsUsageIndexReader methodsUsageIndexReader,
+                                                     final CompilerReferenceService methodsUsageIndexReader,
                                                      final ChainCompletionContext context) {
     final SortedSet<UsageIndexValue> methods = methodsUsageIndexReader.getMethods(target.getClassQName());
     return new SearchInitializer(methods, target.getClassQName(), excludedParamsTypesQNames, context);
   }
 
   @NotNull
-  private static List<MethodsChain> search(final MethodsUsageIndexReader indexReader,
+  private static List<MethodsChain> search(final CompilerReferenceService indexReader,
                                            final SearchInitializer initializer,
                                            final Set<String> toSet,
                                            final int pathMaximalLength,

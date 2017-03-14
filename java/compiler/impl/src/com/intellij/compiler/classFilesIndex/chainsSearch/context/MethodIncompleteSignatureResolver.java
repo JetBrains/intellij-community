@@ -21,7 +21,6 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
-import org.jetbrains.jps.classFilesIndex.AsmUtil;
 
 import java.util.*;
 
@@ -52,7 +51,7 @@ final class MethodIncompleteSignatureResolver {
     if (MethodIncompleteSignature.CONSTRUCTOR_METHOD_NAME.equals(signature.getName())) {
       return PsiMethod.EMPTY_ARRAY;
     }
-    final PsiClass aClass = javaPsiFacade.findClass(AsmUtil.getQualifiedClassName(signature.getOwner()), scope);
+    final PsiClass aClass = javaPsiFacade.findClass(signature.getOwner(), scope);
     if (aClass == null) {
       return PsiMethod.EMPTY_ARRAY;
     }

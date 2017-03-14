@@ -2,15 +2,12 @@ package com.intellij.compiler.classFilesIndex.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeature;
-import com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexFeaturesHolder;
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.classFilesIndex.chainsSearch.*;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextUtil;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
-import com.intellij.compiler.classFilesIndex.impl.MethodsUsageIndexReader;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -38,15 +35,6 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   private final static int MAX_SEARCH_RESULT_SIZE = 5;
   private final static int MAX_CHAIN_SIZE = 4;
   private final static int FILTER_RATIO = 10;
-
-  @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
-    if (parameters.getInvocationCount() >= INVOCATIONS_THRESHOLD &&
-        ClassFilesIndexFeaturesHolder.getInstance(parameters.getPosition().getProject())
-          .enableFeatureIfNeed(ClassFilesIndexFeature.METHOD_CHAINS_COMPLETION)) {
-      super.fillCompletionVariants(parameters, result);
-    }
-  }
 
   @SuppressWarnings("unchecked")
   public MethodsChainsCompletionContributor() {
@@ -95,7 +83,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
                                                       final Set<String> contextRelevantTypes,
                                                       final ChainCompletionContext completionContext) {
     final Project project = completionContext.getProject();
-    final MethodsUsageIndexReader methodsUsageIndexReader = MethodsUsageIndexReader.getInstance(project);
+    final CompilerReferenceService methodsUsageIndexReader = CompilerReferenceService.getInstance(project);
     final List<MethodsChain> searchResult =
       searchChains(target, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
     if (searchResult.size() < MAX_SEARCH_RESULT_SIZE) {
@@ -207,7 +195,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
                                                  final int maxResultSize,
                                                  final int maxChainSize,
                                                  final ChainCompletionContext context,
-                                                 final MethodsUsageIndexReader methodsUsageIndexReader) {
+                                                 final CompilerReferenceService methodsUsageIndexReader) {
     return ChainsSearcher.search(maxChainSize, target, contextVarsQNames, maxResultSize, context, methodsUsageIndexReader);
   }
 }

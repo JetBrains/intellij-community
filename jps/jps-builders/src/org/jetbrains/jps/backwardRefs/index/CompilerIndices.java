@@ -15,9 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs.index;
 
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexExtension;
@@ -28,13 +26,14 @@ import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.LightRefDescriptor;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class CompilerIndices {
   //TODO manage version separately
@@ -43,9 +42,13 @@ public class CompilerIndices {
   public final static ID<LightRef, Integer> BACK_USAGES = ID.create("back.refs");
   public final static ID<LightRef, Collection<LightRef>> BACK_HIERARCHY = ID.create("back.hierarchy");
   public final static ID<LightRef, Void> BACK_CLASS_DEF = ID.create("back.class.def");
+  public final static ID<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = ID.create("back.member.sign");
 
-  public static List<IndexExtension<LightRef, ?, CompiledFileData>> getIndices() {
-    return ContainerUtil.list(createBackwardClassDefinitionExtension(), createBackwardUsagesExtension(), createBackwardHierarchyExtension());
+  public static List<IndexExtension<?, ?, CompiledFileData>> getIndices() {
+    return Arrays.asList(createBackwardClassDefinitionExtension(),
+                         createBackwardUsagesExtension(),
+                         createBackwardHierarchyExtension(),
+                         createBackwardSignatureExtension());
   }
 
   private static IndexExtension<LightRef, Integer, CompiledFileData> createBackwardUsagesExtension() {
@@ -62,13 +65,7 @@ public class CompilerIndices {
 
       @NotNull
       public DataIndexer<LightRef, Integer, CompiledFileData> getIndexer() {
-        return new DataIndexer<LightRef, Integer, CompiledFileData>() {
-          @NotNull
-          @Override
-          public Map<LightRef, Integer> map(@NotNull CompiledFileData inputData) {
-            return inputData.getReferences();
-          }
-        };
+        return CompiledFileData::getReferences;
       }
 
       @NotNull
@@ -113,13 +110,7 @@ public class CompilerIndices {
 
       @NotNull
       public DataIndexer<LightRef, Collection<LightRef>, CompiledFileData> getIndexer() {
-        return new DataIndexer<LightRef, Collection<LightRef>, CompiledFileData>() {
-          @NotNull
-          @Override
-          public Map<LightRef, Collection<LightRef>> map(@NotNull CompiledFileData inputData) {
-            return inputData.getBackwardHierarchy();
-          }
-        };
+        return CompiledFileData::getBackwardHierarchy;
       }
 
       @NotNull
@@ -129,27 +120,7 @@ public class CompilerIndices {
 
       @NotNull
       public DataExternalizer<Collection<LightRef>> getValueExternalizer() {
-        return new DataExternalizer<Collection<LightRef>>() {
-          @Override
-          public void save(@NotNull final DataOutput out, Collection<LightRef> value) throws IOException {
-            DataInputOutputUtil.writeSeq(out, value, new ThrowableConsumer<LightRef, IOException>() {
-              @Override
-              public void consume(LightRef lightRef) throws IOException {
-                LightRefDescriptor.INSTANCE.save(out, lightRef);
-              }
-            });
-          }
-
-          @Override
-          public Collection<LightRef> read(@NotNull final DataInput in) throws IOException {
-            return DataInputOutputUtil.readSeq(in, new ThrowableComputable<LightRef, IOException>() {
-              @Override
-              public LightRef compute() throws IOException {
-                return LightRefDescriptor.INSTANCE.read(in);
-              }
-            });
-          }
-        };
+        return createLightRefSeqExternalizer();
       }
     };
   }
@@ -168,13 +139,7 @@ public class CompilerIndices {
 
       @NotNull
       public DataIndexer<LightRef, Void, CompiledFileData> getIndexer() {
-        return new DataIndexer<LightRef, Void, CompiledFileData>() {
-          @NotNull
-          @Override
-          public Map<LightRef, Void> map(@NotNull CompiledFileData inputData) {
-            return inputData.getDefinitions();
-          }
-        };
+        return CompiledFileData::getDefinitions;
       }
 
       @NotNull
@@ -189,4 +154,76 @@ public class CompilerIndices {
     };
   }
 
+  private static IndexExtension<SignatureData, Collection<LightRef>, CompiledFileData> createBackwardSignatureExtension() {
+    return new IndexExtension<SignatureData, Collection<LightRef>, CompiledFileData>() {
+      @NotNull
+      @Override
+      public ID<SignatureData, Collection<LightRef>> getName() {
+        return BACK_MEMBER_SIGN;
+      }
+
+      @NotNull
+      @Override
+      public DataIndexer<SignatureData, Collection<LightRef>, CompiledFileData> getIndexer() {
+        return CompiledFileData::getSignatureData;
+      }
+
+      @NotNull
+      @Override
+      public KeyDescriptor<SignatureData> getKeyDescriptor() {
+        return createSignatureDataDescriptor();
+      }
+
+      @NotNull
+      @Override
+      public DataExternalizer<Collection<LightRef>> getValueExternalizer() {
+        return createLightRefSeqExternalizer();
+      }
+
+      @Override
+      public int getVersion() {
+        return VERSION;
+      }
+    };
+  }
+
+  @NotNull
+  private static DataExternalizer<Collection<LightRef>> createLightRefSeqExternalizer() {
+    return new DataExternalizer<Collection<LightRef>>() {
+      @Override
+      public void save(@NotNull final DataOutput out, Collection<LightRef> value) throws IOException {
+        DataInputOutputUtilRt.writeSeq(out, value, lightRef -> LightRefDescriptor.INSTANCE.save(out, lightRef));
+      }
+
+      @Override
+      public Collection<LightRef> read(@NotNull final DataInput in) throws IOException {
+        return DataInputOutputUtilRt.readSeq(in, () -> LightRefDescriptor.INSTANCE.read(in));
+      }
+    };
+  }
+
+  private static KeyDescriptor<SignatureData> createSignatureDataDescriptor() {
+    return new KeyDescriptor<SignatureData>() {
+      @Override
+      public int getHashCode(SignatureData value) {
+        return value.hashCode();
+      }
+
+      @Override
+      public boolean isEqual(SignatureData val1, SignatureData val2) {
+        return val1.equals(val2);
+      }
+
+      @Override
+      public void save(@NotNull DataOutput out, SignatureData value) throws IOException {
+        DataInputOutputUtil.writeINT(out, value.getRawReturnType());
+        out.writeBoolean(value.isStatic());
+      }
+
+      @Override
+      public SignatureData read(@NotNull DataInput in) throws IOException {
+        return new SignatureData(DataInputOutputUtil.readINT(in), in.readBoolean());
+      }
+    };
+  }
 }

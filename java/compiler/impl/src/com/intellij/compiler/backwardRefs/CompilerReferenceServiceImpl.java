@@ -20,12 +20,16 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilationStatusListener;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -47,6 +51,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
@@ -57,6 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 
 import java.io.IOException;
 import java.util.*;
@@ -158,6 +165,58 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   @Override
   public void projectClosed() {
     closeReaderIfNeed(false);
+  }
+
+  @Override
+  public TreeSet<UsageIndexValue> getMethods(String name) {
+    try {
+      myReadDataLock.lock();
+
+      if (myReader == null) return null;
+      JavaLightUsageAdapter adapter = new JavaLightUsageAdapter();
+      try {
+        final int type = adapter.findMembersForReturnType(name, myReader.getNameEnumerator());
+        return Stream.of(new SignatureData(type, true), new SignatureData(type, false)).flatMap(sd -> {
+          try {
+            List<LightRef> refs = new SmartList<>();
+            myReader.getIndex().get(CompilerIndices.BACK_MEMBER_SIGN).getData(sd).forEach((id, _refs) -> {
+              refs.addAll(_refs);
+              return true;
+            });
+            return refs.stream().map(x -> new Object() {
+              LightRef myRef = x;
+              SignatureData mySignatureData = sd;
+            });
+          }
+          catch (StorageException e) {
+            throw new RuntimeException(e);
+          }
+        }).map(ref -> {
+          int[] res = new int[]{0};
+          try {
+            myReader.getIndex().get(CompilerIndices.BACK_USAGES).getData(ref.myRef).forEach((id, c) -> {
+              res[0] += c;
+              return true;
+            });
+          }
+          catch (StorageException e) {
+            throw new RuntimeException(e);
+          }
+          if (!(ref.myRef instanceof LightRef.JavaLightMethodRef)) return null;
+          return new UsageIndexValue(adapter.denumerate((LightRef.JavaLightMethodRef)ref.myRef,
+                                                 ref.mySignatureData,
+                                                 myReader.getNameEnumerator()),
+                              res[0]);
+
+        }).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+      return null;//TODO
+    } finally {
+      myReadDataLock.unlock();
+    }
   }
 
   @Nullable

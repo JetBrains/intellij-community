@@ -138,6 +138,10 @@ class CompilerReferenceReader {
     return result[0];
   }
 
+  public CompilerBackwardReferenceIndex getIndex() {
+    return myIndex;
+  }
+
   static boolean exists(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
     if (buildDir == null || CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {

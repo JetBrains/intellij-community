@@ -17,6 +17,7 @@ package org.jetbrains.jps.backwardRefs.index;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.Collection;
 import java.util.Map;
@@ -25,13 +26,16 @@ public class CompiledFileData {
   private final Map<LightRef, Collection<LightRef>> myBackwardHierarchyMap;
   private final Map<LightRef, Integer> myReferences;
   private final Map<LightRef, Void> myDefinitions;
+  private final Map<SignatureData, Collection<LightRef>> mySignatureData;
 
   public CompiledFileData(@NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
                           @NotNull Map<LightRef, Integer> references,
-                          @NotNull Map<LightRef, Void> definitions) {
+                          @NotNull Map<LightRef, Void> definitions,
+                          @NotNull Map<SignatureData, Collection<LightRef>> signatureData) {
     myBackwardHierarchyMap = backwardHierarchyMap;
     myReferences = references;
     myDefinitions = definitions;
+    mySignatureData = signatureData;
   }
 
   @NotNull
@@ -47,5 +51,10 @@ public class CompiledFileData {
   @NotNull
   public Map<LightRef, Void> getDefinitions() {
     return myDefinitions;
+  }
+
+  @NotNull
+  public Map<SignatureData, Collection<LightRef>> getSignatureData() {
+    return mySignatureData;
   }
 }

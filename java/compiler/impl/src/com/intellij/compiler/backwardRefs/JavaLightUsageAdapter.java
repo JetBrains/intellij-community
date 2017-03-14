@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ReadAction;
@@ -32,6 +33,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -164,9 +166,22 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
     return ((PsiClass) candidate).isInheritor((PsiClass) baseClass, false);
   }
 
+  public int findMembersForReturnType(@NotNull String returnType, @NotNull NameEnumerator names) throws IOException {
+    return names.tryEnumerate(returnType);
+  }
+
   private static boolean mayBeVisibleOutsideOwnerFile(@NotNull PsiElement element) {
     if (!(element instanceof PsiModifierListOwner)) return true;
     if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)) return false;
     return true;
   }
+
+  public MethodIncompleteSignature denumerate(LightRef.JavaLightMethodRef ref,
+                                              SignatureData data,
+                                              NameEnumerator enumerator) {
+      return new MethodIncompleteSignature(enumerator.getName(ref.getOwner().getName()),
+                                           enumerator.getName(data.getRawReturnType()),
+                                           enumerator.getName(ref.getName()),
+                                           data.isStatic());
+    }
 }

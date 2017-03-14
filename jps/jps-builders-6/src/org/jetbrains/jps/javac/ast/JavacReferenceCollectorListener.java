@@ -246,6 +246,12 @@ final class JavacReferenceCollectorListener implements TaskListener {
       return JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache);
     }
 
+    @Nullable
+    JavacRef.JavacElementRefBase asJavacRef(TypeMirror typeMirror) {
+      final Element element = getTypeUtility().asElement(typeMirror);
+      return element == null ? null : JavacRef.JavacElementRefBase.fromElement(element, myNameTableCache);
+    }
+
     Element getReferencedElement(Tree tree) {
       return myTreeHelper.getReferencedElement(tree);
     }

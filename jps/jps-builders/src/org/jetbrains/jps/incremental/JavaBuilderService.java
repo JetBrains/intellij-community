@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
-import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFilesIndicesBuilder;
 import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexBuilder;
 import org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder;
 import org.jetbrains.jps.incremental.instrumentation.RmiStubsGenerator;
@@ -50,7 +49,6 @@ public class JavaBuilderService extends BuilderService {
     return Arrays.asList(new JavaBuilder(SharedThreadPool.getInstance()),
                          new NotNullInstrumentingBuilder(),
                          new RmiStubsGenerator(),
-                         new ClassFilesIndicesBuilder(),
                          new BackwardReferenceIndexBuilder());
   }
 

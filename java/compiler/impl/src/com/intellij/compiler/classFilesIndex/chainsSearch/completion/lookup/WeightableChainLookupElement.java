@@ -15,9 +15,11 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup;
 
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.compiler.classFilesIndex.chainsSearch.ChainRelevance;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,5 +35,11 @@ public final class WeightableChainLookupElement extends LookupElementDecorator<L
 
   public ChainRelevance getChainRelevance() {
     return myChainRelevance;
+  }
+
+  @Override
+  public void renderElement(LookupElementPresentation presentation) {
+    presentation.setItemTextForeground(JBColor.GREEN);
+    super.renderElement(presentation);
   }
 }

@@ -25,7 +25,6 @@ import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,8 +36,9 @@ public class BackwardReferenceIndexUtil {
     final int fileId = writer.enumeratePath(filePath);
     int funExprId = 0;
 
-    final Map<LightRef, Void> definitions = new HashMap<>(defs.size());
-    final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
+    final Map<LightRef, Void> definitions = new THashMap<>(defs.size());
+    final Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new THashMap<>();
+    final Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
 
     final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
 
@@ -71,6 +71,14 @@ public class BackwardReferenceIndexUtil {
         ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType,
                                   (Factory<Collection<LightRef>>)() -> new SmartList<>()).add(result);
       }
+      else if (def instanceof JavacDef.JavacMemberDef) {
+        final LightRef ref = writer.enumerateNames(def.getDefinedElement(), name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
+        final LightRef.JavaLightClassRef returnType = writer.asClassUsage(((JavacDef.JavacMemberDef)def).getReturnType());
+        if (ref != null && returnType != null) {
+          final SignatureData data = new SignatureData(returnType.getName(), ((JavacDef.JavacMemberDef)def).isStatic());
+          signatureData.computeIfAbsent(data, element -> new SmartList<>()).add(ref);
+        }
+      }
     }
 
     Map<LightRef, Integer> convertedRefs = new THashMap<>();
@@ -81,7 +89,8 @@ public class BackwardReferenceIndexUtil {
       }
       return true;
     });
-    writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions));
+
+    writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, convertedRefs, definitions, signatureData));
   }
 
   private static class AnonymousClassEnumerator {
