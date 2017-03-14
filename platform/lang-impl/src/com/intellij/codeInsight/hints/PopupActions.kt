@@ -19,11 +19,16 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
+import com.intellij.codeInsight.hints.settings.Diff
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.lang.Language
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -101,7 +106,47 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val offset = editor.caretModel.offset
-    addMethodAtCaretToBlackList(offset, file)
+
+    val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
+    ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, info.toPattern())
+    refreshAllOpenEditors()
+    
+    showHint(project, file, info)
+  }
+  
+  private fun showHint(project: Project, file: PsiFile, info: MethodInfo) {
+    val methodName = info.getMethodName()
+    
+    val language = file.language
+    val listener = NotificationListener { notification, event ->
+      when (event.description) {
+        "settings" -> showSettings(language)
+        "undo" -> undo(language, info)
+      }
+    }
+
+    val notification = Notification("Parameter Name Hints", "Method \"$methodName\" added to blacklist", 
+                 "<html><a href='settings'>Show Parameter Hints Settings</a> or <a href='undo'>Undo</a></html>",
+                 NotificationType.INFORMATION, listener)
+    
+    notification.notify(project)
+  }
+  
+  private fun showSettings(language: Language) {
+    val dialog = ParameterNameHintsConfigurable(language, null)
+    dialog.show()
+  }
+  
+  private fun undo(language: Language, info: MethodInfo) {
+    val settings = ParameterNameHintsSettings.getInstance()
+    
+    val diff = settings.getBlackListDiff(language)
+    val updated = diff.added.toMutableSet().apply {
+      remove(info.toPattern())
+    }
+    
+    settings.setBlackListDiff(language, Diff(updated, diff.removed))
+    refreshAllOpenEditors()
   }
 
   override fun startInWriteAction() = false
@@ -256,14 +301,6 @@ private fun getHintInfoFromProvider(offset: Int, file: PsiFile): HintInfo? {
   val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getHintInfo(e) != null }) ?: return null
   return hintsProvider.getHintInfo(method)
 }
-
-
-private fun addMethodAtCaretToBlackList(offset: Int, file: PsiFile) {
-  val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
-  ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, info.toPattern())
-  refreshAllOpenEditors()
-}
-
 
 fun isPossibleHintNearOffset(file: PsiFile, offset: Int): Boolean {
   val hintProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return false
