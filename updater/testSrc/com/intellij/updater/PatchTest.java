@@ -241,6 +241,42 @@ public class PatchTest extends PatchTestCase {
   }
 
   @Test
+  public void testNoOptionalFileMove1() throws Exception {
+    resetNewerDir();
+    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myOlderDir, "lib/annotations.bin"));
+    FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myOlderDir, "lib64/annotations.bin"));
+    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.bin"));
+    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.bin"));
+
+    Patch patch = createPatch(spec -> spec.setOptionalFiles(Arrays.asList("lib/annotations.bin", "lib/redist/annotations.bin")));
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN),
+      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN),
+      new CreateAction(patch, "lib/redist/"),
+      new CreateAction(patch, "lib64/redist/"),
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN, false));
+  }
+
+  @Test
+  public void testNoOptionalFileMove2() throws Exception {
+    resetNewerDir();
+    FileUtil.copy(new File(dataDir, "lib/annotations_changed.jar"), new File(myOlderDir, "lib/annotations.bin"));
+    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myOlderDir, "lib64/annotations.bin"));
+    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.bin"));
+    FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.bin"));
+
+    Patch patch = createPatch(spec -> spec.setOptionalFiles(Arrays.asList("lib/annotations.bin", "lib/redist/annotations.bin")));
+    assertThat(sortActions(patch.getActions())).containsExactly(
+      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN),
+      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN),
+      new CreateAction(patch, "lib/redist/"),
+      new CreateAction(patch, "lib64/redist/"),
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true));
+  }
+
+  @Test
   public void testSaveLoad() throws Exception {
     Patch original = createPatch();
     File f = getTempFile("file");
