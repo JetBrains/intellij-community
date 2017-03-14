@@ -3872,7 +3872,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void mouseDragged(@NotNull MouseEvent e) {
       if (myDraggedRange != null || myGutterComponent.myDnDInProgress) return; // on Mac we receive events even if drag-n-drop is in progress
       validateMousePointer(e);
-      runMouseDraggedCommand(e);
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myGutterComponent.mouseDragged(e);
