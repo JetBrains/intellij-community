@@ -27,14 +27,14 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.StringJoiner;
 
 /**
  * @author Pavel.Dolgov
@@ -62,9 +62,9 @@ public class JavaReflectionReferenceUtil {
           final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
           if (expressions.length == 1) {
             final PsiExpression argument = findDefinition(ParenthesesUtils.stripParentheses(expressions[0]));
-            final Object value = JavaConstantExpressionEvaluator.computeConstantExpression(argument, false);
-            if (value instanceof String) {
-              return ReflectiveType.create(findClass((String)value, context));
+            final String className = computeConstantExpression(argument, String.class);
+            if (className != null) {
+              return ReflectiveType.create(findClass(className, context));
             }
           }
         }
@@ -89,7 +89,7 @@ public class JavaReflectionReferenceUtil {
     }
     final PsiType type = context.getType();
     if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
+      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       if (!isJavaLangClass(resolveResult.getElement())) return null;
       final PsiTypeParameter[] parameters = resolveResult.getElement().getTypeParameters();
       if (parameters.length == 1) {
@@ -113,6 +113,13 @@ public class JavaReflectionReferenceUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static <T> T computeConstantExpression(@Nullable PsiExpression expression, @NotNull Class<T> expectedType) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    final Object computed = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
+    return ObjectUtils.tryCast(computed, expectedType);
   }
 
   @Nullable
@@ -168,13 +175,15 @@ public class JavaReflectionReferenceUtil {
     return member.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
-  @NotNull
+  @Nullable
   static String getParameterTypesText(@NotNull PsiMethod method) {
-    return Arrays.stream(method.getParameterList().getParameters())
-      .map(parameter -> TypeConversionUtil.erasure(parameter.getType()))
-      .map(type -> (type instanceof PsiEllipsisType) ? new PsiArrayType(((PsiEllipsisType)type).getComponentType()) : type)
-      .map(type -> type.getPresentableText() + ".class")
-      .collect(Collectors.joining(", "));
+    final StringJoiner joiner = new StringJoiner(", ");
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      final String typeText = getTypeText(parameter.getType(), method);
+      if (typeText == null) return null;
+      joiner.add(typeText + ".class");
+    }
+    return joiner.toString();
   }
 
   static void shortenArgumentsClassReferences(@NotNull InsertionContext context) {
@@ -220,6 +229,19 @@ public class JavaReflectionReferenceUtil {
     context.commitDocument();
     shortenArgumentsClassReferences(context);
   }
+
+  @Nullable
+  public static String getTypeText(@Nullable PsiType type, @NotNull PsiElement context) {
+    final ReflectiveType reflectiveType = ReflectiveType.create(type, context);
+    return reflectiveType != null ? reflectiveType.getQualifiedName() : null;
+  }
+
+  @Nullable
+  public static String getTypeText(@Nullable PsiExpression argument) {
+    final ReflectiveType reflectiveType = getReflectiveType(argument);
+    return reflectiveType != null ? reflectiveType.getQualifiedName() : null;
+  }
+
 
   public static class ReflectiveType {
     final PsiClass myPsiClass;

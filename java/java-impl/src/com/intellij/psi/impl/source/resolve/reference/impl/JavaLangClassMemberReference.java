@@ -166,9 +166,10 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   public void handleInsert(InsertionContext context, LookupElement item) {
     final Object object = item.getObject();
     if (object instanceof PsiMethod) {
-      String text = getParameterTypesText((PsiMethod)object);
-
-      replaceText(context, text.isEmpty() ? "" : ", " + text);
+      final String text = getParameterTypesText((PsiMethod)object);
+      if (text != null) {
+        replaceText(context, text.isEmpty() ? "" : ", " + text);
+      }
     }
   }
 }
