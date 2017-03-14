@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
@@ -62,8 +63,11 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    super.tearDown();
+    try {
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    } finally {
+      super.tearDown();
+    }
   }
 
   @WrapInCommand
@@ -373,26 +377,20 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      @NonNls String text = "import xxx.yyy; class S { } <caret> ";
      configureByText(StdFileTypes.JAVA, text);
 
-     boolean old = CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY;
-     CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = true;
+     CodeInsightWorkspaceSettings.getInstance(myProject).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-     try {
-       List<HighlightInfo> errs = highlightErrors();
+     List<HighlightInfo> errs = highlightErrors();
 
-       assertEquals(1, errs.size());
+     assertEquals(1, errs.size());
 
-       assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+     assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
 
-       type("/* */");
-       doHighlighting();
-       UIUtil.dispatchAllInvocationEvents();
+     type("/* */");
+     doHighlighting();
+     UIUtil.dispatchAllInvocationEvents();
 
-       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
-     }
-     finally {
-        CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = old;
-     }
+     assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
    }
 
    public void testAutoInsertImportForInnerClass() throws Throwable {
@@ -447,9 +445,8 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      configureByText(StdFileTypes.JAVA, text);
 
      boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-     boolean opt = CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY;
      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-     CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = true;
+     CodeInsightWorkspaceSettings.getInstance(myProject).setOptimizeImportsOnTheFly(true, getTestRootDisposable());
      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
      try {
@@ -458,7 +455,6 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      }
      finally {
         CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
-        CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY = opt;
      }
    }
 
