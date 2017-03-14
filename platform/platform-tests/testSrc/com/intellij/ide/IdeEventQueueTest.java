@@ -48,10 +48,22 @@ public class IdeEventQueueTest extends PlatformTestCase {
     IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
     assertSame(ideEventQueue, Toolkit.getDefaultToolkit().getSystemEventQueue());
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    ideEventQueue.addDispatcher(e -> {
+      LOG.debug("dispatch: "+e);
+      return false;
+    }, getTestRootDisposable());
+    ideEventQueue.addPostprocessor(e -> {
+      LOG.debug("post dispatch: "+e);
+      return false;
+    }, getTestRootDisposable());
+    ideEventQueue.addPostEventListener(e -> {
+      LOG.debug("post event hook: "+e);
+      return false;
+    }, getTestRootDisposable());
 
     int posted = ideEventQueue.myKeyboardEventsPosted.get();
     int dispatched = ideEventQueue.myKeyboardEventsDispatched.get();
-    KeyEvent pressX = new KeyEvent(new JLabel(), KeyEvent.KEY_PRESSED, 1, InputEvent.ALT_DOWN_MASK, 11, 'x');
+    KeyEvent pressX = new KeyEvent(new JLabel("mykeypress"), KeyEvent.KEY_PRESSED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
     postCarefully(pressX);
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched, ideEventQueue.myKeyboardEventsDispatched.get());
@@ -61,7 +73,7 @@ public class IdeEventQueueTest extends PlatformTestCase {
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
 
     // do not react to other events
-    AWTEvent ev2 = new ActionEvent(new JLabel(), ActionEvent.ACTION_PERFORMED, "Command");
+    AWTEvent ev2 = new ActionEvent(new JLabel(), ActionEvent.ACTION_PERFORMED, "myCommand");
     postCarefully(ev2);
 
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
@@ -71,11 +83,12 @@ public class IdeEventQueueTest extends PlatformTestCase {
     assertEquals(posted+1, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
 
-    KeyEvent keyRelease = new KeyEvent(new JLabel(), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK, 11, 'x');
+    KeyEvent keyRelease = new KeyEvent(new JLabel("mykeyrelease"), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
     postCarefully(keyRelease);
 
     assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
     assertEquals(dispatched+1, ideEventQueue.myKeyboardEventsDispatched.get());
+
     assertEquals(keyRelease, dispatchAllInvocationEventsUntilOtherEvent(ideEventQueue));
 
     assertEquals(posted+2, ideEventQueue.myKeyboardEventsPosted.get());
@@ -84,8 +97,8 @@ public class IdeEventQueueTest extends PlatformTestCase {
 
   private static void postCarefully(AWTEvent event) {
     IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    boolean didPosted = ideEventQueue.doPostEvent(event);
-    assertTrue("Was not posted: "+event, didPosted);
+    boolean posted = ideEventQueue.doPostEvent(event);
+    assertTrue("Was not posted: "+event, posted);
     boolean mustBeConsumed = event.getID() == ActionEvent.ACTION_PERFORMED;
     assertEquals(mustBeConsumed, ReflectionUtil.getField(AWTEvent.class, event, boolean.class, "consumed").booleanValue());
     assertTrue(ReflectionUtil.getField(AWTEvent.class, event, boolean.class, "isPosted"));
