@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
@@ -58,6 +59,9 @@ public class SequentialLimitedLifoExecutor<Task> implements Disposable {
       try {
         myLoader.dismissLastTasks(myMaxTasks);
         myLoadProcess.consume(task);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Throwable e) {
         throw new RuntimeException(e); // todo
