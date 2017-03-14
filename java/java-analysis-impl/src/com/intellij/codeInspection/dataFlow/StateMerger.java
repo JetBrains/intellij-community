@@ -94,7 +94,13 @@ class StateMerger {
 
   @NotNull
   private LinkedHashSet<Fact> getUnrelatedFacts(@NotNull final Fact fact, @NotNull DfaMemoryStateImpl state) {
-    return new LinkedHashSet<>(ContainerUtil.filter(getFacts(state), another -> !fact.invalidatesFact(another)));
+    final LinkedHashSet<Fact> result = new LinkedHashSet<>();
+    for (Fact other : getFacts(state)) {
+      if (!fact.invalidatesFact(other)) {
+        result.add(other);
+      }
+    }
+    return result;
   }
 
   private void restoreOtherInequalities(@NotNull Fact removedFact, @NotNull Collection<DfaMemoryStateImpl> mergedGroup, @NotNull DfaMemoryStateImpl state) {
@@ -295,46 +301,52 @@ class StateMerger {
     }
     
     result = ContainerUtil.newLinkedHashSet();
+
+    IdentityHashMap<EqClass, EqClassInfo> classInfo = new IdentityHashMap<>();
+
     for (EqClass eqClass : state.getNonTrivialEqClasses()) {
-      DfaValue constant = eqClass.findConstant(true);
-      List<DfaVariableValue> vars = eqClass.getVariables(false);
-      for (DfaVariableValue var : vars) {
+      EqClassInfo info = classInfo.computeIfAbsent(eqClass, EqClassInfo::new);
+      DfaValue constant = info.constant;
+      List<DfaVariableValue> vars = info.vars;
+      int size = vars.size();
+      for (int i = 0; i < size; i++) {
+        DfaVariableValue var = vars.get(i);
         if (constant != null) {
           result.add(Fact.createEqualityFact(var, constant, true));
         }
-        for (DfaVariableValue eqVar : vars) {
-          if (var != eqVar) {
-            result.add(Fact.createEqualityFact(var, eqVar, true));
-          }
+        for (int j = i + 1; j < size; j++) {
+          DfaVariableValue eqVar = vars.get(j);
+          result.add(Fact.createEqualityFact(var, eqVar, true));
         }
       }
     }
-    
+
     for (UnorderedPair<EqClass> classPair : state.getDistinctClassPairs()) {
-      List<DfaVariableValue> vars1 = classPair.first.getVariables(false);
-      List<DfaVariableValue> vars2 = classPair.second.getVariables(false);
-      
-      LinkedHashSet<DfaValue> firstSet = new LinkedHashSet<>(vars1);
-      ContainerUtil.addIfNotNull(firstSet, classPair.first.findConstant(true));
+      EqClassInfo info1 = classInfo.computeIfAbsent(classPair.first, EqClassInfo::new);
+      EqClassInfo info2 = classInfo.computeIfAbsent(classPair.second, EqClassInfo::new);
 
-      LinkedHashSet<DfaValue> secondSet = new LinkedHashSet<>(vars2);
-      ContainerUtil.addIfNotNull(secondSet, classPair.second.findConstant(true));
-
-      for (DfaVariableValue var : vars1) {
-        for (DfaValue value : secondSet) {
-          result.add(new Fact(FactType.equality, var, false, value));
+      for (DfaVariableValue var1 : info1.vars) {
+        for (DfaVariableValue var2 : info2.vars) {
+          result.add(new Fact(FactType.equality, var1, false, var2));
+          result.add(new Fact(FactType.equality, var2, false, var1));
         }
       }
-      for (DfaVariableValue var : vars2) {
-        for (DfaValue value : firstSet) {
-          result.add(new Fact(FactType.equality, var, false, value));
+      if(info1.constant != null) {
+        for (DfaVariableValue var2 : info2.vars) {
+          result.add(new Fact(FactType.equality, var2, false, info1.constant));
+        }
+      }
+      if(info2.constant != null) {
+        for (DfaVariableValue var1 : info1.vars) {
+          result.add(new Fact(FactType.equality, var1, false, info2.constant));
         }
       }
     }
 
     Map<DfaVariableValue, DfaVariableState> states = state.getVariableStates();
-    for (DfaVariableValue var : states.keySet()) {
-      DfaVariableState variableState = states.get(var);
+    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : states.entrySet()) {
+      DfaVariableValue var = entry.getKey();
+      DfaVariableState variableState = entry.getValue();
       for (DfaPsiType type : variableState.getInstanceofValues()) {
         result.add(new Fact(FactType.instanceOf, var, true, type));
       }
@@ -355,12 +367,14 @@ class StateMerger {
     private final boolean myPositive;
     @NotNull
     private final Object myArg; // DfaValue for equality fact, DfaPsiType for instanceOf fact
+    private final int myHash;
 
     private Fact(@NotNull FactType type, @NotNull DfaVariableValue var, boolean positive, @NotNull Object arg) {
       myType = type;
       myVar = var;
       myPositive = positive;
       myArg = arg;
+      myHash = Objects.hash(myType, myVar, myPositive, myArg);
     }
 
     @Override
@@ -370,9 +384,10 @@ class StateMerger {
 
       Fact fact = (Fact)o;
 
+      if (myHash != fact.myHash) return false;
       if (myPositive != fact.myPositive) return false;
-      if (!myArg.equals(fact.myArg)) return false;
       if (myType != fact.myType) return false;
+      if (!myArg.equals(fact.myArg)) return false;
       if (!myVar.equals(fact.myVar)) return false;
 
       return true;
@@ -380,11 +395,7 @@ class StateMerger {
 
     @Override
     public int hashCode() {
-      int result = myType.hashCode();
-      result = 31 * result + myVar.hashCode();
-      result = 31 * result + (myPositive ? 1 : 0);
-      result = 31 * result + myArg.hashCode();
-      return result;
+      return myHash;
     }
 
     @Override
@@ -481,4 +492,13 @@ class StateMerger {
     }
   }
 
+  static final class EqClassInfo {
+    final List<DfaVariableValue> vars;
+    final DfaValue constant;
+
+    EqClassInfo(EqClass eqClass) {
+      vars = eqClass.getVariables(false);
+      constant = eqClass.findConstant(true);
+    }
+  }
 }
