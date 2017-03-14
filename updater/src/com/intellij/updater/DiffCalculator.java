@@ -106,8 +106,8 @@ public class DiffCalculator {
           if (i + 1 > common) {
             best = other;
             common = i + 1;
-            // check root folders of candidates with the same matches
           }
+          // check root folders of candidates with the same matches
           else if (i + 1 == common && compareRootFolders(dirs, best.split("/")) < compareRootFolders(dirs, other.split("/"))) {
             best = other;
           }
