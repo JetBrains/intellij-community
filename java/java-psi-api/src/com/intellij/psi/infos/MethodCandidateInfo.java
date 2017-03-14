@@ -41,14 +41,14 @@ import java.util.Map;
 public class MethodCandidateInfo extends CandidateInfo{
   public static final RecursionGuard ourOverloadGuard = RecursionManager.createGuard("overload.guard");
   public static final ThreadLocal<Map<PsiElement,  CurrentCandidateProperties>> CURRENT_CANDIDATE = new ThreadLocal<>();
-  @ApplicabilityLevelConstant private int myApplicabilityLevel; // benign race
-  @ApplicabilityLevelConstant private int myPertinentApplicabilityLevel;
+  @ApplicabilityLevelConstant private volatile int myApplicabilityLevel;
+  @ApplicabilityLevelConstant private volatile int myPertinentApplicabilityLevel;
   private final PsiElement myArgumentList;
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
-  private PsiSubstitutor myCalcedSubstitutor; // benign race
+  private PsiSubstitutor myCalcedSubstitutor;
 
-  private String myInferenceError;
+  private volatile String myInferenceError;
   private final LanguageLevel myLanguageLevel;
 
   public MethodCandidateInfo(@NotNull PsiElement candidate,
@@ -101,18 +101,21 @@ public class MethodCandidateInfo extends CandidateInfo{
 
   @ApplicabilityLevelConstant
   public int getApplicabilityLevel() {
-    if(myApplicabilityLevel == 0){
-      myApplicabilityLevel = getApplicabilityLevelInner();
+    int result = myApplicabilityLevel;
+    if (result == 0) {
+      result = getApplicabilityLevelInner();
+      myApplicabilityLevel = result;
     }
-    return myApplicabilityLevel;
+    return result;
   }
 
   @ApplicabilityLevelConstant
   public int getPertinentApplicabilityLevel() {
-    if (myPertinentApplicabilityLevel == 0) {
-      myPertinentApplicabilityLevel = pullInferenceErrorMessagesFromSubexpressions(getPertinentApplicabilityLevelInner());
+    int result = myPertinentApplicabilityLevel;
+    if (result == 0) {
+      myPertinentApplicabilityLevel = result = pullInferenceErrorMessagesFromSubexpressions(getPertinentApplicabilityLevelInner());
     }
-    return myPertinentApplicabilityLevel;
+    return result;
   }
 
   /**
