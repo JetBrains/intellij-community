@@ -140,7 +140,7 @@ public class JvmStreamDebuggerActionHandler {
     final PsiFile psiFile = position.getFile();
     final VirtualFile file = psiFile.getVirtualFile();
 
-    if (file != null) {
+    if (line >= 0 && file != null) {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         final int offset = document.getLineStartOffset(line);
