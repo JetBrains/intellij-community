@@ -87,8 +87,8 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     final PsiField field = ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
-        PsiField field = elementFactory.createField(chooseName(names, myParentClass.getLanguage()), defaultType);
-        field = (PsiField)myParentClass.add(field);
+        PsiField field = elementFactory.createField(chooseName(names, getParentClass().getLanguage()), defaultType);
+        field = (PsiField)getParentClass().add(field);
         if (myExprText != null) {
           updateInitializer(elementFactory, field);
         }
@@ -107,7 +107,8 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
-    return suggestFieldName(defaultType, (PsiLocalVariable)getLocalVariable(), myExpr != null && myExpr.isValid() ? myExpr : null, myStatic, myParentClass).names;
+    return suggestFieldName(defaultType, (PsiLocalVariable)getLocalVariable(), myExpr != null && myExpr.isValid() ? myExpr : null, myStatic,
+                            getParentClass()).names;
   }
 
   public static SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
@@ -223,13 +224,13 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                                   myIntroduceFieldPanel.getFieldVisibility(), (PsiLocalVariable)getLocalVariable(),
                                                   forcedType,
                                                   myIntroduceFieldPanel.isDeleteVariable(),
-                                                  myParentClass, false, false);
+                                                  getParentClass(), false, false);
       new WriteCommandAction(myProject, getCommandName(), getCommandName()){
         @Override
         protected void run(@NotNull Result result) throws Throwable {
           if (getLocalVariable() != null) {
             final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-              new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), myParentClass, settings, myStatic, myOccurrences);
+              new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myStatic, myOccurrences);
             fieldRunnable.run();
           }
           else {
@@ -238,7 +239,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
                                                                       myOccurrences, myOccurrenceManager,
                                                                       getAnchorElementIfAll(),
                                                                       getAnchorElement(), myEditor,
-                                                                      myParentClass);
+                                                                      getParentClass());
             convertToFieldRunnable.run();
           }
         }
