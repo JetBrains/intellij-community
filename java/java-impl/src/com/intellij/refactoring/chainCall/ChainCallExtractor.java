@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -104,7 +105,8 @@ public interface ChainCallExtractor {
     PsiMethodCallExpression call = tryCast(args.getParent(), PsiMethodCallExpression.class);
     if (call == null) return null;
     for(ChainCallExtractor extractor : KEY.getExtensions()) {
-      if(extractor.canExtractChainCall(call, expression, targetType)) {
+      if(extractor.canExtractChainCall(call, expression, targetType) &&
+         StringUtil.isNotEmpty(extractor.getMethodName(parameter, expression, targetType))) {
         return extractor;
       }
     }
