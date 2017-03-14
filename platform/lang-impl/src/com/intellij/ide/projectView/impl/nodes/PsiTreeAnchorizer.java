@@ -33,7 +33,10 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   public Object createAnchor(Object element) {
     if (element instanceof PsiElement) {
       PsiElement psi = (PsiElement)element;
-      return ReadAction.compute(() -> new SmartPointerWrapper(SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi)));
+      return ReadAction.compute(() -> {
+        if (!psi.isValid()) return psi;
+        return new SmartPointerWrapper(SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi));
+      });
     }
     return super.createAnchor(element);
   }
