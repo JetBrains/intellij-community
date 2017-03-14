@@ -32,21 +32,33 @@ class JetGradlePlugin implements Plugin<Gradle> {
   void apply(Gradle gradle) {
     def extraModelBuilderInstance = new ExtraModelBuilder()
     def isCompositeBuildsSupported = GradleVersion.current() >= GradleVersion.version("3.1")
-    Set<ToolingModelBuilderRegistry> registries = new HashSet<>()
-    gradle.allprojects { project ->
-      registries.addAll(((ProjectInternal)project).services.getAll(ToolingModelBuilderRegistry.class))
+    gradle.rootProject { project ->
+      Set<ToolingModelBuilderRegistry> rootRegistries = new HashSet<>()
+      Set<ToolingModelBuilderRegistry> registries = new HashSet<>()
+      registries.add(((ProjectInternal)project).services.get(ToolingModelBuilderRegistry.class))
       try {
         if (isCompositeBuildsSupported) {
           project.gradle.includedBuilds.each {
-            registries.addAll(it.configuredBuild.services.getAll(ToolingModelBuilderRegistry.class))
+            registries.add(it.configuredBuild.services.get(ToolingModelBuilderRegistry.class))
           }
         }
       }
       catch (ignore) {
       }
-    }
-    gradle.rootProject {
-      registries.each { it.register(extraModelBuilderInstance) }
+      registries.each {
+        def registry = it
+        while(registry.hasProperty('parent') && registry.parent != null) {
+          registry = registry.parent
+        }
+        rootRegistries.add(registry)
+      }
+      rootRegistries.each {
+        if (it.hasProperty('builders') && it.builders instanceof Collection &&
+            (it.builders as Collection).find { it instanceof ExtraModelBuilder} != null) {
+          return
+        }
+        it.register(extraModelBuilderInstance)
+      }
     }
   }
 }
