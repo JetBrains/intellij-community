@@ -105,10 +105,6 @@ public class EduAdaptiveStepicConnector {
               final Task taskFromStep = getTask(project, realLesson.getName(), stepId);
               if (taskFromStep != null) return taskFromStep;
             }
-
-            final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-            postRecommendationReaction(lessonId, String.valueOf(user.getId()), TOO_BORING_RECOMMENDATION_REACTION);
-            return getNextRecommendation(project, course);
           }
           else {
             LOG.warn("Got unexpected number of lessons: " + (lessonContainer == null ? null : lessonContainer.lessons.size()));
