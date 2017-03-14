@@ -380,7 +380,7 @@ public class Utils{
                 if (SystemInfo.isMac) {
                   Graphics2D g2 = (Graphics2D)g.create();
                   g2.setStroke(new BasicStroke(2));
-                  g2.setColor(getBackground());
+                  g2.setColor(UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
                   double y = (double)getHeight() / 2;
                   g2.draw(new Line2D.Double(0, y, getWidth(), y));
                   return;
