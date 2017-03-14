@@ -91,7 +91,8 @@ public class MavenImportNotifier extends MavenSimpleProjectComponent {
 
       myNotification = new Notification(MAVEN_IMPORT_NOTIFICATION_GROUP,
                                         ProjectBundle.message("maven.project.changed"),
-                                        "<a href='reimport'>" + ProjectBundle.message("maven.project.importChanged") + "</a> " +
+                                        "<a href='reimport'>" + ProjectBundle.message("maven.project.importChanged") + "</a>" +
+                                        " &nbsp;&nbsp;" +
                                         "<a href='autoImport'>" + ProjectBundle.message("maven.project.enableAutoImport") + "</a>",
                                         NotificationType.INFORMATION, new NotificationListener.Adapter() {
         @Override
