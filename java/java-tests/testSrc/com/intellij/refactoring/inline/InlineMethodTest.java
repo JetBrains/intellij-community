@@ -231,6 +231,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inline cannot be applied to multiline method in constructor call");
   }
 
+  public void testMethodReferenceInsideMethodCall() throws Exception {
+    doTest();
+  }
+
   private void doTestConflict(final String conflict) throws Exception {
     try {
       doTest();
