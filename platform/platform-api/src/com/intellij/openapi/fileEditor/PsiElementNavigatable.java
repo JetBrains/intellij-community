@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.util.Conditions.or;
@@ -40,9 +39,8 @@ public class PsiElementNavigatable implements Navigatable {
 
   @Override
   public final void navigate(boolean requestFocus) {
-    PsiElement originalElement = myPointer.getElement();
-    if (originalElement != null && originalElement.isValid()) {
-      PsiElement element = ObjectUtils.notNull(originalElement.getNavigationElement(), originalElement);
+    PsiElement element = getElement();
+    if (element != null) {
       VirtualFile file = element.getContainingFile().getVirtualFile();
       if (file != null) {
         new Task.Modal(element.getProject(), EditorBundle.message("editor.open.file.progress", file.getName()), true) {
@@ -63,8 +61,18 @@ public class PsiElementNavigatable implements Navigatable {
 
   @Override
   public boolean canNavigate() {
+    PsiElement element = getElement();
+    return element != null && element.getContainingFile().getVirtualFile() != null;
+  }
+
+  private PsiElement getElement() {
     PsiElement element = myPointer.getElement();
-    return element != null && element.isValid() && ObjectUtils.notNull(element.getNavigationElement(), element).getContainingFile().getVirtualFile() != null;
+    if (element != null && element.isValid()) {
+      PsiElement navigationElement = element.getNavigationElement();
+      return navigationElement != null ? navigationElement : element;
+    }
+
+    return null;
   }
 
   @Override
