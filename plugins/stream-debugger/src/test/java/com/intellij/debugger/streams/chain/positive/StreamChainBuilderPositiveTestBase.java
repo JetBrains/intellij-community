@@ -1,5 +1,6 @@
-package com.intellij.debugger.streams;
+package com.intellij.debugger.streams.chain.positive;
 
+import com.intellij.debugger.streams.chain.StreamChainBuilderFixtureTestCase;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.psi.PsiElement;

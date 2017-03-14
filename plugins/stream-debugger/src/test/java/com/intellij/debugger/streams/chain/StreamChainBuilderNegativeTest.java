@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams;
+package com.intellij.debugger.streams.chain;
 
 import org.jetbrains.annotations.NotNull;
 

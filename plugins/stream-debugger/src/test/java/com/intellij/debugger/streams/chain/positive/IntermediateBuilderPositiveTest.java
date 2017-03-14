@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams;
+package com.intellij.debugger.streams.chain.positive;
 
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;

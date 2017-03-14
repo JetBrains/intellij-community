@@ -9,7 +9,7 @@ import java.io.File;
 /**
  * @author Vitaliy.Bibaev
  */
-class JdkManager {
+public class JdkManager {
   private static final String MOCK_JDK_DIR_NAME_PREFIX = "mockJDK-";
   private static final Sdk JDK18;
 
@@ -18,7 +18,7 @@ class JdkManager {
     JDK18 = ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk("java 1.8", path, false);
   }
 
-  static Sdk getMockJdk18() {
+  public static Sdk getMockJdk18() {
     return JDK18;
   }
 }
