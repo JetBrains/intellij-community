@@ -54,10 +54,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -181,7 +178,8 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     runActivities(myDumbAwarePostStartupActivities);
 
-    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+    DumbService dumbService = DumbService.getInstance(myProject);
+    dumbService.runWhenSmart(new Runnable() {
       @Override
       public void run() {
         app.assertIsDispatchThread();
@@ -189,22 +187,28 @@ public class StartupManagerImpl extends StartupManagerEx {
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
         runActivities(myDumbAwarePostStartupActivities);
 
-        //noinspection SynchronizeOnThis
-        synchronized (StartupManagerImpl.this) {
-          if (!myNotDumbAwarePostStartupActivities.isEmpty()) {
-            while (!myNotDumbAwarePostStartupActivities.isEmpty()) {
-              queueSmartModeActivity(myNotDumbAwarePostStartupActivities.remove(0));
-            }
+        while (true) {
+          List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
+          if (dumbUnaware.isEmpty()) break;
 
-            // return here later to set myPostStartupActivitiesPassed
-            DumbService.getInstance(myProject).runWhenSmart(this);
-          }
-          else {
-            myPostStartupActivitiesPassed = true;
-          }
+          dumbUnaware.forEach(StartupManagerImpl.this::queueSmartModeActivity);
+        }
+
+        if (dumbService.isDumb()) {
+          // return here later to process newly submitted activities (if any) and set myPostStartupActivitiesPassed
+          dumbService.runWhenSmart(this);
+        }
+        else {
+          myPostStartupActivitiesPassed = true;
         }
       }
     });
+  }
+
+  private synchronized List<Runnable> takeDumbUnawareStartupActivities() {
+    List<Runnable> result = new ArrayList<>(myNotDumbAwarePostStartupActivities);
+    myNotDumbAwarePostStartupActivities.clear();
+    return result;
   }
 
   public void scheduleInitialVfsRefresh() {
