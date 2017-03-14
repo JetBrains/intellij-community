@@ -334,4 +334,17 @@ class OptionalWithoutIsPresent {
       System.out.println(opt.get());
     }
   }
+
+  void testThrow(Optional<String> test) {
+    test.orElseThrow(RuntimeException::new);
+    Object o = test.get();
+    System.out.println(o);
+  }
+
+  void testThrow2(Optional<String> test) {
+    test.orElseThrow(RuntimeException::new);
+    if (<warning descr="Condition 'test.isPresent()' is always 'true'">test.isPresent()</warning>) {
+      System.out.println("Yes");
+    }
+  }
 }

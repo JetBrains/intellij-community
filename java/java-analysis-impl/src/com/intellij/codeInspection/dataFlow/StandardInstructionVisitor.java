@@ -51,7 +51,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   private static final Set<String> OPTIONAL_METHOD_NAMES =
     ContainerUtil.set("isPresent", "of", "ofNullable", "fromNullable", "empty", "absent",
-                      "or", "orElseGet", "ifPresent", "map", "flatMap", "filter", "transform");
+                      "or", "orElseGet", "orElseThrow", "ifPresent", "map", "flatMap", "filter", "transform");
   private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
               LongRangeSet.range(-1, Integer.MAX_VALUE))
@@ -242,7 +242,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (method == null || !TypeUtils.isOptional(method.getContainingClass())) return Collections.emptyList();
     List<DfaMemoryState> closures = runner.getStackTopClosures();
     DfaValue[] argValues = popCallArguments(instruction, runner, memState);
-    final DfaValue qualifier = popQualifier(instruction, runner, memState);
+    DfaValue qualifier = popQualifier(instruction, runner, memState);
+    DfaValue result = null;
     switch (methodName) {
       case "isPresent": {
         ThreeState state = memState.checkOptional(qualifier);
@@ -256,22 +257,24 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           return Arrays.asList(memState, falseState);
         }
         else {
-          memState.push(state == ThreeState.YES ? constFactory.getTrue() : constFactory.getFalse());
+          result = state == ThreeState.YES ? constFactory.getTrue() : constFactory.getFalse();
         }
+        break;
+      }
+      case "orElseThrow": {
+        memState.applyIsPresentCheck(true, qualifier);
         break;
       }
       case "of":
       case "ofNullable":
       case "fromNullable":
         if ("of".equals(methodName) || (argValues != null && argValues.length == 1 && memState.isNotNull(argValues[0]))) {
-          memState.push(runner.getFactory().getOptionalFactory().getOptional(true));
-        } else {
-          memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
+          result = runner.getFactory().getOptionalFactory().getOptional(true);
         }
         break;
       case "empty":
       case "absent":
-        memState.push(runner.getFactory().getOptionalFactory().getOptional(false));
+        result = runner.getFactory().getOptionalFactory().getOptional(false);
         break;
       case "filter":
       case "flatMap":
@@ -283,12 +286,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         for (DfaMemoryState closure : closures) {
           closure.applyIsPresentCheck(!methodName.startsWith("or"), qualifier);
         }
-        memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
         break;
       default:
-        memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
-        break;
     }
+    memState.push(result == null ? getMethodResultValue(instruction, qualifier, runner.getFactory()) : result);
     return Collections.singletonList(memState);
   }
 
