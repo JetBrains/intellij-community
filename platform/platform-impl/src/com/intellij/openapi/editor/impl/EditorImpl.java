@@ -150,7 +150,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
-  @NotNull private final JScrollPane myScrollPane = new MyScrollPane();
+  @NotNull private final JScrollPane myScrollPane;
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
@@ -332,6 +332,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myProject = project;
     myDocument = (DocumentEx)document;
     myScheme = createBoundColorSchemeDelegate(null);
+    myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
     if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
