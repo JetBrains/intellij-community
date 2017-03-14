@@ -17,6 +17,8 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Before;
@@ -93,9 +95,9 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
 
     VirtualFile local = LocalFileSystem.getInstance().findFileByIoFile(myTempDir.getRoot());
     assertThat(local).isNotNull();
-    local.refresh(false, true);
+    List<VFileEvent> events = VfsTestUtil.getEvents(() -> local.refresh(false, true));
 
-    assertThat(childNames(myRoot)).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
+    assertThat(childNames(myRoot)).describedAs("events=" + events).containsExactlyInAnyOrder("java.base", "test.a", "test.b");
   }
 
   private static List<String> childNames(VirtualFile dir) {
