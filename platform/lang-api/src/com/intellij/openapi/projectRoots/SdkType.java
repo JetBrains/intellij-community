@@ -262,13 +262,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   /**
-   * Shows the custom SDK create UI. The returned SDK needs to have the correct name and home path; the framework will call
-   * setupSdkPaths() on the returned SDK.
-   *
-   * @param sdkModel the list of SDKs currently displayed in the configuration dialog.
-   * @param parentComponent the parent component for showing the dialog.
-   * @param sdkCreatedCallback the callback to which the created SDK is passed.
-   * @since 12.0
+   * @deprecated Use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead
    */
   public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) {
   }
