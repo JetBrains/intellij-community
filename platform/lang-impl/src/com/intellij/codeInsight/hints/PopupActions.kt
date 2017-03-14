@@ -55,7 +55,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
     val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
     
-    if (!provider.isBlackListSupported()) {
+    if (!provider.isBlackListSupported) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -94,7 +94,7 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val language = file.language
     val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return false
-    return hintsProvider.isBlackListSupported() 
+    return hintsProvider.isBlackListSupported 
            && hasEditorParameterHintAtOffset(editor, file) 
            && isMethodHintAtOffset(editor, file) 
   }
