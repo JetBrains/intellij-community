@@ -452,6 +452,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-23055
+  public void testWithoutTypeButWithNoneDefaultValue() {
+    final int offset = loadTest(1).get("<arg1>").getTextOffset();
+    final String expectedInfo = "b=None";
+
+    feignCtrlP(offset).check(expectedInfo, new String[]{"b=None"});
+  }
+
   // PY-22004
   public void testMultiResolved() {
     myFixture.copyDirectoryToProject("typing", "");
