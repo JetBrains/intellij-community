@@ -107,7 +107,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  private inner class SchemeFileTracker() : BulkFileListener.Adapter() {
+  private inner class SchemeFileTracker() : BulkFileListener {
     private fun isMy(file: VirtualFile) = isMy(file.nameSequence)
     private fun isMy(name: CharSequence) = name.endsWith(schemeExtension, ignoreCase = true) && (processor !is LazySchemeProcessor || processor.isSchemeFile(name))
 

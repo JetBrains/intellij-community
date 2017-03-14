@@ -28,7 +28,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
   private val virtualFileToPathInfo = CacheBuilder.newBuilder().maximumSize(512).expireAfterAccess(11, TimeUnit.MINUTES).build<VirtualFile, PathInfo>()
 
   init {
-    application.messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener.Adapter() {
+    application.messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
         for (event in events) {
           if (event is VFileContentChangeEvent) {

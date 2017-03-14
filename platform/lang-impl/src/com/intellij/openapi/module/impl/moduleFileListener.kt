@@ -37,7 +37,7 @@ import gnu.trove.THashSet
  *
  * If module file is foo/bar/hello.iml and directory foo is renamed to oof then we must update module path. And StorageVirtualFileTracker doesn't help us here (and is not going to help by intention).
  */
-internal class ModuleFileListener(private val moduleManager: ModuleManagerComponent) : BulkFileListener.Adapter() {
+internal class ModuleFileListener(private val moduleManager: ModuleManagerComponent) : BulkFileListener {
   override fun after(events: List<VFileEvent>) {
     for (event in events) {
       when (event) {
