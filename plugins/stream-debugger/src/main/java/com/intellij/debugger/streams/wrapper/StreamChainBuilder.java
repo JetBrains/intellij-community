@@ -38,6 +38,11 @@ public class StreamChainBuilder {
     }
 
     @Override
+    public void visitCodeBlock(PsiCodeBlock block) {
+      // ignore nested blocks
+    }
+
+    @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiMethod method = expression.resolveMethod();
