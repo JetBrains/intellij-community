@@ -56,7 +56,7 @@ public class JavaGuiTestConfigurator extends GuiTestConfiguratorBase {
   // Invoked using reflection and the IDE's ClassLoader.
   @NotNull
   private static Map<String, Object> extractTestConfiguration(@NotNull Method testMethod) {
-    Map<String, Object> config = new HashMap<String, Object>();
+    Map<String, Object> config = new HashMap<>();
     IdeGuiTest guiTest = testMethod.getAnnotation(IdeGuiTest.class);
     if (guiTest != null) {
       config.put(CLOSE_PROJECT_BEFORE_EXECUTION_KEY, guiTest.closeProjectBeforeExecution());
