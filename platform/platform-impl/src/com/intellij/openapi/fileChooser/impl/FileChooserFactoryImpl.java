@@ -28,6 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.MacFileSaverDialog;
 import com.intellij.ui.mac.MacPathChooserDialog;
+import com.intellij.ui.win.WinPathChooserDialog;
 import com.intellij.util.SystemProperties;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -63,12 +64,19 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     if (useNativeMacChooser(descriptor)) {
       return new MacPathChooserDialog(descriptor, parent, project);
     }
-    else if (parent != null) {
+    else if (useNativeWinChooser()) {
+      return new WinPathChooserDialog(descriptor, parent, project);
+    }else if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
     }
     else {
       return new FileChooserDialogImpl(descriptor, project);
     }
+  }
+
+  private static boolean useNativeWinChooser () {
+    return SystemInfo.isWindows &&
+           Registry.is("ide.win.file.chooser.native");
   }
 
   private static boolean useNativeMacChooser(final FileChooserDescriptor descriptor) {
