@@ -67,10 +67,6 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return DevKitBundle.message("module.description");
   }
 
-  public Icon getBigIcon() {
-    return AllIcons.Modules.Types.PluginModule;
-  }
-
   public Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Plugin;
   }
