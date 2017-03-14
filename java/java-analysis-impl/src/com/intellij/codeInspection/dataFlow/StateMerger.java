@@ -253,6 +253,52 @@ class StateMerger {
         return new ArrayList<>(new LinkedHashSet<>(states));
       }
     }
+    // For every variable with more than one range, try to union range info and see if some states could be merged after that
+    for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        class Record {
+          final DfaMemoryStateImpl myState;
+          final LongRangeSet myRange;
+
+          Record(DfaMemoryStateImpl state, LongRangeSet range) {
+            myState = state;
+            myRange = range;
+          }
+
+          Record union(Record other) {
+            return new Record(myState, myRange.union(other.myRange));
+          }
+        }
+
+        Map<DfaMemoryStateImpl, Record> merged = new LinkedHashMap<>();
+        DfaVariableValue var = entry.getKey();
+        for (DfaMemoryStateImpl state : states) {
+          DfaVariableState variableState = state.getVariableState(var);
+          LongRangeSet range = variableState.getRange();
+          if (range == null) {
+            range = Objects.requireNonNull(LongRangeSet.fromType(var.getVariableType()));
+          }
+          merged.merge(copyWithoutVar(state, var), new Record(state, range), Record::union);
+        }
+        if(merged.size() < states.size()) {
+          List<DfaMemoryStateImpl> updated = new ArrayList<>(merged.size());
+          for (Record record : merged.values()) {
+            DfaMemoryStateImpl state = record.myState;
+            DfaVariableState variableState = state.getVariableState(var);
+            if(!record.myRange.equals(variableState.getRange())) {
+              state.flushVariable(var);
+              state.setRange(var, record.myRange);
+            }
+            updated.add(state);
+          }
+          states = updated;
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      return states;
+    }
     if (states.size() <= MAX_RANGE_STATES || ranges.isEmpty()) return null;
     // If there are too many states, try to drop range information from some variable
     DfaVariableValue lastVar = Collections.max(ranges.keySet(), Comparator.comparingInt(DfaVariableValue::getID));

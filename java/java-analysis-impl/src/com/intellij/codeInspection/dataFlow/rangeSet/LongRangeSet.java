@@ -80,6 +80,19 @@ public abstract class LongRangeSet {
   public abstract LongRangeSet intersect(LongRangeSet other);
 
   /**
+   * Merge current set with other
+   *
+   * @param other other set to merge with
+   * @return a new set
+   */
+  public LongRangeSet union(LongRangeSet other) {
+    if(other.isEmpty() || other == this) return this;
+    if(other.contains(this)) return other;
+    // TODO: optimize
+    return Range.LONG_RANGE.subtract(Range.LONG_RANGE.subtract(this).intersect(Range.LONG_RANGE.subtract(other)));
+  }
+
+  /**
    * @return a minimal value contained in the set
    * @throws NoSuchElementException if set is empty
    */
@@ -264,6 +277,11 @@ public abstract class LongRangeSet {
     @Override
     public LongRangeSet intersect(LongRangeSet other) {
       return this;
+    }
+
+    @Override
+    public LongRangeSet union(LongRangeSet other) {
+      return other;
     }
 
     @Override
