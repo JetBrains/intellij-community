@@ -15,13 +15,20 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 
 /**
  * @author ven
  */
 public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/annotations";
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk9();
+  }
 
   public void testWrongPlace() { setLanguageLevel(LanguageLevel.JDK_1_7); doTest(); }
   public void testNotValueNameOmitted() { doTest(); }
