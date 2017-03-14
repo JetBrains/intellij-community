@@ -65,6 +65,10 @@ public class IntermediateBuilderPositiveTest extends StreamChainBuilderPositiveT
     doTest();
   }
 
+  public void testOnClose() throws Exception {
+    doTest();
+  }
+
   @Override
   protected void checkResultChain(StreamChain chain) {
     assertNotNull(chain);
