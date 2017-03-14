@@ -15,9 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.DaemonListeners;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.TransactionGuard;
@@ -35,7 +38,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -78,7 +80,7 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
   }
 
   private boolean timeToOptimizeImports(GroovyFile myFile, Editor editor) {
-    if (!CodeInsightSettings.getInstance().OPTIMIZE_IMPORTS_ON_THE_FLY) return false;
+    if (!CodeInsightWorkspaceSettings.getInstance(myFile.getProject()).optimizeImportsOnTheFly) return false;
     if (onTheFly && editor != null) {
       // if we stand inside import statements, do not optimize
       final VirtualFile vfile = myFile.getVirtualFile();
@@ -103,7 +105,7 @@ public class GroovyOptimizeImportsFix implements IntentionAction {
     return !errors && DaemonListeners.canChangeFileSilently(myFile);
   }
 
-  private boolean containsErrorsPreventingOptimize(GroovyFile myFile, Document myDocument) {
+  private static boolean containsErrorsPreventingOptimize(GroovyFile myFile, Document myDocument) {
     // ignore unresolved imports errors
     final TextRange ignoreRange;
     final GrImportStatement[] imports = myFile.getImportStatements();
