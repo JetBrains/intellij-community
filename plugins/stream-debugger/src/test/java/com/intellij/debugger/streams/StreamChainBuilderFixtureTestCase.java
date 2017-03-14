@@ -1,8 +1,12 @@
 package com.intellij.debugger.streams;
 
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +36,17 @@ public abstract class StreamChainBuilderFixtureTestCase extends LightCodeInsight
   @Override
   protected ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
+  }
+
+  @NotNull
+  PsiElement configureAndGetElementAtCaret() {
+    final String name = File.separator + getTestName(false) + ".java";
+    configureByFile(name);
+    final PsiFile file = getFile();
+    final int offset = getEditor().getCaretModel().getCurrentCaret().getOffset();
+    final PsiElement elementAtCaret = DebuggerUtilsEx.findElementAt(file, offset);
+    assertNotNull(elementAtCaret);
+    return elementAtCaret;
   }
 
   @NotNull
