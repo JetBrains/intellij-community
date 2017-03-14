@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,11 +58,18 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
                                   @NotNull List<Charset> charsets,
                                   @NotNull final Function<Charset, String> charsetFilter) {
     for (final Charset charset : charsets) {
-      String description = charsetFilter.fun(charset);
-      AnAction action = new DumbAwareAction(charset.displayName(), description, description == null ? AllIcons.General.Warning : null) {
+      AnAction action = new DumbAwareAction(charset.displayName(), null, EmptyIcon.ICON_16) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          ChooseFileEncodingAction.this.chosen(virtualFile, charset);
+          chosen(virtualFile, charset);
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          super.update(e);
+          String description = charsetFilter.fun(charset);
+          e.getPresentation().setIcon(description == null ? AllIcons.General.Warning : null);
+          e.getPresentation().setDescription(description);
         }
       };
       group.add(action);
