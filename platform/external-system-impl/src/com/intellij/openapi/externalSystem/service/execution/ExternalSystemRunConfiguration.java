@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -34,6 +35,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
@@ -203,7 +205,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
         }
         processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
         foldGreetingOrFarewell(consoleView, greeting, true);
-        task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
+        ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
 
           private boolean myResetGreeting = true;
 
@@ -241,7 +243,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
             foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
           }
-        });
+        };
+        task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
       DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
       result.setRestartActions(consoleManager.getRestartActions(consoleView));
