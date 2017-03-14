@@ -60,9 +60,13 @@ public abstract class PatchTestCase extends UpdaterTestCase {
   }
 
   protected Patch createPatch() throws IOException, OperationCancelledException {
-    PatchSpec spec = new PatchSpec()
+    return createPatch(Function.identity());
+  }
+
+  protected Patch createPatch(Function<PatchSpec, PatchSpec> tuner) throws IOException, OperationCancelledException {
+    PatchSpec spec = tuner.apply(new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
-      .setNewFolder(myNewerDir.getAbsolutePath());
+      .setNewFolder(myNewerDir.getAbsolutePath()));
     return new Patch(spec, TEST_UI);
   }
 

@@ -226,7 +226,6 @@ public abstract class PatchAction {
 
     PatchAction that = (PatchAction)o;
 
-    if (myFlags != that.myFlags) return false;
     if (myChecksum != that.myChecksum) return false;
     if (!Objects.equals(myPath, that.myPath)) return false;
 
@@ -237,7 +236,6 @@ public abstract class PatchAction {
   public int hashCode() {
     int result = Objects.hashCode(myPath);
     result = 31 * result + (int)(myChecksum ^ (myChecksum >>> 32));
-    result = 31 * result + myFlags;
     return result;
   }
 }

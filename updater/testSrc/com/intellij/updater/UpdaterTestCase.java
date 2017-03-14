@@ -60,10 +60,12 @@ public abstract class UpdaterTestCase {
     public final long README_TXT;
     public final long IDEA_BAT;
     public final long ANNOTATIONS_JAR;
+    public final long ANNOTATIONS_JAR_BIN;
     public final long BOOTSTRAP_JAR;
     public final long BOOTSTRAP_JAR_BINARY;
     public final long FOCUS_KILLER_DLL;
     public final long ANNOTATIONS_JAR_NORM;
+    public final long ANNOTATIONS_CHANGED_JAR_BIN;
     public final long ANNOTATIONS_CHANGED_JAR_NORM;
     public final long BOOT_JAR_NORM;
     public final long BOOT2_JAR_NORM;
@@ -78,10 +80,12 @@ public abstract class UpdaterTestCase {
       README_TXT = windowsLineEnds ? 1272723667L : 7256327L;
       IDEA_BAT = windowsLineEnds ? 3088608749L : 1493936069L;
       ANNOTATIONS_JAR = 2119442657L;
+      ANNOTATIONS_JAR_BIN = 2525796836L;
       BOOTSTRAP_JAR = 2082851308L;
       BOOTSTRAP_JAR_BINARY = 2745721972L;
       FOCUS_KILLER_DLL = 1991212227L;
       ANNOTATIONS_JAR_NORM = 2119442657L;
+      ANNOTATIONS_CHANGED_JAR_BIN = 2587736223L;
       ANNOTATIONS_CHANGED_JAR_NORM = 4088078858L;
       BOOT_JAR_NORM = 3018038682L;
       BOOT2_JAR_NORM = 2406818996L;

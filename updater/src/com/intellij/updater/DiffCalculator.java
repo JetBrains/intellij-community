@@ -20,12 +20,13 @@ import java.util.*;
 
 public class DiffCalculator {
   public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
-    return calculate(oldChecksums, newChecksums, Collections.emptyList(), false);
+    return calculate(oldChecksums, newChecksums, Collections.emptyList(), Collections.emptyList(), false);
   }
 
   public static Result calculate(Map<String, Long> oldChecksums,
                                  Map<String, Long> newChecksums,
                                  List<String> critical,
+                                 List<String> optional,
                                  boolean lookForMoved) {
     Result result = new Result();
     result.commonFiles = collect(oldChecksums, newChecksums, critical, true);
@@ -54,12 +55,12 @@ public class DiffCalculator {
       for (Map.Entry<String, Long> create : toCreate.entrySet()) {
         if (Digester.isFile(create.getValue())) {
           List<String> sameContent = byContent.get(create.getValue());
-          String source = findBestCandidateForMove(sameContent, create.getKey());
+          String source = findBestCandidateForMove(sameContent, create.getKey(), optional);
           boolean move = true;
 
           if (source == null) {
             List<String> sameName = byName.get(new File(create.getKey()).getName());
-            source = findBestCandidateForMove(sameName, create.getKey());
+            source = findBestCandidateForMove(sameName, create.getKey(), optional);
             move = false;
           }
 
@@ -89,15 +90,16 @@ public class DiffCalculator {
     return matches;
   }
 
-  private static String findBestCandidateForMove(List<String> paths, String path) {
+  private static String findBestCandidateForMove(List<String> paths, String path, List<String> optional) {
     if (paths == null) return null;
-    if (paths.size() == 1) return paths.get(0);
 
+    boolean mandatory = !optional.contains(path);
     String best = "";
 
     String[] dirs = path.split("/");
     int common = 0;
     for (String other : paths) {
+      if (mandatory && optional.contains(other)) continue;  // mandatory targets must not use optional sources
       String[] others = other.split("/");
       for (int i = 0; i < dirs.length && i < others.length; i++) {
         if (dirs[dirs.length - i - 1].equals(others[others.length - i - 1])) {
