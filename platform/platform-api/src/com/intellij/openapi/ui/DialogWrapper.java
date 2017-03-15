@@ -528,7 +528,7 @@ public abstract class DialogWrapper {
     }
 
 
-    return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide, myDoNotAsk);
+    return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }
 
   @NotNull
@@ -598,8 +598,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
                                   @NotNull List<JButton> rightSideButtons,
-                                  boolean hasHelpToMoveToLeftSide,
-                                  @Nullable DoNotAskOption doNotAsk) {
+                                  boolean hasHelpToMoveToLeftSide) {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public Color getBackground() {
@@ -611,10 +610,10 @@ public abstract class DialogWrapper {
       }
     };
 
-    if (doNotAsk != null) {
-      myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
-      myCheckBoxDoNotShowDialog.setVisible(doNotAsk.canBeHidden());
-      myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
+    if (myDoNotAsk != null) {
+      myCheckBoxDoNotShowDialog = new JCheckBox(myDoNotAsk.getDoNotShowMessage());
+      myCheckBoxDoNotShowDialog.setVisible(myDoNotAsk.canBeHidden());
+      myCheckBoxDoNotShowDialog.setSelected(!myDoNotAsk.isToBeShown());
       DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
     }
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
