@@ -145,6 +145,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testEnumConstantConstructorWithArgs() throws Exception {
+    doTest();
+  }
+
   public void testConstantInChainingConstructor() throws Exception {   // IDEADEV-28136
     doTest();
   }
