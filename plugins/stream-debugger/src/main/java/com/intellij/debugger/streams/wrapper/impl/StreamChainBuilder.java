@@ -23,7 +23,7 @@ public class StreamChainBuilder {
                                                                      "of", "concat", "empty").toSet();
   private static final Set<String> SUPPORTED_INTERMEDIATE =
     StreamEx.of("limit", "flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble", "distinct", "map",
-                "filter", "mapToInt", "mapToLong", "mapToDouble", "sorted", "boxed", "peek", "onClose").toSet();
+                "filter", "mapToInt", "mapToLong", "mapToDouble", "mapToObj", "sorted", "boxed", "peek", "onClose").toSet();
 
   // TODO: termination - is any method which returns regular object (not subclass of Stream)
   private static final Set<String> SUPPORTED_TERMINATION =
@@ -81,7 +81,7 @@ public class StreamChainBuilder {
           if (callName == null) return null;
           final StreamCallType type = getType(callName);
           if (StreamCallType.INTERMEDIATE.equals(type)) {
-            final GenericType currentType = resolveType(call);
+            final GenericType currentType = resolveType(methodCall);
             if (currentType == null) return null;
             final IntermediateStreamCall streamCall = new IntermediateStreamCallImpl(callName, callArgs, prevCallType, currentType);
             intermediateStreamCalls.add(streamCall);
