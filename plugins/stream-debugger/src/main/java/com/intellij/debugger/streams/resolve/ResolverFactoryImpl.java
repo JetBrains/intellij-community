@@ -46,6 +46,7 @@ public class ResolverFactoryImpl implements ResolverFactory {
     switch (methodName) {
       case "filter":
       case "limit":
+      case "skip":
         return new FilterResolver();
       case "flatMap":
         return new FlatMapResolver();
