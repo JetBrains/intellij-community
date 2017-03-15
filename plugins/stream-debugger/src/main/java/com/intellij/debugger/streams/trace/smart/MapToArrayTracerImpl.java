@@ -5,23 +5,24 @@ import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.smart.handler.HandlerFactory;
 import com.intellij.debugger.streams.trace.smart.handler.PeekCall;
+import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.impl.ResolverFactory;
 import com.intellij.debugger.streams.trace.smart.resolve.impl.ValuesOrderInfo;
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.intellij.debugger.streams.wrapper.StreamCallType;
-import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.LongValue;
 import com.sun.jdi.Value;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -42,10 +43,10 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     String additionalVariablesDeclaration();
 
     @NotNull
-    List<StreamCall> additionalCallsBefore();
+    List<IntermediateStreamCall> additionalCallsBefore();
 
     @NotNull
-    List<StreamCall> additionalCallsAfter();
+    List<IntermediateStreamCall> additionalCallsAfter();
 
     @NotNull
     String prepareResult();
@@ -57,47 +58,19 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
   @NotNull
   @Override
   protected String getTraceExpression(@NotNull StreamChain chain) {
-    final List<StreamCall> tracingChainCalls = new ArrayList<>();
-    final int callCount = chain.length();
-    final StringBuilder declarationBuilder = new StringBuilder();
-    final StringBuilder resultBuilder = new StringBuilder();
-    declarationBuilder.append("final long startTime = java.lang.System.nanoTime();" + LINE_SEPARATOR);
-    declarationBuilder.append(String.format("final java.lang.Object[] info = new java.lang.Object[%d];" + LINE_SEPARATOR, callCount))
-      .append("final java.util.concurrent.atomic.AtomicInteger time = new java.util.concurrent.atomic.AtomicInteger(0);")
-      .append(LINE_SEPARATOR);
-    final StreamCall timeCall = new PeekCall("x -> time.incrementAndGet()");
-    for (int i = 0; i < callCount; i++) {
-      final StreamCall call = chain.getCall(i);
-      final StreamCallTraceHandler handler = HandlerFactory.create(i, call);
+    final StreamCallTraceHandler producerHandler = HandlerFactory.create(chain.getProducerCall());
+    final List<StreamCallTraceHandler> intermediateHandlers = getHandlers(chain.getIntermediateCalls());
+    final StreamCallTraceHandler terminatorHandler = HandlerFactory.create(chain.getTerminationCall());
 
-      declarationBuilder.append(handler.additionalVariablesDeclaration());
-      resultBuilder.append("{").append(LINE_SEPARATOR);
-      resultBuilder.append(handler.prepareResult());
-      resultBuilder.append(String.format("info[%d] = %s;", i, handler.getResultExpression())).append(LINE_SEPARATOR);
-      resultBuilder.append("}").append(LINE_SEPARATOR);
+    final StreamChain traceChain = buildTraceChain(chain, producerHandler, intermediateHandlers, terminatorHandler);
 
-      final List<StreamCall> callsBefore = handler.additionalCallsBefore();
-      final List<StreamCall> callsAfter = handler.additionalCallsAfter();
+    final String declarations = buildDeclarations(producerHandler, intermediateHandlers, terminatorHandler);
 
-      if (!StreamCallType.PRODUCER.equals(call.getType())) {
-        tracingChainCalls.addAll(callsBefore);
-      }
-      tracingChainCalls.add(call);
-      if (!StreamCallType.TERMINATOR.equals(call.getType())) {
-        tracingChainCalls.add(timeCall);
-        tracingChainCalls.addAll(callsAfter);
-      }
-    }
+    final String fillingInfoArray = buildFillInfo(producerHandler, intermediateHandlers, terminatorHandler);
 
-    resultBuilder.append("final long[] elapsedTime = new long[]{ java.lang.System.nanoTime() - startTime };" + LINE_SEPARATOR);
-    resultBuilder.append(RETURN_EXPRESSION);
-    final StreamCall producer = tracingChainCalls.get(0);
-    final List<StreamCall> intermediate = new ArrayList<>(tracingChainCalls.subList(1, tracingChainCalls.size() - 1));
-    final StreamCall terminator = tracingChainCalls.get(tracingChainCalls.size() - 1);
-    final StreamChain newChain = new StreamChainImpl(producer, intermediate, terminator);
-    final String tracingCall = "final Object streamResult = " + newChain.getText() + ";" + LINE_SEPARATOR;
+    final String tracingCall = "final Object streamResult = " + traceChain.getText() + ";" + LINE_SEPARATOR;
 
-    final String result = declarationBuilder.toString() + tracingCall + resultBuilder.toString();
+    final String result = declarations + tracingCall + fillingInfoArray;
     LOG.info("stream expression to trace:" + LINE_SEPARATOR + result);
     return result;
   }
@@ -119,6 +92,97 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     else {
       throw new IllegalArgumentException("value in InvokeMethodProxy must be an ArrayReference");
     }
+  }
+
+  @NotNull
+  private static StreamChain buildTraceChain(@NotNull StreamChain chain,
+                                             @NotNull StreamCallTraceHandler producerHandler,
+                                             @NotNull List<StreamCallTraceHandler> intermediateCallHandlers,
+                                             @NotNull StreamCallTraceHandler terminatorHandler) {
+    final List<IntermediateStreamCall> newIntermediateCalls = new ArrayList<>();
+    final ProducerStreamCall producerCall = chain.getProducerCall();
+
+    newIntermediateCalls.add(createTimePeekCall(producerCall.getTypeAfter()));
+    newIntermediateCalls.addAll(producerHandler.additionalCallsAfter());
+
+    final List<IntermediateStreamCall> intermediateCalls = chain.getIntermediateCalls();
+    assert intermediateCalls.size() == intermediateCallHandlers.size();
+
+    for (int i = 0, callCount = intermediateCallHandlers.size(); i < callCount; i++) {
+      final IntermediateStreamCall call = intermediateCalls.get(i);
+      final StreamCallTraceHandler handler = intermediateCallHandlers.get(i);
+
+      newIntermediateCalls.addAll(handler.additionalCallsBefore());
+
+      newIntermediateCalls.add(call);
+      newIntermediateCalls.add(createTimePeekCall(call.getTypeAfter()));
+
+      newIntermediateCalls.addAll(handler.additionalCallsAfter());
+    }
+
+    newIntermediateCalls.addAll(terminatorHandler.additionalCallsBefore());
+
+    return new StreamChainImpl(producerCall, newIntermediateCalls, chain.getTerminationCall());
+  }
+
+  @NotNull
+  private static IntermediateStreamCall createTimePeekCall(@NotNull GenericType elementType) {
+    return new PeekCall("x -> time.incrementAndGet()", elementType);
+  }
+
+  private static String buildDeclarations(@NotNull StreamCallTraceHandler producerHandler,
+                                          @NotNull List<StreamCallTraceHandler> intermediateCallsHandlers,
+                                          @NotNull StreamCallTraceHandler terminatorHandler) {
+    final StringBuilder builder = new StringBuilder();
+    builder.append("final long startTime = java.lang.System.nanoTime();" + LINE_SEPARATOR);
+    final int resultArraySize = 2 + intermediateCallsHandlers.size();
+    builder.append(String.format("final java.lang.Object[] info = new java.lang.Object[%d];" + LINE_SEPARATOR, resultArraySize))
+      .append("final java.util.concurrent.atomic.AtomicInteger time = new java.util.concurrent.atomic.AtomicInteger(0);")
+      .append(LINE_SEPARATOR);
+
+    builder.append(producerHandler.additionalVariablesDeclaration());
+    intermediateCallsHandlers.forEach(x -> builder.append(x.additionalVariablesDeclaration()));
+    builder.append(terminatorHandler.additionalVariablesDeclaration());
+
+    return builder.toString();
+  }
+
+  @NotNull
+  private static String buildFillInfo(StreamCallTraceHandler producerHandler,
+                                      List<StreamCallTraceHandler> intermediateCallsHandlers,
+                                      StreamCallTraceHandler terminatorHandler) {
+    final StringBuilder builder = new StringBuilder();
+
+    final Iterator<StreamCallTraceHandler> iterator =
+      StreamEx.of(producerHandler).append(intermediateCallsHandlers).append(terminatorHandler).iterator();
+
+    int i = 0;
+    while (iterator.hasNext()) {
+      final StreamCallTraceHandler handler = iterator.next();
+      builder.append("{").append(LINE_SEPARATOR);
+      builder.append(handler.prepareResult());
+      builder.append(String.format("info[%d] = %s;", i, handler.getResultExpression())).append(LINE_SEPARATOR);
+      builder.append("}").append(LINE_SEPARATOR);
+      i++;
+    }
+
+    builder.append("final long[] elapsedTime = new long[]{ java.lang.System.nanoTime() - startTime };" + LINE_SEPARATOR);
+    builder.append(RETURN_EXPRESSION);
+
+    return builder.toString();
+  }
+
+  @NotNull
+  private static List<StreamCallTraceHandler> getHandlers(@NotNull List<IntermediateStreamCall> intermediateCalls) {
+    final List<StreamCallTraceHandler> result = new ArrayList<>();
+
+    int i = 1;
+    for (final IntermediateStreamCall call : intermediateCalls) {
+      result.add(HandlerFactory.createIntermediate(i, call));
+      i++;
+    }
+
+    return result;
   }
 
   @NotNull
