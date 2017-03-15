@@ -90,8 +90,10 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         SemanticEditorPosition position = getPosition(editor,offset);
         if (position.hasEmptyLineAfter(offset) &&
             !position.after().isAtAnyOf(ArrayClosingBracket, BlockOpeningBrace, BlockClosingBrace, RightParenthesis) &&
-            !position.isAtEnd()) {
-            return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
+            !position.isAtEnd() &&
+            position.findLeftParenthesisBackwardsSkippingNested(LeftParenthesis, RightParenthesis, BlockOpeningBrace, BlockClosingBrace)
+              .isAt(LeftParenthesis)) {
+          return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
         }
       }
       else if (getPosition(editor, offset + 1).matchesRule(
