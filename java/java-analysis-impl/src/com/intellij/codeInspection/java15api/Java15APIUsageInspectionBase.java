@@ -15,16 +15,14 @@
  */
 package com.intellij.codeInspection.java15api;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -63,8 +61,6 @@ import java.util.Set;
  */
 public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public static final String SHORT_NAME = "Since15";
-  public static final ExtensionPointName<FileCheckingInspection> EP_NAME =
-    ExtensionPointName.create(ToolExtensionPoints.JAVA15_INSPECTION_TOOL);
 
   private static final String EFFECTIVE_LL = "effectiveLL";
 
@@ -184,7 +180,6 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
-    private final ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(EP_NAME);
 
     public MyVisitor(final ProblemsHolder holder, boolean onTheFly) {
       myHolder = holder;
@@ -343,18 +338,6 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       if (reference != null && isInProject(reference)) {
         //noinspection DialogTitleCapitalization
         myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.5.problem.descriptor", getShortName(api)));
-      }
-    }
-
-    @Override
-    public void visitFile(PsiFile file) {
-      for (FileCheckingInspection inspection : point.getExtensions()) {
-        ProblemDescriptor[] descriptors = inspection.checkFile(file, InspectionManager.getInstance(file.getProject()), myOnTheFly);
-        if (descriptors != null) {
-          for (ProblemDescriptor descriptor : descriptors) {
-            myHolder.registerProblem(descriptor);
-          }
-        }
       }
     }
   }

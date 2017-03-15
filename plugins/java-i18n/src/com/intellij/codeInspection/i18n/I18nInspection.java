@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -29,8 +25,6 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -403,21 +397,6 @@ public class I18nInspection extends BaseLocalInspectionTool {
   @Override
   public String getAlternativeID() {
     return "nls";
-  }
-
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.I18N_INSPECTION_TOOL);
-    final FileCheckingInspection[] fileCheckingInspections = point.getExtensions();
-    for(FileCheckingInspection obj: fileCheckingInspections) {
-      ProblemDescriptor[] descriptors = obj.checkFile(file, manager, isOnTheFly);
-      if (descriptors != null) {
-        return descriptors;
-      }
-    }
-
-    return null;
   }
 
   private ProblemDescriptor[] checkElement(@NotNull PsiElement element, @NotNull InspectionManager manager, boolean isOnTheFly) {
