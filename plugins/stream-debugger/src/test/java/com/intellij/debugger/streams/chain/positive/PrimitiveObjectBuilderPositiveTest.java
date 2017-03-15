@@ -9,19 +9,53 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.debugger.streams.trace.smart.handler.type.GenericType.INT;
-import static com.intellij.debugger.streams.trace.smart.handler.type.GenericType.OBJECT;
+import static com.intellij.debugger.streams.trace.smart.handler.type.GenericType.*;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
-  public void testSimple() {
-    doTest(OBJECT, OBJECT);
+  public void testSimpleObject() {
+    doTest(OBJECT);
+  }
+
+  public void testSimpleInt() {
+    doTest(INT);
+  }
+
+  public void testSimpleDouble() {
+    doTest(DOUBLE);
+  }
+
+  public void testSimpleLong() {
+    doTest(LONG);
+  }
+
+  public void testObj2Int() {
+    doTest(OBJECT, INT);
+  }
+
+  public void testObj2Long() {
+    doTest(OBJECT, LONG);
+  }
+
+  public void testObj2Double() {
+    doTest(OBJECT, DOUBLE);
+  }
+
+  public void testPrimitiveIdentity() {
+    doTest(INT, INT);
+  }
+
+  public void testPrimitive2Obj() {
+    doTest(DOUBLE, OBJECT);
+  }
+
+  public void testFewTransitions() {
+    doTest(OBJECT, INT, INT, OBJECT, DOUBLE, OBJECT, LONG);
   }
 
   private void doTest(@NotNull GenericType producerAfterType,
-                      @NotNull GenericType terminatorBeforeType,
                       @NotNull GenericType... intermediateAfterTypes) {
     final PsiElement elementAtCaret = configureAndGetElementAtCaret();
     assertNotNull(elementAtCaret);
@@ -30,7 +64,6 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
     final List<IntermediateStreamCall> intermediateCalls = chain.getIntermediateCalls();
     assertEquals(intermediateAfterTypes.length, intermediateCalls.size());
     assertEquals(producerAfterType, chain.getProducerCall().getTypeAfter());
-    assertEquals(terminatorBeforeType, chain.getTerminationCall().getTypeBefore());
 
     if (intermediateAfterTypes.length > 0) {
       assertEquals(producerAfterType, intermediateCalls.get(0).getTypeBefore());
@@ -41,6 +74,11 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
 
       final GenericType lastAfterType = intermediateAfterTypes[intermediateAfterTypes.length - 1];
       assertEquals(lastAfterType, chain.getTerminationCall().getTypeBefore());
+      final IntermediateStreamCall lastCall = intermediateCalls.get(intermediateCalls.size() - 1);
+      assertEquals(lastAfterType, lastCall.getTypeAfter());
+    }
+    else {
+      assertEquals(producerAfterType, chain.getTerminationCall().getTypeBefore());
     }
   }
 
