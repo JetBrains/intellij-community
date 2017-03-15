@@ -1,15 +1,11 @@
 package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.ide.IdeView;
-import com.intellij.ide.util.DirectoryUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
-import com.jetbrains.edu.coursecreator.CCUtils;
-import com.jetbrains.edu.coursecreator.creation.CCTaskCreator;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -65,19 +61,11 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
   protected PsiDirectory createItemDir(@NotNull final Project project, @NotNull final StudyItem item,
                                      @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
                                      @NotNull final Course course) {
-    CCTaskCreator creator = CCTaskCreator.INSTANCE.forLanguage(course.getLanguageById());
-    if (creator != null) {
-      return creator.createTask(project, item, view, parentDirectory, course);
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator != null) {
+      return configurator.createTask(project, item, view, parentDirectory, course);
     }
-    final Ref<PsiDirectory> taskDirectory = new Ref<>();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      String taskDirName = EduNames.TASK + item.getIndex();
-      taskDirectory.set(DirectoryUtil.createSubdirectories(taskDirName, parentDirectory, "\\/"));
-      if (taskDirectory.get() != null) {
-        CCUtils.createTaskContent(project, view, course, taskDirectory.get());
-      }
-    });
-    return taskDirectory.get();
+    return null;
   }
 
   @Override

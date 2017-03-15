@@ -1,14 +1,12 @@
 package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.ide.IdeView;
-import com.intellij.ide.util.DirectoryUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
-import com.jetbrains.edu.coursecreator.creation.CCLessonCreator;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
@@ -52,20 +50,11 @@ public class CCCreateLesson extends CCCreateStudyItemActionBase {
   protected PsiDirectory createItemDir(@NotNull final Project project, @NotNull final StudyItem item,
                                     @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
                                     @NotNull final Course course) {
-    CCLessonCreator creator = CCLessonCreator.INSTANCE.forLanguage(course.getLanguageById());
-    if (creator != null) {
-      return creator.createLesson(project, item, view, parentDirectory, course);
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
+      return null;
     }
-    final PsiDirectory[] lessonDirectory = new PsiDirectory[1];
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      lessonDirectory[0] = DirectoryUtil.createSubdirectories(EduNames.LESSON + item.getIndex(), parentDirectory, "\\/");
-    });
-    if (lessonDirectory[0] != null) {
-      if (view != null) {
-        view.selectElement(lessonDirectory[0]);
-      }
-    }
-    return lessonDirectory[0];
+    return configurator.createLesson(item, view, parentDirectory);
   }
 
   @Override

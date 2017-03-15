@@ -48,12 +48,6 @@
     <extensionPoint qualifiedName="Edu.CCLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.CCLanguageManager"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="Edu.CCTaskCreator" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.creation.CCTaskCreator"/>
-    </extensionPoint>
-    <extensionPoint qualifiedName="Edu.CCLessonCreator" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.creation.CCLessonCreator"/>
-    </extensionPoint>
   </extensionPoints>
 
   <actions>
