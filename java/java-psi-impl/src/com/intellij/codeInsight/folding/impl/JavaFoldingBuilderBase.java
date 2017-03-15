@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,9 +60,17 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     if (element instanceof PsiImportList) {
       return "...";
     }
-    if (element instanceof PsiMethod || element instanceof PsiClassInitializer || element instanceof PsiClass ||
-        element instanceof PsiLambdaExpression) {
-      return "{...}";
+    if (element instanceof PsiMethod) {
+      return getCodeBlockPlaceholder(((PsiMethod)element).getBody());
+    }
+    else if (element instanceof PsiClassInitializer) {
+      return getCodeBlockPlaceholder(((PsiClassInitializer)element).getBody());
+    }
+    else if (element instanceof PsiClass) {
+      return getCodeBlockPlaceholder(null);
+    }
+    else if (element instanceof PsiLambdaExpression) {
+      return getCodeBlockPlaceholder(((PsiLambdaExpression)element).getBody());
     }
     if (element instanceof PsiDocComment) {
       return "/**...*/";
@@ -80,6 +88,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return "//...";
     }
     return "...";
+  }
+
+  private static String getCodeBlockPlaceholder(PsiElement codeBlock) {
+    return codeBlock instanceof PsiCodeBlock && ((PsiCodeBlock)codeBlock).getStatements().length == 0 ? "{}" : "{...}";
   }
 
   private static boolean areOnAdjacentLines(@NotNull PsiElement e1, @NotNull PsiElement e2, @NotNull Document document) {
