@@ -120,6 +120,15 @@ public class LongRangeBasics {
     System.out.println(name);
   }
 
+  void testLengthNonFlushed(String s) {
+    if (s.length() > 10) {
+      System.out.println(s);
+      if (<warning descr="Condition 's.length() > 5' is always 'true'">s.length() > 5</warning>) {
+        System.out.println(s);
+      }
+    }
+  }
+
   void getMax(List<String> points, String source) {
     int min = Integer.MAX_VALUE;
     int nextSelectedIndex = -1;

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -468,6 +469,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       PsiCall call = instruction.getCallExpression();
       if (call instanceof PsiMethodCallExpression) {
         LongRangeSet range = KNOWN_METHOD_RANGES.mapFirst((PsiMethodCallExpression)call);
+        if (range == null) {
+          PsiMethod method = call.resolveMethod();
+          if (method != null && AnnotationUtil.isAnnotated(method, "javax.annotation.Nonnegative", false)) {
+            range = LongRangeSet.range(0, Long.MAX_VALUE);
+          }
+        }
         if (range != null) {
           return rangeValue.intersect(range);
         }
