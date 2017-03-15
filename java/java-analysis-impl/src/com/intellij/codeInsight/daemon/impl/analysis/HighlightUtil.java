@@ -69,10 +69,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -87,18 +84,18 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class HighlightUtil extends HighlightUtilBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
 
-  @NotNull private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
-  @NotNull private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new THashMap<>(11);
-  @NotNull private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new THashMap<>(8);
-  @NotNull private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new THashMap<>(8);
-  @NotNull private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new THashMap<>(1);
-  @NotNull private static final Set<String> ourConstructorNotAllowedModifiers =
-    ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
-
-  @NonNls private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
-  private HighlightUtil() { }
+  private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
+  private static final Map<String, Set<String>> ourMethodIncompatibleModifiers = new THashMap<>(11);
+  private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new THashMap<>(8);
+  private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new THashMap<>(8);
+  private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new THashMap<>(1);
+
+  private static final Set<String> ourConstructorNotAllowedModifiers =
+    ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
+
+  private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
 
   static {
     ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(PsiModifier.FINAL));
@@ -118,7 +115,8 @@ public class HighlightUtil extends HighlightUtilBase {
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STRICTFP, Collections.emptySet());
     ourInterfaceIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
 
-    ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED, PsiModifier.DEFAULT));
+    ourMethodIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(
+      PsiModifier.NATIVE, PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PRIVATE, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED, PsiModifier.DEFAULT));
     ourMethodIncompatibleModifiers.put(PsiModifier.NATIVE, ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STRICTFP));
     ourMethodIncompatibleModifiers.put(PsiModifier.PACKAGE_LOCAL, ContainerUtil.newTroveSet(PsiModifier.PRIVATE, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
     ourMethodIncompatibleModifiers.put(PsiModifier.PRIVATE, ContainerUtil.newTroveSet(PsiModifier.PACKAGE_LOCAL, PsiModifier.PUBLIC, PsiModifier.PROTECTED));
@@ -141,6 +139,8 @@ public class HighlightUtil extends HighlightUtilBase {
 
     ourClassInitializerIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
   }
+
+  private HighlightUtil() { }
 
   @Nullable
   private static String getIncompatibleModifier(String modifier,
@@ -889,39 +889,31 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
-  @Nullable
-  private static Map<String, Set<String>> getIncompatibleModifierMap(@NotNull PsiModifierList modifierList) {
-    PsiElement parent = modifierList.getParent();
-    if (parent == null || PsiUtilCore.hasErrorElementChild(parent)) return null;
-    return parent instanceof PsiClass
-           ? ((PsiClass)parent).isInterface() ? ourInterfaceIncompatibleModifiers : ourClassIncompatibleModifiers
-           : parent instanceof PsiMethod
-             ? ourMethodIncompatibleModifiers
-             : parent instanceof PsiVariable
-               ? ourFieldIncompatibleModifiers
-               : parent instanceof PsiClassInitializer ? ourClassInitializerIncompatibleModifiers : null;
+  @Contract("null -> null")
+  private static Map<String, Set<String>> getIncompatibleModifierMap(@Nullable PsiElement modifierListOwner) {
+    if (modifierListOwner == null || PsiUtilCore.hasErrorElementChild(modifierListOwner)) return null;
+    if (modifierListOwner instanceof PsiClass) {
+      return ((PsiClass)modifierListOwner).isInterface() ? ourInterfaceIncompatibleModifiers : ourClassIncompatibleModifiers;
+    }
+    else if (modifierListOwner instanceof PsiMethod) return ourMethodIncompatibleModifiers;
+    else if (modifierListOwner instanceof PsiVariable) return ourFieldIncompatibleModifiers;
+    else if (modifierListOwner instanceof PsiClassInitializer) return ourClassInitializerIncompatibleModifiers;
+    return null;
   }
 
   @Nullable
   static String getIncompatibleModifier(String modifier, @NotNull PsiModifierList modifierList) {
-    PsiElement parent = modifierList.getParent();
-    if (parent == null || PsiUtilCore.hasErrorElementChild(parent)) return null;
-    final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
-    if (incompatibleModifierMap == null) return null;
-    return getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap);
+    Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList.getParent());
+    return incompatibleModifierMap != null ? getIncompatibleModifier(modifier, modifierList, incompatibleModifierMap) : null;
   }
-
 
   @Nullable
   static HighlightInfo checkNotAllowedModifier(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
     PsiElement modifierOwner = modifierList.getParent();
-    if (modifierOwner == null) return null;
-    if (PsiUtilCore.hasErrorElementChild(modifierOwner)) return null;
-
-    @PsiModifier.ModifierConstant String modifier = keyword.getText();
-    final Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierList);
+    Map<String, Set<String>> incompatibleModifierMap = getIncompatibleModifierMap(modifierOwner);
     if (incompatibleModifierMap == null) return null;
 
+    @PsiModifier.ModifierConstant String modifier = keyword.getText();
     Set<String> incompatibles = incompatibleModifierMap.get(modifier);
     PsiElement modifierOwnerParent = modifierOwner instanceof PsiMember ? ((PsiMember)modifierOwner).getContainingClass() : modifierOwner.getParent();
     if (modifierOwnerParent == null) modifierOwnerParent = modifierOwner.getParent();
@@ -1004,12 +996,11 @@ public class HighlightUtil extends HighlightUtilBase {
     isAllowed &= incompatibles != null;
     if (!isAllowed) {
       String message = JavaErrorMessages.message("modifier.not.allowed", modifier);
-
-      HighlightInfo highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
+      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createModifierListFix(modifierList, modifier, false, false));
       return highlightInfo;
     }
+
     return null;
   }
 
