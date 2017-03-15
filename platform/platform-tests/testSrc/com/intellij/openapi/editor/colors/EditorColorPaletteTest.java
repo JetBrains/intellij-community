@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +44,55 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
     assertTrue(palette.getColors(EditorColorPalette.ORDER_NONE).contains(sampleColor));
     assertFalse(palette.getColors(EditorColorPalette.ORDER_NONE).contains(nonConflictingColor));
   }
-  
+
+  public void testResolveConflictingColor() {
+    final EditorColorsScheme colorsScheme = (EditorColorsScheme)EditorColorsManager.getInstance().getScheme("Default").clone();
+    final Color newColorInPalette = EditorColorPaletteFactory.getInstance().getPalette(colorsScheme, Language.ANY)
+      .withBackgroundColors()
+      .withForegroundColors()
+      .getClosestNonConflictingColor(Color.YELLOW);
+
+    final TextAttributes newColorAttrInPallete = new TextAttributes();
+    newColorAttrInPallete.setForegroundColor(newColorInPalette);
+    
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE, newColorAttrInPallete);
+    checkUsed(colorsScheme, newColorInPalette, true);
+
+    checkUsed(colorsScheme, colorsScheme.getAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT).getForegroundColor(), false);
+    
+    // make BLOCK_COMMENT the same as LOCAL_VARIABLE => has conflict with non-rainbow BLOCK_COMMENT color 
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, newColorAttrInPallete);
+    checkUsed(colorsScheme, newColorInPalette, false);
+
+    final TextAttributes blackColorAttrInPallete = new TextAttributes();
+    blackColorAttrInPallete.setForegroundColor(Color.BLACK);
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, blackColorAttrInPallete);
+    checkUsed(colorsScheme, Color.BLACK, false);
+
+    final TextAttributes whiteColorAttrInPallete = new TextAttributes();
+    whiteColorAttrInPallete.setForegroundColor(Color.WHITE);
+    colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, whiteColorAttrInPallete);
+    checkUsed(colorsScheme, Color.WHITE, false);
+  }
+
+  private static void checkUsed(@NotNull EditorColorsScheme colorsScheme, @NotNull Color testColor, boolean needToBeReused) {
+    assertNotNull(testColor);
+    colorsScheme.setAttributes(RainbowHighlighter.RAINBOW_COLOR_KEYS[0], RainbowHighlighter.createRainbowAttribute(testColor));
+    final Color[] colors = RainbowHighlighter.testRainbowGenerateColors(colorsScheme);
+    final double minimalColorDistance = 0.02;//Registry.doubleValue("rainbow.highlighter.colors.diff");
+    int i = 0;
+    for (Color color : colors) {
+      if (needToBeReused) {
+        assertEquals(testColor, color);
+        break;
+      } 
+      else {
+        assertTrue(i++ + ": " + testColor + " vs " + color,
+                   RainbowHighlighter.colorDistance(testColor, color) >= minimalColorDistance * 0.6);
+      }
+    }
+  }
+
   private static void checkSchemeBackgrounds(@NotNull String schemeName, int minIntensity, int maxIntensity) {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(schemeName);
     EditorColorPalette palette = EditorColorPaletteFactory.getInstance().getPalette(defaultScheme, Language.ANY).withBackgroundColors();

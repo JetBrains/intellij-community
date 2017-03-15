@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
+public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo, EditorGeneratedTextAttributesCache {
   @NonNls String DEFAULT_SCHEME_NAME = "Default";
 
   void setName(String name);
