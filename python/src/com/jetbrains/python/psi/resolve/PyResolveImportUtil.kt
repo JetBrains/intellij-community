@@ -81,7 +81,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
   val foreignResults = foreignResults(name, context)
   val pythonResults = listOf(relativeResults,
                              resultsFromRoots(name, context),
-                             relativeResultsFromSkeletons(name, context)).flatten()
+                             relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = foreignResults + pythonResults
   val results = if (name.componentCount > 0) foreignResults + findFirstResults(pythonResults) else allResults
 
