@@ -65,7 +65,8 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         }
 
         Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
-        Component ultimateParentForEventWindow = UIUtil.findUltimateParent(((WindowEvent)e).getWindow());
+        Window sourceWindow = ((WindowEvent)e).getWindow();
+        Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
 
         if (!shouldCloseAllPopup && ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
           shouldCloseAllPopup = true;
@@ -77,6 +78,9 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
               && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
             shouldCloseAllPopup = true;
           }
+        }
+        if (!shouldCloseAllPopup && isPopupWindow(sourceWindow) && sourceWindow.getParent() == ultimateParentForFocusedComponent) {
+          shouldCloseAllPopup = true;
         }
 
         if (shouldCloseAllPopup) {

@@ -86,7 +86,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class FindPopupPanel extends JBPanel implements FindUI {
+public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
   private static final Logger LOG = Logger.getInstance(FindPopupPanel.class);
 
   private static final KeyStroke NEW_LINE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
@@ -151,6 +151,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         .setRequestFocus(true)
         .setCancelCallback(() -> {
           if (!myCanClose.get()) return false;
+          if (!ApplicationManager.getApplication().isActive()) return false;
           List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
           if (!popups.isEmpty()) {
             for (JBPopup popup : popups) {
@@ -1025,6 +1026,15 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       usages[0].navigate(true);
       for (int i = 1; i < usages.length; ++i) usages[i].highlightInEditor();
     }
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return getSelectedUsages();
+    }
+    return null;
   }
 
   @Nullable
