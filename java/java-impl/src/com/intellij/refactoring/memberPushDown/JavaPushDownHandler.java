@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,10 @@ import java.util.List;
 public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ArrayList<PsiElement> elements = new ArrayList<>();
+    List<PsiElement> elements = new ArrayList<>();
     String errorMessage = null;
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
@@ -83,6 +84,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
     if (aClass == null) return;
@@ -114,20 +116,8 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     dialog.show();
   }
 
+  @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    /*
-    if (elements.length == 1) {
-      return elements[0] instanceof PsiClass || elements[0] instanceof PsiField || elements[0] instanceof PsiMethod;
-    }
-    else if (elements.length > 1){
-      for (int  idx = 0;  idx < elements.length;  idx++) {
-        PsiElement element = elements[idx];
-        if (!(element instanceof PsiField || element instanceof PsiMethod)) return false;
-      }
-      return true;
-    }
-    return false;
-    */
     // todo: multiple selection etc
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }

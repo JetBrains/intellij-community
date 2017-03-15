@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ package com.intellij.refactoring.memberPullUp;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -53,8 +52,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.memberPullUp.JavaPullUpHandler");
   public static final String REFACTORING_NAME = RefactoringBundle.message("pull.members.up.title");
+
   private PsiClass mySubclass;
   private Project myProject;
 
@@ -75,8 +74,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
       }
     }
     if (elements.isEmpty()) {
-      String message = RefactoringBundle
-        .getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
     }
     else {
@@ -86,11 +84,8 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-
     myProject = project;
-
     PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
-
     invoke(project, dataContext, aClass, elements);
   }
 
@@ -131,31 +126,26 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
       }
     }
 
-    final PullUpDialog dialog = new PullUpDialog(project, aClass, bases, memberInfoStorage, this);
-
-
-    dialog.show();
+    new PullUpDialog(project, aClass, bases, memberInfoStorage, this).show();
   }
-
-
 
   @Override
   public boolean checkConflicts(final PullUpDialog dialog) {
     final List<MemberInfo> infos = dialog.getSelectedMemberInfos();
     final MemberInfo[] memberInfos = infos.toArray(new MemberInfo[infos.size()]);
     final PsiClass superClass = dialog.getSuperClass();
-    if (!checkWritable(superClass, memberInfos)) return false;
+    if (superClass == null || !checkWritable(superClass, memberInfos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
       final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
-      conflicts
-        .putAllValues(PullUpConflictsUtil.checkConflicts(memberInfos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
+      if (targetDirectory != null && targetPackage != null) {
+        conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(memberInfos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
+      }
     }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
-      conflictsDialog.show();
-      final boolean ok = conflictsDialog.isOK();
+      boolean ok = conflictsDialog.showAndGet();
       if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
       return ok;
     }
@@ -173,19 +163,6 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    /*
-    if (elements.length == 1) {
-      return elements[0] instanceof PsiClass || elements[0] instanceof PsiField || elements[0] instanceof PsiMethod;
-    }
-    else if (elements.length > 1){
-      for (int  idx = 0;  idx < elements.length;  idx++) {
-        PsiElement element = elements[idx];
-        if (!(element instanceof PsiField || element instanceof PsiMethod)) return false;
-      }
-      return true;
-    }
-    return false;
-    */
     // todo: multiple selection etc
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }
