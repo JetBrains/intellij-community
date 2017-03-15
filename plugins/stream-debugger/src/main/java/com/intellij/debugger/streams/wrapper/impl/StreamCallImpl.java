@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public class StreamCallImpl implements StreamCall {
+public abstract class StreamCallImpl implements StreamCall {
   private final String myName;
   private final String myArgs;
   private final StreamCallType myType;

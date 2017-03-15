@@ -1,29 +1,36 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
-import com.intellij.debugger.streams.wrapper.IntermediateCallType;
+import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
-import com.intellij.debugger.streams.wrapper.ValueType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class IntermediateStreamCallImpl extends StreamCallImpl implements IntermediateStreamCall {
-  private final IntermediateCallType myType;
 
-  public IntermediateStreamCallImpl(@NotNull String name, @NotNull String args, @NotNull IntermediateCallType type) {
+  private final GenericType myTypeBefore;
+  private final GenericType myTypeAfter;
+
+  IntermediateStreamCallImpl(@NotNull String name,
+                             @NotNull String args,
+                             @NotNull GenericType typeBefore,
+                             @NotNull GenericType typeAfter) {
     super(name, args, StreamCallType.INTERMEDIATE);
-    myType = type;
+    myTypeBefore = typeBefore;
+    myTypeAfter = typeAfter;
   }
 
+  @NotNull
   @Override
-  public boolean hasPrimitiveSource() {
-    return ValueType.PRIMITIVE.equals(myType.getTypeBefore());
+  public GenericType getTypeBefore() {
+    return myTypeBefore;
   }
 
+  @NotNull
   @Override
-  public boolean hasPrimitiveResult() {
-    return ValueType.PRIMITIVE.equals(myType.getTypeAfter());
+  public GenericType getTypeAfter() {
+    return myTypeAfter;
   }
 }

@@ -15,14 +15,25 @@
  */
 package com.intellij.debugger.streams.wrapper.impl;
 
+import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-class ProducerStreamCall extends StreamCallImpl {
-  ProducerStreamCall(@NotNull String name, @NotNull String args) {
+class ProducerStreamCallImpl extends StreamCallImpl implements ProducerStreamCall {
+  private final GenericType myTypeAfter;
+
+  ProducerStreamCallImpl(@NotNull String name, @NotNull String args, @NotNull GenericType typeAfter) {
     super(name, args, StreamCallType.PRODUCER);
+    myTypeAfter = typeAfter;
+  }
+
+  @NotNull
+  @Override
+  public GenericType getTypeAfter() {
+    return myTypeAfter;
   }
 }
