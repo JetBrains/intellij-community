@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.trace.smart.handler;
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import com.intellij.debugger.streams.trace.smart.handler.type.ClassTypeImpl;
 import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,10 +19,14 @@ public class DistinctHandler extends HandlerBase {
   private final HashMapVariableImpl myStoreMapVariable;
   private final HashMapVariableImpl myResolveMapVariable;
   private final HashMapVariableImpl myReverseUtilMapVariable;
+  private final GenericType myBeforeType;
+  private final GenericType myAfterType;
 
-  DistinctHandler(int callNumber) {
-    myPeekTracer = new PeekTracerHandler(callNumber, "distinct");
+  DistinctHandler(int callNumber, @NotNull IntermediateStreamCall call) {
+    myPeekTracer = new PeekTracerHandler(callNumber, "distinct", call.getTypeBefore(), call.getTypeAfter());
 
+    myBeforeType = call.getTypeBefore();
+    myAfterType = call.getTypeAfter();
     final String variablePrefix = "distinct" + callNumber;
     myStoreMapVariable =
       new HashMapVariableImpl(variablePrefix + "Store", GenericType.OBJECT,
@@ -32,19 +37,19 @@ public class DistinctHandler extends HandlerBase {
 
   @NotNull
   @Override
-  public List<StreamCall> additionalCallsBefore() {
-    final List<StreamCall> result = new ArrayList<>(myPeekTracer.additionalCallsBefore());
+  public List<IntermediateStreamCall> additionalCallsBefore() {
+    final List<IntermediateStreamCall> result = new ArrayList<>(myPeekTracer.additionalCallsBefore());
 
-    final PeekCall storeCall = new PeekCall(createStoreLambda());
+    final PeekCall storeCall = new PeekCall(createStoreLambda(), myBeforeType);
     result.add(storeCall);
     return result;
   }
 
   @NotNull
   @Override
-  public List<StreamCall> additionalCallsAfter() {
-    final List<StreamCall> result = new ArrayList<>(myPeekTracer.additionalCallsAfter());
-    result.add(new PeekCall(createResolveLambda()));
+  public List<IntermediateStreamCall> additionalCallsAfter() {
+    final List<IntermediateStreamCall> result = new ArrayList<>(myPeekTracer.additionalCallsAfter());
+    result.add(new PeekCall(createResolveLambda(), myAfterType));
     return result;
   }
 
@@ -56,15 +61,32 @@ public class DistinctHandler extends HandlerBase {
 
     final String storeMapName = myStoreMapVariable.getName();
     final String afterMapName = myPeekTracer.getAfterMapName();
-    final String prepareResolveMap = "{" + newLine +
-                                     "  for (final int timeAfter : " + myReverseUtilMapVariable.getName() + ".keySet()) {" + newLine +
-                                     "    final java.lang.Object afterValue = " + afterMapName + ".get(timeAfter);" + newLine +
-                                     "    final java.util.Map<java.lang.Integer, java.lang.Object> valuesBefore = " + storeMapName + ".get(afterValue);" + newLine +
-                                     "    for (final int timeBefore : valuesBefore.keySet()) {" + newLine +
-                                     "      " + myResolveMapVariable.getName() + ".put(timeBefore, timeAfter);" + newLine +
-                                     "    }" + newLine +
-                                     "  }" + newLine +
-                                     "}" + newLine;
+    final String prepareResolveMap = "{" +
+                                     newLine +
+                                     "  for (final int timeAfter : " +
+                                     myReverseUtilMapVariable.getName() +
+                                     ".keySet()) {" +
+                                     newLine +
+                                     "    final java.lang.Object afterValue = " +
+                                     afterMapName +
+                                     ".get(timeAfter);" +
+                                     newLine +
+                                     "    final java.util.Map<java.lang.Integer, java.lang.Object> valuesBefore = " +
+                                     storeMapName +
+                                     ".get(afterValue);" +
+                                     newLine +
+                                     "    for (final int timeBefore : valuesBefore.keySet()) {" +
+                                     newLine +
+                                     "      " +
+                                     myResolveMapVariable.getName() +
+                                     ".put(timeBefore, timeAfter);" +
+                                     newLine +
+                                     "    }" +
+                                     newLine +
+                                     "  }" +
+                                     newLine +
+                                     "}" +
+                                     newLine;
 
     final String peekResult =
       "final java.lang.Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;

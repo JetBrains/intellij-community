@@ -2,7 +2,7 @@ package com.intellij.debugger.streams.trace.smart.handler;
 
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
-import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -18,25 +18,30 @@ public class PeekTracerHandler extends HandlerBase {
 
   private final HashMapVariableImpl myBeforeVariable;
   private final HashMapVariableImpl myAfterVariable;
+  private final GenericType myTypeBefore;
+  private final GenericType myTypeAfter;
 
-  PeekTracerHandler(int num, @NotNull String name) {
+  PeekTracerHandler(int num, @NotNull String name, @NotNull GenericType typeBefore, @NotNull GenericType typeAfter) {
+    myTypeBefore = typeBefore;
+    myTypeAfter = typeAfter;
+
     final String variablePrefix = String.format("%sPeek%d", name, num);
-    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", GenericType.INT, GenericType.OBJECT, true);
-    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", GenericType.INT, GenericType.OBJECT, true);
+    myBeforeVariable = new HashMapVariableImpl(variablePrefix + "before", GenericType.INT, typeBefore, true);
+    myAfterVariable = new HashMapVariableImpl(variablePrefix + "after", GenericType.INT, typeAfter, true);
   }
 
   @NotNull
   @Override
-  public List<StreamCall> additionalCallsBefore() {
+  public List<IntermediateStreamCall> additionalCallsBefore() {
     final String beforeMapName = myBeforeVariable.getName();
-    return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.get(), x)", beforeMapName)));
+    return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.get(), x)", beforeMapName), myTypeBefore));
   }
 
   @NotNull
   @Override
-  public List<StreamCall> additionalCallsAfter() {
+  public List<IntermediateStreamCall> additionalCallsAfter() {
     final String afterMapName = myAfterVariable.getName();
-    return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.get(), x)", afterMapName)));
+    return Collections.singletonList(new PeekCall(String.format("x -> %s.put(time.get(), x)", afterMapName), myTypeAfter));
   }
 
   @NotNull

@@ -9,14 +9,14 @@ public class GenericTypeImpl implements GenericType {
   private final String myPrimitiveName;
   private final String myGenericName;
 
-  public GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName) {
+  GenericTypeImpl(@NotNull String primitiveName, @NotNull String genericName) {
     myPrimitiveName = primitiveName;
     myGenericName = genericName;
   }
 
   @NotNull
   @Override
-  public String getVariableName() {
+  public String getVariableTypeName() {
     return myPrimitiveName;
   }
 

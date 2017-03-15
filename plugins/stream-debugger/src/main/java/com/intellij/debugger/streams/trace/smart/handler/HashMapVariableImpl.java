@@ -21,8 +21,8 @@ class HashMapVariableImpl extends VariableImpl {
   String convertToArray(@NotNull String arrayName, boolean usePrimitiveKeys, boolean usePrimitiveValues) {
     final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
 
-    final String keysType = usePrimitiveKeys ? myKeyType.getVariableName() : myKeyType.getGenericTypeName();
-    final String valuesType = usePrimitiveValues ? myValueType.getVariableName() : myValueType.getGenericTypeName();
+    final String keysType = usePrimitiveKeys ? myKeyType.getVariableTypeName() : myKeyType.getGenericTypeName();
+    final String valuesType = usePrimitiveValues ? myValueType.getVariableTypeName() : myValueType.getGenericTypeName();
 
     return "final java.lang.Object[] " + arrayName + ";" + newLine +
            "{" + newLine +
