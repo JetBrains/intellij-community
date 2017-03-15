@@ -18,7 +18,6 @@ package com.intellij.debugger.streams.ui;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
-import com.intellij.debugger.memory.utils.InstanceValueDescriptor;
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
@@ -170,7 +169,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       final XValueChildrenList children = new XValueChildrenList();
       for (TraceElement traceElement : myValues) {
         children
-          .add(new InstanceJavaValue(new InstanceValueDescriptor(myProject, traceElement.getValue()), myEvaluationContext, myNodeManager));
+          .add(new InstanceJavaValue(new PrimitiveValueDescriptor(myProject, traceElement.getValue()), myEvaluationContext, myNodeManager));
       }
 
       node.addChildren(children, true);
