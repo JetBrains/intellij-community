@@ -206,7 +206,7 @@ public class PyImportOptimizer implements ImportOptimizer {
             if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
               Collections.sort(newStatementElements, IMPORT_ELEMENT_COMPARATOR);
             }
-            final String importedNames = StringUtil.join(newStatementElements, PsiElement::getText, ", ");
+            final String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
             final PyFromImportStatement combinedImport = generator.createFromImportStatement(langLevel, source, importedNames, null);
             ContainerUtil.map2LinkedSet(newStatementElements, e -> (PyImportStatementBase)e.getParent()).forEach(affected -> {
               myNewImportToLineComments.putValues(combinedImport, precedingComments.get(affected));
@@ -221,6 +221,12 @@ public class PyImportOptimizer implements ImportOptimizer {
         }
       }
       return result;
+    }
+    
+    @NotNull
+    private static String getNormalizedImportElementText(@NotNull PyImportElement element) {
+      // Remove comments, line feeds and backslashes
+      return element.getText().replaceAll("#.*", "").replaceAll("[\\s\\\\]+", " ");
     }
 
     @NotNull
