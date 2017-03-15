@@ -2440,7 +2440,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
       waitForDaemon();
-      checkFoldingState("[FoldRegion +(25:33), placeholder='{...}']");
+      checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
       new WriteCommandAction<Void>(myProject) {
         @Override
@@ -2449,7 +2449,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         }
       }.execute();
       waitForDaemon();
-      checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{...}']");
+      checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
       EditorTestUtil.executeAction(myEditor, IdeActions.ACTION_EXPAND_ALL_REGIONS);
       waitForDaemon();
