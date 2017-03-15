@@ -211,6 +211,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return child;
   }
 
+  @NotNull
   private VirtualFileSystemEntry[] getArraySafely() {
     synchronized (myData) {
       return myData.getFileChildren(myId, this);

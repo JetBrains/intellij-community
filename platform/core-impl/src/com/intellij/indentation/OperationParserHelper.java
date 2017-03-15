@@ -191,6 +191,7 @@ public class OperationParserHelper {
      * Provides operation priority and operands
      * @return array of TokenSets
      */
+    @NotNull
     TokenSet[] getOperatorsByPriority();
 
     /**
@@ -211,6 +212,7 @@ public class OperationParserHelper {
      * Provides element types to finish binary operation element
      * @return array of Element Types
      */
+    @NotNull
     IElementType[] getOperationElementTypes();
   }
 

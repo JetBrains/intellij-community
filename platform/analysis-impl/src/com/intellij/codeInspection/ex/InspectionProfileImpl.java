@@ -594,6 +594,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         return merger.getMergedToolName();
       }
 
+      @NotNull
       @Override
       public String[] getSourceToolNames() {
         return merger.getSourceToolNames();

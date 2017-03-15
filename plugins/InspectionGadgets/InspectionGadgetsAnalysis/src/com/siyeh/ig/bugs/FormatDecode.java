@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -95,6 +96,7 @@ class FormatDecode {
     }
   }
 
+  @NotNull
   public static Validator[] decode(String formatString, int argumentCount) {
     final ArrayList<Validator> parameters = new ArrayList<>();
 

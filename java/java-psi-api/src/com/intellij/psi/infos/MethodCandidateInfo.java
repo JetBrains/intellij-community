@@ -436,6 +436,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
   }
 
+  @Nullable
   public PsiType[] getArgumentTypes() {
     return myArgumentTypes;
   }

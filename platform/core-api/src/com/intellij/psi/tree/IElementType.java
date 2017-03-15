@@ -57,7 +57,7 @@ public class IElementType {
   private static final short MAX_INDEXED_TYPES = 15000;
 
   private static short size; // guarded by lock
-  private static volatile IElementType[] ourRegistry; // writes are guarded by lock
+  private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
   private static final Object lock = new String("registry lock");
 
   static {
@@ -67,6 +67,7 @@ public class IElementType {
     push(init);
   }
 
+  @NotNull
   static IElementType[] push(@NotNull IElementType[] types) {
     synchronized (lock) {
       IElementType[] oldRegistry = ourRegistry;

@@ -22,6 +22,7 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -68,6 +69,7 @@ public class NamedObjectDescriptor implements PsiWritableMetaData, PsiMetaData {
     myDcl = (XmlTag)element;
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return new Object[] { myDcl };

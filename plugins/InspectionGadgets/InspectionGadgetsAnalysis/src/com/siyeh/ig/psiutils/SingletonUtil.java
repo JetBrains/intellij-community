@@ -67,6 +67,7 @@ public class SingletonUtil {
     return aClass.equals(targetClass);
   }
 
+  @NotNull
   private static PsiMethod[] getIfOnlyInvisibleConstructors(PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     if (constructors.length == 0) {

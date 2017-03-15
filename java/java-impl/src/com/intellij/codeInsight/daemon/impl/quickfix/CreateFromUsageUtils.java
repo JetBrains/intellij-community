@@ -509,6 +509,7 @@ public class CreateFromUsageUtils {
     return result.toArray(new PsiReferenceExpression[result.size()]);
   }
 
+  @NotNull
   static PsiVariable[] guessMatchingVariables(final PsiExpression expression) {
     List<ExpectedTypeInfo[]> typesList = new ArrayList<>();
     List<String> expectedMethodNames = new ArrayList<>();
@@ -616,6 +617,7 @@ public class CreateFromUsageUtils {
     return compareMembers(c1, c2, expression);
   }
 
+  @NotNull
   private static ExpectedTypeInfo[] equalsExpectedTypes(PsiMethodCallExpression methodCall) {
     final PsiType[] argumentTypes = methodCall.getArgumentList().getExpressionTypes();
     if (argumentTypes.length != 1) {

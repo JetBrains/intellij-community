@@ -554,6 +554,7 @@ public class LambdaUtil {
            typeByExpression instanceof PsiLambdaParameterType;
   }
 
+  @NotNull
   public static PsiReturnStatement[] getReturnStatements(PsiLambdaExpression lambdaExpression) {
     final PsiElement body = lambdaExpression.getBody();
     return body instanceof PsiCodeBlock ? PsiUtil.findReturnStatements((PsiCodeBlock)body) : PsiReturnStatement.EMPTY_ARRAY;

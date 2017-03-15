@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
@@ -125,6 +126,7 @@ public class ByteTrie {
     return index + (((long)resultingLength) << 32);
   }
 
+  @NotNull
   public byte[] getBytes(int hashCode) {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     while (hashCode > 0) {
@@ -154,6 +156,7 @@ public class ByteTrie {
     return index;
   }
 
+  @NotNull
   public byte[] getReversedBytes(int hashCode) {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     while (hashCode > 0) {

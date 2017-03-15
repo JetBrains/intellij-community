@@ -161,6 +161,7 @@ public class VfsRootAccess {
     return allowed;
   }
 
+  @NotNull
   private static VirtualFile[] getAllRoots(@NotNull Project project) {
     insideGettingRoots = true;
     final Set<VirtualFile> roots = new THashSet<>();

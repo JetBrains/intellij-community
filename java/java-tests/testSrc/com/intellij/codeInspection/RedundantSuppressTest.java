@@ -43,6 +43,7 @@ public class RedundantSuppressTest extends InspectionTestCase {
       new GlobalInspectionToolWrapper(new UnusedDeclarationInspection())};
 
     myWrapper = new GlobalInspectionToolWrapper(new RedundantSuppressInspection() {
+      @NotNull
       @Override
       protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
         return myInspectionToolWrappers;

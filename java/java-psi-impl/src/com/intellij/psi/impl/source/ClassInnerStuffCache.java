@@ -44,6 +44,7 @@ public class ClassInnerStuffCache {
     myClass = aClass;
   }
 
+  @NotNull
   private static <T> T[] copy(T[] value) {
     return value.length == 0 ? value : value.clone();
   }

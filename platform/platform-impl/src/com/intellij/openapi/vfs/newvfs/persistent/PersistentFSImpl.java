@@ -1220,10 +1220,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @TestOnly
   public void cleanPersistedContents() {
     int[] roots = FSRecords.listRoots();
-    if (roots != null) {
-      for (int root : roots) {
-        markForContentReloadRecursively(root);
-      }
+    for (int root : roots) {
+      markForContentReloadRecursively(root);
     }
   }
 
@@ -1263,6 +1261,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       return myName;
     }
 
+    @NotNull
     @Override
     protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
       char[] chars = new char[pathLength + myPathBeforeSlash.length()];

@@ -99,6 +99,7 @@ public abstract class InspectionRVContentProvider {
       return myEntity == null || myEntity instanceof RefElement && !(myEntity instanceof RefDirectory); //do not show structure for refModule and refPackage
     }
 
+    @NotNull
     public Descriptor[] getDescriptors() {
       return myDescriptors;
     }

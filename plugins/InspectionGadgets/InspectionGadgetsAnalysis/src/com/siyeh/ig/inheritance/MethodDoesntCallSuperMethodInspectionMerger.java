@@ -16,6 +16,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -27,6 +28,7 @@ public class MethodDoesntCallSuperMethodInspectionMerger extends InspectionEleme
     return "RefusedBequest";
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] {
@@ -38,6 +40,7 @@ public class MethodDoesntCallSuperMethodInspectionMerger extends InspectionEleme
     };
   }
 
+  @NotNull
   @Override
   public String[] getSuppressIds() {
     return new String[] {

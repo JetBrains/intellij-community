@@ -70,6 +70,7 @@ public class RowIcon extends JBUI.AuxScalableJBIcon {
     return new RowIcon(this);
   }
 
+  @NotNull
   private Icon[] myScaledIcons() {
     if (myScaledIcons != null) {
       return myScaledIcons;

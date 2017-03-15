@@ -101,6 +101,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     PsiPackageImplementationHelper.getInstance().handleQualifiedNameChange(this, newQualifiedName);
   }
 
+  @NotNull
   @Override
   public VirtualFile[] occursInPackagePrefixes() {
     return PsiPackageImplementationHelper.getInstance().occursInPackagePrefixes(this);
@@ -162,6 +163,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return getFacade().getClasses(this, scope);
   }
 
+  @NotNull
   @Override
   public PsiFile[] getFiles(@NotNull GlobalSearchScope scope) {
     return getFacade().getPackageFiles(this, scope);
@@ -213,6 +215,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes;
   }
 
+  @NotNull
   private PsiClass[] getCachedClassInDumbMode(final String name, GlobalSearchScope scope) {
     Map<GlobalSearchScope, Map<String, PsiClass[]>> scopeMap = SoftReference.dereference(myDumbModeFullCache);
     if (scopeMap == null) {

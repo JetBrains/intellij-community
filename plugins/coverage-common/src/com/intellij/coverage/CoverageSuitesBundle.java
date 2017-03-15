@@ -135,6 +135,7 @@ public class CoverageSuitesBundle {
     return myEngine.getCoverageAnnotator(project);
   }
 
+  @NotNull
   public CoverageSuite[] getSuites() {
     return mySuites;
   }

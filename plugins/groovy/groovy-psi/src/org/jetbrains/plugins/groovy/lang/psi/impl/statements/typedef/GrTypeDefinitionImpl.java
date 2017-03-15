@@ -249,6 +249,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return GrClassImplUtil.getSuperClass(this);
   }
 
+  @NotNull
   @Override
   public PsiClass[] getInterfaces() {
     return GrClassImplUtil.getInterfaces(this);

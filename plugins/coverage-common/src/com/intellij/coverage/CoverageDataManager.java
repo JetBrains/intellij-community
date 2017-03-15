@@ -82,6 +82,7 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
   /**
    * @return registered suites
    */
+  @NotNull
   public abstract CoverageSuite[] getSuites();
 
   /**

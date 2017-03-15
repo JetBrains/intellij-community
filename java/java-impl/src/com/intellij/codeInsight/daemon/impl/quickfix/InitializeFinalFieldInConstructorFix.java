@@ -169,6 +169,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     return Collections.emptyList();
   }
 
+  @NotNull
   private static PsiMethodMember[] toPsiMethodMemberArray(@NotNull PsiMethod[] methods) {
     final PsiMethodMember[] result = new PsiMethodMember[methods.length];
     for (int i = 0; i < methods.length; i++) {
@@ -177,6 +178,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     return result;
   }
 
+  @NotNull
   private static PsiMethod[] toPsiMethodArray(@NotNull List<PsiMethodMember> methodMembers) {
     final PsiMethod[] result = new PsiMethod[methodMembers.size()];
     int i = 0;
@@ -191,6 +193,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
   }
 
+  @NotNull
   private static PsiMethod[] filterIfFieldAlreadyAssigned(@NotNull PsiField field, @NotNull PsiMethod[] ctors) {
     final List<PsiMethod> result = new ArrayList<>(Arrays.asList(ctors));
     for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(ctors))) {

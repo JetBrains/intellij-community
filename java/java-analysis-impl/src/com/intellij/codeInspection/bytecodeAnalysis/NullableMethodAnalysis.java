@@ -18,6 +18,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.AnalyzerExt;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.InterpreterExt;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.LiteAnalyzerExt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
@@ -165,6 +166,7 @@ class NullableMethodAnalysis {
     return FinalBot;
   }
 
+  @NotNull
   private static int[] mapOrigins(boolean[] origins) {
     int[] originsMapping = new int[origins.length];
     int mapped = 0;
