@@ -165,7 +165,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     if (allCandidates.isEmpty()) return;
 
     for (VirtualFile vFile : putLikelyFilesFirst(descriptors, allCandidates.keySet(), project)) {
-      List<FunExprOccurrence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile));
+      List<FunExprOccurrence> toLoad = filterInapplicable(samClasses, vFile, allCandidates.get(vFile), project);
       if (!toLoad.isEmpty()) {
         LOG.trace("To load " + vFile.getPath() + " with values: " + toLoad);
         if (!processor.process(vFile, ContainerUtil.map(toLoad, it -> it.funExprOffset))) {
@@ -186,8 +186,9 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   @NotNull
   private static List<FunExprOccurrence> filterInapplicable(List<PsiClass> samClasses,
                                                             VirtualFile vFile,
-                                                            Collection<FunExprOccurrence> occurrences) {
-    return ReadAction.compute(() -> ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
+                                                            Collection<FunExprOccurrence> occurrences, Project project) {
+    return ReadAction.compute(() -> project.isDisposed() ? Collections.emptyList()
+                                                         : ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
   }
 
   private static boolean processFile(@NotNull Processor<PsiFunctionalExpression> consumer,
