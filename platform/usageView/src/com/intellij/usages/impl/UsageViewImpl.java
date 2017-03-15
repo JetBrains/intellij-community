@@ -197,6 +197,7 @@ public class UsageViewImpl implements UsageView {
           myTree = new Tree(myModel) {
             {
               ToolTipManager.sharedInstance().registerComponent(this);
+              setHorizontalAutoScrollingEnabled(false);
             }
 
             @Override
