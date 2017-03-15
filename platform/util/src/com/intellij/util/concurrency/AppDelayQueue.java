@@ -84,4 +84,8 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
       throw new RuntimeException(e);
     }
   }
+
+  Thread getThread() {
+    return scheduledToPooledTransferer;
+  }
 }

@@ -221,7 +221,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     gatherStatistics = LOG.isDebugEnabled() || isUnitTestMode() || isInternal();
 
     Thread edt = UIUtil.invokeAndWaitIfNeeded(() -> {
-      AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread()); // needed for EDT not to exit suddenly
+      // instantiate AppDelayQueue which starts "Periodic task thread" which we'll mark busy to prevent this EDT to die
+      // that thread was chosen because we know for sure it's running
+      AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
+      Thread thread = service.getPeriodicTasksThread();
+      AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
       return Thread.currentThread();
     });
     myLock = new ReadMostlyRWLock(edt);
