@@ -455,6 +455,11 @@ public abstract class DialogWrapper {
     return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel();
   }
 
+  private static boolean isRemoveHelpButton() {
+    return SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration") ||
+           Registry.is("ide.remove.help.button.from.dialogs");
+  }
+
   /**
    * Creates panel located at the south of the content pane. By default that
    * panel contains dialog's buttons. This default implementation uses <code>createActions()</code>
@@ -471,10 +476,11 @@ public abstract class DialogWrapper {
     }
 
     boolean hasHelpToMoveToLeftSide = false;
-    if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
-      hasHelpToMoveToLeftSide = true;
+    if (isRemoveHelpButton()) {
       actions.remove(getHelpAction());
-    } else if (Registry.is("ide.remove.help.button.from.dialogs")) {
+    }
+    else if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
+      hasHelpToMoveToLeftSide = true;
       actions.remove(getHelpAction());
     }
 
@@ -643,9 +649,7 @@ public abstract class DialogWrapper {
 
     JComponent helpButton = null;
     if (hasHelpToMoveToLeftSide) {
-      if (!(SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration"))) {
-        helpButton = createHelpButton(insets);
-      }
+      helpButton = createHelpButton(insets);
     }
 
     if (helpButton != null || doNotAskCheckbox != null) {
