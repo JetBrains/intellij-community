@@ -22,7 +22,7 @@ def _parse_parametrized(part):
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
     with parentheses
     """
-    match = re.match("^(.+)(\(.+\))$", part)
+    match = re.match("^(.+)(\\(.+\\))$", part)
     if not match:
         return [part]
     else:
