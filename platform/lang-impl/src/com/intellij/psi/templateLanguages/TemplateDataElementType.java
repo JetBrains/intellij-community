@@ -155,7 +155,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     while (baseLexer.getTokenType() != null) {
       TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
       assert currentRange.getEndOffset() == newRange.getStartOffset() :
-        "Inconsistent tokens stream from " + baseLexer.getClass().getSimpleName() +
+        "Inconsistent tokens stream from " + baseLexer +
         ": " + getRangeDump(currentRange, sourceCode) + " followed by " + getRangeDump(newRange, sourceCode);
       currentRange = newRange;
       if (baseLexer.getTokenType() == myTemplateElementType) {
