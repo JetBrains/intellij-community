@@ -95,8 +95,9 @@ class BuildContextImpl extends BuildContext {
     paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
     bundledJreManager = new BundledJreManager(this, communityHome)
 
-    buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
-    fullBuildNumber = "$productProperties.productCode-$buildNumber"
+    // Android Studio: buildNumber is either SNAPSHOT or the one passed from build_studio.sh. fullBuildNumber includes the branch.
+    buildNumber = options.buildNumber ?: "SNAPSHOT"
+    fullBuildNumber = "$productProperties.productCode-" + readSnapshotBuildNumber().replace("SNAPSHOT", buildNumber)
     systemSelector = productProperties.getSystemSelector(applicationInfo)
 
     bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
