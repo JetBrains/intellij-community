@@ -22,6 +22,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -150,17 +151,28 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     StringBuilder result = new StringBuilder(sourceCode.length());
     baseLexer.start(sourceCode);
 
+    TextRange currentRange = TextRange.EMPTY_RANGE;
     while (baseLexer.getTokenType() != null) {
+      TextRange newRange = TextRange.create(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
+      assert currentRange.getEndOffset() == newRange.getStartOffset() :
+        "Inconsistent tokens stream from " + baseLexer.getClass().getSimpleName() +
+        ": " + getRangeDump(currentRange, sourceCode) + " followed by " + getRangeDump(newRange, sourceCode);
+      currentRange = newRange;
       if (baseLexer.getTokenType() == myTemplateElementType) {
         appendCurrentTemplateToken(result, sourceCode, baseLexer);
       }
       else {
-        outerRangesCollector.addRange(baseLexer.getTokenStart(), baseLexer.getTokenEnd());
+        outerRangesCollector.addRange(currentRange);
       }
       baseLexer.advance();
     }
 
     return result;
+  }
+
+  @NotNull
+  private static String getRangeDump(@NotNull TextRange range, @NotNull CharSequence sequence) {
+    return "'" + StringUtil.escapeLineBreak(range.subSequence(sequence).toString()) + "' " + range;
   }
 
   protected void appendCurrentTemplateToken(StringBuilder result, CharSequence buf, Lexer lexer) {
@@ -269,22 +281,19 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   protected static class RangesCollector {
     private final List<TextRange> myRanges = new ArrayList<>();
 
-    public void addRange(int startOffset, int endOffset) {
-      if (startOffset == endOffset) {
+    public void addRange(@NotNull TextRange newRange) {
+      if (newRange.isEmpty()) {
         return;
       }
-      assert startOffset < endOffset : "Incorrect range: " + startOffset + "-" + endOffset;
       if (!myRanges.isEmpty()) {
         int lastItemIndex = myRanges.size() - 1;
         TextRange lastRange = myRanges.get(lastItemIndex);
-        assert startOffset >= lastRange.getEndOffset() :
-          "Inconsistent ranges: last range: " + lastRange + " new range: " + startOffset + "-" + endOffset;
-        if (lastRange.getEndOffset() == startOffset) {
-          myRanges.set(lastItemIndex, TextRange.create(lastRange.getStartOffset(), endOffset));
+        if (lastRange.getEndOffset() == newRange.getStartOffset()) {
+          myRanges.set(lastItemIndex, TextRange.create(lastRange.getStartOffset(), newRange.getEndOffset()));
           return;
         }
       }
-      myRanges.add(TextRange.create(startOffset, endOffset));
+      myRanges.add(newRange);
     }
   }
 }
