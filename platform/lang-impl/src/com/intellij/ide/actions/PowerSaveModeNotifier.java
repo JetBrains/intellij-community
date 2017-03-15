@@ -51,9 +51,6 @@ public class PowerSaveModeNotifier implements StartupActivity {
       return;
     }
 
-    MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
-    MessageBusConnection connection = bus.connect();
-
     Notification notification = POWER_SAVE_MODE
       .createNotification("Power save mode is on", "Code insight and background tasks are disabled.", NotificationType.WARNING, null);
 
@@ -62,26 +59,24 @@ public class PowerSaveModeNotifier implements StartupActivity {
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         PropertiesComponent.getInstance().setValue(IGNORE_POWER_SAVE_MODE, true);
         notification.expire();
-        connection.disconnect();
       }
     });
     notification.addAction(new NotificationAction("Disable Power Save Mode") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        connection.disconnect();
         PowerSaveMode.setEnabled(false);
         notification.expire();
       }
-    });
-    connection.subscribe(PowerSaveMode.TOPIC, () -> {
-      connection.disconnect();
-      notification.expire();
     });
 
     notification.notify(project);
 
     Balloon balloon = notification.getBalloon();
-    assert balloon != null;
-    Disposer.register(balloon, connection);
+    if (balloon != null) {
+      MessageBus bus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+      MessageBusConnection connection = bus.connect();
+      connection.subscribe(PowerSaveMode.TOPIC, () -> notification.expire());
+      Disposer.register(balloon, connection);
+    }
   }
 }
