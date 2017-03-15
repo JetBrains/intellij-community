@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.descriptors.ConfigFile;
@@ -28,11 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +47,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public static PluginModuleType getInstance() {
-    return (PluginModuleType) ModuleTypeManager.getInstance().findByID(ID);
+    return (PluginModuleType)ModuleTypeManager.getInstance().findByID(ID);
   }
 
   public static boolean isOfType(@NotNull Module module) {
@@ -74,13 +76,25 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   @Nullable
   public static XmlFile getPluginXml(Module module) {
     if (module == null) return null;
-    if (!isOfType(module)) return null;
+    if (!isOfType(module)) {
+      for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
+        final VirtualFile pluginXmlVF = file.findFileByRelativePath(PluginDescriptorConstants.PLUGIN_XML_PATH);
+        if (pluginXmlVF != null) {
+          final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(pluginXmlVF);
+          if (psiFile instanceof XmlFile) {
+            return (XmlFile)psiFile;
+          }
+        }
+      }
+
+      return null;
+    }
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration == null) return null;
     final ConfigFile configFile = buildConfiguration.getPluginXmlConfigFile();
     return configFile != null ? configFile.getXmlFile() : null;
-}
+  }
 
   public static boolean isPluginModuleOrDependency(@Nullable Module module) {
     if (module == null) return false;
@@ -89,14 +103,6 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public static List<Module> getCandidateModules(Module module) {
-    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-
-    final Sdk jdk = manager.getSdk();
-    // don't allow modules that don't use an IDEA-JDK
-    if (IdeaJdk.findIdeaJdk(jdk) == null) {
-      return Collections.emptyList();
-    }
-
     final Module[] modules = ModuleManager.getInstance(module.getProject()).getModules();
     final List<Module> candidates = new ArrayList<>(modules.length);
     final Set<Module> deps = new HashSet<>(modules.length);

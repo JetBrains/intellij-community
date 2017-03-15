@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.util;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
@@ -142,6 +143,15 @@ public class PsiUtil {
         JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS,
                                                      GlobalSearchScope.allScope(project)) != null;
       return CachedValueProvider.Result.createSingleDependency(foundMarkerClass, ProjectRootManager.getInstance(project));
+    });
+  }
+
+  public static boolean isPluginModule(@NotNull final Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      boolean foundMarkerClass = JavaPsiFacade.getInstance(module.getProject())
+                                   .findClass(IDE_PROJECT_MARKER_CLASS,
+                                              GlobalSearchScope.moduleRuntimeScope(module, false)) != null;
+      return CachedValueProvider.Result.createSingleDependency(foundMarkerClass, ProjectRootManager.getInstance(module.getProject()));
     });
   }
 
