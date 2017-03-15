@@ -669,7 +669,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       if (externalIncludedRootProject == null) continue;
       final DefaultExternalProject wrappedExternalIncludedRootProject = new DefaultExternalProject(externalIncludedRootProject);
       wrappedExternalRootProject.getChildProjects().put(wrappedExternalIncludedRootProject.getName(), wrappedExternalIncludedRootProject);
-      models.addExtraProject(wrappedExternalIncludedRootProject, ExternalProject.class);
       String compositePrefix = project.getName();
       final Map<String, ExternalProject> externalIncludedProjectsMap =
         createExternalProjectsMap(compositePrefix, wrappedExternalIncludedRootProject);
