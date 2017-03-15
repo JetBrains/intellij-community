@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.wrapper;
+package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
+import com.intellij.debugger.streams.wrapper.MethodCall;
+import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.intellij.debugger.streams.wrapper.StreamChain;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 

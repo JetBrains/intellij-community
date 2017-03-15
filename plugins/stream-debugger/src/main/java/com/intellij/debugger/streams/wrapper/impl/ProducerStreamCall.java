@@ -13,39 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.wrapper;
+package com.intellij.debugger.streams.wrapper.impl;
 
+import com.intellij.debugger.streams.wrapper.StreamCallType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class StreamCallImpl implements StreamCall {
-  private final String myName;
-  private final String myArgs;
-  private final StreamCallType myType;
-
-  public StreamCallImpl(@NotNull String name, @NotNull String args, @NotNull StreamCallType type) {
-    myName = name;
-    myArgs = args;
-    myType = type;
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return myName;
-  }
-
-  @NotNull
-  @Override
-  public String getArguments() {
-    return myArgs;
-  }
-
-  @NotNull
-  @Override
-  public StreamCallType getType() {
-    return myType;
+class ProducerStreamCall extends StreamCallImpl {
+  ProducerStreamCall(@NotNull String name, @NotNull String args) {
+    super(name, args, StreamCallType.PRODUCER);
   }
 }

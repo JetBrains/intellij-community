@@ -2,7 +2,7 @@ package com.intellij.debugger.streams.chain.negative;
 
 import com.intellij.debugger.streams.chain.StreamChainBuilderFixtureTestCase;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
+import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilder;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 

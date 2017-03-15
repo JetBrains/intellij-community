@@ -1,5 +1,9 @@
-package com.intellij.debugger.streams.wrapper;
+package com.intellij.debugger.streams.wrapper.impl;
 
+import com.intellij.debugger.streams.wrapper.IntermediateCallType;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.debugger.streams.wrapper.ValueType;
 import org.jetbrains.annotations.NotNull;
 
 /**

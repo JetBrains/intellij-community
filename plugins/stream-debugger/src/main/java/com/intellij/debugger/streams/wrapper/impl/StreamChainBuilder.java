@@ -1,5 +1,8 @@
-package com.intellij.debugger.streams.wrapper;
+package com.intellij.debugger.streams.wrapper.impl;
 
+import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;

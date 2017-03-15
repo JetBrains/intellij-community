@@ -12,7 +12,7 @@ import com.intellij.debugger.streams.trace.smart.resolve.impl.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.StreamChainImpl;
+import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ArrayReference;
