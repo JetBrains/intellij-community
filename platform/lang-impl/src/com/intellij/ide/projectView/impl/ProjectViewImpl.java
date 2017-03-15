@@ -486,7 +486,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null && newSubId != null) {
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(selectedPsiElement);
-      if (virtualFile != null && ((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, new SelectInContext() {
+      ProjectViewSelectInTarget target = virtualFile == null ? null : getProjectViewSelectInTarget(newPane);
+      if (target != null && target.isSubIdSelectable(newSubId, new SelectInContext() {
         @Override
         @NotNull
         public Project getProject() {
@@ -585,10 +586,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane == null) return false;
     newPane.setSubId(subId);
     showPane(newPane);
-    SelectInTarget target = getSelectInTarget(id);
-    if (target instanceof ProjectViewSelectInTarget) {
-      ((ProjectViewSelectInTarget)target).setSubId(subId);
-    }
+    ProjectViewSelectInTarget target = getProjectViewSelectInTarget(newPane);
+    if (target != null) target.setSubId(subId);
     if (isAutoscrollFromSource(id)) {
       myAutoScrollFromSourceHandler.scrollFromSource();
     }
@@ -820,6 +819,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private SelectInTarget getSelectInTarget(String id) {
     return mySelectInTargets.get(id);
+  }
+
+  private ProjectViewSelectInTarget getProjectViewSelectInTarget(AbstractProjectViewPane pane) {
+    SelectInTarget target = getSelectInTarget(pane.getId());
+    return target instanceof ProjectViewSelectInTarget
+           ? (ProjectViewSelectInTarget)target
+           : null;
   }
 
   @Override
