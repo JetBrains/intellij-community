@@ -54,6 +54,7 @@ class PyUniversalTestLegacyInteropInitializer {
     // Delegate to project initialization
     ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
       override fun projectComponentsInitialized(project: Project) {
+        if (project.isDefault) return
         if (project.isInitialized) {
           projectInitialized(project)
           return
