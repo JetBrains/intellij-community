@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,11 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
@@ -95,6 +100,11 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     protected void doFix(final Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
@@ -109,11 +119,11 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
       if (file != null) {
         return;
       }
-      new WriteCommandAction.Simple(project, InspectionGadgetsBundle.message("package.dot.html.convert.command"), file) {
+      new WriteCommandAction.Simple(project, InspectionGadgetsBundle.message("package.dot.html.convert.command"), xmlFile) {
         @Override
         protected void run() throws Throwable {
-          final PsiJavaFile file = (PsiJavaFile)directory.createFile("package-info.java");
-          CommandProcessor.getInstance().addAffectedFiles(project, file.getVirtualFile());
+          final PsiJavaFile packageInfoFile = (PsiJavaFile)directory.createFile("package-info.java");
+          CommandProcessor.getInstance().addAffectedFiles(project, packageInfoFile.getVirtualFile());
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
           String packageInfoText = getPackageInfoText(xmlFile);
           if (packageInfoText == null) {
@@ -134,13 +144,13 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
           final PsiDocComment comment = elementFactory.createDocCommentFromText(commentText.toString());
           if (!aPackage.isEmpty()) {
             final PsiPackageStatement packageStatement = elementFactory.createPackageStatement(aPackage);
-            final PsiElement addedElement = file.add(packageStatement);
-            file.addBefore(comment, addedElement);
+            final PsiElement addedElement = packageInfoFile.add(packageStatement);
+            packageInfoFile.addBefore(comment, addedElement);
           }
           else {
-            file.add(comment);
+            packageInfoFile.add(comment);
           }
-          element.delete();
+          xmlFile.delete();
           if (!isOnTheFly()) {
             return;
           }
@@ -149,7 +159,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
               @Override
               public void consume(DataContext dataContext) {
                 final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-                final VirtualFile virtualFile = file.getVirtualFile();
+                final VirtualFile virtualFile = packageInfoFile.getVirtualFile();
                 if (virtualFile == null) {
                   return;
                 }
@@ -167,7 +177,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
     }
 
     @Nullable
-    private static String getPackageInfoText(XmlFile xmlFile) {
+    static String getPackageInfoText(XmlFile xmlFile) {
       final XmlTag rootTag = xmlFile.getRootTag();
       if (rootTag == null) {
         return null;
