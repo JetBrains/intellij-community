@@ -167,10 +167,9 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   public boolean matches(String className, String moduleName) {
     if (matchesAnyPattern(myExcludedTestGroupPatterns, className)) return false;
     if (matchesAnyPattern(myIncludedTestGroupPatterns, className)) return true;
-    return myContainsAllExcludeDefinedGroup &&
-           myGroups.stream()
-             .noneMatch(g -> !matchesAnyPattern(g.excluded, className) && matchesAnyPattern(g.included, className));
+    return myContainsAllExcludeDefinedGroup && myGroups.stream().noneMatch(g -> g.matches(className));
   }
+
 
   private static boolean containsAllExcludeDefinedGroup(List<String> groupNames) {
     return groupNames.isEmpty() || groupNames.contains(ALL_EXCLUDE_DEFINED);
@@ -183,6 +182,10 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
     public Group(List<Pattern> included, List<Pattern> excluded) {
       this.excluded = excluded;
       this.included = included;
+    }
+    
+    private boolean matches(String className) {
+      return !matchesAnyPattern(excluded, className) && matchesAnyPattern(included, className);
     }
   }
 }
