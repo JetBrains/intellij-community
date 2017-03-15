@@ -249,6 +249,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
             exclude(name: "bin/restarter")
             exclude(name: "MacOS/*")
             exclude(name: "build.txt")
+            exclude(name: "LICENSE.txt")
             exclude(name: "NOTICE.txt")
             extraBins.each {
               exclude(name: it)
@@ -274,6 +275,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           zipfileset(dir: it, prefix: "$zipRoot/Resources") {
             include(name: "build.txt")
             include(name: "NOTICE.txt")
+            include(name: "LICENSE.txt")
           }
         }
 
