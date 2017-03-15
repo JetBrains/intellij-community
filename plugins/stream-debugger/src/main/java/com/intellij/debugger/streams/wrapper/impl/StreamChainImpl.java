@@ -16,23 +16,25 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
-import com.intellij.debugger.streams.wrapper.MethodCall;
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class StreamChainImpl implements StreamChain {
-  private final StreamCall myProducer;
-  private final List<StreamCall> myIntermediateCalls;
-  private final StreamCall myTerminator;
+  private final ProducerStreamCall myProducer;
+  private final List<IntermediateStreamCall> myIntermediateCalls;
+  private final TerminatorStreamCall myTerminator;
 
-  public StreamChainImpl(@NotNull StreamCall producer, @NotNull List<StreamCall> intermediateCalls, @NotNull StreamCall terminator) {
+  public StreamChainImpl(@NotNull ProducerStreamCall producer,
+                         @NotNull List<IntermediateStreamCall> intermediateCalls,
+                         @NotNull TerminatorStreamCall terminator) {
     myProducer = producer;
     myIntermediateCalls = intermediateCalls;
     myTerminator = terminator;
@@ -40,13 +42,13 @@ public class StreamChainImpl implements StreamChain {
 
   @NotNull
   @Override
-  public StreamCall getProducerCall() {
+  public ProducerStreamCall getProducerCall() {
     return myProducer;
   }
 
   @NotNull
   @Override
-  public List<StreamCall> getIntermediateCalls() {
+  public List<IntermediateStreamCall> getIntermediateCalls() {
     return Collections.unmodifiableList(myIntermediateCalls);
   }
 
@@ -62,14 +64,14 @@ public class StreamChainImpl implements StreamChain {
 
   @NotNull
   @Override
-  public StreamCall getTerminationCall() {
+  public TerminatorStreamCall getTerminationCall() {
     return myTerminator;
   }
 
   @NotNull
   @Override
   public String getText() {
-    final Iterator<StreamCall> iterator = StreamEx.of(myProducer).append(myIntermediateCalls).append(myTerminator).iterator();
+    final Iterator<StreamCall> iterator = StreamEx.of((StreamCall)myProducer).append(myIntermediateCalls).append(myTerminator).iterator();
     final StringBuilder builder = new StringBuilder();
 
     while (iterator.hasNext()) {

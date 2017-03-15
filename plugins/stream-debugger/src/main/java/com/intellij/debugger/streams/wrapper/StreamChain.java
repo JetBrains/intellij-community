@@ -9,16 +9,16 @@ import java.util.List;
  */
 public interface StreamChain {
   @NotNull
-  StreamCall getProducerCall();
+  ProducerStreamCall getProducerCall();
 
   @NotNull
-  List<StreamCall> getIntermediateCalls();
+  List<IntermediateStreamCall> getIntermediateCalls();
 
   @NotNull
   StreamCall getCall(int index);
 
   @NotNull
-  StreamCall getTerminationCall();
+  TerminatorStreamCall getTerminationCall();
 
   @NotNull
   String getText();
