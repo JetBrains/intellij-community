@@ -585,7 +585,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane == null) return false;
     newPane.setSubId(subId);
     showPane(newPane);
-    SelectInTarget target = mySelectInTargets.get(id);
+    SelectInTarget target = getSelectInTarget(id);
     if (target instanceof ProjectViewSelectInTarget) {
       ((ProjectViewSelectInTarget)target).setSubId(subId);
     }
@@ -812,6 +812,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public String getCurrentViewId() {
     return myCurrentViewId;
+  }
+
+  private SelectInTarget getCurrentSelectInTarget() {
+    return getSelectInTarget(getCurrentViewId());
+  }
+
+  private SelectInTarget getSelectInTarget(String id) {
+    return mySelectInTargets.get(id);
   }
 
   @Override
@@ -1741,12 +1749,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           selectElementAtCaretNotLosingFocus(editor);
         }
         else {
-          final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
-          if (file != null && file.isValid()) {
-            final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-            if (psiFile != null) {
-              final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
-              if (target != null) {
+          SelectInTarget target = getCurrentSelectInTarget();
+          if (target != null) {
+            final VirtualFile file = FileEditorManagerEx.getInstanceEx(myProject).getFile(fileEditor);
+            if (file != null && file.isValid()) {
+              final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+              if (psiFile != null) {
                 final MySelectInContext selectInContext = new MySelectInContext(psiFile, null) {
                   @Override
                   public Object getSelectorInFile() {
@@ -1805,13 +1813,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     private void scrollFromFile(@NotNull PsiFile file, @Nullable Editor editor) {
       SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(file);
       PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+        SelectInTarget target = getCurrentSelectInTarget();
+        if (target == null) return;
+
         PsiFile restoredPsi = pointer.getElement();
         if (restoredPsi == null) return;
 
         final MySelectInContext selectInContext = new MySelectInContext(restoredPsi, editor);
 
-        final SelectInTarget target = mySelectInTargets.get(getCurrentViewId());
-        if (target != null && target.canSelect(selectInContext)) {
+        if (target.canSelect(selectInContext)) {
           target.selectIn(selectInContext, false);
         }
       });
