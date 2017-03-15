@@ -68,9 +68,9 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   }
 
   @Override
-  public PsiElement resolveMember(PyClassType clazz, String name, PsiElement location, TypeEvalContext context) {
+  public PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location, TypeEvalContext context) {
     final PyCallable mockPatchCallable = mockPatchCallable(clazz, location, context);
-    if (mockPatchCallable != null) {
+    if (mockPatchCallable != null && location!= null) {
       for (PyCustomMember member : MOCK_PATCH_MEMBERS) {
         if (name.equals(member.getName())) {
           return member.resolve(location);
