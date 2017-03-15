@@ -13,7 +13,7 @@ class HashMapVariableImpl extends VariableImpl {
 
   HashMapVariableImpl(@NotNull String name, @NotNull GenericType from, @NotNull GenericType to, boolean isLinked) {
     super(String.format("java.util.Map<%s, %s>", from.getGenericTypeName(), to.getGenericTypeName()), name,
-          isLinked ? "new java.util.LinkedHashMap<>()" : "java.util.new HashMap<>()");
+          isLinked ? "new java.util.LinkedHashMap<>()" : "new java.util.HashMap<>()");
     myKeyType = from;
     myValueType = to;
   }
