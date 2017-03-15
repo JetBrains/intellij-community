@@ -253,6 +253,7 @@ class StateMerger {
   private static Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> createRangeMap(List<DfaMemoryStateImpl> states) {
     Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = new LinkedHashMap<>();
     for (DfaMemoryStateImpl state : states) {
+      ProgressManager.checkCanceled();
       Map<DfaVariableValue, DfaVariableState> variableStates = state.getVariableStates();
       for (Map.Entry<DfaVariableValue, DfaVariableState> entry : variableStates.entrySet()) {
         LongRangeSet range = entry.getValue().getRange();
@@ -286,6 +287,7 @@ class StateMerger {
           }
         }
 
+        ProgressManager.checkCanceled();
         Map<DfaMemoryStateImpl, Record> merged = new LinkedHashMap<>();
         DfaVariableValue var = entry.getKey();
         for (DfaMemoryStateImpl state : states) {
