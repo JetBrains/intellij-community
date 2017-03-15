@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
@@ -55,7 +56,8 @@ public class Restarter {
     if (SystemInfo.isUnix) {
       return UnixProcessManager.getCurrentProcessId() > 0 &&
              CreateDesktopEntryAction.getLauncherScript() != null &&
-             new File(PathManager.getBinPath(), "restart.py").canExecute();
+             new File(PathManager.getBinPath(), "restart.py").canExecute() &&
+             PathEnvironmentVariableUtil.findInPath("python") != null;
     }
 
     return false;
