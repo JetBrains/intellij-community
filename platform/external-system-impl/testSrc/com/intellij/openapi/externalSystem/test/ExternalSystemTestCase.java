@@ -114,7 +114,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     List<String> allowedRoots = new ArrayList<>();
     collectAllowedRoots(allowedRoots);
     if (!allowedRoots.isEmpty()) {
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
+      VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
     }
 
     CompilerTestUtil.enableExternalCompiler();
