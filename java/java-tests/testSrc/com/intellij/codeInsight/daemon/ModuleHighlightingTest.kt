@@ -67,6 +67,12 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }""".trimIndent())
   }
 
+  fun testAnnotations() {
+    highlight("""
+        @Deprecated <error descr="'@Override' not applicable to module">@Override</error> module M { }
+        """.trimIndent())
+  }
+
   fun testDuplicateStatements() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
     addFile("pkg/main/Impl.java", "package pkg.main;\npublic class Impl extends C { }")
