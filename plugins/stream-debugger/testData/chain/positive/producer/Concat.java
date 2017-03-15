@@ -4,6 +4,8 @@ import java.util.stream.Stream;
 
 public class Baz {
   public static void bar() {
-<caret>    List<Integer> val = Stream.concat(Stream.empty(), Stream.of(1)).collect(Collectors.toList());
+    final Stream<Integer> a = Stream.empty();
+    final Stream<Integer> b = Stream.of(1);
+<caret>    List<Integer> val = Stream.concat(a, b).collect(Collectors.toList());
   }
 }
