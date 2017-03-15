@@ -62,7 +62,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
-  private static Throwable ourForcedTrace;
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbStart;
   private volatile TransactionId myDumbStartTransaction;
@@ -197,7 +196,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @VisibleForTesting
   void queueAsynchronousTask(@NotNull DumbModeTask task) {
-    Throwable trace = ourForcedTrace != null ? ourForcedTrace : new Throwable(); // please report exceptions here to peter
+    Throwable trace = new Throwable(); // please report exceptions here to peter
     TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
     Runnable runnable = () -> queueTaskOnEdt(task, contextTransaction, trace);
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -251,20 +250,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         LOG.error(e);
       }
     }
-  }
-
-  @NotNull
-  public static AccessToken forceDumbModeStartTrace(@NotNull Throwable trace) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final Throwable prev = ourForcedTrace;
-    ourForcedTrace = trace;
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourForcedTrace = prev;
-      }
-    };
   }
 
   private void queueUpdateFinished() {
