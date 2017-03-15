@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,81 +16,77 @@
 package com.intellij.compiler.classFilesIndex.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
+import org.jetbrains.jps.backwardRefs.SignatureData;
+
+import java.io.IOException;
 
 /**
  * @author Dmitry Batkovich
  */
 public class MethodIncompleteSignature {
   public static final String CONSTRUCTOR_METHOD_NAME = "<init>";
+  @NotNull
+  private final LightRef.JavaLightMethodRef myRef;
+  @NotNull
+  private final SignatureData mySignatureData;
+  @NotNull private final NameEnumerator myNameEnumerator;
 
-  @NotNull
-  private final String myOwner;
-  @NotNull
-  private final String myReturnType;
-  @NotNull
-  private final String myName;
-  private final boolean myStatic;
-
-  public MethodIncompleteSignature(@NotNull final String owner,
-                                   @NotNull final String returnType,
-                                   @NotNull final String name,
-                                   final boolean aStatic) {
-    myOwner = owner;
-    myReturnType = returnType;
-    myName = name;
-    myStatic = aStatic;
+  public MethodIncompleteSignature(@NotNull LightRef.JavaLightMethodRef ref,
+                                   @NotNull SignatureData data,
+                                   @NotNull NameEnumerator nameEnumerator) {
+    myRef = ref;
+    mySignatureData = data;
+    myNameEnumerator = nameEnumerator;
   }
 
-  @NotNull
-  public String getOwner() {
-    return myOwner;
-  }
-
-  @NotNull
   public String getName() {
-    return myName;
+    return denumerate(myRef.getName());
   }
 
-  @NotNull
-  public String getReturnType() {
-    return myReturnType;
+  public String getOwner() {
+    return denumerate(myRef.getOwner().getName());
+  }
+
+  public String  getRawReturnType() {
+    return denumerate(mySignatureData.getRawReturnType());
+  }
+
+  public int getParameterCount() {
+    return myRef.getParameterCount();
   }
 
   public boolean isStatic() {
-    return myStatic;
+    return mySignatureData.isStatic();
+  }
+
+  private String denumerate(int idx) {
+    try {
+      return myNameEnumerator.valueOf(idx);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
-  public String toString() {
-    return "MethodIncompleteSignature{" +
-           "myOwner='" + myOwner + '\'' +
-           ", myReturnType='" + myReturnType + '\'' +
-           ", myName='" + myName + '\'' +
-           ", myStatic=" + myStatic +
-           '}';
-  }
-
-  @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || !(o instanceof MethodIncompleteSignature)) return false;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    final MethodIncompleteSignature that = (MethodIncompleteSignature)o;
+    MethodIncompleteSignature signature = (MethodIncompleteSignature)o;
 
-    if (myStatic != that.myStatic) return false;
-    if (!myName.equals(that.myName)) return false;
-    if (!myOwner.equals(that.myOwner)) return false;
-    if (!myReturnType.equals(that.myReturnType)) return false;
+    if (!myRef.equals(signature.myRef)) return false;
+    if (!mySignatureData.equals(signature.mySignatureData)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myOwner.hashCode();
-    result = 31 * result + myReturnType.hashCode();
-    result = 31 * result + myName.hashCode();
-    result = 31 * result + (myStatic ? 1 : 0);
+    int result = myRef.hashCode();
+    result = 31 * result + mySignatureData.hashCode();
     return result;
   }
 }

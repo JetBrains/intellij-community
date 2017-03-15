@@ -20,7 +20,6 @@ import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextRelevantStaticMethod;
 import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
-import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -48,12 +47,12 @@ public class CachedRelevantStaticMethodSearcher {
         myCompletionContext.getTarget().getClassQName().equals(resultQualifiedClassName)) {
       return Collections.emptyList();
     }
-    final TreeSet<UsageIndexValue> indexValues = myIndexReader.getMethods(resultQualifiedClassName);
+    final SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues = myIndexReader.getMethods(resultQualifiedClassName);
     if (!indexValues.isEmpty()) {
       int occurrences = 0;
       final List<ContextRelevantStaticMethod> relevantMethods = new ArrayList<>();
-      for (final UsageIndexValue indexValue : extractStaticMethods(indexValues)) {
-        final MethodIncompleteSignature methodInvocation = indexValue.getMethodIncompleteSignature();
+      for (final OccurrencesAware<MethodIncompleteSignature> indexValue : extractStaticMethods(indexValues)) {
+        final MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
         final PsiMethod method;
         if (myCachedResolveResults.containsKey(methodInvocation)) {
           method = myCachedResolveResults.get(methodInvocation);
@@ -86,10 +85,10 @@ public class CachedRelevantStaticMethodSearcher {
     return Collections.emptyList();
   }
 
-  private static List<UsageIndexValue> extractStaticMethods(final TreeSet<UsageIndexValue> indexValues) {
-    final List<UsageIndexValue> relevantStaticMethods = new SmartList<>();
-    for (final UsageIndexValue indexValue : indexValues) {
-      if (indexValue.getMethodIncompleteSignature().isStatic()) {
+  private static List<OccurrencesAware<MethodIncompleteSignature>> extractStaticMethods(final SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues) {
+    final List<OccurrencesAware<MethodIncompleteSignature>> relevantStaticMethods = new SmartList<>();
+    for (final OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
+      if (indexValue.getUnderlying().isStatic()) {
         relevantStaticMethods.add(indexValue);
       }
     }

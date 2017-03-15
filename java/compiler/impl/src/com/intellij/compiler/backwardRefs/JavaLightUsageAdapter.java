@@ -175,13 +175,4 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
     if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)) return false;
     return true;
   }
-
-  public MethodIncompleteSignature denumerate(LightRef.JavaLightMethodRef ref,
-                                              SignatureData data,
-                                              NameEnumerator enumerator) {
-      return new MethodIncompleteSignature(enumerator.getName(ref.getOwner().getName()),
-                                           enumerator.getName(data.getRawReturnType()),
-                                           enumerator.getName(ref.getName()),
-                                           data.isStatic());
-    }
 }

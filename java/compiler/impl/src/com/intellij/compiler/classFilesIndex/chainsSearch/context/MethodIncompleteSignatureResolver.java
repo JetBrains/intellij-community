@@ -70,18 +70,18 @@ final class MethodIncompleteSignatureResolver {
             if (qualifiedName == null) {
               continue;
             }
-            if (qualifiedName.equals(signature.getReturnType())) {
+            if (qualifiedName.equals(signature.getRawReturnType())) {
               filtered.add(method);
             }
           }
-          else if (returnType.equalsToText(signature.getReturnType())) {
+          else if (returnType.equalsToText(signature.getRawReturnType())) {
             filtered.add(method);
           }
         }
       }
     }
     if (filtered.size() > 1) {
-      Collections.sort(filtered, (o1, o2) -> o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount());
+      Collections.sort(filtered, Comparator.comparingInt(o -> o.getParameterList().getParametersCount()));
     }
     return filtered.toArray(new PsiMethod[filtered.size()]);
   }

@@ -16,15 +16,16 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
+import com.intellij.compiler.classFilesIndex.chainsSearch.OccurrencesAware;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.openapi.project.Project;
 
-import java.util.TreeSet;
+import java.util.SortedSet;
 
 public abstract class CompilerReferenceServiceEx extends CompilerReferenceService {
   protected CompilerReferenceServiceEx(Project project) {
     super(project);
   }
 
-  public abstract TreeSet<UsageIndexValue> getMethods(String rawReturnType);
+  public abstract SortedSet<OccurrencesAware<MethodIncompleteSignature>> getMethods(String rawReturnType);
 }

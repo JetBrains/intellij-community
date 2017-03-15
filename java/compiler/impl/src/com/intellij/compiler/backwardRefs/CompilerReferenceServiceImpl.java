@@ -19,7 +19,8 @@ import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
-import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
+import com.intellij.compiler.classFilesIndex.chainsSearch.OccurrencesAware;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -167,7 +168,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   }
 
   @Override
-  public TreeSet<UsageIndexValue> getMethods(String rawReturnType) {
+  public TreeSet<OccurrencesAware<MethodIncompleteSignature>> getMethods(String rawReturnType) {
     try {
       myReadDataLock.lock();
 
@@ -202,10 +203,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             throw new RuntimeException(e);
           }
           if (!(ref.myRef instanceof LightRef.JavaLightMethodRef)) return null;
-          return new UsageIndexValue(adapter.denumerate((LightRef.JavaLightMethodRef)ref.myRef,
-                                                 ref.mySignatureData,
-                                                 myReader.getNameEnumerator()),
-                              res[0]);
+          return new OccurrencesAware<>(new MethodIncompleteSignature((LightRef.JavaLightMethodRef)ref.myRef, ref.mySignatureData, myReader.getNameEnumerator()), res[0]);
 
         }).filter(Objects::nonNull).collect(Collectors.toCollection(TreeSet::new));
       }

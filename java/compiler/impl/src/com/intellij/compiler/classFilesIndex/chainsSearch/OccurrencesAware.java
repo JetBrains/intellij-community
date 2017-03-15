@@ -17,29 +17,26 @@ package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Batkovich
- */
-public class WeightAware<V> implements Comparable<WeightAware<V>> {
+public class OccurrencesAware<V> implements Comparable<OccurrencesAware<V>> {
   private final V myUnderlying;
-  private final int myWeight;
+  private final int myOccurrences;
 
-  public WeightAware(final V underlying, final int weight) {
+  public OccurrencesAware(final V underlying, final int occurrences) {
     myUnderlying = underlying;
-    myWeight = weight;
+    myOccurrences = occurrences;
   }
 
   public V getUnderlying() {
     return myUnderlying;
   }
 
-  public int getWeight() {
-    return myWeight;
+  public int getOccurrences() {
+    return myOccurrences;
   }
 
   @Override
-  public int compareTo(@NotNull final WeightAware<V> that) {
-    final int sub = -getWeight() + that.getWeight();
+  public int compareTo(@NotNull final OccurrencesAware<V> that) {
+    final int sub = -getOccurrences() + that.getOccurrences();
     if (sub != 0) {
       return sub;
     }
