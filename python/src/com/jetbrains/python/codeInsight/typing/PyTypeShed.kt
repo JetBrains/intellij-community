@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.typing
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -58,6 +59,9 @@ object PyTypeShed {
       return true
     }
     if (isInThirdPartyLibraries(root)) {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        return true
+      }
       val pyPIPackage = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: topLevelPackage
       val packages = PyPackageManagers.getInstance().forSdk(sdk).packages ?: return true
       return PyPackageUtil.findPackage(packages, pyPIPackage) != null
