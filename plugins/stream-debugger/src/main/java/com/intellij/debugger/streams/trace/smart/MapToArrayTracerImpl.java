@@ -16,12 +16,14 @@ import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.ArrayReference;
+import com.sun.jdi.LongValue;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Vitaliy.Bibaev
@@ -29,7 +31,7 @@ import java.util.List;
 public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
   private static final Logger LOG = Logger.getInstance(MapToArrayTracerImpl.class);
 
-  private static final String RETURN_EXPRESSION = "new java.lang.Object[]{ info, streamResult };" + LINE_SEPARATOR;
+  private static final String RETURN_EXPRESSION = "new java.lang.Object[]{ info, streamResult, elapsedTime };" + LINE_SEPARATOR;
 
   public MapToArrayTracerImpl(@NotNull XDebugSession session) {
     super(session);
@@ -59,7 +61,8 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     final int callCount = chain.length();
     final StringBuilder declarationBuilder = new StringBuilder();
     final StringBuilder resultBuilder = new StringBuilder();
-    declarationBuilder.append(String.format("final java.lang.Object[] info = new java.lang.Object[%d];\n", callCount))
+    declarationBuilder.append("final long startTime = java.lang.System.nanoTime();" + LINE_SEPARATOR);
+    declarationBuilder.append(String.format("final java.lang.Object[] info = new java.lang.Object[%d];" + LINE_SEPARATOR, callCount))
       .append("final java.util.concurrent.atomic.AtomicInteger time = new java.util.concurrent.atomic.AtomicInteger(0);")
       .append(LINE_SEPARATOR);
     final StreamCall timeCall = new PeekCall("x -> time.incrementAndGet()");
@@ -86,6 +89,7 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
       }
     }
 
+    resultBuilder.append("final long[] elapsedTime = new long[]{ java.lang.System.nanoTime() - startTime };" + LINE_SEPARATOR);
     resultBuilder.append(RETURN_EXPRESSION);
     final StreamCall producer = tracingChainCalls.get(0);
     final List<StreamCall> intermediate = new ArrayList<>(tracingChainCalls.subList(1, tracingChainCalls.size() - 1));
@@ -107,6 +111,8 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
       final ArrayReference resultArray = (ArrayReference)value;
       final ArrayReference info = (ArrayReference)resultArray.getValue(0);
       final Value streamResult = resultArray.getValue(1);
+      final Value time = resultArray.getValue(2);
+      logTime(time);
       final List<TraceInfo> trace = getTrace(chain, info);
       return new MyTracingResult(streamResult, trace);
     }
@@ -128,6 +134,13 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     }
 
     return result;
+  }
+
+  private void logTime(@NotNull Value elapsedTimeArray) {
+    final Value elapsedTime = ((ArrayReference)elapsedTimeArray).getValue(0);
+    final long elapsedNanoseconds = ((LongValue)elapsedTime).value();
+    final long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds);
+    LOG.info("evaluation completed in " + elapsedMillis + "ms");
   }
 
   private static class MyTracingResult implements TracingResult {
