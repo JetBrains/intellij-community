@@ -138,16 +138,16 @@ public class LanguageMismatch extends LocalInspectionTool {
                 }
               }
               // context implies language, but declaration isn't annotated
-              final PsiAnnotation annotation = annotations[annotations.length - 1];
-              final String initializer = annotation.getParameterList().getText();
-              final AnnotateFix fix = new AnnotateFix(declOwner, annotation.getQualifiedName(), initializer) {
-                @NotNull
-                public String getName() {
-                  return initializer == null ? super.getName() : super.getName() + initializer;
-                }
-              };
-
-              if (fix.canApply()) {
+              if (AnnotateFix.canApplyOn(declOwner)) {
+                final PsiAnnotation annotation = annotations[annotations.length - 1];
+                final String initializer = annotation.getParameterList().getText();
+                final AnnotateFix fix = new AnnotateFix(annotation.getQualifiedName(), initializer) {
+                  @Override
+                  @NotNull
+                  public String getName() {
+                    return initializer == null ? super.getName() : super.getName() + initializer;
+                  }
+                };
                 holder.registerProblem(expression, "Language problem: Found non-annotated reference where '" + expected + "' is expected",
                                        fix);
               }

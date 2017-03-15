@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,57 +30,72 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AnnotateFix implements LocalQuickFix {
-  private final PsiModifierListOwner myElement;
   private final String myAnnotationName;
   private final String myArgList;
 
-  public AnnotateFix(@NotNull PsiModifierListOwner owner, String annotationClassname) {
-    this(owner, annotationClassname, null);
+  public AnnotateFix(String annotationClassname) {
+    this(annotationClassname, null);
   }
 
-  public AnnotateFix(@NotNull PsiModifierListOwner owner, String annotationClassname, @Nullable String argList) {
-    myElement = owner;
+  public AnnotateFix(String annotationClassname, @Nullable String argList) {
     myAnnotationName = annotationClassname;
     myArgList = argList;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return "Annotate with @" + StringUtil.getShortName(myAnnotationName);
   }
 
-  public boolean canApply() {
-    return PsiUtilEx.isInSourceContent(myElement) && myElement.getModifierList() != null;
+  public static boolean canApplyOn(PsiModifierListOwner element) {
+    return PsiUtilEx.isInSourceContent(element) && element.getModifierList() != null;
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(myElement)) {
+     PsiElement element = descriptor.getPsiElement();
+    if (!(element instanceof PsiModifierListOwner)) {
+      element = AnnotationUtilEx.getAnnotatedElementFor(element, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
+      // this element may be from a different file
+      if (element == null) {
+        return;
+      }
+    }
+    final PsiModifierList modifierList = ((PsiModifierListOwner)element).getModifierList();
+    if (modifierList == null) {
       return;
     }
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    try {
-      final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(myAnnotationName, myElement.getResolveScope());
-      final InitializerRequirement requirement = InitializerRequirement.calcInitializerRequirement(psiClass);
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
+      return;
+    }
+    WriteAction.run(() -> {
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      try {
+        final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(myAnnotationName, modifierList.getResolveScope());
+        final InitializerRequirement requirement = InitializerRequirement.calcInitializerRequirement(psiClass);
 
-      final String argList;
-      if (myArgList == null) {
-        switch (requirement) {
-          case VALUE_REQUIRED:
-          case OTHER_REQUIRED:
-            argList = "(\"\")";
-            break;
-          default:
-            argList = "";
+        final String argList;
+        if (myArgList == null) {
+          switch (requirement) {
+            case VALUE_REQUIRED:
+            case OTHER_REQUIRED:
+              argList = "(\"\")";
+              break;
+            default:
+              argList = "";
+          }
         }
-      }
-      else {
-        argList = myArgList;
-      }
+        else {
+          argList = myArgList;
+        }
 
-      PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotationName + argList, myElement);
-      final PsiModifierList modifierList = myElement.getModifierList();
-
-      if (modifierList != null) {
+        PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotationName + argList, modifierList);
         annotation = (PsiAnnotation)modifierList.addBefore(annotation, modifierList.getFirstChild());
         annotation = (PsiAnnotation)JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
 
@@ -88,9 +104,9 @@ public class AnnotateFix implements LocalQuickFix {
           ((NavigationItem)list).navigate(true);
         }
       }
-    }
-    catch (IncorrectOperationException e) {
-      Logger.getInstance(getClass().getName()).error(e);
-    }
+      catch (IncorrectOperationException e) {
+        Logger.getInstance(getClass().getName()).error(e);
+      }
+    });
   }
 }
