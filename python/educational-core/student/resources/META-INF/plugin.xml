@@ -44,10 +44,10 @@
     <extensionPoint qualifiedName="Edu.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.checker.StudyExecutor"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="Edu.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.learning.StudyLanguageManager"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="Edu.studyPluginConfigurator" interface="com.jetbrains.edu.learning.StudyPluginConfigurator"/>
+    <extensionPoint qualifiedName="Edu.pluginConfigurator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.jetbrains.edu.learning.EduPluginConfigurator"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="Edu.studyActionsProvider" interface="com.jetbrains.edu.learning.StudyActionsProvider"/>
     <extensionPoint qualifiedName="Edu.studyTwitterPluginConfigurator" interface="com.jetbrains.edu.learning.StudyTwitterPluginConfigurator"/>
     <extensionPoint qualifiedName="Edu.studyActionListener" interface="com.jetbrains.edu.learning.StudyActionListener"/>

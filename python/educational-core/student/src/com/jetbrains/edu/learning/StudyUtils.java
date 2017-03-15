@@ -297,25 +297,16 @@ public class StudyUtils {
   }
 
 
-  /**
-   * returns language manager which contains all the information about language specific file names
-   */
-  @Nullable
-  public static StudyLanguageManager getLanguageManager(@NotNull final Course course) {
-    Language language = course.getLanguageById();
-    return language == null ? null : StudyLanguageManager.INSTANCE.forLanguage(language);
-  }
-
   public static boolean isTestsFile(@NotNull Project project, @NotNull final String name) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     if (course == null) {
       return false;
     }
-    StudyLanguageManager manager = getLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return false;
     }
-    String testFileName = manager.getTestFileName();
+    String testFileName = configurator.getTestFileName();
     return name.equals(testFileName) ||
            name.startsWith(FileUtil.getNameWithoutExtension(testFileName)) && name.contains(EduNames.SUBTASK_MARKER);
   }

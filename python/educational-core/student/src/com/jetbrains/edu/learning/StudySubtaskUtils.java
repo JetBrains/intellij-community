@@ -95,11 +95,11 @@ public class StudySubtaskUtils {
     if (course == null) {
       return;
     }
-    StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return;
     }
-    String defaultTestFileName = manager.getTestFileName();
+    String defaultTestFileName = configurator.getTestFileName();
     String nameWithoutExtension = FileUtil.getNameWithoutExtension(defaultTestFileName);
     String extension = FileUtilRt.getExtension(defaultTestFileName);
     String subtaskTestFileName = nameWithoutExtension + EduNames.SUBTASK_MARKER + toSubtaskIndex;

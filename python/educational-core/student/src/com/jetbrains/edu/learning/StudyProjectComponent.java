@@ -161,9 +161,9 @@ public class StudyProjectComponent implements ProjectComponent {
     flushCourse(course);
     course.initCourse(false);
 
-    StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
-    if (manager == null) {
-      LOG.info("Study Language Manager is null for " + course.getLanguageById().getDisplayName());
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
+      LOG.info("EduPluginConfigurator not found for language " + course.getLanguageById().getDisplayName());
       return;
     }
 

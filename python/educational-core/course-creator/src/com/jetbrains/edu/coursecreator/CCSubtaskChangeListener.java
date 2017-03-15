@@ -9,10 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.edu.learning.StudyLanguageManager;
-import com.jetbrains.edu.learning.StudySubtaskChangeListener;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Task;
@@ -31,11 +28,11 @@ public class CCSubtaskChangeListener implements StudySubtaskChangeListener {
     if (course == null) {
       return;
     }
-    StudyLanguageManager manager = StudyUtils.getLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return;
     }
-    String testFileName = manager.getTestFileName();
+    String testFileName = configurator.getTestFileName();
     if (newSubtaskNumber != 0) {
       String nameWithoutExtension = FileUtil.getNameWithoutExtension(testFileName);
       String extension = FileUtilRt.getExtension(testFileName);

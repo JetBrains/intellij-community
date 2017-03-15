@@ -65,9 +65,9 @@ public class PyStudyExecutor implements StudyExecutor {
                                                @NotNull final Task currentTask) {
     final List<UserTest> userTests = StudyTaskManager.getInstance(project).getUserTests(currentTask);
     if (!userTests.isEmpty()) {
-      StudyLanguageManager manager = StudyUtils.getLanguageManager(currentTask.getLesson().getCourse());
-      if (manager != null) {
-        cmd.addParameter(new File(project.getBaseDir().getPath(), manager.getUserTester()).getPath());
+      EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(currentTask.getLesson().getCourse().getLanguageById());
+      if (configurator != null) {
+        cmd.addParameter(new File(project.getBaseDir().getPath(), "user_tester.py").getPath());
         cmd.addParameter(sdkPath);
         cmd.addParameter(filePath);
       }

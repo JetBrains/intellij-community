@@ -239,10 +239,10 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     LanguageLevel baseLevel = LanguageLevel.PYTHON30;
     if (course != null) {
       final String version = course.getLanguageVersion();
-      if (PyStudyLanguageManager.PYTHON_2.equals(version)) {
+      if (PyEduPluginConfigurator.PYTHON_2.equals(version)) {
         baseLevel = LanguageLevel.PYTHON27;
       }
-      else if (PyStudyLanguageManager.PYTHON_3.equals(version)) {
+      else if (PyEduPluginConfigurator.PYTHON_3.equals(version)) {
         baseLevel = LanguageLevel.PYTHON31;
       }
       else if (version != null) {
