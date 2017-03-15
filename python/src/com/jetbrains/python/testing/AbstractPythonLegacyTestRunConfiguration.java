@@ -149,7 +149,7 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     return myScriptName;
   }
 
-  public void setScriptName(String scriptName) {
+  public void setScriptName(@NotNull String scriptName) {
     myScriptName = scriptName;
   }
 
