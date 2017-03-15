@@ -476,6 +476,16 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         return true;
       }
     }.installOn(myResultsPreviewTable);
+    myResultsPreviewTable.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+        Component focusOwner = focusManager.getFocusOwner();
+        if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, myUsagePreviewPanel)) {
+          focusManager.requestFocus(mySearchComponent, true);
+        }
+      }
+    });
     applyFont(JBUI.Fonts.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
               myResultsPreviewTable);
     ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
