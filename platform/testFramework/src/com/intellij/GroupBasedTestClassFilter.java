@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -55,14 +56,12 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
-  private final List<Pattern> myIncludedTestGroupPatterns = ContainerUtil.newSmartList();
-  private final List<Pattern> myExcludedTestGroupPatterns = ContainerUtil.newSmartList();
   private final List<Group> myGroups = ContainerUtil.newSmartList();
-  private boolean myContainsAllExcludeDefinedGroup;
+  private final Set<String> myTestGroupNames;
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
-    myContainsAllExcludeDefinedGroup = containsAllExcludeDefinedGroup(testGroupNames);
+    myTestGroupNames = ContainerUtil.newTroveSet(testGroupNames);
 
     for (String groupName : filters.keySet()) {
       Collection<String> groupFilters = filters.get(groupName);
@@ -71,12 +70,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
                                                          .filter(s -> s.startsWith("-") && s.length() > 1)
                                                          .map(s -> s.substring(1))
                                                          .collect(Collectors.toList()));
-      myGroups.add(new Group(includePatterns, excludedPatterns));
-
-      if (testGroupNames.contains(groupName)) {
-        myIncludedTestGroupPatterns.addAll(includePatterns);
-        myExcludedTestGroupPatterns.addAll(excludedPatterns);
-      }
+      myGroups.add(new Group(groupName, includePatterns, excludedPatterns));
     }
   }
 
@@ -165,21 +159,21 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   @Override
   public boolean matches(String className, String moduleName) {
-    if (matchesAnyPattern(myExcludedTestGroupPatterns, className)) return false;
-    if (matchesAnyPattern(myIncludedTestGroupPatterns, className)) return true;
-    return myContainsAllExcludeDefinedGroup && myGroups.stream().noneMatch(g -> g.matches(className));
+    if (myGroups.stream().filter(g -> myTestGroupNames.contains(g.name)).anyMatch(g -> g.matches(className))) return true;
+    return containsAllExcludeDefinedGroup(myTestGroupNames) && myGroups.stream().noneMatch(g -> g.matches(className));
   }
 
-
-  private static boolean containsAllExcludeDefinedGroup(List<String> groupNames) {
+  private static boolean containsAllExcludeDefinedGroup(Set<String> groupNames) {
     return groupNames.isEmpty() || groupNames.contains(ALL_EXCLUDE_DEFINED);
   }
 
   private static class Group {
-    public final List<Pattern> included;
-    public final List<Pattern> excluded;
+    private final String name;
+    private final List<Pattern> included;
+    private final List<Pattern> excluded;
 
-    public Group(List<Pattern> included, List<Pattern> excluded) {
+    private Group(String name, List<Pattern> included, List<Pattern> excluded) {
+      this.name = name;
       this.excluded = excluded;
       this.included = included;
     }
