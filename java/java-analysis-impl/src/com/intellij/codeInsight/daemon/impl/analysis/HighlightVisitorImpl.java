@@ -1295,6 +1295,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myHolder.add(GenericsHighlightUtil.areSupersAccessible(psiClass, expression));
       }
     }
+
+    if (!myHolder.hasErrorResults() && resolved != null && myJavaModule != null) {
+      myHolder.add(ModuleHighlightUtil.checkPackageAccessibility(expression, resolved, myJavaModule));
+    }
   }
 
   @Override
