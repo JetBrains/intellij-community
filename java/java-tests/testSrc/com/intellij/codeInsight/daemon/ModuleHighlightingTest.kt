@@ -59,6 +59,14 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("pkg/module-info.java", """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
   }
 
+  fun testIncompatibleModifiers() {
+    highlight("""
+        module M {
+          requires static transitive M2;
+          requires <error descr="Modifier 'private' not allowed here">private</error> <error descr="Modifier 'volatile' not allowed here">volatile</error> M3;
+        }""".trimIndent())
+  }
+
   fun testDuplicateStatements() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic class C { }")
     addFile("pkg/main/Impl.java", "package pkg.main;\npublic class Impl extends C { }")

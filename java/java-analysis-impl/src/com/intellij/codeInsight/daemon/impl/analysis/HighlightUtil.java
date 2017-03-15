@@ -91,6 +91,8 @@ public class HighlightUtil extends HighlightUtilBase {
   private static final Map<String, Set<String>> ourFieldIncompatibleModifiers = new THashMap<>(8);
   private static final Map<String, Set<String>> ourClassIncompatibleModifiers = new THashMap<>(8);
   private static final Map<String, Set<String>> ourClassInitializerIncompatibleModifiers = new THashMap<>(1);
+  private static final Map<String, Set<String>> ourModuleIncompatibleModifiers = new THashMap<>(1);
+  private static final Map<String, Set<String>> ourRequiresIncompatibleModifiers = new THashMap<>(2);
 
   private static final Set<String> ourConstructorNotAllowedModifiers =
     ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
@@ -138,6 +140,11 @@ public class HighlightUtil extends HighlightUtilBase {
     ourFieldIncompatibleModifiers.put(PsiModifier.VOLATILE, ContainerUtil.newTroveSet(PsiModifier.FINAL));
 
     ourClassInitializerIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
+
+    ourModuleIncompatibleModifiers.put(PsiModifier.OPEN, Collections.emptySet());
+
+    ourRequiresIncompatibleModifiers.put(PsiModifier.STATIC, Collections.emptySet());
+    ourRequiresIncompatibleModifiers.put(PsiModifier.TRANSITIVE, Collections.emptySet());
   }
 
   private HighlightUtil() { }
@@ -901,6 +908,8 @@ public class HighlightUtil extends HighlightUtilBase {
     else if (modifierListOwner instanceof PsiMethod) return ourMethodIncompatibleModifiers;
     else if (modifierListOwner instanceof PsiVariable) return ourFieldIncompatibleModifiers;
     else if (modifierListOwner instanceof PsiClassInitializer) return ourClassInitializerIncompatibleModifiers;
+    else if (modifierListOwner instanceof PsiJavaModule) return ourModuleIncompatibleModifiers;
+    else if (modifierListOwner instanceof PsiRequiresStatement) return ourRequiresIncompatibleModifiers;
     return null;
   }
 
