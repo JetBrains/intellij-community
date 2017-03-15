@@ -21,7 +21,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupEx;
@@ -49,7 +48,7 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.intention.impl.IntentionHintComponent.*;
+import static com.intellij.codeInsight.intention.impl.IntentionHintComponent.PopupUpdateResult;
 
 /**
  * @author mike
@@ -85,7 +84,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
     }
 
-    if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
+    //if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) return;
 
     //intentions check isWritable before modification: if (!file.isWritable()) return;
 

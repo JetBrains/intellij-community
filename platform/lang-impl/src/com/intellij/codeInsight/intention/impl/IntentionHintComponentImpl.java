@@ -19,9 +19,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.*;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.unwrap.ScopeHighlighter;
-import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,22 +29,16 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.Alarm;
-import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -56,10 +47,8 @@ import javax.swing.border.Border;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 
 /**
  * @author max
@@ -332,68 +321,19 @@ public class IntentionHintComponentImpl extends IntentionHintComponent implement
     if (myPopup != null) {
       Disposer.dispose(myPopup);
     }
-    myPopup = JBPopupFactory.getInstance().createListPopup(step);
-    if (myPopup instanceof WizardPopup) {
-      Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
-      for (Shortcut shortcut : shortcuts) {
-        if (shortcut instanceof KeyboardShortcut) {
-          KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
-          if (keyboardShortcut.getSecondKeyStroke() == null) {
-            ((WizardPopup)myPopup).registerAction("activateSelectedElement", keyboardShortcut.getFirstKeyStroke(), new AbstractAction() {
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                myPopup.handleSelect(true);
-              }
-            });
-          }
-        }
+    ListPopup popup = createPopup(myEditor, myFile, step);
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void beforeShown(LightweightWindowEvent event) {
+
       }
-    }
 
-    boolean committed = PsiDocumentManager.getInstance(myFile.getProject()).isCommitted(myEditor.getDocument());
-    final PsiFile injectedFile = committed ? InjectedLanguageUtil.findInjectedPsiNoCommit(myFile, myEditor.getCaretModel().getOffset()) : null;
-    final Editor injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(myEditor, injectedFile);
-
-    final ScopeHighlighter highlighter = new ScopeHighlighter(myEditor);
-    final ScopeHighlighter injectionHighlighter = new ScopeHighlighter(injectedEditor);
-
-    myPopup.addListener(new JBPopupListener.Adapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        highlighter.dropHighlight();
-        injectionHighlighter.dropHighlight();
         myPopupShown = false;
       }
     });
-    myPopup.addListSelectionListener(e -> {
-      final Object source = e.getSource();
-      highlighter.dropHighlight();
-      injectionHighlighter.dropHighlight();
-
-      if (source instanceof DataProvider) {
-        final Object selectedItem = PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)source);
-        if (selectedItem instanceof IntentionActionWithTextCaching) {
-          final IntentionAction action = ((IntentionActionWithTextCaching)selectedItem).getAction();
-          if (action instanceof SuppressIntentionActionFromFix) {
-            if (injectedFile != null && ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost() == ThreeState.NO) {
-              final PsiElement at = injectedFile.findElementAt(injectedEditor.getCaretModel().getOffset());
-              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-              if (container != null) {
-                injectionHighlighter.highlight(container, Collections.singletonList(container));
-              }
-            }
-            else {
-              final PsiElement at = myFile.findElementAt(myEditor.getCaretModel().getOffset());
-              final PsiElement container = ((SuppressIntentionActionFromFix)action).getContainer(at);
-              if (container != null) {
-                highlighter.highlight(container, Collections.singletonList(container));
-              }
-            }
-          }
-        }
-      }
-    });
-
+    myPopup = popup;
     if (myEditor.isOneLineMode()) {
       // hide popup on combobox popup show
       final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, myEditor.getContentComponent());
@@ -415,7 +355,7 @@ public class IntentionHintComponentImpl extends IntentionHintComponent implement
   }
 
   @Override
-  void canceled(@NotNull ListPopupStep intentionListStep) {
+  public void canceled(@NotNull ListPopupStep intentionListStep) {
     if (myPopup.getListStep() != intentionListStep || myDisposed) {
       return;
     }
