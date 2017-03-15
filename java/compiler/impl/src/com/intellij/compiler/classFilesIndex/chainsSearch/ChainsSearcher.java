@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
-import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
 import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
@@ -49,7 +49,7 @@ public final class ChainsSearcher {
                                           final Set<String> contextQNames,
                                           final int maxResultSize,
                                           final ChainCompletionContext context,
-                                          final CompilerReferenceService methodsUsageIndexReader) {
+                                          final CompilerReferenceServiceEx methodsUsageIndexReader) {
     final SearchInitializer initializer = createInitializer(targetType, context.getExcludedQNames(), methodsUsageIndexReader, context);
     if (initializer == null) {
       return Collections.emptyList();
@@ -66,14 +66,14 @@ public final class ChainsSearcher {
   @Nullable
   private static SearchInitializer createInitializer(final TargetType target,
                                                      final Set<String> excludedParamsTypesQNames,
-                                                     final CompilerReferenceService methodsUsageIndexReader,
+                                                     final CompilerReferenceServiceEx methodsUsageIndexReader,
                                                      final ChainCompletionContext context) {
     final SortedSet<UsageIndexValue> methods = methodsUsageIndexReader.getMethods(target.getClassQName());
     return new SearchInitializer(methods, target.getClassQName(), excludedParamsTypesQNames, context);
   }
 
   @NotNull
-  private static List<MethodsChain> search(final CompilerReferenceService indexReader,
+  private static List<MethodsChain> search(final CompilerReferenceServiceEx indexReader,
                                            final SearchInitializer initializer,
                                            final Set<String> toSet,
                                            final int pathMaximalLength,

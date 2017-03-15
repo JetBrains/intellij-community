@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -26,8 +25,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.TreeSet;
 
 /**
  * The service is intended to provide an information about class/method/field usages or classes hierarchy that is obtained on compilation time.
@@ -41,9 +38,6 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   protected CompilerReferenceService(Project project) {
     super(project);
   }
-
-  //TODO
-  public abstract TreeSet<UsageIndexValue> getMethods(String name);
 
   public static CompilerReferenceService getInstance(@NotNull Project project) {
     return project.getComponent(CompilerReferenceService.class);

@@ -16,14 +16,15 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextRelevantStaticMethod;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.compiler.classFilesIndex.impl.UsageIndexValue;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 
 import java.util.*;
 
@@ -32,11 +33,11 @@ import java.util.*;
  */
 public class CachedRelevantStaticMethodSearcher {
   private final HashMap<MethodIncompleteSignature, PsiMethod> myCachedResolveResults = new HashMap<>();
-  private final CompilerReferenceService myIndexReader;
+  private final CompilerReferenceServiceEx myIndexReader;
   private final ChainCompletionContext myCompletionContext;
 
   public CachedRelevantStaticMethodSearcher(final ChainCompletionContext completionContext) {
-    myIndexReader = CompilerReferenceService.getInstance(completionContext.getProject());
+    myIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(completionContext.getProject());
     myCompletionContext = completionContext;
   }
 

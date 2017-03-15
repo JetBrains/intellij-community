@@ -3,7 +3,11 @@ package com.intellij.compiler.classFilesIndex.chainsSearch.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.compiler.classFilesIndex.chainsSearch.*;
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
+import com.intellij.compiler.classFilesIndex.chainsSearch.ChainCompletionStringUtil;
+import com.intellij.compiler.classFilesIndex.chainsSearch.ChainsSearcher;
+import com.intellij.compiler.classFilesIndex.chainsSearch.MethodsChain;
+import com.intellij.compiler.classFilesIndex.chainsSearch.MethodsChainLookupRangingHelper;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextUtil;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
@@ -14,13 +18,16 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.*;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.*;
+import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.patternForMethodParameter;
+import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.patternForVariableAssignment;
 import static com.intellij.patterns.PsiJavaPatterns.or;
 
 /**
@@ -83,7 +90,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
                                                       final Set<String> contextRelevantTypes,
                                                       final ChainCompletionContext completionContext) {
     final Project project = completionContext.getProject();
-    final CompilerReferenceService methodsUsageIndexReader = CompilerReferenceService.getInstance(project);
+    final CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
     final List<MethodsChain> searchResult =
       searchChains(target, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
     if (searchResult.size() < MAX_SEARCH_RESULT_SIZE) {
@@ -195,7 +202,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
                                                  final int maxResultSize,
                                                  final int maxChainSize,
                                                  final ChainCompletionContext context,
-                                                 final CompilerReferenceService methodsUsageIndexReader) {
+                                                 final CompilerReferenceServiceEx methodsUsageIndexReader) {
     return ChainsSearcher.search(maxChainSize, target, contextVarsQNames, maxResultSize, context, methodsUsageIndexReader);
   }
 }

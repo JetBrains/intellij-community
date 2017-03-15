@@ -16,7 +16,6 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
@@ -76,7 +75,7 @@ import java.util.stream.Stream;
 import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFileTypes;
 import static com.intellij.psi.search.GlobalSearchScope.notScope;
 
-public class CompilerReferenceServiceImpl extends CompilerReferenceService implements ModificationTracker {
+public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx implements ModificationTracker {
   private final static Logger LOG = Logger.getInstance(CompilerReferenceServiceImpl.class);
 
   private final Set<FileType> myFileTypes;
@@ -168,14 +167,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   @Override
-  public TreeSet<UsageIndexValue> getMethods(String name) {
+  public TreeSet<UsageIndexValue> getMethods(String rawReturnType) {
     try {
       myReadDataLock.lock();
 
       if (myReader == null) return null;
       JavaLightUsageAdapter adapter = new JavaLightUsageAdapter();
       try {
-        final int type = adapter.findMembersForReturnType(name, myReader.getNameEnumerator());
+        final int type = adapter.findMembersForReturnType(rawReturnType, myReader.getNameEnumerator());
         return Stream.of(new SignatureData(type, true), new SignatureData(type, false)).flatMap(sd -> {
           try {
             List<LightRef> refs = new SmartList<>();
