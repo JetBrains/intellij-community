@@ -1691,7 +1691,9 @@ public class UsageViewImpl implements UsageView {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
       else {
-        Node node = getSelectedNode();
+        // can arrive here outside EDT from usage view preview.
+        // ignore all these fancy actions in this case.
+        Node node = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNode() : null;
         if (node != null) {
           Object userObject = node.getUserObject();
           if (userObject instanceof TypeSafeDataProvider) {
