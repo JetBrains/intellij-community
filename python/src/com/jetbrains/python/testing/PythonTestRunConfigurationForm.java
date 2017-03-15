@@ -25,6 +25,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -170,7 +171,7 @@ public class PythonTestRunConfigurationForm implements AbstractPythonTestRunConf
     return toSystemIndependentName(myTestScriptTextField.getText().trim());
   }
 
-  public void setScriptName(String scriptName) {
+  public void setScriptName(@NotNull String scriptName) {
     myTestScriptTextField.setText(FileUtil.toSystemDependentName(scriptName));
   }
 
