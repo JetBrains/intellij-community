@@ -15,12 +15,14 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,31 +42,42 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler {
+public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    return !getElements(editor, file, Ref.create()).isEmpty();
+  }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+
+    Ref<String> errorMessage = Ref.create();
+    List<PsiElement> elements = getElements(editor, file, errorMessage);
+    if (elements.isEmpty()) {
+      String message =
+        !errorMessage.isNull() ? errorMessage.get() : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
+    }
+    else {
+      invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
+    }
+  }
+
+  @NotNull
+  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<String> errorMessage) {
     List<PsiElement> elements = new ArrayList<>();
-    String errorMessage = null;
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
       PsiElement element = file.findElementAt(offset);
       String errorFromElement = collectElementsUnderCaret(element, elements);
       if (errorFromElement != null) {
-        errorMessage = errorFromElement;
+        errorMessage.set(errorFromElement);
       }
     }
-
-    if (elements.isEmpty()) {
-      String message = errorMessage != null ? errorMessage
-                                            : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
-      return;
-    }
-
-    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
+    return elements;
   }
 
   private static String collectElementsUnderCaret(PsiElement element, List<PsiElement> elements) {

@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,26 +46,43 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler {
+public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("pull.members.up.title");
 
   private PsiClass mySubclass;
   private Project myProject;
 
   @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    return !getElements(editor, file).isEmpty();
+  }
+
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    List<PsiElement> elements = new ArrayList<>();
+
+    List<PsiElement> elements = getElements(editor, file);
+    if (elements.isEmpty()) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
+    }
+    else {
+      invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
+    }
+  }
+
+  private static List<PsiElement> getElements(Editor editor, PsiFile file) {
+    List<PsiElement> elements = ContainerUtil.newSmartList();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
       PsiElement element = file.findElementAt(offset);
-
       while (element != null && !(element instanceof PsiFile)) {
         if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
           elements.add(element);
@@ -73,13 +91,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
         element = element.getParent();
       }
     }
-    if (elements.isEmpty()) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
-    }
-    else {
-      invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY),dataContext);
-    }
+    return elements;
   }
 
   @Override
