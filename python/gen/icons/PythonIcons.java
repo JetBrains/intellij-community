@@ -67,7 +67,6 @@ public class PythonIcons {
     public static final Icon Pypy = load("/icons/com/jetbrains/python/pypy.png"); // 16x16
     public static final Icon Python_logo = load("/icons/com/jetbrains/python/python-logo.png"); // 16x16
     public static final Icon Python = load("/icons/com/jetbrains/python/python.png"); // 16x16
-    public static final Icon Python_24 = load("/icons/com/jetbrains/python/python_24.png"); // 24x24
     public static final Icon PythonClosed = load("/icons/com/jetbrains/python/pythonClosed.png"); // 16x16
     public static final Icon PythonConsole = load("/icons/com/jetbrains/python/pythonConsole.png"); // 16x16
     public static final Icon PythonConsoleToolWindow = load("/icons/com/jetbrains/python/pythonConsoleToolWindow.png"); // 13x13

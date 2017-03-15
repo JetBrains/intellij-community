@@ -147,7 +147,9 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       public void threadAction() {
         if (node.isObsolete()) return;
         if (myInsertCapturePoint != null) {
-          node.setMessage("Async stacktrace could be available here, enable in", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
+          node.setMessage("Async stacktrace from " +
+                          myInsertCapturePoint.myClassName + "." + myInsertCapturePoint.myMethodName +
+                          " could be available here, enable in", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
                           SimpleTextAttributes.REGULAR_ATTRIBUTES, StackFrameItem.CAPTURE_SETTINGS_OPENER);
         }
         XValueChildrenList children = new XValueChildrenList();

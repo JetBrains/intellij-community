@@ -96,6 +96,7 @@ public class IdeEventQueueTest extends PlatformTestCase {
   }
 
   private static void postCarefully(AWTEvent event) {
+    LOG.debug("posting " + event);
     IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
     boolean posted = ideEventQueue.doPostEvent(event);
     assertTrue("Was not posted: "+event, posted);
@@ -108,6 +109,7 @@ public class IdeEventQueueTest extends PlatformTestCase {
   private static AWTEvent dispatchAllInvocationEventsUntilOtherEvent(IdeEventQueue ideEventQueue) throws InterruptedException {
     while (true) {
       AWTEvent event = PlatformTestUtil.dispatchNextEventIfAny(ideEventQueue);
+      LOG.debug("event dispatched in dispatchAll() "+event+"; -"+(event instanceof InvocationEvent ? "continuing" : "returning"));
       if (!(event instanceof InvocationEvent)) return event;
     }
   }

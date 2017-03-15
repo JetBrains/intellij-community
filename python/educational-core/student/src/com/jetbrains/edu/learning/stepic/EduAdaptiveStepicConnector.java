@@ -105,10 +105,6 @@ public class EduAdaptiveStepicConnector {
               final Task taskFromStep = getTask(project, realLesson.getName(), stepId);
               if (taskFromStep != null) return taskFromStep;
             }
-
-            final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-            postRecommendationReaction(lessonId, String.valueOf(user.getId()), TOO_BORING_RECOMMENDATION_REACTION);
-            return getNextRecommendation(project, course);
           }
           else {
             LOG.warn("Got unexpected number of lessons: " + (lessonContainer == null ? null : lessonContainer.lessons.size()));
@@ -160,17 +156,19 @@ public class EduAdaptiveStepicConnector {
 
     return null;
   }
-  
+
+  @NotNull
   private static Task getTheoryTaskFromStep(@NotNull String lessonName, @NotNull StepicWrappers.Step block, int stepId) {
     final Task task = new Task(lessonName);
     task.setStepId(stepId);
     task.setText(block.text);
     task.setTheoryTask(true);
-    
+
     createMockTaskFile(task, "# this is a theory task. You can use this editor as a playground");
-    return task;    
+    return task;
   }
 
+  @NotNull
   private static Task getChoiceTaskFromStep(@NotNull String lessonName,
                                             @NotNull StepicWrappers.Step block,
                                             int stepId) {
@@ -294,9 +292,8 @@ public class EduAdaptiveStepicConnector {
       indicator.checkCanceled();
       final StepicUser user = StepicUpdateSettings.getInstance().getUser();
 
-      final boolean recommendationReaction =
-        postRecommendationReaction(String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
-                                   String.valueOf(user.getId()), reaction);
+      final boolean recommendationReaction = postRecommendationReaction(String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
+                                                                        String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
         indicator.checkCanceled();
         final Task task = getNextRecommendation(project, course);
@@ -367,7 +364,8 @@ public class EduAdaptiveStepicConnector {
             final Balloon balloon =
               JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Couldn't load a new recommendation", MessageType.ERROR, null)
                 .createBalloon();
-            StudyUtils.showCheckPopUp(project, balloon);});
+            StudyUtils.showCheckPopUp(project, balloon);
+          });
         }
         ApplicationManager.getApplication().invokeLater(() -> {
           VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);

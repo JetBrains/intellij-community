@@ -15,7 +15,8 @@
  */
 
 package org.jetbrains.plugins.groovy.refactoring.optimizeImports
-import com.intellij.codeInsight.CodeInsightSettings
+
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -37,14 +38,8 @@ class OptimizeImportsTest extends LightGroovyTestCase {
   @Override
   void setUp() {
     super.setUp()
-    CodeInsightSettings.instance.OPTIMIZE_IMPORTS_ON_THE_FLY = true
+    CodeInsightWorkspaceSettings.getInstance(project).setOptimizeImportsOnTheFly(true, testRootDisposable)
     ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true)
-  }
-
-  @Override
-  void tearDown() {
-    CodeInsightSettings.instance.OPTIMIZE_IMPORTS_ON_THE_FLY = false
-    super.tearDown()
   }
 
   void testNewline() {

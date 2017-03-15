@@ -175,7 +175,7 @@ public class DfaExpressionFactory {
           return method;
         }
       }
-      if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_LANG_STRING, PsiType.INT, "length")) {
+      if (MethodUtils.isStringLength(method)) {
         return method;
       }
       if (AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {

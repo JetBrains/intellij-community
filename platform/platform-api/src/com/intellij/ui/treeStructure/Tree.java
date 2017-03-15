@@ -670,21 +670,24 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private class MyMouseListener extends MouseAdapter {
     @Override
-    public void mousePressed(MouseEvent mouseevent) {
-      if (!JBSwingUtilities.isLeftMouseButton(mouseevent) &&
-          (JBSwingUtilities.isRightMouseButton(mouseevent) || JBSwingUtilities.isMiddleMouseButton(mouseevent))) {
-        TreePath treepath = getPathForLocation(mouseevent.getX(), mouseevent.getY());
-        if (treepath != null) {
-          if (getSelectionModel().getSelectionMode() != TreeSelectionModel.SINGLE_TREE_SELECTION) {
-            TreePath[] selectionPaths = getSelectionModel().getSelectionPaths();
-            if (selectionPaths != null) {
-              for (TreePath selectionPath : selectionPaths) {
-                if (selectionPath != null && selectionPath.equals(treepath)) return;
-              }
+    public void mousePressed(MouseEvent event) {
+      if (!JBSwingUtilities.isLeftMouseButton(event) &&
+          (JBSwingUtilities.isRightMouseButton(event) || JBSwingUtilities.isMiddleMouseButton(event))) {
+        TreePath path = getClosestPathForLocation(event.getX(), event.getY());
+        if (path == null) return;
+
+        Rectangle bounds = getPathBounds(path);
+        if (bounds != null && bounds.y + bounds.height < event.getY()) return;
+
+        if (getSelectionModel().getSelectionMode() != TreeSelectionModel.SINGLE_TREE_SELECTION) {
+          TreePath[] selectionPaths = getSelectionModel().getSelectionPaths();
+          if (selectionPaths != null) {
+            for (TreePath selectionPath : selectionPaths) {
+              if (selectionPath != null && selectionPath.equals(path)) return;
             }
           }
-          getSelectionModel().setSelectionPath(treepath);
         }
+        getSelectionModel().setSelectionPath(path);
       }
     }
 

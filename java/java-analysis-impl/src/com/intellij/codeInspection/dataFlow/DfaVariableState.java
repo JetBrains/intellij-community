@@ -65,8 +65,7 @@ class DfaVariableState {
     DfaVariableValue qualifier = var.getQualifier();
     if(qualifier != null) {
       PsiModifierListOwner owner = var.getPsiVariable();
-      boolean stringLength = owner instanceof PsiMethod &&
-                       MethodUtils.methodMatches((PsiMethod)owner, CommonClassNames.JAVA_LANG_STRING, PsiType.INT, "length");
+      boolean stringLength = owner instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)owner);
       boolean arrayLength =
         owner instanceof PsiField && "length".equals(((PsiField)owner).getName()) && qualifier.getVariableType() instanceof PsiArrayType;
       if(stringLength || arrayLength) {

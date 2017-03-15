@@ -1,3 +1,5 @@
+import java.util.List;
+
 public class LongRangeBasics {
   void testSwitch(int i) {
     switch (i) {
@@ -87,5 +89,66 @@ public class LongRangeBasics {
     if (<warning descr="Condition 'arr.length < 0' is always 'false'">arr.length < 0</warning>) {
       System.out.println("Impossible");
     }
+  }
+
+  static void testTwoLengths(int[] data) {
+    String s1 = data.length > 0 ? "foo" : null;
+    String s2 = data.length == 0 ? null : "bar";
+    if(s1 == null || <warning descr="Condition 's2 == null' is always 'false' when reached">s2 == null</warning>) {
+      System.out.println("Test");
+    }
+  }
+
+
+  void testWrongMerge(boolean a, boolean b, int c) {
+    int currentLevel = 0;
+    if (a) {
+      currentLevel = c;
+    }
+    if(currentLevel > 0 && b || currentLevel < 0) {
+
+    }
+  }
+
+  void testLength2(String name) {
+    boolean completeDigits = name.length() > 1;
+    for (int j = 1; j < name.length(); ++j) {
+      <warning descr="Condition 'completeDigits' at the left side of assignment expression is always 'true'. Can be simplified">completeDigits</warning> &= Character.isDigit(name.charAt(j));
+      if (!completeDigits) break;
+    }
+    if (completeDigits) name = "this";
+    System.out.println(name);
+  }
+
+  void testLengthNonFlushed(String s) {
+    if (s.length() > 10) {
+      System.out.println(s);
+      if (<warning descr="Condition 's.length() > 5' is always 'true'">s.length() > 5</warning>) {
+        System.out.println(s);
+      }
+    }
+  }
+
+  void getMax(List<String> points, String source) {
+    int min = Integer.MAX_VALUE;
+    int nextSelectedIndex = -1;
+    for (int i = points.size() - 1; i >= 0; i--) {
+      final int distance = calcDistance(source, points.get(i));
+      if (distance < min) {
+        min = distance;
+        nextSelectedIndex = i;
+      }
+    }
+    if (min == Integer.MAX_VALUE) {
+      return;
+    }
+    if (<warning descr="Condition 'nextSelectedIndex == -1' is always 'false'">nextSelectedIndex == -1</warning>) {
+      System.out.println("Impossible");
+    }
+    System.out.println(nextSelectedIndex);
+  }
+
+  private int calcDistance(String s1, String s2) {
+    return s1.length() - s2.length();
   }
 }

@@ -53,12 +53,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   public static final int FLAGS_LOCKED = 0x800;
   private static final NullableFunction<ElementIconRequest,Icon> ICON_COMPUTE = request -> {
-    final PsiElement element = request.getElement();
-    if (element == null || !element.isValid() || element.getProject().isDisposed()) return null;
+    PsiElement element = request.myPointer.getElement();
+    if (element == null) return null;
 
-    int flags = request.getFlags();
-    Icon icon = computeIconNow(element, flags);
-    LastComputedIcon.put(element, icon, flags);
+    Icon icon = computeIconNow(element, request.myFlags);
+    LastComputedIcon.put(element, icon, request.myFlags);
     return icon;
   };
 
@@ -183,19 +182,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     private ElementIconRequest(@NotNull PsiElement element, @NotNull Project project, @IconFlags int flags) {
       myPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
       myFlags = flags;
-    }
-
-    @Nullable
-    public PsiElement getElement() {
-      if (myPointer.getProject().isDisposed()) return null;
-      PsiElement element = myPointer.getElement();
-      SmartPointerManager.getInstance(myPointer.getProject()).removePointer(myPointer);
-      return element;
-    }
-
-    @Iconable.IconFlags
-    public int getFlags() {
-      return myFlags;
     }
 
     @Override

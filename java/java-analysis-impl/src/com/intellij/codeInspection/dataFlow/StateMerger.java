@@ -215,16 +215,7 @@ class StateMerger {
   List<DfaMemoryStateImpl> mergeByRanges(List<DfaMemoryStateImpl> states) {
     // If the same variable has different range A and B in different memState and range A contains range B
     // then range A is replaced with range B
-    Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = new LinkedHashMap<>();
-    for (DfaMemoryStateImpl state : states) {
-      Map<DfaVariableValue, DfaVariableState> variableStates = state.getVariableStates();
-      for (Map.Entry<DfaVariableValue, DfaVariableState> entry : variableStates.entrySet()) {
-        LongRangeSet range = entry.getValue().getRange();
-        if (range != null) {
-          ranges.computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(range, range);
-        }
-      }
-    }
+    Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = createRangeMap(states);
     boolean changed = false;
     for (Map<LongRangeSet, LongRangeSet> map : ranges.values()) {
       for (Map.Entry<LongRangeSet, LongRangeSet> entry : map.entrySet()) {
@@ -253,23 +244,50 @@ class StateMerger {
         return new ArrayList<>(new LinkedHashSet<>(states));
       }
     }
+    List<DfaMemoryStateImpl> merged = mergeIndependentRanges(states, ranges);
+    if(merged != null) return merged;
+    return dropExcessRangeInfo(states, ranges.keySet());
+  }
+
+  @NotNull
+  private static Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> createRangeMap(List<DfaMemoryStateImpl> states) {
+    Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = new LinkedHashMap<>();
+    for (DfaMemoryStateImpl state : states) {
+      ProgressManager.checkCanceled();
+      Map<DfaVariableValue, DfaVariableState> variableStates = state.getVariableStates();
+      for (Map.Entry<DfaVariableValue, DfaVariableState> entry : variableStates.entrySet()) {
+        LongRangeSet range = entry.getValue().getRange();
+        if (range != null) {
+          ranges.computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(range, range);
+        }
+      }
+    }
+    return ranges;
+  }
+
+  @Nullable
+  private List<DfaMemoryStateImpl> mergeIndependentRanges(List<DfaMemoryStateImpl> states, Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges) {
+    boolean changed = false;
     // For every variable with more than one range, try to union range info and see if some states could be merged after that
     for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
       if (entry.getValue().size() > 1) {
         class Record {
           final DfaMemoryStateImpl myState;
           final LongRangeSet myRange;
+          final boolean myMerged;
 
-          Record(DfaMemoryStateImpl state, LongRangeSet range) {
+          Record(DfaMemoryStateImpl state, LongRangeSet range, boolean merged) {
             myState = state;
             myRange = range;
+            myMerged = merged;
           }
 
           Record union(Record other) {
-            return new Record(myState, myRange.union(other.myRange));
+            return new Record(myState, myRange.union(other.myRange), true);
           }
         }
 
+        ProgressManager.checkCanceled();
         Map<DfaMemoryStateImpl, Record> merged = new LinkedHashMap<>();
         DfaVariableValue var = entry.getKey();
         for (DfaMemoryStateImpl state : states) {
@@ -278,14 +296,13 @@ class StateMerger {
           if (range == null) {
             range = Objects.requireNonNull(LongRangeSet.fromType(var.getVariableType()));
           }
-          merged.merge(copyWithoutVar(state, var), new Record(state, range), Record::union);
+          merged.merge(copyWithoutVar(state, var), new Record(state, range, false), Record::union);
         }
         if(merged.size() < states.size()) {
           List<DfaMemoryStateImpl> updated = new ArrayList<>(merged.size());
           for (Record record : merged.values()) {
             DfaMemoryStateImpl state = record.myState;
-            DfaVariableState variableState = state.getVariableState(var);
-            if(!record.myRange.equals(variableState.getRange())) {
+            if(record.myMerged) {
               state.flushVariable(var);
               state.setRange(var, record.myRange);
             }
@@ -296,12 +313,14 @@ class StateMerger {
         }
       }
     }
-    if (changed) {
-      return states;
-    }
-    if (states.size() <= MAX_RANGE_STATES || ranges.isEmpty()) return null;
+    return changed ? states : null;
+  }
+
+  @Nullable
+  private static List<DfaMemoryStateImpl> dropExcessRangeInfo(List<DfaMemoryStateImpl> states, Set<DfaVariableValue> rangeVariables) {
+    if (states.size() <= MAX_RANGE_STATES || rangeVariables.isEmpty()) return null;
     // If there are too many states, try to drop range information from some variable
-    DfaVariableValue lastVar = Collections.max(ranges.keySet(), Comparator.comparingInt(DfaVariableValue::getID));
+    DfaVariableValue lastVar = Collections.max(rangeVariables, Comparator.comparingInt(DfaVariableValue::getID));
     for (DfaMemoryStateImpl state : states) {
       state.setRange(lastVar, null);
     }

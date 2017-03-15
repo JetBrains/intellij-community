@@ -4,10 +4,10 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/http-client"/>
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/httpcore-4.4.5.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/httpmime-4.5.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/httpclient-4.5.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpcore-4.4.5.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/fluent-hc-4.5.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpmime-4.5.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

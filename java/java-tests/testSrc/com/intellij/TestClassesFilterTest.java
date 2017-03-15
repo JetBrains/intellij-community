@@ -39,7 +39,9 @@ public class TestClassesFilterTest {
                                       "com.intellij.package7.*package8\n" +
                                       "[Group3]\n" +
                                       "org.jetbrains.*\n" +
-                                      "-org.jetbrains.excluded.*";
+                                      "-org.jetbrains.excluded.*\n" +
+                                      "[Group4]\n" +
+                                      "org.jetbrains.excluded.TestIncludeInG4";
 
   @Test
   public void excluded() throws Exception {
@@ -49,6 +51,20 @@ public class TestClassesFilterTest {
     assertFalse(classesFilter.matches("org.jetbrains.excluded.Test1"));
     assertFalse(classesFilter.matches("org.jetbrains.excluded.sub.Test1"));
     assertTrue(classesFilter.matches("org.jetbrains.excluded"));
+  }
+
+  @Test
+  public void excludedFromGroup3ShouldBeInAllExcluded() throws Exception {
+    TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT),
+                                    Collections.singletonList(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
+    assertTrue(classesFilter.matches("org.jetbrains.excluded.Test1"));
+  }
+
+  @Test
+  public void excludedFromGroup3AndIncludeInGroup4ShouldBeOutAllExcluded() throws Exception {
+    TestClassesFilter classesFilter = createOn(getReader(FILTER_TEXT),
+                                    Collections.singletonList(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED));
+    assertFalse(classesFilter.matches("org.jetbrains.excluded.TestIncludeInG4"));
   }
 
   @Test

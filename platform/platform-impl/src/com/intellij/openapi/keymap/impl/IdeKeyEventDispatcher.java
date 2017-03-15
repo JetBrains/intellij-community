@@ -97,9 +97,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private KeyState myState = KeyState.STATE_INIT;
 
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private boolean myDisposed = false;
-  private boolean myLeftCtrlPressed = false;
-  private boolean myRightAltPressed = false;
+  private boolean myDisposed;
+  private boolean myLeftCtrlPressed;
+  private boolean myRightAltPressed;
 
   private final KeyboardGestureProcessor myKeyGestureProcessor = new KeyboardGestureProcessor(this);
 
@@ -128,8 +128,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   /**
-   * @return <code>true</code> if and only if the passed event is already dispatched by the
-   * <code>IdeKeyEventDispatcher</code> and there is no need for any other processing of the event.
+   * @return {@code true} if and only if the passed event is already dispatched by the
+   * {@code IdeKeyEventDispatcher} and there is no need for any other processing of the event.
    */
   public boolean dispatchKeyEvent(final KeyEvent e){
     if (myDisposed) return false;
@@ -244,9 +244,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   /**
-   * @return <code>true</code> if and only if the <code>component</code> represents
+   * @return {@code true} if and only if the {@code component} represents
    * modal context.
-   * @throws IllegalArgumentException if <code>component</code> is <code>null</code>.
+   * @throws IllegalArgumentException if {@code component} is {@code null}.
    */
   public static boolean isModalContext(@NotNull Component component) {
     Window window = UIUtil.getWindow(component);
@@ -639,7 +639,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   /**
-   * This method fills <code>myActions</code> list.
+   * This method fills {@code myActions} list.
    * @return true if there is a shortcut with second stroke found.
    */
   public KeyProcessorContext updateCurrentContext(Component component, Shortcut sc, boolean isModalContext){
@@ -723,7 +723,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return myContext;
   }
 
-  private static KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
+  private static final KeyboardShortcut CONTROL_ENTER = KeyboardShortcut.fromString("control ENTER");
   private static boolean isControlEnterOnDialog(Component component, Shortcut sc) {
     return CONTROL_ENTER.equals(sc)
            && !IdeEventQueue.getInstance().isPopupActive() //avoid Control+Enter in completion
@@ -779,11 +779,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     setPressedWasProcessed(false);
   }
 
-  public boolean isPressedWasProcessed() {
+  private boolean isPressedWasProcessed() {
     return myPressedWasProcessed;
   }
 
-  public void setPressedWasProcessed(boolean pressedWasProcessed) {
+  private void setPressedWasProcessed(boolean pressedWasProcessed) {
     myPressedWasProcessed = pressedWasProcessed;
   }
 

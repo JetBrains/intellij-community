@@ -115,10 +115,11 @@ public class Restarter {
   }
 
   private static String[] getRestartArgv(String[] argv) {
+    String mainClass = System.getProperty("idea.main.class.name", "com.intellij.idea.Main");
+
     int countArgs = argv.length;
     for (int i = argv.length-1; i >=0; i--) {
-      if (argv[i].endsWith("com.intellij.idea.Main") ||
-          argv[i].endsWith(".exe")) {
+      if (argv[i].equals(mainClass) || argv[i].endsWith(".exe")) {
         countArgs = i + 1;
         if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separatorChar) < 0) {
           //absolute path
@@ -127,6 +128,7 @@ public class Restarter {
         break;
       }
     }
+
     String[] restartArg = new String[countArgs];
     System.arraycopy(argv, 0, restartArg, 0, countArgs);
     return restartArg;

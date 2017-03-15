@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -56,9 +55,9 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
-  private final List<Pattern> myAllPatterns = new ArrayList<>();
   private final List<Pattern> myIncludedTestGroupPatterns = ContainerUtil.newSmartList();
   private final List<Pattern> myExcludedTestGroupPatterns = ContainerUtil.newSmartList();
+  private final List<Group> myGroups = ContainerUtil.newSmartList();
   private boolean myContainsAllExcludeDefinedGroup;
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {
@@ -67,13 +66,16 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
 
     for (String groupName : filters.keySet()) {
       Collection<String> groupFilters = filters.get(groupName);
-      List<Pattern> patterns = compilePatterns(ContainerUtil.filter(groupFilters, s -> !s.startsWith("-")));
-      myAllPatterns.addAll(patterns);
+      List<Pattern> includePatterns = compilePatterns(ContainerUtil.filter(groupFilters, s -> !s.startsWith("-")));
+      List<Pattern> excludedPatterns = compilePatterns(groupFilters.stream()
+                                                         .filter(s -> s.startsWith("-") && s.length() > 1)
+                                                         .map(s -> s.substring(1))
+                                                         .collect(Collectors.toList()));
+      myGroups.add(new Group(includePatterns, excludedPatterns));
 
       if (testGroupNames.contains(groupName)) {
-        myIncludedTestGroupPatterns.addAll(patterns);
-        List<String> excluded = groupFilters.stream().filter(s -> s.startsWith("-")).map(s -> s.substring(1)).collect(Collectors.toList());
-        myExcludedTestGroupPatterns.addAll(compilePatterns(excluded));
+        myIncludedTestGroupPatterns.addAll(includePatterns);
+        myExcludedTestGroupPatterns.addAll(excludedPatterns);
       }
     }
   }
@@ -164,16 +166,23 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
   @Override
   public boolean matches(String className, String moduleName) {
     if (matchesAnyPattern(myExcludedTestGroupPatterns, className)) return false;
-    if (matchesAnyPattern(myIncludedTestGroupPatterns, className)) {
-      return true;
-    }
-    if (myContainsAllExcludeDefinedGroup && !matchesAnyPattern(myAllPatterns, className)) {
-      return true;
-    }
-    return false;
+    if (matchesAnyPattern(myIncludedTestGroupPatterns, className)) return true;
+    return myContainsAllExcludeDefinedGroup &&
+           myGroups.stream()
+             .noneMatch(g -> !matchesAnyPattern(g.excluded, className) && matchesAnyPattern(g.included, className));
   }
 
   private static boolean containsAllExcludeDefinedGroup(List<String> groupNames) {
     return groupNames.isEmpty() || groupNames.contains(ALL_EXCLUDE_DEFINED);
+  }
+
+  private static class Group {
+    public final List<Pattern> included;
+    public final List<Pattern> excluded;
+
+    public Group(List<Pattern> included, List<Pattern> excluded) {
+      this.excluded = excluded;
+      this.included = included;
+    }
   }
 }

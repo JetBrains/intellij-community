@@ -17,12 +17,10 @@ package com.jetbrains.python.actions;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionHelper;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -30,12 +28,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
@@ -171,7 +172,7 @@ public class PyExecuteSelectionAction extends AnAction {
   }
 
   private static void selectConsole(@NotNull DataContext dataContext, @NotNull Project project,
-                                    final Consumer<PyCodeExecutor> consumer) {
+                                    final Consumer<PyCodeExecutor> consumer, Editor editor) {
     Collection<RunContentDescriptor> consoles = getConsoles(project);
 
     ExecutionHelper
@@ -179,21 +180,26 @@ public class PyExecuteSelectionAction extends AnAction {
         if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
           ExecutionConsole console = descriptor.getExecutionConsole();
           consumer.consume((PyCodeExecutor)console);
-          ToolWindow toolWindow;
           if (console instanceof PythonDebugLanguageConsoleView) {
-            RunContentManager runContentManager = ExecutionManager.getInstance(project).getContentManager();
-            toolWindow = runContentManager.getToolWindowByDescriptor(descriptor);
+            XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
+            if (currentSession != null) {
+              // Select "Console" tab in case of Debug console
+              ContentManager contentManager = currentSession.getUI().getContentManager();
+              Content content = contentManager.findContent("Console");
+              contentManager.setSelectedContent(content);
+              IdeFocusManager.findInstance().requestFocus(editor.getContentComponent(), true);
+            }
           }
           else {
             PythonConsoleToolWindow consoleToolWindow = PythonConsoleToolWindow.getInstance(project);
-            toolWindow = consoleToolWindow != null ? consoleToolWindow.getToolWindow() : null;
-          }
-          if (toolWindow != null && !toolWindow.isVisible()) {
-            toolWindow.show(null);
-            ContentManager contentManager = toolWindow.getContentManager();
-            Content content = contentManager.findContent(descriptor.getDisplayName());
-            if (content != null) {
-              contentManager.setSelectedContent(content);
+            ToolWindow toolWindow = consoleToolWindow != null ? consoleToolWindow.getToolWindow() : null;
+            if (toolWindow != null && !toolWindow.isVisible()) {
+              toolWindow.show(null);
+              ContentManager contentManager = toolWindow.getContentManager();
+              Content content = contentManager.findContent(descriptor.getDisplayName());
+              if (content != null) {
+                contentManager.setSelectedContent(content);
+              }
             }
           }
         }
@@ -227,7 +233,7 @@ public class PyExecuteSelectionAction extends AnAction {
   private static void findCodeExecutor(AnActionEvent e, Consumer<PyCodeExecutor> consumer, Editor editor, Project project, Module module) {
     if (project != null && editor != null) {
       if (canFindConsole(e)) {
-        selectConsole(e.getDataContext(), project, consumer);
+        selectConsole(e.getDataContext(), project, consumer, editor);
       }
       else {
         startConsole(project, consumer, module);

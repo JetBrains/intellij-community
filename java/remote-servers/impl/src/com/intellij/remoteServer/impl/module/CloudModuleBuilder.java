@@ -74,11 +74,6 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
   }
 
   @Override
-  public Icon getBigIcon() {
-    return AllIcons.General.Balloon;
-  }
-
-  @Override
   public Icon getNodeIcon() {
     return AllIcons.General.Balloon;
   }
