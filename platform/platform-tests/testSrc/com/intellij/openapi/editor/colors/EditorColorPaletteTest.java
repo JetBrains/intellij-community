@@ -79,7 +79,7 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
     assertNotNull(testColor);
     colorsScheme.setAttributes(RainbowHighlighter.RAINBOW_COLOR_KEYS[0], RainbowHighlighter.createRainbowAttribute(testColor));
     final Color[] colors = RainbowHighlighter.testRainbowGenerateColors(colorsScheme);
-    final double minimalColorDistance = 0.02;//Registry.doubleValue("rainbow.highlighter.colors.diff");
+    final double minimalColorDistance = 0.02;
     int i = 0;
     for (Color color : colors) {
       if (needToBeReused) {
@@ -88,7 +88,7 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
       } 
       else {
         assertTrue(i++ + ": " + testColor + " vs " + color,
-                   RainbowHighlighter.colorDistance(testColor, color) >= minimalColorDistance * 0.6);
+                   RainbowHighlighter.colorDistance01(testColor, color) >= minimalColorDistance);
       }
     }
   }

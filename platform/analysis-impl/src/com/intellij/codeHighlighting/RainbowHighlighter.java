@@ -220,9 +220,14 @@ public class RainbowHighlighter {
         .getPalette((EditorColorsScheme)colorsScheme, Language.ANY)
         .collectColorsWithFilter(attr -> getRainbowColorFromAttribute(attr), true);
 
-      final double minDistanceWithOrdinal = 0.03;
-      final double minDistanceWithDiagnostic = ColorUtil.isDark(((EditorColorsScheme)colorsScheme).getDefaultBackground()) ? 0.12 : 0.20;
+
       final List<Pair<Color, Double>> colorCircles = new ArrayList<>();
+      final Color background = ((EditorColorsScheme)colorsScheme).getDefaultBackground();
+      final boolean schemeIsDark = ColorUtil.isDark(background);
+      final double minDistanceWithOrdinal = schemeIsDark ? 0.06 : 0.10;      
+      final double minDistanceWithDiagnostic = schemeIsDark ? 0.12 : 0.20;
+      colorCircles.add(Pair.create(background, 0.24));
+      
       palette.getEntries().forEach(entry -> colorCircles.add(Pair.create(entry.getKey(),
                                                                          Collections.disjoint(CODE_INSIGHT_CONFLICT_KEYS, entry.getValue())
                                                                          ? minDistanceWithOrdinal
@@ -244,23 +249,23 @@ public class RainbowHighlighter {
   }
 
   private static Color resolveConflict(@NotNull final List<Pair<Color, Double>> colorCircles, @NotNull final Color sampleColor, int nestLevel) {
-    if (nestLevel > 3) {
+    if (nestLevel > 4) {
       return sampleColor;
     }
     for (Pair<Color, Double> circle: colorCircles) {
       final Color paletteColor = circle.first;
-      final double distance = colorDistance(paletteColor, sampleColor) / Math.sqrt(3*256*256);
+      final double distance = colorDistance01(sampleColor, paletteColor);
       if (distance < circle.second) {
-        final int[] rgb = rgbDiffColor(sampleColor, paletteColor);
+        final float[] rgb = rgbDiffColor(sampleColor, paletteColor);
         final double factor = 256 * circle.second / getLength(rgb);
-        final int r = noramalize(sampleColor.getRed() + rgb[0] * factor * 0.21);          
-        final int g = noramalize(sampleColor.getGreen() + rgb[1] * factor * 0.72) ;
-        final int b = noramalize(sampleColor.getBlue() + rgb[2] * factor * 0.07);
+        final int mod = nestLevel % 4; 
+        final int r = noramalize(sampleColor.getRed() + rgb[0] * factor * (mod == 3 ? 2 : 1));          
+        final int g = noramalize(sampleColor.getGreen() + rgb[1] * factor * (mod == 1 ? 2 : 1));
+        final int b = noramalize(sampleColor.getBlue() + rgb[2] * factor * (mod == 2 ? 2 : 1));
         final float[] hsbNew = Color.RGBtoHSB(r, g, b, null);
         final float[] hsbOrig = Color.RGBtoHSB(sampleColor.getRed(), sampleColor.getGreen(), sampleColor.getBlue(), null);
         
-        //noinspection UseJBColor
-        System.out.println("#" + nestLevel + ":" + sampleColor + " diff:" + circle.second + " conflict:" + circle.first + " now:" +Color.getHSBColor(hsbNew[0], hsbNew[1], hsbOrig[2]));
+        //System.out.println("#" + nestLevel + ":" + sampleColor + " diff:" + circle.second + " conflict:" + circle.first + " now:" +Color.getHSBColor(hsbNew[0], hsbNew[1], hsbOrig[2]));
         return resolveConflict(colorCircles,
                                Color.getHSBColor(hsbNew[0], hsbNew[1], (hsbOrig[2] + hsbNew[2])/2), 
                                ++nestLevel);
@@ -273,21 +278,33 @@ public class RainbowHighlighter {
     return Math.min(Math.max(1, (int)b), 254);
   }
 
-  public static double colorDistance(@NotNull Color c1, @NotNull Color c2) {
-    return getLength(rgbDiffColor(c1, c2));
+  public static double colorDistance01(@NotNull Color c1, @NotNull Color c2) {
+    return getLength(YPbPr01(rgbDiffColor(c1, c2)));
   }
-  
-  private static double getLength(@NotNull int[] rgb) {
-    return Math.sqrt(rgb[0] * rgb[0] + rgb[1] * rgb[1] + rgb[2] * rgb[2]);
+
+  private static double getLength(@NotNull float[] components) {
+    return Math.sqrt(components[0] * components[0] + components[1] * components[1] + components[2] * components[2]);
   }
 
   @NotNull
-  private static int[] rgbDiffColor(@NotNull Color c1, @NotNull Color c2) {
-    return new int[] {
-      c1.getRed() - c2.getRed(),
-      c1.getGreen() - c2.getGreen(),
-      c1.getBlue() - c2.getBlue()};
+  private static float[] rgbDiffColor(@NotNull Color c1, @NotNull Color c2) {
+    return new float[] {
+      (float)(c1.getRed() - c2.getRed()),
+      (float)(c1.getGreen() - c2.getGreen()),
+      (float)(c1.getBlue() - c2.getBlue())
+    };
   }
+
+  @NotNull
+  @Contract(pure = true)
+  private static float[] YPbPr01(@NotNull float[] rgb) {
+    // http://www.equasys.de/colorconversion.html
+    return new float[]{
+      (float)((  0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2])/256),
+      (float)(( -0.169 * rgb[0] - 0.331 * rgb[1] + 0.500 * rgb[2])/256),
+      (float)(( +0.500 * rgb[0] - 0.419 * rgb[1] - 0.081 * rgb[2])/256)
+    };
+  } 
 
   @Nullable
   private static Color[] getColorsFromCache(@NotNull TextAttributesScheme colorsScheme) {
