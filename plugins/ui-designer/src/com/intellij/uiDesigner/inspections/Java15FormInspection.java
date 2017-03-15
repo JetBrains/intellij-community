@@ -58,7 +58,7 @@ public class Java15FormInspection extends BaseFormInspection {
       final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, prop.getName(), false, true);
       if (getter == null) continue;
       final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (Java15APIUsageInspection.isForbiddenApiUsage(getter, languageLevel)) {
+      if (Java15APIUsageInspection.getLastIncompatibleLanguageLevel(getter, languageLevel) != null) {
         registerError(component, collector, prop, "@since " + Java15APIUsageInspection.getShortName(languageLevel));
       }
     }
