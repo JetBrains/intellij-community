@@ -77,20 +77,27 @@ public class StartupManagerImpl extends StartupManagerEx {
     myProject = project;
   }
 
+  private void checkNonDefaultProject() {
+    LOG.assertTrue(!myProject.isDefault(), "Please don't register startup activities for the default project: they won't ever be run");
+  }
+
   @Override
   public void registerPreStartupActivity(@NotNull Runnable runnable) {
+    checkNonDefaultProject();
     LOG.assertTrue(!myPreStartupActivitiesPassed, "Registering pre startup activity that will never be run");
     myPreStartupActivities.add(runnable);
   }
 
   @Override
   public void registerStartupActivity(@NotNull Runnable runnable) {
+    checkNonDefaultProject();
     LOG.assertTrue(!myStartupActivitiesPassed, "Registering startup activity that will never be run");
     myStartupActivities.add(runnable);
   }
 
   @Override
   public synchronized void registerPostStartupActivity(@NotNull Runnable runnable) {
+    checkNonDefaultProject();
     LOG.assertTrue(!myPostStartupActivitiesPassed, "Registering post-startup activity that will never be run:" +
                                                    " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() + "; passed=" + myStartupActivitiesPassed);
     (DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities).add(runnable);
@@ -372,7 +379,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     synchronized (this) {
       // in tests which simulate project opening, post-startup activities could have been run already.
       // Then we should act as if the project was initialized
-      boolean initialized = myProject.isInitialized() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
+      boolean initialized = myProject.isInitialized() || myProject.isDefault() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
       if (!initialized) {
         registerPostStartupActivity(action);
         return;

@@ -123,6 +123,13 @@ public abstract class TransactionGuard {
   }
 
   /**
+   * Logs an error if the given modality state was created in a write-unsafe context. For modalities created in write-safe contexts,
+   * {@link Application#invokeLater(Runnable, ModalityState)} and similar calls will be guaranteed to also run in a write-safe context.
+   * {@link ModalityState#NON_MODAL} is always write-safe, {@link ModalityState#any()} is always write-unsafe.
+   */
+  public abstract void assertWriteSafeContext(@NotNull ModalityState modality);
+
+  /**
    * Schedules a given runnable to be executed inside a transaction later on Swing thread.
    * Same as {@link #submitTransaction(Disposable, Runnable)}, but the runnable is never executed immediately.
    */

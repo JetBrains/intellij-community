@@ -106,6 +106,8 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       }
     });
 
+    if (project.isDefault()) return;
+
     startupManager.registerPreStartupActivity(() -> {
       DocumentAdapter documentListener = new DocumentAdapter() {
         @Override
@@ -123,12 +125,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
         factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
       }
     });
-    startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        fileStatusesChanged();
-      }
-    });
+    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> fileStatusesChanged());
   }
 
   public void setFileStatusProvider(final FileStatusProvider fileStatusProvider) {
