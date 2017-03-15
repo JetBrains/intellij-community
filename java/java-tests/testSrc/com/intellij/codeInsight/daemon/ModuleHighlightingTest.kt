@@ -233,7 +233,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
         import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
 
-        class C { }
+        class C {{
+          <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">C2Impl</error>.make();
+          <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make();
+        }}
         """.trimIndent())
   }
 
