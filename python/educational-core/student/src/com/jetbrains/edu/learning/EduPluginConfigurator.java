@@ -18,8 +18,10 @@ public interface EduPluginConfigurator {
   @NotNull
   String getTestFileName();
 
-  default PsiDirectory createLesson(@NotNull final StudyItem item,
-                                    @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory) {
+  default PsiDirectory createLesson(@NotNull Project project,
+                                    @NotNull StudyItem item,
+                                    @Nullable IdeView view,
+                                    @NotNull PsiDirectory parentDirectory) {
     final PsiDirectory[] lessonDirectory = new PsiDirectory[1];
     ApplicationManager.getApplication().runWriteAction(() -> {
       lessonDirectory[0] = DirectoryUtil.createSubdirectories(EduNames.LESSON + item.getIndex(), parentDirectory, "\\/");
