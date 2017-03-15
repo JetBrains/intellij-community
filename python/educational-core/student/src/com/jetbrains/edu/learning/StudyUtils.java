@@ -3,6 +3,11 @@ package com.jetbrains.edu.learning;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.ide.IdeView;
+import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -200,7 +205,7 @@ public class StudyUtils {
   @Nullable
   public static StudyToolWindow getStudyToolWindow(@NotNull final Project project) {
     if (project.isDisposed()) return null;
-    
+
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(StudyToolWindowFactory.STUDY_TOOL_WINDOW);
     if (toolWindow != null) {
       Content[] contents = toolWindow.getContentManager().getContents();
@@ -527,9 +532,9 @@ public class StudyUtils {
     if (taskDirectory == null) return null;
     final String taskFileNameMd = constructTaskTextFilename(task, EduNames.TASK_MD);
     final String taskFileNameHtml = constructTaskTextFilename(task, EduNames.TASK_HTML);
-    
+
     VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(taskFileNameMd), taskDirectory.findChild(taskFileNameHtml));
-    
+
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
       if (srcDir != null) {
@@ -594,7 +599,7 @@ public class StudyUtils {
     }
     return taskFile;
   }
-  
+
   @Nullable
   public static Task getCurrentTask(@NotNull final Project project) {
     final TaskFile taskFile = getSelectedTaskFile(project);
@@ -713,10 +718,10 @@ public class StudyUtils {
     ArrayList<String> lines = ContainerUtil.newArrayList(content.split("\n|\r|\r\n"));
     MarkdownUtil.replaceHeaders(lines);
     MarkdownUtil.replaceCodeBlock(lines);
-    
+
     return new MarkdownProcessor().markdown(StringUtil.join(lines, "\n"));
   }
-  
+
   public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
     if (EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName)) {
       return true;
@@ -727,21 +732,21 @@ public class StudyUtils {
     }
     return fileName.contains(EduNames.TASK) && fileName.contains(EduNames.SUBTASK_MARKER);
   }
-  
+
   @Nullable
   public static VirtualFile findTaskDescriptionVirtualFile(@NotNull Project project, @NotNull VirtualFile taskDir) {
     Task task = getTask(project, taskDir.getName().contains(EduNames.TASK) ? taskDir: taskDir.getParent());
     if (task == null) {
       return null;
     }
-    
+
     return ObjectUtils.chooseNotNull(taskDir.findChild(constructTaskTextFilename(task, EduNames.TASK_HTML)),
                                      taskDir.findChild(constructTaskTextFilename(task, EduNames.TASK_MD)));
   }
-  
+
   @NotNull
   public static String getTaskDescriptionFileName(final boolean useHtml) {
-    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;    
+    return useHtml ? EduNames.TASK_HTML : EduNames.TASK_MD;
   }
 
   @Nullable
@@ -829,7 +834,7 @@ public class StudyUtils {
     final int endOffset = startOffset + length + delta;
     return Pair.create(startOffset, endOffset);
   }
-  
+
   public static boolean isCourseValid(@Nullable Course course) {
     if (course == null) return false;
     if (course.isAdaptive()) {
@@ -839,5 +844,27 @@ public class StudyUtils {
       }
     }
     return true;
+  }
+
+  public static void createFromTemplate(@NotNull Project project,
+                                        @NotNull PsiDirectory taskDirectory,
+                                        @NotNull String name,
+                                        @Nullable IdeView view,
+                                        boolean open) {
+    FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate(name);
+    if (template == null) {
+      LOG.info("Template " + name + " wasn't found");
+      return;
+    }
+    try {
+      final PsiElement file = FileTemplateUtil.createFromTemplate(template, name, null, taskDirectory);
+      if (view != null && open) {
+        EditorHelper.openInEditor(file, false);
+        view.selectElement(file);
+      }
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 }

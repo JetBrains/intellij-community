@@ -38,4 +38,8 @@ public interface EduPluginConfigurator {
   PsiDirectory createTask(@NotNull final Project project, @NotNull final StudyItem item,
                           @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
                           @NotNull final Course course);
+
+  void createTaskContent(@NotNull Project project,
+                         @Nullable IdeView view,
+                         PsiDirectory taskDirectory);
 }

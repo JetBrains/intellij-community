@@ -2,11 +2,6 @@ package com.jetbrains.edu.coursecreator;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.intellij.ide.IdeView;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -23,9 +18,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
-import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -280,41 +273,5 @@ public class CCUtils {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     presentation.setEnabledAndVisible(project != null && isCourseCreator(project));
-  }
-
-  private static void createFromTemplate(@NotNull final PsiDirectory taskDirectory,
-                                         @Nullable final FileTemplate template,
-                                         @Nullable IdeView view, boolean open) {
-    if (template == null) {
-      return;
-    }
-    try {
-      final PsiElement file = FileTemplateUtil.createFromTemplate(template, template.getName(), null, taskDirectory);
-      if (view != null && open) {
-        EditorHelper.openInEditor(file, false);
-        view.selectElement(file);
-      }
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
-
-  public static void createTaskContent(@NotNull Project project,
-                                       @Nullable IdeView view,
-                                       @NotNull Course course,
-                                       PsiDirectory taskDirectory) {
-    CCLanguageManager manager = getStudyLanguageManager(course);
-    if (manager == null) {
-      return;
-    }
-    createFromTemplate(taskDirectory, manager.getTestsTemplate(project), view, false);
-    createFromTemplate(taskDirectory, FileTemplateManager.getInstance(project)
-      .getInternalTemplate(StudyUtils.getTaskDescriptionFileName(CCSettings.getInstance().useHtmlAsDefaultTaskFormat())), view, false);
-    String defaultExtension = manager.getDefaultTaskFileExtension();
-    if (defaultExtension != null) {
-      FileTemplate taskFileTemplate = manager.getTaskFileTemplateForExtension(project, defaultExtension);
-      createFromTemplate(taskDirectory, taskFileTemplate, view, true);
-    }
   }
 }

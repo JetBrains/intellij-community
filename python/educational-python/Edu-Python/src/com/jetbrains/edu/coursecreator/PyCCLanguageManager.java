@@ -11,45 +11,20 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
 public class PyCCLanguageManager implements CCLanguageManager {
   private static final Logger LOG = Logger.getInstance(PyCCLanguageManager.class);
 
-  @Nullable
-  @Override
-  public String getDefaultTaskFileExtension() {
-    return "py";
-  }
-
-  @Nullable
-  @Override
-  public FileTemplate getTaskFileTemplateForExtension(@NotNull final Project project, String extension) {
-    if (!extension.equals("py")) {
-      return null;
-    }
-    return getInternalTemplateByName(project, "task.py");
-  }
-
-  @Nullable
-  @Override
-  public FileTemplate getTestsTemplate(@NotNull final Project project) {
-    return getInternalTemplateByName(project, EduNames.TESTS_FILE);
-  }
-
   @Override
   public boolean doNotPackFile(File pathname) {
     String name = pathname.getName();
     return name.contains("__pycache__") || name.contains(".pyc");
-  }
-
-  private static FileTemplate getInternalTemplateByName(@NotNull final Project project, String name) {
-    return FileTemplateManager.getInstance(project).getInternalTemplate(name);
   }
 
   @Override
@@ -72,11 +47,12 @@ public class PyCCLanguageManager implements CCLanguageManager {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         PsiDirectory taskPsiDir = PsiManager.getInstance(project).findDirectory(taskDir);
-        FileTemplate testsTemplate = getTestsTemplate(project);
+        FileTemplate testsTemplate = FileTemplateManager.getInstance(project).getInternalTemplate(EduNames.TESTS_FILE);
         if (taskPsiDir == null || testsTemplate == null) {
           return;
         }
         FileTemplateUtil.createFromTemplate(testsTemplate, nextSubtaskTestsFileName, null, taskPsiDir);
+        StudyUtils.createFromTemplate(project, taskPsiDir, nextSubtaskTestsFileName, null, false);
       }
       catch (Exception e) {
         LOG.error(e);
