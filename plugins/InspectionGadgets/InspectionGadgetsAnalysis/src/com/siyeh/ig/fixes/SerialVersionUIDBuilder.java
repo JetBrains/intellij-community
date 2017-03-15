@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Bas Leijdekkers
+ * Copyright 2003-20175 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       return name1.compareTo(name2);
     };
 
-  private SerialVersionUIDBuilder(PsiClass clazz) {
+  private SerialVersionUIDBuilder(@NotNull PsiClass clazz) {
     this.clazz = clazz;
     nonPrivateMethods = new HashSet<>();
     final PsiMethod[] methods = clazz.getMethods();
@@ -151,9 +151,9 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   }
 
   /**
-   * @see java.io.ObjectStreamClass#computeDefaultSUID(java.lang.Class)
+   * @see java.io.ObjectStreamClass#computeDefaultSUID(Class)
    */
-  public static long computeDefaultSUID(PsiClass psiClass) {
+  public static long computeDefaultSUID(@NotNull PsiClass psiClass) {
     final Project project = psiClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -219,14 +219,10 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       return serialVersionUID;
     }
     catch (IOException exception) {
-      final InternalError internalError = new InternalError(exception.getMessage());
-      internalError.initCause(exception);
-      throw internalError;
+      throw new InternalError(exception.getMessage(), exception);
     }
     catch (NoSuchAlgorithmException exception) {
-      final SecurityException securityException = new SecurityException(exception.getMessage());
-      securityException.initCause(exception);
-      throw securityException;
+      throw new SecurityException(exception.getMessage(), exception);
     }
   }
 
@@ -406,7 +402,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
           signatureBuffer.append('L').append(className).append(';');
         }
         final String accessMethodIndex = getAccessMethodIndex(field);
-        if (!field.getContainingClass().equals(clazz)) {
+        if (!clazz.equals(field.getContainingClass())) {
           return;
         }
         @NonNls String name = null;
@@ -456,8 +452,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
     }
     else if (element instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)element;
-      if (method.hasModifierProperty(PsiModifier.PRIVATE) &&
-          method.getContainingClass().equals(clazz)) {
+      if (method.hasModifierProperty(PsiModifier.PRIVATE) && clazz.equals(method.getContainingClass())) {
         final String signature;
         if (method.hasModifierProperty(PsiModifier.STATIC)) {
           signature =
