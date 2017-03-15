@@ -131,6 +131,7 @@ public class Queue<T> {
     return normalize(result);
   }
 
+  @NotNull
   private T[] normalize(T[] result) {
     if (isWrapped) {
       int tailLength = copyFromTo(myFirst, myArray.length, result, 0);

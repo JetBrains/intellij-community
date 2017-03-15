@@ -155,6 +155,7 @@ public class ExpectedTypesProvider {
     return visitor.getResult();
   }
 
+  @NotNull
   public static PsiType[] processExpectedTypes(@NotNull ExpectedTypeInfo[] infos,
                                                @NotNull PsiTypeVisitor<PsiType> visitor, @NotNull Project project) {
     LinkedHashSet<PsiType> set = new LinkedHashSet<>();

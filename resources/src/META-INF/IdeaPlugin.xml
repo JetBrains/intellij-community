@@ -102,13 +102,6 @@
     <extensionPoint name="junitRecognizer"
                     interface="com.intellij.execution.JUnitRecognizer"/>
 
-    <extensionPoint name="i18nInspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-    <extensionPoint name="invalidPropertyKeyInspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-    <extensionPoint name="java15InspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-
     <extensionPoint name="deadCode"
                     interface="com.intellij.codeInspection.reference.EntryPoint"/>
     <extensionPoint name="predefinedMigrationMapProvider"

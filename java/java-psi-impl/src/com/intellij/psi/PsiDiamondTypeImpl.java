@@ -409,6 +409,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     }
   }
 
+  @NotNull
   private static PsiTypeParameter[] getAllTypeParams(PsiTypeParameterListOwner listOwner, PsiClass containingClass) {
     Set<PsiTypeParameter> params = new LinkedHashSet<>();
     Collections.addAll(params, containingClass.getTypeParameters());

@@ -132,6 +132,7 @@ public class RelaxedHtmlFromRngElementDescriptor implements XmlElementDescriptor
     myDelegate.init(element);
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return myDelegate.getDependences();

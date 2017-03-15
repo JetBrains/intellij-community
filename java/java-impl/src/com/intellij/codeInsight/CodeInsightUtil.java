@@ -202,6 +202,7 @@ public class CodeInsightUtil {
     };
   }
 
+  @NotNull
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {
     List<PsiExpression> array = new ArrayList<>();
     addExpressionOccurrences(RefactoringUtil.unparenthesizeExpression(expr), array, scope);
@@ -231,6 +232,7 @@ public class CodeInsightUtil {
     }
   }
 
+  @NotNull
   public static PsiExpression[] findReferenceExpressions(PsiElement scope, PsiElement referee) {
     ArrayList<PsiElement> array = new ArrayList<>();
     if (scope != null) {

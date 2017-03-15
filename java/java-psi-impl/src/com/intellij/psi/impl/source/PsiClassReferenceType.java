@@ -53,6 +53,7 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
     myReference = reference;
   }
 
+  @NotNull
   private static PsiAnnotation[] collectAnnotations(PsiJavaCodeReferenceElement reference) {
     List<PsiAnnotation> result = null;
     for (PsiElement child = reference.getFirstChild(); child != null; child = child.getNextSibling()) {

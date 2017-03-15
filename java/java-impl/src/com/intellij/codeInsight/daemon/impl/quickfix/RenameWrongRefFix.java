@@ -88,6 +88,7 @@ public class RenameWrongRefFix implements IntentionAction {
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
+  @NotNull
   private LookupElement[] collectItems() {
     Set<LookupElement> items = new LinkedHashSet<>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;

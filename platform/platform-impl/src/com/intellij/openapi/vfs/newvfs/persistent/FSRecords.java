@@ -721,6 +721,7 @@ public class FSRecords {
 
   private static final int ROOT_RECORD_ID = 1;
 
+  @NotNull
   static int[] listRoots() {
     try {
       r.lock();
@@ -765,7 +766,7 @@ public class FSRecords {
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
-      return null;
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
   }
 

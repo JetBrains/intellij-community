@@ -97,6 +97,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     return myReferences;
   }
 
+  @NotNull
   public PsiReference[] getPsiReferences() {
     return myReferences.toArray(new PsiReference[myReferences.size()]);
   }

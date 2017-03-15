@@ -39,6 +39,7 @@ public class PathListReferenceProvider extends PsiReferenceProvider {
     return true;
   }
 
+  @NotNull
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
 
     PsiReference[] result = PsiReference.EMPTY_ARRAY;
@@ -75,6 +76,7 @@ public class PathListReferenceProvider extends PsiReferenceProvider {
     return ',';
   }
 
+  @NotNull
   protected PsiReference[] createReferences(@NotNull PsiElement element, String s, int offset, final boolean soft) {
     int contentOffset = StringUtil.findFirst(s, CharFilter.NOT_WHITESPACE_FILTER);
     if (contentOffset >= 0) {

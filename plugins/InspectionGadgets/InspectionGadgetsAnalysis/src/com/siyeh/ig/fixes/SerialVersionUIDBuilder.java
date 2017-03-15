@@ -20,10 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -251,21 +249,25 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
     return cache;
   }
 
+  @NotNull
   public MemberSignature[] getNonPrivateConstructors() {
     init();
     return nonPrivateConstructors.toArray(new MemberSignature[nonPrivateConstructors.size()]);
   }
 
+  @NotNull
   public MemberSignature[] getNonPrivateFields() {
     init();
     return nonPrivateFields.toArray(new MemberSignature[nonPrivateFields.size()]);
   }
 
+  @NotNull
   public MemberSignature[] getNonPrivateMethodSignatures() {
     init();
     return nonPrivateMethods.toArray(new MemberSignature[nonPrivateMethods.size()]);
   }
 
+  @NotNull
   public MemberSignature[] getStaticInitializers() {
     init();
     return staticInitializers.toArray(new MemberSignature[staticInitializers.size()]);

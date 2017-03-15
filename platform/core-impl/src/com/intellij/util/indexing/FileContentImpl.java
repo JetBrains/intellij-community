@@ -201,6 +201,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     return myStamp;
   }
 
+  @NotNull
   @Override
   public byte[] getContent() {
     if (myContent == null) {

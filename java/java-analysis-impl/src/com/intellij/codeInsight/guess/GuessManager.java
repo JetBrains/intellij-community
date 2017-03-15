@@ -31,8 +31,10 @@ public abstract class GuessManager {
     return ServiceManager.getService(project, GuessManager.class);
   }
 
+  @NotNull
   public abstract PsiType[] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore);
 
+  @NotNull
   public abstract PsiType[] guessTypeToCast(PsiExpression expr);
 
   @NotNull 

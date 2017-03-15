@@ -61,6 +61,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     return uncheckedCb;
   }
 
+  @NotNull
   private static LocalQuickFix[] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
     if (itemType instanceof PsiMethodReferenceType) return generifyFixes;
     LOG.assertTrue(parameter.isValid());
@@ -148,8 +149,9 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     };
   }
 
+  @NotNull
   protected LocalQuickFix[] createFixes() {
-    return null;
+    return LocalQuickFix.EMPTY_ARRAY;
   }
 
   private static String isMethodCalledOnRawType(PsiElement expression) {

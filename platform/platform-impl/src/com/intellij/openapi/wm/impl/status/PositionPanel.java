@@ -139,13 +139,14 @@ public class PositionPanel extends EditorBasedWidget
 
   @Override
   public void selectionChanged(final SelectionEvent e) {
-    updatePosition(e.getEditor());
+    Editor editor = e.getEditor();
+    if (isFocusedEditor(editor)) updatePosition(editor);
   }
 
   public void caretPositionChanged(final CaretEvent e) {
     Editor editor = e.getEditor();
     // When multiple carets exist in editor, we don't show information about caret positions
-    if (editor.getCaretModel().getCaretCount() == 1) updatePosition(editor);
+    if (editor.getCaretModel().getCaretCount() == 1 && isFocusedEditor(editor)) updatePosition(editor);
   }
 
   @Override
@@ -188,13 +189,17 @@ public class PositionPanel extends EditorBasedWidget
 
   private void onDocumentUpdate(Document document) {
     Editor[] editors = EditorFactory.getInstance().getEditors(document);
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     for (Editor editor : editors) {
-      if (editor.getContentComponent() == focusOwner) {
+      if (isFocusedEditor(editor)) {
         updatePosition(editor);
         break;
       }
     }
+  }
+
+  private static boolean isFocusedEditor(Editor editor) {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return focusOwner == editor.getContentComponent();
   }
 
   private void updatePosition(final Editor editor) {

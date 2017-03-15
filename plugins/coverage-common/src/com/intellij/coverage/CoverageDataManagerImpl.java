@@ -260,6 +260,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
+  @NotNull
   public CoverageSuite[] getSuites() {
     return myCoverageSuites.toArray(new CoverageSuite[myCoverageSuites.size()]);
   }

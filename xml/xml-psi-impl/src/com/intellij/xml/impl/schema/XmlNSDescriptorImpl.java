@@ -938,6 +938,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     dependencies = ArrayUtil.toObjectArray(dependenciesSet);
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     if (dependencies == null) dependencies = myFile == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] {myFile}; // init was not called

@@ -536,6 +536,7 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
+  @NotNull
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
     List<UsageFilteringRule> list = new ArrayList<>(providers.length);
@@ -545,6 +546,7 @@ public class UsageViewImpl implements UsageView {
     return list.toArray(new UsageFilteringRule[list.size()]);
   }
 
+  @NotNull
   private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<>(providers.length);

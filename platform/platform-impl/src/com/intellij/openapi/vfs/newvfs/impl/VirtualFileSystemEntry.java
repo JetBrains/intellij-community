@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
@@ -164,6 +163,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
+  @NotNull
   protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
     CharSequence name = FileNameCache.getVFileName(mySegment.getNameId(myId));
 

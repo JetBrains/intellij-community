@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -49,6 +50,7 @@ public abstract class InspectionElementsMerger {
   /**
    * @return the shortNames of the merged inspections
    */
+  @NotNull
   public abstract String[] getSourceToolNames();
 
   /**
@@ -56,6 +58,7 @@ public abstract class InspectionElementsMerger {
    * If this returns an empty string array, the result of getSourceToolNames() is used instead.
    * @return the suppressIds of the merged inspections.
    */
+  @NotNull
   public String[] getSuppressIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }

@@ -466,6 +466,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return result;
   }
 
+  @NotNull
   private static <T> T[] createArray(@NotNull Class<?> type, int length) {
     //noinspection unchecked
     return (T[])Array.newInstance(type, length);

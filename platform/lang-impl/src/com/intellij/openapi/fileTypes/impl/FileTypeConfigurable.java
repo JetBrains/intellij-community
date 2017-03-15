@@ -101,6 +101,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
     myRecognizedFileType.setFileTypes(types);
   }
 
+  @NotNull
   private static FileType[] getModifiableFileTypes() {
     FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     ArrayList<FileType> result = new ArrayList<>();

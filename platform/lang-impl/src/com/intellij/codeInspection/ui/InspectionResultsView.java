@@ -1042,6 +1042,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return null;
   }
 
+  @NotNull
   private PsiElement[] collectPsiElements() {
     RefEntity[] refElements = myTree.getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<>();

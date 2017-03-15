@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -27,6 +28,7 @@ public class ThrowableNeverThrownInspectionMerger extends InspectionElementsMerg
     return "ThrowableNotThrown";
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] {"ThrowableInstanceNeverThrown", "ThrowableResultOfMethodCallIgnored"};

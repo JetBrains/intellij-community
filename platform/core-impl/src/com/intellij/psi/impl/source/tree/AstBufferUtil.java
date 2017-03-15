@@ -75,6 +75,7 @@ public class AstBufferUtil {
       return end;
     }
 
+    @NotNull
     public char[] getBuffer() {
       assert buffer != null;
       return buffer;

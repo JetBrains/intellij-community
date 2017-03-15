@@ -213,14 +213,17 @@ public class InspectionTree extends Tree {
     }
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getAllValidSelectedDescriptors() {
     return getSelectedDescriptors(false, null, true, false);
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getSelectedDescriptors() {
     return getSelectedDescriptors(false, null, false, false);
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getSelectedDescriptors(boolean sortedByPosition,
                                                           @Nullable Set<VirtualFile> readOnlyFilesSink,
                                                           boolean allowResolved,

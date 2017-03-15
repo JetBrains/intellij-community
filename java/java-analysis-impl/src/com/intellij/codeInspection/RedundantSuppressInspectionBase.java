@@ -115,6 +115,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   }
 
   @NotNull
+  @Nullable
   public ProblemDescriptor[] checkElement(@NotNull final PsiElement psiElement, @NotNull final InspectionManager manager) {
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<>();
     psiElement.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -296,6 +297,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
     return new GlobalInspectionContextBase(file.getProject());
   }
 
+  @NotNull
   protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
     // todo for what we create modifiable model here?
     return new InspectionProfileModifiableModel(InspectionProjectProfileManager.getInstance(manager.getProject()).getCurrentProfile()).getInspectionTools(psiElement);

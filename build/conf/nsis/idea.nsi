@@ -903,7 +903,15 @@ skip_ipr:
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "NoRepair" 1
 
-  ExecWait "$INSTDIR\jre\jre\bin\javaw.exe -Xshare:dump"
+  ; Regenerating the Shared Archives for java x64 and x86 bit.
+  ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
+  IfFileExists $INSTDIR\jre\bin\javaw.exe 0 java64
+  ExecWait "$INSTDIR\jre\bin\javaw.exe -Xshare:dump"
+java64:
+  IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
+  ExecWait "$INSTDIR\jre64\bin\javaw.exe -Xshare:dump"
+
+skip_regeneration_shared_archive_for_java_64:
   SetOutPath $INSTDIR\bin
 ; set the current time for installation files under $INSTDIR\bin
   ExecDos::exec 'copy "$INSTDIR\bin\*.*s" +,,'

@@ -2159,7 +2159,6 @@ public abstract class DialogWrapper {
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
-      myLabel.setIcon(AllIcons.Actions.Lightning);
       myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
       myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
@@ -2315,7 +2314,7 @@ public abstract class DialogWrapper {
     @Override
     public void executePaint(Component component, Graphics2D g) {
       for (ValidationInfo i : info) {
-        if (i.component != null && usePainter(i)) {
+        if (i.component != null && !(Registry.is("ide.inplace.errors.outline"))) {
           int w = i.component.getWidth();
           int h = i.component.getHeight();
           Point p;
@@ -2351,12 +2350,6 @@ public abstract class DialogWrapper {
 
     private void setValidationInfo(@NotNull List<ValidationInfo> info) {
       this.info = info;
-    }
-
-    private boolean usePainter(ValidationInfo i) {
-      return !(Registry.is("ide.inplace.errors.outline") &&
-               i.component != null &&
-               i.component.getBorder() instanceof ErrorBorderCapable);
     }
   }
 

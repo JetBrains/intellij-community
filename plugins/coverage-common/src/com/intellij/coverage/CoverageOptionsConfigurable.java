@@ -100,6 +100,7 @@ public class CoverageOptionsConfigurable implements SearchableConfigurable, Conf
     return panel;
   }
 
+  @NotNull
   private CoverageOptions[] getExtensions() {
     return Extensions.getExtensions(CoverageOptions.EP_NAME, myProject);
   }

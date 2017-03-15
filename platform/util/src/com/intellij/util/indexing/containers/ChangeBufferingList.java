@@ -15,9 +15,10 @@
  */
 package com.intellij.util.indexing.containers;
 
-import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.indexing.impl.DebugAssertions;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -53,6 +54,7 @@ public class ChangeBufferingList implements Cloneable {
     checkSet = EXTRA_SANITY_CHECKS ? new IdSet(length) : null;
   }
 
+  @NotNull
   static int[] calcMinMax(int[] set, int length) {
     int max = Integer.MIN_VALUE;
     int min = Integer.MAX_VALUE;

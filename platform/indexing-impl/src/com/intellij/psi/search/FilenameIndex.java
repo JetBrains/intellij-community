@@ -43,6 +43,7 @@ public class FilenameIndex {
   @Deprecated
   public @NonNls static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
+  @NotNull
   public static String[] getAllFilenames(Project project) {
     Set<String> names = new THashSet<>();
     getService().processAllFileNames((String s) -> {
@@ -68,6 +69,7 @@ public class FilenameIndex {
     return getVirtualFilesByNameIgnoringCase(name, scope, project, null);
   }
 
+  @NotNull
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
@@ -142,6 +144,7 @@ public class FilenameIndex {
     return files;
   }
 
+  @NotNull
   public static PsiFileSystemItem[] getFilesByName(final Project project,
                                                    final String name,
                                                    @NotNull final GlobalSearchScope scope,
