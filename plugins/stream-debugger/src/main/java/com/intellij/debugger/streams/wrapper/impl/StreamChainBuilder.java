@@ -1,8 +1,7 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.intellij.debugger.streams.wrapper.StreamCallType;
-import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -66,40 +65,65 @@ public class StreamChainBuilder {
   public static StreamChain tryBuildChain(@NotNull PsiElement elementAtCursor) {
     final PsiMethodCallExpression call = tryFindStreamCall(elementAtCursor);
     if (call != null) {
-      final List<StreamCall> streamCalls = new ArrayList<>();
+      final List<IntermediateStreamCall> intermediateStreamCalls = new ArrayList<>();
       final String name = resolveProducerCallName(call);
       final String args = resolveArguments(call);
-      final StreamCall producer = new ProducerStreamCall(name, args);
+      GenericType prevCallType = resolveType(call);
+      if (prevCallType == null) return null;
+      final ProducerStreamCall producer = new ProducerStreamCallImpl(name, args, prevCallType);
       PsiElement current = call.getParent();
-      StreamCall terminator = null;
       while (current != null) {
         if (current instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)current;
           final String callName = resolveMethodName(methodCall);
           final String callArgs = resolveArguments(methodCall);
           if (callName == null) return null;
-          final StreamCallImpl streamCall = new StreamCallImpl(callName, callArgs, getType(callName));
-          if (StreamCallType.TERMINATOR.equals(streamCall.getType())) {
-            terminator = streamCall;
-            break;
+          final StreamCallType type = getType(callName);
+          if (StreamCallType.INTERMEDIATE.equals(type)) {
+            final GenericType currentType = resolveType(call);
+            if (currentType == null) return null;
+            final IntermediateStreamCall streamCall = new IntermediateStreamCallImpl(callName, callArgs, prevCallType, currentType);
+            intermediateStreamCalls.add(streamCall);
+            prevCallType = currentType;
+          }
+          else if (StreamCallType.TERMINATOR.equals(type)) {
+            final TerminatorStreamCallImpl terminator = new TerminatorStreamCallImpl(callName, callArgs, prevCallType);
+            return new StreamChainImpl(producer, intermediateStreamCalls, terminator);
           }
           else {
-            streamCalls.add(streamCall);
+            throw new RuntimeException("wrong operation type!");
           }
         }
 
         current = current.getParent();
       }
-
-      // at least of producer and terminator
-      if (terminator == null) {
-        return null;
-      }
-
-      return new StreamChainImpl(producer, streamCalls, terminator);
     }
 
     return null;
+  }
+
+  @Nullable
+  private static GenericType resolveType(@NotNull PsiMethodCallExpression call) {
+    return ApplicationManager.getApplication().runReadAction((Computable<GenericType>)() -> {
+      final PsiMethod method = call.resolveMethod();
+      if (method != null) {
+        final PsiType returnType = method.getReturnType();
+        if (returnType != null) {
+          if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) {
+            return GenericType.INT;
+          }
+          if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) {
+            return GenericType.LONG;
+          }
+          if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) {
+            return GenericType.DOUBLE;
+          }
+
+          return GenericType.OBJECT;
+        }
+      }
+      return null;
+    });
   }
 
   public static boolean checkStreamExists(@NotNull PsiElement elementAtCursor) {
