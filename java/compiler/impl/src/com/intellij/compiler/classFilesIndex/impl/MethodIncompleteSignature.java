@@ -42,6 +42,11 @@ public class MethodIncompleteSignature {
     myNameEnumerator = nameEnumerator;
   }
 
+  @NotNull
+  public LightRef.JavaLightMethodRef getRef() {
+    return myRef;
+  }
+
   @Contract(pure = true)
   @NotNull
   public String getName() {

@@ -54,6 +54,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.InvertedIndex;
+import com.intellij.util.indexing.InvertedIndexUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import gnu.trove.THashSet;
@@ -63,6 +65,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 
 import java.io.IOException;
@@ -214,6 +217,28 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     } finally {
       myReadDataLock.unlock();
     }
+  }
+
+  @Override
+  public boolean getCoupleOccurrences(LightRef ref1, LightRef ref2) {
+    //TODO seems it works!
+    final InvertedIndex<LightRef, Integer, CompiledFileData> usages = myReader.getIndex().get(CompilerIndices.BACK_USAGES);
+    try {
+      final TIntHashSet setUnion = InvertedIndexUtil.collectInputIdsContainingAllKeys(usages, Arrays.asList(ref1, ref2), null, null, null);
+      final TIntHashSet set1 = InvertedIndexUtil.collectInputIdsContainingAllKeys(usages, Collections.singletonList(ref1), null, null, null);
+      final TIntHashSet set2 = InvertedIndexUtil.collectInputIdsContainingAllKeys(usages, Collections.singletonList(ref2), null, null, null);
+
+      if ((set1.size() - setUnion.size()) * 10 < setUnion.size()) {
+        return true;
+      }
+      if ((set2.size() - setUnion.size()) * 10 < setUnion.size()) {
+        return true;
+      }
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+    return false;
   }
 
   @Nullable

@@ -19,6 +19,7 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.classFilesIndex.chainsSearch.OccurrencesAware;
 import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.jps.backwardRefs.LightRef;
 
 import java.util.SortedSet;
 
@@ -28,4 +29,6 @@ public abstract class CompilerReferenceServiceEx extends CompilerReferenceServic
   }
 
   public abstract SortedSet<OccurrencesAware<MethodIncompleteSignature>> getMethods(String rawReturnType);
+
+  public abstract boolean getCoupleOccurrences(LightRef ref1, LightRef ref2);
 }

@@ -164,7 +164,7 @@ public final class ChainsSearcher {
         for (final OccurrencesAware<MethodIncompleteSignature> sign : currentSignatures) {
           final PsiMethod[] resolved = context.resolveNotDeprecated(sign.getUnderlying());
           if (!isBreak) {
-            if (sign.getOccurrences() * NEXT_METHOD_IN_CHAIN_RATIO > currentVertex.getOccurrences()) {
+            if (indexReader.getCoupleOccurrences(sign.getUnderlying().getRef(), currentVertex.getUnderlying().getFirst().getRef())) {
               final boolean stopChain = sign.getUnderlying().isStatic() || toSet.contains(sign.getUnderlying().getOwner());
               if (stopChain) {
                 updated = true;
