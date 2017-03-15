@@ -66,8 +66,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Comparator<GitRemoteBranch> REMOTE_BRANCH_COMPARATOR = new MyRemoteBranchComparator();
   private static final String SEPARATOR = " : ";
-  private static final Color NEW_BRANCH_LABEL_FG = new JBColor(0x00b53d, 0x24953c);
-  private static final Color NEW_BRANCH_LABEL_BG = ColorUtil.toAlpha(NEW_BRANCH_LABEL_FG, 40);
+  private static final Color NEW_BRANCH_LABEL_FG = new JBColor(0x00b53d, 0x6ba65d);
+  private static final Color NEW_BRANCH_LABEL_BG = new JBColor(0xebfcf1, 0x313b32);
   private static final RelativeFont NEW_BRANCH_LABEL_FONT = RelativeFont.TINY.small();
   private static final TextIcon NEW_BRANCH_LABEL = new TextIcon("New", NEW_BRANCH_LABEL_FG, NEW_BRANCH_LABEL_BG, 0);
 
