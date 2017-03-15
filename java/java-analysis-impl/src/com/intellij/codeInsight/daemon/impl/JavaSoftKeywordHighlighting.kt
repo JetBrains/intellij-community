@@ -25,10 +25,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.JavaRecursiveElementVisitor
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiKeyword
+import com.intellij.psi.*
 
 class JavaSoftKeywordHighlightingPassFactory(project: Project, registrar: TextEditorHighlightingPassRegistrar) :
   AbstractProjectComponent(project), TextEditorHighlightingPassFactory {
@@ -37,9 +34,10 @@ class JavaSoftKeywordHighlightingPassFactory(project: Project, registrar: TextEd
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? =
-    if (file is PsiJavaFile && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_9)) JavaSoftKeywordHighlightingPass(file, editor.document)
-    else null
+  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+    val visit = file is PsiJavaFile && file.name == PsiJavaModule.MODULE_INFO_FILE && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_9)
+    return if (visit) JavaSoftKeywordHighlightingPass(file as PsiJavaFile, editor.document) else null
+  }
 }
 
 private class JavaSoftKeywordHighlightingPass(private val file: PsiJavaFile, document: Document) :
