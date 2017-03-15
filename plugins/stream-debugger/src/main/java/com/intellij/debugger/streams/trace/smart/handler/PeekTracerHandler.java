@@ -52,8 +52,8 @@ public class PeekTracerHandler extends HandlerBase {
   @NotNull
   @Override
   public String prepareResult() {
-    final String beforeConversion = myBeforeVariable.convertToArray(BEFORE_ARRAY_NAME, true, false);
-    final String afterConversion = myAfterVariable.convertToArray(AFTER_ARRAY_NAME, true, false);
+    final String beforeConversion = myBeforeVariable.convertToArray(BEFORE_ARRAY_NAME);
+    final String afterConversion = myAfterVariable.convertToArray(AFTER_ARRAY_NAME);
     return beforeConversion + EvaluateExpressionTracerBase.LINE_SEPARATOR + afterConversion;
   }
 

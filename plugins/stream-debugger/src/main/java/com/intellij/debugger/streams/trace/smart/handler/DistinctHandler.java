@@ -4,7 +4,6 @@ import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
 import com.intellij.debugger.streams.trace.smart.handler.type.ClassTypeImpl;
 import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -61,36 +60,20 @@ public class DistinctHandler extends HandlerBase {
 
     final String storeMapName = myStoreMapVariable.getName();
     final String afterMapName = myPeekTracer.getAfterMapName();
-    final String prepareResolveMap = "{" +
-                                     newLine +
-                                     "  for (final int timeAfter : " +
-                                     myReverseUtilMapVariable.getName() +
-                                     ".keySet()) {" +
-                                     newLine +
-                                     "    final java.lang.Object afterValue = " +
-                                     afterMapName +
-                                     ".get(timeAfter);" +
-                                     newLine +
-                                     "    final java.util.Map<java.lang.Integer, java.lang.Object> valuesBefore = " +
-                                     storeMapName +
-                                     ".get(afterValue);" +
-                                     newLine +
-                                     "    for (final int timeBefore : valuesBefore.keySet()) {" +
-                                     newLine +
-                                     "      " +
-                                     myResolveMapVariable.getName() +
-                                     ".put(timeBefore, timeAfter);" +
-                                     newLine +
-                                     "    }" +
-                                     newLine +
-                                     "  }" +
-                                     newLine +
-                                     "}" +
-                                     newLine;
+    final String prepareResolveMap =
+      "{" + newLine +
+      "  for (final int timeAfter : " + myReverseUtilMapVariable.getName() + ".keySet()) {" + newLine +
+      "    final java.lang.Object afterValue = " + afterMapName + ".get(timeAfter);" + newLine +
+      "    final java.util.Map<java.lang.Integer, java.lang.Object> valuesBefore = " + storeMapName + ".get(afterValue);" + newLine +
+      "    for (final int timeBefore : valuesBefore.keySet()) {" + newLine +
+      "      " + myResolveMapVariable.getName() + ".put(timeBefore, timeAfter);" + newLine +
+      "    }" + newLine +
+      "  }" + newLine +
+      "}" + newLine;
 
     final String peekResult =
       "final java.lang.Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
-    final String resolve2Array = myResolveMapVariable.convertToArray("resolve", true, true);
+    final String resolve2Array = myResolveMapVariable.convertToArray("resolve");
     return peekPrepare + prepareResolveMap + resolve2Array + peekResult;
   }
 
