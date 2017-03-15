@@ -481,7 +481,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       public void mousePressed(MouseEvent e) {
         IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
         Component focusOwner = focusManager.getFocusOwner();
-        if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, myUsagePreviewPanel)) {
+        if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, FindPopupPanel.this) && focusOwner != myReplaceComponent) {
           focusManager.requestFocus(mySearchComponent, true);
         }
       }
