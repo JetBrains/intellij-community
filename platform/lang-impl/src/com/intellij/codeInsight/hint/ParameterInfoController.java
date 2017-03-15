@@ -28,10 +28,12 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon.Position;
 import com.intellij.openapi.util.Disposer;
@@ -64,6 +66,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
 public class ParameterInfoController implements Disposable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.ParameterInfoController");
   private final Project myProject;
   @NotNull private final Editor myEditor;
 
@@ -247,9 +250,15 @@ public class ParameterInfoController implements Disposable {
   private void addAlarmRequest(){
     Runnable request = () -> {
       if (!myDisposed && !myProject.isDisposed()) {
-        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() ->
-          DumbService.getInstance(myProject).withAlternativeResolveEnabled(this::updateComponent)
-        );
+        PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
+          try {
+            DumbService.getInstance(myProject).withAlternativeResolveEnabled(this::updateComponent);
+          }
+          catch (IndexNotReadyException e) {
+            LOG.info(e);
+            Disposer.dispose(this);
+          }
+        });
       }
     };
     myAlarm.addRequest(request, DELAY, ModalityState.stateForComponent(myEditor.getComponent()));
