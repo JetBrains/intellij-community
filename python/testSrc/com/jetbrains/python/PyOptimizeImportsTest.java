@@ -267,6 +267,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-23104
+  public void testMultilineImportElementsInCombinedFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
