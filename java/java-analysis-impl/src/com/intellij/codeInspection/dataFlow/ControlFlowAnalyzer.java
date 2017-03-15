@@ -1120,7 +1120,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     PopInstruction pop = new PopInstruction();
     addInstruction(pop);
-    DfaConstValue constValue = and ? myFactory.getConstFactory().getFalse() : myFactory.getConstFactory().getTrue();
+    DfaConstValue constValue = myFactory.getBoolean(!and);
     PushInstruction pushSuccess = new PushInstruction(constValue, null);
     addInstruction(pushSuccess);
 

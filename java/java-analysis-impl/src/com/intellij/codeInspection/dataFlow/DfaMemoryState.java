@@ -57,6 +57,8 @@ public interface DfaMemoryState {
   @Nullable
   LongRangeSet getRange(DfaValue value);
 
+  DfaValue getStringLength(DfaValue value);
+
   void flushFields();
 
   void flushVariable(DfaVariableValue variable);

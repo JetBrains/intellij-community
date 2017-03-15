@@ -5,7 +5,7 @@ class BrokenAlignment {
       return other.myRootPath.startsWith(request.myRootPath);
     }
 
-    return !other.myToWatchRecursively && request.myRootPath.equals(other.myRootPath);
+    return !other.myToWatchRecursively && <warning descr="Condition 'request.myRootPath.equals(other.myRootPath)' is always 'true' when reached">request.myRootPath.equals(other.myRootPath)</warning>;
   }
 
   private static class WatchRequestImpl {

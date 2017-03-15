@@ -54,8 +54,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     ContainerUtil.set("isPresent", "of", "ofNullable", "fromNullable", "empty", "absent",
                       "or", "orElseGet", "orElseThrow", "ifPresent", "map", "flatMap", "filter", "transform");
   private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
-              LongRangeSet.range(-1, Integer.MAX_VALUE))
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59));
 
@@ -197,9 +195,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
     finalStates.addAll(handleOptionalMethods(instruction, runner, memState));
+    finalStates.addAll(handleKnownMethods(instruction, runner, memState));
 
     if (finalStates.isEmpty()) {
-      DfaValue[] argValues = popCallArguments(instruction, runner, memState);
+      DfaValue[] argValues = popCallArguments(instruction, runner, memState, true);
       final DfaValue qualifier = popQualifier(instruction, runner, memState);
 
       LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(memState);
@@ -234,6 +233,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
+  private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
+    CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(call);
+    if (handler == null) return Collections.emptyList();
+    DfaValue[] arguments = popCallArguments(instruction, runner, memState, false);
+    DfaValue qualifier = popQualifier(instruction, runner, memState);
+    List<DfaMemoryState> states =
+      arguments == null ? Collections.emptyList() :
+      handler.handle(qualifier, arguments, memState, runner.getFactory());
+    if (states.isEmpty()) {
+      memState.push(getMethodResultValue(instruction, qualifier, runner.getFactory()));
+      return Collections.singletonList(memState);
+    }
+    return states;
+  }
+
+  @NotNull
   private List<DfaMemoryState> handleOptionalMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
     if (call == null) return Collections.emptyList();
@@ -242,7 +258,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiMethod method = call.resolveMethod();
     if (method == null || !TypeUtils.isOptional(method.getContainingClass())) return Collections.emptyList();
     List<DfaMemoryState> closures = runner.getStackTopClosures();
-    DfaValue[] argValues = popCallArguments(instruction, runner, memState);
+    DfaValue[] argValues = popCallArguments(instruction, runner, memState, false);
     DfaValue qualifier = popQualifier(instruction, runner, memState);
     DfaValue result = null;
     switch (methodName) {
@@ -294,14 +310,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return Collections.singletonList(memState);
   }
 
-  @Nullable 
-  private DfaValue[] popCallArguments(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  @Nullable
+  private DfaValue[] popCallArguments(MethodCallInstruction instruction,
+                                      DataFlowRunner runner,
+                                      DfaMemoryState memState,
+                                      boolean contractOnly) {
     final PsiExpression[] args = instruction.getArgs();
 
     PsiMethod method = instruction.getTargetMethod();
     boolean varargCall = instruction.isVarArgCall();
     DfaValue[] argValues;
-    if (method == null || instruction.getContracts().isEmpty()) {
+    if (method == null || (contractOnly && instruction.getContracts().isEmpty())) {
       argValues = null;
     } else {
       PsiParameterList paramList = method.getParameterList();

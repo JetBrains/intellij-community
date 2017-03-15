@@ -30,10 +30,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -1037,6 +1035,35 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return LongRangeSet.fromConstant(((DfaConstValue)value).getValue());
     }
     return null;
+  }
+
+  @Override
+  public DfaValue getStringLength(DfaValue value) {
+    if (value instanceof DfaVariableValue) {
+      DfaVariableValue variableValue = (DfaVariableValue)value;
+      DfaConstValue constValue = getConstantValue(variableValue);
+      if(constValue != null) {
+        value = constValue;
+      } else {
+        PsiType type = variableValue.getVariableType();
+        if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+          if (psiClass != null) {
+            PsiMethod[] lengthMethods = psiClass.findMethodsByName("length", false);
+            if (lengthMethods.length == 1) {
+              return getFactory().getVarFactory().createVariableValue(lengthMethods[0], PsiType.INT, false, variableValue);
+            }
+          }
+        }
+      }
+    }
+    if(value instanceof DfaConstValue) {
+      Object str = ((DfaConstValue)value).getValue();
+      if(str instanceof String) {
+        return getFactory().getRangeFactory().create(LongRangeSet.point(((String)str).length()));
+      }
+    }
+    return DfaUnknownValue.getInstance();
   }
 
   @Nullable

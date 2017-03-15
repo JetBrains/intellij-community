@@ -102,10 +102,11 @@ public class DfaValueFactory {
 
   @Nullable
   public DfaValue createLiteralValue(PsiLiteralExpression literal) {
-    if (literal.getValue() instanceof String) {
-      return createTypeValue(literal.getType(), Nullness.NOT_NULL); // Non-null string literal.
-    }
     return getConstFactory().create(literal);
+  }
+
+  public DfaConstValue getBoolean(boolean value) {
+    return value ? getConstFactory().getTrue() : getConstFactory().getFalse();
   }
 
   public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
