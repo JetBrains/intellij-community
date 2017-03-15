@@ -51,6 +51,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     private final JCheckBox myCompact = new JCheckBox("Compact style", false);
     private final JCheckBox myErrorText = new JCheckBox("Error text", false);
     private final JCheckBox myMoveErrorTextToButtons = new JCheckBox("Move error text to the buttons", false);
+    private final JCheckBox myCenterButtons = new JCheckBox("Center buttons", false);
 
     public MyDialogWrapper(Project project) {
       super(project);
@@ -76,6 +77,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       myAllowMergeButtons.addActionListener(e -> UISettings.getShadowInstance().setAllowMergeButtons(myAllowMergeButtons.isSelected()));
 
       myErrorText.addActionListener(e -> setErrorText(myErrorText.isSelected() ? "Error text" : null, myErrorText));
+      myCenterButtons.addActionListener(e -> setButtonsAlignment(myCenterButtons.isSelected() ? SwingUtilities.CENTER : SwingUtilities.RIGHT));
 
       panel.add(myRefresh);
       panel.add(myHasOKAction);
@@ -88,6 +90,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
       panel.add(myCompact);
       panel.add(myErrorText);
       panel.add(myMoveErrorTextToButtons);
+      panel.add(myCenterButtons);
 
       return panel;
     }
@@ -100,7 +103,6 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
 
     private void refreshSouthPanel() {
       mySouthPanel.setContent(super.createSouthPanel());
-      pack();
     }
 
     @Nullable
