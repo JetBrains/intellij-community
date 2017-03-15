@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.classFilesIndex.impl;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
@@ -41,14 +42,20 @@ public class MethodIncompleteSignature {
     myNameEnumerator = nameEnumerator;
   }
 
+  @Contract(pure = true)
+  @NotNull
   public String getName() {
     return denumerate(myRef.getName());
   }
 
+  @Contract(pure = true)
+  @NotNull
   public String getOwner() {
     return denumerate(myRef.getOwner().getName());
   }
 
+  @Contract(pure = true)
+  @NotNull
   public String  getRawReturnType() {
     return denumerate(mySignatureData.getRawReturnType());
   }

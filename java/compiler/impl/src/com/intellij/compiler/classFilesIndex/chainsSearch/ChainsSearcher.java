@@ -175,19 +175,11 @@ public final class ChainsSearcher {
                 updated = true;
                 final MethodsChain methodsChain =
                   currentVertexUnderlying.second.addEdge(resolved, sign.getUnderlying().getOwner(), sign.getOccurrences());
-                q.add(new OccurrencesAware<>(
+                q.addFirst(new OccurrencesAware<>(
                   Pair.create(sign.getUnderlying(), methodsChain), sign.getOccurrences()));
                 continue;
               }
             }
-          }
-          final MethodsChain methodsChain =
-            currentVertexUnderlying.second.addEdge(resolved, sign.getUnderlying().getOwner(), sign.getOccurrences());
-          final ParametersMatcher.MatchResult parametersMatchResult = ParametersMatcher.matchParameters(methodsChain, context);
-          if (parametersMatchResult.noUnmatchedAndHasMatched() && parametersMatchResult.hasTarget()) {
-            updated = true;
-            q.addFirst(new OccurrencesAware<>(
-              Pair.create(sign.getUnderlying(), methodsChain), sign.getOccurrences()));
           }
           isBreak = true;
         }
