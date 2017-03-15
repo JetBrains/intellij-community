@@ -4,6 +4,8 @@
       <root url="jar://$PROJECT_DIR$/lib/junit.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/junit3_8_1.jar!/"/>
+    </SOURCES>
   </library>
 </component>
