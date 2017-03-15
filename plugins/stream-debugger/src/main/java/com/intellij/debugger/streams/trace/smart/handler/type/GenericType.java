@@ -7,11 +7,13 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GenericType {
   @NotNull
-  String getVariableName();
+  String getVariableTypeName();
 
   @NotNull
   String getGenericTypeName();
 
   GenericType INT = new GenericTypeImpl("int", "java.lang.Integer");
+  GenericType DOUBLE = new GenericTypeImpl("double", "java.lang.Double");
+  GenericType LONG = new GenericTypeImpl("long", "java.lang.Long");
   GenericType OBJECT = new ClassTypeImpl("java.lang.Object");
 }
