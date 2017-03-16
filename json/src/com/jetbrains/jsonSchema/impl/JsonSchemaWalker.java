@@ -277,9 +277,8 @@ public class JsonSchemaWalker {
         }
       };
 
-      TransitionResultConsumer transitionResultConsumer = new TransitionResultConsumer();
+      TransitionResultConsumer transitionResultConsumer;
       for (JsonSchemaObject object : list) {
-        /*if (schema.getAllOf() == null)*/
         transitionResultConsumer = new TransitionResultConsumer();
         step.getTransition().step(object, transitionResultConsumer, acceptAdditionalPropertiesSchemas);
         if (transitionResultConsumer.isNothing()) continue;
@@ -291,28 +290,23 @@ public class JsonSchemaWalker {
   }
 
   private static List<JsonSchemaObject> gatherSchemas(JsonSchemaObject schema) {
-    List<JsonSchemaObject> list = null;
     if (schema.getAllOf() != null) {
       return gatherSchemas(mergeAll(schema));
     } else {
       if (schema.getAnyOf() != null) {
         return mergeList(schema.getAnyOf(), schema, false);
-        //final List<JsonSchemaObject> subList = mergeList(schema.getAnyOf(), schema);
-        //return ContainerUtil.flatten(subList.stream().map(s -> gatherSchemas(s)).collect(Collectors.toList()));
       }
       if (schema.getOneOf() != null) {
         return mergeList(schema.getOneOf(), schema, true);
       }
     }
-    return list == null ? Collections.singletonList(schema) : list;
+    return Collections.singletonList(schema);
   }
 
   @NotNull
   public static JsonSchemaObject mergeAll(@NotNull JsonSchemaObject schema) {
     JsonSchemaObject currentBase = copySchema(schema);
     currentBase.setAllOf(null);
-    //currentBase.setAnyOf(null);
-    //currentBase.setOneOf(null);
     for (JsonSchemaObject object : schema.getAllOf()) {
       currentBase = merge(currentBase, object);
     }
