@@ -272,6 +272,10 @@ public class PyOptimizeImportsTest extends PyTestCase {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
     doTest();
   }
+  
+  public void testStackDanglingCommentsAtEnd() {
+    doTest();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".py");
