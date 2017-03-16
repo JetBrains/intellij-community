@@ -16,9 +16,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySubtaskUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -69,11 +69,11 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     if (course == null) {
       return;
     }
-    CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return;
     }
-    manager.createTestsForNewSubtask(project, task);
+    configurator.createTestsForNewSubtask(project, task);
   }
 
   private static void createTaskDescriptionFile(Project project, VirtualFile taskDir, int index) {

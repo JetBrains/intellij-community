@@ -5,12 +5,16 @@ import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 public interface EduPluginConfigurator {
   LanguageExtension<EduPluginConfigurator> INSTANCE = new LanguageExtension<>("Edu.pluginConfigurator");
@@ -42,4 +46,12 @@ public interface EduPluginConfigurator {
   void createTaskContent(@NotNull Project project,
                          @Nullable IdeView view,
                          PsiDirectory taskDirectory);
+
+  boolean excludeFromArchive(File pathname);
+
+  default boolean isTestFile(VirtualFile file) {
+    return false;
+  }
+
+  default void createTestsForNewSubtask(@NotNull Project project, @NotNull Task task) {}
 }

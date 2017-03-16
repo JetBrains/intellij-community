@@ -5,10 +5,6 @@
     <runConfigurationProducer implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationProducer"/>
   </extensions>
 
-  <extensions defaultExtensionNs="Edu">
-    <CCLanguageManager implementationClass="com.jetbrains.edu.coursecreator.PyCCLanguageManager" language="Python"/>
-  </extensions>
-
   <actions>
     <action class="com.jetbrains.edu.coursecreator.PyCCCreateProjectFromArchive" id="PyCC.NewEdu">
       <add-to-group group-id="CCFileGroup" anchor="last"/>

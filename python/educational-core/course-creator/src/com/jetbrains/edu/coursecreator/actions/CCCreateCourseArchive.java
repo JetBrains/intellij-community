@@ -21,9 +21,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
-import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -88,17 +88,17 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       return;
     }
 
-    CCLanguageManager manager = CCUtils.getStudyLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return;
     }
-    FileFilter filter = pathname -> !manager.doNotPackFile(pathname);
+    FileFilter filter = pathname -> !configurator.excludeFromArchive(pathname);
 
     for (VirtualFile child : baseDir.getChildren()) {
       String name = child.getName();
       File fromFile = new File(child.getPath());
       if (CCUtils.GENERATED_FILES_FOLDER.equals(name) || Project.DIRECTORY_STORE_FOLDER.equals(name)
-          || name.contains("iml") || manager.doNotPackFile(fromFile)) {
+          || name.contains("iml") || configurator.excludeFromArchive(fromFile)) {
         continue;
       }
       copyChild(archiveFolder, filter, child, fromFile);

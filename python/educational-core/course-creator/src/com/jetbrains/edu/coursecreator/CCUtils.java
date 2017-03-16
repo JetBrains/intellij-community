@@ -2,7 +2,6 @@ package com.jetbrains.edu.coursecreator;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
-import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +18,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.Function;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -64,12 +64,6 @@ public class CCUtils {
     catch (NumberFormatException e) {
       return -1;
     }
-  }
-
-  @Nullable
-  public static CCLanguageManager getStudyLanguageManager(@NotNull final Course course) {
-    Language language = Language.findLanguageByID(course.getLanguageID());
-    return language == null ? null : CCLanguageManager.INSTANCE.forLanguage(language);
   }
 
   /**
@@ -206,11 +200,11 @@ public class CCUtils {
     if (course == null) {
       return false;
     }
-    CCLanguageManager manager = getStudyLanguageManager(course);
-    if (manager == null) {
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
+    if (configurator == null) {
       return false;
     }
-    return manager.isTestFile(file);
+    return configurator.isTestFile(file);
   }
 
   public static void createResourceFile(VirtualFile createdFile, Course course, VirtualFile taskVF) {

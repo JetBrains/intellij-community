@@ -44,12 +44,6 @@
     </component>
   </project-components>
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="Edu.CCLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.jetbrains.edu.coursecreator.CCLanguageManager"/>
-    </extensionPoint>
-  </extensionPoints>
-
   <actions>
     <action id="CreateLesson" class="com.jetbrains.edu.coursecreator.actions.CCCreateLesson">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
