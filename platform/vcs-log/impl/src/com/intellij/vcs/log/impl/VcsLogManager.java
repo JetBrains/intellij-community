@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VcsLogManager implements Disposable {
@@ -201,6 +202,11 @@ public class VcsLogManager implements Disposable {
   @Override
   public void dispose() {
     disposeLog();
+  }
+
+  @NotNull
+  public Set<String> getTabNames() {
+    return myTabsLogRefresher.getTabNames();
   }
 
   private class MyFatalErrorsHandler implements FatalErrorHandler {
