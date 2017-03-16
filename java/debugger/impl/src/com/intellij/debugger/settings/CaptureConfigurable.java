@@ -129,8 +129,8 @@ public class CaptureConfigurable implements SearchableConfigurable {
       public void actionPerformed(@NotNull AnActionEvent e) {
         selectedCapturePoints(table).forEach(c -> {
           try {
-            myTableModel.add(c.clone());
-            table.getSelectionModel().setSelectionInterval(table.getRowCount() - 1, table.getRowCount() - 1);
+            int idx = myTableModel.add(c.clone());
+            table.getSelectionModel().setSelectionInterval(idx, idx);
           }
           catch (CloneNotSupportedException ex) {
             LOG.error(ex);
@@ -205,7 +205,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
             Document document = JDOMUtil.loadDocument(file.getInputStream());
             List<Element> children = document.getRootElement().getChildren();
             children.forEach(element -> {
-              int idx = myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class));
+              int idx = myTableModel.addIfNeeded(XmlSerializer.deserialize(element, CapturePoint.class));
               table.getSelectionModel().addSelectionInterval(idx, idx);
             });
           }
@@ -286,7 +286,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
         scanPointsInt(true, capturePointsFromAnnotations);
         scanPointsInt(false, capturePointsFromAnnotations);
 
-        capturePointsFromAnnotations.forEach(this::add);
+        capturePointsFromAnnotations.forEach(this::addIfNeeded);
       }
     }
 
@@ -447,7 +447,14 @@ public class CaptureConfigurable implements SearchableConfigurable {
       return myCapturePoints.get(idx);
     }
 
-    public int add(CapturePoint p) {
+    int add(CapturePoint p) {
+      myCapturePoints.add(p);
+      int lastRow = getRowCount() - 1;
+      fireTableRowsInserted(lastRow, lastRow);
+      return lastRow;
+    }
+
+    int addIfNeeded(CapturePoint p) {
       CapturePoint clone = p;
       try {
         clone = p.clone();
@@ -461,10 +468,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
         idx = myCapturePoints.indexOf(clone);
       }
       if (idx < 0) {
-        myCapturePoints.add(p);
-        int lastRow = getRowCount() - 1;
-        fireTableRowsInserted(lastRow, lastRow);
-        return lastRow;
+        idx = add(p);
       }
       return idx;
     }
