@@ -80,8 +80,8 @@ public class LongRangeKnownMethods {
   }
 
   void testEqualsIgnoreCase(String s) {
-    if(!s.equalsIgnoreCase("xyz") || !s.isEmpty()) {
-      System.out.println("Always");
+    if(s.equalsIgnoreCase("xyz") && s.isEmpty()) {
+      System.out.println("Never");
     }
   }
 
@@ -89,6 +89,64 @@ public class LongRangeKnownMethods {
     int idx = "abcdefgh".indexOf(s);
     if(<warning descr="Condition 'idx > 8' is always 'false'">idx > 8</warning>) {
       System.out.println("Impossible");
+    }
+  }
+
+  void testMax(int x) {
+    x = Math.max(x, 0);
+    if (<warning descr="Condition 'x > -1' is always 'true'">x > -1</warning>) {
+      System.out.println("Always");
+    }
+    if (x > 0) {
+      System.out.println("Not always");
+    }
+  }
+
+  void testMin(long x, long y) {
+    if (x < 10 && y > 10) {
+      y = Long.min(x, y);
+      if (<warning descr="Condition 'y > 20' is always 'false'">y > 20</warning>) {
+        System.out.println("Impossible");
+      }
+    }
+    if (y > 20) {
+      System.out.println("Possible");
+    }
+  }
+
+  void testMinMax(List<String> rows) {
+    int start = Integer.MAX_VALUE;
+    int end = -1;
+
+    for (int i = 0; i < rows.size(); i++) {
+      String row = rows.get(i);
+      if (!row.isEmpty()) {
+        start = Math.min(start, i);
+        end = Math.max(end, i);
+      }
+    }
+
+    if(end >= 0 && start < Integer.MAX_VALUE) {
+      System.out.println("Ok");
+    }
+  }
+
+  void testAbs(long x, int y) {
+    x = Math.abs(x);
+    y = Math.abs(y);
+    if (x == Long.MIN_VALUE) {
+      System.out.println("possible");
+    }
+    if (<warning descr="Condition 'x == Long.MIN_VALUE + 1' is always 'false'">x == Long.MIN_VALUE + 1</warning>) {
+      System.out.println("impossible");
+    }
+    if (<warning descr="Condition 'x == Integer.MIN_VALUE' is always 'false'">x == Integer.MIN_VALUE</warning>) {
+      System.out.println("impossible");
+    }
+    if (y == Integer.MIN_VALUE) {
+      System.out.println("possible");
+    } else if(<warning descr="Condition 'y < 0' is always 'false'">y < 0</warning>) {
+      System.out.println("impossible");
     }
   }
 }

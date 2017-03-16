@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 /**
  * An immutable set of long values optimized for small number of ranges.
@@ -40,27 +42,7 @@ public abstract class LongRangeSet {
    */
   public abstract LongRangeSet subtract(LongRangeSet other);
 
-  public LongRangeSet gt(long value) {
-    return subtract(range(Long.MIN_VALUE, value));
-  }
-
-  public LongRangeSet ge(long value) {
-    return value == Long.MIN_VALUE ? this : subtract(range(Long.MIN_VALUE, value - 1));
-  }
-
-  public LongRangeSet lt(long value) {
-    return subtract(range(value, Long.MAX_VALUE));
-  }
-
-  public LongRangeSet le(long value) {
-    return value == Long.MAX_VALUE ? this : subtract(range(value + 1, Long.MAX_VALUE));
-  }
-
-  public LongRangeSet eq(long value) {
-    return contains(value) ? point(value) : Empty.EMPTY;
-  }
-
-  public LongRangeSet ne(long value) {
+  public LongRangeSet without(long value) {
     return subtract(point(value));
   }
 
@@ -144,8 +126,8 @@ public abstract class LongRangeSet {
     }
     if (JavaTokenType.NE.equals(relation)) {
       long min = min();
-      if (min == max()) return Range.LONG_RANGE.subtract(this);
-      return Range.LONG_RANGE;
+      if (min == max()) return all().without(min);
+      return all();
     }
     if (JavaTokenType.GT.equals(relation)) {
       long min = min();
@@ -165,10 +147,33 @@ public abstract class LongRangeSet {
   }
 
   /**
+   * Returns a range which represents all the possible values after applying {@link Math#abs(int)} or {@link Math#abs(long)}
+   * to the values from this set
+   *
+   * @param isLong whether {@link Math#abs(long)} is applied
+   * @return a new range
+   */
+  public abstract LongRangeSet abs(boolean isLong);
+
+  /**
+   * Returns a stream of all values from this range. Be careful: could be huge
+   *
+   * @return a new stream
+   */
+  public abstract LongStream stream();
+
+  /**
    * @return an empty set
    */
   public static LongRangeSet empty() {
     return Empty.EMPTY;
+  }
+
+  /**
+   * @return a set containing all possible long values
+   */
+  public static LongRangeSet all() {
+    return Range.LONG_RANGE;
   }
 
   /**
@@ -215,6 +220,10 @@ public abstract class LongRangeSet {
     return from == to ? String.valueOf(from) : from + (to - from == 1 ? ", " : "..") + to;
   }
 
+  static long minValue(boolean isLong) {
+    return isLong ? Long.MIN_VALUE : Integer.MIN_VALUE;
+  }
+
   /**
    * @return LongRangeSet describing possible array or string indices (from 0 to Integer.MAX_VALUE)
    */
@@ -248,7 +257,7 @@ public abstract class LongRangeSet {
         return Range.INT_RANGE;
       }
       if (type.equals(PsiType.LONG)) {
-        return Range.LONG_RANGE;
+        return all();
       }
     }
     return null;
@@ -307,6 +316,16 @@ public abstract class LongRangeSet {
     @Override
     public boolean contains(LongRangeSet other) {
       return other.isEmpty();
+    }
+
+    @Override
+    public LongRangeSet abs(boolean isLong) {
+      return this;
+    }
+
+    @Override
+    public LongStream stream() {
+      return LongStream.empty();
     }
 
     @Override
@@ -370,6 +389,16 @@ public abstract class LongRangeSet {
     @Override
     public boolean contains(LongRangeSet other) {
       return other.isEmpty() || equals(other);
+    }
+
+    @Override
+    public LongRangeSet abs(boolean isLong) {
+      return myValue >= 0 || myValue == minValue(isLong) ? this : point(-myValue);
+    }
+
+    @Override
+    public LongStream stream() {
+      return LongStream.of(myValue);
     }
 
     @Override
@@ -510,6 +539,35 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public LongRangeSet abs(boolean isLong) {
+      if (myFrom >= 0) return this;
+      long minValue = minValue(isLong);
+      long low = myFrom, hi = myTo;
+      if (low <= minValue) {
+        low = minValue + 1;
+      }
+      if (myTo <= 0) {
+        hi = -low;
+        low = -myTo;
+      }
+      else {
+        hi = Math.max(-low, hi);
+        low = 0;
+      }
+      if (myFrom <= minValue) {
+        return new RangeSet(new long[]{minValue, minValue, low, hi});
+      }
+      else {
+        return new Range(low, hi);
+      }
+    }
+
+    @Override
+    public LongStream stream() {
+      return LongStream.rangeClosed(myFrom, myTo);
+    }
+
+    @Override
     long[] asRanges() {
       return new long[] {myFrom, myTo};
     }
@@ -572,7 +630,7 @@ public abstract class LongRangeSet {
       if (other instanceof Point || other instanceof Range) {
         return other.intersect(this);
       }
-      return subtract(Range.LONG_RANGE.subtract(other));
+      return subtract(all().subtract(other));
     }
 
     @Override
@@ -624,6 +682,22 @@ public abstract class LongRangeSet {
     public boolean contains(LongRangeSet other) {
       if (other.isEmpty() || other == this) return true;
       return other.subtract(this).isEmpty();
+    }
+
+    @Override
+    public LongRangeSet abs(boolean isLong) {
+      LongRangeSet result = all();
+      for (int i = 0; i < myRanges.length; i += 2) {
+        result = result.subtract(range(myRanges[i], myRanges[i + 1]).abs(isLong));
+      }
+      return all().subtract(result);
+    }
+
+    @Override
+    public LongStream stream() {
+      return IntStream.range(0, myRanges.length / 2)
+        .mapToObj(idx -> LongStream.rangeClosed(myRanges[idx * 2], myRanges[idx * 2 + 1]))
+        .reduce(LongStream::concat).orElseGet(LongStream::empty);
     }
 
     @Override

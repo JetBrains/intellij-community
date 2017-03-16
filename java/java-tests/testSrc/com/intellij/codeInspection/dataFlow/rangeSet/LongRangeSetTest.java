@@ -73,41 +73,36 @@ public class LongRangeSetTest {
     assertTrue(point(10).subtract(range(-10, 20)).isEmpty());
     assertTrue(point(10).subtract(range(-10, 10)).isEmpty());
 
-    assertEquals("{0..20}", range(0, 20).lt(30).toString());
-    assertEquals("{0..19}", range(0, 20).lt(20).toString());
-    assertEquals("{0..18}", range(0, 20).lt(19).toString());
-    assertEquals("{0}", range(0, 20).lt(1).toString());
-    assertTrue(range(0, 20).lt(0).isEmpty());
+    assertEquals("{0..20}", range(0, 20).subtract(range(30, Long.MAX_VALUE)).toString());
+    assertEquals("{0..19}", range(0, 20).subtract(range(20, Long.MAX_VALUE)).toString());
+    assertEquals("{0..18}", range(0, 20).subtract(range(19, Long.MAX_VALUE)).toString());
+    assertEquals("{0}", range(0, 20).subtract(range(1, Long.MAX_VALUE)).toString());
+    assertTrue(range(0, 20).subtract(range(0, Long.MAX_VALUE)).isEmpty());
 
-    LongRangeSet fullRange = range(Long.MIN_VALUE, Long.MAX_VALUE);
-    assertEquals("{-9223372036854775808}", fullRange.le(Long.MIN_VALUE).toString());
-    assertEquals(fullRange, fullRange.le(Long.MAX_VALUE));
-    assertEquals("{9223372036854775807}", fullRange.ge(Long.MAX_VALUE).toString());
-    assertEquals(fullRange, fullRange.ge(Long.MIN_VALUE));
-    assertTrue(fullRange.gt(Long.MAX_VALUE).isEmpty());
-    assertEquals(indexRange(), fromType(PsiType.INT).gt(-1));
-    assertTrue(fullRange.subtract(fullRange).isEmpty());
-
-    assertEquals(point(10), fullRange.eq(10));
-    assertTrue(range(30, 50).eq(10).isEmpty());
+    assertEquals("{-9223372036854775808}", all().subtract(range(Long.MIN_VALUE + 1, Long.MAX_VALUE)).toString());
+    assertEquals("{9223372036854775807}", all().subtract(range(Long.MIN_VALUE, Long.MAX_VALUE - 1)).toString());
+    assertTrue(all().subtract(range(Long.MIN_VALUE, Long.MAX_VALUE)).isEmpty());
+    assertEquals(indexRange(), fromType(PsiType.INT).subtract(range(Long.MIN_VALUE, (long)-1)));
+    assertTrue(all().subtract(all()).isEmpty());
   }
 
   @Test
   public void testSets() {
-    assertEquals("{0..9, 11..20}", range(0, 20).ne(10).toString());
+    assertEquals("{0..9, 11..20}", range(0, 20).without(10).toString());
     assertEquals("{0, 20}", range(0, 20).subtract(range(1, 19)).toString());
     assertEquals("{0, 1, 19, 20}", range(0, 20).subtract(range(2, 18)).toString());
 
-    assertEquals("{0..9, 12..20}", range(0, 20).ne(10).ne(11).toString());
-    assertEquals("{0..9, 12..14, 16..20}", range(0, 20).ne(10).ne(11).ne(15).toString());
-    assertEquals("{0, 4..20}", range(0, 20).ne(3).ne(2).ne(1).toString());
-    assertEquals("{4..20}", range(0, 20).ne(3).ne(2).ne(1).ne(0).toString());
+    assertEquals("{0..9, 12..20}", range(0, 20).without(10).without(11).toString());
+    assertEquals("{0..9, 12..14, 16..20}", range(0, 20).without(10).without(11).without(15).toString());
+    assertEquals("{0, 4..20}", range(0, 20).without(3).without(2).without(1).toString());
+    assertEquals("{4..20}", range(0, 20).without(3).without(2).without(1).without(0).toString());
 
     assertEquals("{0..2, 5..15, 19, 20}",
                  range(0, 20).subtract(range(3, 18).subtract(range(5, 15))).toString());
 
-    LongRangeSet first = fromType(PsiType.CHAR).ne(45);
-    LongRangeSet second = fromType(PsiType.CHAR).ne(32).ne(40).ne(44).ne(45).ne(46).ne(58).ne(59).ne(61);
+    LongRangeSet first = fromType(PsiType.CHAR).without(45);
+    LongRangeSet second =
+      fromType(PsiType.CHAR).without(32).without(40).without(44).without(45).without(46).without(58).without(59).without(61);
     assertEquals("{0..44, 46..65535}", first.toString());
     assertEquals("{0..31, 33..39, 41..43, 47..57, 60, 62..65535}", second.toString());
     assertEquals("{32, 40, 44, 46, 58, 59, 61}", first.subtract(second).toString());
@@ -207,6 +202,18 @@ public class LongRangeSetTest {
       }
       assertEquals(message, intersection, right.subtract(fromType(PsiType.LONG).subtract(left)));
       assertEquals(message, intersection, left.subtract(fromType(PsiType.LONG).subtract(right)));
+      intersection.stream().limit(1000).forEach(e -> {
+        assertTrue(left.contains(e));
+        assertTrue(right.contains(e));
+      });
+      lDiff.stream().limit(1000).forEach(e -> {
+        assertTrue(left.contains(e));
+        assertFalse(right.contains(e));
+      });
+      rDiff.stream().limit(1000).forEach(e -> {
+        assertFalse(left.contains(e));
+        assertTrue(right.contains(e));
+      });
       switch (r.nextInt(3)) {
         case 0:
           data[idx] = lDiff;
@@ -241,5 +248,24 @@ public class LongRangeSetTest {
     assertNull(range(100, 200).fromRelation(JavaTokenType.EQ));
     assertEquals(fromType(PsiType.LONG), range(100, 200).fromRelation(JavaTokenType.NE));
     assertEquals("{-9223372036854775808..99, 101..9223372036854775807}", point(100).fromRelation(JavaTokenType.NE).toString());
+  }
+
+  @Test
+  public void testAbs() {
+    assertTrue(empty().abs(true).isEmpty());
+    assertEquals(point(Long.MAX_VALUE), point(Long.MIN_VALUE + 1).abs(true));
+    assertEquals(point(Long.MIN_VALUE), point(Long.MIN_VALUE).abs(true));
+    assertEquals(point(Integer.MIN_VALUE), point(Integer.MIN_VALUE).abs(false));
+    assertEquals(point(Integer.MAX_VALUE + 1L), point(Integer.MIN_VALUE).abs(true));
+    assertEquals(range(100, 200), range(100, 200).abs(true));
+    assertEquals(range(0, 200), range(-1, 200).abs(true));
+    assertEquals(range(0, 200), range(-200, 200).abs(false));
+    assertEquals(range(0, 201), range(-201, 200).abs(false));
+    assertEquals(range(0, Long.MAX_VALUE).union(point(Long.MIN_VALUE)), all().abs(true));
+    assertEquals(range(100, Integer.MAX_VALUE).union(point(Integer.MIN_VALUE)), range(Integer.MIN_VALUE, -100).abs(false));
+    assertEquals(range(100, Integer.MAX_VALUE + 1L), range(Integer.MIN_VALUE, -100).abs(true));
+    LongRangeSet set = range(-900, 1000).subtract(range(-800, -600)).subtract(range(-300, 100)).subtract(range(500, 700));
+    assertEquals("{-900..-801, -599..-301, 101..499, 701..1000}", set.toString());
+    assertEquals("{101..599, 701..1000}", set.abs(false).toString());
   }
 }

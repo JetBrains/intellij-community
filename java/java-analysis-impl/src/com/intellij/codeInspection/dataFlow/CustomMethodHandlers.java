@@ -28,9 +28,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.JavaTokenType.*;
-import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 /**
  * @author Tagir Valeev
@@ -52,7 +52,21 @@ public class CustomMethodHandlers {
     .register(instanceCall(JAVA_LANG_STRING, "startsWith").parameterCount(1),
               (qualifier, args, memState, factory) -> stringStartsEnds(qualifier, args, memState, factory, false))
     .register(instanceCall(JAVA_LANG_STRING, "endsWith").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringStartsEnds(qualifier, args, memState, factory, true));
+              (qualifier, args, memState, factory) -> stringStartsEnds(qualifier, args, memState, factory, true))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "max").parameterTypes("int", "int"),
+                    staticCall(JAVA_LANG_MATH, "max").parameterTypes("long", "long"),
+                    staticCall(JAVA_LANG_INTEGER, "max").parameterTypes("int", "int"),
+                    staticCall(JAVA_LANG_LONG, "max").parameterTypes("long", "long")),
+              (qualifier, args, memState, factory) -> mathMinMax(args, memState, factory, true))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
+                    staticCall(JAVA_LANG_MATH, "min").parameterTypes("long", "long"),
+                    staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"),
+                    staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
+              (qualifier, args, memState, factory) -> mathMinMax(args, memState, factory, false))
+    .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("int"),
+              (qualifier, args, memState, factory) -> mathAbs(args, memState, factory, false))
+    .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
+              (qualifier, args, memState, factory) -> mathAbs(args, memState, factory, true));
 
   public static CustomMethodHandler find(PsiMethodCallExpression call) {
     return CUSTOM_METHOD_HANDLERS.mapFirst(call);
@@ -114,6 +128,25 @@ public class CustomMethodHandlers {
     DfaRelationValue trueRelation = factory.getRelationFactory().createRelation(length, zero, EQEQ, false);
     DfaRelationValue falseRelation = factory.getRelationFactory().createRelation(length, zero, NE, false);
     return applyCondition(memState, trueRelation, factory.getBoolean(true), falseRelation, factory.getBoolean(false));
+  }
+
+  private static List<DfaMemoryState> mathMinMax(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean max) {
+    if(args == null || args.length != 2) return Collections.emptyList();
+    LongRangeSet first = memState.getRange(args[0]);
+    LongRangeSet second = memState.getRange(args[1]);
+    if (first == null || second == null || first.isEmpty() || second.isEmpty()) return Collections.emptyList();
+    LongRangeSet domain = max ? LongRangeSet.range(Math.max(first.min(), second.min()), Long.MAX_VALUE)
+                          : LongRangeSet.range(Long.MIN_VALUE, Math.min(first.max(), second.max()));
+    LongRangeSet result = first.union(second).intersect(domain);
+    return singleResult(memState, factory.getRangeFactory().create(result));
+  }
+
+  private static List<DfaMemoryState> mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
+    DfaValue arg = ArrayUtil.getFirstElement(args);
+    if(arg == null) return Collections.emptyList();
+    LongRangeSet range = memState.getRange(arg);
+    if (range == null) return Collections.emptyList();
+    return singleResult(memState, factory.getRangeFactory().create(range.abs(isLong)));
   }
 
   private static List<DfaMemoryState> singleResult(DfaMemoryState state, DfaValue value) {
