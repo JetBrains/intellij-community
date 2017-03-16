@@ -47,7 +47,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.List;
-import java.util.Map;
 
 public abstract class StudyToolWindow extends SimpleToolWindowPanel implements DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
@@ -90,7 +89,6 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
 
     myContentPanel.add(TASK_INFO_ID, panel);
     mySplitPane.setFirstComponent(myContentPanel);
-    addAdditionalPanels(project);
     myCardLayout.show(myContentPanel, TASK_INFO_ID);
 
     setContent(mySplitPane);
@@ -98,8 +96,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     if (isToolwindow) {
       StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
       if (configurator != null) {
-        final FileEditorManagerListener listener = configurator.getFileEditorManagerListener(project, this);
-        project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+        project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new StudyFileEditorManagerListener(this, project));
       }
 
       if (StudyTaskManager.getInstance(project).isTurnEditingMode() ||
@@ -128,17 +125,6 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     JPanel toolbarPanel = createToolbarPanel(group);
     setToolbar(toolbarPanel);
   }
-
-  private void addAdditionalPanels(Project project) {
-    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
-    if (configurator != null) {
-      Map<String, JPanel> panels = configurator.getAdditionalPanels(project);
-      for (Map.Entry<String, JPanel> entry : panels.entrySet()) {
-        myContentPanel.add(entry.getKey(), entry.getValue());
-      }
-    }
-  }
-
 
   public void dispose() {
   }
