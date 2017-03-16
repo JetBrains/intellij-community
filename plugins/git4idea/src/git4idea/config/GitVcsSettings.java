@@ -85,6 +85,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public GitPushTagMode PUSH_TAGS = null;
     public boolean SIGN_OFF_COMMIT = false;
     public boolean SET_USER_NAME_GLOBALLY = true;
+    public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
 
     @AbstractCollection(surroundWithTag = false)
     @Tag("push-targets")
@@ -325,6 +326,13 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SET_USER_NAME_GLOBALLY = value;
   }
 
+  public boolean shouldSwapSidesInCompareBranches() {
+    return myState.SWAP_SIDES_IN_COMPARE_BRANCHES;
+  }
+
+  public void setSwapSidesInCompareBranches(boolean value) {
+    myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
+  }
 
   @Tag("push-target-info")
   private static class PushTargetInfo extends DvcsBranchInfo {
