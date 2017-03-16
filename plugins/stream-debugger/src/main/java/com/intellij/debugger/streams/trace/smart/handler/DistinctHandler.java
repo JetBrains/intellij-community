@@ -1,6 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
-import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.smart.handler.type.ClassTypeImpl;
 import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -55,7 +55,7 @@ public class DistinctHandler extends HandlerBase {
   @NotNull
   @Override
   public String prepareResult() {
-    final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
+    final String newLine = TraceExpressionBuilderImpl.LINE_SEPARATOR;
     final String peekPrepare = myPeekTracer.prepareResult();
 
     final String storeMapName = myStoreMapVariable.getName();
@@ -72,7 +72,7 @@ public class DistinctHandler extends HandlerBase {
       "}" + newLine;
 
     final String peekResult =
-      "final java.lang.Object peekResult = " + myPeekTracer.getResultExpression() + ";" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
+      "final java.lang.Object peekResult = " + myPeekTracer.getResultExpression() + ";" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
     final String resolve2Array = myResolveMapVariable.convertToArray("resolve");
     return peekPrepare + prepareResolveMap + resolve2Array + peekResult;
   }
@@ -91,7 +91,7 @@ public class DistinctHandler extends HandlerBase {
 
   @NotNull
   private String createResolveLambda() {
-    final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
+    final String newLine = TraceExpressionBuilderImpl.LINE_SEPARATOR;
     final String storeMap = myStoreMapVariable.getName();
     final String resolveReverseMap = myReverseUtilMapVariable.getName();
 

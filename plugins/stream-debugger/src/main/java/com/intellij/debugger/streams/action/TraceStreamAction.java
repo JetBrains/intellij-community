@@ -4,10 +4,9 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
-import com.intellij.debugger.streams.trace.ResolvedTracingResult;
-import com.intellij.debugger.streams.trace.TracingCallback;
-import com.intellij.debugger.streams.trace.TracingResult;
-import com.intellij.debugger.streams.trace.smart.MapToArrayTracerImpl;
+import com.intellij.debugger.streams.trace.*;
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
+import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilder;
@@ -31,6 +30,8 @@ public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
+  private final TraceExpressionBuilder myExpressionBuilder = new TraceExpressionBuilderImpl();
+  private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -48,7 +49,8 @@ public class TraceStreamAction extends AnAction {
     if (chain != null) {
       final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session.getProject(), chain);
       ApplicationManager.getApplication().invokeLater(window::show);
-      new MapToArrayTracerImpl(session).trace(chain, new TracingCallback() {
+      final StreamTracer tracer = new EvaluateExpressionTracer(session, myExpressionBuilder, myResultInterpreter);
+      tracer.trace(chain, new TracingCallback() {
         @Override
         public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
           final ResolvedTracingResult resolvedTrace = result.resolve();

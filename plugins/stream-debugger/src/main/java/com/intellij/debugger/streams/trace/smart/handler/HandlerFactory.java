@@ -1,6 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
-import com.intellij.debugger.streams.trace.smart.MapToArrayTracerImpl;
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.wrapper.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 public class HandlerFactory {
 
   @NotNull
-  public static MapToArrayTracerImpl.StreamCallTraceHandler createIntermediate(int number,
-                                                                               @NotNull IntermediateStreamCall call) {
+  public static TraceExpressionBuilderImpl.StreamCallTraceHandler createIntermediate(int number,
+                                                                                     @NotNull IntermediateStreamCall call) {
     final String callName = call.getName();
     switch (callName) {
       case "distinct":
@@ -21,11 +21,11 @@ public class HandlerFactory {
     }
   }
 
-  public static MapToArrayTracerImpl.StreamCallTraceHandler create(@NotNull ProducerStreamCall call) {
+  public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull ProducerStreamCall call) {
     return new ProducerHandler(call.getTypeAfter());
   }
 
-  public static MapToArrayTracerImpl.StreamCallTraceHandler create(@NotNull TerminatorStreamCall call) {
+  public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull TerminatorStreamCall call) {
     return new TerminatorHandler(call.getTypeBefore());
   }
 }

@@ -1,6 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
-import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ class HashMapVariableImpl extends VariableImpl {
   }
 
   String convertToArray(@NotNull String arrayName) {
-    final String newLine = EvaluateExpressionTracerBase.LINE_SEPARATOR;
+    final String newLine = TraceExpressionBuilderImpl.LINE_SEPARATOR;
 
     final String keysType = myKeyType.getVariableTypeName();
     final String valuesType = myValueType.getVariableTypeName();

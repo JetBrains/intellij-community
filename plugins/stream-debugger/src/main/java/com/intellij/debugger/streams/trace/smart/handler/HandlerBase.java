@@ -1,7 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.handler;
 
-import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
-import com.intellij.debugger.streams.trace.smart.MapToArrayTracerImpl;
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -9,8 +8,8 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public abstract class HandlerBase implements MapToArrayTracerImpl.StreamCallTraceHandler {
-  private static final String DECLARATION_FORMAT = "final %s %s = %s;" + EvaluateExpressionTracerBase.LINE_SEPARATOR;
+public abstract class HandlerBase implements TraceExpressionBuilderImpl.StreamCallTraceHandler {
+  private static final String DECLARATION_FORMAT = "final %s %s = %s;" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
 
   @NotNull
   @Override

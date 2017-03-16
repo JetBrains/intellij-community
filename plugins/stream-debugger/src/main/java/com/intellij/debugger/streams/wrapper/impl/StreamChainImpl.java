@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.wrapper.impl;
 
-import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.wrapper.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +78,7 @@ public class StreamChainImpl implements StreamChain {
       final MethodCall call = iterator.next();
       builder.append(call.getName()).append(call.getArguments());
       if (iterator.hasNext()) {
-        builder.append(EvaluateExpressionTracerBase.LINE_SEPARATOR).append(".");
+        builder.append(TraceExpressionBuilderImpl.LINE_SEPARATOR).append(".");
       }
     }
 
