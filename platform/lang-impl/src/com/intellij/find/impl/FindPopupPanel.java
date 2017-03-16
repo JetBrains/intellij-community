@@ -38,7 +38,9 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -67,7 +69,10 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBFont;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -480,11 +485,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     myResultsPreviewTable.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
-        IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-        Component focusOwner = focusManager.getFocusOwner();
-        if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, FindPopupPanel.this) && focusOwner != myReplaceComponent) {
-          focusManager.requestFocus(mySearchComponent, true);
-        }
+        myResultsPreviewTable.transferFocus();
       }
     });
     applyFont(JBUI.Fonts.label(), myCbCaseSensitive, myCbPreserveCase, myCbWholeWordsOnly, myCbRegularExpressions,
@@ -583,6 +584,12 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
     MnemonicHelper.init(this);
     setFocusCycleRoot(true);
+    setFocusTraversalPolicy(new ContainerOrderFocusTraversalPolicy() {
+      @Override
+      public Component getComponentAfter(Container container, Component c) {
+        return (c == myResultsPreviewTable) ? mySearchComponent : super.getComponentAfter(container, c);
+      }
+    });
   }
 
   public static ActionToolbarImpl createToolbar(AnAction... actions) {
@@ -696,10 +703,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     myOKHintLabel.setVisible(!isReplaceState);
     myOKButton.setText(isReplaceState ? FindBundle.message("find.popup.replace.button") : FindBundle.message("find.popup.find.button"));
   }
-
-  //public JComponent getPreferredFocusedComponent() {
-  //  return myCbCaseSensitive;
-  //}
 
   private static void applyFont(JBFont font, Component... components) {
     for (Component component : components) {
