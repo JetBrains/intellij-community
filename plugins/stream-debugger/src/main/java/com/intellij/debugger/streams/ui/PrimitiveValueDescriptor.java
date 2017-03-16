@@ -31,11 +31,6 @@ public class PrimitiveValueDescriptor extends InstanceValueDescriptor {
   }
 
   @Override
-  public boolean isShowIdLabel() {
-    return true;
-  }
-
-  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext debuggerContext) throws EvaluateException {
     final Value value = getValue();
     if (value instanceof ObjectReference) {
