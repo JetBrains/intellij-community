@@ -5,15 +5,16 @@ class BrokenAlignment {
       return other.myRootPath.startsWith(request.myRootPath);
     }
 
-    return !other.myToWatchRecursively && <warning descr="Condition 'request.myRootPath.equals(other.myRootPath)' is always 'true' when reached">request.myRootPath.equals(other.myRootPath)</warning>;
+    return !other.myToWatchRecursively && request.myRootPath.equals(other.myRootPath);
   }
 
   private static class WatchRequestImpl {
     private final boolean myToWatchRecursively;
-    private final String myRootPath = "";
+    private final String myRootPath;
 
     private WatchRequestImpl(boolean toWatchRecursively) {
       myToWatchRecursively = toWatchRecursively;
+      myRootPath = toWatchRecursively ? "one" : "two";
     }
 
   }
