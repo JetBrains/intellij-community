@@ -19,6 +19,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -154,6 +155,128 @@ public abstract class LongRangeSet {
    * @return a new range
    */
   public abstract LongRangeSet abs(boolean isLong);
+
+  /**
+   * Returns a range which represents all the possible values after applying {@code x & y} operation for
+   * all {@code x} from this set and for all {@code y} from the other set. The resulting set may contain
+   * some more values.
+   *
+   * @param other other set to perform bitwise-and with
+   * @return a new range
+   */
+  public LongRangeSet bitwiseAnd(LongRangeSet other) {
+    if (this.isEmpty() || other.isEmpty()) return empty();
+    long[] left = splitAtZero(asRanges());
+    long[] right = splitAtZero(other.asRanges());
+    // More than three intervals --> convert to single interval to make result more compact (though probably less precise)
+    if (left.length > 6) {
+      left = splitAtZero(new long[]{left[0], left[left.length - 1]});
+    }
+    if (right.length > 6) {
+      right = splitAtZero(new long[]{right[0], right[right.length - 1]});
+    }
+    LongRangeSet result = all();
+    for (int i = 0; i < left.length; i += 2) {
+      for (int j = 0; j < right.length; j += 2) {
+        result = result.subtract(bitwiseAnd(left[i], left[i + 1], right[j], right[j + 1]));
+      }
+    }
+    return all().subtract(result);
+  }
+
+  private static long[] splitAtZero(long[] ranges) {
+    for (int i = 0; i < ranges.length; i += 2) {
+      if (ranges[i] < 0 && ranges[i + 1] >= 0) {
+        long[] result = new long[ranges.length + 2];
+        System.arraycopy(ranges, 0, result, 0, i + 1);
+        result[i + 1] = -1;
+        System.arraycopy(ranges, i + 1, result, i + 3, ranges.length - i - 1);
+        return result;
+      }
+    }
+    return ranges;
+  }
+
+  private static LongRangeSet bitwiseAnd(long leftFrom, long leftTo, long rightFrom, long rightTo) {
+    if (leftFrom == leftTo && rightFrom == rightTo) {
+      return point(leftFrom & rightFrom);
+    }
+    ThreeState[] leftBits = bits(leftFrom, leftTo);
+    ThreeState[] rightBits = bits(rightFrom, rightTo);
+    ThreeState[] resultBits = new ThreeState[Long.SIZE];
+    for (int i = 0; i < Long.SIZE; i++) {
+      if (leftBits[i] == ThreeState.NO || rightBits[i] == ThreeState.NO) {
+        resultBits[i] = ThreeState.NO;
+      }
+      else if (leftBits[i] == ThreeState.UNSURE || rightBits[i] == ThreeState.UNSURE) {
+        resultBits[i] = ThreeState.UNSURE;
+      }
+      else {
+        resultBits[i] = ThreeState.YES;
+      }
+    }
+    return fromBits(resultBits);
+  }
+
+  /**
+   * Creates a set which contains all the numbers satisfying the supplied bit vector.
+   * Vector format is the same as returned by {@link #bits(long, long)}. The resulting set may
+   * contain more values than necessary.
+   *
+   * @param bits a bit vector
+   * @return a new LongRangeSet
+   */
+  private static LongRangeSet fromBits(ThreeState[] bits) {
+    long from = 0;
+    int i = 0;
+    while (i < Long.SIZE && bits[i] != ThreeState.UNSURE) {
+      if (bits[i] == ThreeState.YES) {
+        from |= (1L << (Long.SIZE - 1 - i));
+      }
+      i++;
+    }
+    long to = ((1L << (Long.SIZE - i)) - 1) | from;
+    int j = Long.SIZE - 1;
+    while(j > i && bits[j] != ThreeState.UNSURE) {
+      if (bits[j] == ThreeState.NO) {
+        to &= ~(1L << Long.SIZE - 1 - j);
+      }
+      j--;
+    }
+    if(i == j) {
+      return point(from).union(point(to));
+    }
+    return from < to ? range(from, to) : range(to, from);
+  }
+
+  /**
+   * Returns a bit vector for values between from and to.
+   *
+   * @param from lower bound
+   * @param to upper bound
+   * @return an array of 64 ThreeState values (NO = zero bit for all values, YES = one bit for all values,
+   * UNSURE = both one and zero possible)
+   */
+  private static ThreeState[] bits(long from, long to) {
+    ThreeState[] bits = new ThreeState[Long.SIZE];
+    Arrays.setAll(bits, idx -> ThreeState.NO);
+    while (true) {
+      int fromBit = Long.numberOfLeadingZeros(from);
+      int toBit = Long.numberOfLeadingZeros(to);
+      if (fromBit != toBit) {
+        for (int i = Math.min(fromBit, toBit); i < Long.SIZE; i++) {
+          bits[i] = ThreeState.UNSURE;
+        }
+        break;
+      }
+      if (fromBit == 64) break;
+      bits[fromBit] = ThreeState.YES;
+      long clearMask = ~(1L << (Long.SIZE - 1 - fromBit));
+      from &= clearMask;
+      to &= clearMask;
+    }
+    return bits;
+  }
 
   /**
    * Returns a stream of all values from this range. Be careful: could be huge

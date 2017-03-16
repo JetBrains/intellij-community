@@ -21,6 +21,7 @@ import com.intellij.util.containers.HashMap;
 import org.junit.Test;
 
 import java.util.Random;
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.*;
 import static org.junit.Assert.*;
@@ -267,5 +268,32 @@ public class LongRangeSetTest {
     LongRangeSet set = range(-900, 1000).subtract(range(-800, -600)).subtract(range(-300, 100)).subtract(range(500, 700));
     assertEquals("{-900..-801, -599..-301, 101..499, 701..1000}", set.toString());
     assertEquals("{101..599, 701..1000}", set.abs(false).toString());
+  }
+
+  @Test
+  public void testBitwiseAnd() {
+    assertTrue(empty().bitwiseAnd(all()).isEmpty());
+    assertTrue(all().bitwiseAnd(empty()).isEmpty());
+    assertEquals(all(), all().bitwiseAnd(all()));
+    assertEquals("{0, 16}", all().bitwiseAnd(point(16)).toString());
+    assertEquals("{0, 1}", all().bitwiseAnd(point(1)).toString());
+    assertEquals(range(0, 24), all().bitwiseAnd(point(24)));
+    assertEquals(range(0, 31), all().bitwiseAnd(point(25)));
+    assertEquals(range(0, 15), all().bitwiseAnd(range(10, 15)));
+    assertEquals(range(0, 31), all().bitwiseAnd(range(16, 24)));
+
+    checkBitwiseAnd(range(0, 3), range(4, 7), "{0..3}");
+    checkBitwiseAnd(range(3, 4), range(3, 4), "{0..7}"); // 0,3,4,7 actually
+    checkBitwiseAnd(range(-20, 20), point(8), "{0, 8}");
+    checkBitwiseAnd(point(3).union(point(5)), point(3).union(point(5)), "{1, 3, 5}");
+    checkBitwiseAnd(range(-10, 10), range(-20, 5), "{-32..15}");
+    checkBitwiseAnd(range(-30, -20).union(range(20, 33)), point(-10).union(point(10)), "{-32..-26, 0..62}");
+  }
+
+  void checkBitwiseAnd(LongRangeSet range1, LongRangeSet range2, String expected) {
+    LongRangeSet result = range1.bitwiseAnd(range2);
+    assertEquals(expected, result.toString());
+    assertTrue(
+      range1.stream().mapToObj(l1 -> range2.stream().map(l2 -> l1 & l2)).flatMapToLong(Function.identity()).allMatch(result::contains));
   }
 }

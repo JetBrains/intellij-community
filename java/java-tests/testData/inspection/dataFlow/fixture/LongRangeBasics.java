@@ -151,4 +151,22 @@ public class LongRangeBasics {
   private int calcDistance(String s1, String s2) {
     return s1.length() - s2.length();
   }
+
+  public void testBitwiseAnd() {
+    int state = getState() & 0xF;
+    switch (state) {
+      <warning descr="Switch label 'case 24:' is unreachable">case 24:</warning>
+        System.out.println("Impossible");
+    }
+  }
+
+  public void testBitwiseAndOk() {
+    if((getState() & 0x1) == 0x1) {
+      System.out.println("ok");
+    }
+  }
+
+  private int getState() {
+    return (int)(Math.random() * 100);
+  }
 }

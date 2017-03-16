@@ -55,7 +55,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                       "or", "orElseGet", "orElseThrow", "ifPresent", "map", "flatMap", "filter", "transform");
   private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
-    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59));
+    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
+              LongRangeSet.range(0, Long.SIZE))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
+              LongRangeSet.range(0, Integer.SIZE));
 
   private final Set<BinopInstruction> myReachable = new THashSet<>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();
@@ -523,7 +527,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue dfaLeft = memState.pop();
 
     final IElementType opSign = instruction.getOperationSign();
-    if (opSign != null) {
+    if (ComparisonUtils.isComparisonOperation(opSign) || opSign == INSTANCEOF_KEYWORD) {
       DfaInstructionState[] states = handleConstantComparison(instruction, runner, memState, dfaRight, dfaLeft, opSign);
       if (states == null) {
         states = handleRangeComparison(instruction, runner, memState, dfaRight, dfaLeft, opSign);
@@ -534,20 +538,24 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (states != null) {
         return states;
       }
-
-      if (PLUS == opSign) {
-        memState.push(instruction.getNonNullStringValue(runner.getFactory()));
+    }
+    DfaValue result = null;
+    if (AND == opSign) {
+      LongRangeSet left = memState.getRange(dfaLeft);
+      LongRangeSet right = memState.getRange(dfaRight);
+      if(left != null && right != null) {
+        result = runner.getFactory().getRangeFactory().create(left.bitwiseAnd(right));
       }
-      else {
-        if (instruction instanceof InstanceofInstruction) {
-          handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);
-        }
-        memState.push(DfaUnknownValue.getInstance());
-      }
+    }
+    else if (PLUS == opSign) {
+      result = instruction.getNonNullStringValue(runner.getFactory());
     }
     else {
-      memState.push(DfaUnknownValue.getInstance());
+      if (instruction instanceof InstanceofInstruction) {
+        handleInstanceof((InstanceofInstruction)instruction, dfaRight, dfaLeft);
+      }
     }
+    memState.push(result == null ? DfaUnknownValue.getInstance() : result);
 
     instruction.setTrueReachable();  // Not a branching instruction actually.
     instruction.setFalseReachable();
