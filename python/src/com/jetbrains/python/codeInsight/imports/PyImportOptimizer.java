@@ -282,15 +282,14 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
       final PyImportStatementBase firstImport = myImportBlock.get(0);
       final List<PsiComment> boundComments = collectPrecedingLineComments(firstImport).getFirst();
-      final PsiElement insertionAnchor = boundComments.isEmpty() ? firstImport : boundComments.get(0);
-      addImportsBefore(insertionAnchor);
-      // Remove together with extra whitespaces preceding
-      final PsiElement nonWhitespaceBefore = PyPsiUtils.getPrevNonWhitespaceSibling(insertionAnchor);
-      myFile.deleteChildRange(nonWhitespaceBefore != null ? nonWhitespaceBefore.getNextSibling() : insertionAnchor, 
-                              ContainerUtil.getLastItem(myImportBlock));
+      final PsiElement firstElementToRemove = boundComments.isEmpty() ? firstImport : boundComments.get(0);
+      final PyImportStatementBase lastImport = ContainerUtil.getLastItem(myImportBlock);
+      assert lastImport != null;
+      addImportsAfter(lastImport);
+      myFile.deleteChildRange(firstElementToRemove, PyPsiUtils.getNextNonWhitespaceSibling(lastImport).getPrevSibling());
     }
 
-    private void addImportsBefore(@NotNull PsiElement anchor) {
+    private void addImportsAfter(@NotNull PsiElement anchor) {
       final StringBuilder content = new StringBuilder();
 
       for (List<PyImportStatementBase> imports : myGroups.values()) {
@@ -325,14 +324,12 @@ public class PyImportOptimizer implements ImportOptimizer {
 
       final Project project = anchor.getProject();
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-      PyFile file = (PyFile)generator.createDummyFile(LanguageLevel.forElement(anchor), content.toString());
-      file = (PyFile)CodeStyleManager.getInstance(project).reformat(file);
-      final List<PyImportStatementBase> newImportBlock = file.getImportBlock();
+      final PyFile file = (PyFile)generator.createDummyFile(LanguageLevel.forElement(anchor), content.toString());
+      final PyFile reformattedFile = (PyFile)CodeStyleManager.getInstance(project).reformat(file);
+      final List<PyImportStatementBase> newImportBlock = reformattedFile.getImportBlock();
       assert newImportBlock != null;
 
-      final PyImportStatementBase lastImport = ContainerUtil.getLastItem(newImportBlock);
-      assert lastImport != null;
-      myFile.addRangeBefore(file.getFirstChild(), file.getLastChild(), anchor);
+      myFile.addRangeAfter(reformattedFile.getFirstChild(), reformattedFile.getLastChild(), anchor);
     }
   }
 }

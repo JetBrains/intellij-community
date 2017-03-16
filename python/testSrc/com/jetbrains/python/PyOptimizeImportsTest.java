@@ -273,6 +273,7 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
   
+  // PY-23125
   public void testStackDanglingCommentsAtEnd() {
     doTest();
   }

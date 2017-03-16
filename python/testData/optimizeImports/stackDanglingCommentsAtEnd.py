@@ -4,6 +4,8 @@
 
 # comment after the top-level one
 
+
+
 # comment for b
 import b
 
