@@ -356,12 +356,24 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
     private void checkForEnum(PsiElement value, JsonSchemaObject schema) {
       //enum values + pattern -> don't check enum values
       if (schema.getEnum() == null || schema.getPattern() != null) return;
-      final String text = value.getText();
+      final String text = StringUtil.notNullize(value.getText());
       final List<Object> objects = schema.getEnum();
       for (Object object : objects) {
-        if (object.toString().equalsIgnoreCase(text)) return;
+        if (myWalker.onlyDoubleQuotesForStringLiterals()) {
+          if (object.toString().equalsIgnoreCase(text)) return;
+        } else {
+          if (equalsIgnoreQuotesAndCase(object.toString(), text)) return;
+        }
       }
       error("Value should be one of: [" + StringUtil.join(objects, o -> o.toString(), ", ") + "]", value);
+    }
+
+    private static boolean equalsIgnoreQuotesAndCase(@NotNull final String s1, @NotNull final String s2) {
+      final boolean quoted1 = StringUtil.isQuotedString(s1);
+      final boolean quoted2 = StringUtil.isQuotedString(s2);
+      if (quoted1 != quoted2) return false;
+      if (!quoted1) return s1.equalsIgnoreCase(s2);
+      return StringUtil.unquoteString(s1).equalsIgnoreCase(StringUtil.unquoteString(s2));
     }
 
     private void checkArray(JsonValueAdapter value, JsonSchemaObject schema) {

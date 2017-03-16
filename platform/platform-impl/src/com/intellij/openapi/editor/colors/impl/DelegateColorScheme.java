@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -40,6 +41,17 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     return myDelegate;
   }
 
+  @Nullable
+  @Override
+  public Map<TextAttributesKey, TextAttributes> getGeneratedTextAttributesCache() {
+    return myDelegate.getGeneratedTextAttributesCache();
+  }
+
+  @Override
+  public void dropGeneratedTextAttributesCache() {
+    myDelegate.dropGeneratedTextAttributesCache();
+  }
+  
   public void setDelegate(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;
   }
