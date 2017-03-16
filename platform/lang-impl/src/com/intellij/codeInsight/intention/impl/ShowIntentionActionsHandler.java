@@ -92,6 +92,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return;
     }
 
+    showIntentionHint(project, editor, file, intentions);
+  }
+
+  // added for override into Rider
+  @SuppressWarnings("WeakerAccess")
+  protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (!intentions.isEmpty()) {
       IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
     }

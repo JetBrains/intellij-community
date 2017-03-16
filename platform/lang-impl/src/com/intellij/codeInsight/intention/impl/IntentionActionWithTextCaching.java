@@ -34,7 +34,7 @@ import java.util.List;
 /**
 * @author cdr
 */
-class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider {
+public class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching");
   private final List<IntentionAction> myOptionIntentions = new ArrayList<>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<>();
@@ -78,7 +78,7 @@ class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTe
   }
 
   @NotNull
-  IntentionAction getAction() {
+  public IntentionAction getAction() {
     return myAction;
   }
 
