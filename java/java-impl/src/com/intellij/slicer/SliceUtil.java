@@ -16,6 +16,7 @@
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,10 +43,7 @@ import org.intellij.lang.annotations.Flow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author cdr
@@ -117,11 +115,20 @@ class SliceUtil {
         SliceUsage stopUsage = createTooComplexDFAUsage(expression, parent);
         return processor.process(stopUsage);
       }
-      final Set<PsiExpression> expressions = new THashSet<>(values);
       PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && expressions.isEmpty()) expressions.add(initializer);
+      if (values.isEmpty() && initializer != null) {
+        values = Collections.singletonList(initializer);
+      }
       boolean initializerReported = false;
-      for (PsiExpression exp : expressions) {
+      // no need to search and report assignments if we are going to report the variable anyway - it would create duplicate nodes if we did
+      if (values.isEmpty() && !(variable instanceof PsiParameter) && !needToReportDeclaration) {
+        values = DfaPsiUtil.getVariableAssignmentsInFile(variable, false, variable.getContainingFile().getLastChild());
+        initializerReported = !values.isEmpty();
+      }
+      else if (!values.isEmpty() && !(variable instanceof PsiParameter)) {
+        needToReportDeclaration = false; // already found all values
+      }
+      for (PsiExpression exp : values) {
         if (!handToProcessor(exp, processor, parent, parentSubstitutor, indexNesting, syntheticField)) return false;
         if (exp == initializer) initializerReported = true;
       }
