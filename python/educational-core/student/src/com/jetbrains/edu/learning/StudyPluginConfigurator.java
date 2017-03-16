@@ -16,17 +16,8 @@ public interface StudyPluginConfigurator {
   @NotNull
   DefaultActionGroup getActionGroup(Project project);
 
-  /**
-   * @return parameter for CodeMirror script. Available languages: @see <@linktourl http://codemirror.net/mode/>
-   */
-  @NotNull
-  default String getDefaultHighlightingMode(){return "";}
-
   @Nullable
   StudyAfterCheckAction[] getAfterCheckActions();
-  
-  @NotNull
-  default String getLanguageScriptUrl(){return "";}
 
   boolean accept(@NotNull final Project project);
 }

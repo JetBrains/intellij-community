@@ -54,4 +54,13 @@ public interface EduPluginConfigurator {
   }
 
   default void createTestsForNewSubtask(@NotNull Project project, @NotNull Task task) {}
+
+  /**
+   * @return parameter for CodeMirror script. Available languages: @see <@linktourl http://codemirror.net/mode/>
+   */
+  @NotNull
+  default String getDefaultHighlightingMode(){return "";}
+
+  @NotNull
+  default String getLanguageScriptUrl(){return "";}
 }

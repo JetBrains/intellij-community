@@ -17,18 +17,6 @@ public class PyStudyPluginConfigurator extends StudyBasePluginConfigurator {
     return group;
   }
 
-  @NotNull
-  @Override
-  public String getDefaultHighlightingMode() {
-    return "python";
-  }
-
-  @NotNull
-  @Override
-  public String getLanguageScriptUrl() {
-    return getClass().getResource("/python.js").toExternalForm();
-  }
-
   @Override
   public boolean accept(@NotNull Project project) {
     StudyTaskManager taskManager = StudyTaskManager.getInstance(project);

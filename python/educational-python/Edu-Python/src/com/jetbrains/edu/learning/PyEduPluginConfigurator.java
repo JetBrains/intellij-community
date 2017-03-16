@@ -109,4 +109,16 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
                                               index + "." +
                                               FileUtilRt.getExtension(EduNames.TESTS_FILE);
   }
+
+  @NotNull
+  @Override
+  public String getDefaultHighlightingMode() {
+    return "python";
+  }
+
+  @NotNull
+  @Override
+  public String getLanguageScriptUrl() {
+    return getClass().getResource("/python.js").toExternalForm();
+  }
 }
