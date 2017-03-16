@@ -82,6 +82,7 @@ public class ResolverFactoryImpl implements ResolverFactory {
     }
   }
 
+  // TODO: totally wrong. time changed => TraceElement changed too
   private static class MyIdentityResolver implements ValuesOrderResolver {
     @NotNull
     @Override
