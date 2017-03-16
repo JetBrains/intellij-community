@@ -1169,9 +1169,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public final boolean useStrongRefs() {
-    if (myTrees.useStrongRefs) return true;
-    return myViewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider &&
-           myViewProvider.getAllFiles().stream().anyMatch(root -> root instanceof PsiFileImpl && ((PsiFileImpl)root).myTrees.useStrongRefs);
+    return myTrees.useStrongRefs;
   }
 
   public boolean mayCacheAst() {
