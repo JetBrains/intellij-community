@@ -15,7 +15,7 @@ import java.io.File;
 /**
  * @author Vitaliy.Bibaev
  */
-public abstract class StreamChainBuilderFixtureTestCase extends LightCodeInsightTestCase {
+public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCase {
 
   @NotNull
   @Override
