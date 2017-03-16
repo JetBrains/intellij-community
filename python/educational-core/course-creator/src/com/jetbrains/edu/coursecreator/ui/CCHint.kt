@@ -25,7 +25,7 @@ class CCHint(private val myPlaceholder: AnswerPlaceholder?, project: Project) : 
   }
 
   private inner class EditHint : AnAction("Edit Hint", "Edit Hint", AllIcons.Modules.Edit) {
-    
+
     override fun actionPerformed(e: AnActionEvent?) {
       val dlg = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!.taskText,
                                                                                                     myPlaceholder.hints)
@@ -40,33 +40,6 @@ class CCHint(private val myPlaceholder: AnswerPlaceholder?, project: Project) : 
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = myPlaceholder != null
-    }
-  }
-
-  private inner class AddHint : AnAction("Add Hint", "Add Hint", AllIcons.General.Add) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      myPlaceholder!!.addHint(newHintDefaultText)
-      myShownHintNumber++
-      studyToolWindow.setText(newHintDefaultText)
-    }
-
-    override fun update(e: AnActionEvent?) {
-      e?.presentation?.isEnabled = !isEditingMode && myPlaceholder != null
-    }
-  }
-
-  private inner class RemoveHint : AnAction("Remove Hint", "Remove Hint", AllIcons.General.Remove) {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      myPlaceholder!!.removeHint(myShownHintNumber)
-      myShownHintNumber += if (myShownHintNumber < myPlaceholder.hints.size) 0 else -1
-      
-      setHintText(myPlaceholder.hints)
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = myPlaceholder != null && myPlaceholder.hints.size > 0 && !isEditingMode
     }
   }
 }
