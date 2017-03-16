@@ -32,18 +32,18 @@ import java.awt.event.ActionListener;
  * @author max
  */
 public class NotificationPopup {
-  public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
-    this(owner, content, backgroud, true);
+  public NotificationPopup(final JComponent owner, final JComponent content, Color background) {
+    this(owner, content, background, true);
   }
 
-  public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, boolean useDefaultPreferredSize) {
-    this(owner, content, backgroud, useDefaultPreferredSize, null, false);
+  public NotificationPopup(final JComponent owner, final JComponent content, Color background, boolean useDefaultPreferredSize) {
+    this(owner, content, background, useDefaultPreferredSize, null, false);
   }
 
-  public NotificationPopup(final JComponent owner, final JComponent content, Color backgroud, final boolean useDefaultPreferredSize, ActionListener clickHandler, boolean closeOnClick) {
+  public NotificationPopup(final JComponent owner, final JComponent content, Color background, final boolean useDefaultPreferredSize, ActionListener clickHandler, boolean closeOnClick) {
     final IdeFrame frame = findFrame(owner);
     if (frame == null || !((Window)frame).isShowing() || frame.getBalloonLayout() == null) {
-      new FramelessNotificationPopup(owner, content, backgroud, useDefaultPreferredSize, clickHandler);
+      new FramelessNotificationPopup(owner, content, background, useDefaultPreferredSize, clickHandler);
     } else {
       final Wrapper wrapper = new NonOpaquePanel(content) {
         @Override
@@ -65,7 +65,7 @@ public class NotificationPopup {
         .setHideOnFrameResize(false)
         .setHideOnKeyOutside(false)
         .setCloseButtonEnabled(true)
-        .setFillColor(backgroud)
+        .setFillColor(background)
         .setShowCallout(false)
         .setClickHandler(clickHandler, closeOnClick)
         .createBalloon();
