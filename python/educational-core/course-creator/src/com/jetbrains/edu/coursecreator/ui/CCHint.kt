@@ -13,8 +13,6 @@ import java.util.*
 
 class CCHint(private val myPlaceholder: AnswerPlaceholder?, project: Project) : StudyHint(myPlaceholder, project) {
 
-  private val newHintDefaultText = "Edit this hint"
-
   override fun getActions(): List<AnAction> {
     val result = ArrayList<AnAction>()
     result.add(GoBackward())
