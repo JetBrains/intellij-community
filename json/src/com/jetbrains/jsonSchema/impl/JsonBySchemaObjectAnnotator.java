@@ -77,6 +77,28 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
         checker.checkByScheme(firstProp.getValue(), schema, validatedProperties);
         checkers.add(checker);
       }
+
+      @Override
+      public void oneOf(boolean isName,
+                        @NotNull List<JsonSchemaObject> list,
+                        @NotNull VirtualFile schemaFile,
+                        @NotNull List<JsonSchemaWalker.Step> steps) {
+        final BySchemaChecker checker = new BySchemaChecker(walker);
+        final Set<String> validatedProperties = new HashSet<>();
+        checker.processOneOf(firstProp.getValue(), list, validatedProperties);
+        checkers.add(checker);
+      }
+
+      @Override
+      public void anyOf(boolean isName,
+                        @NotNull List<JsonSchemaObject> list,
+                        @NotNull VirtualFile schemaFile,
+                        @NotNull List<JsonSchemaWalker.Step> steps) {
+        final BySchemaChecker checker = new BySchemaChecker(walker);
+        final Set<String> validatedProperties = new HashSet<>();
+        checker.processAnyOf(firstProp.getValue(), list, validatedProperties);
+        checkers.add(checker);
+      }
     }, myRootSchema, mySchemaFile);
 
     if (checkers.isEmpty()) return;
@@ -181,15 +203,15 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
       if (value == null) return;
 
       if (schema.getAnyOf() != null && ! schema.getAnyOf().isEmpty()) {
-        processAnyOf(value, schema, validatedProperties);
-      }
-      if (schema.getOneOf() != null && ! schema.getOneOf().isEmpty()) {
-        processOneOf(value, schema, validatedProperties);
-      }
-      if (schema.getAllOf() != null && ! schema.getAllOf().isEmpty()) {
-        processAllOf(value, schema, validatedProperties);
-      }
+        processAnyOf(value, JsonSchemaWalker.mergeList(schema.getAnyOf(), schema, false), validatedProperties);
+      } else if (schema.getOneOf() != null && ! schema.getOneOf().isEmpty()) {
+        processOneOf(value, JsonSchemaWalker.mergeList(schema.getOneOf(), schema, true), validatedProperties);
+      } else if (schema.getAllOf() != null && ! schema.getAllOf().isEmpty()) {
+        checkByScheme(value, JsonSchemaWalker.mergeAll(schema), validatedProperties);
+      } else checkBySchemeBare(value, schema, validatedProperties);
+    }
 
+    private void checkBySchemeBare(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema, Set<String> validatedProperties) {
       final JsonSchemaType type = getType(value);
       if (type == null) {
         //typeError(value.getDelegate());
@@ -306,32 +328,56 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
 
         final Processor<JsonSchemaObject> processor = schemaObject -> {
           final List<JsonSchemaWalker.Step> steps = skipProperties(JsonOriginalPsiWalker.INSTANCE.findPosition(object, false, true));
-          JsonSchemaWalker.extractSchemaVariants(object.getProject(), (isName, schema, schemaFile1, steps1) -> {
-                                                   if (schemaFile.equals(schemaFile1)) {
-                                                     final Map<SmartPsiElementPointer<JsonObject>, String> invalidPatternProperties = schema.getInvalidPatternProperties();
-                                                     if (invalidPatternProperties != null) {
-                                                       for (Map.Entry<SmartPsiElementPointer<JsonObject>, String> entry : invalidPatternProperties.entrySet()) {
-                                                         final JsonObject element = entry.getKey().getElement();
-                                                         if (element == null || !element.isValid()) continue;
-                                                         final PsiElement parent = element.getParent();
-                                                         if (parent instanceof JsonProperty) {
-                                                           error(StringUtil.convertLineSeparators(entry.getValue()), ((JsonProperty)parent).getNameElement());
-                                                         }
-                                                       }
-                                                     }
-                                                     final String patternError = schema.getPatternError();
-                                                     if (patternError != null && schema.getPattern() != null) {
-                                                       final SmartPsiElementPointer<JsonObject> pointer = schema.getPeerPointer();
-                                                       final JsonObject element = pointer.getElement();
-                                                       if (element != null && element.isValid()) {
-                                                         final JsonProperty pattern = element.findProperty("pattern");
-                                                         if (pattern != null) {
-                                                           error(StringUtil.convertLineSeparators(patternError), pattern.getValue());
-                                                         }
-                                                       }
-                                                     }
-                                                   }
-                                                 },
+          final JsonSchemaWalker.CompletionSchemesConsumer consumer =
+            new JsonSchemaWalker.CompletionSchemesConsumer() {
+              @Override
+              public void consume(boolean isName,
+                                  @NotNull JsonSchemaObject schema,
+                                  @NotNull VirtualFile schemaFile1,
+                                  @NotNull List<JsonSchemaWalker.Step> steps1) {
+                if (schemaFile.equals(schemaFile1)) {
+                  final Map<SmartPsiElementPointer<JsonObject>, String> invalidPatternProperties = schema.getInvalidPatternProperties();
+                  if (invalidPatternProperties != null) {
+                    for (Map.Entry<SmartPsiElementPointer<JsonObject>, String> entry : invalidPatternProperties.entrySet()) {
+                      final JsonObject element = entry.getKey().getElement();
+                      if (element == null || !element.isValid()) continue;
+                      final PsiElement parent = element.getParent();
+                      if (parent instanceof JsonProperty) {
+                        error(StringUtil.convertLineSeparators(entry.getValue()), ((JsonProperty)parent).getNameElement());
+                      }
+                    }
+                  }
+                  final String patternError = schema.getPatternError();
+                  if (patternError != null && schema.getPattern() != null) {
+                    final SmartPsiElementPointer<JsonObject> pointer = schema.getPeerPointer();
+                    final JsonObject element = pointer.getElement();
+                    if (element != null && element.isValid()) {
+                      final JsonProperty pattern = element.findProperty("pattern");
+                      if (pattern != null) {
+                        error(StringUtil.convertLineSeparators(patternError), pattern.getValue());
+                      }
+                    }
+                  }
+                }
+              }
+
+              @Override
+              public void oneOf(boolean isName,
+                                @NotNull List<JsonSchemaObject> list,
+                                @NotNull VirtualFile schemaFile,
+                                @NotNull List<JsonSchemaWalker.Step> steps) {
+                list.forEach(s -> consume(isName, s, schemaFile, steps));
+              }
+
+              @Override
+              public void anyOf(boolean isName,
+                                @NotNull List<JsonSchemaObject> list,
+                                @NotNull VirtualFile schemaFile,
+                                @NotNull List<JsonSchemaWalker.Step> steps) {
+                list.forEach(s -> consume(isName, s, schemaFile, steps));
+              }
+            };
+          JsonSchemaWalker.extractSchemaVariants(object.getProject(), consumer,
                                                  schemaFile, schemaObject, false, steps, true);
           return true;
         };
@@ -558,15 +604,7 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
       }
     }
 
-    private void processAllOf(JsonValueAdapter value, JsonSchemaObject schema, Set<String> validatedProperties) {
-      final List<JsonSchemaObject> allOf = schema.getAllOf();
-      for (JsonSchemaObject object : allOf) {
-        checkByScheme(value, object, validatedProperties);
-      }
-    }
-
-    private void processOneOf(JsonValueAdapter value, JsonSchemaObject schema, Set<String> validatedProperties) {
-      final List<JsonSchemaObject> oneOf = schema.getOneOf();
+    private void processOneOf(JsonValueAdapter value, List<JsonSchemaObject> oneOf, Set<String> validatedProperties) {
       final Map<PsiElement, String> errors = new HashMap<>();
       int cntCorrect = 0;
       boolean validatedPropertiesAdded = false;
@@ -578,6 +616,7 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
         final HashSet<String> local = new HashSet<>();
         checker.checkByScheme(value, object, local);
         if (checker.isCorrect()) {
+          errors.clear();
           if (!validatedPropertiesAdded) {
             validatedPropertiesAdded = true;
             validatedProperties.addAll(local);
@@ -608,13 +647,12 @@ public class JsonBySchemaObjectAnnotator implements Annotator {
       return !checker.getErrors().containsKey(value);
     }
 
-    private void processAnyOf(JsonValueAdapter value, JsonSchemaObject schema, Set<String> validatedProperties) {
-      final List<JsonSchemaObject> anyOf = schema.getAnyOf();
+    private void processAnyOf(JsonValueAdapter value, List<JsonSchemaObject> anyOf, Set<String> validatedProperties) {
       final Map<PsiElement, String> errors = new HashMap<>();
       for (JsonSchemaObject object : anyOf) {
         final BySchemaChecker checker = new BySchemaChecker(myWalker);
         final HashSet<String> local = new HashSet<>();
-        checker.checkByScheme(value, object, local);
+        checker.checkBySchemeBare(value, object, local);
         if (checker.isCorrect()) {
           validatedProperties.addAll(local);
           return;

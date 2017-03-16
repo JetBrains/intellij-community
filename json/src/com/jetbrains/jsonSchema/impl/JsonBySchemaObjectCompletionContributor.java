@@ -134,6 +134,22 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
             suggestValues(schema);
           }
         }
+
+        @Override
+        public void oneOf(boolean isName,
+                          @NotNull List<JsonSchemaObject> list,
+                          @NotNull VirtualFile schemaFile,
+                          @NotNull List<JsonSchemaWalker.Step> steps) {
+          list.forEach(s -> consume(isName, s, schemaFile, steps));
+        }
+
+        @Override
+        public void anyOf(boolean isName,
+                          @NotNull List<JsonSchemaObject> list,
+                          @NotNull VirtualFile schemaFile,
+                          @NotNull List<JsonSchemaWalker.Step> steps) {
+          list.forEach(s -> consume(isName, s, schemaFile, steps));
+        }
       }, myRootSchema, mySchemaFile);
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);

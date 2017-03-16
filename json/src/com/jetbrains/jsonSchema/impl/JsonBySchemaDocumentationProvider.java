@@ -71,6 +71,22 @@ public class JsonBySchemaDocumentationProvider implements DocumentationProvider 
                           @NotNull List<JsonSchemaWalker.Step> steps) {
         result.set(schema.getDescription());
       }
+
+      @Override
+      public void oneOf(boolean isName,
+                        @NotNull List<JsonSchemaObject> list,
+                        @NotNull VirtualFile schemaFile,
+                        @NotNull List<JsonSchemaWalker.Step> steps) {
+        //todo?
+      }
+
+      @Override
+      public void anyOf(boolean isName,
+                        @NotNull List<JsonSchemaObject> list,
+                        @NotNull VirtualFile schemaFile,
+                        @NotNull List<JsonSchemaWalker.Step> steps) {
+        //todo?
+      }
     }, myRootSchema, mySchemaFile);
 
     return result.get();
