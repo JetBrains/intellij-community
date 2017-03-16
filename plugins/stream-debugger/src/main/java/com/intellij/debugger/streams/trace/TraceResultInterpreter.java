@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TraceInterpreter {
+public interface TraceResultInterpreter {
   @NotNull
   TracingResult interpret(@NotNull StreamChain chain, @NotNull Value evaluationResult);
 }
