@@ -10,12 +10,13 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class PrimitiveValueDescriptor extends InstanceValueDescriptor {
-  PrimitiveValueDescriptor(Project project, Value value) {
+  PrimitiveValueDescriptor(@NotNull Project project, @NotNull Value value) {
     super(project, value);
   }
 
@@ -26,7 +27,12 @@ public class PrimitiveValueDescriptor extends InstanceValueDescriptor {
       return super.calcValueName();
     }
 
-    return value.toString();
+    return value.type().name();
+  }
+
+  @Override
+  public boolean isShowIdLabel() {
+    return true;
   }
 
   @Override
