@@ -72,6 +72,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -96,6 +97,31 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this) {
+      {
+        if (hasUnderlineSelection()) {
+          IdeEventQueue.getInstance().addDispatcher(createFocusDispatcher(), this);
+        }
+      }
+
+      private IdeEventQueue.EventDispatcher createFocusDispatcher() {
+        return e -> {
+          if (e instanceof FocusEvent) {
+            Component from = ((FocusEvent)e).getOppositeComponent();
+            Component to = ((FocusEvent)e).getComponent();
+            if (isChild(from) || isChild(to)) {
+              myTabs.repaint();
+            }
+          }
+          return false;
+        };
+      }
+
+      private boolean isChild(@Nullable Component c) {
+        if (c == null) return false;
+        if (c == this) return true;
+        return isChild(c.getParent());
+      }
+
       @Override
       public boolean hasUnderlineSelection() {
         return UIUtil.isUnderDarcula() && Registry.is("ide.new.editor.tabs.selection");
