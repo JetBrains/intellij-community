@@ -1,6 +1,6 @@
 package com.intellij.debugger.streams.trace.smart.resolve.impl;
 
-import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
+import com.intellij.debugger.streams.trace.smart.resolve.CallTraceResolver;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,12 +18,12 @@ public class ResolverFactory {
     return Holder.INSTANCE;
   }
 
-  public TraceResolver getResolver(@NotNull String callName) {
+  public CallTraceResolver getResolver(@NotNull String callName) {
     switch (callName) {
       case "distinct":
-        return new DistinctResolver();
+        return new DistinctCallTraceResolver();
       default:
-        return new SimplePeekResolver();
+        return new SimplePeekCallTraceResolver();
     }
   }
 }

@@ -2,8 +2,8 @@ package com.intellij.debugger.streams.trace.smart.resolve.impl;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
 import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
+import com.intellij.debugger.streams.trace.smart.resolve.CallTraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
-import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueException;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.ArrayReference;
@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * @author Vitaliy.Bibaev
  */
-public class SimplePeekResolver implements TraceResolver {
+public class SimplePeekCallTraceResolver implements CallTraceResolver {
   @NotNull
   @Override
   public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {

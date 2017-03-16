@@ -1,8 +1,8 @@
 package com.intellij.debugger.streams.trace.smart.resolve.impl;
 
 import com.intellij.debugger.streams.trace.smart.TraceElement;
+import com.intellij.debugger.streams.trace.smart.resolve.CallTraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
-import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedArrayLengthException;
 import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueException;
 import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueTypeException;
@@ -18,8 +18,8 @@ import java.util.*;
 /**
  * @author Vitaliy.Bibaev
  */
-public class DistinctResolver implements TraceResolver {
-  private final TraceResolver myPeekResolver = new SimplePeekResolver();
+public class DistinctCallTraceResolver implements CallTraceResolver {
+  private final CallTraceResolver myPeekResolver = new SimplePeekCallTraceResolver();
 
   private enum Direction {
     DIRECT, REVERSE

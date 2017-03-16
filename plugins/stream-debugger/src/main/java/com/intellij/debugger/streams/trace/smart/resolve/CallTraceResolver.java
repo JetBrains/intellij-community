@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TraceResolver {
+public interface CallTraceResolver {
   @NotNull
   TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value);
 }
