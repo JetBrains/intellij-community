@@ -32,6 +32,7 @@ public interface JsonLikePsiWalker {
   PsiElement goUpToCheckable(@NotNull final PsiElement element);
   List<JsonSchemaWalker.Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition);
   boolean isNameQuoted();
+  boolean onlyDoubleQuotesForStringLiterals();
   boolean hasPropertiesBehindAndNoComma(@NotNull PsiElement element);
   Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element);
   @Nullable JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element);
