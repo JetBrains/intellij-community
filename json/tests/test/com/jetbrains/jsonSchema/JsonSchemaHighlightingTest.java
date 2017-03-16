@@ -259,12 +259,12 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   @SuppressWarnings("Duplicates")
   public void testAllOf() throws Exception {
     final List<String> subSchemas = new ArrayList<>();
-    subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
-    subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"c\"]}");
+    subSchemas.add("{\"type\": \"integer\", \"\"multipleOf\": 2}");
+    subSchemas.add("{\"enum\": [1,2,3]}");
     final String schema = schema("{\"allOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
-    testImpl(schema, "{\"prop\": <warning descr=\"Value should be one of: [\\\"a\\\", \\\"c\\\"]\">\"b\"</warning>}");
-    testImpl(schema, "{\"prop\": <warning descr=\"Value should be one of: [\\\"a\\\", \\\"b\\\"]\">\"c\"</warning>}");
-    testImpl(schema, "{\"prop\": \"a\"}");
+    testImpl(schema, "{\"prop\": 1}");
+    testImpl(schema, "{\"prop\": 4}");
+    testImpl(schema, "{\"prop\": 2}");
   }
 
   public void testObjectInArray() throws Exception {
@@ -297,7 +297,7 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     final String schema = "{\"allOf\": [{\"type\": \"object\", \"properties\": {\"first\": {}}}," +
                           " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
     testImpl(schema, "{\"first\": {}, \"second\": null}");
-    testImpl(schema, "{\"first\": {}, \"second\": 44, \"other\": 15}");
+    testImpl(schema, "{\"first\": {}, \"second\": 44, <warning descr=\"Property 'other' is not allowed\">\"other\": 15</warning>}");
     testImpl(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: [33, 44]\">12</warning>}");
   }
 
@@ -313,6 +313,18 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   public void testIntegerTypeWithMinMax() throws Exception {
     String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/integerTypeWithMinMax_schema.json"));
     String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/integerTypeWithMinMax.json"));
+    testImpl(schemaText, inputText);
+  }
+
+  public void testOneOf1() throws Exception {
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOfSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOf1.json"));
+    testImpl(schemaText, inputText);
+  }
+
+  public void testOneOf2() throws Exception {
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOfSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOf2.json"));
     testImpl(schemaText, inputText);
   }
 
