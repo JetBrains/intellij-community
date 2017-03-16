@@ -27,13 +27,13 @@ class CCHint(private val myPlaceholder: AnswerPlaceholder?, project: Project) : 
   private inner class EditHint : AnAction("Edit Hint", "Edit Hint", AllIcons.Modules.Edit) {
 
     override fun actionPerformed(e: AnActionEvent?) {
-      val dlg = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!.taskText,
-                                                                                                    myPlaceholder.hints)
+      val dlg = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!.taskText, myPlaceholder.hints)
       dlg.title = "Edit Answer Placeholder"
       if (dlg.showAndGet()) {
         val answerPlaceholderText = dlg.taskText
         myPlaceholder.taskText = answerPlaceholderText
-        myPlaceholder.length = if (myPlaceholder.activeSubtaskInfo.isNeedInsertText) 0 else StringUtil.notNullize(answerPlaceholderText).length
+        myPlaceholder.length = if (myPlaceholder.activeSubtaskInfo.isNeedInsertText) 0
+        else StringUtil.notNullize(answerPlaceholderText).length
         myPlaceholder.hints = dlg.hints
       }
     }
