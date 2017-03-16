@@ -58,7 +58,7 @@ public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvi
     SpellCheckerManager manager = SpellCheckerManager.getInstance(project);
 
     manager.getSuggestions(text).stream()
-      .filter(newName -> RenameUtil.isValidName(project, nameSuggestionContext, newName))
+      .filter(newName -> RenameUtil.isValidName(project, element, newName))
       .forEach(result::add);
 
     return SuggestedNameInfo.NULL_INFO;
