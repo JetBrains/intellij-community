@@ -79,7 +79,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
             shouldCloseAllPopup = true;
           }
         }
-        if (!shouldCloseAllPopup && isPopupWindow(sourceWindow) && sourceWindow.getParent() == ultimateParentForFocusedComponent) {
+        if (!shouldCloseAllPopup && isPopupWindow(sourceWindow) && sourceWindow.getParent() == UIUtil.getWindow(focused)) {
           shouldCloseAllPopup = true;
         }
 
