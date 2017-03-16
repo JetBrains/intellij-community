@@ -16,12 +16,18 @@
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
@@ -40,6 +46,8 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  * @author Pavel.Dolgov
  */
 public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalInspectionTool {
+  public static final Key<List<String>> DEFAULT_SIGNATURE = Key.create("DEFAULT_SIGNATURE");
+
   private static final String METHOD_TYPE = "methodType";
   private static final String GENERIC_METHOD_TYPE = "genericMethodType";
 
@@ -123,28 +131,33 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
   }
 
   private static void checkConstructor(@NotNull PsiClass ownerClass,
-                                       @NotNull PsiExpression methodTypeExpression,
+                                       @NotNull PsiExpression constructorTypeExpression,
                                        @NotNull ProblemsHolder holder) {
-    final List<String> methodSignature = composeMethodSignature(methodTypeExpression);
-    if (methodSignature != null) {
+    final List<String> constructorSignature = composeMethodSignature(constructorTypeExpression);
+    if (constructorSignature != null) {
       final List<PsiMethod> constructors = ContainerUtil.filter(ownerClass.getMethods(), PsiMethod::isConstructor);
-      LocalQuickFix[] fixes = null;
+      List<List<String>> validSignatures = null;
       if (constructors.isEmpty()) {
-        if (!methodSignature.equals(NO_ARGUMENT_CONSTRUCTOR_SIGNATURE)) {
-          final LocalQuickFix fix = ReplaceSignatureQuickFix.createConstructorSignatureFix(ownerClass, NO_ARGUMENT_CONSTRUCTOR_SIGNATURE);
-          fixes = fix != null ? new LocalQuickFix[]{fix} : LocalQuickFix.EMPTY_ARRAY;
+        if (!constructorSignature.equals(NO_ARGUMENT_CONSTRUCTOR_SIGNATURE)) {
+          validSignatures = Collections.singletonList(NO_ARGUMENT_CONSTRUCTOR_SIGNATURE);
         }
       }
-      else if (!matchMethodSignature(constructors, methodSignature)) {
-        fixes = constructors.stream()
-          .map(constructor -> ReplaceSignatureQuickFix.createConstructorSignatureFix(ownerClass, constructor))
+      else if (!matchMethodSignature(constructors, constructorSignature)) {
+        validSignatures = constructors.stream()
+          .map(JavaLangInvokeHandleSignatureInspection::getMethodSignature)
           .filter(Objects::nonNull)
-          .toArray(LocalQuickFix[]::new);
+          .collect(Collectors.toList());
       }
-      if (fixes != null) {
-        final String declarationText = getConstructorDeclarationText(ownerClass, methodSignature);
+      if (validSignatures != null) {
+        final String declarationText = getConstructorDeclarationText(ownerClass, constructorSignature);
         if (declarationText != null) {
-          holder.registerProblem(methodTypeExpression, JavaErrorMessages.message("cannot.resolve.constructor", declarationText), fixes);
+          LocalQuickFix fix = null;
+          final String ownerClassName = ownerClass.getName();
+          if (ownerClassName != null) {
+            fix = ReplaceSignatureQuickFix
+              .createFix(constructorTypeExpression, ownerClassName, validSignatures, true, holder.isOnTheFly());
+          }
+          holder.registerProblem(constructorTypeExpression, JavaErrorMessages.message("cannot.resolve.constructor", declarationText), fix);
         }
       }
     }
@@ -170,7 +183,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
         final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStatic);
         final String message = InspectionsBundle.message(
           isStatic ? "inspection.handle.signature.field.static" : "inspection.handle.signature.field.not.static", fieldName);
-        holder.registerProblem(factoryMethodNameElement, message, fix != null ? new LocalQuickFix[]{fix} : LocalQuickFix.EMPTY_ARRAY);
+        holder.registerProblem(factoryMethodNameElement, message, fix);
         return;
       }
     }
@@ -208,7 +221,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
         final LocalQuickFix fix = SwitchStaticnessQuickFix.createFix(factoryMethodName, isStatic);
         final String message = InspectionsBundle.message(
           isStatic ? "inspection.handle.signature.method.static" : "inspection.handle.signature.method.not.static", methodName);
-        holder.registerProblem(factoryMethodNameElement, message, fix != null ? new LocalQuickFix[]{fix} : LocalQuickFix.EMPTY_ARRAY);
+        holder.registerProblem(factoryMethodNameElement, message, fix);
         return;
       }
     }
@@ -216,37 +229,39 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     final List<String> methodSignature = composeMethodSignature(methodTypeExpression);
     if (methodSignature != null && !matchMethodSignature(filteredMethods, methodSignature)) {
       final String declarationText = getMethodDeclarationText(methodName, methodSignature);
-      if (declarationText != null) {
-        final LocalQuickFix[] fixes = filteredMethods.stream()
-          .map(ReplaceSignatureQuickFix::createMethodSignatureFix)
-          .filter(Objects::nonNull)
-          .toArray(LocalQuickFix[]::new);
-
-        holder.registerProblem(methodTypeExpression, JavaErrorMessages.message("cannot.resolve.method", declarationText), fixes);
-      }
+      final List<List<String>> validSignatures = filteredMethods.stream()
+        .map(JavaLangInvokeHandleSignatureInspection::getMethodSignature)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+      final LocalQuickFix fix =
+        ReplaceSignatureQuickFix.createFix(methodTypeExpression, methodName, validSignatures, false, holder.isOnTheFly());
+      holder.registerProblem(methodTypeExpression, JavaErrorMessages.message("cannot.resolve.method", declarationText), fix);
     }
   }
 
-  @Nullable
+  @NotNull
   private static String getMethodDeclarationText(@NotNull String name, @NotNull List<String> methodSignature) {
-    if (methodSignature.isEmpty()) {
-      return null;
-    }
     final String argumentTypes = methodSignature.stream().skip(1).collect(Collectors.joining(", "));
-    return methodSignature.get(0) + " " + name + "(" + argumentTypes + ")";
+    final String returnType = !methodSignature.isEmpty() ? methodSignature.get(0) : "";
+    return returnType + " " + name + "(" + argumentTypes + ")";
   }
 
   @Nullable
   private static String getConstructorDeclarationText(@NotNull PsiClass ownerClass, @NotNull List<String> methodSignature) {
-    final String name = ownerClass.getName();
-    if (name == null || methodSignature.isEmpty()) {
-      return null;
+    final String className = ownerClass.getName();
+    if (className != null && !methodSignature.isEmpty()) {
+      return getConstructorDeclarationText(className, methodSignature);
     }
+    return null;
+  }
+
+  @NotNull
+  private static String getConstructorDeclarationText(@NotNull String className, @NotNull List<String> methodSignature) {
     // Return type of the constructor should be 'void'. If it isn't so let's make that mistake more noticeable.
     final String returnType = methodSignature.get(0);
     final String fakeReturnType = !PsiKeyword.VOID.equals(returnType) ? returnType + " " : "";
     final String argumentTypes = methodSignature.stream().skip(1).collect(Collectors.joining(", "));
-    return fakeReturnType + name + "(" + argumentTypes + ")";
+    return fakeReturnType + className + "(" + argumentTypes + ")";
   }
 
   private static boolean matchMethodSignature(@NotNull List<PsiMethod> methods, @NotNull List<String> expectedMethodSignature) {
@@ -410,62 +425,127 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     }
   }
 
-  private static class ReplaceSignatureQuickFix implements LocalQuickFix {
-    private final String myFixName;
-    private final List<String> myMethodSignature;
+  private static class ReplaceSignatureQuickFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+    private String myName;
+    private List<List<String>> mySignatures;
+    private boolean myIsConstructor;
 
-    public ReplaceSignatureQuickFix(@NotNull String fixName, @NotNull List<String> methodSignature) {
-      myFixName = fixName;
-      myMethodSignature = methodSignature;
+    public ReplaceSignatureQuickFix(@Nullable PsiElement element,
+                                    @NotNull String name,
+                                    @NotNull List<List<String>> signatures,
+                                    boolean isConstructor) {
+      super(element);
+      myName = name;
+      mySignatures = signatures;
+      myIsConstructor = isConstructor;
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return myFixName;
+      return getText();
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      if (mySignatures.size() == 1) {
+        final String declarationText = getDeclarationText(mySignatures.get(0));
+        return InspectionsBundle.message(myIsConstructor
+                                         ? "inspection.handle.signature.use.constructor.fix.name"
+                                         : "inspection.handle.signature.use.method.fix.name",
+                                         declarationText);
+      }
+      return InspectionsBundle.message(myIsConstructor
+                                       ? "inspection.handle.signature.use.constructor.fix.family.name"
+                                       : "inspection.handle.signature.use.method.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable Editor editor,
+                       @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final PsiElement element = myStartElement.getElement();
+        if (editor != null && element != null) {
+          final List<String> signature = editor.getUserData(DEFAULT_SIGNATURE);
+          if (signature != null && mySignatures.contains(signature)) {
+            applyFix(project, element, signature);
+          }
+        }
+        return;
+      }
 
-      final String types = myMethodSignature.stream()
-        .map(text -> text + ".class")
-        .collect(Collectors.joining(", "));
-      final String text = JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + "(" + types + ")";
+      if (mySignatures.size() == 1) {
+        applyFix(project, startElement, mySignatures.get(0));
+      }
+      else if (editor != null) {
+        showLookup(project, editor);
+      }
+    }
 
+    private void showLookup(@NotNull Project project, @NotNull Editor editor) {
+      final List<LookupElement> items = mySignatures.stream()
+        .map(signature -> LookupElementBuilder.create(signature, "")
+          .withIcon(PlatformIcons.METHOD_ICON)
+          .withPresentableText(getDeclarationText(signature)))
+        .collect(Collectors.toList());
+
+      // Unfortunately, LookupManager.showLookup() doesn't invoke InsertHandler. A workaround with LookupListener is used.
+      // To let the workaround work we need to make sure that noting is actually replaced by the default behavior of showLookup().
+      editor.getSelectionModel().removeSelection();
+
+      final LookupManager lookupManager = LookupManager.getInstance(project);
+      final LookupEx lookup = lookupManager.showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
+      if (lookup != null) {
+        lookup.addLookupListener(new LookupAdapter() {
+          @Override
+          public void itemSelected(LookupEvent event) {
+            final LookupElement item = event.getItem();
+            if (item != null) {
+              final PsiElement element = myStartElement.getElement();
+              final Object object = item.getObject();
+              if (element != null && object instanceof List) {
+                @SuppressWarnings("unchecked") final List<String> signature = (List<String>)object;
+                WriteAction.run(() -> applyFix(project, element, signature));
+              }
+            }
+          }
+        });
+      }
+    }
+
+    private static void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull List<String> signature) {
+      final String replacementText = getReplacementText(signature);
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      final PsiExpression replacement = factory.createExpressionFromText(text, element);
+      final PsiExpression replacement = factory.createExpressionFromText(replacementText, element);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       styleManager.shortenClassReferences(element.replace(replacement));
     }
 
-    @Nullable
-    public static LocalQuickFix createMethodSignatureFix(@Nullable PsiMethod method) {
-      final List<String> methodSignature = getMethodSignature(method);
-      if (methodSignature != null) {
-        final String declarationText = getMethodDeclarationText(method.getName(), methodSignature);
-        if (declarationText != null) {
-          final String message = InspectionsBundle.message("inspection.handle.signature.use.method.fix.name", declarationText);
-          return new ReplaceSignatureQuickFix(message, methodSignature);
-        }
-      }
-      return null;
+    @NotNull
+    private String getDeclarationText(@NotNull List<String> signature) {
+      return myIsConstructor ? getConstructorDeclarationText(myName, signature) : getMethodDeclarationText(myName, signature);
+    }
+
+    @NotNull
+    private static String getReplacementText(@NotNull List<String> signature) {
+      final String types = signature.stream()
+        .map(text -> text + ".class")
+        .collect(Collectors.joining(", "));
+      return JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + "(" + types + ")";
     }
 
     @Nullable
-    public static LocalQuickFix createConstructorSignatureFix(@NotNull PsiClass ownerClass, @Nullable PsiMethod constructor) {
-      final List<String> methodSignature = getMethodSignature(constructor);
-      return methodSignature != null ? createConstructorSignatureFix(ownerClass, methodSignature) : null;
-    }
-
-    @Nullable
-    public static LocalQuickFix createConstructorSignatureFix(@NotNull PsiClass ownerClass, @NotNull List<String> methodSignature) {
-      final String declarationText = getConstructorDeclarationText(ownerClass, methodSignature);
-      if (declarationText != null) {
-        final String message = InspectionsBundle.message("inspection.handle.signature.use.constructor.fix.name", declarationText);
-        return new ReplaceSignatureQuickFix(message, methodSignature);
+    private static LocalQuickFix createFix(@Nullable PsiElement element,
+                                           @NotNull String methodName,
+                                           @NotNull List<List<String>> methodSignatures,
+                                           boolean isConstructor, boolean isOnTheFly) {
+      if (isOnTheFly && !methodSignatures.isEmpty() || methodSignatures.size() == 1) {
+        return new ReplaceSignatureQuickFix(element, methodName, methodSignatures, isConstructor);
       }
       return null;
     }
