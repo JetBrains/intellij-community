@@ -16,28 +16,18 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
-import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayBePackageInfoInspectionBase {
 
@@ -60,28 +50,12 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
         return;
       }
-      final XmlFile xmlFile = (XmlFile)element;
-      new WriteCommandAction.Simple(project, InspectionGadgetsBundle.message("package.dot.html.delete.command"), xmlFile) {
-        @Override
-        protected void run() throws Throwable {
-          element.delete();
-        }
-
-        @Override
-        protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-          return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-        }
-      }.execute();
+      element.delete();
     }
   }
 
@@ -100,11 +74,6 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
     protected void doFix(final Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
@@ -115,86 +84,64 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
       if (directory == null) {
         return;
       }
-      final PsiFile file = directory.findFile("package-info.java");
+      final PsiFile file = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (file != null) {
         return;
       }
-      new WriteCommandAction.Simple(project, InspectionGadgetsBundle.message("package.dot.html.convert.command"), xmlFile) {
-        @Override
-        protected void run() throws Throwable {
-          final PsiJavaFile packageInfoFile = (PsiJavaFile)directory.createFile("package-info.java");
-          CommandProcessor.getInstance().addAffectedFiles(project, packageInfoFile.getVirtualFile());
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-          String packageInfoText = getPackageInfoText(xmlFile);
-          if (packageInfoText == null) {
-            packageInfoText = xmlFile.getText();
-          }
-          final StringBuilder commentText = new StringBuilder("/**\n");
-          final String[] lines = StringUtil.splitByLines(packageInfoText);
-          boolean appended = false;
-          for (String line : lines) {
-            if (!appended && line.isEmpty()) {
-              // skip empty lines at the beginning
-              continue;
-            }
-            commentText.append(" * ").append(line).append('\n');
-            appended = true;
-          }
-          commentText.append("*/");
-          final PsiDocComment comment = elementFactory.createDocCommentFromText(commentText.toString());
-          if (!aPackage.isEmpty()) {
-            final PsiPackageStatement packageStatement = elementFactory.createPackageStatement(aPackage);
-            final PsiElement addedElement = packageInfoFile.add(packageStatement);
-            packageInfoFile.addBefore(comment, addedElement);
-          }
-          else {
-            packageInfoFile.add(comment);
-          }
-          xmlFile.delete();
-          if (!isOnTheFly()) {
-            return;
-          }
-          final AsyncResult<DataContext> dataContextFromFocus = DataManager.getInstance().getDataContextFromFocus();
-          dataContextFromFocus.doWhenDone(new Consumer<DataContext>() {
-              @Override
-              public void consume(DataContext dataContext) {
-                final FileEditorManager editorManager = FileEditorManager.getInstance(project);
-                final VirtualFile virtualFile = packageInfoFile.getVirtualFile();
-                if (virtualFile == null) {
-                  return;
-                }
-                editorManager.openFile(virtualFile, true);
-              }
-            }
-          );
-        }
-
-        @Override
-        protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-          return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-        }
-      }.execute();
+      final String packageInfoText = getPackageInfoText(xmlFile);
+      final PsiJavaFile packageInfoFile = (PsiJavaFile)directory.createFile(PsiPackage.PACKAGE_INFO_FILE);
+      final String commentText = buildCommentText(packageInfoText);
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      final PsiDocComment comment = elementFactory.createDocCommentFromText(commentText);
+      if (!aPackage.isEmpty()) {
+        final PsiPackageStatement packageStatement = elementFactory.createPackageStatement(aPackage);
+        final PsiElement addedElement = packageInfoFile.add(packageStatement);
+        packageInfoFile.addBefore(comment, addedElement);
+      }
+      else {
+        packageInfoFile.add(comment);
+      }
+      xmlFile.delete();
+      if (isOnTheFly()) {
+        packageInfoFile.navigate(true);
+      }
     }
 
-    @Nullable
-    static String getPackageInfoText(XmlFile xmlFile) {
-      final XmlTag rootTag = xmlFile.getRootTag();
-      if (rootTag == null) {
-        return null;
-      }
-      final PsiElement[] children = rootTag.getChildren();
-      for (PsiElement child : children) {
-        if (!(child instanceof HtmlTag)) {
+    @NotNull
+    private static String buildCommentText(String packageInfoText) {
+      final StringBuilder commentText = new StringBuilder("/**\n");
+      final String[] lines = StringUtil.splitByLines(packageInfoText);
+      boolean appended = false;
+      for (String line : lines) {
+        if (!appended && line.isEmpty()) {
+          // skip empty lines at the beginning
           continue;
         }
-        final HtmlTag htmlTag = (HtmlTag)child;
-        @NonNls final String name = htmlTag.getName();
-        if ("body".equalsIgnoreCase(name)) {
-          final XmlTagValue value = htmlTag.getValue();
-          return value.getText();
+        commentText.append(" * ").append(line).append('\n');
+        appended = true;
+      }
+      commentText.append("*/");
+      return commentText.toString();
+    }
+
+    @NotNull
+    static String getPackageInfoText(XmlFile xmlFile) {
+      final XmlTag rootTag = xmlFile.getRootTag();
+      if (rootTag != null) {
+        final PsiElement[] children = rootTag.getChildren();
+        for (PsiElement child : children) {
+          if (!(child instanceof HtmlTag)) {
+            continue;
+          }
+          final HtmlTag htmlTag = (HtmlTag)child;
+          @NonNls final String name = htmlTag.getName();
+          if ("body".equalsIgnoreCase(name)) {
+            final XmlTagValue value = htmlTag.getValue();
+            return value.getText();
+          }
         }
       }
-      return null;
+      return xmlFile.getText();
     }
   }
 }
