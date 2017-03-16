@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.turnRefsToSuper;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -33,8 +35,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class TurnRefsToSuperHandler implements RefactoringActionHandler {
+public class TurnRefsToSuperHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("use.interface.where.possible.title");
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    return !PsiUtil.isModuleFile(file);
+  }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {

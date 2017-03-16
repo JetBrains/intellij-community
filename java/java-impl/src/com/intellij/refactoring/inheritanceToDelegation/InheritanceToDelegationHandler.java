@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.inheritanceToDelegation;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -45,7 +47,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class InheritanceToDelegationHandler implements RefactoringActionHandler {
+public class InheritanceToDelegationHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler");
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.inheritance.with.delegation.title");
@@ -63,6 +65,11 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
       return false;
     }
   };
+
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    return !PsiUtil.isModuleFile(file);
+  }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
