@@ -115,7 +115,6 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
   }
 
   @NotNull
-  @Nullable
   public ProblemDescriptor[] checkElement(@NotNull final PsiElement psiElement, @NotNull final InspectionManager manager) {
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<>();
     psiElement.accept(new JavaRecursiveElementWalkingVisitor() {

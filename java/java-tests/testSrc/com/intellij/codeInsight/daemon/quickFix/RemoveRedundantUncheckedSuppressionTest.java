@@ -31,6 +31,7 @@ public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixParame
     final PossibleHeapPollutionVarargsInspection varargsInspection = new PossibleHeapPollutionVarargsInspection();
     final UncheckedWarningLocalInspection warningLocalInspection = new UncheckedWarningLocalInspection();
     final RedundantSuppressInspection inspection = new RedundantSuppressInspection(){
+      @NotNull
       @Override
       protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
         return new InspectionToolWrapper[]{
