@@ -18,7 +18,9 @@ package org.jetbrains.idea.devkit.module;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -31,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
-import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -77,12 +79,22 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   public static XmlFile getPluginXml(Module module) {
     if (module == null) return null;
     if (!isOfType(module)) {
-      for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
-        final VirtualFile pluginXmlVF = file.findFileByRelativePath(PluginDescriptorConstants.PLUGIN_XML_PATH);
-        if (pluginXmlVF != null) {
-          final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(pluginXmlVF);
-          if (psiFile instanceof XmlFile) {
-            return (XmlFile)psiFile;
+      for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        for (final SourceFolder folder : entry.getSourceFolders(JavaModuleSourceRootTypes.PRODUCTION)) {
+          final VirtualFile file = folder.getFile();
+          if (file == null) continue;
+
+          final String packagePrefix = folder.getPackagePrefix();
+          final String prefixPath = packagePrefix.isEmpty() ? "" :
+                                    packagePrefix.replace('.', '/') + '/';
+
+          final String relativePath = prefixPath + PluginDescriptorConstants.PLUGIN_XML_PATH;
+          final VirtualFile pluginXmlVF = file.findFileByRelativePath(relativePath);
+          if (pluginXmlVF != null) {
+            final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(pluginXmlVF);
+            if (psiFile instanceof XmlFile) {
+              return (XmlFile)psiFile;
+            }
           }
         }
       }
