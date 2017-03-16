@@ -1,21 +1,19 @@
-package org.jetbrains.builtInWebServer;
+package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 
-public abstract class WebServerRootsProvider {
-  public static final ExtensionPointName<WebServerRootsProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.webServerRootsProvider");
+data class PathQuery(val searchInLibs: Boolean = true, val searchInArtifacts: Boolean = true, val useHtaccess: Boolean = true, val useVfs: Boolean = true)
 
-  @Nullable
-  public abstract PathInfo resolve(@NotNull String path, @NotNull Project project);
-
-  @Nullable
-  public abstract PathInfo getPathInfo(@NotNull VirtualFile file, @NotNull Project project);
-
-  public boolean isClearCacheOnFileContentChanged(@NotNull VirtualFile file) {
-    return false;
+abstract class WebServerRootsProvider {
+  companion object {
+    val EP_NAME = ExtensionPointName.create<WebServerRootsProvider>("org.jetbrains.webServerRootsProvider")
   }
+  
+  abstract fun resolve(path: String, project: Project, pathQuery: PathQuery): PathInfo?
+
+  abstract fun getPathInfo(file: VirtualFile, project: Project): PathInfo?
+
+  open fun isClearCacheOnFileContentChanged(file: VirtualFile) = false
 }
