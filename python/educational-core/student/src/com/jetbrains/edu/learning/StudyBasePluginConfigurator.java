@@ -4,7 +4,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.actions.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class StudyBasePluginConfigurator implements StudyPluginConfigurator {
   @NotNull
@@ -25,12 +24,4 @@ public abstract class StudyBasePluginConfigurator implements StudyPluginConfigur
     group.add(new StudyEditInputAction());
     return group;
   }
-
-  @Nullable
-  @Override
-  public StudyAfterCheckAction[] getAfterCheckActions() {
-    return null;
-  }
-
-
 }

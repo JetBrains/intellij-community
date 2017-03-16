@@ -32,7 +32,7 @@
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
-    <studyActionListener implementation="com.jetbrains.edu.coursecreator.CCStudyActionListener"/>
+    <checkListener implementation="com.jetbrains.edu.coursecreator.CCCheckListener"/>
     <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
     <studySubtaskChangeListener implementation="com.jetbrains.edu.coursecreator.CCSubtaskChangeListener"/>
     <studyPluginConfigurator implementation="com.jetbrains.edu.coursecreator.CCPluginConfigurator" />

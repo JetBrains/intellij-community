@@ -1,6 +1,7 @@
 package com.jetbrains.edu.learning.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.extensions.Extensions;
@@ -10,7 +11,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
-import com.jetbrains.edu.learning.StudyActionListener;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.StudyCheckListener;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.courseFormat.Task;
@@ -45,12 +47,21 @@ public abstract class StudyCheckAction extends StudyActionWithShortcut {
       return;
     }
     if (DumbService.isDumb(project)) {
-      StudyCheckUtils.showTestResultPopUp("Checking is not available while indexing is in progress", MessageType.WARNING.getPopupBackground(), project);
+      StudyCheckUtils
+        .showTestResultPopUp("Checking is not available while indexing is in progress", MessageType.WARNING.getPopupBackground(), project);
       return;
     }
     FileDocumentManager.getInstance().saveAllDocuments();
-    for (StudyActionListener listener : Extensions.getExtensions(StudyActionListener.EP_NAME)) {
-      listener.beforeCheck(e);
+    VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    if (virtualFile == null) {
+      return;
+    }
+    Task task = StudyUtils.getTaskForFile(project, virtualFile);
+    if (task == null) {
+      return;
+    }
+    for (StudyCheckListener listener : Extensions.getExtensions(StudyCheckListener.EP_NAME)) {
+      listener.beforeCheck(project, task);
     }
     check(project);
   }
@@ -84,6 +95,6 @@ public abstract class StudyCheckAction extends StudyActionWithShortcut {
 
   @Override
   public String[] getShortcuts() {
-    return new String[] {SHORTCUT};
+    return new String[]{SHORTCUT};
   }
 }

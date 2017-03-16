@@ -9,7 +9,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -20,7 +19,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.jetbrains.edu.learning.*;
+import com.jetbrains.edu.learning.StudyState;
+import com.jetbrains.edu.learning.StudySubtaskUtils;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -152,9 +154,6 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = event.getProject();
     if (project != null) {
-      for (StudyActionListener listener : Extensions.getExtensions(StudyActionListener.EP_NAME)) {
-        listener.beforeCheck(event);
-      }
       refresh(project);
     }
   }

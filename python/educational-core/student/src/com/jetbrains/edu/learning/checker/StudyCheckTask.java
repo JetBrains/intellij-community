@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.*;
-import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
 import com.jetbrains.edu.learning.actions.StudyRunAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -285,17 +284,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void runAfterTaskCheckedActions() {
-    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(myProject);
-    if (configurator != null) {
-      StudyAfterCheckAction[] checkActions = configurator.getAfterCheckActions();
-      if (checkActions != null) {
-        for (StudyAfterCheckAction action : checkActions) {
-          action.run(myProject, myTask, myStatusBeforeCheck);
-        }
-      }
-    }
-    else {
-      LOG.warn("No configurator is provided for the plugin");
+    for (StudyCheckListener listener : StudyCheckListener.EP_NAME.getExtensions()) {
+      listener.afterCheck(myProject, myTask);
     }
   }
 }
