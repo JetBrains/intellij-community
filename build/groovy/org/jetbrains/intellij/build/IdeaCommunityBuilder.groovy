@@ -16,7 +16,6 @@
 package org.jetbrains.intellij.build
 
 import org.codehaus.gant.GantBinding
-
 /**
  * @author nik
  */
@@ -42,10 +41,9 @@ class IdeaCommunityBuilder {
 
   void buildIntelliJCore() {
     buildContext.projectBuilder.targetFolder = buildContext.options.outputRootPath
-    BuildTasks.create(buildContext).compileModules(binding["analysisApiModules"] + binding["analysisImplModules"])
-
-    def layouts = binding["includeFile"]("$buildContext.paths.communityHome/build/scripts/layouts.gant")
-    layoutIntelliJCore(layouts)
+    def builder = new IntelliJCoreArtifactsBuilder(buildContext)
+    builder.compileModules()
+    builder.layoutIntelliJCore()
   }
 
   void buildDistJars() {
@@ -66,28 +64,13 @@ class IdeaCommunityBuilder {
 
   void layoutAdditionalArtifacts(boolean buildJps = false) {
     def layouts = binding["includeFile"]("$buildContext.paths.communityHome/build/scripts/layouts.gant")
-    layoutIntelliJCore(layouts)
+    new IntelliJCoreArtifactsBuilder(buildContext).layoutIntelliJCore()
     if (buildJps) {
       buildContext.messages.block("Build standalone JPS") {
         String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
         layouts.layoutJps(buildContext.paths.communityHome, jpsArtifactDir, buildContext.fullBuildNumber, {})
         buildContext.notifyArtifactBuilt(jpsArtifactDir)
       }
-    }
-  }
-
-  private void layoutIntelliJCore(layouts) {
-    buildContext.messages.block("Build intellij-core") {
-      String coreArtifactDir = "$buildContext.paths.artifacts/core"
-      buildContext.ant.mkdir(dir: coreArtifactDir)
-      layouts.layout_core(buildContext.paths.communityHome, coreArtifactDir)
-      buildContext.notifyArtifactBuilt(coreArtifactDir)
-
-      def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"
-      buildContext.ant.zip(destfile: intellijCoreZip) {
-        fileset(dir: coreArtifactDir)
-      }
-      buildContext.notifyArtifactBuilt(intellijCoreZip)
     }
   }
 }
