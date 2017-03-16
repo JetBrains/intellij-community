@@ -203,10 +203,11 @@ public class CaptureConfigurable implements SearchableConfigurable {
         for (VirtualFile file : files) {
           try {
             Document document = JDOMUtil.loadDocument(file.getInputStream());
-            int start = table.getRowCount();
             List<Element> children = document.getRootElement().getChildren();
-            children.forEach(element -> myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class)));
-            table.getSelectionModel().addSelectionInterval(start, table.getRowCount() - 1);
+            children.forEach(element -> {
+              int idx = myTableModel.add(XmlSerializer.deserialize(element, CapturePoint.class));
+              table.getSelectionModel().addSelectionInterval(idx, idx);
+            });
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
@@ -285,19 +286,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
         scanPointsInt(true, capturePointsFromAnnotations);
         scanPointsInt(false, capturePointsFromAnnotations);
 
-        capturePointsFromAnnotations.forEach(c -> {
-          CapturePoint clone = c;
-          try {
-            clone = c.clone();
-            clone.myEnabled = !clone.myEnabled;
-          }
-          catch (CloneNotSupportedException e) {
-            LOG.error(e);
-          }
-          if (!myCapturePoints.contains(c) && !myCapturePoints.contains(clone)) {
-            myCapturePoints.add(c);
-          }
-        });
+        capturePointsFromAnnotations.forEach(this::add);
       }
     }
 
@@ -458,10 +447,26 @@ public class CaptureConfigurable implements SearchableConfigurable {
       return myCapturePoints.get(idx);
     }
 
-    public void add(CapturePoint p) {
-      myCapturePoints.add(p);
-      int lastRow = getRowCount() - 1;
-      fireTableRowsInserted(lastRow, lastRow);
+    public int add(CapturePoint p) {
+      CapturePoint clone = p;
+      try {
+        clone = p.clone();
+        clone.myEnabled = !clone.myEnabled;
+      }
+      catch (CloneNotSupportedException e) {
+        LOG.error(e);
+      }
+      int idx = myCapturePoints.indexOf(p);
+      if (idx < 0) {
+        idx = myCapturePoints.indexOf(clone);
+      }
+      if (idx < 0) {
+        myCapturePoints.add(p);
+        int lastRow = getRowCount() - 1;
+        fireTableRowsInserted(lastRow, lastRow);
+        return lastRow;
+      }
+      return idx;
     }
 
     public void addRow() {
