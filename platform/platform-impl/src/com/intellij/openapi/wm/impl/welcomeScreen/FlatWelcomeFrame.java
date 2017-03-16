@@ -116,13 +116,15 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     addComponentListener(new ComponentAdapter() {
       @Override
       public void componentShown(ComponentEvent e) {
-        pack();
+        Dimension size = getPreferredSize();
         Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
         Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
-        setLocation(new Point(
-          screenBounds.x + (screenBounds.width - getWidth()) / 2,
-          screenBounds.y + (screenBounds.height - getHeight()) / 3
-        ));
+        setBounds(
+          screenBounds.x + (screenBounds.width - size.width) / 2,
+          screenBounds.y + (screenBounds.height - size.height) / 3,
+          size.width,
+          size.height
+        );
       }
     });
     //setLocation(x, y);
