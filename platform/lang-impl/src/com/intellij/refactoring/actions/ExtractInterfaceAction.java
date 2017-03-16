@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -22,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExtractInterfaceAction extends ExtractSuperActionBase {
-
   public ExtractInterfaceAction() {
     setInjectedContext(true);
   }
@@ -32,5 +30,4 @@ public class ExtractInterfaceAction extends ExtractSuperActionBase {
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider supportProvider) {
     return supportProvider.getExtractInterfaceHandler();
   }
-
 }

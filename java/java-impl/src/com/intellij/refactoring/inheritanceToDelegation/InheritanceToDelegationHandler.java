@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -48,6 +47,7 @@ import java.util.*;
 
 public class InheritanceToDelegationHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler");
+
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.inheritance.with.delegation.title");
 
   private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<PsiMember>() {
@@ -64,7 +64,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     }
   };
 
-
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     int offset = editor.getCaretModel().getOffset();
@@ -84,6 +84,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
     }
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
@@ -131,12 +132,9 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler 
 
     final MemberInfoStorage memberInfoStorage = new MemberInfoStorage(baseClass, MEMBER_INFO_FILTER);
 
-    ArrayList<MemberInfo> memberInfoList = new ArrayList<>(memberInfoStorage.getClassMemberInfos(deepestBase));
-    List<MemberInfo> memberInfos = memberInfoStorage.getIntermediateMemberInfosList(deepestBase);
-    for (final MemberInfo memberInfo : memberInfos) {
-      memberInfoList.add(memberInfo);
-    }
-
+    List<MemberInfo> memberInfoList = new ArrayList<>();
+    memberInfoList.addAll(memberInfoStorage.getClassMemberInfos(deepestBase));
+    memberInfoList.addAll(memberInfoStorage.getIntermediateMemberInfosList(deepestBase));
     return memberInfoList;
   }
 }

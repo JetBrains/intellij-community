@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.history.LocalHistory;
@@ -53,7 +52,6 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
 
   private PsiClass mySubclass;
   private Project myProject;
-
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -97,7 +95,6 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
       return;
     }
 
-
     List<MemberInfo> memberInfos = MemberInfo.extractClassMembers(mySubclass, new MemberInfo.Filter<PsiMember>() {
       @Override
       public boolean includeMember(PsiMember element) {
@@ -110,8 +107,7 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
                                                                       memberInfo.getOverrides() != null));
     }
 
-    final ExtractSuperclassDialog dialog =
-      new ExtractSuperclassDialog(project, mySubclass, memberInfos, this);
+    final ExtractSuperclassDialog dialog = new ExtractSuperclassDialog(project, mySubclass, memberInfos, this);
     if (!dialog.showAndGet() || !dialog.isExtractSuperclass()) {
       return;
     }
@@ -126,26 +122,22 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
   public boolean checkConflicts(final ExtractSuperclassDialog dialog) {
     final MemberInfo[] infos = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
-    final PsiPackage targetPackage;
-    if (targetDirectory != null) {
-      targetPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
-    }
-    else {
-      targetPackage = null;
-    }
+    final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
     final MultiMap<PsiElement,String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass superClass =
         mySubclass.getExtendsListTypes().length > 0 || mySubclass instanceof PsiAnonymousClass ? mySubclass.getSuperClass() : null;
-      conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory,
-                                                                dialog.getContainmentVerifier(), false));
+      if (targetPackage != null) {
+        conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(
+          infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier(), false));
+      }
     }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     ExtractSuperClassUtil.checkSuperAccessible(targetDirectory, conflicts, mySubclass);
     return ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject);
   }
 
   // invoked inside Command and Atomic action
-  private void doRefactoring(final Project project, final PsiClass subclass, final ExtractSuperclassDialog dialog) {
+  private static void doRefactoring(final Project project, final PsiClass subclass, final ExtractSuperclassDialog dialog) {
     final String superclassName = dialog.getExtractedSuperName();
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     final MemberInfo[] selectedMemberInfos = ArrayUtil.toObjectArray(dialog.getSelectedMemberInfos(), MemberInfo.class);
@@ -153,10 +145,8 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName(subclass, superclassName));
     try {
       final PsiClass superclass;
-
       try {
-        superclass =
-          ExtractSuperClassUtil.extractSuperClass(project, targetDirectory, superclassName, subclass, selectedMemberInfos, javaDocPolicy);
+        superclass = ExtractSuperClassUtil.extractSuperClass(project, targetDirectory, superclassName, subclass, selectedMemberInfos, javaDocPolicy);
       }
       finally {
         a.finish();
@@ -168,10 +158,9 @@ public class ExtractSuperclassHandler implements RefactoringActionHandler, Extra
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-
   }
 
-  private String getCommandName(final PsiClass subclass, String newName) {
+  private static String getCommandName(final PsiClass subclass, String newName) {
     return RefactoringBundle.message("extract.superclass.command.name", newName, DescriptiveNameUtil.getDescriptiveName(subclass));
   }
 

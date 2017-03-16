@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,8 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("extract.interface.title");
 
-
   private Project myProject;
   private PsiClass myClass;
-
   private String myInterfaceName;
   private MemberInfo[] mySelectedMembers;
   private PsiDirectory myTargetDir;
@@ -80,13 +78,13 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
     myProject = project;
     myClass = (PsiClass)elements[0];
 
-
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
 
     final ExtractInterfaceDialog dialog = new ExtractInterfaceDialog(myProject, myClass);
     if (!dialog.showAndGet() || !dialog.isExtractSuperclass()) {
       return;
     }
+
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
     ExtractSuperClassUtil.checkSuperAccessible(dialog.getTargetDirectory(), conflicts, myClass);
     if (!ExtractSuperClassUtil.showConflicts(dialog, conflicts, myProject)) return;
@@ -103,7 +101,6 @@ public class ExtractInterfaceHandler implements RefactoringActionHandler, Elemen
       }
     }), REFACTORING_NAME, null);
   }
-
 
   private void doRefactoring() throws IncorrectOperationException {
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());

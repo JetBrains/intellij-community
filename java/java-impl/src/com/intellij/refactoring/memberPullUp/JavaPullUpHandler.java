@@ -50,7 +50,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler {
@@ -110,8 +109,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
       return;
     }
 
-    ArrayList<PsiClass> bases = RefactoringHierarchyUtil.createBasesList(aClass, false, true);
-
+    List<PsiClass> bases = RefactoringHierarchyUtil.createBasesList(aClass, false, true);
     if (bases.isEmpty()) {
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass != null) {
