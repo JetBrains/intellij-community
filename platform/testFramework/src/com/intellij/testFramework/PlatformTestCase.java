@@ -503,18 +503,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private void disposeProject() {
-    new RunAll(() -> {
-      DocumentCommitThread.getInstance().clearQueue();
-      // sometimes SwingUtilities maybe confused about EDT at this point
-      if (SwingUtilities.isEventDispatchThread()) {
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    }, () -> {
-      if (myProject != null) {
-        closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
-        myProject = null;
-      }
-    }).run();
+    if (myProject != null) {
+      closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
+      myProject = null;
+    }
   }
 
   public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull final Project projectToClose) {
