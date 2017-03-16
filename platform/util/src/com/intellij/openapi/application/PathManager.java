@@ -27,14 +27,12 @@ import com.sun.jna.platform.FileUtils;
 import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
-import org.apache.xerces.util.SecurityManager;
 import org.intellij.lang.annotations.Flow;
 import org.iq80.snappy.Snappy;
 import org.jdom.Document;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.ElementTraversal;
 
 import java.io.*;
 import java.net.URL;
@@ -455,8 +453,8 @@ public class PathManager {
       FileUtils.class,              // JNA (jna-platform)
       PatternMatcher.class,         // OROMatcher
       Snappy.class,                 // Snappy
-      SecurityManager.class,        // xercesImpl
-      ElementTraversal.class        // xml-apis (required by Xerces)
+      // Insert new elements above this line
+      Flow.class                    // duplicate of annotations, to keep comma after previous argument
     };
 
     final Set<String> classPath = new HashSet<String>();
