@@ -49,6 +49,7 @@
       <with attribute="implementationClass" implements="com.jetbrains.edu.learning.EduPluginConfigurator"/>
     </extensionPoint>
     <extensionPoint qualifiedName="Edu.studyActionsProvider" interface="com.jetbrains.edu.learning.StudyActionsProvider"/>
+    <extensionPoint qualifiedName="Edu.hintActionsProvider" interface="com.jetbrains.edu.learning.ui.StudyHintActionsProvider"/>
     <extensionPoint qualifiedName="Edu.studyTwitterPluginConfigurator" interface="com.jetbrains.edu.learning.StudyTwitterPluginConfigurator"/>
     <extensionPoint qualifiedName="Edu.checkListener" interface="com.jetbrains.edu.learning.StudyCheckListener"/>
     <extensionPoint qualifiedName="Edu.studySubtaskChangeListener" interface="com.jetbrains.edu.learning.StudySubtaskChangeListener"/>

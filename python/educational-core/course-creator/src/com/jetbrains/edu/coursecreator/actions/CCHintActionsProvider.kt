@@ -1,28 +1,21 @@
-package com.jetbrains.edu.coursecreator.ui
+package com.jetbrains.edu.coursecreator.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Separator
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.edu.coursecreator.CCUtils
 import com.jetbrains.edu.coursecreator.actions.placeholder.CCCreateAnswerPlaceholderDialog
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder
-import com.jetbrains.edu.learning.ui.StudyHint
+import com.jetbrains.edu.learning.ui.StudyHintActionsProvider
 import java.util.*
 
-class CCHint(private val myPlaceholder: AnswerPlaceholder?, project: Project) : StudyHint(myPlaceholder, project) {
-
-  override fun getActions(): List<AnAction> {
-    val result = ArrayList<AnAction>()
-    result.add(GoBackward())
-    result.add(GoForward())
-    result.add(Separator.getInstance())
-    result.add(EditHint())
-    return result
+class CCHintActionsProvider : StudyHintActionsProvider {
+  override fun getAdditionalHintActions(answerPlaceholder: AnswerPlaceholder?): List<AnAction>? {
+    return Collections.singletonList(EditHint(answerPlaceholder))
   }
 
-  private inner class EditHint : AnAction("Edit Hint", "Edit Hint", AllIcons.Modules.Edit) {
+  private inner class EditHint(val myPlaceholder: AnswerPlaceholder?) : AnAction("Edit Hint", "Edit Hint", AllIcons.Modules.Edit) {
 
     override fun actionPerformed(e: AnActionEvent?) {
       val dlg = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!.taskText, myPlaceholder.hints)
@@ -37,7 +30,7 @@ class CCHint(private val myPlaceholder: AnswerPlaceholder?, project: Project) : 
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = myPlaceholder != null
+      e.presentation.isEnabledAndVisible = CCUtils.isCourseCreator(e.project!!) && myPlaceholder != null
     }
   }
 }
