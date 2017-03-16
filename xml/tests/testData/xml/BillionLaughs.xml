@@ -8,4 +8,4 @@
     <!ENTITY lol4 "&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;">
     <!ENTITY lol5 "&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;">
     ]>
-<lolz><error descr="The parser has encountered more than \"100 000\" entity expansions in this document; this is the limit imposed by the application.">&lol5;</error></lolz>
+<lolz><error descr="The parser has encountered more than \"100,000\" entity expansions in this document; this is the limit imposed by the application.">&lol5;</error></lolz>
