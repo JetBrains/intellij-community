@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.file.exclude;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -75,6 +76,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
 
   public static boolean isApplicableFor(@NotNull VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
+    if (ScratchUtil.isScratch(file)) return false;
     FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
     return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
   }
@@ -89,13 +91,13 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
 
   private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, @NotNull final VirtualFile... files) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
+      ProjectPlainTextFileTypeManager projectManager = ProjectPlainTextFileTypeManager.getInstance(project);
       for (VirtualFile file : files) {
-        if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
-          ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
+        if (projectManager.isInContent(file)) {
+          ensureProjectFileSetAdded(project, projectManager);
           if (isAdded ?
-              projectPlainTextFileTypeManager.addFile(file) :
-              projectPlainTextFileTypeManager.removeFile(file)) {
+              projectManager.addFile(file) :
+              projectManager.removeFile(file)) {
             FileBasedIndex.getInstance().requestReindex(file);
           }
         }
