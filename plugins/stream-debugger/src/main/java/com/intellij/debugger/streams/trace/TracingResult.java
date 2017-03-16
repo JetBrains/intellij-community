@@ -34,4 +34,7 @@ public interface TracingResult {
 
   @NotNull
   List<TraceInfo> getTrace();
+
+  @NotNull
+  ResolvedTracingResult resolve();
 }

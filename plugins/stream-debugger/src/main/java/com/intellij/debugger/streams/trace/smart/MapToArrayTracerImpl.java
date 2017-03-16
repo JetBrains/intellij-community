@@ -2,15 +2,18 @@ package com.intellij.debugger.streams.trace.smart;
 
 import com.intellij.debugger.streams.remote.InvokeMethodProxy;
 import com.intellij.debugger.streams.trace.EvaluateExpressionTracerBase;
-import com.intellij.debugger.streams.trace.TracingResult;
+import com.intellij.debugger.streams.trace.impl.TracingResultImpl;
 import com.intellij.debugger.streams.trace.smart.handler.HandlerFactory;
 import com.intellij.debugger.streams.trace.smart.handler.PeekCall;
 import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.trace.smart.resolve.CallTraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
-import com.intellij.debugger.streams.trace.smart.resolve.TraceResolver;
 import com.intellij.debugger.streams.trace.smart.resolve.impl.ResolverFactory;
 import com.intellij.debugger.streams.trace.smart.resolve.impl.ValuesOrderInfo;
-import com.intellij.debugger.streams.wrapper.*;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
+import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XDebugSession;
@@ -19,7 +22,6 @@ import com.sun.jdi.LongValue;
 import com.sun.jdi.Value;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -87,7 +89,7 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
       final Value time = resultArray.getValue(2);
       logTime(time);
       final List<TraceInfo> trace = getTrace(chain, info);
-      return new MyTracingResult(streamResult, trace);
+      return new TracingResultImpl(streamResult, trace);
     }
     else {
       throw new IllegalArgumentException("value in InvokeMethodProxy must be an ArrayReference");
@@ -192,7 +194,7 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     for (int i = 0; i < callCount; i++) {
       final StreamCall call = chain.getCall(i);
       final Value trace = info.getValue(i);
-      final TraceResolver resolver = ResolverFactory.getInstance().getResolver(call.getName());
+      final CallTraceResolver resolver = ResolverFactory.getInstance().getResolver(call.getName());
       final TraceInfo traceInfo = trace == null ? ValuesOrderInfo.empty(call) : resolver.resolve(call, trace);
       result.add(traceInfo);
     }
@@ -205,27 +207,5 @@ public class MapToArrayTracerImpl extends EvaluateExpressionTracerBase {
     final long elapsedNanoseconds = ((LongValue)elapsedTime).value();
     final long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds);
     LOG.info("evaluation completed in " + elapsedMillis + "ms");
-  }
-
-  private static class MyTracingResult implements TracingResult {
-    private final Value myStreamResult;
-    private final List<TraceInfo> myTrace;
-
-    MyTracingResult(@NotNull Value streamResult, @NotNull List<TraceInfo> trace) {
-      myStreamResult = streamResult;
-      myTrace = trace;
-    }
-
-    @Nullable
-    @Override
-    public Value getResult() {
-      return myStreamResult;
-    }
-
-    @NotNull
-    @Override
-    public List<TraceInfo> getTrace() {
-      return myTrace;
-    }
   }
 }
