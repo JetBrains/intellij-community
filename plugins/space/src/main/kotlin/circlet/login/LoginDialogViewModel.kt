@@ -26,8 +26,8 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
     val lifetime = lifetimeDef
     val loginStatus = Property.createMutable(LoginAuthStatus(LoginStatus.InProrgess, ""))
 
-    val login = Property.createMutable(loginComponent.login)
-    val pass = Property.createMutable(loginComponent.pass)
+    val login = Property.createMutable("")
+    val pass = Property.createMutable("")
 
     val token = Property.createMutable("")
     val signInEnabled = Property.createMutable(false)
@@ -44,6 +44,7 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
                     {
                         token.value = ""
                         task {
+/*
                             loginComponent.getAccessToken(loginText, passText).thenLater(refreshLt) {
                                 log.info( "Checking credentials resulted in ${it.errorMessage}, ${it.errorTag}, ${it.token}" )
                                 val errorMessage = it.errorMessage
@@ -56,6 +57,7 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
                             }.failureLater(refreshLt) {
                                 loginStatus.value = LoginAuthStatus(LoginStatus.Fail, it.message ?: "Failed to check credentials")
                             }
+*/
                         }
                     }
                 }, 2000, TimeUnit.MILLISECONDS)
@@ -67,6 +69,6 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
     }
 
     fun commit() {
-        loginComponent.setCredentials(login.value, pass.value, token.value)
+//        loginComponent.setCredentials(login.value, pass.value, token.value)
     }
 }
