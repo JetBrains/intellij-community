@@ -18,7 +18,7 @@ package com.intellij.debugger.streams.ui;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
-import com.intellij.debugger.streams.trace.smart.TraceElement;
+import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;

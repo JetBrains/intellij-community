@@ -16,7 +16,7 @@
 package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.streams.trace.smart.TraceElement;
+import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLabel;

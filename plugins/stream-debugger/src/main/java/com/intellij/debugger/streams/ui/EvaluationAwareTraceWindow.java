@@ -2,7 +2,7 @@ package com.intellij.debugger.streams.ui;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
-import com.intellij.debugger.streams.trace.smart.TraceElementImpl;
+import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.icons.AllIcons;

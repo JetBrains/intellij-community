@@ -1,5 +1,6 @@
-package com.intellij.debugger.streams.trace.smart;
+package com.intellij.debugger.streams.trace.impl;
 
+import com.intellij.debugger.streams.trace.TraceElement;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
