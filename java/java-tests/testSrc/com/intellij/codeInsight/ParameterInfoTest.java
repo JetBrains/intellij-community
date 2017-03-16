@@ -76,6 +76,26 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSelectionWithGenerics() {
+    doTest2CandidatesWithPreselection();
+  }
+
+  public void testOverloadWithVarargs() {
+    doTest2CandidatesWithPreselection();
+  }
+
+  public void testOverloadWithVarargsMultipleArgs() {
+    doTest2CandidatesWithPreselection();
+  }
+
+  public void testOverloadWithVarargsSingleArg() {
+    doTest2CandidatesWithPreselection();
+  }
+
+  public void testOverloadWithVarargsArray() {
+    doTest2CandidatesWithPreselection();
+  }
+
+  private void doTest2CandidatesWithPreselection() {
     myFixture.configureByFile(getTestName(false) + ".java");
 
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
