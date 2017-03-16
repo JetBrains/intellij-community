@@ -1,4 +1,5 @@
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class LongRangeKnownMethods {
   void testIndexOf(String s) {
@@ -126,7 +127,7 @@ public class LongRangeKnownMethods {
       }
     }
 
-    if(end >= 0 && start < Integer.MAX_VALUE) {
+    if(end >= 0 && <warning descr="Condition 'start < Integer.MAX_VALUE' is always 'true' when reached">start < Integer.MAX_VALUE</warning>) {
       System.out.println("Ok");
     }
   }
