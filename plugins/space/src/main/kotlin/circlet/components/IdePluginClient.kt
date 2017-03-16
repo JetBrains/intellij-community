@@ -1,29 +1,18 @@
 package circlet.components
 
 import circlet.*
+import runtime.async.*
 import circlet.login.*
+import circlet.reactive.*
 import circlet.utils.*
-import com.intellij.concurrency.*
 import com.intellij.notification.*
 import com.intellij.openapi.components.*
-import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
 import klogging.*
-import nl.komponents.kovenant.*
-import runtime.*
 import runtime.kdata.*
-import runtime.klogger.*
-import java.util.concurrent.*
 
 private val log = KLoggers.logger("plugin/IdePluginClient.kt")
-
-enum class ConnectingState {
-    Disconnected,
-    Connected,
-    AuthFailed,
-    TryConnect
-}
 
 class IdePluginClient(val project: Project) :
     AbstractProjectComponent(project),
@@ -31,39 +20,22 @@ class IdePluginClient(val project: Project) :
 
     val loginDataComponent = component<CircletLoginComponent>()
 
-    var attemptToConnectNotificationShown = false
-
-    val state = Property.createMutable(ConnectingState.Disconnected)
-    val askPasswordExplicitlyAllowed = Property.createMutable(false)
-    val client = Property.createMutable<CircletClient?>(null)
+    val app = Property.createMutable<IdeaCircletApp?>(null)
 
     init {
 
         loginDataComponent.enabled.whenTrue(componentLifetime) { enabledLt ->
-            state.value = ConnectingState.TryConnect
-
-            enabledLt.inContext {
-                disconnect()
+            async {
+                val ideaApp = IdeaCircletApp(enabledLt)
+                ideaApp.start(IdeaPersistence, "http://localhost")
+                app.value = ideaApp
             }
+            enabledLt.add { app.value = null }
         }
-
-        state.view(componentLifetime) { lt, state ->
-            when (state) {
-                ConnectingState.TryConnect -> tryReconnect(lt)
-                ConnectingState.AuthFailed -> authCheckFailedNotification()
-                ConnectingState.Connected -> notifyConnected()
-                ConnectingState.Disconnected -> notifyDisconnected(lt)
-            }
-        }
-
-        loginDataComponent.credentialsUpdated.forEach(componentLifetime, {
-            state.value = ConnectingState.TryConnect
-        })
 
     }
 
     fun enable() {
-        askPasswordExplicitlyAllowed.value = true
         loginDataComponent.enabled.value = true
     }
 
@@ -71,76 +43,12 @@ class IdePluginClient(val project: Project) :
         loginDataComponent.enabled.value = false
     }
 
-    private fun tryReconnect(lifetime: Lifetime) {
-
-        val ask = askPasswordExplicitlyAllowed.value
-        askPasswordExplicitlyAllowed.value = false
-
-        val loginComponent = component<CircletLoginComponent>()
-        val modality = application.currentModalityState
-
-        task {
-            log.catch {
-                loginComponent.
-                    getAccessToken(loginComponent.login, loginComponent.pass).
-                    thenLater(lifetime, modality) {
-                        val errorMessage = it.errorMessage
-                        if (errorMessage == null || errorMessage.isEmpty()) {
-                            state.value = ConnectingState.Connected
-                            val token = it.token!!
-                            connectWithToken(lifetime, token)
-                        } else {
-                            state.value = ConnectingState.AuthFailed
-                            if (ask)
-                                askPassword()
-                        }
-                    }.failureLater(lifetime, modality) {
-                    notifyReconnect(lifetime)
-                    JobScheduler.getScheduler().schedule({
-                        if (!lifetime.isTerminated)
-                            tryReconnect(lifetime)
-                    }, 5000, TimeUnit.MILLISECONDS)
-                    state.value = ConnectingState.TryConnect
-                }
-            }
-        }
-    }
-
     fun askPassword() {
         LoginDialog(LoginDialogViewModel(component<CircletLoginComponent>())).show()
     }
 
-    private fun connectWithToken(lifetime: Lifetime, token: String) {
-        val clientLocal = CircletClient(lifetime, "ws://localhost:8084/api/v1/connect", token)
-        client.value = clientLocal
-/*
-        clientLocal.services.user.isMyProfileReady()
-            .flatMap {
-                if (!it) {
-                    clientLocal.services.user.createProfile("your", "name", null)
-                } else {
-                    clientLocal.services.user.getMyUid().map {
-                        log.debug { "My Profile: $it" }
-                    }
-                    clientLocal.services.user.editUsername("heytwo")
-                }
-            }
-            .then {
-                log.debug { "Result: $it" }
-            }
-            .failure {
-                log.debug { "Error: $it" }
-            }
-*/
-    }
-
-    fun disconnect() {
-        state.value = ConnectingState.Disconnected
-    }
 
     private fun notifyReconnect(lt: Lifetime) {
-        if (attemptToConnectNotificationShown)
-            return
         val notification = Notification(
             "IdePLuginClient.notifyReconnect",
             "Circlet",
@@ -148,8 +56,6 @@ class IdePluginClient(val project: Project) :
             NotificationType.INFORMATION,
             { a, b -> disable() })
         notification.notify(lt, project)
-        attemptToConnectNotificationShown = true
-        lt.inContext { afterTermination { attemptToConnectNotificationShown = false } }
     }
 
     fun notifyDisconnected(lt: Lifetime) {
@@ -166,7 +72,7 @@ class IdePluginClient(val project: Project) :
         val notification = Notification(
             "IdePLuginClient.notifyDisconnected",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Logged in as ${loginDataComponent.login}"),
+            XmlStringUtil.wrapInHtml("Logged in"),
             NotificationType.INFORMATION,
             { a, b -> enable() })
         notification.notify(project)
@@ -182,5 +88,4 @@ class IdePluginClient(val project: Project) :
             .notify(project)
     }
 }
-
 
