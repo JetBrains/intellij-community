@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class BuiltInServer implements Disposable {
   static {
     // IDEA-120811
     if (SystemProperties.getBooleanProperty("io.netty.random.id", true)) {
-      System.setProperty("io.netty.machineId", "9e43d860");
+      System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e");
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
       System.setProperty("io.netty.serviceThreadPrefix", "Netty ");
     }
