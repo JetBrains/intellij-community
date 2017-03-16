@@ -210,7 +210,7 @@ public class IDEATestNGRemoteListener {
     final Map<String, String> attrs = new LinkedHashMap<String, String>();
     attrs.put("name", methodName);
     final String failureMessage = ex != null ? ex.getMessage() : null;
-    if (failureMessage != null) {
+    if (ex != null) {
       ComparisonFailureData notification;
       try {
         notification = TestNGExpectedPatterns.createExceptionNotification(failureMessage);
