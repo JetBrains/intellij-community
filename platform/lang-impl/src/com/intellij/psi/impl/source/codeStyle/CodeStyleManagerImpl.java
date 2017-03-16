@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -879,5 +879,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   
   void setCurrentFormattingMode(@NotNull FormattingMode mode) {
     myCurrentFormattingMode.set(mode);
+  }
+
+  @Override
+  public int getSpacing(@NotNull PsiFile file, int offset) {
+    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    if (builder == null) return -1;
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+    FormattingModel model = builder.createModel(file, settings);
+    return FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
   }
 }
