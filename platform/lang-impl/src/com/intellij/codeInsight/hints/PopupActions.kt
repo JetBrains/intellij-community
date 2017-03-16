@@ -187,41 +187,6 @@ class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
 }
 
 
-class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
-  companion object {
-    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
-  }
-  
-  private var lastOptionName = ""
-  
-  override fun getText(): String = CodeInsightBundle.message("inlay.hints.enable.custom.option", lastOptionName)
-  override fun getFamilyName(): String = presentableFamilyName
-
-  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
-    InlayParameterHintsExtension.forLanguage(file.language) ?: return false
-    if (hasEditorParameterHintAtOffset(editor, file)) return false
-    
-    val option = getOptionHintAtOffset(editor, file) ?: return false
-    lastOptionName = option.optionName
-    
-    return true 
-  }
-
-  private fun getOptionHintAtOffset(editor: Editor, file: PsiFile): HintInfo.OptionInfo? {
-    val offset = editor.caretModel.offset
-    return getHintInfoFromProvider(offset, file) as? HintInfo.OptionInfo
-  }
-
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
-    val option = getOptionHintAtOffset(editor, file) ?: return
-    option.enable()
-  }
-
-  override fun startInWriteAction() = false
-}
-
-
-
 class ToggleInlineHintsAction : AnAction() {
   
   companion object {
