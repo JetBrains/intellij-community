@@ -20,9 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.formatter.common.AbstractBlock;
@@ -41,10 +41,10 @@ public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingM
     if (element instanceof PsiFile) {
       final FileViewProvider viewProvider = ((PsiFile)element).getViewProvider();
       if (viewProvider instanceof TemplateLanguageFileViewProvider) {
-        final Language language = ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage();
-        FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(language);
-        if (builder != null) {
-          return builder.createModel(viewProvider.getPsi(language), settings);
+        final Language templateDataLanguage = ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage();
+        FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(templateDataLanguage);
+        if (builder != null && templateDataLanguage != element.getLanguage()) {
+          return builder.createModel(viewProvider.getPsi(templateDataLanguage), settings);
         }
       }
     }
