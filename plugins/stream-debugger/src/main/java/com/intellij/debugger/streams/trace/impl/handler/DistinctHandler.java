@@ -1,8 +1,8 @@
-package com.intellij.debugger.streams.trace.smart.handler;
+package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
-import com.intellij.debugger.streams.trace.smart.handler.type.ClassTypeImpl;
-import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
 

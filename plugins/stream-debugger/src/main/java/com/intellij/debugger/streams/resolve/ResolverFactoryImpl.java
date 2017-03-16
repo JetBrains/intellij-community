@@ -15,8 +15,8 @@
  */
 package com.intellij.debugger.streams.resolve;
 
-import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
+import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

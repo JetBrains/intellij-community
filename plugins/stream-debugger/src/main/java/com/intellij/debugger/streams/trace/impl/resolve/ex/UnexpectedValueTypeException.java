@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams.trace.smart.resolve.ex;
+package com.intellij.debugger.streams.trace.impl.resolve.ex;
 
 import org.jetbrains.annotations.NotNull;
 

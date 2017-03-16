@@ -6,8 +6,8 @@ import com.intellij.debugger.streams.resolve.ResolverFactoryImpl;
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
 import com.intellij.debugger.streams.trace.ResolvedTracingResult;
 import com.intellij.debugger.streams.trace.TracingResult;
-import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
+import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ public class TracingResultImpl implements TracingResult {
   private final Value myStreamResult;
   private final List<TraceInfo> myTrace;
 
-  public TracingResultImpl(@NotNull Value streamResult, @NotNull List<TraceInfo> trace) {
+  TracingResultImpl(@NotNull Value streamResult, @NotNull List<TraceInfo> trace) {
     myStreamResult = streamResult;
     myTrace = trace;
   }

@@ -1,11 +1,11 @@
-package com.intellij.debugger.streams.trace.smart.resolve.impl;
+package com.intellij.debugger.streams.trace.impl.resolve;
 
-import com.intellij.debugger.streams.trace.smart.TraceElement;
-import com.intellij.debugger.streams.trace.smart.resolve.CallTraceResolver;
-import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
-import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedArrayLengthException;
-import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueException;
-import com.intellij.debugger.streams.trace.smart.resolve.ex.UnexpectedValueTypeException;
+import com.intellij.debugger.streams.trace.CallTraceResolver;
+import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.TraceInfo;
+import com.intellij.debugger.streams.trace.impl.resolve.ex.UnexpectedArrayLengthException;
+import com.intellij.debugger.streams.trace.impl.resolve.ex.UnexpectedValueException;
+import com.intellij.debugger.streams.trace.impl.resolve.ex.UnexpectedValueTypeException;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.IntegerValue;

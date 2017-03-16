@@ -1,6 +1,6 @@
-package com.intellij.debugger.streams.trace.smart.resolve.impl;
+package com.intellij.debugger.streams.trace.impl.resolve;
 
-import com.intellij.debugger.streams.trace.smart.resolve.CallTraceResolver;
+import com.intellij.debugger.streams.trace.CallTraceResolver;
 import org.jetbrains.annotations.NotNull;
 
 /**

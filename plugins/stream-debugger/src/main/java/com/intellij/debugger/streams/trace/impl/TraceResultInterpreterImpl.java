@@ -2,10 +2,10 @@ package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.TraceResultInterpreter;
 import com.intellij.debugger.streams.trace.TracingResult;
-import com.intellij.debugger.streams.trace.smart.resolve.CallTraceResolver;
-import com.intellij.debugger.streams.trace.smart.resolve.TraceInfo;
-import com.intellij.debugger.streams.trace.smart.resolve.impl.ResolverFactory;
-import com.intellij.debugger.streams.trace.smart.resolve.impl.ValuesOrderInfo;
+import com.intellij.debugger.streams.trace.CallTraceResolver;
+import com.intellij.debugger.streams.trace.TraceInfo;
+import com.intellij.debugger.streams.trace.impl.resolve.ResolverFactory;
+import com.intellij.debugger.streams.trace.impl.resolve.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.diagnostic.Logger;

@@ -1,9 +1,9 @@
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
-import com.intellij.debugger.streams.trace.smart.handler.HandlerFactory;
-import com.intellij.debugger.streams.trace.smart.handler.PeekCall;
-import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.trace.impl.handler.HandlerFactory;
+import com.intellij.debugger.streams.trace.impl.handler.PeekCall;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;

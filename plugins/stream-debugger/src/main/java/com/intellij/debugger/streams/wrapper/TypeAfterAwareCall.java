@@ -1,6 +1,6 @@
 package com.intellij.debugger.streams.wrapper;
 
-import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import org.jetbrains.annotations.NotNull;
 
 /**

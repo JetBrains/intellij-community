@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams.trace.smart.handler;
+package com.intellij.debugger.streams.trace.impl.handler;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +10,7 @@ public class VariableImpl implements Variable {
   private final String myType;
   private final String myInitialExpression;
 
-  public VariableImpl(@NotNull String type, @NotNull String name, @NotNull String initialExpression) {
+  VariableImpl(@NotNull String type, @NotNull String name, @NotNull String initialExpression) {
     myName = name;
     myType = type;
     myInitialExpression = initialExpression;

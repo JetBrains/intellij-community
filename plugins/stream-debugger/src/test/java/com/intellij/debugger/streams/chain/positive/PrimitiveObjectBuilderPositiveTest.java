@@ -1,6 +1,6 @@
 package com.intellij.debugger.streams.chain.positive;
 
-import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilder;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.intellij.debugger.streams.trace.smart.handler.type.GenericType.*;
+import static com.intellij.debugger.streams.trace.impl.handler.type.GenericType.*;
 
 /**
  * @author Vitaliy.Bibaev

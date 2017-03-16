@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams.trace.smart.resolve;
+package com.intellij.debugger.streams.trace;
 
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.Value;

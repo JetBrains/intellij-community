@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.wrapper.impl;
 
-import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
 import org.jetbrains.annotations.NotNull;

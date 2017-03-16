@@ -1,6 +1,6 @@
-package com.intellij.debugger.streams.trace.smart.handler;
+package com.intellij.debugger.streams.trace.impl.handler;
 
-import com.intellij.debugger.streams.trace.smart.handler.type.GenericType;
+import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,11 +10,11 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class ProducerHandler extends HandlerBase {
+public class TerminatorHandler extends HandlerBase {
   private final PeekTracerHandler myPeekTracerHandler;
 
-  ProducerHandler(@NotNull GenericType afterType) {
-    myPeekTracerHandler = new PeekTracerHandler(0, "producer", GenericType.OBJECT, afterType);
+  TerminatorHandler(@NotNull GenericType beforeType) {
+    myPeekTracerHandler = new PeekTracerHandler(Integer.MAX_VALUE, "terminator", beforeType, GenericType.OBJECT);
   }
 
   @NotNull
@@ -26,13 +26,13 @@ public class ProducerHandler extends HandlerBase {
   @NotNull
   @Override
   public List<IntermediateStreamCall> additionalCallsBefore() {
-    return Collections.emptyList();
+    return myPeekTracerHandler.additionalCallsBefore();
   }
 
   @NotNull
   @Override
   public List<IntermediateStreamCall> additionalCallsAfter() {
-    return myPeekTracerHandler.additionalCallsAfter();
+    return Collections.emptyList();
   }
 
   @NotNull

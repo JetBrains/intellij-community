@@ -1,4 +1,4 @@
-package com.intellij.debugger.streams.trace.smart.handler.type;
+package com.intellij.debugger.streams.trace.impl.handler.type;
 
 import org.jetbrains.annotations.NotNull;
 
