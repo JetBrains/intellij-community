@@ -96,10 +96,16 @@ class BuiltInWebServer : HttpRequestHandler() {
       if (urlDecoder.path().length < 2) {
         return false
       }
+      
       projectName = null
     }
     else {
-      projectName = host
+      if (host.endsWith(".localhost")) {
+        projectName = host.substring(0, host.lastIndexOf('.'))
+      }
+      else {
+        projectName = host
+      }
     }
     return doProcess(urlDecoder, request, context, projectName)
   }
