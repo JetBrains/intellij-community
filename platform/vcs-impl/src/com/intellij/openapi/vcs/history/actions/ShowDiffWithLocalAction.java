@@ -37,12 +37,13 @@ public class ShowDiffWithLocalAction extends DumbAwareAction {
     VcsRevisionNumber currentRevisionNumber = e.getRequiredData(VcsDataKeys.HISTORY_SESSION).getCurrentRevisionNumber();
     VcsFileRevision selectedRevision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS)[0];
     FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
+    VirtualFile virtualFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
 
     if (currentRevisionNumber != null && selectedRevision != null) {
       DiffFromHistoryHandler diffHandler = ObjectUtils.notNull(e.getRequiredData(VcsDataKeys.HISTORY_PROVIDER).getHistoryDiffHandler(),
                                                                new StandardDiffFromHistoryHandler());
       diffHandler.showDiffForTwo(project, filePath,
-                                 selectedRevision, new CurrentRevision(filePath.getVirtualFile(), currentRevisionNumber));
+                                 selectedRevision, new CurrentRevision(virtualFile, currentRevisionNumber));
     }
   }
 
