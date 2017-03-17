@@ -30,7 +30,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferen
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +38,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaLangInvokeHandleReference.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
@@ -47,9 +45,6 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  */
 public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalInspectionTool {
   public static final Key<List<String>> DEFAULT_SIGNATURE = Key.create("DEFAULT_SIGNATURE");
-
-  private static final String METHOD_TYPE = "methodType";
-  private static final String GENERIC_METHOD_TYPE = "genericMethodType";
 
   private static final String FIND_CONSTRUCTOR = "findConstructor";
   private static final Set<String> KNOWN_METHOD_NAMES = Collections.unmodifiableSet(
@@ -107,6 +102,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
             case FIND_VAR_HANDLE:
               checkField(ownerClass, memberName, nameExpression, typeExpression, false, factoryMethodExpression, holder);
               break;
+
             case FIND_STATIC_GETTER:
             case FIND_STATIC_SETTER:
             case FIND_STATIC_VAR_HANDLE:
@@ -144,7 +140,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
       }
       else if (!matchMethodSignature(constructors, constructorSignature)) {
         validSignatures = constructors.stream()
-          .map(JavaLangInvokeHandleSignatureInspection::getMethodSignature)
+          .map(JavaReflectionReferenceUtil::getMethodSignature)
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
       }
@@ -230,7 +226,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     if (methodSignature != null && !matchMethodSignature(filteredMethods, methodSignature)) {
       final String declarationText = getMethodDeclarationText(methodName, methodSignature);
       final List<List<String>> validSignatures = filteredMethods.stream()
-        .map(JavaLangInvokeHandleSignatureInspection::getMethodSignature)
+        .map(JavaReflectionReferenceUtil::getMethodSignature)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
       final LocalQuickFix fix =
@@ -266,7 +262,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
 
   private static boolean matchMethodSignature(@NotNull List<PsiMethod> methods, @NotNull List<String> expectedMethodSignature) {
     return methods.stream()
-      .map(JavaLangInvokeHandleSignatureInspection::getMethodSignature)
+      .map(JavaReflectionReferenceUtil::getMethodSignature)
       .anyMatch(expectedMethodSignature::equals);
   }
 
@@ -340,24 +336,6 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
       typeNames.add(CommonClassNames.JAVA_LANG_OBJECT + "[]");
     }
     return typeNames;
-  }
-
-  @Contract("null -> null")
-  @Nullable
-  private static List<String> getMethodSignature(@Nullable PsiMethod method) {
-    if (method != null) {
-      final List<String> types = new ArrayList<>();
-      final PsiType returnType = !method.isConstructor() ? method.getReturnType() : PsiType.VOID;
-      types.add(getTypeText(returnType, method));
-
-      for (PsiParameter parameter : method.getParameterList().getParameters()) {
-        types.add(getTypeText(parameter.getType(), method));
-      }
-      if (!types.contains(null)) {
-        return types;
-      }
-    }
-    return null;
   }
 
   private static class FieldTypeQuickFix implements LocalQuickFix {
@@ -519,7 +497,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     }
 
     private static void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull List<String> signature) {
-      final String replacementText = getReplacementText(signature);
+      final String replacementText = getMethodTypeExpressionText(signature);
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       final PsiExpression replacement = factory.createExpressionFromText(replacementText, element);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -529,14 +507,6 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     @NotNull
     private String getDeclarationText(@NotNull List<String> signature) {
       return myIsConstructor ? getConstructorDeclarationText(myName, signature) : getMethodDeclarationText(myName, signature);
-    }
-
-    @NotNull
-    private static String getReplacementText(@NotNull List<String> signature) {
-      final String types = signature.stream()
-        .map(text -> text + ".class")
-        .collect(Collectors.joining(", "));
-      return JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + "(" + types + ")";
     }
 
     @Nullable

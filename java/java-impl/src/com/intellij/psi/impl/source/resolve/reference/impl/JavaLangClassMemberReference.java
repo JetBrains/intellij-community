@@ -38,11 +38,6 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  * @author Konstantin Bulenkov
  */
 public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
-  private static final String FIELD = "getField";
-  private static final String DECLARED_FIELD = "getDeclaredField";
-  private static final String METHOD = "getMethod";
-  private static final String DECLARED_METHOD = "getDeclaredMethod";
-
   private final PsiExpression myContext;
 
   public JavaLangClassMemberReference(@NotNull PsiLiteralExpression literal, @NotNull PsiExpression context) {
@@ -67,16 +62,16 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
         if (psiClass != null) {
           switch (type) {
 
-            case FIELD: {
+            case GET_FIELD: {
               return psiClass.findFieldByName(name, true);
             }
 
-            case DECLARED_FIELD: {
+            case GET_DECLARED_FIELD: {
               final PsiField field = psiClass.findFieldByName(name, false);
               return isPotentiallyAccessible(field, psiClass) ? field : null;
             }
 
-            case METHOD: {
+            case GET_METHOD: {
               final PsiMethod[] methods = psiClass.findMethodsByName(name, true);
               final PsiMethod publicMethod = ContainerUtil.find(methods, method -> isRegularMethod(method) && isPublic(method));
               if (publicMethod != null) {
@@ -85,7 +80,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               return ContainerUtil.find(methods, method -> isRegularMethod(method));
             }
 
-            case DECLARED_METHOD: {
+            case GET_DECLARED_METHOD: {
               final PsiMethod[] methods = psiClass.findMethodsByName(name, false);
               return ContainerUtil.find(methods, method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass));
             }
@@ -110,14 +105,14 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
       if (psiClass != null) {
         switch (type) {
 
-          case DECLARED_FIELD:
+          case GET_DECLARED_FIELD:
             return Arrays.stream(psiClass.getFields())
               .filter(field -> field.getName() != null)
               .sorted(Comparator.comparing(PsiField::getName))
               .map(field -> lookupField(field))
               .toArray();
 
-          case FIELD: {
+          case GET_FIELD: {
             final Set<String> uniqueNames = new THashSet<>();
             return Arrays.stream(psiClass.getAllFields())
               .filter(field -> isPotentiallyAccessible(field, psiClass) && field.getName() != null && uniqueNames.add(field.getName()))
@@ -126,14 +121,14 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .toArray();
           }
 
-          case DECLARED_METHOD:
+          case GET_DECLARED_METHOD:
             return Arrays.stream(psiClass.getMethods())
               .filter(method -> isRegularMethod(method))
               .sorted(Comparator.comparing(PsiMethod::getName))
               .map(method -> lookupMethod(method))
               .toArray();
 
-          case METHOD: {
+          case GET_METHOD: {
             return psiClass.getVisibleSignatures()
               .stream()
               .map(MethodSignatureBackedByPsiMethod::getMethod)

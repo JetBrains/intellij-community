@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.quickFix
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.InspectionsBundle.message
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.DEFAULT_SIGNATURE
 import com.intellij.testFramework.LightProjectDescriptor
@@ -50,16 +50,17 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightCodeInsightFixtureTestCa
   fun testStaticMethod() = doTestMethod(VOID)
   fun testStaticMethod2() = doTestMethod(STRING, STRING)
   fun testStaticMethod3() = doTestMethod(STRING, STRING, STRING_ARRAY)
-  fun testStaticMethod4() = doTest("Replace with 'findStatic'")
+  fun testStaticMethod4() = doTestReplace("findStatic")
 
   fun testVirtualMethod() = doTestMethod(VOID)
   fun testVirtualMethod2() = doTestMethod(STRING, STRING)
   fun testVirtualMethod3() = doTestMethod(STRING, STRING, STRING_ARRAY)
-  fun testVirtualMethod4() = doTest("Replace with 'findVirtual'")
+  fun testVirtualMethod4() = doTestReplace("findVirtual")
 
 
   fun doTestMethod(vararg withSignature: String) = doTest(USE_METHOD, *withSignature)
   fun doTestConstructor(vararg withSignature: String) = doTest(USE_CONSTRUCTOR, VOID, *withSignature)
+  fun doTestReplace(replacement: String) = doTest(message("inspection.handle.signature.replace.with.fix.name", replacement))
 
   fun doTest(actionPrefix: String, vararg withSignature: String) {
     val testName = getTestName(false)
@@ -80,8 +81,8 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightCodeInsightFixtureTestCa
     assertEquals("Too many actions", 0, actions.size)
 
     val familyName = when (actionPrefix) {
-      USE_CONSTRUCTOR -> InspectionsBundle.message("inspection.handle.signature.use.constructor.fix.family.name")
-      USE_METHOD -> InspectionsBundle.message("inspection.handle.signature.use.method.fix.family.name")
+      USE_CONSTRUCTOR -> message("inspection.handle.signature.use.constructor.fix.family.name")
+      USE_METHOD -> message("inspection.handle.signature.use.method.fix.family.name")
       else -> {
         fail("Unexpected action " + actionPrefix); ""
       }

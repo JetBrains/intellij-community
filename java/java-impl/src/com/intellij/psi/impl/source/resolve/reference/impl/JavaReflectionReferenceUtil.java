@@ -34,12 +34,49 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 /**
  * @author Pavel.Dolgov
  */
 public class JavaReflectionReferenceUtil {
+  public static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";
+  public static final String JAVA_LANG_INVOKE_METHOD_TYPE = "java.lang.invoke.MethodType";
+
+  public static final String METHOD_TYPE = "methodType";
+  public static final String GENERIC_METHOD_TYPE = "genericMethodType";
+
+  public static final String FIND_VIRTUAL = "findVirtual";
+  public static final String FIND_STATIC = "findStatic";
+  public static final String FIND_SPECIAL = "findSpecial";
+
+  public static final String FIND_GETTER = "findGetter";
+  public static final String FIND_SETTER = "findSetter";
+  public static final String FIND_STATIC_GETTER = "findStaticGetter";
+  public static final String FIND_STATIC_SETTER = "findStaticSetter";
+
+  public static final String FIND_VAR_HANDLE = "findVarHandle";
+  public static final String FIND_STATIC_VAR_HANDLE = "findStaticVarHandle";
+
+  public static final String GET_FIELD = "getField";
+  public static final String GET_DECLARED_FIELD = "getDeclaredField";
+  public static final String GET_METHOD = "getMethod";
+  public static final String GET_DECLARED_METHOD = "getDeclaredMethod";
+
+  public static final String JAVA_LANG_CLASS_LOADER = "java.lang.ClassLoader";
+  public static final String FOR_NAME = "forName";
+  public static final String LOAD_CLASS = "loadClass";
+  public static final String GET_CLASS = "getClass";
+
+  public static final String[] HANDLE_FACTORY_METHOD_NAMES = {
+    FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,
+    FIND_GETTER, FIND_SETTER,
+    FIND_STATIC_GETTER, FIND_STATIC_SETTER,
+    FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE};
+
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
   @Nullable
@@ -56,7 +93,7 @@ public class JavaReflectionReferenceUtil {
     if (context instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)context;
       final String methodReferenceName = methodCall.getMethodExpression().getReferenceName();
-      if ("forName".equals(methodReferenceName)) {
+      if (FOR_NAME.equals(methodReferenceName)) {
         final PsiMethod method = methodCall.resolveMethod();
         if (method != null && isJavaLangClass(method.getContainingClass())) {
           final PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
@@ -69,7 +106,7 @@ public class JavaReflectionReferenceUtil {
           }
         }
       }
-      else if ("getClass".equals(methodReferenceName) && methodCall.getArgumentList().getExpressions().length == 0) {
+      else if (GET_CLASS.equals(methodReferenceName) && methodCall.getArgumentList().getExpressions().length == 0) {
         final PsiMethod method = methodCall.resolveMethod();
         if (method != null && isJavaLangObject(method.getContainingClass())) {
           final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodCall.getMethodExpression().getQualifierExpression());
@@ -240,6 +277,32 @@ public class JavaReflectionReferenceUtil {
   public static String getTypeText(@Nullable PsiExpression argument) {
     final ReflectiveType reflectiveType = getReflectiveType(argument);
     return reflectiveType != null ? reflectiveType.getQualifiedName() : null;
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  public static List<String> getMethodSignature(@Nullable PsiMethod method) {
+    if (method != null) {
+      final List<String> types = new ArrayList<>();
+      final PsiType returnType = !method.isConstructor() ? method.getReturnType() : PsiType.VOID;
+      types.add(getTypeText(returnType, method));
+
+      for (PsiParameter parameter : method.getParameterList().getParameters()) {
+        types.add(getTypeText(parameter.getType(), method));
+      }
+      if (!types.contains(null)) {
+        return types;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static String getMethodTypeExpressionText(@NotNull List<String> signature) {
+    final String types = signature.stream()
+      .map(text -> text + ".class")
+      .collect(Collectors.joining(", "));
+    return JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + "(" + types + ")";
   }
 
 
