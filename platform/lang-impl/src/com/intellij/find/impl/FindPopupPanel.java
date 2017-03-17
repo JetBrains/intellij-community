@@ -604,7 +604,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         int index = myResultsPreviewTable.getSelectedRow();
         if (index != -1) {
           UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
-          myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+          myUsagePreviewPanel.updateLayout(usageInfo.isValid() ? Collections.singletonList(usageInfo) : null);
           VirtualFile file = usageInfo.getVirtualFile();
           String path = "";
           if (file != null) {
