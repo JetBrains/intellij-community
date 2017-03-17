@@ -493,3 +493,9 @@ iml_module(
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
     ],
 )
+
+py_test(
+    name = "test_studio",
+    srcs = ["test_studio.py"],
+    tags = ["manual"],
+)
