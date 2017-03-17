@@ -43,9 +43,6 @@ public class CourseDirectoryNode extends StudyDirectoryNode {
     Object value = childNode.getValue();
     if (value instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)value;
-      if (EduNames.SANDBOX_DIR.equals(directory.getName())) {
-        return new SandboxDirectoryNode(myProject, directory, myViewSettings);
-      }
       Lesson lesson = myCourse.getLesson(directory.getName());
       return lesson != null ? createChildDirectoryNode(lesson, directory) : null;
     }
