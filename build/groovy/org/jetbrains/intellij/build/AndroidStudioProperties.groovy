@@ -230,7 +230,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     // Bundle Gradle and an offline Maven repo
     buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
     buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
-      fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2")
+      fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2") {
+        exclude(name: "BUILD")
+      }
       fileset(dir: "$root/out/studio/repo")
     }
 
@@ -255,7 +257,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     // TODO: This extra copying is unfortunate, but our TemplateManager doesn't seem to handle the default resources.jar packaging (which
     // works out just fine for the rest of Intellij, see lib/resources.jar).
     buildContext.ant.copy(todir: "$androidPluginLib/templates") {
-      fileset(dir: "$root/tools/base/templates")
+      fileset(dir: "$root/tools/base/templates") {
+        exclude(name: "BUILD")
+      }
     }
     // TODO: Cloud Tools declares templates/ and clientTemplates/ as source roots (why?!), so they'll also be packaged in the .jar.
     buildContext.ant.copy(todir: "$targetDirectory/plugins/google-cloud-tools-as/lib/templates") {
