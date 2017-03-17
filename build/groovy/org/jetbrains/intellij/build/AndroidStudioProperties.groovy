@@ -66,7 +66,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                     "cidr-util",
                                                     "doxygen",
                                                   ] +
-                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main", "updater-ui"] -
+                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"] -
                                                   ["jps-model-impl", "jps-model-serialization"]
     productLayout.additionalPlatformJars.putAll("resources.jar", "community-resources", "adt-branding")
 
