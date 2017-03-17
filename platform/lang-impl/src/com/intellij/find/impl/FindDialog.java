@@ -69,6 +69,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
@@ -1603,6 +1604,9 @@ public class FindDialog extends DialogWrapper implements FindUI {
             TextChunk textChunk = text[i];
             SimpleTextAttributes attributes = getAttributes(textChunk);
             myUsageRenderer.append(textChunk.getText(), attributes);
+          }
+          if (!((UsageInfo2UsageAdapter)value).isValid()) {
+            myUsageRenderer.append(" "+UsageViewBundle.message("node.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
           }
         }
         setBorder(null);
