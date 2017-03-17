@@ -903,14 +903,6 @@ java_library(
 )
 
 java_library(
-    name = "google-api-java-client",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/google-api-java-client/1.20.0:google-api-java-client-min-repackaged-1.20.0"],
-    runtime_deps = ["//prebuilts/tools/common/google-api-java-client/1.20.0:google-api-java-client-min-repackaged-1.20.0"],
-)
-
-java_library(
     name = "purejavacomm",
     tags = ["managed"],
     visibility = ["//visibility:public"],

@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="google-api-java-client">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../../prebuilts/tools/common/google-api-java-client/1.20.0/google-api-java-client-min-repackaged-1.20.0.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
