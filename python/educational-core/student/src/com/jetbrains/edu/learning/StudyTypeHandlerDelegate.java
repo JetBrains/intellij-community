@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 
 public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
@@ -31,7 +32,7 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
     TaskFile taskFile = StudyUtils.getTaskFile(project, file.getVirtualFile());
-    if (taskFile == null || !taskFile.getTask().hasSubtasks()) {
+    if (taskFile == null || !(taskFile.getTask() instanceof TaskWithSubtasks)) {
       return Result.CONTINUE;
     }
     int offset = editor.getCaretModel().getOffset();

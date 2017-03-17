@@ -10,6 +10,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public abstract class CCSubtaskPlaceholderAction extends CCAnswerPlaceholderActi
       return;
     }
     TaskFile taskFile = state.getTaskFile();
-    if (!taskFile.getTask().hasSubtasks()) {
+    if (!(taskFile.getTask() instanceof TaskWithSubtasks)) {
       return;
     }
     int offset = state.getEditor().getCaretModel().getOffset();

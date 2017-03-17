@@ -18,6 +18,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
     }
     StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
     final StudyState studyState = new StudyState(studyEditor);
-    if (answerPlaceholder.getTaskFile().getTask().hasSubtasks()) {
+    if (answerPlaceholder.getTaskFile().getTask() instanceof TaskWithSubtasks) {
       StudySubtaskUtils.refreshPlaceholder(studyState.getEditor(), answerPlaceholder);
       return;
     }

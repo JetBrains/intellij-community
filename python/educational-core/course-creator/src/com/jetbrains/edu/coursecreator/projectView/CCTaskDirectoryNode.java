@@ -17,6 +17,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.projectView.TaskDirectoryNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
       if (!CCUtils.isTestsFile(myProject, virtualFile)) {
         return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings);
       }
-      if (!myTask.hasSubtasks()) {
+      if (!(myTask instanceof TaskWithSubtasks)) {
         return new CCStudentInvisibleFileNode(myProject, psiFile, myViewSettings, getTestNodeName(configurator, psiElement));
       }
       String testFileName = getTestNodeName(configurator, psiElement);
@@ -81,7 +82,7 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
   }
 
   private boolean isActiveSubtaskTest(VirtualFile virtualFile) {
-    if (!myTask.hasSubtasks()) {
+    if (!(myTask instanceof TaskWithSubtasks)) {
       return true;
     }
 

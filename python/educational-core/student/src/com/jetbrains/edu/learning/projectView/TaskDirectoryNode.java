@@ -15,6 +15,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
   @Override
   protected void updateImpl(PresentationData data) {
     StudyStatus status = myTask.getStatus();
-    String subtaskInfo = myTask.hasSubtasks() ? getSubtaskInfo() : null;
+    String subtaskInfo = myTask instanceof TaskWithSubtasks ? getSubtaskInfo() : null;
     if (status == StudyStatus.Unchecked) {
       updatePresentation(data, myTask.getName(), JBColor.BLACK, InteractiveLearningIcons.Task, subtaskInfo);
       return;

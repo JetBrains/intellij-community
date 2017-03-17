@@ -22,6 +22,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -241,7 +242,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           });
       }
       else {
-        boolean hasMoreSubtasks = myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != myTask.getLastSubtaskIndex();
+        boolean hasMoreSubtasks = myTask instanceof TaskWithSubtasks && myTask.getActiveSubtaskIndex() != myTask.getLastSubtaskIndex();
         int visibleSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
         ApplicationManager.getApplication().invokeLater(() -> {
           int subtaskSize = myTask.getLastSubtaskIndex() + 1;
@@ -249,7 +250,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
           if (hasMoreSubtasks) {
             int nextSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
-            StudySubtaskUtils.switchStep(myProject, myTask, nextSubtaskIndex);
+            StudySubtaskUtils.switchStep(myProject, (TaskWithSubtasks)myTask, nextSubtaskIndex);
             rememberAnswers(nextSubtaskIndex);
           }
         });

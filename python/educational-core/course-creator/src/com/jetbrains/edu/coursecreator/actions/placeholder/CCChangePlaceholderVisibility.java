@@ -13,6 +13,7 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +95,7 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
       return;
     }
     Task task = state.getTaskFile().getTask();
-    if (!task.hasSubtasks()) {
+    if (!(task instanceof TaskWithSubtasks)) {
       return;
     }
     Integer minSubtaskIndex = Collections.min(placeholder.getSubtaskInfos().keySet());

@@ -40,6 +40,7 @@ import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.stepic.StepicAdaptiveReactionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -305,7 +306,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     if (lessons.size() == 1 && lessons.get(0).getTaskList().size() == 1) {
       final Lesson lesson = lessons.get(0);
       final Task task = lesson.getTaskList().get(0);
-      if (!task.hasSubtasks()) {
+      if (!(task instanceof TaskWithSubtasks)) {
         return null;
       }
       int taskNum = task.getLastSubtaskIndex() + 1;

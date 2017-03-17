@@ -28,6 +28,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
@@ -66,7 +67,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
     final Task task = taskFile.getTask();
-    if (task.hasSubtasks()) {
+    if (task instanceof TaskWithSubtasks) {
       for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
         StudySubtaskUtils.refreshPlaceholder(editor, placeholder);
       }

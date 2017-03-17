@@ -11,6 +11,7 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 
 public class CCSwitchSubtask extends DumbAwareAction {
@@ -21,14 +22,14 @@ public class CCSwitchSubtask extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Task task = getTask(e);
-    if (task == null) {
+    if (!(task instanceof TaskWithSubtasks)) {
       return;
     }
     Project project = e.getProject();
     if (project == null) {
       return;
     }
-    CCSubtaskEditorNotificationProvider.createPopup(task, project).showCenteredInCurrentWindow(project);
+    CCSubtaskEditorNotificationProvider.createPopup((TaskWithSubtasks)task, project).showCenteredInCurrentWindow(project);
   }
 
   @Override
@@ -36,7 +37,7 @@ public class CCSwitchSubtask extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
     Task task = getTask(e);
-    if (task == null || !task.hasSubtasks()) {
+    if (task == null || !(task instanceof TaskWithSubtasks)) {
       return;
     }
     presentation.setEnabledAndVisible(true);

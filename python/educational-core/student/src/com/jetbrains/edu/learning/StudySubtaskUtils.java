@@ -22,6 +22,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jetbrains.annotations.NotNull;
@@ -35,14 +36,14 @@ public class StudySubtaskUtils {
   private StudySubtaskUtils() {
   }
 
-  public static void switchStep(@NotNull Project project, @NotNull Task task, int toSubtaskIndex) {
+  public static void switchStep(@NotNull Project project, @NotNull TaskWithSubtasks task, int toSubtaskIndex) {
     switchStep(project, task, toSubtaskIndex, true);
   }
 
   /***
    * @param toSubtaskIndex from 0 to subtaskNum - 1
    */
-  public static void switchStep(@NotNull Project project, @NotNull Task task, int toSubtaskIndex, boolean navigateToTask) {
+  public static void switchStep(@NotNull Project project, @NotNull TaskWithSubtasks task, int toSubtaskIndex, boolean navigateToTask) {
     if (toSubtaskIndex == task.getActiveSubtaskIndex()) {
       return;
     }

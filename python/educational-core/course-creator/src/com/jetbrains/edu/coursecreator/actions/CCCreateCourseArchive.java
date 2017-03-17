@@ -31,6 +31,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,7 +135,7 @@ public class CCCreateCourseArchive extends DumbAwareAction {
             if (srcDir != null) {
               studentFileDir = srcDir;
             }
-            if (task.hasSubtasks()) {
+            if (task instanceof TaskWithSubtasks) {
               transformSubtaskTestsToTextFiles(studentFileDir);
             }
             for (String taskFile : task.getTaskFiles().keySet()) {
