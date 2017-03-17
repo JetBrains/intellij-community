@@ -371,4 +371,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testIteratingOverListAfterIfNot() {
     doTest();
   }
+
+  // EA-98555, EA-98663
+  public void testNullArgumentMappedToPositionalParameter() {
+    doTest();
+  }
 }
