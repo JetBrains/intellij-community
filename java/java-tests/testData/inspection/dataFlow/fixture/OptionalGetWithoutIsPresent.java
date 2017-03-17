@@ -82,7 +82,7 @@ class OptionalWithoutIsPresent {
     }
     if (maybe.isPresent()) {
       maybe = Optional.empty();
-      System.out.println(maybe.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>());
+      System.out.println(maybe.<warning descr="The call to get always fails, according to its method contracts">get</warning>());
     }
     boolean b = <warning descr="Condition '((maybe.isPresent()))' is always 'false'">((maybe.isPresent()))</warning> && maybe.get() == 1;
     boolean c = <warning descr="Condition '(!maybe.isPresent())' is always 'true'">(!maybe.isPresent())</warning> || maybe.get() == 1;
@@ -118,7 +118,7 @@ class OptionalWithoutIsPresent {
     boolean absent = !present;
     boolean otherAbsent = !!absent;
     if(otherAbsent) {
-      System.out.println(opt.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>());
+      System.out.println(opt.<warning descr="The call to get always fails, according to its method contracts">get</warning>());
     } else {
       System.out.println(opt.get());
     }
@@ -151,7 +151,7 @@ class OptionalWithoutIsPresent {
 
     o2 = getOptional();
     org.junit.Assert.assertTrue(!o2.isPresent());
-    System.out.println(o2.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>());
+    System.out.println(o2.<warning descr="The call to get always fails, according to its method contracts">get</warning>());
   }
 
   private void checkAsserts2() {
@@ -175,12 +175,12 @@ class OptionalWithoutIsPresent {
       test = Optional.empty();
     }
     System.out.println(test.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
-    if(b) {
+    if(<warning descr="Condition 'b' is always 'true'">b</warning>) {
       test = Optional.empty();
     } else {
       test = Optional.empty();
     }
-    System.out.println(test.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>());
+    System.out.println(test.<warning descr="The call to get always fails, according to its method contracts">get</warning>());
 
   }
 
@@ -228,7 +228,7 @@ class OptionalWithoutIsPresent {
 
   void order(Optional<String> order, boolean b) {
     order.ifPresent(o -> System.out.println(order.get()));
-    System.out.println(order.orElseGet(() -> order.<warning descr="'Optional.get()' will definitely fail as Optional is empty here">get</warning>().trim()));
+    System.out.println(order.orElseGet(() -> order.<warning descr="The call to get always fails, according to its method contracts">get</warning>().trim()));
   }
 
   public static void two(Optional<Object> o1,Optional<Object> o2) {
@@ -318,7 +318,7 @@ class OptionalWithoutIsPresent {
 
   void guavaTest(com.google.common.base.Optional<String> opt, String s) {
     System.out.println(opt.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
-    if(opt.isPresent()) {
+    if(<warning descr="Condition 'opt.isPresent()' is always 'true'">opt.isPresent()</warning>) {
       System.out.println(opt.get());
     }
     opt = com.google.common.base.Optional.fromNullable(s);
@@ -346,5 +346,21 @@ class OptionalWithoutIsPresent {
     if (<warning descr="Condition 'test.isPresent()' is always 'true'">test.isPresent()</warning>) {
       System.out.println("Yes");
     }
+  }
+
+  void testThrowCatch(Optional<String> opt) {
+    try {
+      opt.orElseThrow(RuntimeException::new);
+      System.out.println("Ok: " + opt.get());
+    } catch (RuntimeException ex) {
+      System.out.println("Fail: " + opt.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
+    }
+  }
+
+  public void testThrowFail(Optional<String> arg) {
+    if(!arg.isPresent()) {
+      System.out.println(arg.<warning descr="The call to orElseThrow always fails, according to its method contracts">orElseThrow</warning>(IllegalAccessError::new));
+    }
+    String res = Optional.<String>empty().<warning descr="The call to orElseThrow always fails, according to its method contracts">orElseThrow</warning>(RuntimeException::new);
   }
 }

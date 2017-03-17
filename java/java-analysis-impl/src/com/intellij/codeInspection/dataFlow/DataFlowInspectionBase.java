@@ -355,30 +355,24 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private void reportUncheckedOptionalGet(ProblemsHolder holder,
                                           Map<PsiMethodCallExpression, ThreeState> calls,
                                           List<PsiExpression> qualifiers) {
+    if (!REPORT_UNCHECKED_OPTIONALS) return;
     for (Map.Entry<PsiMethodCallExpression, ThreeState> entry : calls.entrySet()) {
       ThreeState state = entry.getValue();
-      if (state == ThreeState.YES || state == ThreeState.UNSURE && !REPORT_UNCHECKED_OPTIONALS) {
-        continue;
-      }
+      if (state != ThreeState.UNSURE) continue;
       PsiMethodCallExpression call = entry.getKey();
       PsiMethod method = call.resolveMethod();
       if (method == null) continue;
       PsiClass optionalClass = method.getContainingClass();
       if (optionalClass == null) continue;
-      if (state == ThreeState.NO) {
-        holder.registerProblem(getElementToHighlight(call),
-                               InspectionsBundle.message("dataflow.message.optional.get.definitely.absent", optionalClass.getName()));
-      } else if (state == ThreeState.UNSURE) {
-        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
-        if (qualifier instanceof PsiMethodCallExpression &&
-            qualifiers.stream().anyMatch(q -> PsiEquivalenceUtil.areElementsEquivalent(q, qualifier))) {
-          // Conservatively do not report methodCall().get() cases if methodCall().isPresent() was found in the same method
-          // without deep correspondence analysis
-          continue;
-        }
-        holder.registerProblem(getElementToHighlight(call),
-                               InspectionsBundle.message("dataflow.message.optional.get.without.is.present", optionalClass.getName()));
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression());
+      if (qualifier instanceof PsiMethodCallExpression &&
+          qualifiers.stream().anyMatch(q -> PsiEquivalenceUtil.areElementsEquivalent(q, qualifier))) {
+        // Conservatively do not report methodCall().get() cases if methodCall().isPresent() was found in the same method
+        // without deep correspondence analysis
+        continue;
       }
+      holder.registerProblem(getElementToHighlight(call),
+                             InspectionsBundle.message("dataflow.message.optional.get.without.is.present", optionalClass.getName()));
     }
   }
 
@@ -980,7 +974,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           if ("isPresent".equals(methodName) && qualifier instanceof PsiMethodCallExpression) {
             myOptionalQualifiers.add(qualifier);
           }
-          else if (isOptionalGetMethodName(methodName)) {
+          else if (DfaOptionalSupport.isOptionalGetMethodName(methodName)) {
             ThreeState state = memState.checkOptional(memState.peek());
             myOptionalCalls.merge(call, state, (s1, s2) -> s1 == s2 ? s1 : ThreeState.UNSURE);
           }
@@ -994,18 +988,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       return states;
     }
 
-    private static boolean isOptionalGetMethodName(String name) {
-      return "get".equals(name) || "getAsDouble".equals(name) || "getAsInt".equals(name) || "getAsLong".equals(name);
-    }
-
     private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {
       List<MethodContract> contracts = instruction.getContracts();
-      return !contracts.isEmpty() && contracts.stream().allMatch(DataFlowInstructionVisitor::isNonTrivialFailingContract);
+      return !contracts.isEmpty() && contracts.stream().anyMatch(DataFlowInstructionVisitor::isNonTrivialFailingContract);
     }
 
     private static boolean isNonTrivialFailingContract(MethodContract contract) {
-      return contract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION &&
-             Arrays.stream(contract.arguments).anyMatch(v -> v != MethodContract.ValueConstraint.ANY_VALUE);
+      return contract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION && !contract.isTrivial();
     }
 
     @Override

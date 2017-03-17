@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract.QualifierBasedContract;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -27,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
@@ -50,9 +50,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
   private static final Object ANY_VALUE = new Object();
 
-  private static final Set<String> OPTIONAL_METHOD_NAMES =
-    ContainerUtil.set("isPresent", "of", "ofNullable", "fromNullable", "empty", "absent",
-                      "or", "orElseGet", "orElseThrow", "ifPresent", "map", "flatMap", "filter", "transform");
+  private static final Set<String> OPTIONAL_METHOD_NAMES = ContainerUtil
+    .set("of", "ofNullable", "fromNullable", "empty", "absent", "or", "orElseGet", "ifPresent", "map", "flatMap", "filter", "transform");
   private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59))
@@ -208,7 +207,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       LinkedHashSet<DfaMemoryState> currentStates = ContainerUtil.newLinkedHashSet(memState);
       if (argValues != null) {
         for (MethodContract contract : instruction.getContracts()) {
-          currentStates = addContractResults(argValues, contract, currentStates, instruction, runner.getFactory(), finalStates);
+          currentStates = addContractResults(qualifier, argValues, contract, currentStates, instruction, runner.getFactory(), finalStates);
           if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
@@ -266,26 +265,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     DfaValue qualifier = popQualifier(instruction, runner, memState);
     DfaValue result = null;
     switch (methodName) {
-      case "isPresent": {
-        ThreeState state = memState.checkOptional(qualifier);
-        DfaConstValue.Factory constFactory = runner.getFactory().getConstFactory();
-        if (state == ThreeState.UNSURE) {
-          DfaMemoryState falseState = memState.createCopy();
-          memState.push(constFactory.getTrue());
-          memState.applyIsPresentCheck(true, qualifier);
-          falseState.push(constFactory.getFalse());
-          falseState.applyIsPresentCheck(false, qualifier);
-          return Arrays.asList(memState, falseState);
-        }
-        else {
-          result = state == ThreeState.YES ? constFactory.getTrue() : constFactory.getFalse();
-        }
-        break;
-      }
-      case "orElseThrow": {
-        memState.applyIsPresentCheck(true, qualifier);
-        break;
-      }
       case "of":
       case "ofNullable":
       case "fromNullable":
@@ -371,12 +350,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return qualifier;
   }
 
-  private LinkedHashSet<DfaMemoryState> addContractResults(DfaValue[] argValues,
-                                                  MethodContract contract,
-                                                  LinkedHashSet<DfaMemoryState> states,
-                                                  MethodCallInstruction instruction,
-                                                  DfaValueFactory factory,
-                                                  Set<DfaMemoryState> finalStates) {
+  private LinkedHashSet<DfaMemoryState> addContractResults(DfaValue qualifier,
+                                                           DfaValue[] argValues,
+                                                           MethodContract contract,
+                                                           LinkedHashSet<DfaMemoryState> states,
+                                                           MethodCallInstruction instruction,
+                                                           DfaValueFactory factory,
+                                                           Set<DfaMemoryState> finalStates) {
     DfaConstValue.Factory constFactory = factory.getConstFactory();
     LinkedHashSet<DfaMemoryState> falseStates = ContainerUtil.newLinkedHashSet();
     for (int i = 0; i < argValues.length; i++) {
@@ -418,6 +398,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
           if (unknownVsNull && invertCondition) {
             falseCopy.markEphemeral();
           }
+          falseStates.add(falseCopy);
+        }
+      }
+      states = nextStates;
+    }
+
+    if (contract instanceof QualifierBasedContract) {
+      LinkedHashSet<DfaMemoryState> nextStates = ContainerUtil.newLinkedHashSet();
+      QualifierBasedContract qualifierBasedContract = (QualifierBasedContract)contract;
+      for (DfaMemoryState state : states) {
+        DfaMemoryState falseCopy = state.createCopy();
+        if (qualifierBasedContract.applyContract(true, qualifier, state)) {
+          nextStates.add(state);
+        }
+        if (qualifierBasedContract.applyContract(false, qualifier, falseCopy)) {
           falseStates.add(falseCopy);
         }
       }
