@@ -175,3 +175,28 @@ For final build (post RC) :
     commit 85304d8edd8c7979831c1c8fa337b1406940ce4f
     Update launcher icons to use a yellow tint for preview releases
     Change-Id: Ic2db50f66bc9f3f6292e6f54bbd150001cf9cfec
+
+--------------------------------------------------------------------------------
+For AOSP push:
+
+ 1. Update the build scripts such that they no longer reference any of
+    the closed source plugins such as the C++ support; this means removing
+    the vendor/ plugin references from .idea/modules.xml, community-main.xml,
+    and build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
+
+ 2. Remove the build.xml reference which calls ant in tools/adt/idea to
+    build the protobufs from source; instead, after a build, check these
+    in as prebuilts into android/lib. Also remove
+      fileset(dir: "$root/out/studio/runtime")
+    from
+      build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
+
+ 3. Perform a test build of tools/idea/build\_studio.sh and make sure the sources
+    build correctly.
+
+ Relevant CLs from the 2.3 AOSP push (though they'll need to be adjusted to
+ account for the big build script changes in 2.4) :
+ Change-Id: I364ee67262524aa27f71831e6ed01164826e54ad
+ Change-Id: I9298c7319ce55fb64c29e38636808e57f2a84209
+ Change-Id: Ic60a95a21ea0e483d82f6013539d112b89a7d0c0 (AOSP)
+ Change-Id: I42bcad10589b8172a46a3f74aa1e7a5826ea52fc (AOSP)
