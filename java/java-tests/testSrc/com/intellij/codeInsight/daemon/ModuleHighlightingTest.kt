@@ -68,9 +68,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testAnnotations() {
-    highlight("""
-        @Deprecated <error descr="'@Override' not applicable to module">@Override</error> module M { }
-        """.trimIndent())
+    highlight("""@Deprecated <error descr="'@Override' not applicable to module">@Override</error> module M { }""")
   }
 
   fun testDuplicateStatements() {
@@ -214,7 +212,6 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
-
     highlight("test.java", """
         import pkg.m2.C2;
         import pkg.m2.*;
