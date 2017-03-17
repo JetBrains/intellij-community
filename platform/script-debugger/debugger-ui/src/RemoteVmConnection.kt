@@ -80,14 +80,12 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
         if (result.isFulfilled) {
           close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
         }
+        else if (++attemptNumber > 100 || (stopCondition?.value(null) ?: false)) {
+          result.setError("Cannot establish connection - promptly closed after open")
+        }
         else {
-          if (++attemptNumber > 10 || (stopCondition?.value(null) ?: false)) {
-            result.setError("Cannot establish connection - promptly closed after open")
-          }
-          else {
-            sleep(result, 300)
-            attempt()
-          }
+          sleep(result, 500)
+          attempt()
         }
       }
     }
