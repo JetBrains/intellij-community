@@ -112,7 +112,8 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
         break;
       }
       else if (element instanceof PsiMember) {
-        psiClass = ((PsiMember)element).getContainingClass();
+        psiClass = contextLocation instanceof MethodLocation ? ((MethodLocation)contextLocation).getContainingClass()
+                                                             : ((PsiMember)element).getContainingClass();
         if (isTestClass(psiClass)) {
           break;
         }
@@ -138,7 +139,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     PsiMethod method = PsiTreeUtil.getParentOfType(context.getPsiLocation(), PsiMethod.class, false);
     while (method != null) {
       if (isTestMethod(false, method)) {
-        configuration.beMethodConfiguration(PsiLocation.fromPsiElement(project, method));
+        configuration.beMethodConfiguration(MethodLocation.elementInClass(method, psiClass));
         psiElement = method;
       }
       method = PsiTreeUtil.getParentOfType(method, PsiMethod.class);
