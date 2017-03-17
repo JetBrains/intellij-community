@@ -82,6 +82,7 @@ public class GitUtil {
   public static final String DOT_GIT = ".git";
 
   public static final String ORIGIN_HEAD = "origin/HEAD";
+  public static final String GRAFTED = "grafted";
 
   public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = new Function<GitRepository, VirtualFile>() {
     @Override
