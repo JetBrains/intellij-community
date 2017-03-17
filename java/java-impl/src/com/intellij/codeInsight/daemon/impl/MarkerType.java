@@ -344,12 +344,13 @@ public class MarkerType {
 
     final PsiElementProcessor.FindElement<PsiClass> collectProcessor = new PsiElementProcessor.FindElement<>();
     final PsiElementProcessor.FindElement<PsiFunctionalExpression> collectExprProcessor = new PsiElementProcessor.FindElement<>();
+    JComponent component = e == null ? null : (JComponent)e.getComponent();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
       if (collectProcessor.getFoundElement() == null) {
         FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
       }
-    }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
+    }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), component)) {
       return;
     }
 
