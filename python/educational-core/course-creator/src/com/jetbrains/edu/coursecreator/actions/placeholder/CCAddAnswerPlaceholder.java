@@ -18,6 +18,8 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -50,7 +52,8 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     final SelectionModel model = editor.getSelectionModel();
     final int offset = model.hasSelection() ? model.getSelectionStart() : editor.getCaretModel().getOffset();
     TaskFile taskFile = state.getTaskFile();
-    int subtaskIndex = state.getTaskFile().getTask().getActiveSubtaskIndex();
+    final Task task = state.getTaskFile().getTask();
+    int subtaskIndex = task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0;
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
     AnswerPlaceholderSubtaskInfo info = new AnswerPlaceholderSubtaskInfo();
     answerPlaceholder.getSubtaskInfos().put(subtaskIndex, info);

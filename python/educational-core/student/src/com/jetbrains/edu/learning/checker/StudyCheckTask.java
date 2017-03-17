@@ -243,15 +243,16 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       }
       else {
         if (myTask instanceof TaskWithSubtasks) {
-          boolean hasMoreSubtasks = ((TaskWithSubtasks)myTask).activeSubtaskIsLast();
-          int visibleSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+          boolean hasMoreSubtasks = ((TaskWithSubtasks)myTask).activeSubtaskNotLast();
+          final int activeSubtaskIndex = ((TaskWithSubtasks)myTask).getActiveSubtaskIndex();
+          int visibleSubtaskIndex = activeSubtaskIndex + 1;
 
           ApplicationManager.getApplication().invokeLater(() -> {
             int subtaskSize = ((TaskWithSubtasks)myTask).getLastSubtaskIndex() + 1;
             String resultMessage = !hasMoreSubtasks ? message : "Subtask " + visibleSubtaskIndex + "/" + subtaskSize + " solved";
             StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
             if (hasMoreSubtasks) {
-              int nextSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+              int nextSubtaskIndex = activeSubtaskIndex + 1;
               StudySubtaskUtils.switchStep(myProject, (TaskWithSubtasks)myTask, nextSubtaskIndex);
               rememberAnswers(nextSubtaskIndex);
             }

@@ -63,7 +63,7 @@ public class PyCCRunTestsConfigurationProducer extends RunConfigurationProducer<
     }
     String generatedName = task.getLesson().getName() + "/" + task.getName();
     if (task instanceof TaskWithSubtasks) {
-      int index = task.getActiveSubtaskIndex() + 1;
+      int index = ((TaskWithSubtasks)task).getActiveSubtaskIndex() + 1;
       generatedName += " " + index;
     }
     return generatedName;
@@ -88,7 +88,8 @@ public class PyCCRunTestsConfigurationProducer extends RunConfigurationProducer<
     if (task == null) {
       return null;
     }
-    String testsFileName = PyEduPluginConfigurator.getSubtaskTestsFileName(task.getActiveSubtaskIndex());
+    String testsFileName = PyEduPluginConfigurator.getSubtaskTestsFileName(task instanceof TaskWithSubtasks ?
+                                                                       ((TaskWithSubtasks)task).getActiveSubtaskIndex() : 0);
     String taskDirPath = FileUtil.toSystemDependentName(taskDir.getPath());
     String testsPath = taskDir.findChild(EduNames.SRC) != null ?
                        FileUtil.join(taskDirPath, EduNames.SRC, testsFileName) :
@@ -100,9 +101,6 @@ public class PyCCRunTestsConfigurationProducer extends RunConfigurationProducer<
   @Override
   public boolean isConfigurationFromContext(PyCCRunTestConfiguration configuration, ConfigurationContext context) {
     String path = getTestPath(context);
-    if (path == null) {
-      return false;
-    }
-    return path.equals(configuration.getPathToTest());
+    return path != null && path.equals(configuration.getPathToTest());
   }
 }

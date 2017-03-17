@@ -69,7 +69,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     if (task instanceof TaskWithSubtasks) {
       EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
       String header = (isTestFile ? "test" : "task") + " file";
-      int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
+      int activeSubtaskIndex = ((TaskWithSubtasks)task).getActiveSubtaskIndex() + 1;
       int subtaskSize = ((TaskWithSubtasks)task).getLastSubtaskIndex() + 1;
       panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
       panel

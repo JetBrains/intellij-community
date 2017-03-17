@@ -87,7 +87,7 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
     }
 
     boolean isSubtaskTestFile = virtualFile.getName().contains(EduNames.SUBTASK_MARKER);
-    if (myTask.getActiveSubtaskIndex() == 0) {
+    if (((TaskWithSubtasks)myTask).getActiveSubtaskIndex() == 0) {
       return !isSubtaskTestFile;
     }
     if (!isSubtaskTestFile) {
@@ -96,7 +96,7 @@ public class CCTaskDirectoryNode extends TaskDirectoryNode {
     String nameWithoutExtension = virtualFile.getNameWithoutExtension();
     int stepMarkerStart = nameWithoutExtension.indexOf(EduNames.SUBTASK_MARKER);
     int stepIndex = Integer.valueOf(nameWithoutExtension.substring(EduNames.SUBTASK_MARKER.length() + stepMarkerStart));
-    return stepIndex == myTask.getActiveSubtaskIndex();
+    return stepIndex == ((TaskWithSubtasks)myTask).getActiveSubtaskIndex();
   }
 
   @Override

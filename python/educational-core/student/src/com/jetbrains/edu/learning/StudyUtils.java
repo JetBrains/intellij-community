@@ -67,6 +67,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.editor.StudyEditor;
@@ -502,8 +503,8 @@ public class StudyUtils {
   @NotNull
   private static String constructTaskTextFilename(@NotNull Task task, @NotNull String defaultName) {
     String fileNameWithoutExtension = FileUtil.getNameWithoutExtension(defaultName);
-    int activeStepIndex = task.getActiveSubtaskIndex();
-    if (activeStepIndex != 0) {
+    if (task instanceof TaskWithSubtasks) {
+      int activeStepIndex = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
       fileNameWithoutExtension += EduNames.SUBTASK_MARKER + activeStepIndex;
     }
     return addExtension(fileNameWithoutExtension, defaultName);

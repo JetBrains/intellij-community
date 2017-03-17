@@ -13,7 +13,6 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,9 +31,9 @@ public class PyStudyTestRunner extends StudyTestRunner {
     Course course = myTask.getLesson().getCourse();
     PyEduPluginConfigurator configurator = new PyEduPluginConfigurator();
     String testsFileName = configurator.getTestFileName();
-    if (myTask instanceof TaskWithSubtasks && myTask.getActiveSubtaskIndex() != 0) {
+    if (myTask instanceof TaskWithSubtasks && ((TaskWithSubtasks)myTask).getActiveSubtaskIndex() != 0) {
       testsFileName = FileUtil.getNameWithoutExtension(testsFileName);
-      int index = myTask.getActiveSubtaskIndex();
+      int index = ((TaskWithSubtasks)myTask).getActiveSubtaskIndex();
       testsFileName += EduNames.SUBTASK_MARKER + index + "." + FileUtilRt.getExtension(configurator.getTestFileName());
     }
     final File testRunner = new File(myTaskDir.getPath(), testsFileName);
