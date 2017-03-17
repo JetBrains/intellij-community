@@ -33,6 +33,7 @@ public class ProducerBuilderPositiveTest extends StreamChainBuilderPositiveTestB
 
   @Override
   protected void checkResultChain(StreamChain chain) {
+    assertNotNull(chain);
     assertNotNull(chain.getProducerCall());
   }
 
