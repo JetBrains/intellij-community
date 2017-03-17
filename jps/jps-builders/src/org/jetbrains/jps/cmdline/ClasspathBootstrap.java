@@ -72,7 +72,7 @@ public class ClasspathBootstrap {
     cp.addAll(getInstrumentationUtilRoots());
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     cp.addAll(getJavac8RefScannerClasspath());
-    //don't forget to update layoutCommunityJps() in layouts.gant accordingly
+    //don't forget to update CommunityStandaloneJpsBuilder.layoutJps accordingly
 
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");

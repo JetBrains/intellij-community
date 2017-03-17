@@ -184,6 +184,15 @@ class LayoutBuilder {
       }
     }
 
+    /**
+     * Include files and directories specified in {@code inner} into the current place in this layout
+     */
+    def include(@DelegatesTo(LayoutSpec) Closure inner) {
+      def body = inner.rehydrate(null, this, inner.thisObject)
+      body.resolveStrategy = Closure.OWNER_FIRST
+      body()
+    }
+
     JpsModule findModule(String name) {
       def module = project.modules.find { it.name == name }
       if (module == null) {
