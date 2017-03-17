@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -25,6 +26,10 @@ public class Lesson implements StudyItem {
 
   @Expose
   @SerializedName("task_list")
+  @AbstractCollection(elementTypes = {
+    Task.class,
+    ChoiceTask.class,
+    TheoryTask.class})
   public List<Task> taskList = new ArrayList<>();
 
   @Transient

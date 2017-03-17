@@ -16,6 +16,7 @@ import com.jetbrains.edu.learning.StudyCheckListener;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TheoryTask;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,7 @@ public abstract class StudyCheckAction extends StudyActionWithShortcut {
       final StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
       if (studyEditor != null) {
         final Task task = studyEditor.getTaskFile().getTask();
-        if (task.isTheoryTask()) {
+        if (task instanceof TheoryTask) {
           presentation.setText(getTextWithShortcuts("Get Next Recommendation"));
         }
         else {

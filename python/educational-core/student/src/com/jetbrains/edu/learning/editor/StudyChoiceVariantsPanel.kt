@@ -5,7 +5,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.edu.learning.courseFormat.Task
+import com.jetbrains.edu.learning.courseFormat.ChoiceTask
 import javafx.application.Platform
 import javafx.beans.value.ObservableValue
 import javafx.embed.swing.JFXPanel
@@ -24,7 +24,7 @@ import javax.swing.JScrollPane
 import javax.swing.ScrollPaneConstants
 
 
-class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
+class StudyChoiceVariantsPanel(task: ChoiceTask) : JScrollPane() {
 
   private val LEFT_INSET = 15.0
   private val RIGHT_INSET = 10.0
@@ -80,7 +80,7 @@ class StudyChoiceVariantsPanel(task: Task) : JScrollPane() {
     return Color.rgb(panelBackground.red, panelBackground.green, panelBackground.blue)
   }
 
-  private fun createSelectionListener(task: Task, index: Int): (ObservableValue<out Boolean>, Boolean, Boolean) -> Unit {
+  private fun createSelectionListener(task: ChoiceTask, index: Int): (ObservableValue<out Boolean>, Boolean, Boolean) -> Unit {
     return { observableValue, wasSelected, isSelected ->
       if (isSelected) {
         task.selectedVariants.add(index)

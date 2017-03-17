@@ -74,10 +74,10 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
         Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
         return;
       }
-      if (task.isChoiceTask()) {
+      if (task instanceof ChoiceTask) {
         final StudyToolWindow window = StudyUtils.getStudyToolWindow(project);
         if (window != null) {
-          window.setBottomComponent(new StudyChoiceVariantsPanel(task));
+          window.setBottomComponent(new StudyChoiceVariantsPanel((ChoiceTask)task));
         }
       }
     }
@@ -101,8 +101,8 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     }
     final Task task = taskFile.getTask();
     task.setStatus(StudyStatus.Unchecked);
-    if (task.isChoiceTask()) {
-      task.setSelectedVariants(new ArrayList<>());
+    if (task instanceof ChoiceTask) {
+      ((ChoiceTask)task).setSelectedVariants(new ArrayList<>());
     }
     resetAnswerPlaceholders(taskFile, project);
     ProjectView.getInstance(project).refresh();

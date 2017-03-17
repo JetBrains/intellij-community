@@ -12,9 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
@@ -396,6 +394,7 @@ public class StudySerializationUtils {
     public static final String SUBTASK_INFOS = "subtask_infos";
     public static final String FORMAT_VERSION = "format_version";
     public static final String INDEX = "index";
+    public static final String TASK_TYPE = "task_type";
 
     private Json() {
     }
@@ -440,7 +439,7 @@ public class StudySerializationUtils {
             }
           }
         }
-        return new GsonBuilder().create().fromJson(json, Course.class);
+        return new GsonBuilder().registerTypeAdapter(Task.class, new TaskDeserializer()).create().fromJson(json, Course.class);
       }
 
       private static void convertToAbsoluteOffset(Document document, JsonElement placeholder) {
@@ -583,6 +582,36 @@ public class StudySerializationUtils {
       subtaskInfo.add(INDEX, new JsonPrimitive(0));
       subtaskInfo.add(HINTS, hintsArray);
       subtaskInfo.addProperty(POSSIBLE_ANSWER, placeholderObject.getAsJsonPrimitive(POSSIBLE_ANSWER).getAsString());
+    }
+
+    public static class TaskSerializer implements JsonSerializer<Task> {
+
+      @Override
+      public JsonElement serialize(Task src, Type typeOfSrc, JsonSerializationContext context) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+        JsonElement tree = gson.toJsonTree(src);
+        final JsonObject task = tree.getAsJsonObject();
+        task.add(TASK_TYPE, new JsonPrimitive(src.getTaskType()));
+        return task;
+      }
+    }
+
+    public static class TaskDeserializer implements JsonDeserializer<Task> {
+
+      @Override
+      public Task deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+        final JsonObject object = json.getAsJsonObject();
+        if (object.has(TASK_TYPE)) {
+          final String taskType = object.get(TASK_TYPE).getAsString();
+          switch (taskType) {
+            case "choice": return gson.fromJson(json, ChoiceTask.class);
+            case "theory": return gson.fromJson(json, TheoryTask.class);
+            case "pycharm": return gson.fromJson(json, Task.class);
+          }
+        }
+        return null;
+      }
     }
 
     public static class StepicAnswerPlaceholderAdapter implements JsonSerializer<AnswerPlaceholder> {

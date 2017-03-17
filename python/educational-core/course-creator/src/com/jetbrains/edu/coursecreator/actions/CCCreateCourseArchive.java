@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CreateCourseArchiveDialog;
+import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -196,7 +197,10 @@ public class CCCreateCourseArchive extends DumbAwareAction {
       }
       zos.close();
       if (showMessage) {
-        Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(), "Course Archive Was Created Successfully");
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showInfoMessage("Course archive was saved to " + zipFile.getPath(),
+                                         "Course Archive Was Created Successfully"));
+
       }
     }
     catch (IOException e1) {
@@ -206,7 +210,8 @@ public class CCCreateCourseArchive extends DumbAwareAction {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static void generateJson(VirtualFile parentDir, Course course) {
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
+      registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskSerializer()).create();
     final String json = gson.toJson(course);
     final File courseJson = new File(parentDir.getPath(), EduNames.COURSE_META_FILE);
     OutputStreamWriter outputStreamWriter = null;

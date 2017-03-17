@@ -144,11 +144,11 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   }
 
   private void checkForAdaptiveCourse(@NotNull ProgressIndicator indicator) {
-    if (myTask.isChoiceTask()) {
-      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, myTask);
+    if (myTask instanceof ChoiceTask) {
+      final Pair<Boolean, String> result = EduAdaptiveStepicConnector.checkChoiceTask(myProject, (ChoiceTask)myTask);
       processStepicCheckOutput(indicator, result);
     }
-    else if (myTask.isTheoryTask()) {
+    else if (myTask instanceof TheoryTask) {
       final int lessonId = myTask.getLesson().getId();
       final StepicUser user = StepicUpdateSettings.getInstance().getUser();
       final boolean reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
@@ -161,7 +161,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
         }
       }
       else {
-        ApplicationManager.getApplication().invokeLater(() -> 
+        ApplicationManager.getApplication().invokeLater(() ->
                                                           StudyUtils.showErrorPopupOnToolbar(myProject, "Unable to get next recommendation"));
       }
     }
@@ -228,7 +228,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       if (course.isAdaptive()) {
         ApplicationManager.getApplication().invokeLater(
           () -> {
-            if (myTask.isChoiceTask()) {
+            if (myTask instanceof ChoiceTask) {
               StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
             }
             else {
