@@ -30,8 +30,6 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 @CompileStatic
 class AndroidStudioProperties extends BaseIdeaProperties {
 
-  private String gradleVersion = "3.2"
-
   AndroidStudioProperties(String home) {
     baseFileName = "studio"
     platformPrefix = "AndroidStudio"
@@ -190,6 +188,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
   }
 
+  static String getGradleVersionToBundle(BuildContext buildContext) {
+    File sdkConstants = buildContext.findFileInModuleSources("common", "com/android/SdkConstants.java")
+    if (sdkConstants != null && sdkConstants.exists()) {
+      return sdkConstants.readLines().find { line -> line =~ ".*GRADLE_MINIMUM_VERSION.*" }.split("\"")[1]
+    }
+    buildContext.messages.error("Cannot parse GRADLE_MINIMUM_VERSION in com/android/SdkConstants.java from module 'common'.")
+  }
 
   // TODO: Exclude BUILD files
   // TODO: Remove JavaFX
@@ -226,14 +231,16 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
 
     def root = "$buildContext.paths.communityHome/../.."
+    def gradleVersion = getGradleVersionToBundle(buildContext)
 
-    // Bundle Gradle and an offline Maven repo
-    buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
-    buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
-      fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2") {
-        exclude(name: "BUILD")
+    buildContext.messages.block("Bundle Gradle $gradleVersion and the offline Maven repo") {
+      buildContext.ant.unzip(src: "$root/tools/external/gradle/gradle-$gradleVersion-bin.zip", dest: "$targetDirectory/gradle")
+      buildContext.ant.copy(todir: "$targetDirectory/gradle/m2repository") {
+        fileset(dir: System.getenv().STUDIO_CUSTOM_REPO ?: "$root/prebuilts/tools/common/offline-m2") {
+          exclude(name: "BUILD")
+        }
+        fileset(dir: "$root/out/studio/repo")
       }
-      fileset(dir: "$root/out/studio/repo")
     }
 
     buildContext.ant.touch(file: "$targetDirectory/license/dev01_license.txt", mkdirs: true)
