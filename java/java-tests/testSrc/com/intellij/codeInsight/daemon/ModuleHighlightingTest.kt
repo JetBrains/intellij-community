@@ -150,6 +150,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testProvides() {
     addFile("pkg/main/C.java", "package pkg.main;\npublic interface C { }")
+    addFile("pkg/main/CT.java", "package pkg.main;\npublic interface CT<T> { }")
     addFile("pkg/main/Impl1.java", "package pkg.main;\nclass Impl1 { }")
     addFile("pkg/main/Impl2.java", "package pkg.main;\npublic class Impl2 { }")
     addFile("pkg/main/Impl3.java", "package pkg.main;\npublic abstract class Impl3 implements C { }")
@@ -159,6 +160,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/main/Impl7.java", "package pkg.main;\npublic class Impl7 {\n public static void provider();\n}")
     addFile("pkg/main/Impl8.java", "package pkg.main;\npublic class Impl8 {\n public static C provider();\n}")
     addFile("pkg/main/Impl9.java", "package pkg.main;\npublic class Impl9 {\n public class Inner implements C { }\n}")
+    addFile("pkg/main/Impl10.java", "package pkg.main;\npublic class Impl10<T> implements CT<T> {\n private Impl10() { }\n public static CT provider();\n}")
     addFile("module-info.java", "module M2 {\n exports pkg.m2;\n}", M2)
     addFile("pkg/m2/C.java", "package pkg.m2;\npublic class C { }", M2)
     addFile("pkg/m2/Impl.java", "package pkg.m2;\npublic class Impl extends C { }", M2)
@@ -175,6 +177,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           provides pkg.main.C with pkg.main.<error descr="The 'provider' method return type must be a subtype of the service interface type: Impl7">Impl7</error>;
           provides pkg.main.C with pkg.main.Impl8;
           provides pkg.main.C with pkg.main.Impl9.<error descr="The service implementation is an inner class: Inner">Inner</error>;
+          provides pkg.main.CT with pkg.main.Impl10;
           provides pkg.m2.C with pkg.m2.<error descr="The service implementation must be defined in the same module as the provides directive">Impl</error>;
         }""".trimIndent())
   }
