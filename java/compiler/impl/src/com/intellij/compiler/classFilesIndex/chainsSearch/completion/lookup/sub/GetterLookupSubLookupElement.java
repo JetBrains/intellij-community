@@ -16,6 +16,7 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub;
 
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -25,8 +26,8 @@ public class GetterLookupSubLookupElement implements SubLookupElement {
   private final String myVariableName;
   private final String myMethodName;
 
-  public GetterLookupSubLookupElement(final String methodName) {
-    this(null, methodName);
+  public GetterLookupSubLookupElement(final PsiMethod method) {
+    this(null, method.getName());
   }
 
   public GetterLookupSubLookupElement(@Nullable final String variableName, final String methodName) {

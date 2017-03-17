@@ -41,9 +41,10 @@ public class CachedRelevantStaticMethodSearcher {
   }
 
   @NotNull
-  public List<ContextRelevantStaticMethod> getRelevantStaticMethods(final String resultQualifiedClassName, final int minOccurrence) {
+  public List<ContextRelevantStaticMethod> getRelevantStaticMethods(final PsiType type, final int minOccurrence) {
+    String resultQualifiedClassName = type.getCanonicalText();
     if (resultQualifiedClassName == null ||
-        ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(resultQualifiedClassName) ||
+        ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type) ||
         myCompletionContext.getTarget().getClassQName().equals(resultQualifiedClassName)) {
       return Collections.emptyList();
     }
@@ -104,7 +105,7 @@ public class CachedRelevantStaticMethodSearcher {
       final String shortClassName = typeAsShortString(type);
       if (targetTypeShortName.equals(shortClassName)) return false;
       if (!ChainCompletionStringUtil.isShortNamePrimitiveOrArrayOfPrimitives(shortClassName) &&
-          !completionContext.contains(type.getCanonicalText())) {
+          !completionContext.contains(type)) {
         return false;
       }
     }

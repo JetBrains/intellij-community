@@ -22,38 +22,30 @@ import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author Dmitry Batkovich
  */
-public final class ChainsSearcher {
+public class ChainsSearcher {
+  private static final Logger LOG = Logger.getInstance(ChainsSearcher.class);
+
   private ChainsSearcher() {
   }
-
-  private static final Logger LOG = Logger.getInstance(ChainsSearcher.class);
-  private static final double NEXT_METHOD_IN_CHAIN_RATIO = 1.5;
 
   @NotNull
   public static List<MethodsChain> search(final int pathMaximalLength,
                                           final TargetType targetType,
-                                          final Set<String> contextQNames,
+                                          final Set<PsiType> contextQNames,
                                           final int maxResultSize,
                                           final ChainCompletionContext context,
-                                          final CompilerReferenceServiceEx methodsUsageIndexReader) {
-    final SearchInitializer initializer = createInitializer(targetType, context.getExcludedQNames(), methodsUsageIndexReader, context);
-    if (initializer == null) {
-      return Collections.emptyList();
-    }
-    return search(methodsUsageIndexReader,
+                                          final CompilerReferenceServiceEx compilerReferenceServiceEx) {
+    final SearchInitializer initializer = createInitializer(targetType, compilerReferenceServiceEx, context);
+    return search(compilerReferenceServiceEx,
                   initializer,
                   contextQNames,
                   pathMaximalLength,
@@ -62,25 +54,24 @@ public final class ChainsSearcher {
                   context);
   }
 
-  @Nullable
+  @NotNull
   private static SearchInitializer createInitializer(final TargetType target,
-                                                     final Set<String> excludedParamsTypesQNames,
-                                                     final CompilerReferenceServiceEx methodsUsageIndexReader,
+                                                     final CompilerReferenceServiceEx compilerReferenceServiceEx,
                                                      final ChainCompletionContext context) {
-    final SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = methodsUsageIndexReader.getMethods(target.getClassQName());
-    return new SearchInitializer(methods, target.getClassQName(), excludedParamsTypesQNames, context);
+    final SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.getMethods(target.getClassQName());
+    return new SearchInitializer(methods, target.getPsiType(), context);
   }
 
   @NotNull
   private static List<MethodsChain> search(final CompilerReferenceServiceEx indexReader,
                                            final SearchInitializer initializer,
-                                           final Set<String> toSet,
+                                           final Set<PsiType> toSet,
                                            final int pathMaximalLength,
                                            final int maxResultSize,
                                            final String targetQName,
                                            final ChainCompletionContext context) {
-    final Set<String> allExcludedNames = MethodChainsSearchUtil.joinToHashSet(context.getExcludedQNames(), targetQName);
-    final SearchInitializer.InitResult initResult = initializer.init(Collections.<String>emptySet());
+    final Set<PsiType> allExcludedNames = Collections.singleton(context.getTarget().getPsiType());
+    final SearchInitializer.InitResult initResult = initializer.init(Collections.emptySet());
 
     final Map<MethodIncompleteSignature, MethodsChain> knownDistance = initResult.getChains();
 
@@ -143,7 +134,7 @@ public final class ChainsSearcher {
               if (currentVertexMethodsChain.size() < pathMaximalLength - 1) {
                 final MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
                 final PsiMethod[] psiMethods = context.resolveNotDeprecated(methodInvocation);
-                if (psiMethods.length != 0 && MethodChainsSearchUtil.checkParametersForTypesQNames(psiMethods, allExcludedNames)) {
+                if (psiMethods.length != 0 && !MethodChainsSearchUtil.doesMethodsContainParameters(psiMethods, allExcludedNames)) {
                   final MethodsChain newBestMethodsChain =
                     currentVertexMethodsChain.addEdge(psiMethods, indexValue.getUnderlying().getOwner(), vertexDistance);
                   currentSignatures

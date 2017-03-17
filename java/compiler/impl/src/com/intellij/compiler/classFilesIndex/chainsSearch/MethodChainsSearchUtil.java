@@ -16,77 +16,78 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.text.EditDistance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Stream;
 
-/**
- * @author Dmitry Batkovich
- */
 public final class MethodChainsSearchUtil {
+  private final static int COMMON_PART_MIN_LENGTH = 3;
+
   private MethodChainsSearchUtil() {
+  }
+
+  public static boolean isSimilar(@NotNull final String target,
+                                  @NotNull final String candidate) {
+    return EditDistance.levenshtein(target, sanitizedToLowerCase(candidate), true) >= COMMON_PART_MIN_LENGTH;
+  }
+
+  @NotNull
+  public static String sanitizedToLowerCase(@NotNull final String name) {
+    final StringBuilder result = new StringBuilder();
+    for (int i = 0; i < name.length(); i++) {
+      final char ch = name.charAt(i);
+      if (Character.isLetter(ch)) {
+        result.append(Character.toLowerCase(ch));
+      }
+    }
+    return result.toString();
   }
 
   @Nullable
   public static PsiMethod getMethodWithMinNotPrimitiveParameters(final @NotNull PsiMethod[] methods,
-                                                                 final Set<String> excludedParamsQNames) {
-    PsiMethod minMethod = null;
-    int minParametersCount = Integer.MAX_VALUE;
-    for (final PsiMethod method : methods) {
-      final PsiParameterList parameterList = method.getParameterList();
-      boolean doContinue = false;
-      int parametersCount = parameterList.getParametersCount();
-      for (final PsiParameter p : parameterList.getParameters()) {
-        if (!(p.getType() instanceof PsiPrimitiveType)) {
-          if (excludedParamsQNames.contains(p.getType().getCanonicalText())) {
-            doContinue = true;
-            break;
-          }
-          parametersCount++;
-        }
-      }
-      if (doContinue) {
-        continue;
-      }
-      if (parametersCount < minParametersCount) {
-        if (parametersCount == 0) {
-          return method;
-        }
-        minParametersCount = parametersCount;
-        minMethod = method;
-      }
-    }
-    return minMethod;
+                                                                 final @NotNull Set<String> excludedQNames) {
+    return Stream.of(methods)
+      .filter(m -> !containsParameter(m, excludedQNames))
+      .sorted(Comparator.comparing(MethodChainsSearchUtil::getNonPrimitiveParameterCount))
+      .findFirst().orElse(null);
   }
 
-  public static boolean checkParametersForTypesQNames(final PsiMethod[] psiMethods, final Set<String> excludedTypesQNames) {
-    if (psiMethods.length == 0) {
-      return true;
+  private static boolean containsParameter(@NotNull PsiMethod method, @NotNull Set<String> excludedQNames) {
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      final PsiType t = parameter.getType();
+      final boolean matched = isRawTypeOneOf(t, excludedQNames);
+      if (matched) {
+        return false;
+      }
     }
-    for (final PsiMethod method : psiMethods) {
-      boolean hasTargetInParams = false;
-      for (final PsiParameter param : method.getParameterList().getParameters()) {
-        final String paramType = param.getType().getCanonicalText();
-        if (excludedTypesQNames.contains(paramType)) {
-          hasTargetInParams = true;
-          break;
-        }
-      }
-      if (!hasTargetInParams) {
-        return true;
-      }
+    return true;
+  }
+
+  private static boolean isRawTypeOneOf(@NotNull PsiType type, @NotNull Set<String> qNames) {
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return aClass != null && qNames.contains(aClass.getQualifiedName());
+  }
+
+  private static int getNonPrimitiveParameterCount(PsiMethod method) {
+    return (int)Stream.of(method.getParameterList().getParameters())
+      .map(p -> p.getType())
+      .filter(t -> !TypeConversionUtil.isPrimitiveAndNotNull(t))
+      .count();
+  }
+
+  public static boolean doesMethodsContainParameters(@NotNull final PsiMethod[] psiMethods,
+                                                     @NotNull final Set<PsiType> parameterRawTypes) {
+    for (PsiMethod m : psiMethods) {
+      //TODO
+      //if (!containsParameter(m, parameterRawTypes)) {
+      //  return true;
+      //}
     }
     return false;
-  }
-
-  public static <T> HashSet<T> joinToHashSet(final Collection<T> collection, final T... items) {
-    final HashSet<T> result = new HashSet<>();
-    result.addAll(collection);
-    Collections.addAll(result, items);
-    return result;
   }
 }

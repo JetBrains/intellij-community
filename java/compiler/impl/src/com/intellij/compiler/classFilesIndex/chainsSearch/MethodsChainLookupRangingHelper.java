@@ -17,16 +17,15 @@ package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.completion.JavaChainLookupElement;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextRelevantStaticMethod;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextRelevantVariableGetter;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionNewVariableLookupElement;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.GetterLookupSubLookupElement;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.SubLookupElement;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.sub.VariableSubLookupElement;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
+import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextRelevantStaticMethod;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
@@ -41,9 +40,6 @@ import java.util.List;
 import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionLookupElementUtil.createLookupElement;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-/**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
- */
 public class MethodsChainLookupRangingHelper {
 
   public static List<LookupElement> chainsToWeightableLookupElements(final List<MethodsChain> chains,
@@ -144,40 +140,26 @@ public class MethodsChainLookupRangingHelper {
     final PsiParameter[] parameters = parameterList.getParameters();
     for (int i = 0; i < parameters.length; i++) {
       final PsiParameter parameter = parameters[i];
-      final String typeQName = parameter.getType().getCanonicalText();
-      if (JAVA_LANG_STRING.equals(typeQName)) {
-        final PsiVariable relevantStringVar = context.findRelevantStringInContext(parameter.getName());
-        if (relevantStringVar == null) {
+      final PsiType type = parameter.getType();
+      if (type.equalsToText(JAVA_LANG_STRING)) {
+        final PsiElement relevantStringElement = context.findRelevantStringInContext(parameter.getName());
+        if (relevantStringElement == null) {
           notMatchedStringVars++;
         }
         else {
-          parametersMap.put(i, new VariableSubLookupElement(relevantStringVar));
+          parametersMap.put(i, createSubLookup(relevantStringElement));
         }
       }
-      else if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(typeQName)) {
-        final Collection<PsiVariable> contextVariables = context.getVariables(typeQName);
-        final PsiVariable contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
+      else if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
+        final Collection<PsiElement> contextVariables = context.getQualifiers(type);
+        final PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
         if (contextVariable != null) {
-          if (contextVariables.size() == 1) parametersMap.put(i, new VariableSubLookupElement(contextVariable));
-          matchedParametersInContext++;
-          continue;
-        }
-        final Collection<ContextRelevantVariableGetter> relevantVariablesGetters = context.getRelevantVariablesGetters(typeQName);
-        final ContextRelevantVariableGetter contextVariableGetter = ContainerUtil.getFirstItem(relevantVariablesGetters, null);
-        if (contextVariableGetter != null) {
-          if (relevantVariablesGetters.size() == 1) parametersMap.put(i, contextVariableGetter.createSubLookupElement());
-          matchedParametersInContext++;
-          continue;
-        }
-        final Collection<PsiMethod> containingClassMethods = context.getContainingClassMethods(typeQName);
-        final PsiMethod contextRelevantGetter = ContainerUtil.getFirstItem(containingClassMethods, null);
-        if (contextRelevantGetter != null) {
-          if (containingClassMethods.size() == 1) parametersMap.put(i, new GetterLookupSubLookupElement(method.getName()));
+          if (contextVariables.size() == 1) parametersMap.put(i, createSubLookup(contextVariable));
           matchedParametersInContext++;
           continue;
         }
         final ContextRelevantStaticMethod contextRelevantStaticMethod =
-          ContainerUtil.getFirstItem(staticMethodSearcher.getRelevantStaticMethods(typeQName, weight), null);
+          ContainerUtil.getFirstItem(staticMethodSearcher.getRelevantStaticMethods(type, weight), null);
         if (contextRelevantStaticMethod != null) {
           //
           // In most cases it is not really relevant
@@ -201,10 +183,7 @@ public class MethodsChainLookupRangingHelper {
         return null;
       }
       else {
-        @SuppressWarnings("ConstantConditions")
-        final String classQName = qualifierClass.getQualifiedName();
-        if (classQName == null) return null;
-        final Object e = ContainerUtil.getFirstItem(context.getContextRefElements(classQName), null);
+        final Object e = ContainerUtil.getFirstItem(context.getQualifiers(qualifierClass), null);
         if (e != null) {
           final LookupElement firstChainElement;
           if (e instanceof PsiVariable) {
@@ -224,9 +203,9 @@ public class MethodsChainLookupRangingHelper {
         }
         else {
           lookupElement = createLookupElement(method, parametersMap);
-          if (!context.getContainingClassQNames().contains(classQName)) {
-            introduceNewVariable = true;
-          }
+          //if (!context.getContainingClassQNames().contains(classQName)) {
+          //  introduceNewVariable = true;
+          //}
         }
       }
     }
@@ -239,6 +218,13 @@ public class MethodsChainLookupRangingHelper {
                                 hasCallingVariableInContext,
                                 introduceNewVariable,
                                 matchedParametersInContext);
+  }
+
+  @NotNull
+  private static SubLookupElement createSubLookup(PsiElement relevantStringElement) {
+    return relevantStringElement instanceof PsiMethod
+                         ? new GetterLookupSubLookupElement((PsiMethod)relevantStringElement)
+                         : new VariableSubLookupElement((PsiVariable)relevantStringElement);
   }
 
   private static class MethodProcResult {

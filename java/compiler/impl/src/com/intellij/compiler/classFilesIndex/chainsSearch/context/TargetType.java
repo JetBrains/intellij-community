@@ -51,7 +51,18 @@ public class TargetType {
   }
 
   @Nullable
-  public static TargetType create(final PsiArrayType arrayType) {
+  public static TargetType create(final PsiType type) {
+    if (type instanceof PsiArrayType) {
+      return create((PsiArrayType)type);
+    }
+    else if (type instanceof PsiClassType) {
+      return create((PsiClassType)type);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static TargetType create(final PsiArrayType arrayType) {
     PsiType currentComponentType = arrayType.getComponentType();
     while (currentComponentType instanceof PsiArrayType) {
       currentComponentType = ((PsiArrayType)currentComponentType).getComponentType();
@@ -64,7 +75,7 @@ public class TargetType {
   }
 
   @Nullable
-  public static TargetType create(final PsiClassType classType) {
+  private static TargetType create(final PsiClassType classType) {
     final PsiClassType.ClassResolveResult resolvedGenerics = classType.resolveGenerics();
     final PsiClass resolvedClass = resolvedGenerics.getElement();
     if (resolvedClass == null) {

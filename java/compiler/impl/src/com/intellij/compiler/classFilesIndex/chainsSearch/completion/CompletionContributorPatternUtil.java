@@ -23,11 +23,7 @@ import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
- */
-public final class CompletionContributorPatternUtil {
-
+public class CompletionContributorPatternUtil {
   private CompletionContributorPatternUtil() {}
 
   @SuppressWarnings("unchecked")
@@ -42,7 +38,7 @@ public final class CompletionContributorPatternUtil {
                                                                              .inside(PsiMethod.class);
   }
 
-  public static ElementPattern<PsiElement> patternForMethodParameter() {
+  public static ElementPattern<PsiElement> patternForMethodCallParameter() {
     return psiElement().withSuperParent(3, PsiMethodCallExpressionImpl.class);
   }
 }

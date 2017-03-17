@@ -16,30 +16,30 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiMethod;
-import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
+import com.intellij.psi.PsiType;
 
 import java.util.*;
 
 public class SearchInitializer {
-  private final static int CHAIN_SEARCH_MAGIC_RATIO = 12;
+  private final static int CHAIN_SEARCH_MAGIC_RATIO = 10;
 
   private final LinkedHashMap<MethodIncompleteSignature, Pair<MethodsChain, Integer>> myChains;
   private final ChainCompletionContext myContext;
 
   public SearchInitializer(final SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues,
-                           final String targetQName,
-                           final Set<String> excludedParamsTypesQNames,
+                           final PsiType target,
                            final ChainCompletionContext context) {
     myContext = context;
     final int size = indexValues.size();
     myChains = new LinkedHashMap<>(size);
-    add(indexValues, MethodChainsSearchUtil.joinToHashSet(excludedParamsTypesQNames, targetQName));
+    add(indexValues, Collections.singleton(target));
   }
 
   private void add(final Collection<OccurrencesAware<MethodIncompleteSignature>> indexValues,
-                   final Set<String> excludedParamsTypesQNames) {
+                   final Set<PsiType> excludedParamsTypesQNames) {
     int bestOccurrences = -1;
     for (final OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
       if (add(indexValue, excludedParamsTypesQNames)) {
@@ -54,10 +54,10 @@ public class SearchInitializer {
     }
   }
 
-  private boolean add(final OccurrencesAware<MethodIncompleteSignature> indexValue, final Set<String> excludedParamsTypesQNames) {
+  private boolean add(final OccurrencesAware<MethodIncompleteSignature> indexValue, final Set<PsiType> excludedParamsTypesQNames) {
     final MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
     final PsiMethod[] psiMethods = myContext.resolveNotDeprecated(methodInvocation);
-    if (psiMethods.length != 0 && MethodChainsSearchUtil.checkParametersForTypesQNames(psiMethods, excludedParamsTypesQNames)) {
+    if (psiMethods.length != 0 && !MethodChainsSearchUtil.doesMethodsContainParameters(psiMethods, excludedParamsTypesQNames)) {
       final int occurrences = indexValue.getOccurrences();
       final MethodsChain methodsChain = new MethodsChain(psiMethods, occurrences, indexValue.getUnderlying().getOwner());
       myChains.put(methodInvocation, Pair.create(methodsChain, occurrences));

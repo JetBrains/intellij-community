@@ -15,134 +15,97 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch.context;
 
-import com.intellij.compiler.classFilesIndex.chainsSearch.CachedRelevantStaticMethodSearcher;
+import com.intellij.compiler.classFilesIndex.chainsSearch.ChainCompletionStringUtil;
+import com.intellij.compiler.classFilesIndex.chainsSearch.MethodChainsSearchUtil;
+import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-/**
- * @author Dmitry Batkovich
- */
 public class ChainCompletionContext {
+  @NotNull
   private final TargetType myTarget;
-  private final Set<String> myContainingClassQNames;
-  private final MultiMap<String, PsiVariable> myContextVars;
-  private final MultiMap<String, PsiMethod> myContainingClassGetters;
-  private final MultiMap<String, ContextRelevantVariableGetter> myContextVarsGetters;
-  private final Map<String, PsiVariable> myStringVars;
-  private final Set<String> myExcludedQNames;
+  @NotNull
+  private final List<PsiNamedElement> myContextElements;
+  @NotNull
+  private final List<PsiNamedElement> myContextStrings;
+  @NotNull
+  private final PsiElement myContext;
+  @NotNull
   private final GlobalSearchScope myResolveScope;
+  @NotNull
   private final Project myProject;
+  @NotNull
   private final PsiManager myPsiManager;
+  @NotNull
   private final MethodIncompleteSignatureResolver myNotDeprecatedMethodsResolver;
 
-  private final NotNullLazyValue<Set<String>> contextTypesQNames = new NotNullLazyValue<Set<String>>() {
-    @SuppressWarnings("unchecked")
-    @NotNull
-    @Override
-    protected Set<String> compute() {
-      return unionToHashSet(myContainingClassQNames,
-                            myContextVars.keySet(),
-                            myContainingClassGetters.keySet(),
-                            myContextVarsGetters.keySet());
-    }
-  };
-
-  public Set<String> getExcludedQNames() {
-    return myExcludedQNames;
-  }
-
-  ChainCompletionContext(final TargetType target,
-                         final Set<String> containingClassQNames,
-                         final MultiMap<String, PsiVariable> contextVars,
-                         final MultiMap<String, PsiMethod> containingClassGetters,
-                         final MultiMap<String, ContextRelevantVariableGetter> contextVarsGetters,
-                         final Map<String, PsiVariable> stringVars,
-                         final Set<String> excludedQNames,
-                         final Project project,
-                         final GlobalSearchScope resolveScope) {
+  public ChainCompletionContext(@NotNull TargetType target,
+                                @NotNull List<PsiNamedElement> contextElements,
+                                @NotNull List<PsiNamedElement> contextStrings,
+                                @NotNull PsiElement context) {
     myTarget = target;
-    myContainingClassQNames = containingClassQNames;
-    myContextVars = contextVars;
-    myContainingClassGetters = containingClassGetters;
-    myContextVarsGetters = contextVarsGetters;
-    myStringVars = stringVars;
-    myExcludedQNames = excludedQNames;
-    myResolveScope = resolveScope;
-    myProject = project;
-    myPsiManager = PsiManager.getInstance(project);
-    myNotDeprecatedMethodsResolver = new MethodIncompleteSignatureResolver(JavaPsiFacade.getInstance(project), resolveScope);
+    myContextElements = contextElements;
+    myContextStrings = contextStrings;
+    myContext = context;
+    myResolveScope = context.getResolveScope();
+    myProject = context.getProject();
+    myPsiManager = PsiManager.getInstance(myProject);
+    myNotDeprecatedMethodsResolver = new MethodIncompleteSignatureResolver(JavaPsiFacade.getInstance(myProject), myResolveScope);
   }
 
+  @NotNull
   public TargetType getTarget() {
     return myTarget;
   }
 
-  @Nullable
-  public PsiVariable findRelevantStringInContext(@Nullable final String stringParamName) {
-    if (stringParamName == null) {
-      return null;
-    }
-    for (final Map.Entry<String, PsiVariable> e : myStringVars.entrySet()) {
-      if (ChainCompletionContextStringUtil.isSimilar(e.getKey(), stringParamName)) {
-        return e.getValue();
+  @NotNull
+  public List<PsiNamedElement> getContextElements() {
+    return myContextElements;
+  }
+
+  public boolean contains(@Nullable final PsiType type) {
+    if (type == null) return false;
+    final Set<PsiType> types = getContextTypes();
+    if (types.contains(type)) return true;
+    for (PsiType contextType : types) {
+      if (type.isAssignableFrom(contextType)) {
+        return true;
       }
     }
-    return null;
+    return false;
   }
 
-  public Set<String> getContainingClassQNames() {
-    return myContainingClassQNames;
+  @NotNull
+  public Set<PsiType> getContextTypes() {
+    return myContextElements.stream().map(ChainCompletionContext::getType).collect(Collectors.toSet());
   }
 
-  public Collection<PsiVariable> getVariables(final String typeQName) {
-    return myContextVars.get(typeQName);
-  }
-
-  public Collection<PsiMethod> getContainingClassMethods(final String typeQName) {
-    return myContainingClassGetters.get(typeQName);
-  }
-
-  public Collection<ContextRelevantVariableGetter> getRelevantVariablesGetters(final String typeQName) {
-    return myContextVarsGetters.get(typeQName);
-  }
-
-  public Collection<?> getContextRefElements(final String typeQName) {
-    final Collection<PsiVariable> variables = getVariables(typeQName);
-    final Collection<PsiMethod> containingClassMethods = getContainingClassMethods(typeQName);
-    final Collection<UserDataHolder> refElements = new ArrayList<>(variables.size() + containingClassMethods.size());
-    refElements.addAll(variables);
-    refElements.addAll(containingClassMethods);
-    for (final ContextRelevantVariableGetter contextRelevantVariableGetter : getRelevantVariablesGetters(typeQName)) {
-      refElements.add(contextRelevantVariableGetter.createLookupElement());
-    }
-    return refElements;
-  }
-
-  public boolean contains(@Nullable final String typeQualifierName) {
-    return typeQualifierName != null && contextTypesQNames.getValue().contains(typeQualifierName);
-  }
-
-  public Set<String> getContextTypes() {
-    return contextTypesQNames.getValue();
-  }
-
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     return myResolveScope;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @NotNull
   public PsiManager getPsiManager() {
     return myPsiManager;
   }
@@ -152,11 +115,113 @@ public class ChainCompletionContext {
     return myNotDeprecatedMethodsResolver.get(methodIncompleteSignature);
   }
 
-  private static <T> HashSet<T> unionToHashSet(final Collection<T>... collections) {
-    final HashSet<T> res = new HashSet<>();
-    for (final Collection<T> set : collections) {
-      res.addAll(set);
+  @Nullable
+  public PsiElement findRelevantStringInContext(String stringParameterName) {
+    String sanitizedTarget = MethodChainsSearchUtil.sanitizedToLowerCase(stringParameterName);
+    return myContextStrings.stream().filter(e -> {
+      String name = e.getName();
+      return name != null && MethodChainsSearchUtil.isSimilar(sanitizedTarget, name);
+    }).findFirst().orElse(null);
+  }
+
+  public Collection<PsiElement> getQualifiers(@Nullable PsiClass targetType) {
+    if (targetType == null) return Collections.emptyList();
+    return getQualifiers(JavaPsiFacade.getInstance(myProject).getElementFactory().createType(targetType));
+  }
+
+  public Collection<PsiElement> getQualifiers(@NotNull PsiType targetType) {
+    return myContextElements.stream().filter(e -> {
+      final PsiType elementType = getType(e);
+      return elementType != null && targetType.isAssignableFrom(elementType);
+    }).collect(Collectors.toList());
+  }
+
+  @Nullable
+  public static ChainCompletionContext createContext(final @Nullable PsiType variableType,
+                                                     final @Nullable String variableName,
+                                                     final @Nullable PsiElement containingElement) {
+    if (containingElement == null) return null;
+    final TargetType target = TargetType.create(variableType);
+    if (target == null) return null;
+
+    final ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement);
+    PsiScopesUtil.treeWalkUp(processor, containingElement, containingElement.getContainingFile());
+    final List<PsiNamedElement> contextElements = processor.getContextElements();
+    final List<PsiNamedElement> contextStrings = processor.getContextStrings();
+
+    return new ChainCompletionContext(target, contextElements, contextStrings, containingElement);
+  }
+
+  private static class ContextProcessor extends BaseScopeProcessor implements ElementClassHint {
+    private final List<PsiNamedElement> myContextElements = new SmartList<>();
+    private final List<PsiNamedElement> myContextStrings = new SmartList<>();
+    private final PsiVariable myCompletionVariable;
+    private final PsiResolveHelper myResolveHelper;
+    private final PsiElement myPlace;
+
+    private ContextProcessor(@Nullable PsiVariable variable,
+                             @NotNull Project project,
+                             @NotNull PsiElement place) {
+      myCompletionVariable = variable;
+      myResolveHelper = PsiResolveHelper.SERVICE.getInstance(project);
+      myPlace = place;
     }
-    return res;
+
+    @Override
+    public boolean shouldProcess(DeclarationKind kind) {
+      return kind == DeclarationKind.ENUM_CONST ||
+             kind == DeclarationKind.FIELD ||
+             kind == DeclarationKind.METHOD ||
+             kind == DeclarationKind.VARIABLE;
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+      if ((!(element instanceof PsiMethod) || PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) &&
+          (!(element instanceof PsiMember) || myResolveHelper.isAccessible((PsiMember)element, myPlace, null))) {
+        final PsiType type = getType(element);
+        if (type == null) {
+          return false;
+        }
+        if (ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
+          if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            myContextStrings.add((PsiNamedElement)element);
+          }
+          return false;
+        }
+        myContextElements.add((PsiNamedElement)element);
+      }
+      return true;
+    }
+
+    @Override
+    public <T> T getHint(@NotNull Key<T> hintKey) {
+      if (hintKey == ElementClassHint.KEY) {
+        return (T)this;
+      }
+      return super.getHint(hintKey);
+    }
+
+    @NotNull
+    public List<PsiNamedElement> getContextElements() {
+      myContextElements.remove(myCompletionVariable);
+      return myContextElements;
+    }
+
+    @NotNull
+    public List<PsiNamedElement> getContextStrings() {
+      return myContextStrings;
+    }
+  }
+
+  @Nullable
+  private static PsiType getType(PsiElement element) {
+    if (element instanceof PsiVariable) {
+      return ((PsiVariable)element).getType();
+    }
+    if (element instanceof PsiMethod) {
+      return ((PsiMethod)element).getReturnType();
+    }
+    throw new AssertionError(element);
   }
 }

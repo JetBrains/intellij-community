@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.classFilesIndex.chainsSearch.ChainRelevance;
-import com.intellij.compiler.classFilesIndex.chainsSearch.completion.MethodsChainsCompletionContributor;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
 import com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.ide.util.PropertiesComponent;
@@ -236,7 +235,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
       .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(true));
     compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getBeforeCompletionFilePath());
-    myFixture.complete(CompletionType.BASIC, MethodsChainsCompletionContributor.INVOCATIONS_THRESHOLD);
+    myFixture.complete(CompletionType.BASIC);
     PropertiesComponent.getInstance(getProject())
       .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(false));
     myFixture.checkResultByFile(getAfterCompletionFilePath());
@@ -257,7 +256,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private LookupElement[] runCompletion() {
     myFixture.configureByFiles(getTestCompletionFilePath());
     final LookupElement[] lookupElements =
-      myFixture.complete(CompletionType.BASIC, MethodsChainsCompletionContributor.INVOCATIONS_THRESHOLD);
+      myFixture.complete(CompletionType.BASIC);
     return lookupElements == null ? LookupElement.EMPTY_ARRAY : lookupElements;
   }
 

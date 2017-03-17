@@ -9,9 +9,9 @@ import com.intellij.compiler.classFilesIndex.chainsSearch.ChainsSearcher;
 import com.intellij.compiler.classFilesIndex.chainsSearch.MethodsChain;
 import com.intellij.compiler.classFilesIndex.chainsSearch.MethodsChainLookupRangingHelper;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.classFilesIndex.chainsSearch.context.ContextUtil;
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.patternForMethodParameter;
+import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.patternForMethodCallParameter;
 import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.CompletionContributorPatternUtil.patternForVariableAssignment;
 import static com.intellij.patterns.PsiJavaPatterns.or;
 
@@ -34,18 +34,17 @@ import static com.intellij.patterns.PsiJavaPatterns.or;
  * @author Dmitry Batkovich
  */
 public class MethodsChainsCompletionContributor extends CompletionContributor {
-  private final static boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
+  private static final Logger LOG = Logger.getInstance(MethodsChainsCompletionContributor.class);
 
-  public static final int INVOCATIONS_THRESHOLD = 2;
+  private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
+  private static final int MAX_SEARCH_RESULT_SIZE = 5;
+  private static final int MAX_CHAIN_SIZE = 4;
+  private static final int FILTER_RATIO = 10;
   public static final CompletionType COMPLETION_TYPE = IS_UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;
-
-  private final static int MAX_SEARCH_RESULT_SIZE = 5;
-  private final static int MAX_CHAIN_SIZE = 4;
-  private final static int FILTER_RATIO = 10;
 
   @SuppressWarnings("unchecked")
   public MethodsChainsCompletionContributor() {
-    final ElementPattern<PsiElement> pattern = or(patternForMethodParameter(), patternForVariableAssignment());
+    final ElementPattern<PsiElement> pattern = or(patternForMethodCallParameter(), patternForVariableAssignment());
     extend(COMPLETION_TYPE, pattern, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(final @NotNull CompletionParameters parameters,
@@ -54,15 +53,15 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         final ChainCompletionContext completionContext = extractContext(parameters);
         if (completionContext == null) return;
 
-        final Set<String> contextTypesKeysSet = completionContext.getContextTypes();
-        final Set<String> contextRelevantTypes = new HashSet<>(contextTypesKeysSet.size() + 1);
-        for (final String type : contextTypesKeysSet) {
+        final Set<PsiType> contextTypesKeysSet = completionContext.getContextTypes();
+        final Set<PsiType> contextRelevantTypes = new HashSet<>(contextTypesKeysSet.size() + 1);
+        for (final PsiType type : contextTypesKeysSet) {
           if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
             contextRelevantTypes.add(type);
           }
         }
         final TargetType target = completionContext.getTarget();
-        contextRelevantTypes.remove(target.getClassQName());
+        contextRelevantTypes.remove(target.getPsiType());
         final List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(target, contextRelevantTypes, completionContext);
         if (!IS_UNIT_TEST_MODE) {
           result.runRemainingContributors(parameters, completionResult -> {
@@ -87,7 +86,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   }
 
   private static List<LookupElement> searchForLookups(final TargetType target,
-                                                      final Set<String> contextRelevantTypes,
+                                                      final Set<PsiType> contextRelevantTypes,
                                                       final ChainCompletionContext completionContext) {
     final Project project = completionContext.getProject();
     final CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
@@ -137,22 +136,16 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     return elements.subList(0, MAX_CHAIN_SIZE);
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   private static ChainCompletionContext extractContext(final CompletionParameters parameters) {
-    final PsiElement parent = PsiTreeUtil
-      .getParentOfType(parameters.getPosition(), PsiAssignmentExpression.class, PsiLocalVariable.class, PsiMethodCallExpression.class);
-    if (parent == null) {
-      return null;
-    }
+    final PsiElement parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiAssignmentExpression.class, PsiLocalVariable.class, PsiMethodCallExpression.class);
+    LOG.assertTrue(parent != null, "A completion position should match to a pattern");
 
     if (parent instanceof PsiAssignmentExpression) {
-      return tryExtractContextFromAssignment((PsiAssignmentExpression)parent);
+      return extractContextFromAssignment((PsiAssignmentExpression)parent);
     }
     if (parent instanceof PsiLocalVariable) {
-      final PsiLocalVariable localVariable = (PsiLocalVariable)parent;
-      return ContextUtil.createContext(localVariable.getType(), localVariable.getName(),
-                                       PsiTreeUtil.getParentOfType(parent, PsiDeclarationStatement.class));
+      return extractContextFromVariable((PsiLocalVariable)parent);
     }
     final PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
     if (method == null) return null;
@@ -163,19 +156,26 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     final PsiParameter[] methodParameters = method.getParameterList().getParameters();
     if (exprPosition < methodParameters.length) {
       final PsiParameter methodParameter = methodParameters[exprPosition];
-      return ContextUtil
-        .createContext(methodParameter.getType(), null, PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class));
+      return ChainCompletionContext.createContext(methodParameter.getType(), null, PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class));
     }
     return null;
   }
 
   @Nullable
-  private static ChainCompletionContext tryExtractContextFromAssignment(final PsiAssignmentExpression assignmentExpression) {
+  private static ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable) {
+    final PsiType varType = localVariable.getType();
+    final String varName = localVariable.getName();
+    final PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(localVariable, PsiDeclarationStatement.class);
+    return ChainCompletionContext.createContext(varType, varName, declaration);
+  }
+
+  @Nullable
+  private static ChainCompletionContext extractContextFromAssignment(final PsiAssignmentExpression assignmentExpression) {
     final PsiType type = assignmentExpression.getLExpression().getType();
     final PsiIdentifier identifier = PsiTreeUtil.getChildOfType(assignmentExpression.getLExpression(), PsiIdentifier.class);
     if (identifier == null) return null;
     final String identifierText = identifier.getText();
-    return ContextUtil.createContext(type, identifierText, assignmentExpression);
+    return ChainCompletionContext.createContext(type, identifierText, assignmentExpression);
   }
 
   private static List<MethodsChain> filterTailAndGetSumLastMethodOccurrence(final List<MethodsChain> chains) {
@@ -198,7 +198,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   }
 
   private static List<MethodsChain> searchChains(final TargetType target,
-                                                 final Set<String> contextVarsQNames,
+                                                 final Set<PsiType> contextVarsQNames,
                                                  final int maxResultSize,
                                                  final int maxChainSize,
                                                  final ChainCompletionContext context,
