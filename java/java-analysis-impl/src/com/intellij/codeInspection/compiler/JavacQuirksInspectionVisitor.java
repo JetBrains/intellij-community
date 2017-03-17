@@ -145,6 +145,25 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitBinaryExpression(PsiBinaryExpression expression) {
+    super.visitBinaryExpression(expression);
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_7) && !myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
+      PsiType ltype = expression.getLOperand().getType();
+      PsiExpression rOperand = expression.getROperand();
+      if (rOperand != null) {
+        PsiType rtype = rOperand.getType();
+        if (ltype != null && rtype != null &&
+            (ltype.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ^ rtype.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) &&
+            (TypeConversionUtil.isPrimitiveAndNotNull(ltype) ^ TypeConversionUtil.isPrimitiveAndNotNull(rtype)) &&
+            TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), ltype, rtype, false) &&
+            TypeConversionUtil.areTypesConvertible(rtype, ltype)) {
+          myHolder.registerProblem(expression.getOperationSign(), "Comparision between Object and primitive is illegal and is accepted in java 7 only", ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        }
+      }
+    }
+  }
+
   private static class ReplaceAssignmentOperatorWithAssignmentFix implements LocalQuickFix {
     private final String myOperationSign;
 
