@@ -24,7 +24,7 @@
     <action id="Compare.Specified" class="com.intellij.openapi.vcs.actions.SelectAndCompareWithSelectedRevisionAction"
             text="Com_pare with Specified Revision..." popup="true"/>
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
-    <action id="Vcs.GetVersion" class="com.intellij.openapi.vcs.history.GetVersionAction"/>
+    <action id="Vcs.GetVersion" class="com.intellij.openapi.vcs.history.actions.GetVersionAction"/>
 
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
 
@@ -264,7 +264,7 @@
       <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>
 
-    <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.ShowDiffWithLocalAction"
+    <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.actions.ShowDiffWithLocalAction"
             text="Compare with Local" description="Compare version from selected revision with current version"
             icon="AllIcons.Actions.DiffWithCurrent"/>
 
@@ -281,7 +281,7 @@
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </action>
 
-    <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.CopyRevisionNumberAction"
+    <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
             text="Copy Revision Number" description="Copy short revision numbers of selected commits to the clipboard"
             icon="AllIcons.Actions.Copy" />
 
