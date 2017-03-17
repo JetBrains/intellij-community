@@ -56,7 +56,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(range);
   }
 
-  protected void switchToAnchor(@NotNull PsiElement element) {
+  void switchToAnchor(@NotNull PsiElement element) {
     Pair<Identikit.ByAnchor, PsiElement> pair = Identikit.withAnchor(element, myIdentikit.getFileLanguage());
     if (pair != null) {
       assert pair.first.hashCode() == myIdentikit.hashCode();
@@ -195,9 +195,10 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return areRestoredElementsEqual(other);
   }
 
-  protected boolean areRestoredElementsEqual(@NotNull final SmartPointerElementInfo other) {
+  boolean areRestoredElementsEqual(@NotNull final SmartPointerElementInfo other) {
     return ApplicationManager.getApplication().runReadAction(
-      (Computable<Boolean>)() -> Comparing.equal(restoreElement(), other.restoreElement()));
+      (Computable<Boolean>)() -> Comparing.equal(getVirtualFile(), other.getVirtualFile())
+                                 && Comparing.equal(restoreElement(), other.restoreElement()));
   }
 
   @Override

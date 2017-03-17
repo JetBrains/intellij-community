@@ -35,6 +35,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
@@ -244,7 +245,10 @@ class SliceUtil {
                                                   @NotNull final Processor<SliceUsage> processor,
                                                   @NotNull final JavaSliceUsage parent,
                                                   @NotNull final PsiSubstitutor parentSubstitutor) {
-    final JavaResolveResult resolved = methodCallExpr.resolveMethodGenerics();
+    // if the call looks like 'otherClassObject.methodFromInterface()'
+    // we can narrow down the overridden methods scan to inheritors of OtherClass only
+    PsiClass qualifierClass = resolveQualifier(methodCallExpr);
+    JavaResolveResult resolved = methodCallExpr.resolveMethodGenerics();
     PsiElement r = resolved.getElement();
     if (r instanceof PsiCompiledElement) {
       r = r.getNavigationElement();
@@ -257,8 +261,15 @@ class SliceUtil {
 
     final PsiType parentType = parentSubstitutor.substitute(methodCallExpr.getType());
     final PsiSubstitutor substitutor = resolved.getSubstitutor().putAll(parentSubstitutor);
-    Collection<PsiMethod> overrides =
-      new THashSet<>(OverridingMethodsSearch.search(methodCalled, parent.getScope().toSearchScope(), true).findAll());
+    Collection<PsiMethod> overrides = new THashSet<>();
+    OverridingMethodsSearch.search(methodCalled, parent.getScope().toSearchScope(), true).forEach((PsiMethod override) -> {
+      PsiClass containingClass = override.getContainingClass();
+      if (containingClass == null) return true;
+      if (qualifierClass == null || containingClass.isInheritor(qualifierClass, true)) {
+        overrides.add(override);
+      }
+      return true;
+    });
     overrides.add(methodCalled);
 
     final boolean[] result = {true};
@@ -298,6 +309,31 @@ class SliceUtil {
     }
 
     return result[0];
+  }
+
+  private static PsiClass resolveQualifier(@NotNull PsiMethodCallExpression expr) {
+    PsiExpression qualifier = expr.getMethodExpression().getQualifierExpression();
+    if (qualifier == null) {
+      PsiMethodCallExpression copy = (PsiMethodCallExpression)expr.copy();
+      PsiReferenceExpression methodExpression = copy.getMethodExpression();
+
+      PsiThisExpression thisExpression = RefactoringChangeUtil.createThisExpression(expr.getManager(), null);
+      methodExpression.setQualifierExpression(thisExpression);
+      qualifier = methodExpression.getQualifierExpression();
+    }
+    if (qualifier != null) {
+      if (qualifier instanceof PsiReferenceExpression) {
+        PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
+        if (resolved instanceof PsiClass) return (PsiClass)resolved;
+      }
+      else if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
+        PsiType type = qualifier.getType();
+        if (type instanceof PsiClassType) {
+          return ((PsiClassType)type).resolve();
+        }
+      }
+    }
+    return null;
   }
 
   private static boolean processFieldUsages(@NotNull final PsiField field,
