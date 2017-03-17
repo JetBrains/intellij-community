@@ -27,7 +27,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -37,10 +44,6 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final TraceExpressionBuilder myExpressionBuilder = new TraceExpressionBuilderImpl();
   private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
-
-  public void testSimple() throws InterruptedException, ExecutionException, InvocationTargetException {
-    doTest(false);
-  }
 
   public void testFilter() throws InterruptedException, ExecutionException, InvocationTargetException {
     doTest(false);
@@ -67,45 +70,75 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
     return JdkManager.getMockJdk18();
   }
 
-  protected List<TraceInfo> doTest(boolean isResultNull) throws InterruptedException, ExecutionException, InvocationTargetException {
+  protected void doTest(boolean isResultNull) throws InterruptedException, ExecutionException, InvocationTargetException {
     final String name = getTestName(false);
 
     createLocalProcess(name);
+    final XDebugSession session = getDebuggerSession().getXDebugSession();
+    assertNotNull(session);
+
+    final AtomicReference<StreamChain> chainRef = new AtomicReference<>();
+    final AtomicReference<TracingResult> tracingResultRef = new AtomicReference<>();
+    final AtomicReference<String> compilationFailReasonRef = new AtomicReference<>();
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    final AtomicBoolean breakpointReached = new AtomicBoolean(false);
+
     doWhenXSessionPausedThenResume(() -> {
-      printContext(getDebugProcess().getDebuggerContext());
-      final XDebugSession session = getDebuggerSession().getXDebugSession();
-      assertNotNull(session);
+      System.out.println("bp");
+      if (breakpointReached.getAndSet(true)) {
+        return;
+      }
 
-      final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
-        final PsiElement elementAtBreakpoint = myPositionResolver.getNearestElementToBreakpoint(session);
-        assertNotNull(elementAtBreakpoint);
-        return StreamChainBuilder.tryBuildChain(elementAtBreakpoint);
-      });
+      try {
+        System.out.println("bp2");
+        printContext(getDebugProcess().getDebuggerContext());
+        final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
+          final PsiElement elementAtBreakpoint = myPositionResolver.getNearestElementToBreakpoint(session);
+          return elementAtBreakpoint == null ? null : StreamChainBuilder.tryBuildChain(elementAtBreakpoint);
+        });
 
-      assertNotNull(chain);
-      println(chain.getText(), ProcessOutputTypes.SYSTEM);
-      final StreamTracer tracer = new EvaluateExpressionTracer(session, myExpressionBuilder, myResultInterpreter);
-      tracer.trace(chain, new TracingCallback() {
-        @Override
-        public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-          final Value resultValue = result.getResult();
-          handleResultValue(resultValue, isResultNull);
+        chainRef.set(chain);
 
-          final List<TraceInfo> trace = result.getTrace();
-          handleTrace(trace);
+        new EvaluateExpressionTracer(session, myExpressionBuilder, myResultInterpreter).trace(chain, new TracingCallback() {
+          @Override
+          public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
+            tracingResultRef.set(result);
+          }
 
-          final ResolvedTracingResult resolvedTrace = result.resolve();
-          handleResultValue(resolvedTrace.getResult(), isResultNull);
-          handleResolvedTrace(resolvedTrace);
-        }
-
-        @Override
-        public void failed(@NotNull String traceExpression, @NotNull String reason) {
-          fail("evaluation failed");
-        }
-      });
+          @Override
+          public void failed(@NotNull String traceExpression, @NotNull String reason) {
+            compilationFailReasonRef.set(reason);
+          }
+        });
+      }
+      finally {
+        latch.countDown();
+      }
     });
-    return Collections.emptyList();
+
+    latch.await();
+    //latch.await(10, TimeUnit.SECONDS);
+
+    System.out.println("latch released");
+    final StreamChain chain = chainRef.get();
+    final TracingResult result = tracingResultRef.get();
+
+    assertNotNull(chain);
+    assertNull(compilationFailReasonRef.get());
+    assertNotNull(result);
+
+    println(chain.getText(), ProcessOutputTypes.SYSTEM);
+
+    final Value resultValue = result.getResult();
+    handleResultValue(resultValue, isResultNull);
+
+    final List<TraceInfo> trace = result.getTrace();
+    handleTrace(trace);
+
+    final ResolvedTracingResult resolvedTrace = result.resolve();
+    handleResultValue(resolvedTrace.getResult(), isResultNull);
+    handleResolvedTrace(resolvedTrace);
   }
 
   protected void handleResultValue(@Nullable Value result, boolean mustBeNull) {
@@ -141,7 +174,9 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
     for (final ResolvedTrace trace : traces) {
       final String name = trace.getCall().getName();
       final List<TraceElement> values = trace.getValues();
+
       println("mappings for " + name, ProcessOutputTypes.SYSTEM);
+
       for (final TraceElement element : StreamEx.of(values).sortedBy(TraceElement::getTime)) {
         final String beforeTimes = StreamEx.of(trace.getPreviousValues(element)).map(TraceElement::getTime).sorted().joining(", ");
         final String afterTimes = StreamEx.of(trace.getNextValues(element)).map(TraceElement::getTime).sorted().joining(",");
@@ -191,6 +226,6 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   protected String getRelativeTestPath() {
-    return "debug4";
+    return "debug";
   }
 }
