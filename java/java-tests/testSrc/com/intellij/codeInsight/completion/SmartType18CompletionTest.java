@@ -233,6 +233,11 @@ public void testConvertToObjectStream() {
     assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
   }
 
+  public void testInferredObjects() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "M", "HM");
+  }
+
   public void testSuggestMapInheritors() { doTest(); }
 
   public void testUnboundTypeArgs() { doTest(); }
