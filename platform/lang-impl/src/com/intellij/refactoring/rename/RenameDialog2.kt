@@ -34,6 +34,7 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
 import com.intellij.refactoring.ui.NameSuggester
 import com.intellij.refactoring.ui.NameSuggesterSelection
 import com.intellij.refactoring.ui.nameSuggester
+import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.noria.*
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.ui.JBUI
@@ -84,6 +85,7 @@ fun createRenameDialog2(psiElement: PsiElement,
   val project = psiElement.project
   val searchInComments: VarCell<Boolean> = cell(processor.isToSearchInComments(psiElement))
   val searchTextOccurrences: VarCell<Boolean> = cell(processor.isToSearchForTextOccurrences(psiElement))
+  val searchTextOccurrencesEnabled = TextOccurrencesUtil.isSearchTextOccurencesEnabled(psiElement)
   val searchForReferences: VarCell<Boolean>? = run {
     if (processor.isToSearchForReferencesEnabled(psiElement)) cell(
       processor.isToSearchForReferences(psiElement))
@@ -126,6 +128,7 @@ fun createRenameDialog2(psiElement: PsiElement,
                        validate = { validate(project, psiElement, it) },
                        searchInComments = searchInComments,
                        searchTextOccurrences = searchTextOccurrences,
+                       searchTextOccurrencesEnabled = searchTextOccurrencesEnabled,
                        searchForReferences = searchForReferences,
                        factoriesFlags = factoriesFlags,
                        performRename = performRename,
@@ -158,6 +161,7 @@ data class RenameDialog2(var project: Project,
                          var hasHelp: Boolean,
                          var searchInComments: VarCell<Boolean>,
                          var searchTextOccurrences: VarCell<Boolean>,
+                         var searchTextOccurrencesEnabled: Boolean,
                          var searchForReferences: VarCell<Boolean>?,
                          var suggestedNames: List<String>,
                          var suggestedNameInfo: SuggestedNameInfo?,
@@ -252,17 +256,19 @@ fun RenameDialog2.show() {
           }
         }
       }
-      checkbox {
-        key = "searchForTextOccurrences"
-        props = Checkbox(text = RefactoringBundle.getSearchForTextOccurrencesText(),
-                         selected = searchTextOccurrences.value,
-                         onChange = { searchTextOccurrences.value = it }).apply {
-          constraints = GridBagConstraints().apply {
-            insets = JBUI.insetsBottom(4)
-            gridwidth = GridBagConstraints.REMAINDER
-            gridx = 1
-            weightx = 1.0
-            fill = GridBagConstraints.BOTH
+      if (searchTextOccurrencesEnabled) {
+        checkbox {
+          key = "searchForTextOccurrences"
+          props = Checkbox(text = RefactoringBundle.getSearchForTextOccurrencesText(),
+                           selected = searchTextOccurrences.value,
+                           onChange = { searchTextOccurrences.value = it }).apply {
+            constraints = GridBagConstraints().apply {
+              insets = JBUI.insetsBottom(4)
+              gridwidth = GridBagConstraints.REMAINDER
+              gridx = 1
+              weightx = 1.0
+              fill = GridBagConstraints.BOTH
+            }
           }
         }
       }
