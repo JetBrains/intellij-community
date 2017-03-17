@@ -95,12 +95,11 @@ public abstract class CCChangePlaceholderVisibility extends CCAnswerPlaceholderA
       return;
     }
     Task task = state.getTaskFile().getTask();
-    if (!(task instanceof TaskWithSubtasks)) {
-      return;
-    }
-    Integer minSubtaskIndex = Collections.min(placeholder.getSubtaskInfos().keySet());
-    if (canChangeState(placeholder, task, minSubtaskIndex)) {
-      presentation.setEnabledAndVisible(true);
+    if ((task instanceof TaskWithSubtasks)) {
+      Integer minSubtaskIndex = Collections.min(placeholder.getSubtaskInfos().keySet());
+      if (canChangeState(placeholder, task, minSubtaskIndex)) {
+        presentation.setEnabledAndVisible(true);
+      }
     }
   }
 

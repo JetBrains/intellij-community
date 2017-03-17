@@ -46,7 +46,7 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
   @Override
   protected void updateImpl(PresentationData data) {
     StudyStatus status = myTask.getStatus();
-    String subtaskInfo = myTask instanceof TaskWithSubtasks ? getSubtaskInfo() : null;
+    String subtaskInfo = myTask instanceof TaskWithSubtasks ? getSubtaskInfo((TaskWithSubtasks)myTask) : null;
     if (status == StudyStatus.Unchecked) {
       updatePresentation(data, myTask.getName(), JBColor.BLACK, InteractiveLearningIcons.Task, subtaskInfo);
       return;
@@ -57,9 +57,9 @@ public class TaskDirectoryNode extends StudyDirectoryNode {
     updatePresentation(data, myTask.getName(), color, icon, subtaskInfo);
   }
 
-  private String getSubtaskInfo() {
-    int index = myTask.getActiveSubtaskIndex() + 1;
-    int subtasksNum = myTask.getLastSubtaskIndex() + 1;
+  private String getSubtaskInfo(TaskWithSubtasks task) {
+    int index = task.getActiveSubtaskIndex() + 1;
+    int subtasksNum = task.getLastSubtaskIndex() + 1;
     return EduNames.SUBTASK + " " + index + "/" + subtasksNum;
   }
 

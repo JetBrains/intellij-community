@@ -21,15 +21,14 @@ public class CCSwitchSubtask extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Task task = getTask(e);
-    if (!(task instanceof TaskWithSubtasks)) {
-      return;
-    }
     Project project = e.getProject();
     if (project == null) {
       return;
     }
-    CCSubtaskEditorNotificationProvider.createPopup((TaskWithSubtasks)task, project).showCenteredInCurrentWindow(project);
+    Task task = getTask(e);
+    if (task instanceof TaskWithSubtasks) {
+      CCSubtaskEditorNotificationProvider.createPopup((TaskWithSubtasks)task, project).showCenteredInCurrentWindow(project);
+    }
   }
 
   @Override
@@ -37,10 +36,9 @@ public class CCSwitchSubtask extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
     Task task = getTask(e);
-    if (task == null || !(task instanceof TaskWithSubtasks)) {
-      return;
+    if (task instanceof TaskWithSubtasks) {
+      presentation.setEnabledAndVisible(true);
     }
-    presentation.setEnabledAndVisible(true);
   }
 
   private static Task getTask(@NotNull AnActionEvent e) {

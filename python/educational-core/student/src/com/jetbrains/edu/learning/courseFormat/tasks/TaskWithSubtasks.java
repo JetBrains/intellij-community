@@ -47,11 +47,15 @@ public class TaskWithSubtasks extends Task {
 
   public void setStatus(StudyStatus status) {
     super.setStatus(status);
-    if (status == StudyStatus.Solved && getActiveSubtaskIndex() != getLastSubtaskIndex()) {
+    if (status == StudyStatus.Solved && activeSubtaskIsLast()) {
       if (myStatus == StudyStatus.Failed) {
         myStatus = StudyStatus.Unchecked;
       }
     }
+  }
+
+  public boolean activeSubtaskIsLast() {
+    return getActiveSubtaskIndex() != getLastSubtaskIndex();
   }
 
   public String getTaskType() {

@@ -271,10 +271,6 @@ public class Task implements StudyItem {
     return 0;
   }
 
-  public int getLastSubtaskIndex() {
-    return 0;
-  }
-
   public void copyParametersOf(@NotNull Task task) {
     myLesson = task.getLesson();
     myIndex = task.getIndex();

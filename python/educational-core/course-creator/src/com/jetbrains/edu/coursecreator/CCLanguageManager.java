@@ -4,7 +4,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,5 +28,5 @@ public interface CCLanguageManager {
     return false;
   }
 
-  default void createTestsForNewSubtask(@NotNull Project project, @NotNull Task task) {}
+  default void createTestsForNewSubtask(@NotNull Project project, @NotNull TaskWithSubtasks task) {}
 }
