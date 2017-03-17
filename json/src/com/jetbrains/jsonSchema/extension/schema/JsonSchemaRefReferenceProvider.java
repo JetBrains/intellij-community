@@ -85,8 +85,9 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       }
 
       final List<JsonSchemaWalker.Step> steps = JsonSchemaWalker.buildSteps(StringUtil.join(chain, "/")).getFirst();
-      return new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, normalized, steps)
+      final PsiElement element = new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, normalized, steps)
         .resolveInSchemaRecursively();
+      return element;
     }
   }
 }

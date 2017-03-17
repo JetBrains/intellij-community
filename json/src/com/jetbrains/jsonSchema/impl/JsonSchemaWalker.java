@@ -191,7 +191,7 @@ public class JsonSchemaWalker {
         matchedSchemas.forEach(matchedSchema -> {
           final List<JsonSchemaObject> list = gatherSchemas(matchedSchema);
           for (JsonSchemaObject schemaObject : list) {
-            if (schemaObject.getDefinitionAddress() != null) {
+            if (schemaObject.getDefinitionAddress() != null && !schemaObject.getDefinitionAddress().startsWith("#/")) {
               final List<Step> steps = new ArrayList<>();
               // add value step if needed
               if (!isName) steps.add(new Step(StateType._value, null));
