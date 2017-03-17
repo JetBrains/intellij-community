@@ -4,6 +4,7 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import one.util.streamex.StreamEx;
@@ -30,12 +31,12 @@ public class StreamChainBuilder {
     StreamEx.of("collect", "sum", "reduce", "toArray", "anyMatch", "allMatch", "max", "min", "findAny", "close", "count", "forEach",
                 "average", "summaryStatistics", "forEachOrdered", "findFirst", "noneMatch", "spliterator", "iterator").toSet();
 
-  private static final ThreadLocal<PsiMethodCallExpression[]> SEARCH_RESULT = new ThreadLocal<>();
+  private static final Ref<PsiMethodCallExpression> SEARCH_RESULT = new Ref<>();
   private static final PsiElementVisitor STREAM_CALL_VISITOR = new JavaRecursiveElementWalkingVisitor() {
     @Override
     public void visitLambdaExpression(PsiLambdaExpression expression) {
       // ignore lambda calls if stream call was found
-      if (SEARCH_RESULT.get()[0] == null) {
+      if (SEARCH_RESULT.get() == null) {
         super.visitLambdaExpression(expression);
       }
     }
@@ -52,15 +53,11 @@ public class StreamChainBuilder {
       if (method != null) {
         final PsiType type = method.getReturnType();
         if (type != null && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
-          SEARCH_RESULT.get()[0] = expression;
+          SEARCH_RESULT.set(expression);
         }
       }
     }
   };
-
-  static {
-    SEARCH_RESULT.set(new PsiMethodCallExpression[1]);
-  }
 
   @Nullable
   public static StreamChain tryBuildChain(@NotNull PsiElement startElement) {
@@ -141,13 +138,13 @@ public class StreamChainBuilder {
     }
 
     final PsiElement candidate = current;
-    SEARCH_RESULT.get()[0] = null;
+    SEARCH_RESULT.set(null);
     if (candidate != null) {
       // find the deepest call with stream as result
       candidate.accept(STREAM_CALL_VISITOR);
     }
 
-    return SEARCH_RESULT.get()[0];
+    return SEARCH_RESULT.get();
   }
 
   @Nullable
