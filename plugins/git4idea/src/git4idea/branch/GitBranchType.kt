@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.branch;
+package git4idea.branch
 
-public enum GitBranchType {
-  LOCAL, REMOTE
+import com.intellij.dvcs.branch.BranchType
+
+enum class GitBranchType constructor(private val myName: String) : BranchType {
+  LOCAL("LOCAL"), REMOTE("REMOTE");
+
+  override fun getName(): String {
+    return myName
+  }
 }
