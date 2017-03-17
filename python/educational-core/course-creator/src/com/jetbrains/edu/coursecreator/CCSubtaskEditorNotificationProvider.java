@@ -67,13 +67,14 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     }
     Task task = StudyUtils.getTaskForFile(myProject, file);
     if (task instanceof TaskWithSubtasks) {
+      final TaskWithSubtasks withSubtasks = (TaskWithSubtasks)task;
       EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
       String header = (isTestFile ? "test" : "task") + " file";
-      int activeSubtaskIndex = ((TaskWithSubtasks)task).getActiveSubtaskIndex() + 1;
-      int subtaskSize = ((TaskWithSubtasks)task).getLastSubtaskIndex() + 1;
+      int activeSubtaskIndex = withSubtasks.getActiveSubtaskIndex() + 1;
+      int subtaskSize = withSubtasks.getLastSubtaskIndex() + 1;
       panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
       panel
-        .createActionLabel(SWITCH_SUBTASK, () -> createPopup((TaskWithSubtasks)task, myProject).show(RelativePoint.getSouthEastOf(panel)));
+        .createActionLabel(SWITCH_SUBTASK, () -> createPopup(withSubtasks, myProject).show(RelativePoint.getSouthEastOf(panel)));
       return panel;
     }
     return null;
