@@ -293,6 +293,13 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   public void applyEditorTo(@NotNull final JUnitConfiguration configuration) {
+    configuration.setRepeatMode((String)myRepeatCb.getSelectedItem());
+    try {
+      configuration.setRepeatCount(Integer.parseInt(myRepeatCountField.getText()));
+    }
+    catch (NumberFormatException e) {
+      configuration.setRepeatCount(1);
+    }
     myModel.apply(getModuleSelector().getModule(), configuration);
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
     applyHelpersTo(configuration);
@@ -311,13 +318,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
-    configuration.setRepeatMode((String)myRepeatCb.getSelectedItem());
-    try {
-      configuration.setRepeatCount(Integer.parseInt(myRepeatCountField.getText()));
-    }
-    catch (NumberFormatException e) {
-      configuration.setRepeatCount(1);
-    }
   }
 
   public void resetEditorFrom(@NotNull final JUnitConfiguration configuration) {
