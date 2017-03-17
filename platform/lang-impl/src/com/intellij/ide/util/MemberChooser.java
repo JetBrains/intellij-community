@@ -27,6 +27,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiCompiledElement;
@@ -933,7 +934,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       if (n1.getDelegate() instanceof ClassMemberWithElement && n2.getDelegate() instanceof ClassMemberWithElement) {
         PsiElement element1 = ((ClassMemberWithElement)n1.getDelegate()).getElement();
         PsiElement element2 = ((ClassMemberWithElement)n2.getDelegate()).getElement();
-        if (!(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
+        if (Comparing.equal(element1.getContainingFile(), element2.getContainingFile()) &&
+            !(element1 instanceof PsiCompiledElement) && !(element2 instanceof PsiCompiledElement)) {
           return element1.getTextOffset() - element2.getTextOffset();
         }
       }
