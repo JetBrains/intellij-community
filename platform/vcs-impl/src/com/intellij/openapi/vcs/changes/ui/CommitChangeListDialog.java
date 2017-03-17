@@ -138,21 +138,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private String myLastKnownComment = "";
   private String myLastSelectedListName;
 
-
-  public static void commitPaths(@NotNull Project project,
-                                 @NotNull Collection<FilePath> paths,
-                                 @Nullable LocalChangeList initialSelection,
-                                 @Nullable CommitExecutor executor,
-                                 @Nullable String comment) {
-    ChangeListManager manager = ChangeListManager.getInstance(project);
-    Collection<Change> changes = newHashSet();
-    for (FilePath path : paths) {
-      changes.addAll(manager.getChangesIn(path));
-    }
-
-    commitChanges(project, changes, initialSelection, executor, comment);
-  }
-
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<Change> changes,
                                       @Nullable LocalChangeList initialSelection,
