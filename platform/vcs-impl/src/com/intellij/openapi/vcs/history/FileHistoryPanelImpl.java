@@ -918,38 +918,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  abstract static class AbstractActionForSomeSelection extends AnAction implements DumbAware {
-    private final int mySuitableSelectedElements;
-    private final FileHistoryPanelImpl mySelectionProvider;
-
-    public AbstractActionForSomeSelection(String name,
-                                          String description,
-                                          @NonNls String iconName,
-                                          int suitableSelectionSize,
-                                          FileHistoryPanelImpl tableProvider) {
-      super(name, description, IconLoader.getIcon("/actions/" + iconName + ".png"));
-      mySuitableSelectedElements = suitableSelectionSize;
-      mySelectionProvider = tableProvider;
-    }
-
-    protected abstract void executeAction(AnActionEvent e);
-
-    public boolean isEnabled() {
-      return mySelectionProvider.getSelection().size() == mySuitableSelectedElements;
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      if (!isEnabled()) return;
-      executeAction(e);
-    }
-
-    public void update(AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setVisible(true);
-      presentation.setEnabled(isEnabled());
-    }
-  }
-
   abstract static class VcsColumnInfo<T extends Comparable<T>> extends DualViewColumnInfo<VcsFileRevision, String>
     implements Comparator<VcsFileRevision> {
     @NotNull private final ColoredTableCellRenderer myRenderer;
@@ -1120,21 +1088,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private class MyDiffAction extends AbstractActionForSomeSelection {
+  private class MyDiffAction extends DumbAwareAction {
     public MyDiffAction() {
-      super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"), "diff", 2,
-            FileHistoryPanelImpl.this);
+      super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"),
+            IconLoader.getIcon("/actions/diff.png"));
     }
 
-    protected void executeAction(AnActionEvent e) {
-      List<TreeNodeOnVcsRevision> sel = getSelection();
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (!isEnabled()) return;
 
-      int selectionSize = sel.size();
+      List<TreeNodeOnVcsRevision> selection = getSelection();
+
+      int selectionSize = selection.size();
       if (selectionSize > 1) {
         List<VcsFileRevision> selectedRevisions =
-          ContainerUtil.sorted(ContainerUtil.map(sel, TreeNodeOnVcsRevision::getRevision), myRevisionsInOrderComparator);
+          ContainerUtil.sorted(ContainerUtil.map(selection, TreeNodeOnVcsRevision::getRevision), myRevisionsInOrderComparator);
         VcsFileRevision olderRevision = selectedRevisions.get(0);
-        VcsFileRevision newestRevision = selectedRevisions.get(sel.size() - 1);
+        VcsFileRevision newestRevision = selectedRevisions.get(selection.size() - 1);
         myDiffHandler.showDiffForTwo(e.getRequiredData(CommonDataKeys.PROJECT), myFilePath, olderRevision, newestRevision);
       }
       else if (selectionSize == 1) {
@@ -1157,10 +1127,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     }
 
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      final int selectionSize = getSelection().size();
-      e.getPresentation().setEnabled(selectionSize > 0 && isEnabled());
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(getSelection().size() > 0 && isEnabled());
     }
 
     public boolean isEnabled() {
@@ -1170,14 +1138,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         return myHistorySession.isContentAvailable(sel.get(0));
       }
       else if (selectionSize > 1) {
-        return isDiffEnabled();
+        List<TreeNodeOnVcsRevision> sel = getSelection();
+        return myHistorySession.isContentAvailable(sel.get(0)) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1));
       }
       return false;
-    }
-
-    private boolean isDiffEnabled() {
-      List<TreeNodeOnVcsRevision> sel = getSelection();
-      return myHistorySession.isContentAvailable(sel.get(0)) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1));
     }
   }
 
