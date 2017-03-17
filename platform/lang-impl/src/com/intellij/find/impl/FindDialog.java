@@ -645,7 +645,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
             int index = myResultsPreviewTable.getSelectionModel().getLeadSelectionIndex();
             if (index != -1) {
               UsageInfo usageInfo = ((UsageInfo2UsageAdapter)myResultsPreviewTable.getModel().getValueAt(index, 0)).getUsageInfo();
-              myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+              myUsagePreviewPanel.updateLayout(usageInfo.isValid() ? Collections.singletonList(usageInfo) : null);
               VirtualFile file = usageInfo.getVirtualFile();
               myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(file != null ? file.getPath() : "", false));
             }
@@ -1597,6 +1597,9 @@ public class FindDialog extends DialogWrapper implements FindUI {
       @Override
       protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         if (value instanceof UsageInfo2UsageAdapter) {
+          if (!((UsageInfo2UsageAdapter)value).isValid()) {
+            myUsageRenderer.append(" "+UsageViewBundle.message("node.invalid") + " ", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          }
           TextChunk[] text = ((UsageInfo2UsageAdapter)value).getPresentation().getText();
 
           // skip line number / file info
@@ -1604,9 +1607,6 @@ public class FindDialog extends DialogWrapper implements FindUI {
             TextChunk textChunk = text[i];
             SimpleTextAttributes attributes = getAttributes(textChunk);
             myUsageRenderer.append(textChunk.getText(), attributes);
-          }
-          if (!((UsageInfo2UsageAdapter)value).isValid()) {
-            myUsageRenderer.append(" "+UsageViewBundle.message("node.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
           }
         }
         setBorder(null);
