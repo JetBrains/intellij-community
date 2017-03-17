@@ -12,11 +12,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.*;
-import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
-import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
@@ -611,6 +610,7 @@ public class StudySerializationUtils {
           switch (taskType) {
             case "choice": return gson.fromJson(json, ChoiceTask.class);
             case "theory": return gson.fromJson(json, TheoryTask.class);
+            case "code": return gson.fromJson(json, CodeTask.class);
             case "pycharm": return gson.fromJson(json, Task.class);
             case "subtasks": return gson.fromJson(json, TaskWithSubtasks.class);
           }

@@ -26,6 +26,7 @@ import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.CodeTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
@@ -52,7 +53,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
@@ -406,8 +410,7 @@ public class EduAdaptiveStepicConnector {
                                           @NotNull StepicWrappers.Step step,
                                           @NotNull String name,
                                           int lessonID) {
-    final Task task = new Task();
-    task.setName(name);
+    final Task task = new CodeTask(name);
     task.setStepId(lessonID);
     task.setText(step.text);
     task.setStatus(StudyStatus.Unchecked);

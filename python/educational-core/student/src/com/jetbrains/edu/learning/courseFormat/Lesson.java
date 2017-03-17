@@ -6,10 +6,7 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
-import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +31,7 @@ public class Lesson implements StudyItem {
     Task.class,
     ChoiceTask.class,
     TheoryTask.class,
+    CodeTask.class,
     TaskWithSubtasks.class})
   public List<Task> taskList = new ArrayList<>();
 
