@@ -35,6 +35,7 @@ import com.intellij.diagnostic.IdePerformanceListener;
 import com.intellij.diagnostic.ThreadDump;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.actions.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.analytics.StudioCrashDetection;
@@ -47,6 +48,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -536,13 +538,42 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     synchronized (ACTION_INVOCATIONS_LOCK) {
       String actionName = getActionName(actionClass, templatePresentation);
       InvocationKind invocationKind = getInvocationKindFromEvent(event);
-      Multiset<InvocationKind> invocations = ourActionInvocations.get(actionName);
-      if (invocations == null) {
-        invocations = LinkedHashMultiset.create();
-        ourActionInvocations.put(actionName, invocations);
+
+      // We aggregate actions the user takes many times in the course of editing code (key events, copy/paste etc...)
+      // other actions are logged directly (our logging mechanism batches the uploads, but timestamps will be accurate).
+      if (shouldAggregate(actionClass)) {
+        Multiset<InvocationKind> invocations = ourActionInvocations.get(actionName);
+        if (invocations == null) {
+          invocations = LinkedHashMultiset.create();
+          ourActionInvocations.put(actionName, invocations);
+        }
+        invocations.add(invocationKind);
+      } else {
+        UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
+                                         .setCategory(EventCategory.STUDIO_UI)
+                                         .setKind(EventKind.STUDIO_UI_ACTION_STATS)
+                                         .setUiActionStats(UIActionStats.newBuilder()
+                                                             .setActionClassName(actionName)
+                                                             .setInvocationKind(invocationKind)
+                                                             .setInvocations(1)));
       }
-      invocations.add(invocationKind);
     }
+  }
+
+  /**
+   * Checks if the action is one we need to aggregate.
+   * We only aggregate actions the user takes many times in the course of editing code (key events, copy/paste etc...).
+   */
+  private static boolean shouldAggregate(Class actionClass) {
+    return EditorAction.class.isAssignableFrom(actionClass)
+           || UndoRedoAction.class.isAssignableFrom(actionClass)
+           || PasteAction.class.isAssignableFrom(actionClass)
+           || CopyAction.class.isAssignableFrom(actionClass)
+           || CutAction.class.isAssignableFrom(actionClass)
+           || SaveAllAction.class.isAssignableFrom(actionClass)
+           || DeleteAction.class.isAssignableFrom(actionClass)
+           || NextOccurenceAction.class.isAssignableFrom(actionClass)
+           || PreviousOccurenceAction.class.isAssignableFrom(actionClass);
   }
 
   /**
