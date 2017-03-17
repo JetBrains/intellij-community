@@ -277,8 +277,9 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
       final List<Object> values = jsonSchemaObject.getEnum();
       if (type == null && values != null && !values.isEmpty()) type = detectType(values);
       final Object defaultValue = jsonSchemaObject.getDefault();
-      final String defaultValueAsString = defaultValue == null ? null : defaultValue instanceof String ? "\"" + defaultValue + "\"" :
-                                                                        String.valueOf(defaultValue);
+      final String defaultValueAsString = defaultValue == null || defaultValue instanceof JsonSchemaObject ? null :
+                                          (defaultValue instanceof String ? "\"" + defaultValue + "\"" :
+                                                                        String.valueOf(defaultValue));
       JsonSchemaType finalType = type;
       return new InsertHandler<LookupElement>() {
         @Override
