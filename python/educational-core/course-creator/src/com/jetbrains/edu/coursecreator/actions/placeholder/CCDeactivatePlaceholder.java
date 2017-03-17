@@ -3,6 +3,8 @@ package com.jetbrains.edu.coursecreator.actions.placeholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -40,6 +42,8 @@ public class CCDeactivatePlaceholder extends CCSubtaskPlaceholderAction {
     if (existingActivePlaceholder == null) {
       return false;
     }
-    return Collections.min(existingActivePlaceholder.getSubtaskInfos().keySet()) < taskFile.getTask().getActiveSubtaskIndex();
+    final Task task = taskFile.getTask();
+    return task instanceof TaskWithSubtasks &&
+           Collections.min(existingActivePlaceholder.getSubtaskInfos().keySet()) < ((TaskWithSubtasks)task).getActiveSubtaskIndex();
   }
 }

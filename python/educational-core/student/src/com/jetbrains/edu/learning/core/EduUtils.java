@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,8 +171,10 @@ public class EduUtils {
     studentDocument.addDocumentListener(listener);
     taskFile.setTrackLengths(false);
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      int fromSubtask = task.getActiveSubtaskIndex();
-      placeholder.switchSubtask(studentDocument, fromSubtask, targetSubtaskIndex);
+      if (task instanceof TaskWithSubtasks) {
+        int fromSubtask = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
+        placeholder.switchSubtask(studentDocument, fromSubtask, targetSubtaskIndex);
+      }
     }
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
       replaceWithTaskText(studentDocument, placeholder, targetSubtaskIndex);

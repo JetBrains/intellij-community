@@ -267,10 +267,6 @@ public class Task implements StudyItem {
     return !date.after(myUpdateDate);
   }
 
-  public int getActiveSubtaskIndex() {
-    return 0;
-  }
-
   public void copyParametersOf(@NotNull Task task) {
     myLesson = task.getLesson();
     myIndex = task.getIndex();
