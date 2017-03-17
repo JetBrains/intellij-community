@@ -91,13 +91,12 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     Project project = completionContext.getProject();
     CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
     List<MethodsChain> searchResult =
-      searchChains(target, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
+      searchChains(target, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
     if (searchResult.size() < MAX_SEARCH_RESULT_SIZE) {
       if (!target.isArray()) {
         List<MethodsChain> inheritorFilteredSearchResult = new SmartList<>();
         Processor<TargetType> consumer = targetType -> {
           for (MethodsChain chain : searchChains(targetType,
-                                                 contextRelevantTypes,
                                                  MAX_SEARCH_RESULT_SIZE,
                                                  MAX_CHAIN_SIZE,
                                                  completionContext,
@@ -198,7 +197,6 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   }
 
   private static List<MethodsChain> searchChains(TargetType target,
-                                                 Set<PsiType> contextVarsQNames,
                                                  int maxResultSize,
                                                  int maxChainSize,
                                                  ChainCompletionContext context,

@@ -15,14 +15,18 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.text.EditDistance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public final class MethodChainsSearchUtil {
@@ -31,16 +35,16 @@ public final class MethodChainsSearchUtil {
   private MethodChainsSearchUtil() {
   }
 
-  public static boolean isSimilar(@NotNull final String target,
-                                  @NotNull final String candidate) {
+  public static boolean isSimilar(@NotNull String target,
+                                  @NotNull String candidate) {
     return EditDistance.levenshtein(target, sanitizedToLowerCase(candidate), true) >= COMMON_PART_MIN_LENGTH;
   }
 
   @NotNull
-  public static String sanitizedToLowerCase(@NotNull final String name) {
-    final StringBuilder result = new StringBuilder();
+  public static String sanitizedToLowerCase(@NotNull String name) {
+    StringBuilder result = new StringBuilder();
     for (int i = 0; i < name.length(); i++) {
-      final char ch = name.charAt(i);
+      char ch = name.charAt(i);
       if (Character.isLetter(ch)) {
         result.append(Character.toLowerCase(ch));
       }
@@ -49,28 +53,21 @@ public final class MethodChainsSearchUtil {
   }
 
   @Nullable
-  public static PsiMethod getMethodWithMinNotPrimitiveParameters(final @NotNull PsiMethod[] methods,
-                                                                 final @NotNull Set<String> excludedQNames) {
+  public static PsiMethod getMethodWithMinNotPrimitiveParameters(@NotNull PsiMethod[] methods,
+                                                                 @NotNull PsiClass target) {
     return Stream.of(methods)
-      .filter(m -> !containsParameter(m, excludedQNames))
+      .filter(m -> {
+        for (PsiParameter parameter : m.getParameterList().getParameters()) {
+          PsiType t = parameter.getType();
+          PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(t);
+          if (aClass != null && aClass == target) {
+            return false;
+          }
+        }
+        return true;
+      })
       .sorted(Comparator.comparing(MethodChainsSearchUtil::getNonPrimitiveParameterCount))
       .findFirst().orElse(null);
-  }
-
-  private static boolean containsParameter(@NotNull PsiMethod method, @NotNull Set<String> excludedQNames) {
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      final PsiType t = parameter.getType();
-      final boolean matched = isRawTypeOneOf(t, excludedQNames);
-      if (matched) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean isRawTypeOneOf(@NotNull PsiType type, @NotNull Set<String> qNames) {
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    return aClass != null && qNames.contains(aClass.getQualifiedName());
   }
 
   private static int getNonPrimitiveParameterCount(PsiMethod method) {
@@ -80,8 +77,8 @@ public final class MethodChainsSearchUtil {
       .count();
   }
 
-  public static boolean doesMethodsContainParameters(@NotNull final PsiMethod[] psiMethods,
-                                                     @NotNull final Set<PsiType> parameterRawTypes) {
+  public static boolean doesMethodsContainParameters(@NotNull PsiMethod[] psiMethods,
+                                                     @NotNull Set<PsiType> parameterRawTypes) {
     for (PsiMethod m : psiMethods) {
       //TODO
       //if (!containsParameter(m, parameterRawTypes)) {

@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,7 +74,7 @@ public class MethodsChainLookupRangingHelper {
 
     for (PsiMethod[] psiMethods : chain.getPath()) {
       PsiMethod method =
-        MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(psiMethods, Collections.singleton(context.getTarget().getClassQName()));
+        MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(psiMethods, context.getTarget().getTargetClass());
       if (method == null) {
         return null;
       }

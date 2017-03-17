@@ -94,4 +94,8 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
     result = 31 * result + signatureData.hashCode()
     return result
   }
+
+  override fun toString(): String {
+    return owner + (if (isStatic) "." else "#") + name + "(" + parameterCount + ")"
+  }
 }

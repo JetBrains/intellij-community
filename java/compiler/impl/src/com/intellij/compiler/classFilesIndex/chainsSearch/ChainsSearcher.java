@@ -20,12 +20,12 @@ import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletio
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.TargetType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
@@ -56,7 +56,7 @@ public class ChainsSearcher {
                                                      CompilerReferenceServiceEx compilerReferenceServiceEx,
                                                      ChainCompletionContext context) {
     SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.getMethods(target.getClassQName());
-    return new SearchInitializer(methods, target.getPsiType(), context);
+    return new SearchInitializer(methods, context);
   }
 
   @NotNull
@@ -71,24 +71,15 @@ public class ChainsSearcher {
 
     Map<MethodIncompleteSignature, MethodsChain> knownDistance = initResult.getChains();
 
-    List<OccurrencesAware<MethodIncompleteSignature>> allInitialVertexes = initResult.getVertexes();
+    LinkedList<OccurrencesAware<MethodsChain>> q = initResult
+      .getVertices()
+      .stream()
+      .map(
+        signAndWeight -> new OccurrencesAware<>(MethodsChain.create(signAndWeight.getUnderlying(), signAndWeight.getOccurrences(), context),
+                                                signAndWeight.getOccurrences()))
+      .filter(Objects::nonNull)
+      .collect(Collectors.toCollection(LinkedList::new));
 
-    LinkedList<OccurrencesAware<Pair<MethodIncompleteSignature, MethodsChain>>> q =
-      new LinkedList<>(ContainerUtil.map(allInitialVertexes,
-                                         methodIncompleteSignatureOccurrencesAware -> {
-                                           MethodIncompleteSignature underlying =
-                                             methodIncompleteSignatureOccurrencesAware.getUnderlying();
-                                           return new OccurrencesAware<>(
-                                             Pair.create(
-                                               underlying,
-                                               new MethodsChain(context.resolveQualifierClass(underlying),
-                                                                context.resolve(underlying),
-                                                                methodIncompleteSignatureOccurrencesAware.getOccurrences())),
-                                             methodIncompleteSignatureOccurrencesAware
-                                               .getOccurrences()
-                                           );
-                                         }
-      ));
 
     int maxWeight = 0;
     for (MethodsChain methodsChain : knownDistance.values()) {
@@ -100,18 +91,19 @@ public class ChainsSearcher {
     ResultHolder result = new ResultHolder(context.getPsiManager());
     while (!q.isEmpty()) {
       ProgressManager.checkCanceled();
-      OccurrencesAware<Pair<MethodIncompleteSignature, MethodsChain>> currentVertex = q.poll();
+      OccurrencesAware<MethodsChain> currentVertex = q.poll();
       int currentVertexDistance = currentVertex.getOccurrences();
-      Pair<MethodIncompleteSignature, MethodsChain> currentVertexUnderlying = currentVertex.getUnderlying();
-      MethodsChain currentVertexMethodsChain = knownDistance.get(currentVertexUnderlying.getFirst());
+      MethodsChain currentChain = currentVertex.getUnderlying();
+      MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
+      MethodsChain currentVertexMethodsChain = knownDistance.get(headSignature);
       if (currentVertexDistance != currentVertexMethodsChain.getChainWeight()) {
         continue;
       }
-      if (currentVertex.getUnderlying().getFirst().isStatic() || context.hasQualifier(context.resolveQualifierClass(currentVertex.getUnderlying().getFirst()))) {
-        result.add(currentVertex.getUnderlying().getSecond());
+      if (headSignature.isStatic() || context.hasQualifier(context.resolveQualifierClass(headSignature))) {
+        result.add(currentChain);
         continue;
       }
-      String currentReturnType = currentVertexUnderlying.getFirst().getOwner();
+      String currentReturnType = headSignature.getOwner();
       SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.getMethods(currentReturnType);
       MaxSizeTreeSet<OccurrencesAware<MethodIncompleteSignature>> currentSignatures =
         new MaxSizeTreeSet<>(maxResultSize);
@@ -124,11 +116,9 @@ public class ChainsSearcher {
           if ((knownVertexMethodsChain == null || knownVertexMethodsChain.getChainWeight() < vertexDistance)) {
             if (currentSignatures.isEmpty() || currentSignatures.last().getOccurrences() < vertexDistance) {
               if (currentVertexMethodsChain.size() < pathMaximalLength - 1) {
-                MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
-                PsiMethod[] psiMethods = context.resolve(methodInvocation);
-                if (psiMethods.length != 0 && !MethodChainsSearchUtil.doesMethodsContainParameters(psiMethods, allExcludedNames)) {
-                  MethodsChain newBestMethodsChain =
-                    currentVertexMethodsChain.addEdge(psiMethods, context.resolveQualifierClass(indexValue.getUnderlying()), vertexDistance);
+                MethodsChain newBestMethodsChain =
+                  currentVertexMethodsChain.continuation(indexValue.getUnderlying(), indexValue.getOccurrences(), context);
+                if (newBestMethodsChain != null) {
                   currentSignatures
                     .add(new OccurrencesAware<>(indexValue.getUnderlying(), vertexDistance));
                   knownDistance.put(vertex, newBestMethodsChain);
@@ -145,22 +135,25 @@ public class ChainsSearcher {
       if (!currentSignatures.isEmpty()) {
         boolean isBreak = false;
         for (OccurrencesAware<MethodIncompleteSignature> sign : currentSignatures) {
-          PsiMethod[] resolved = context.resolve(sign.getUnderlying());
           if (!isBreak) {
-            if (indexReader.getCoupleOccurrences(sign.getUnderlying().getRef(), currentVertex.getUnderlying().getFirst().getRef())) {
+            if (indexReader.getCoupleOccurrences(sign.getUnderlying().getRef(), headSignature.getRef())) {
               boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
               if (stopChain) {
                 updated = true;
-                result.add(currentVertex.getUnderlying().getSecond().addEdge(resolved, context.resolveQualifierClass(sign.getUnderlying()), sign.getOccurrences()));
+                MethodsChain continuation = currentChain.continuation(sign.getUnderlying(), sign.getOccurrences(), context);
+                if (continuation != null) {
+                  result.add(continuation);
+                }
                 continue;
               }
               else {
                 updated = true;
                 MethodsChain methodsChain =
-                  currentVertexUnderlying.second.addEdge(resolved, context.resolveQualifierClass(sign.getUnderlying()), sign.getOccurrences());
-                q.addFirst(new OccurrencesAware<>(
-                  Pair.create(sign.getUnderlying(), methodsChain), sign.getOccurrences()));
-                continue;
+                  currentChain.continuation(sign.getUnderlying(), sign.getOccurrences(), context);
+                if (methodsChain != null) {
+                  q.addFirst(new OccurrencesAware<>(methodsChain, sign.getOccurrences()));
+                  continue;
+                }
               }
             }
           }
@@ -168,9 +161,9 @@ public class ChainsSearcher {
         }
       }
       if (!updated &&
-          (currentVertex.getUnderlying().getFirst().isStatic() ||
-           !targetQName.equals(currentVertex.getUnderlying().getFirst().getOwner()))) {
-        result.add(currentVertex.getUnderlying().getSecond());
+          (headSignature.isStatic() ||
+           !targetQName.equals(headSignature.getOwner()))) {
+        result.add(currentVertex.getUnderlying());
       }
       if (result.size() > maxResultSize) {
         return result.getResult();
@@ -180,7 +173,8 @@ public class ChainsSearcher {
   }
 
   private static MethodsChain createChainFromFirstElement(MethodsChain chain, PsiClass newQualifierClass) {
-    return new MethodsChain(newQualifierClass, chain.getFirst(), chain.getChainWeight());
+    //TODO
+    return new MethodsChain(newQualifierClass, Collections.singletonList(chain.getFirst()), null, chain.getChainWeight());
   }
 
   private static class ResultHolder {

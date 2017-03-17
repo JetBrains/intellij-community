@@ -15,10 +15,8 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch.context;
 
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,9 +28,9 @@ public class TargetType {
   private final boolean myArray;
   private final PsiType myPsiType;
 
-  public TargetType(final String classQName,
-                    final boolean isArray,
-                    final PsiType targetType) {
+  public TargetType(String classQName,
+                    boolean isArray,
+                    PsiType targetType) {
     myClassQName = classQName;
     myArray = isArray;
     myPsiType = targetType;
@@ -50,8 +48,16 @@ public class TargetType {
     return myPsiType;
   }
 
+  public PsiClass getTargetClass() {
+    return PsiUtil.resolveClassInType(myPsiType);
+  }
+
+  public boolean isAssignableFrom(PsiClass psiClass) {
+    return myPsiType.isAssignableFrom(JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass));
+  }
+
   @Nullable
-  public static TargetType create(final PsiType type) {
+  public static TargetType create(PsiType type) {
     if (type instanceof PsiArrayType) {
       return create((PsiArrayType)type);
     }
@@ -62,7 +68,7 @@ public class TargetType {
   }
 
   @Nullable
-  private static TargetType create(final PsiArrayType arrayType) {
+  private static TargetType create(PsiArrayType arrayType) {
     PsiType currentComponentType = arrayType.getComponentType();
     while (currentComponentType instanceof PsiArrayType) {
       currentComponentType = ((PsiArrayType)currentComponentType).getComponentType();
@@ -70,18 +76,18 @@ public class TargetType {
     if (!(currentComponentType instanceof PsiClassType)) {
       return null;
     }
-    final String targetQName = arrayType.getCanonicalText();
+    String targetQName = arrayType.getCanonicalText();
     return new TargetType(targetQName, true, arrayType);
   }
 
   @Nullable
-  private static TargetType create(final PsiClassType classType) {
-    final PsiClassType.ClassResolveResult resolvedGenerics = classType.resolveGenerics();
-    final PsiClass resolvedClass = resolvedGenerics.getElement();
+  private static TargetType create(PsiClassType classType) {
+    PsiClassType.ClassResolveResult resolvedGenerics = classType.resolveGenerics();
+    PsiClass resolvedClass = resolvedGenerics.getElement();
     if (resolvedClass == null) {
       return null;
     }
-    final String classQName = resolvedClass.getQualifiedName();
+    String classQName = resolvedClass.getQualifiedName();
     if (classQName == null) {
       return null;
     }

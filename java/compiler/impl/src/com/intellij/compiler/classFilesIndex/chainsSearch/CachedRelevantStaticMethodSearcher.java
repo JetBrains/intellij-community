@@ -60,7 +60,7 @@ public class CachedRelevantStaticMethodSearcher {
         else {
           PsiMethod[] methods = myCompletionContext.resolve(methodInvocation);
           method = MethodChainsSearchUtil
-            .getMethodWithMinNotPrimitiveParameters(methods, Collections.singleton(myCompletionContext.getTarget().getClassQName()));
+            .getMethodWithMinNotPrimitiveParameters(methods, myCompletionContext.getTarget().getTargetClass());
           myCachedResolveResults.put(methodInvocation, method);
           if (method == null) {
             return Collections.emptyList();

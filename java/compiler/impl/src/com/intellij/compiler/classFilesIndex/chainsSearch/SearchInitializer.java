@@ -17,8 +17,6 @@ package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 
 import java.util.*;
 
@@ -29,19 +27,17 @@ public class SearchInitializer {
   private final ChainCompletionContext myContext;
 
   public SearchInitializer(SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues,
-                           PsiType target,
                            ChainCompletionContext context) {
     myContext = context;
     int size = indexValues.size();
     myChains = new LinkedHashMap<>(size);
-    add(indexValues, Collections.singleton(target));
+    add(indexValues);
   }
 
-  private void add(Collection<OccurrencesAware<MethodIncompleteSignature>> indexValues,
-                   Set<PsiType> excludedParamsTypesQNames) {
+  private void add(Collection<OccurrencesAware<MethodIncompleteSignature>> indexValues) {
     int bestOccurrences = -1;
     for (OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
-      if (add(indexValue, excludedParamsTypesQNames)) {
+      if (add(indexValue)) {
         int occurrences = indexValue.getOccurrences();
         if (bestOccurrences == -1) {
           bestOccurrences = occurrences;
@@ -53,12 +49,11 @@ public class SearchInitializer {
     }
   }
 
-  private boolean add(OccurrencesAware<MethodIncompleteSignature> indexValue, Set<PsiType> excludedParamsTypesQNames) {
+  private boolean add(OccurrencesAware<MethodIncompleteSignature> indexValue) {
     MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
-    PsiMethod[] psiMethods = myContext.resolve(methodInvocation);
-    if (psiMethods.length != 0 && !MethodChainsSearchUtil.doesMethodsContainParameters(psiMethods, excludedParamsTypesQNames)) {
-      int occurrences = indexValue.getOccurrences();
-      MethodsChain methodsChain = new MethodsChain(myContext.resolveQualifierClass(indexValue.getUnderlying()), psiMethods, occurrences);
+    int occurrences = indexValue.getOccurrences();
+    MethodsChain methodsChain = MethodsChain.create(indexValue.getUnderlying(), occurrences, myContext);
+    if (methodsChain != null) {
       myChains.put(methodInvocation, Pair.create(methodsChain, occurrences));
       return true;
     }
@@ -91,7 +86,7 @@ public class SearchInitializer {
       myChains = chains;
     }
 
-    public List<OccurrencesAware<MethodIncompleteSignature>> getVertexes() {
+    public List<OccurrencesAware<MethodIncompleteSignature>> getVertices() {
       return myVertexes;
     }
 

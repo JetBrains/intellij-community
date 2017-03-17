@@ -62,14 +62,14 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testStaticMethod() {
-    final List<WeightableChainLookupElement> elements = doCompletion();
+    List<WeightableChainLookupElement> elements = doCompletion();
     assertSize(2, elements);
     assertAdvisorLookupElementEquals("getInstance", 0, 2, 1, 0, elements.get(0));
   }
 
   public void testStaticMethodAndMethod() {
-    final List<WeightableChainLookupElement> elements = doCompletion();
-    assertEquals(String.valueOf(elements), elements.size(), 2);
+    List<WeightableChainLookupElement> elements = doCompletion();
+    assertEquals(String.valueOf(elements), 2, elements.size());
     assertAdvisorLookupElementEquals("findClass", 0, 3, 1, 1, elements.get(1));
     assertAdvisorLookupElementEquals("m.getContainingClass", 0, 5, 1, 0, elements.get(0));
   }
@@ -116,12 +116,12 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testBigrams2() {
-    final List<WeightableChainLookupElement> collection = doCompletion();
+    List<WeightableChainLookupElement> collection = doCompletion();
     assertAdvisorLookupElementEquals("e.getContainingFile().getVirtualFile", 0, 8, 1, 0, assertOneElement(collection));
   }
 
   public void testBigrams3() {
-    final List<WeightableChainLookupElement> elements = doCompletion();
+    List<WeightableChainLookupElement> elements = doCompletion();
     assertSize(2, elements);
     assertAdvisorLookupElementEquals("getInstance().findFile", 2, 8, 2, 0, elements.get(0));
   }
@@ -167,7 +167,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testResultOrdering() {
-    final List<WeightableChainLookupElement> lookupElements = doCompletion();
+    List<WeightableChainLookupElement> lookupElements = doCompletion();
     assertSize(4, lookupElements);
     assertLookupElementStringEquals(lookupElements.get(0), "f.createFileFromText");
     assertLookupElementStringEquals(lookupElements.get(1), "getInstance().findFile");
@@ -176,13 +176,13 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testResultRelevance() {
-    final List<WeightableChainLookupElement> weightableChainLookupElements = doCompletion();
+    List<WeightableChainLookupElement> weightableChainLookupElements = doCompletion();
     assertEquals("e.getContainingClass", weightableChainLookupElements.get(0).getLookupString());
     assertEquals("getInstance().findClass", weightableChainLookupElements.get(1).getLookupString());
   }
 
   public void testResultRelevance3() {
-    final List<WeightableChainLookupElement> weightableChainLookupElements = doCompletion();
+    List<WeightableChainLookupElement> weightableChainLookupElements = doCompletion();
     assertSize(2, weightableChainLookupElements);
     assertEquals("e.getProject1", weightableChainLookupElements.get(0).getLookupString());
     assertEquals("getProject", weightableChainLookupElements.get(1).getLookupString());
@@ -204,26 +204,26 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     doTestRendering();
   }
 
-  public void assertAdvisorLookupElementEquals(final String lookupText,
-                                               final int unreachableParametersCount,
-                                               final int lastMethodWeight,
-                                               final int chainSize,
-                                               final int notMatchedStringVars,
-                                               final WeightableChainLookupElement actualLookupElement) {
+  public void assertAdvisorLookupElementEquals(String lookupText,
+                                               int unreachableParametersCount,
+                                               int lastMethodWeight,
+                                               int chainSize,
+                                               int notMatchedStringVars,
+                                               WeightableChainLookupElement actualLookupElement) {
     assertLookupElementStringEquals(actualLookupElement, lookupText);
     //assertChainRelevanceEquals(actualLookupElement.getChainRelevance(), lastMethodWeight, chainSize, notMatchedStringVars,
     //                           unreachableParametersCount);
   }
 
-  private static void assertLookupElementStringEquals(final LookupElement lookupElement, final String lookupText) {
+  private static void assertLookupElementStringEquals(LookupElement lookupElement, String lookupText) {
     assertEquals(lookupText, lookupElement.getLookupString());
   }
 
-  private static void assertChainRelevanceEquals(final ChainRelevance chainRelevance,
-                                                 final int lastMethodWeight,
-                                                 final int chainSize,
-                                                 final int notMatchedStringVars,
-                                                 final int unreachableParametersCount) {
+  private static void assertChainRelevanceEquals(ChainRelevance chainRelevance,
+                                                 int lastMethodWeight,
+                                                 int chainSize,
+                                                 int notMatchedStringVars,
+                                                 int unreachableParametersCount) {
     assertEquals(notMatchedStringVars, chainRelevance.getNotMatchedStringVars());
     assertEquals(chainSize, chainRelevance.getChainSize());
     assertEquals(unreachableParametersCount, chainRelevance.getUnreachableParametersCount());
@@ -243,9 +243,9 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
 
   private List<WeightableChainLookupElement> doCompletion() {
     compileAndIndexData(TEST_INDEX_FILE_NAME);
-    final LookupElement[] allLookupElements = runCompletion();
-    final List<WeightableChainLookupElement> targetLookupElements = new SmartList<>();
-    for (final LookupElement lookupElement : allLookupElements) {
+    LookupElement[] allLookupElements = runCompletion();
+    List<WeightableChainLookupElement> targetLookupElements = new SmartList<>();
+    for (LookupElement lookupElement : allLookupElements) {
       if (lookupElement instanceof WeightableChainLookupElement) {
         targetLookupElements.add((WeightableChainLookupElement)lookupElement);
       }
@@ -255,7 +255,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
 
   private LookupElement[] runCompletion() {
     myFixture.configureByFiles(getTestCompletionFilePath());
-    final LookupElement[] lookupElements =
+    LookupElement[] lookupElements =
       myFixture.complete(CompletionType.BASIC);
     return lookupElements == null ? LookupElement.EMPTY_ARRAY : lookupElements;
   }

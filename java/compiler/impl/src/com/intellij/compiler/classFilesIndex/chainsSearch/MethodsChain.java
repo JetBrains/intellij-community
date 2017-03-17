@@ -15,29 +15,61 @@
  */
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.reverse;
 
 public class MethodsChain {
   private final List<PsiMethod[]> myRevertedPath;
+  private final MethodIncompleteSignature mySignature;
   private final int myWeight;
   private final PsiClass myQualifierClass;
 
-  public MethodsChain(PsiClass qualifierClass, PsiMethod[] methods, int weight) {
-    this(qualifierClass, weight, Collections.singletonList(methods));
+  @Nullable
+  public static MethodsChain create(@NotNull MethodIncompleteSignature signature,
+                             int weight,
+                             @NotNull ChainCompletionContext context) {
+    PsiClass qualifier = context.resolveQualifierClass(signature);
+    if (!signature.isStatic() && context.getTarget().isAssignableFrom(qualifier)) {
+      return null;
+    }
+    PsiMethod[] methods = context.resolve(signature);
+    if (methods.length == 0) return null;
+    Set<PsiClass> classes = Arrays.stream(methods)
+      .flatMap(m -> Arrays.stream(m.getParameterList().getParameters()))
+      .map(p -> PsiUtil.resolveClassInType(p.getType()))
+      .collect(Collectors.toSet());
+    PsiClass contextClass = context.getTarget().getTargetClass();
+    if (classes.contains(contextClass)) {
+      return null;
+    }
+    classes.add(contextClass);
+    return new MethodsChain(qualifier, Collections.singletonList(methods), signature, weight);
   }
 
-  private MethodsChain(PsiClass qualifierClass, int weight, List<PsiMethod[]> revertedPath) {
-    myRevertedPath = revertedPath;
-    myWeight = weight;
+  public MethodsChain(@NotNull PsiClass qualifierClass,
+                      @NotNull List<PsiMethod[]> revertedPath,
+                      MethodIncompleteSignature signature,
+                      int weight) {
     myQualifierClass = qualifierClass;
+    myRevertedPath = revertedPath;
+    mySignature = signature;
+    myWeight = weight;
+  }
+
+  @NotNull
+  public MethodIncompleteSignature getHeadSignature() {
+    return mySignature;
   }
 
   public int size() {
@@ -65,18 +97,22 @@ public class MethodsChain {
     return myWeight;
   }
 
-  @SuppressWarnings("unchecked")
-  public MethodsChain addEdge(PsiMethod[] psiMethods, PsiClass newQualifierClassName, int newWeight) {
-    List<PsiMethod[]> newRevertedPath = new ArrayList<>(myRevertedPath.size() + 1);
-    newRevertedPath.addAll(myRevertedPath);
-    newRevertedPath.add(psiMethods);
-    return new MethodsChain(newQualifierClassName, newWeight, newRevertedPath);
-  }
 
+  public MethodsChain continuation(@NotNull MethodIncompleteSignature signature,
+                                   int weight,
+                                   @NotNull ChainCompletionContext context) {
+    MethodsChain head = create(signature, weight, context);
+    if (head == null) return null;
+
+    ArrayList<PsiMethod[]> newRevertedPath = newArrayList();
+    newRevertedPath.addAll(myRevertedPath);
+    newRevertedPath.add(head.getPath().get(0));
+    return new MethodsChain(head.getQualifierClass(), newRevertedPath, head.getHeadSignature(), weight);
+  }
 
   @Override
   public String toString() {
-    return StringUtil.join(myRevertedPath, "<-");
+    return myRevertedPath.stream().map(methods -> methods[0].getName()).collect(Collectors.joining("<-"));
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -135,15 +171,5 @@ public class MethodsChain {
       }
     }
     return false;
-  }
-
-  private static Set<String> joinSets(Set<String>... sets) {
-    Set<String> result = new HashSet<>();
-    for (Set<String> set : sets) {
-      for (String s : set) {
-        result.add(s);
-      }
-    }
-    return result;
   }
 }
