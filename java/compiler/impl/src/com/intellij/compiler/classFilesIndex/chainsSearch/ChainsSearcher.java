@@ -39,14 +39,12 @@ public class ChainsSearcher {
   @NotNull
   public static List<MethodsChain> search(int pathMaximalLength,
                                           TargetType targetType,
-                                          Set<PsiType> contextQNames,
                                           int maxResultSize,
                                           ChainCompletionContext context,
                                           CompilerReferenceServiceEx compilerReferenceServiceEx) {
     SearchInitializer initializer = createInitializer(targetType, compilerReferenceServiceEx, context);
     return search(compilerReferenceServiceEx,
                   initializer,
-                  contextQNames,
                   pathMaximalLength,
                   maxResultSize,
                   targetType.getClassQName(),
@@ -64,7 +62,6 @@ public class ChainsSearcher {
   @NotNull
   private static List<MethodsChain> search(CompilerReferenceServiceEx indexReader,
                                            SearchInitializer initializer,
-                                           Set<PsiType> toSet,
                                            int pathMaximalLength,
                                            int maxResultSize,
                                            String targetQName,
@@ -110,7 +107,7 @@ public class ChainsSearcher {
       if (currentVertexDistance != currentVertexMethodsChain.getChainWeight()) {
         continue;
       }
-      if (currentVertex.getUnderlying().getFirst().isStatic() || toSet.contains(currentVertex.getUnderlying().getFirst().getOwner())) {
+      if (currentVertex.getUnderlying().getFirst().isStatic() || context.hasQualifier(context.resolveQualifierClass(currentVertex.getUnderlying().getFirst()))) {
         result.add(currentVertex.getUnderlying().getSecond());
         continue;
       }
@@ -151,7 +148,7 @@ public class ChainsSearcher {
           PsiMethod[] resolved = context.resolve(sign.getUnderlying());
           if (!isBreak) {
             if (indexReader.getCoupleOccurrences(sign.getUnderlying().getRef(), currentVertex.getUnderlying().getFirst().getRef())) {
-              boolean stopChain = sign.getUnderlying().isStatic() || toSet.contains(sign.getUnderlying().getOwner());
+              boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
               if (stopChain) {
                 updated = true;
                 result.add(currentVertex.getUnderlying().getSecond().addEdge(resolved, context.resolveQualifierClass(sign.getUnderlying()), sign.getOccurrences()));

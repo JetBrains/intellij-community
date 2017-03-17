@@ -44,31 +44,31 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
 
   @SuppressWarnings("unchecked")
   public MethodsChainsCompletionContributor() {
-    final ElementPattern<PsiElement> pattern = or(patternForMethodCallParameter(), patternForVariableAssignment());
+    ElementPattern<PsiElement> pattern = or(patternForMethodCallParameter(), patternForVariableAssignment());
     extend(COMPLETION_TYPE, pattern, new CompletionProvider<CompletionParameters>() {
       @Override
-      protected void addCompletions(final @NotNull CompletionParameters parameters,
-                                    final ProcessingContext context,
-                                    final @NotNull CompletionResultSet result) {
-        final ChainCompletionContext completionContext = extractContext(parameters);
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        ChainCompletionContext completionContext = extractContext(parameters);
         if (completionContext == null) return;
 
-        final Set<PsiType> contextTypesKeysSet = completionContext.getContextTypes();
-        final Set<PsiType> contextRelevantTypes = new HashSet<>(contextTypesKeysSet.size() + 1);
-        for (final PsiType type : contextTypesKeysSet) {
+        Set<PsiType> contextTypesKeysSet = completionContext.getContextTypes();
+        Set<PsiType> contextRelevantTypes = new HashSet<>(contextTypesKeysSet.size() + 1);
+        for (PsiType type : contextTypesKeysSet) {
           if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
             contextRelevantTypes.add(type);
           }
         }
-        final TargetType target = completionContext.getTarget();
+        TargetType target = completionContext.getTarget();
         contextRelevantTypes.remove(target.getPsiType());
-        final List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(target, contextRelevantTypes, completionContext);
+        List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(target, contextRelevantTypes, completionContext);
         if (!IS_UNIT_TEST_MODE) {
           result.runRemainingContributors(parameters, completionResult -> {
-            final LookupElement lookupElement = completionResult.getLookupElement();
-            final PsiElement lookupElementPsi = lookupElement.getPsiElement();
+            LookupElement lookupElement = completionResult.getLookupElement();
+            PsiElement lookupElementPsi = lookupElement.getPsiElement();
             if (lookupElementPsi != null) {
-              for (final LookupElement element : elementsFoundByMethodsChainsSearch) {
+              for (LookupElement element : elementsFoundByMethodsChainsSearch) {
                 if (lookupElementPsi.isEquivalentTo(element.getPsiElement())) {
                   elementsFoundByMethodsChainsSearch.remove(element);
                   break;
@@ -85,26 +85,26 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     });
   }
 
-  private static List<LookupElement> searchForLookups(final TargetType target,
-                                                      final Set<PsiType> contextRelevantTypes,
-                                                      final ChainCompletionContext completionContext) {
-    final Project project = completionContext.getProject();
-    final CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
-    final List<MethodsChain> searchResult =
+  private static List<LookupElement> searchForLookups(TargetType target,
+                                                      Set<PsiType> contextRelevantTypes,
+                                                      ChainCompletionContext completionContext) {
+    Project project = completionContext.getProject();
+    CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(project);
+    List<MethodsChain> searchResult =
       searchChains(target, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, methodsUsageIndexReader);
     if (searchResult.size() < MAX_SEARCH_RESULT_SIZE) {
       if (!target.isArray()) {
-        final List<MethodsChain> inheritorFilteredSearchResult = new SmartList<>();
-        final Processor<TargetType> consumer = targetType -> {
-          for (final MethodsChain chain : searchChains(targetType,
-                                                       contextRelevantTypes,
-                                                       MAX_SEARCH_RESULT_SIZE,
-                                                       MAX_CHAIN_SIZE,
-                                                       completionContext,
-                                                       methodsUsageIndexReader)) {
+        List<MethodsChain> inheritorFilteredSearchResult = new SmartList<>();
+        Processor<TargetType> consumer = targetType -> {
+          for (MethodsChain chain : searchChains(targetType,
+                                                 contextRelevantTypes,
+                                                 MAX_SEARCH_RESULT_SIZE,
+                                                 MAX_CHAIN_SIZE,
+                                                 completionContext,
+                                                 methodsUsageIndexReader)) {
             boolean insert = true;
-            for (final MethodsChain baseChain : searchResult) {
-              final MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain, completionContext.getPsiManager());
+            for (MethodsChain baseChain : searchResult) {
+              MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain, completionContext.getPsiManager());
               if (r != MethodsChain.CompareResult.NOT_EQUAL) {
                 insert = false;
                 break;
@@ -118,7 +118,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
           return searchResult.size() < MAX_SEARCH_RESULT_SIZE;
         };
         DirectClassInheritorsSearch.search(((PsiClassType)target.getPsiType()).resolve()).forEach(psiClass -> {
-          final String inheritorQName = psiClass.getQualifiedName();
+          String inheritorQName = psiClass.getQualifiedName();
           if (inheritorQName == null) {
             return true;
           }
@@ -126,19 +126,19 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         });
       }
     }
-    final List<MethodsChain> chains = searchResult.size() > MAX_CHAIN_SIZE ? chooseHead(searchResult) : searchResult;
+    List<MethodsChain> chains = searchResult.size() > MAX_CHAIN_SIZE ? chooseHead(searchResult) : searchResult;
     return MethodsChainLookupRangingHelper
       .chainsToWeightableLookupElements(filterTailAndGetSumLastMethodOccurrence(chains), completionContext);
   }
 
-  private static List<MethodsChain> chooseHead(final List<MethodsChain> elements) {
+  private static List<MethodsChain> chooseHead(List<MethodsChain> elements) {
     Collections.sort(elements, (o1, o2) -> o2.getChainWeight() - o1.getChainWeight());
     return elements.subList(0, MAX_CHAIN_SIZE);
   }
 
   @Nullable
-  private static ChainCompletionContext extractContext(final CompletionParameters parameters) {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiAssignmentExpression.class, PsiLocalVariable.class, PsiMethodCallExpression.class);
+  private static ChainCompletionContext extractContext(CompletionParameters parameters) {
+    PsiElement parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiAssignmentExpression.class, PsiLocalVariable.class, PsiMethodCallExpression.class);
     LOG.assertTrue(parent != null, "A completion position should match to a pattern");
 
     if (parent instanceof PsiAssignmentExpression) {
@@ -147,15 +147,15 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     if (parent instanceof PsiLocalVariable) {
       return extractContextFromVariable((PsiLocalVariable)parent);
     }
-    final PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
+    PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
     if (method == null) return null;
-    final PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
-    final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpressionList.class);
+    PsiExpression expression = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpression.class);
+    PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiExpressionList.class);
     if (expressionList == null) return null;
-    final int exprPosition = Arrays.asList(expressionList.getExpressions()).indexOf(expression);
-    final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+    int exprPosition = Arrays.asList(expressionList.getExpressions()).indexOf(expression);
+    PsiParameter[] methodParameters = method.getParameterList().getParameters();
     if (exprPosition < methodParameters.length) {
-      final PsiParameter methodParameter = methodParameters[exprPosition];
+      PsiParameter methodParameter = methodParameters[exprPosition];
       return ChainCompletionContext.createContext(methodParameter.getType(), null, PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class));
     }
     return null;
@@ -163,33 +163,33 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
 
   @Nullable
   private static ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable) {
-    final PsiType varType = localVariable.getType();
-    final String varName = localVariable.getName();
-    final PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(localVariable, PsiDeclarationStatement.class);
+    PsiType varType = localVariable.getType();
+    String varName = localVariable.getName();
+    PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(localVariable, PsiDeclarationStatement.class);
     return ChainCompletionContext.createContext(varType, varName, declaration);
   }
 
   @Nullable
-  private static ChainCompletionContext extractContextFromAssignment(final PsiAssignmentExpression assignmentExpression) {
-    final PsiType type = assignmentExpression.getLExpression().getType();
-    final PsiIdentifier identifier = PsiTreeUtil.getChildOfType(assignmentExpression.getLExpression(), PsiIdentifier.class);
+  private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression) {
+    PsiType type = assignmentExpression.getLExpression().getType();
+    PsiIdentifier identifier = PsiTreeUtil.getChildOfType(assignmentExpression.getLExpression(), PsiIdentifier.class);
     if (identifier == null) return null;
-    final String identifierText = identifier.getText();
+    String identifierText = identifier.getText();
     return ChainCompletionContext.createContext(type, identifierText, assignmentExpression);
   }
 
-  private static List<MethodsChain> filterTailAndGetSumLastMethodOccurrence(final List<MethodsChain> chains) {
+  private static List<MethodsChain> filterTailAndGetSumLastMethodOccurrence(List<MethodsChain> chains) {
     int maxWeight = 0;
-    for (final MethodsChain chain : chains) {
-      final int chainWeight = chain.getChainWeight();
+    for (MethodsChain chain : chains) {
+      int chainWeight = chain.getChainWeight();
       if (chainWeight > maxWeight) {
         maxWeight = chainWeight;
       }
     }
 
-    final List<MethodsChain> filteredResult = new ArrayList<>();
-    for (final MethodsChain chain : chains) {
-      final int chainWeight = chain.getChainWeight();
+    List<MethodsChain> filteredResult = new ArrayList<>();
+    for (MethodsChain chain : chains) {
+      int chainWeight = chain.getChainWeight();
       if (chainWeight * FILTER_RATIO >= maxWeight) {
         filteredResult.add(chain);
       }
@@ -197,12 +197,12 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     return filteredResult;
   }
 
-  private static List<MethodsChain> searchChains(final TargetType target,
-                                                 final Set<PsiType> contextVarsQNames,
-                                                 final int maxResultSize,
-                                                 final int maxChainSize,
-                                                 final ChainCompletionContext context,
-                                                 final CompilerReferenceServiceEx methodsUsageIndexReader) {
-    return ChainsSearcher.search(maxChainSize, target, contextVarsQNames, maxResultSize, context, methodsUsageIndexReader);
+  private static List<MethodsChain> searchChains(TargetType target,
+                                                 Set<PsiType> contextVarsQNames,
+                                                 int maxResultSize,
+                                                 int maxChainSize,
+                                                 ChainCompletionContext context,
+                                                 CompilerReferenceServiceEx methodsUsageIndexReader) {
+    return ChainsSearcher.search(maxChainSize, target, maxResultSize, context, methodsUsageIndexReader);
   }
 }

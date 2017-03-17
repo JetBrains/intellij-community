@@ -31,11 +31,10 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ChainCompletionContext {
   @NotNull
@@ -135,16 +134,20 @@ public class ChainCompletionContext {
     }).findFirst().orElse(null);
   }
 
-  public Collection<PsiElement> getQualifiers(@Nullable PsiClass targetType) {
-    if (targetType == null) return Collections.emptyList();
-    return getQualifiers(JavaPsiFacade.getInstance(myProject).getElementFactory().createType(targetType));
+  public boolean hasQualifier(@Nullable PsiClass targetClass) {
+    return getQualifiers(targetClass).findAny().isPresent();
   }
 
-  public Collection<PsiElement> getQualifiers(@NotNull PsiType targetType) {
+  public Stream<PsiNamedElement> getQualifiers(@Nullable PsiClass targetClass) {
+    if (targetClass == null) return Stream.empty();
+    return getQualifiers(JavaPsiFacade.getInstance(myProject).getElementFactory().createType(targetClass));
+  }
+
+  public Stream<PsiNamedElement> getQualifiers(@NotNull PsiType targetType) {
     return myContextElements.stream().filter(e -> {
       PsiType elementType = getType(e);
       return elementType != null && targetType.isAssignableFrom(elementType);
-    }).collect(Collectors.toList());
+    });
   }
 
   @NotNull
@@ -156,6 +159,7 @@ public class ChainCompletionContext {
   public PsiMethod[] resolve(MethodIncompleteSignature sign) {
     return myResolver.get(sign);
   }
+
 
   @Nullable
   public static ChainCompletionContext createContext(@Nullable PsiType variableType,

@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.compiler.classFilesIndex.chainsSearch.completion.lookup.ChainCompletionLookupElementUtil.createLookupElement;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
@@ -149,7 +150,7 @@ public class MethodsChainLookupRangingHelper {
         }
       }
       else if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
-        Collection<PsiElement> contextVariables = context.getQualifiers(type);
+        Collection<PsiElement> contextVariables = context.getQualifiers(type).collect(Collectors.toList());
         PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
         if (contextVariable != null) {
           if (contextVariables.size() == 1) parametersMap.put(i, createSubLookup(contextVariable));
@@ -181,7 +182,7 @@ public class MethodsChainLookupRangingHelper {
         return null;
       }
       else {
-        Object e = ContainerUtil.getFirstItem(context.getQualifiers(qualifierClass), null);
+        Object e = context.getQualifiers(qualifierClass).findFirst().orElse(null);
         if (e != null) {
           LookupElement firstChainElement;
           if (e instanceof PsiVariable) {
