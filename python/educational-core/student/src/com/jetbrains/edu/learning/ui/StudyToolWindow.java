@@ -94,10 +94,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     setContent(mySplitPane);
 
     if (isToolwindow) {
-      StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
-      if (configurator != null) {
-        project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new StudyFileEditorManagerListener(this, project));
-      }
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new StudyFileEditorManagerListener(this, project));
 
       if (StudyTaskManager.getInstance(project).isTurnEditingMode() ||
           StudyTaskManager.getInstance(project).getToolWindowMode() == StudyToolWindowMode.EDITING) {
@@ -172,16 +169,12 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       LOG.warn("Course is null");
       return group;
     }
-    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(project);
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
     if (configurator != null) {
-      group.addAll(configurator.getActionGroup(project));
-      addAdditionalActions(group);
-      return group;
+      group.addAll(configurator.getTaskDescriptionActionGroup());
     }
-    else {
-      LOG.warn("No configurator is provided for plugin");
-      return StudyBasePluginConfigurator.getDefaultActionGroup();
-    }
+    addAdditionalActions(group);
+    return group;
   }
 
   private static void addAdditionalActions(DefaultActionGroup group) {

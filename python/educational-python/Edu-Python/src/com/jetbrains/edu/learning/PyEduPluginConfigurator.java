@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
+import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
@@ -120,5 +121,10 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   @Override
   public String getLanguageScriptUrl() {
     return getClass().getResource("/python.js").toExternalForm();
+  }
+
+  @Override
+  public StudyCheckAction getCheckAction() {
+    return new PyStudyCheckAction();
   }
 }

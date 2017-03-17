@@ -3,10 +3,12 @@ package com.jetbrains.edu.learning;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
@@ -63,4 +65,20 @@ public interface EduPluginConfigurator {
 
   @NotNull
   default String getLanguageScriptUrl(){return "";}
+
+  StudyCheckAction getCheckAction();
+
+  @NotNull
+  default DefaultActionGroup getTaskDescriptionActionGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(getCheckAction());
+    group.add(new StudyPreviousTaskAction());
+    group.add(new StudyNextTaskAction());
+    group.add(new StudyRefreshTaskFileAction());
+    group.add(new StudyShowHintAction());
+
+    group.add(new StudyRunAction());
+    group.add(new StudyEditInputAction());
+    return group;
+  }
 }

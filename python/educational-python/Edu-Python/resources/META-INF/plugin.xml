@@ -33,7 +33,6 @@
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <StudyExecutor implementationClass="com.jetbrains.edu.learning.PyStudyExecutor" language="Python"/>
-    <studyPluginConfigurator implementation="com.jetbrains.edu.learning.PyStudyPluginConfigurator" />
     <pluginConfigurator implementationClass="com.jetbrains.edu.learning.PyEduPluginConfigurator" language="Python"/>
   </extensions>
   <actions>

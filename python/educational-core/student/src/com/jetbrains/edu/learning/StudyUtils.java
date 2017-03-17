@@ -548,17 +548,6 @@ public class StudyUtils {
   }
 
   @Nullable
-  public static StudyPluginConfigurator getConfigurator(@NotNull final Project project) {
-    StudyPluginConfigurator[] extensions = StudyPluginConfigurator.EP_NAME.getExtensions();
-    for (StudyPluginConfigurator extension: extensions) {
-      if (extension.accept(project)) {
-        return extension;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   public static StudyTwitterPluginConfigurator getTwitterConfigurator(@NotNull final Project project) {
     StudyTwitterPluginConfigurator[] extensions = StudyTwitterPluginConfigurator.EP_NAME.getExtensions();
     for (StudyTwitterPluginConfigurator extension: extensions) {
