@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.model.execution;
 
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -36,6 +38,7 @@ import java.util.List;
 public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
+  @NotNull @NonNls public static final Key<ParametersList> DEBUGGER_SETUP_KEY = Key.create("debuggerSetup");
 
   private List<String> myTaskNames = ContainerUtilRt.newArrayList();
   private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();
