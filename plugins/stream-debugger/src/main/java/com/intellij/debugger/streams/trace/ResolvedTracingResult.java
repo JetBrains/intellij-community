@@ -12,7 +12,7 @@ import java.util.List;
  */
 public interface ResolvedTracingResult {
   @NotNull
-  List<ResolvedTrace> getResolvedCalls();
+  List<ResolvedTrace> getResolvedTraces();
 
   @Nullable
   Value getResult();

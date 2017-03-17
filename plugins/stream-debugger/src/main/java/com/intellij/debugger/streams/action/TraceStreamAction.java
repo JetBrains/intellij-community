@@ -54,7 +54,7 @@ public class TraceStreamAction extends AnAction {
         @Override
         public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
           final ResolvedTracingResult resolvedTrace = result.resolve();
-          final List<ResolvedTrace> calls = resolvedTrace.getResolvedCalls();
+          final List<ResolvedTrace> calls = resolvedTrace.getResolvedTraces();
           ApplicationManager.getApplication()
             .invokeLater(() -> window.setTrace(calls, result.getResult(), context));
         }

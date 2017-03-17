@@ -81,7 +81,7 @@ public class TracingResultImpl implements TracingResult {
 
     @NotNull
     @Override
-    public List<ResolvedTrace> getResolvedCalls() {
+    public List<ResolvedTrace> getResolvedTraces() {
       return Collections.unmodifiableList(myTrace);
     }
 

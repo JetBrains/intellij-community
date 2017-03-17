@@ -63,8 +63,8 @@ public class StreamChainBuilder {
   }
 
   @Nullable
-  public static StreamChain tryBuildChain(@NotNull PsiElement elementAtCursor) {
-    final PsiMethodCallExpression call = tryFindStreamCall(elementAtCursor);
+  public static StreamChain tryBuildChain(@NotNull PsiElement startElement) {
+    final PsiMethodCallExpression call = tryFindStreamCall(startElement);
     if (call != null) {
       final List<IntermediateStreamCall> intermediateStreamCalls = new ArrayList<>();
       final String name = resolveProducerCallName(call);
