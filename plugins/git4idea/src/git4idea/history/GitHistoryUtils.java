@@ -610,7 +610,7 @@ public class GitHistoryUtils {
                                               @NotNull VcsLogObjectsFactory factory,
                                               @NotNull VirtualFile root) {
     return ContainerUtil.mapNotNull(refs, refName -> {
-      if (refName.equals(GitUtil.GRAFTED)) return null;
+      if (refName.equals(GitUtil.GRAFTED) || refName.equals(GitUtil.REPLACED)) return null;
       VcsRefType type = GitRefManager.getRefType(refName);
       refName = GitBranchUtil.stripRefsPrefix(refName);
       return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
