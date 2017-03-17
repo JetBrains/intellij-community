@@ -14,6 +14,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +153,7 @@ public class StepicWrappers {
     if (taskDir == null) {
       return testFiles;
     }
-    if (!task.hasSubtasks()) {
+    if (!(task instanceof TaskWithSubtasks)) {
       VirtualFile testFile = taskDir.findChild(EduNames.TESTS_FILE);
       testFiles.add(testFile);
       return testFiles;

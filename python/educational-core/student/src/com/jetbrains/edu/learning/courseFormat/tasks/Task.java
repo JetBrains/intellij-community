@@ -29,7 +29,7 @@ public class Task implements StudyItem {
 
   // index is visible to user number of task from 1 to task number
   private int myIndex;
-  private StudyStatus myStatus = StudyStatus.Unchecked;
+  protected StudyStatus myStatus = StudyStatus.Unchecked;
 
   @SerializedName("stepic_id")
   @Expose private int myStepId;
@@ -38,15 +38,11 @@ public class Task implements StudyItem {
   @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
   private String text;
-  private Map<String, String> testsText = new HashMap<>();
-  private Map<String, String> taskTexts = new HashMap<>();
+  protected Map<String, String> testsText = new HashMap<>();
+  protected Map<String, String> taskTexts = new HashMap<>();
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
-
-  private int myActiveSubtaskIndex = 0;
-  @SerializedName("last_subtask_index")
-  @Expose private int myLastSubtaskIndex = 0;
 
   public Task() {}
 
@@ -245,12 +241,6 @@ public class Task implements StudyItem {
         placeholder.setStatus(status);
       }
     }
-    if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getLastSubtaskIndex()) {
-      if (myStatus == StudyStatus.Failed) {
-        myStatus = StudyStatus.Unchecked;
-      }
-      return;
-    }
     myStatus = status;
   }
 
@@ -278,23 +268,11 @@ public class Task implements StudyItem {
   }
 
   public int getActiveSubtaskIndex() {
-    return myActiveSubtaskIndex;
-  }
-
-  public void setActiveSubtaskIndex(int activeSubtaskIndex) {
-    myActiveSubtaskIndex = activeSubtaskIndex;
+    return 0;
   }
 
   public int getLastSubtaskIndex() {
-    return myLastSubtaskIndex;
-  }
-
-  public void setLastSubtaskIndex(int lastSubtaskIndex) {
-    myLastSubtaskIndex = lastSubtaskIndex;
-  }
-
-  public boolean hasSubtasks() {
-    return myLastSubtaskIndex > 0;
+    return 0;
   }
 
   public void copyParametersOf(@NotNull Task task) {

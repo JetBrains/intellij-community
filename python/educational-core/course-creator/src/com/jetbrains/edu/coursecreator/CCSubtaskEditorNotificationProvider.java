@@ -30,6 +30,7 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
       return null;
     }
     Task task = StudyUtils.getTaskForFile(myProject, file);
-    if (task == null || !task.hasSubtasks()) {
+    if (task == null || !(task instanceof TaskWithSubtasks)) {
       return null;
     }
     EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
@@ -73,12 +74,12 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
     int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
     int subtaskSize = task.getLastSubtaskIndex() + 1;
     panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
-    panel.createActionLabel(SWITCH_SUBTASK, () -> createPopup(task, myProject).show(RelativePoint.getSouthEastOf(panel)));
+    panel.createActionLabel(SWITCH_SUBTASK, () -> createPopup((TaskWithSubtasks)task, myProject).show(RelativePoint.getSouthEastOf(panel)));
     return panel;
   }
 
   @NotNull
-  public static ListPopup createPopup(@NotNull Task task, @NotNull Project project) {
+  public static ListPopup createPopup(@NotNull TaskWithSubtasks task, @NotNull Project project) {
     ArrayList<Integer> values = new ArrayList<>();
     for (int i = 0; i <= task.getLastSubtaskIndex(); i++) {
       values.add(i);
@@ -88,12 +89,12 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
   }
 
   public static class SwitchSubtaskPopupStep extends BaseListPopupStep<Integer> {
-    private final Task myTask;
+    private final TaskWithSubtasks myTask;
     private final Project myProject;
 
     public SwitchSubtaskPopupStep(@Nullable String title,
                                   List<Integer> values,
-                                  @NotNull Task task,
+                                  @NotNull TaskWithSubtasks task,
                                   @NotNull Project project) {
       super(title, values);
       myTask = task;
@@ -152,11 +153,11 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
 
     public static final String SELECT = "Select";
     public static final String DELETE = "Delete";
-    private final Task myTask;
+    private final TaskWithSubtasks myTask;
     private final int mySubtaskIndex;
     private final Project myProject;
 
-    public ActionsPopupStep(@NotNull Task task, int subtaskIndex, @NotNull Project project) {
+    public ActionsPopupStep(@NotNull TaskWithSubtasks task, int subtaskIndex, @NotNull Project project) {
       super(null, Arrays.asList(SELECT, DELETE));
       myTask = task;
       mySubtaskIndex = subtaskIndex;

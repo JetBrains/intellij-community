@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -270,11 +271,15 @@ public class EduStepicConnector {
       LOG.error("Got a block with non-pycharm prefix: " + block.name + " for step: " + stepicId);
       return null;
     }
-    final Task task = new Task();
+    final int lastSubtaskIndex = block.options.lastSubtaskIndex;
+    Task task = new Task();
+    if (lastSubtaskIndex != 0) {
+      task = createTaskWithSubtasks(lastSubtaskIndex);
+    }
     task.setStepId(stepicId);
     task.setUpdateDate(step.update_date);
     task.setName(block.options != null ? block.options.title : (PYCHARM_PREFIX + CURRENT_VERSION));
-    task.setLastSubtaskIndex(block.options.lastSubtaskIndex);
+
     for (StepicWrappers.FileWrapper wrapper : block.options.test) {
       task.addTestsTexts(wrapper.name, wrapper.text);
     }
@@ -292,6 +297,13 @@ public class EduStepicConnector {
         task.taskFiles.put(taskFile.name, taskFile);
       }
     }
+    return task;
+  }
+
+  @NotNull
+  private static Task createTaskWithSubtasks(int lastSubtaskIndex) {
+    TaskWithSubtasks task = new TaskWithSubtasks();
+    task.setLastSubtaskIndex(lastSubtaskIndex);
     return task;
   }
 

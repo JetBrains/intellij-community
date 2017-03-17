@@ -13,6 +13,7 @@ import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +38,7 @@ public class PyStudyTestRunner extends StudyTestRunner {
     }
 
     String testsFileName = manager.getTestFileName();
-    if (myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != 0) {
+    if (myTask instanceof TaskWithSubtasks && myTask.getActiveSubtaskIndex() != 0) {
       testsFileName = FileUtil.getNameWithoutExtension(testsFileName);
       int index = myTask.getActiveSubtaskIndex();
       testsFileName += EduNames.SUBTASK_MARKER + index + "." + FileUtilRt.getExtension(manager.getTestFileName());

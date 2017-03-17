@@ -24,8 +24,13 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 public class CCNewSubtaskAction extends DumbAwareAction {
@@ -46,13 +51,27 @@ public class CCNewSubtaskAction extends DumbAwareAction {
       return;
     }
     Task task = StudyUtils.getTaskForFile(project, virtualFile);
-    if (task == null) {
-      return;
+    if (task == null) return;
+    if (!(task instanceof TaskWithSubtasks)) {
+      task = replaceTaskWithSubtasks(task);
     }
-    addSubtask(task, project);
+    addSubtask((TaskWithSubtasks)task, project);
   }
 
-  public static void addSubtask(@NotNull Task task, @NotNull Project project) {
+  @NotNull
+  private Task replaceTaskWithSubtasks(Task task) {
+    final Lesson lesson = task.getLesson();
+    final List<Task> list = lesson.getTaskList();
+    final int i = list.indexOf(task);
+    task = new TaskWithSubtasks(task);
+    for (TaskFile taskFile : task.getTaskFiles().values()) {
+      taskFile.setTask(task);
+    }
+    list.set(i, task);
+    return task;
+  }
+
+  public static void addSubtask(@NotNull TaskWithSubtasks task, @NotNull Project project) {
     VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return;
