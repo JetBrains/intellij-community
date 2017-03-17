@@ -24,7 +24,7 @@ IDETalk
 com.intellij.commander
 SourceSafe
 TFS
-ro.redeul.google.go
+org.jetbrains.plugins.go
 com.intellij.plugins.html.instantEditing
 com.jetbrains.intellij.api.watcher
 com.jetbrains.php.framework
