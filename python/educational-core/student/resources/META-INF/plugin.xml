@@ -118,5 +118,6 @@
 
   <extensions defaultExtensionNs="Edu">
     <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicStudyOptions"/>
+    <checkListener implementation="com.jetbrains.edu.learning.twitter.StudyTwitterAction"/>
   </extensions>
 </idea-plugin>
