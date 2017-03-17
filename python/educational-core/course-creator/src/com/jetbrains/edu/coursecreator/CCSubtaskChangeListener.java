@@ -12,7 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

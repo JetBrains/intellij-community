@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.checker.StudyExecutor;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.courseFormat.UserTest;

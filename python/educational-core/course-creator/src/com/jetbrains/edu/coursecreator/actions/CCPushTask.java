@@ -47,7 +47,7 @@ public class CCPushTask extends DumbAwareAction {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson != null && lesson.getId() > 0 && course.getId() > 0) {
       e.getPresentation().setEnabledAndVisible(true);
-      final com.jetbrains.edu.learning.courseFormat.Task task = lesson.getTask(taskDir.getName());
+      final com.jetbrains.edu.learning.courseFormat.tasks.Task task = lesson.getTask(taskDir.getName());
       if (task.getStepId() <= 0) {
         e.getPresentation().setText("Upload Task to Stepik");
       }
@@ -74,7 +74,7 @@ public class CCPushTask extends DumbAwareAction {
     final Lesson lesson = course.getLesson(lessonDir.getName());
     if (lesson == null) return;
 
-    final com.jetbrains.edu.learning.courseFormat.Task task = lesson.getTask(taskDir.getName());
+    final com.jetbrains.edu.learning.courseFormat.tasks.Task task = lesson.getTask(taskDir.getName());
     if (task == null) return;
 
     ProgressManager.getInstance().run(new Task.Modal(project, "Uploading Task", true) {

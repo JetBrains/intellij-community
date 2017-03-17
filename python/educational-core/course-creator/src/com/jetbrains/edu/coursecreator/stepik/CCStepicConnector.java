@@ -16,6 +16,7 @@ import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.stepic.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
