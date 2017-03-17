@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.Value;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -31,10 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -77,67 +74,62 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
     final XDebugSession session = getDebuggerSession().getXDebugSession();
     assertNotNull(session);
 
-    final AtomicReference<StreamChain> chainRef = new AtomicReference<>();
-    final AtomicReference<TracingResult> tracingResultRef = new AtomicReference<>();
-    final AtomicReference<String> compilationFailReasonRef = new AtomicReference<>();
-
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicBoolean breakpointReached = new AtomicBoolean(false);
-
-    doWhenXSessionPausedThenResume(() -> {
-      System.out.println("bp");
-      if (breakpointReached.getAndSet(true)) {
-        return;
-      }
-
-      try {
-        System.out.println("bp2");
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        session.removeSessionListener(this);
         printContext(getDebugProcess().getDebuggerContext());
         final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
           final PsiElement elementAtBreakpoint = myPositionResolver.getNearestElementToBreakpoint(session);
           return elementAtBreakpoint == null ? null : StreamChainBuilder.tryBuildChain(elementAtBreakpoint);
         });
 
-        chainRef.set(chain);
+        if (chain == null) {
+          complete(null, null, null);
+          return;
+        }
 
         new EvaluateExpressionTracer(session, myExpressionBuilder, myResultInterpreter).trace(chain, new TracingCallback() {
           @Override
           public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-            tracingResultRef.set(result);
+            complete(chain, result, null);
           }
 
           @Override
           public void failed(@NotNull String traceExpression, @NotNull String reason) {
-            compilationFailReasonRef.set(reason);
+            complete(chain, null, reason);
           }
         });
       }
-      finally {
-        latch.countDown();
+
+      private void complete(@Nullable StreamChain chain,
+                            @Nullable TracingResult result,
+                            @Nullable String evaluationError) {
+        handleResults(chain, result, evaluationError, isResultNull);
+        ApplicationManager.getApplication().invokeLater(session::resume);
       }
-    });
+    }, getTestRootDisposable());
+  }
 
-    latch.await();
-    //latch.await(10, TimeUnit.SECONDS);
-
-    System.out.println("latch released");
-    final StreamChain chain = chainRef.get();
-    final TracingResult result = tracingResultRef.get();
+  protected void handleResults(@Nullable StreamChain chain,
+                               @Nullable TracingResult result,
+                               @Nullable String evaluationError,
+                               boolean resultMustBeNull) {
 
     assertNotNull(chain);
-    assertNull(compilationFailReasonRef.get());
+    assertNull(evaluationError);
     assertNotNull(result);
 
     println(chain.getText(), ProcessOutputTypes.SYSTEM);
 
     final Value resultValue = result.getResult();
-    handleResultValue(resultValue, isResultNull);
+    handleResultValue(resultValue, resultMustBeNull);
 
     final List<TraceInfo> trace = result.getTrace();
     handleTrace(trace);
 
     final ResolvedTracingResult resolvedTrace = result.resolve();
-    handleResultValue(resolvedTrace.getResult(), isResultNull);
+    handleResultValue(resolvedTrace.getResult(), resultMustBeNull);
     handleResolvedTrace(resolvedTrace);
   }
 
@@ -185,6 +177,7 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
     }
   }
 
+  @NotNull
   private String evalTimesRepresentation(@NotNull String before, int elementTime, @NotNull String after) {
     before = before.isEmpty() ? "nothing" : before;
     after = after.isEmpty() ? "nothing" : after;
@@ -225,6 +218,7 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
     return StreamEx.of(values.keySet()).sorted().joining(",");
   }
 
+  @NotNull
   protected String getRelativeTestPath() {
     return "debug";
   }
