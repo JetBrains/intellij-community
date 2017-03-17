@@ -67,6 +67,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1194,7 +1195,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  private class MyAnnotateAction extends AnnotateRevisionActionBase implements DumbAware {
+  private static class MyAnnotateAction extends AnnotateRevisionActionBase implements DumbAware {
     public MyAnnotateAction() {
       super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"), AllIcons.Actions.Annotate);
       setShortcutSet(ActionManager.getInstance().getAction("Annotate").getShortcutSet());
@@ -1203,7 +1204,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     @Nullable
     @Override
     protected Editor getEditor(@NotNull AnActionEvent e) {
-      VirtualFile virtualFile = getVirtualFile();
+      Project project = e.getProject();
+      if (project == null) return null;
+
+      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+      if (filePath == null) return null;
+      VirtualFile virtualFile = filePath.getVirtualFile();
       if (virtualFile == null) return null;
 
       Editor editor = e.getData(CommonDataKeys.EDITOR);
@@ -1212,7 +1218,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         if (Comparing.equal(editorFile, virtualFile)) return editor;
       }
 
-      FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(virtualFile);
+      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
       if (fileEditor instanceof TextEditor) {
         return ((TextEditor)fileEditor).getEditor();
       }
@@ -1222,7 +1228,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     @Nullable
     @Override
     protected AbstractVcs getVcs(@NotNull AnActionEvent e) {
-      return myVcs;
+      return VcsUtil.findVcs(e);
     }
 
     @Nullable
@@ -1233,16 +1239,21 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
       VirtualFile file = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
       if (file == null || file.isDirectory()) return null;
-      if (myFilePath.getFileType().isBinary()) return null;
+
+      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+      if (filePath == null || filePath.getFileType().isBinary()) return null;
+
       return file;
     }
 
     @Nullable
     @Override
     protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
-      VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+      VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
+      if (historySession == null) return null;
 
-      if (!myHistorySession.isContentAvailable(revision)) return null;
+      VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
+      if (!historySession.isContentAvailable(revision)) return null;
 
       return revision;
     }
