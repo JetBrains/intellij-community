@@ -378,14 +378,24 @@ public class ModuleHighlightUtil {
       PsiElement implTarget = implRef.resolve();
       if (implTarget instanceof PsiClass) {
         PsiClass implClass = (PsiClass)implTarget;
-        PsiMethod provider;
 
         if (findModule(statement) != findModule(implClass)) {
           String message = JavaErrorMessages.message("module.service.alien");
           results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
         }
 
-        if (InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
+        PsiMethod provider = ContainerUtil.find(
+          implClass.findMethodsByName("provider", false),
+          m -> m.hasModifierProperty(PsiModifier.PUBLIC) && m.hasModifierProperty(PsiModifier.STATIC) && m.getParameterList().getParametersCount() == 0);
+        if (provider != null) {
+          PsiType type = provider.getReturnType();
+          PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
+          if (!InheritanceUtil.isInheritorOrSelf(typeClass, (PsiClass)intTarget, true)) {
+            String message = JavaErrorMessages.message("module.service.provider.type", implClass.getName());
+            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+          }
+        }
+        else if (InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
           if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
             String message = JavaErrorMessages.message("module.service.abstract", implClass.getName());
             results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
@@ -399,14 +409,6 @@ public class ModuleHighlightUtil {
             results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
           }
         }
-        else if ((provider = findProvider(implClass)) != null) {
-          PsiType type = provider.getReturnType();
-          PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
-          if (!InheritanceUtil.isInheritorOrSelf(typeClass, (PsiClass)intTarget, true)) {
-            String message = JavaErrorMessages.message("module.service.provider.type", implClass.getName());
-            results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
-          }
-        }
         else {
           String message = JavaErrorMessages.message("module.service.impl");
           results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
@@ -415,11 +417,6 @@ public class ModuleHighlightUtil {
     }
 
     return results;
-  }
-
-  private static PsiMethod findProvider(PsiClass implClass) {
-    return JBIterable.of(implClass.findMethodsByName("provider", false))
-            .find(p -> p.hasModifierProperty(PsiModifier.PUBLIC) && p.hasModifierProperty(PsiModifier.STATIC) && p.getParameterList().getParametersCount() == 0);
   }
 
   @Nullable
