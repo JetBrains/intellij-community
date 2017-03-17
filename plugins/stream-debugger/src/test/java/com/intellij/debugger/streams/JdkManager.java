@@ -10,15 +10,19 @@ import java.io.File;
  * @author Vitaliy.Bibaev
  */
 public class JdkManager {
+  public static final String JDK18_PATH;
+
   private static final String MOCK_JDK_DIR_NAME_PREFIX = "mockJDK-";
-  private static final Sdk JDK18;
+
+  private static class Holder {
+    static final Sdk JDK18 = ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk("java 1.8", JDK18_PATH, false);
+  }
 
   static {
-    final String path = new File("java/" + MOCK_JDK_DIR_NAME_PREFIX + "1.8").getAbsolutePath();
-    JDK18 = ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk("java 1.8", path, false);
+    JDK18_PATH = new File("java/" + MOCK_JDK_DIR_NAME_PREFIX + "1.8").getAbsolutePath();
   }
 
   public static Sdk getMockJdk18() {
-    return JDK18;
+    return Holder.JDK18;
   }
 }
