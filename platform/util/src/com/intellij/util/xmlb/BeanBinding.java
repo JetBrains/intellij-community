@@ -238,6 +238,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
+    for (Binding binding : myBindings) {
+      if (binding instanceof AccessorBindingWrapper && ((AccessorBindingWrapper)binding).isFlat()) {
+        ((AccessorBindingWrapper)binding).deserialize(result, element);
+      }
+    }
+
     if (data != null) {
       for (Binding binding : data.keySet()) {
         if (accessorNameTracker != null) {
@@ -441,20 +447,25 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (binding instanceof CompactCollectionBinding) {
-      return new AccessorBindingWrapper(accessor, binding);
+      return new AccessorBindingWrapper(accessor, binding, false);
     }
 
     boolean surroundWithTag = true;
+    boolean inline = false;
     Property property = accessor.getAnnotation(Property.class);
     if (property != null) {
       surroundWithTag = property.surroundWithTag();
+      inline = property.flat();
     }
 
-    if (!surroundWithTag) {
+    if (!surroundWithTag || inline) {
+      if (inline && !(binding instanceof BeanBinding)) {
+        throw new XmlSerializationException("inline supported only for BeanBinding: " + accessor);
+      }
       if (binding == null || binding instanceof TextBinding) {
         throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
       }
-      return new AccessorBindingWrapper(accessor, binding);
+      return new AccessorBindingWrapper(accessor, binding, inline);
     }
 
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
