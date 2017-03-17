@@ -61,7 +61,12 @@ class ShowSettingsWithAddedPattern : AnAction() {
     }
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
+    val info = getHintInfoFromProvider(offset, file) as? MethodInfo
+    if (info == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    
     val name = info.getMethodName()
     e.presentation.text = CodeInsightBundle.message("inlay.hints.show.settings", name)
   }
