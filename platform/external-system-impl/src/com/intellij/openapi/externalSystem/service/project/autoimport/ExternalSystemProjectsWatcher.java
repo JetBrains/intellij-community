@@ -48,7 +48,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -421,6 +420,7 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
           projectPaths.stream()
             .map(path -> ExternalSystemApiUtil.getSettings(project, systemId).getLinkedProjectSettings(path))
             .distinct()
+            .filter(Objects::nonNull)
             .forEach(settings -> {
               if (isReimport) {
                 scheduleRefresh(project, settings.getExternalProjectPath(), systemId, true);
