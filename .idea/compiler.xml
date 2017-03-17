@@ -23,6 +23,8 @@
       <entry name="!*.kt" />
       <entry name="!*.iml" />
       <entry name="!*.gant" />
+      <entry name="!BUILD" />
+      <entry name="!BUILD.bazel" />
     </wildcardResourcePatterns>
     <annotationProcessing>
       <profile default="true" name="Default" enabled="false">
