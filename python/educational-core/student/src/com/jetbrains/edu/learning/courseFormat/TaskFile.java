@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,7 +36,7 @@ public class TaskFile {
     for (AnswerPlaceholder answerPlaceholder : answerPlaceholders) {
       answerPlaceholder.initAnswerPlaceholder(this, isRestarted);
     }
-    Collections.sort(answerPlaceholders, new AnswerPlaceholderComparator());
+    answerPlaceholders.sort(new AnswerPlaceholderComparator());
     for (int i = 0; i < answerPlaceholders.size(); i++) {
       answerPlaceholders.get(i).setIndex(i);
     }
@@ -146,7 +145,7 @@ public class TaskFile {
   }
 
   public void sortAnswerPlaceholders() {
-    Collections.sort(myAnswerPlaceholders, new AnswerPlaceholderComparator());
+    myAnswerPlaceholders.sort(new AnswerPlaceholderComparator());
     for (int i = 0; i < myAnswerPlaceholders.size(); i++) {
       myAnswerPlaceholders.get(i).setIndex(i);
     }
