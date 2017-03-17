@@ -248,7 +248,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   public static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
     // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
-    sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision, true)).append(" ");
+    sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision)).append(" ");
     sb.append(revision.getAuthor());
     long time = revision.getRevisionDate().getTime();
     sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
@@ -696,9 +696,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       myComparator = comparator;
     }
 
-    static String toString(VcsFileRevision o, boolean shortVersion) {
+    @NotNull
+    private static String toString(@NotNull VcsFileRevision o) {
       VcsRevisionNumber number = o.getRevisionNumber();
-      return shortVersion && number instanceof ShortVcsRevisionNumber
+      return number instanceof ShortVcsRevisionNumber
              ? ((ShortVcsRevisionNumber)number).toShortString()
              : number.asString();
     }
@@ -714,7 +715,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     public String valueOf(VcsFileRevision object) {
-      return toString(object, true);
+      return toString(object);
     }
 
     @Override
