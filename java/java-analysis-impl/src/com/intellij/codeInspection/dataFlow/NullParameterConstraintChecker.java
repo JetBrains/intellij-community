@@ -52,8 +52,8 @@ class NullParameterConstraintChecker extends DataFlowRunner {
   private final Set<PsiParameter> myPossiblyViolatedParameters;
   private final Set<PsiParameter> myUsedParameters;
 
-  private NullParameterConstraintChecker(Collection<PsiParameter> parameters, boolean isOnTheFly) {
-    super(false, true, isOnTheFly);
+  private NullParameterConstraintChecker(Collection<PsiParameter> parameters) {
+    super(false, true);
     myPossiblyViolatedParameters = new THashSet<>(parameters);
     myUsedParameters = new THashSet<>();
   }
@@ -75,7 +75,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     }
     if (nullableParameters.isEmpty()) return PsiParameter.EMPTY_ARRAY;
 
-    final NullParameterConstraintChecker checker = new NullParameterConstraintChecker(nullableParameters, true);
+    final NullParameterConstraintChecker checker = new NullParameterConstraintChecker(nullableParameters);
     checker.analyzeMethod(method.getBody(), new StandardInstructionVisitor());
 
     return checker.myPossiblyViolatedParameters.stream().filter(checker.myUsedParameters::contains).toArray(PsiParameter[]::new);

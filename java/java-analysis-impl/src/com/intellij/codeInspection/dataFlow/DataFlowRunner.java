@@ -26,7 +26,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -54,17 +53,15 @@ public class DataFlowRunner {
   private final List<DfaMemoryState> myStackTopClosures = new ArrayList<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
-  private final boolean myShouldCheckLimitTime;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
 
   protected DataFlowRunner() {
-    this(false, true, false);
+    this(false, true);
   }
 
-  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers, boolean shouldCheckLimitTime) {
-    myShouldCheckLimitTime = shouldCheckLimitTime;
+  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
     myValueFactory = new DfaValueFactory(honorFieldInitializers, unknownMembersAreNullable);
   }
 
@@ -281,10 +278,6 @@ public class DataFlowRunner {
 
   private static boolean inSameLoop(@NotNull Instruction prevInstruction, @NotNull Instruction nextInstruction, @NotNull int[] loopNumber) {
     return loopNumber[nextInstruction.getIndex()] == loopNumber[prevInstruction.getIndex()];
-  }
-
-  protected boolean shouldCheckTimeLimit() {
-    return myShouldCheckLimitTime && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @NotNull

@@ -173,8 +173,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass) && !(containingClass instanceof PsiEnumConstantInitializer)) return;
 
     final StandardDataFlowRunner dfaRunner =
-      new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE,
-                                 !isInsideConstructorOrInitializer(scope), onTheFly);
+      new StandardDataFlowRunner(TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, !isInsideConstructorOrInitializer(scope));
     analyzeDfaWithNestedClosures(scope, holder, dfaRunner, Collections.singletonList(dfaRunner.createMemoryState()), onTheFly);
   }
 
@@ -1020,10 +1019,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         myProblems.putValue(problem, anchor);
       }
       Pair<NullabilityProblem, PsiElement> key = Pair.create(problem, anchor);
-      StateInfo info = myStateInfos.get(key);
-      if (info == null) {
-        myStateInfos.put(key, info = new StateInfo());
-      }
+      StateInfo info = myStateInfos.computeIfAbsent(key, k -> new StateInfo());
       if (state.isEphemeral() && !ok) {
         info.ephemeralNpe = true;
       } else if (!state.isEphemeral()) {
