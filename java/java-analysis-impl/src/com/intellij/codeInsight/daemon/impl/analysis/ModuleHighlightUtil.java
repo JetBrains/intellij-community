@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,12 +95,23 @@ public class ModuleHighlightUtil {
       .orElse(null);
   }
 
-  static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file) {
+  static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
     if (PsiUtil.isModuleFile(file)) {
       String message = JavaErrorMessages.message("module.no.package");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
       return info;
+    }
+
+    if (module != null) {
+      String packageName = statement.getPackageName();
+      if (packageName != null) {
+        PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(module, packageName);
+        if (origin != null) {
+          String message = JavaErrorMessages.message("module.conflicting.packages", packageName, origin.getName());
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
+        }
+      }
     }
 
     return null;
@@ -463,6 +475,18 @@ public class ModuleHighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new AddRequiredModuleFix(refModule, requiredName));
         return info;
       }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkClashingReads(@NotNull PsiJavaModule module) {
+    Trinity<String, PsiJavaModule, PsiJavaModule> conflict = JavaModuleGraphUtil.findConflict(module);
+    if (conflict != null) {
+      String message = JavaErrorMessages.message(
+        "module.conflicting.reads", module.getName(), conflict.first, conflict.second.getName(), conflict.third.getName());
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(module)).descriptionAndTooltip(message).create();
     }
 
     return null;
