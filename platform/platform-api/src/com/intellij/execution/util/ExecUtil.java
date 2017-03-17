@@ -146,10 +146,10 @@ public class ExecUtil {
 
     final GeneralCommandLine sudoCommandLine;
     if (SystemInfo.isWinVistaOrNewer) {
-      // Sudo.exe process with elevated permissions on UAC. Only non-interactive processes are supported
-      final File sudoExe = PathManager.findBinFile("sudo.exe");
-      assert sudoExe != null && sudoExe.exists(): "Can't find sudo.exe";
-      sudoCommandLine = new GeneralCommandLine(sudoExe.getPath());
+      // launcher.exe process with elevated permissions on UAC.
+      final File launcherExe = PathManager.findBinFile("launcher.exe");
+      assert launcherExe != null && launcherExe.exists(): "Can't find launcher.exe";
+      sudoCommandLine = new GeneralCommandLine(launcherExe.getPath());
       sudoCommandLine.setWorkDirectory(commandLine.getWorkDirectory());
       sudoCommandLine.addParameter(commandLine.getExePath());
       sudoCommandLine.addParameters(commandLine.getParametersList().getParameters());
