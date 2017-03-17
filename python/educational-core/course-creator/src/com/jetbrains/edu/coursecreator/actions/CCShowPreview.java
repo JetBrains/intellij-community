@@ -15,7 +15,6 @@
  */
 package com.jetbrains.edu.coursecreator.actions;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -142,11 +141,7 @@ public class CCShowPreview extends DumbAwareAction {
       return;
     }
     final EditorEx createdEditor = (EditorEx)factory.createEditor(document, project, userFile, true);
-    Disposer.register(project, new Disposable() {
-      public void dispose() {
-        factory.releaseEditor(createdEditor);
-      }
-    });
+    Disposer.register(project, () -> factory.releaseEditor(createdEditor));
     for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
       if (answerPlaceholder.getActiveSubtaskInfo().isNeedInsertText()) {
         answerPlaceholder.setLength(answerPlaceholder.getTaskText().length());

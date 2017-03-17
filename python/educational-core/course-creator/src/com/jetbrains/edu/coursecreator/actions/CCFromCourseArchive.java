@@ -68,6 +68,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
       reader = new InputStreamReader(new FileInputStream(courseMetaFile));
       Gson gson = new GsonBuilder()
         .registerTypeAdapter(Course.class, new StudySerializationUtils.Json.CourseTypeAdapter(courseMetaFile))
+        .registerTypeAdapter(Task.class, new StudySerializationUtils.Json.TaskDeserializer())
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .create();
       Course course = gson.fromJson(reader, Course.class);

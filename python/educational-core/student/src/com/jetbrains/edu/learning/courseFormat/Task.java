@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -44,7 +43,6 @@ public class Task implements StudyItem {
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
-  @Expose @SerializedName("choice_parameters") private AdaptiveTaskParameters myAdaptiveTaskParameters;
   private int myActiveSubtaskIndex = 0;
   @SerializedName("last_subtask_index")
   @Expose private int myLastSubtaskIndex = 0;
@@ -53,12 +51,6 @@ public class Task implements StudyItem {
 
   public Task(@NotNull final String name) {
     this.name = name;
-  }
-  
-  public static Task createChoiceTask(@NotNull String name) {
-    final Task task = new Task(name);
-    task.setAdaptiveTaskParameters(new AdaptiveTaskParameters());
-    return task;
   }
 
   /**
@@ -304,82 +296,12 @@ public class Task implements StudyItem {
     return myLastSubtaskIndex > 0;
   }
 
-  @Transient
-  @NotNull
-  public List<String> getChoiceVariants() {
-    return myAdaptiveTaskParameters.getChoiceVariants();
-  }
-
-  @Transient
-  public void setChoiceVariants(List<String> choiceVariants) {
-    myAdaptiveTaskParameters.setChoiceVariants(choiceVariants);
-  }
-
-  @Transient
-  public boolean isMultipleChoice() {
-    return myAdaptiveTaskParameters.isMultipleChoice();
-  }
-
-  @Transient
-  public void setMultipleChoice(boolean multipleChoice) {
-    myAdaptiveTaskParameters.setMultipleChoice(multipleChoice);
-  }
-
-  @Transient
-  public List<Integer> getSelectedVariants() {
-    return myAdaptiveTaskParameters.getSelectedVariants();
-  }
-
-  @Transient
-  public void setSelectedVariants(List<Integer> selectedVariants) {
-    myAdaptiveTaskParameters.setSelectedVariants(selectedVariants);
-  }
-  
-  public boolean isChoiceTask() {
-    return myAdaptiveTaskParameters != null && !myAdaptiveTaskParameters.getChoiceVariants().isEmpty();
-  }
-  
-  public boolean isTheoryTask() {
-    return myAdaptiveTaskParameters != null && myAdaptiveTaskParameters.isTheoryTask();
-  }
-  
-  public void setTheoryTask(boolean isTheoryTask) {
-    if (myAdaptiveTaskParameters == null) {
-      myAdaptiveTaskParameters = new AdaptiveTaskParameters();
-    }
-    myAdaptiveTaskParameters.setTheoryTask(isTheoryTask);
-  }
-
-  // used for serialization
-  @SuppressWarnings("unused")
-  public AdaptiveTaskParameters getAdaptiveTaskParameters() {
-    return myAdaptiveTaskParameters;
-  }
-
-  // used for serialization
-  @SuppressWarnings("unused")
-  public void setAdaptiveTaskParameters(AdaptiveTaskParameters adaptiveTaskParameters) {
-    myAdaptiveTaskParameters = adaptiveTaskParameters;
-  }
-
   public void copyParametersOf(@NotNull Task task) {
-    setName(task.getName());
-    setStepId(task.getStepId());
-    setText(task.getText());
-    getTestsText().clear();
-    setStatus(StudyStatus.Unchecked);
-    setTheoryTask(task.isTheoryTask());
-    if (task.isChoiceTask() || task.isTheoryTask()) {
-      setChoiceVariants(task.getChoiceVariants());
-      setMultipleChoice(task.isMultipleChoice());
-      setTheoryTask(task.isTheoryTask());
-    }
-    else {
-      setAdaptiveTaskParameters(null);
-    }
-    final Map<String, String> testsText = task.getTestsText();
-    for (String testName : testsText.keySet()) {
-      addTestsTexts(testName, testsText.get(testName));
-    }
+    myLesson = task.getLesson();
+    myIndex = task.getIndex();
+  }
+
+  public String getTaskType() {
+    return "pycharm";
   }
 }

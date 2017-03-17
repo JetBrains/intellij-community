@@ -2,15 +2,22 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdaptiveTaskParameters {
+/**
+ * Implementation of task which contains task files, tests, input file for tests
+ */
+public class ChoiceTask extends Task {
+
+  @SuppressWarnings("unused") //used for deserialization
+  public ChoiceTask() {}
+
   @Expose @SerializedName("choice_variants") private List<String> myChoiceVariants = new ArrayList<>();
   @Expose @SerializedName("is_multichoice") private boolean myIsMultipleChoice;
   @SerializedName("selected_variants") private List<Integer> mySelectedVariants = new ArrayList<>();
-  @Expose @SerializedName("is_theory_task") private boolean isTheoryTask = false;
 
   public List<Integer> getSelectedVariants() {
     return mySelectedVariants;
@@ -36,11 +43,12 @@ public class AdaptiveTaskParameters {
     myChoiceVariants = choiceVariants;
   }
 
-  public boolean isTheoryTask() {
-    return isTheoryTask;
+  public ChoiceTask(@NotNull final String name) {
+    super(name);
   }
 
-  public void setTheoryTask(boolean theoryTask) {
-    isTheoryTask = theoryTask;
+  @Override
+  public String getTaskType() {
+    return "choice";
   }
 }
