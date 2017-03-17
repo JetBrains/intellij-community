@@ -44,6 +44,7 @@ import java.util.Set;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.asLiteLinearGraph;
 
 public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
+  private static final int VISIBLE_RANGE = 1000;
 
   @NotNull private final LinearGraph myLinearGraph;
   @NotNull private final GraphLayout myGraphLayout;
@@ -68,10 +69,10 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
                                                            @NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo,
                                                            int permanentGraphSize,
                                                            @NotNull Set<Integer> branchNodeIds) {
-    int firstVisibleRow = 1000; // todo get first visible row from table somehow
-    int delta = 1000;
-    int start = Math.max(0, firstVisibleRow - delta);
-    int end = Math.min(linearGraph.nodesCount(), start + 2 * delta); // no more than 2*1000 commits;
+    int firstVisibleRow = VISIBLE_RANGE; // todo get first visible row from table somehow
+
+    int start = Math.max(0, firstVisibleRow - VISIBLE_RANGE);
+    int end = Math.min(linearGraph.nodesCount(), start + 2 * VISIBLE_RANGE); // no more than 2*1000 commits;
 
     List<GraphCommit<CommitId>> graphCommits = ContainerUtil.newArrayListWithCapacity(end - start);
     List<CommitId> commitsIdMap = ContainerUtil.newArrayListWithCapacity(end - start);
