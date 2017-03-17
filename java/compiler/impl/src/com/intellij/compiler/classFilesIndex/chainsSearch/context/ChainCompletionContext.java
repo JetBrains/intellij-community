@@ -17,7 +17,7 @@ package com.intellij.compiler.classFilesIndex.chainsSearch.context;
 
 import com.intellij.compiler.classFilesIndex.chainsSearch.ChainCompletionStringUtil;
 import com.intellij.compiler.classFilesIndex.chainsSearch.MethodChainsSearchUtil;
-import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
+import com.intellij.compiler.classFilesIndex.chainsSearch.MethodIncompleteSignature;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -27,6 +27,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,9 @@ public class ChainCompletionContext {
   @NotNull
   private final PsiManager myPsiManager;
   @NotNull
-  private final MethodIncompleteSignatureResolver myNotDeprecatedMethodsResolver;
+  private final FactoryMap<MethodIncompleteSignature, PsiClass> myQualifierClassResolver;
+  @NotNull
+  private final FactoryMap<MethodIncompleteSignature, PsiMethod[]> myResolver;
 
   public ChainCompletionContext(@NotNull TargetType target,
                                 @NotNull List<PsiNamedElement> contextElements,
@@ -65,7 +68,20 @@ public class ChainCompletionContext {
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
     myPsiManager = PsiManager.getInstance(myProject);
-    myNotDeprecatedMethodsResolver = new MethodIncompleteSignatureResolver(JavaPsiFacade.getInstance(myProject), myResolveScope);
+    myQualifierClassResolver = new FactoryMap<MethodIncompleteSignature, PsiClass>() {
+      @Nullable
+      @Override
+      protected PsiClass create(MethodIncompleteSignature sign) {
+        return sign.resolveQualifier(myProject, myResolveScope);
+      }
+    };
+    myResolver = new FactoryMap<MethodIncompleteSignature, PsiMethod[]>() {
+      @NotNull
+      @Override
+      protected PsiMethod[] create(MethodIncompleteSignature sign) {
+        return sign.resolve(myProject, myResolveScope);
+      }
+    };
   }
 
   @NotNull
@@ -78,9 +94,9 @@ public class ChainCompletionContext {
     return myContextElements;
   }
 
-  public boolean contains(@Nullable final PsiType type) {
+  public boolean contains(@Nullable PsiType type) {
     if (type == null) return false;
-    final Set<PsiType> types = getContextTypes();
+    Set<PsiType> types = getContextTypes();
     if (types.contains(type)) return true;
     for (PsiType contextType : types) {
       if (type.isAssignableFrom(contextType)) {
@@ -110,11 +126,6 @@ public class ChainCompletionContext {
     return myPsiManager;
   }
 
-  @NotNull
-  public PsiMethod[] resolveNotDeprecated(final MethodIncompleteSignature methodIncompleteSignature) {
-    return myNotDeprecatedMethodsResolver.get(methodIncompleteSignature);
-  }
-
   @Nullable
   public PsiElement findRelevantStringInContext(String stringParameterName) {
     String sanitizedTarget = MethodChainsSearchUtil.sanitizedToLowerCase(stringParameterName);
@@ -131,23 +142,33 @@ public class ChainCompletionContext {
 
   public Collection<PsiElement> getQualifiers(@NotNull PsiType targetType) {
     return myContextElements.stream().filter(e -> {
-      final PsiType elementType = getType(e);
+      PsiType elementType = getType(e);
       return elementType != null && targetType.isAssignableFrom(elementType);
     }).collect(Collectors.toList());
   }
 
+  @NotNull
+  public PsiClass resolveQualifierClass(MethodIncompleteSignature sign) {
+    return myQualifierClassResolver.get(sign);
+  }
+
+  @NotNull
+  public PsiMethod[] resolve(MethodIncompleteSignature sign) {
+    return myResolver.get(sign);
+  }
+
   @Nullable
-  public static ChainCompletionContext createContext(final @Nullable PsiType variableType,
-                                                     final @Nullable String variableName,
-                                                     final @Nullable PsiElement containingElement) {
+  public static ChainCompletionContext createContext(@Nullable PsiType variableType,
+                                                     @Nullable String variableName,
+                                                     @Nullable PsiElement containingElement) {
     if (containingElement == null) return null;
-    final TargetType target = TargetType.create(variableType);
+    TargetType target = TargetType.create(variableType);
     if (target == null) return null;
 
-    final ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement);
+    ContextProcessor processor = new ContextProcessor(null, containingElement.getProject(), containingElement);
     PsiScopesUtil.treeWalkUp(processor, containingElement, containingElement.getContainingFile());
-    final List<PsiNamedElement> contextElements = processor.getContextElements();
-    final List<PsiNamedElement> contextStrings = processor.getContextStrings();
+    List<PsiNamedElement> contextElements = processor.getContextElements();
+    List<PsiNamedElement> contextStrings = processor.getContextStrings();
 
     return new ChainCompletionContext(target, contextElements, contextStrings, containingElement);
   }
@@ -179,7 +200,7 @@ public class ChainCompletionContext {
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if ((!(element instanceof PsiMethod) || PropertyUtil.isSimplePropertyAccessor((PsiMethod)element)) &&
           (!(element instanceof PsiMember) || myResolveHelper.isAccessible((PsiMember)element, myPlace, null))) {
-        final PsiType type = getType(element);
+        PsiType type = getType(element);
         if (type == null) {
           return false;
         }
@@ -197,6 +218,7 @@ public class ChainCompletionContext {
     @Override
     public <T> T getHint(@NotNull Key<T> hintKey) {
       if (hintKey == ElementClassHint.KEY) {
+        //noinspection unchecked
         return (T)this;
       }
       return super.getHint(hintKey);

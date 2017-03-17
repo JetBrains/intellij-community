@@ -20,7 +20,7 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.classFilesIndex.chainsSearch.OccurrencesAware;
-import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
+import com.intellij.compiler.classFilesIndex.chainsSearch.MethodIncompleteSignature;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;

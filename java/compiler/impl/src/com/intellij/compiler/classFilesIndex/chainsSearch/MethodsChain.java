@@ -16,52 +16,36 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.util.containers.ContainerUtil.findAll;
 import static com.intellij.util.containers.ContainerUtil.reverse;
 
-/**
- * @author Dmitry Batkovich
- */
 public class MethodsChain {
   private final List<PsiMethod[]> myRevertedPath;
   private final int myWeight;
-  //
-  // chain qualifier class could be different with method.getContainingClass()
-  private final String myQualifierClassName;
+  private final PsiClass myQualifierClass;
 
-  private final Set<String> myExcludedQNames;
-
-  public MethodsChain(final PsiMethod[] methods, final int weight, final String qualifierClassName) {
-    this(Collections.singletonList(methods), weight, qualifierClassName, chooseParametersQNames(methods));
+  public MethodsChain(PsiClass qualifierClass, PsiMethod[] methods, int weight) {
+    this(qualifierClass, weight, Collections.singletonList(methods));
   }
 
-  private MethodsChain(final List<PsiMethod[]> revertedPath,
-                       final int weight,
-                       final String qualifierClassName,
-                       final Set<String> excludedQNames) {
+  private MethodsChain(PsiClass qualifierClass, int weight, List<PsiMethod[]> revertedPath) {
     myRevertedPath = revertedPath;
     myWeight = weight;
-    myQualifierClassName = qualifierClassName;
-    myExcludedQNames = excludedQNames;
+    myQualifierClass = qualifierClass;
   }
 
   public int size() {
     return myRevertedPath.size();
   }
 
-  public Set<String> getExcludedQNames() {
-    return myExcludedQNames;
-  }
-
-  public String getQualifierClassName() {
-    return myQualifierClassName;
+  public PsiClass getQualifierClass() {
+    return myQualifierClass;
   }
 
   public Iterator<PsiMethod[]> iterator() {
@@ -82,14 +66,11 @@ public class MethodsChain {
   }
 
   @SuppressWarnings("unchecked")
-  public MethodsChain addEdge(final PsiMethod[] psiMethods, final String newQualifierClassName, final int newWeight) {
-    final List<PsiMethod[]> newRevertedPath = new ArrayList<>(myRevertedPath.size() + 1);
+  public MethodsChain addEdge(PsiMethod[] psiMethods, PsiClass newQualifierClassName, int newWeight) {
+    List<PsiMethod[]> newRevertedPath = new ArrayList<>(myRevertedPath.size() + 1);
     newRevertedPath.addAll(myRevertedPath);
     newRevertedPath.add(psiMethods);
-    return new MethodsChain(newRevertedPath,
-                            newWeight,
-                            newQualifierClassName,
-                            joinSets(myExcludedQNames, chooseParametersQNames(psiMethods)));
+    return new MethodsChain(newQualifierClassName, newWeight, newRevertedPath);
   }
 
 
@@ -99,19 +80,19 @@ public class MethodsChain {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public static CompareResult compare(final MethodsChain left, final MethodsChain right, final PsiManager psiManager) {
+  public static CompareResult compare(MethodsChain left, MethodsChain right, PsiManager psiManager) {
     if (left.size() == 0) {
       return CompareResult.RIGHT_CONTAINS_LEFT;
     }
     if (right.size() == 0) {
       return CompareResult.LEFT_CONTAINS_RIGHT;
     }
-    final Iterator<PsiMethod[]> leftIterator = left.myRevertedPath.iterator();
-    final Iterator<PsiMethod[]> rightIterator = right.myRevertedPath.iterator();
+    Iterator<PsiMethod[]> leftIterator = left.myRevertedPath.iterator();
+    Iterator<PsiMethod[]> rightIterator = right.myRevertedPath.iterator();
 
     while (leftIterator.hasNext() && rightIterator.hasNext()) {
-      final PsiMethod thisNext = leftIterator.next()[0];
-      final PsiMethod thatNext = rightIterator.next()[0];
+      PsiMethod thisNext = leftIterator.next()[0];
+      PsiMethod thatNext = rightIterator.next()[0];
       if (thisNext == null || thatNext == null) {
         throw new NullPointerException();
       }
@@ -139,12 +120,12 @@ public class MethodsChain {
     NOT_EQUAL
   }
 
-  private static boolean hasBaseMethod(final PsiMethod[] left, final PsiMethod[] right, final PsiManager psiManager) {
-    for (final PsiMethod rightMethod : right) {
-      final PsiMethod[] rightSupers = rightMethod.findDeepestSuperMethods();
+  private static boolean hasBaseMethod(PsiMethod[] left, PsiMethod[] right, PsiManager psiManager) {
+    for (PsiMethod rightMethod : right) {
+      PsiMethod[] rightSupers = rightMethod.findDeepestSuperMethods();
       if (rightSupers.length != 0) {
-        for (final PsiMethod leftMethod : left) {
-          final PsiMethod[] leftSupers = leftMethod.findDeepestSuperMethods();
+        for (PsiMethod leftMethod : left) {
+          PsiMethod[] leftSupers = leftMethod.findDeepestSuperMethods();
           if (leftSupers.length != 0) {
             if (psiManager.areElementsEquivalent(leftSupers[0], rightSupers[0])) {
               return true;
@@ -156,22 +137,13 @@ public class MethodsChain {
     return false;
   }
 
-  private static Set<String> joinSets(final Set<String>... sets) {
-    final Set<String> result = new HashSet<>();
-    for (final Set<String> set : sets) {
-      for (final String s : set) {
+  private static Set<String> joinSets(Set<String>... sets) {
+    Set<String> result = new HashSet<>();
+    for (Set<String> set : sets) {
+      for (String s : set) {
         result.add(s);
       }
     }
     return result;
   }
-
-  private static Set<String> chooseParametersQNames(final PsiMethod[] methods) {
-    final Set<String> qNames = new HashSet<>();
-    for (final PsiParameter methodParameter : methods[0].getParameterList().getParameters()) {
-      qNames.add(methodParameter.getType().getCanonicalText());
-    }
-    return qNames;
-  }
-
 }

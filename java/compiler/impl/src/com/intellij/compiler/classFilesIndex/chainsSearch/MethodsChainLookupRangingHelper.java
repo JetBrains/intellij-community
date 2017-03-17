@@ -42,12 +42,12 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class MethodsChainLookupRangingHelper {
 
-  public static List<LookupElement> chainsToWeightableLookupElements(final List<MethodsChain> chains,
-                                                                     final ChainCompletionContext context) {
-    final CachedRelevantStaticMethodSearcher staticMethodSearcher = new CachedRelevantStaticMethodSearcher(context);
-    final List<LookupElement> lookupElements = new ArrayList<>(chains.size());
-    for (final MethodsChain chain : chains) {
-      final LookupElement lookupElement = chainToWeightableLookupElement(chain, context, staticMethodSearcher);
+  public static List<LookupElement> chainsToWeightableLookupElements(List<MethodsChain> chains,
+                                                                     ChainCompletionContext context) {
+    CachedRelevantStaticMethodSearcher staticMethodSearcher = new CachedRelevantStaticMethodSearcher(context);
+    List<LookupElement> lookupElements = new ArrayList<>(chains.size());
+    for (MethodsChain chain : chains) {
+      LookupElement lookupElement = chainToWeightableLookupElement(chain, context, staticMethodSearcher);
       if (lookupElement != null) {
         lookupElements.add(lookupElement);
       }
@@ -57,12 +57,12 @@ public class MethodsChainLookupRangingHelper {
 
   @SuppressWarnings("ConstantConditions")
   @Nullable
-  private static LookupElement chainToWeightableLookupElement(final MethodsChain chain,
-                                                              final ChainCompletionContext context,
-                                                              final CachedRelevantStaticMethodSearcher staticMethodSearcher) {
-    final int chainSize = chain.size();
+  private static LookupElement chainToWeightableLookupElement(MethodsChain chain,
+                                                              ChainCompletionContext context,
+                                                              CachedRelevantStaticMethodSearcher staticMethodSearcher) {
+    int chainSize = chain.size();
     assert chainSize != 0;
-    final int lastMethodWeight = chain.getChainWeight();
+    int lastMethodWeight = chain.getChainWeight();
     int unreachableParametersCount = 0;
     int notMatchedStringVars = 0;
     int matchedParametersInContext = 0;
@@ -70,10 +70,10 @@ public class MethodsChainLookupRangingHelper {
     Boolean hasCallingVariableInContext = null;
     LookupElement chainLookupElement = null;
     PsiClass newVariableClass = null;
-    final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(context.getProject());
+    NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(context.getProject());
 
-    for (final PsiMethod[] psiMethods : chain.getPath()) {
-      final PsiMethod method =
+    for (PsiMethod[] psiMethods : chain.getPath()) {
+      PsiMethod method =
         MethodChainsSearchUtil.getMethodWithMinNotPrimitiveParameters(psiMethods, Collections.singleton(context.getTarget().getClassQName()));
       if (method == null) {
         return null;
@@ -81,18 +81,16 @@ public class MethodsChainLookupRangingHelper {
       if (isFirstMethodStatic == null) {
         isFirstMethodStatic = psiMethods[0].hasModifierProperty(PsiModifier.STATIC);
       }
-      final PsiClass qualifierClass;
-      final boolean isHead = chainLookupElement == null;
+      PsiClass qualifierClass;
+      boolean isHead = chainLookupElement == null;
       if (isHead) {
-        final String qualifierClassName = chain.getQualifierClassName();
-        qualifierClass = JavaPsiFacade.getInstance(context.getProject()).
-          findClass(qualifierClassName, context.getResolveScope());
+        qualifierClass = chain.getQualifierClass();
       }
       else {
         qualifierClass = null;
       }
 
-      final MethodProcResult procResult = processMethod(method, qualifierClass, isHead, lastMethodWeight, context, staticMethodSearcher,
+      MethodProcResult procResult = processMethod(method, qualifierClass, isHead, lastMethodWeight, context, staticMethodSearcher,
                                                         nullableNotNullManager);
       if (procResult == null) {
         return null;
@@ -114,7 +112,7 @@ public class MethodsChainLookupRangingHelper {
       chainLookupElement = ChainCompletionNewVariableLookupElement.create(newVariableClass, chainLookupElement);
     }
 
-    final ChainRelevance relevance =
+    ChainRelevance relevance =
       new ChainRelevance(chainSize, lastMethodWeight, unreachableParametersCount, notMatchedStringVars, hasCallingVariableInContext,
                          isFirstMethodStatic, matchedParametersInContext);
 
@@ -123,26 +121,26 @@ public class MethodsChainLookupRangingHelper {
 
 
   @Nullable
-  private static MethodProcResult processMethod(@NotNull final PsiMethod method,
-                                                @Nullable final PsiClass qualifierClass,
-                                                final boolean isHeadMethod,
-                                                final int weight,
-                                                final ChainCompletionContext context,
-                                                final CachedRelevantStaticMethodSearcher staticMethodSearcher,
-                                                final NullableNotNullManager nullableNotNullManager) {
+  private static MethodProcResult processMethod(@NotNull PsiMethod method,
+                                                @Nullable PsiClass qualifierClass,
+                                                boolean isHeadMethod,
+                                                int weight,
+                                                ChainCompletionContext context,
+                                                CachedRelevantStaticMethodSearcher staticMethodSearcher,
+                                                NullableNotNullManager nullableNotNullManager) {
     int unreachableParametersCount = 0;
     int notMatchedStringVars = 0;
     int matchedParametersInContext = 0;
     boolean hasCallingVariableInContext = false;
     boolean introduceNewVariable = false;
-    final PsiParameterList parameterList = method.getParameterList();
-    final TIntObjectHashMap<SubLookupElement> parametersMap = new TIntObjectHashMap<>(parameterList.getParametersCount());
-    final PsiParameter[] parameters = parameterList.getParameters();
+    PsiParameterList parameterList = method.getParameterList();
+    TIntObjectHashMap<SubLookupElement> parametersMap = new TIntObjectHashMap<>(parameterList.getParametersCount());
+    PsiParameter[] parameters = parameterList.getParameters();
     for (int i = 0; i < parameters.length; i++) {
-      final PsiParameter parameter = parameters[i];
-      final PsiType type = parameter.getType();
+      PsiParameter parameter = parameters[i];
+      PsiType type = parameter.getType();
       if (type.equalsToText(JAVA_LANG_STRING)) {
-        final PsiElement relevantStringElement = context.findRelevantStringInContext(parameter.getName());
+        PsiElement relevantStringElement = context.findRelevantStringInContext(parameter.getName());
         if (relevantStringElement == null) {
           notMatchedStringVars++;
         }
@@ -151,14 +149,14 @@ public class MethodsChainLookupRangingHelper {
         }
       }
       else if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
-        final Collection<PsiElement> contextVariables = context.getQualifiers(type);
-        final PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
+        Collection<PsiElement> contextVariables = context.getQualifiers(type);
+        PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
         if (contextVariable != null) {
           if (contextVariables.size() == 1) parametersMap.put(i, createSubLookup(contextVariable));
           matchedParametersInContext++;
           continue;
         }
-        final ContextRelevantStaticMethod contextRelevantStaticMethod =
+        ContextRelevantStaticMethod contextRelevantStaticMethod =
           ContainerUtil.getFirstItem(staticMethodSearcher.getRelevantStaticMethods(type, weight), null);
         if (contextRelevantStaticMethod != null) {
           //
@@ -173,7 +171,7 @@ public class MethodsChainLookupRangingHelper {
         }
       }
     }
-    final LookupElement lookupElement;
+    LookupElement lookupElement;
     if (isHeadMethod) {
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         hasCallingVariableInContext = true;
@@ -183,9 +181,9 @@ public class MethodsChainLookupRangingHelper {
         return null;
       }
       else {
-        final Object e = ContainerUtil.getFirstItem(context.getQualifiers(qualifierClass), null);
+        Object e = ContainerUtil.getFirstItem(context.getQualifiers(qualifierClass), null);
         if (e != null) {
-          final LookupElement firstChainElement;
+          LookupElement firstChainElement;
           if (e instanceof PsiVariable) {
             firstChainElement = new VariableLookupItem((PsiVariable)e);
           }
@@ -235,12 +233,12 @@ public class MethodsChainLookupRangingHelper {
     private final boolean myIntroduceNewVariable;
     private final int myMatchedParametersInContext;
 
-    private MethodProcResult(final LookupElement methodLookup,
-                             final int unreachableParametersCount,
-                             final int notMatchedStringVars,
-                             final boolean hasCallingVariableInContext,
-                             final boolean introduceNewVariable,
-                             final int matchedParametersInContext) {
+    private MethodProcResult(LookupElement methodLookup,
+                             int unreachableParametersCount,
+                             int notMatchedStringVars,
+                             boolean hasCallingVariableInContext,
+                             boolean introduceNewVariable,
+                             int matchedParametersInContext) {
       myMethodLookup = methodLookup;
       myUnreachableParametersCount = unreachableParametersCount;
       myNotMatchedStringVars = notMatchedStringVars;

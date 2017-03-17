@@ -16,7 +16,6 @@
 package com.intellij.compiler.classFilesIndex.chainsSearch;
 
 import com.intellij.compiler.classFilesIndex.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.classFilesIndex.impl.MethodIncompleteSignature;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
@@ -29,21 +28,21 @@ public class SearchInitializer {
   private final LinkedHashMap<MethodIncompleteSignature, Pair<MethodsChain, Integer>> myChains;
   private final ChainCompletionContext myContext;
 
-  public SearchInitializer(final SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues,
-                           final PsiType target,
-                           final ChainCompletionContext context) {
+  public SearchInitializer(SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues,
+                           PsiType target,
+                           ChainCompletionContext context) {
     myContext = context;
-    final int size = indexValues.size();
+    int size = indexValues.size();
     myChains = new LinkedHashMap<>(size);
     add(indexValues, Collections.singleton(target));
   }
 
-  private void add(final Collection<OccurrencesAware<MethodIncompleteSignature>> indexValues,
-                   final Set<PsiType> excludedParamsTypesQNames) {
+  private void add(Collection<OccurrencesAware<MethodIncompleteSignature>> indexValues,
+                   Set<PsiType> excludedParamsTypesQNames) {
     int bestOccurrences = -1;
-    for (final OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
+    for (OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
       if (add(indexValue, excludedParamsTypesQNames)) {
-        final int occurrences = indexValue.getOccurrences();
+        int occurrences = indexValue.getOccurrences();
         if (bestOccurrences == -1) {
           bestOccurrences = occurrences;
         }
@@ -54,28 +53,28 @@ public class SearchInitializer {
     }
   }
 
-  private boolean add(final OccurrencesAware<MethodIncompleteSignature> indexValue, final Set<PsiType> excludedParamsTypesQNames) {
-    final MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
-    final PsiMethod[] psiMethods = myContext.resolveNotDeprecated(methodInvocation);
+  private boolean add(OccurrencesAware<MethodIncompleteSignature> indexValue, Set<PsiType> excludedParamsTypesQNames) {
+    MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
+    PsiMethod[] psiMethods = myContext.resolve(methodInvocation);
     if (psiMethods.length != 0 && !MethodChainsSearchUtil.doesMethodsContainParameters(psiMethods, excludedParamsTypesQNames)) {
-      final int occurrences = indexValue.getOccurrences();
-      final MethodsChain methodsChain = new MethodsChain(psiMethods, occurrences, indexValue.getUnderlying().getOwner());
+      int occurrences = indexValue.getOccurrences();
+      MethodsChain methodsChain = new MethodsChain(myContext.resolveQualifierClass(indexValue.getUnderlying()), psiMethods, occurrences);
       myChains.put(methodInvocation, Pair.create(methodsChain, occurrences));
       return true;
     }
     return false;
   }
 
-  public InitResult init(final Set<String> excludedEdgeNames) {
-    final int size = myChains.size();
-    final List<OccurrencesAware<MethodIncompleteSignature>> initedVertexes = new ArrayList<>(size);
-    final LinkedHashMap<MethodIncompleteSignature, MethodsChain> initedChains =
+  public InitResult init(Set<String> excludedEdgeNames) {
+    int size = myChains.size();
+    List<OccurrencesAware<MethodIncompleteSignature>> initedVertexes = new ArrayList<>(size);
+    LinkedHashMap<MethodIncompleteSignature, MethodsChain> initedChains =
       new LinkedHashMap<>(size);
-    for (final Map.Entry<MethodIncompleteSignature, Pair<MethodsChain, Integer>> entry : myChains.entrySet()) {
-      final MethodIncompleteSignature signature = entry.getKey();
+    for (Map.Entry<MethodIncompleteSignature, Pair<MethodsChain, Integer>> entry : myChains.entrySet()) {
+      MethodIncompleteSignature signature = entry.getKey();
       if (!excludedEdgeNames.contains(signature.getName())) {
         initedVertexes.add(new OccurrencesAware<>(entry.getKey(), entry.getValue().getSecond()));
-        final MethodsChain methodsChain = entry.getValue().getFirst();
+        MethodsChain methodsChain = entry.getValue().getFirst();
         initedChains.put(signature, methodsChain);
       }
     }
@@ -86,8 +85,8 @@ public class SearchInitializer {
     private final List<OccurrencesAware<MethodIncompleteSignature>> myVertexes;
     private final LinkedHashMap<MethodIncompleteSignature, MethodsChain> myChains;
 
-    private InitResult(final List<OccurrencesAware<MethodIncompleteSignature>> vertexes,
-                       final LinkedHashMap<MethodIncompleteSignature, MethodsChain> chains) {
+    private InitResult(List<OccurrencesAware<MethodIncompleteSignature>> vertexes,
+                       LinkedHashMap<MethodIncompleteSignature, MethodsChain> chains) {
       myVertexes = vertexes;
       myChains = chains;
     }
