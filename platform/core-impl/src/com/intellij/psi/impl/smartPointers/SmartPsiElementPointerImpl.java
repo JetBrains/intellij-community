@@ -144,9 +144,12 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
                                                                                   @NotNull E element,
                                                                                   PsiFile containingFile, boolean forInjected) {
     SmartPointerElementInfo elementInfo = doCreateElementInfo(project, element, containingFile, forInjected);
-    if (ApplicationManager.getApplication().isUnitTestMode() && !element.equals(elementInfo.restoreElement())) {
-      // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
-      LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      PsiElement restored = elementInfo.restoreElement();
+      if (!element.equals(restored)) {
+        // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
+        LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo + "; restored=" + restored + " in " + element.getProject());
+      }
     }
     return elementInfo;
   }
