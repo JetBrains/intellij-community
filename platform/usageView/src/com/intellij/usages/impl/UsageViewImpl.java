@@ -249,7 +249,10 @@ public class UsageViewImpl implements UsageView {
           toolWindowPanel.setContent(myCentralPanel);
 
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
-          collapseAll();
+          SwingUtilities.invokeLater(() -> {
+            if (isDisposed || myProject.isDisposed()) return;
+            collapseAll();
+          });
 
           myModelTracker.addListener(isPropertyChange-> {
             if (!isPropertyChange) {
@@ -945,7 +948,7 @@ public class UsageViewImpl implements UsageView {
   void expandRoot() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     fireEvents();
-    myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
+    TreeUtil.expand(myTree, 1);
   }
 
   @NotNull

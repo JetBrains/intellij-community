@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
-import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +74,6 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
       UsageViewPresentation presentation = new UsageViewPresentation();
       presentation.setCodeUsagesString(getCodeUsagesString());
       myCurrentUsageView = UsageViewManager.getInstance(myProject).createUsageView(UsageTarget.EMPTY_ARRAY, usages, presentation, null);
-      ((UsageViewImpl)myCurrentUsageView).expandAll();
       setToComponent(myCurrentUsageView.getComponent());
     }
     catch (ProcessCanceledException e) {
