@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -74,7 +75,11 @@ public class GetVersionAction extends AnAction implements DumbAware {
   }
 
   protected boolean isContentAvailable(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull AnActionEvent e) {
-    return !filePath.isDirectory();
+    VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
+    if (historySession == null) {
+      return false;
+    }
+    return historySession.isContentAvailable(revision) && !filePath.isDirectory();
   }
 
   @Override

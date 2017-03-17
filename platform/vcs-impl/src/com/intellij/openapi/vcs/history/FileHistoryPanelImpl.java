@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -446,7 +446,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     final AnAction diffGroup = ActionManager.getInstance().getAction(VCS_HISTORY_ACTIONS_GROUP);
     if (diffGroup != null) result.add(diffGroup);
     result.add(new MyCreatePatch());
-    result.add(new MyGetVersionAction());
+    result.add(new GetVersionAction());
     result.add(new AnnotateRevisionAction());
     AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshUiAndScheduleDataRefresh(true));
     if (additionalActions != null) {
@@ -1178,17 +1178,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     private boolean isDiffEnabled() {
       List<TreeNodeOnVcsRevision> sel = getSelection();
       return myHistorySession.isContentAvailable(sel.get(0)) && myHistorySession.isContentAvailable(sel.get(sel.size() - 1));
-    }
-  }
-
-  private static class MyGetVersionAction extends GetVersionAction {
-    @Override
-    protected boolean isContentAvailable(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull AnActionEvent e) {
-      VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
-      if (historySession == null) {
-        return false;
-      }
-      return historySession.isContentAvailable(revision) && !filePath.isDirectory();
     }
   }
 
