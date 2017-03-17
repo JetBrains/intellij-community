@@ -242,18 +242,25 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           });
       }
       else {
-        boolean hasMoreSubtasks = myTask instanceof TaskWithSubtasks && myTask.getActiveSubtaskIndex() != myTask.getLastSubtaskIndex();
-        int visibleSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
-        ApplicationManager.getApplication().invokeLater(() -> {
-          int subtaskSize = myTask.getLastSubtaskIndex() + 1;
-          String resultMessage = !hasMoreSubtasks ? message : "Subtask " + visibleSubtaskIndex + "/" + subtaskSize + " solved";
-          StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
-          if (hasMoreSubtasks) {
-            int nextSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
-            StudySubtaskUtils.switchStep(myProject, (TaskWithSubtasks)myTask, nextSubtaskIndex);
-            rememberAnswers(nextSubtaskIndex);
-          }
-        });
+        if (myTask instanceof TaskWithSubtasks) {
+          boolean hasMoreSubtasks = ((TaskWithSubtasks)myTask).activeSubtaskIsLast();
+          int visibleSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            int subtaskSize = ((TaskWithSubtasks)myTask).getLastSubtaskIndex() + 1;
+            String resultMessage = !hasMoreSubtasks ? message : "Subtask " + visibleSubtaskIndex + "/" + subtaskSize + " solved";
+            StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
+            if (hasMoreSubtasks) {
+              int nextSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+              StudySubtaskUtils.switchStep(myProject, (TaskWithSubtasks)myTask, nextSubtaskIndex);
+              rememberAnswers(nextSubtaskIndex);
+            }
+          });
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(
+            () -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
+        }
       }
     }
   }

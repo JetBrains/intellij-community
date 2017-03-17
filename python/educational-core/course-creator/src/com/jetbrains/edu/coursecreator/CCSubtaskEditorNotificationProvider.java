@@ -66,16 +66,17 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
       return null;
     }
     Task task = StudyUtils.getTaskForFile(myProject, file);
-    if (task == null || !(task instanceof TaskWithSubtasks)) {
-      return null;
+    if (task instanceof TaskWithSubtasks) {
+      EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
+      String header = (isTestFile ? "test" : "task") + " file";
+      int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
+      int subtaskSize = ((TaskWithSubtasks)task).getLastSubtaskIndex() + 1;
+      panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
+      panel
+        .createActionLabel(SWITCH_SUBTASK, () -> createPopup((TaskWithSubtasks)task, myProject).show(RelativePoint.getSouthEastOf(panel)));
+      return panel;
     }
-    EditorNotificationPanel panel = new EditorNotificationPanel(EditorColors.GUTTER_BACKGROUND);
-    String header = (isTestFile ? "test" : "task") + " file";
-    int activeSubtaskIndex = task.getActiveSubtaskIndex() + 1;
-    int subtaskSize = task.getLastSubtaskIndex() + 1;
-    panel.setText("This is a " + header + " for " + EduNames.SUBTASK + " " + activeSubtaskIndex + "/" + subtaskSize);
-    panel.createActionLabel(SWITCH_SUBTASK, () -> createPopup((TaskWithSubtasks)task, myProject).show(RelativePoint.getSouthEastOf(panel)));
-    return panel;
+    return null;
   }
 
   @NotNull

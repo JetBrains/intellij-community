@@ -306,12 +306,11 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
     if (lessons.size() == 1 && lessons.get(0).getTaskList().size() == 1) {
       final Lesson lesson = lessons.get(0);
       final Task task = lesson.getTaskList().get(0);
-      if (!(task instanceof TaskWithSubtasks)) {
-        return null;
+      if (task instanceof TaskWithSubtasks) {
+        int taskNum = ((TaskWithSubtasks)task).getLastSubtaskIndex() + 1;
+        boolean isLastSubtaskSolved = task.getActiveSubtaskIndex() == ((TaskWithSubtasks)task).getLastSubtaskIndex() && task.getStatus() == StudyStatus.Solved;
+        return Pair.create(isLastSubtaskSolved ? taskNum : task.getActiveSubtaskIndex(), taskNum);
       }
-      int taskNum = task.getLastSubtaskIndex() + 1;
-      boolean isLastSubtaskSolved = task.getActiveSubtaskIndex() == task.getLastSubtaskIndex() && task.getStatus() == StudyStatus.Solved;
-      return Pair.create(isLastSubtaskSolved ? taskNum : task.getActiveSubtaskIndex(), taskNum);
     }
     return null;
   }

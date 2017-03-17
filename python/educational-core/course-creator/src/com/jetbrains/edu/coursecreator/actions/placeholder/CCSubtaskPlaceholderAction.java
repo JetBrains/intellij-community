@@ -65,12 +65,11 @@ public abstract class CCSubtaskPlaceholderAction extends CCAnswerPlaceholderActi
       return;
     }
     TaskFile taskFile = state.getTaskFile();
-    if (!(taskFile.getTask() instanceof TaskWithSubtasks)) {
-      return;
-    }
-    int offset = state.getEditor().getCaretModel().getOffset();
-    if (isAvailable(taskFile, offset)) {
-      presentation.setEnabledAndVisible(true);
+    if (taskFile.getTask() instanceof TaskWithSubtasks) {
+      int offset = state.getEditor().getCaretModel().getOffset();
+      if (isAvailable(taskFile, offset)) {
+        presentation.setEnabledAndVisible(true);
+      }
     }
   }
 

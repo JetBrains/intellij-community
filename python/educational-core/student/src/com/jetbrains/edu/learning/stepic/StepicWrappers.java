@@ -61,7 +61,7 @@ public class StepicWrappers {
 
     public static StepOptions fromTask(final Project project, @NotNull final Task task) {
       final StepOptions source = new StepOptions();
-      source.lastSubtaskIndex = task.getLastSubtaskIndex();
+      source.lastSubtaskIndex = task instanceof TaskWithSubtasks ? ((TaskWithSubtasks)task).getLastSubtaskIndex() : 0;
       setTests(task, source, project);
       setTaskTexts(task, source, project);
       source.files = new ArrayList<>();
