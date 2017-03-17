@@ -69,13 +69,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                            @NotNull final List<String> taskNames,
                            @NotNull String projectPath,
                            @Nullable GradleExecutionSettings settings,
-                           @Nullable final String debuggerSetup,
+                           @Nullable final String jvmAgentSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
     // TODO add support for external process mode
     if (ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
       for (GradleTaskManagerExtension gradleTaskManagerExtension : GradleTaskManagerExtension.EP_NAME.getExtensions()) {
-        if (gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, debuggerSetup, listener)) {
+        if (gradleTaskManagerExtension.executeTasks(id, taskNames, projectPath, settings, jvmAgentSetup, listener)) {
           return;
         }
       }
@@ -90,7 +90,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
            resolverExtension != null;
            resolverExtension = resolverExtension.getNext()) {
         final String resolverClassName = resolverExtension.getClass().getName();
-        resolverExtension.enhanceTaskProcessing(taskNames, debuggerSetup, script -> {
+        resolverExtension.enhanceTaskProcessing(taskNames, jvmAgentSetup, script -> {
           if (StringUtil.isNotEmpty(script)) {
             ContainerUtil.addAllNotNull(
               initScripts,

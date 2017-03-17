@@ -38,7 +38,7 @@ import java.util.List;
 public class ExternalSystemTaskExecutionSettings implements Cloneable {
 
   @NotNull @NonNls public static final String TAG_NAME = "ExternalSystemSettings";
-  @NotNull @NonNls public static final Key<ParametersList> DEBUGGER_SETUP_KEY = Key.create("debuggerSetup");
+  @NotNull @NonNls public static final Key<ParametersList> JVM_AGENT_SETUP_KEY = Key.create("jvmAgentSetup");
 
   private List<String> myTaskNames = ContainerUtilRt.newArrayList();
   private List<String> myTaskDescriptions = ContainerUtilRt.newArrayList();

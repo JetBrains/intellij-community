@@ -169,13 +169,19 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       if (tasks.isEmpty()) {
         throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
       }
-      String debuggerSetup = null;
+      String jvmAgentSetup = null;
       if (myDebugPort > 0) {
-        debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
+        jvmAgentSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
       } else {
-        ParametersList parametersList = myEnv.getUserData(ExternalSystemTaskExecutionSettings.DEBUGGER_SETUP_KEY);
+        ParametersList parametersList = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
         if (parametersList != null) {
-          debuggerSetup = parametersList.getParametersString();
+          for (String parameter : parametersList.getList()) {
+            if (parameter.startsWith("-agentlib:")) continue;
+            if (parameter.startsWith("-agentpath:")) continue;
+            if (parameter.startsWith("-javaagent:")) continue;
+            throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
+          }
+          jvmAgentSetup = parametersList.getParametersString();
         }
       }
 
@@ -187,7 +193,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                                                                                    tasks,
                                                                                    mySettings.getVmOptions(),
                                                                                    mySettings.getScriptParameters(),
-                                                                                   debuggerSetup);
+                                                                                   jvmAgentSetup);
       copyUserDataTo(task);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);

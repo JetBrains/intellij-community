@@ -47,7 +47,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
                                @Nullable ExternalSystemExecutionSettings settings,
                                @NotNull List<String> vmOptions,
                                @NotNull List<String> scriptParameters,
-                               @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException
+                               @Nullable String jvmAgentSetup) throws RemoteException, ExternalSystemException
       {
       }
 
@@ -56,7 +56,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
                                @NotNull List<String> taskNames,
                                @NotNull String projectPath,
                                @Nullable ExternalSystemExecutionSettings settings,
-                               @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException {
+                               @Nullable String jvmAgentSetup) throws RemoteException, ExternalSystemException {
       }
 
       @Override
@@ -94,15 +94,15 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
                             @Nullable S settings,
                             @NotNull List<String> vmOptions,
                             @NotNull List<String> scriptParameters,
-                            @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException {
+                            @Nullable String jvmAgentSetup) throws RemoteException, ExternalSystemException {
   }
 
   default void executeTasks(@NotNull ExternalSystemTaskId id,
                             @NotNull List<String> taskNames,
                             @NotNull String projectPath,
                             @Nullable S settings,
-                            @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException {
-    executeTasks(id, taskNames, projectPath, settings, Collections.emptyList(), Collections.emptyList(), debuggerSetup);
+                            @Nullable String jvmAgentSetup) throws RemoteException, ExternalSystemException {
+    executeTasks(id, taskNames, projectPath, settings, Collections.emptyList(), Collections.emptyList(), jvmAgentSetup);
   }
 
   boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException;

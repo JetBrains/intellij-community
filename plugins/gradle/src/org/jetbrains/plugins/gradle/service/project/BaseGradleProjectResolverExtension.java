@@ -665,15 +665,15 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
   @Override
   public void enhanceTaskProcessing(@NotNull List<String> taskNames,
-                                    @Nullable String debuggerSetup,
+                                    @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
-    if (!StringUtil.isEmpty(debuggerSetup)) {
+    if (!StringUtil.isEmpty(jvmAgentSetup)) {
       final String names = "[\"" + StringUtil.join(taskNames, "\", \"") + "\"]";
       final String[] lines = {
         "gradle.taskGraph.beforeTask { Task task ->",
         "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
-        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib') && !it?.startsWith('-Xrunjdwp')}",
-        "        jvmArgs << '" + debuggerSetup.trim().replace("\\", "\\\\") + '\'',
+        "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
+        "        jvmArgs << '" + jvmAgentSetup.trim().replace("\\", "\\\\") + '\'',
         "        task.jvmArgs jvmArgs",
         "    }" +
         "}",

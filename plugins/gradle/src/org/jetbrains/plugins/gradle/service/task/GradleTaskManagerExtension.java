@@ -44,7 +44,7 @@ public interface GradleTaskManagerExtension {
                                @Nullable final GradleExecutionSettings settings,
                                @NotNull final List<String> vmOptions,
                                @NotNull final List<String> scriptParameters,
-                               @Nullable final String debuggerSetup,
+                               @Nullable final String jvmAgentSetup,
                                @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
     return false;
   }
@@ -53,11 +53,11 @@ public interface GradleTaskManagerExtension {
                                @NotNull final List<String> taskNames,
                                @NotNull String projectPath,
                                @Nullable final GradleExecutionSettings settings,
-                               @Nullable final String debuggerSetup,
+                               @Nullable final String jvmAgentSetup,
                                @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
     List<String> vmOptions = settings != null ? new ArrayList<>(settings.getVmOptions()) : Collections.emptyList();
     List<String> arguments = settings != null ? settings.getArguments() : Collections.emptyList();
-    return executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, debuggerSetup, listener);
+    return executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmAgentSetup, listener);
   }
 
   boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)

@@ -43,10 +43,10 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
                            @NotNull final List<String> taskNames,
                            @NotNull final String projectPath,
                            @Nullable final S settings,
-                           @Nullable final String debuggerSetup) throws RemoteException, ExternalSystemException {
+                           @Nullable final String jvmAgentSetup) throws RemoteException, ExternalSystemException {
     execute(id, () -> {
       myDelegate.executeTasks(
-        id, taskNames, projectPath, settings, debuggerSetup, getNotificationListener());
+        id, taskNames, projectPath, settings, jvmAgentSetup, getNotificationListener());
       return null;
     });
   }

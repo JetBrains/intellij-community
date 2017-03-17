@@ -45,19 +45,19 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
   @Nullable private final String myVmOptions;
   @Nullable private String myArguments;
-  @Nullable private final String myDebuggerSetup;
+  @Nullable private final String myJvmAgentSetup;
 
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
                                        @Nullable String arguments,
-                                       @Nullable String debuggerSetup) throws IllegalArgumentException {
+                                       @Nullable String jvmAgentSetup) throws IllegalArgumentException {
     super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
     myTasksToExecute = tasksToExecute;
     myVmOptions = vmOptions;
     myArguments = arguments;
-    myDebuggerSetup = debuggerSetup;
+    myJvmAgentSetup = jvmAgentSetup;
   }
 
   @NotNull
@@ -124,7 +124,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     final List<String> arguments = parseCmdParameters(myArguments);
     settings.withVmOptions(vmOptions).withArguments(arguments);
 
-    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myDebuggerSetup);
+    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myJvmAgentSetup);
   }
 
   @Override

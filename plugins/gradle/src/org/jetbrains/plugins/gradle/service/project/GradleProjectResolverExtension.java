@@ -121,5 +121,5 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    */
   void preImportCheck();
 
-  void enhanceTaskProcessing(@NotNull List<String> taskNames, @Nullable String debuggerSetup, @NotNull Consumer<String> initScriptConsumer);
+  void enhanceTaskProcessing(@NotNull List<String> taskNames, @Nullable String jvmAgentSetup, @NotNull Consumer<String> initScriptConsumer);
 }
