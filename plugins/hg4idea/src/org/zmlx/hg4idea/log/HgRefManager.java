@@ -62,7 +62,7 @@ public class HgRefManager implements VcsLogRefManager {
     }
   };
 
-  private static final String DEFAULT = "default";
+  public static final String DEFAULT = "default";
 
   // @NotNull private final RepositoryManager<HgRepository> myRepositoryManager;
 

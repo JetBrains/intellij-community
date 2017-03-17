@@ -98,7 +98,7 @@ public class HgBranchPopupActions {
     Collections.sort(branchNamesList);
     for (String branch : branchNamesList) {
       if (!branch.equals(myRepository.getCurrentBranch())) { // don't show current branch in the list
-        popupGroup.add(new HgCommonBranchActions(myProject, Collections.singletonList(myRepository), branch));
+        popupGroup.add(new BranchActions(myProject, Collections.singletonList(myRepository), branch));
       }
     }
     return popupGroup;
@@ -269,13 +269,19 @@ public class HgBranchPopupActions {
     }
   }
 
+  static class BranchActions extends HgCommonBranchActions {
+    BranchActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+      super(project, repositories, branchName, HgBranchType.BRANCH);
+    }
+  }
+  
   /**
    * Actions available for  bookmarks.
    */
   static class BookmarkActions extends HgCommonBranchActions {
 
     BookmarkActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
-      super(project, repositories, branchName);
+      super(project, repositories, branchName, HgBranchType.BOOKMARK);
     }
 
     @NotNull
