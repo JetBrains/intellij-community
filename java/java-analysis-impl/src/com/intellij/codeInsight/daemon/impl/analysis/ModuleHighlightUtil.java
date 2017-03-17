@@ -282,6 +282,7 @@ public class ModuleHighlightUtil {
       String message = JavaErrorMessages.message("module.opens.in.weak.module");
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, factory().createModifierListFix((PsiModifierListOwner)parent, PsiModifier.OPEN, false, false));
+      QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(statement));
       return info;
     }
 
