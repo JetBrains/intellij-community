@@ -17,7 +17,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;

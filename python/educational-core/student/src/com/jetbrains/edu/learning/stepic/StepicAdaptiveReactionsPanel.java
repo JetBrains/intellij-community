@@ -76,7 +76,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
     final FileEditorManagerListener editorManagerListener = new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);
+        final com.jetbrains.edu.learning.courseFormat.tasks.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);
         final boolean isEnabled = task != null && task.getStatus() != StudyStatus.Solved;
         StepicAdaptiveReactionsPanel.this.setEnabledRecursive(isEnabled);
       }
@@ -91,7 +91,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
     public ReactionButtonPanel(@NotNull final String text,
                                @NotNull final String enabledTooltip,
                                int reaction) {
-      com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);
+      com.jetbrains.edu.learning.courseFormat.tasks.Task task = StudyUtils.getTaskFromSelectedEditor(myProject);
       final boolean isEnabled = task != null && task.getStatus() != StudyStatus.Solved;
 
       myLabel = new JLabel(text);
@@ -138,7 +138,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 1 && isEnabled()) {
-          final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getCurrentTask(myProject);
+          final com.jetbrains.edu.learning.courseFormat.tasks.Task task = StudyUtils.getCurrentTask(myProject);
           if (task != null && task.getStatus() != StudyStatus.Solved) {
             final ProgressIndicatorBase progress = new ProgressIndicatorBase();
             progress.setText("Loading Next Recommendation");
@@ -158,7 +158,7 @@ public class StepicAdaptiveReactionsPanel extends JPanel {
 
       @Override
       public void mouseEntered(MouseEvent e) {
-        final com.jetbrains.edu.learning.courseFormat.Task task = StudyUtils.getCurrentTask(myProject);
+        final com.jetbrains.edu.learning.courseFormat.tasks.Task task = StudyUtils.getCurrentTask(myProject);
         if (task != null && task.getStatus() != StudyStatus.Solved && myPanel.isEnabled()) {
           setBackground(JBColor.GRAY);
         }

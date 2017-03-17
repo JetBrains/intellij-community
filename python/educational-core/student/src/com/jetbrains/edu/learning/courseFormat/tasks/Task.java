@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.courseFormat;
+package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -11,6 +11,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;

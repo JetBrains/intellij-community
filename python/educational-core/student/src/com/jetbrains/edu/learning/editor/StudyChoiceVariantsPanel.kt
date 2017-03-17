@@ -5,7 +5,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.edu.learning.courseFormat.ChoiceTask
+import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask
 import javafx.application.Platform
 import javafx.beans.value.ObservableValue
 import javafx.embed.swing.JFXPanel

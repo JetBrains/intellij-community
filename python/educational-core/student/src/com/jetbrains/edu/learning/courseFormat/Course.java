@@ -8,6 +8,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jdom.Element;

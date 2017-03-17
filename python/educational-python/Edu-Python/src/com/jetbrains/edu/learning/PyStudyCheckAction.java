@@ -15,6 +15,8 @@ import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;

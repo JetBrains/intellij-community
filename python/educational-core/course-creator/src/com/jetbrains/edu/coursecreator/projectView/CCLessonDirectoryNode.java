@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.projectView.LessonDirectoryNode;
 import org.jetbrains.annotations.NotNull;
 

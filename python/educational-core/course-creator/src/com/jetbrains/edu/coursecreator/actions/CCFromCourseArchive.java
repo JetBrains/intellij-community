@@ -28,6 +28,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduDocumentListener;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;

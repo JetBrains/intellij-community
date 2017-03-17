@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyActionListener;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 
 public class CCStudyActionListener implements StudyActionListener {

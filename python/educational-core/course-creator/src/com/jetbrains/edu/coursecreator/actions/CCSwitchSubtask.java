@@ -10,7 +10,7 @@ import com.jetbrains.edu.coursecreator.CCSubtaskEditorNotificationProvider;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
 public class CCSwitchSubtask extends DumbAwareAction {

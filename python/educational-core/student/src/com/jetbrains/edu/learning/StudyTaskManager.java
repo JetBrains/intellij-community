@@ -12,6 +12,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import org.jdom.Element;

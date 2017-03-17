@@ -13,6 +13,7 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

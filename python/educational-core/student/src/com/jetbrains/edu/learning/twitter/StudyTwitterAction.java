@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.learning.StudyTwitterPluginConfigurator;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 
 /**

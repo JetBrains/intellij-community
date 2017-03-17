@@ -22,7 +22,7 @@ import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.intellij.EduCourseConfigurator;
 import com.jetbrains.edu.learning.intellij.generation.EduCourseModuleBuilder;

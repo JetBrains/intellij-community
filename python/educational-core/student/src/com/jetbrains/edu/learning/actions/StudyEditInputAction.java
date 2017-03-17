@@ -24,7 +24,7 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.UserTest;
 import com.jetbrains.edu.learning.editor.StudyEditor;

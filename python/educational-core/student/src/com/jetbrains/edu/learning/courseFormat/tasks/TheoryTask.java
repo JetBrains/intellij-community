@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning.courseFormat;
+package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import org.jetbrains.annotations.NotNull;
 
