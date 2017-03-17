@@ -67,33 +67,31 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
       return Promise.resolve(null);
     }
     int offset = AbstractValueHint.calculateOffset(editor, point);
-    Promise<ExpressionInfo> expressionInfoPromise = getExpressionInfo(evaluator, project, type, editor, offset);
-
-    return expressionInfoPromise.thenAsync(expressionInfo -> {
-      AsyncPromise<AbstractValueHint> resultPromise = new AsyncPromise<>();
-      UIUtil.invokeLaterIfNeeded(() -> {
-        int textLength = editor.getDocument().getTextLength();
-        if (expressionInfo == null) {
-          resultPromise.setResult(null);
-          return;
-        }
-        TextRange range = expressionInfo.getTextRange();
-        if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
-          LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
-          resultPromise.setResult(null);
-          return;
-        }
-        resultPromise.setResult(new XValueHint(project, editor, point, type, expressionInfo, evaluator, session));
+    return getExpressionInfo(evaluator, project, type, editor, offset)
+      .thenAsync(expressionInfo -> {
+        AsyncPromise<AbstractValueHint> resultPromise = new AsyncPromise<>();
+        UIUtil.invokeLaterIfNeeded(() -> {
+          int textLength = editor.getDocument().getTextLength();
+          if (expressionInfo == null) {
+            resultPromise.setResult(null);
+            return;
+          }
+          TextRange range = expressionInfo.getTextRange();
+          if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
+            LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
+            resultPromise.setResult(null);
+            return;
+          }
+          resultPromise.setResult(new XValueHint(project, editor, point, type, expressionInfo, evaluator, session));
+        });
+        return resultPromise;
       });
-      return resultPromise;
-    });
   }
 
 
   @NotNull
   private static Promise<ExpressionInfo> getExpressionInfo(final XDebuggerEvaluator evaluator, final Project project,
-                                                                     final ValueHintType type,
-                                                                     final Editor editor, final int offset) {
+                                                           final ValueHintType type, @NotNull Editor editor, final int offset) {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
