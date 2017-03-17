@@ -21,7 +21,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
@@ -37,7 +36,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.AnnotateRevisionActionBase;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -67,7 +65,6 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -450,7 +447,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if (diffGroup != null) result.add(diffGroup);
     result.add(new MyCreatePatch());
     result.add(new MyGetVersionAction());
-    result.add(new MyAnnotateAction());
+    result.add(new AnnotateRevisionAction());
     AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshUiAndScheduleDataRefresh(true));
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
@@ -1192,70 +1189,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         return false;
       }
       return historySession.isContentAvailable(revision) && !filePath.isDirectory();
-    }
-  }
-
-  private static class MyAnnotateAction extends AnnotateRevisionActionBase implements DumbAware {
-    public MyAnnotateAction() {
-      super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"), AllIcons.Actions.Annotate);
-      setShortcutSet(ActionManager.getInstance().getAction("Annotate").getShortcutSet());
-    }
-
-    @Nullable
-    @Override
-    protected Editor getEditor(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      if (project == null) return null;
-
-      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-      if (filePath == null) return null;
-      VirtualFile virtualFile = filePath.getVirtualFile();
-      if (virtualFile == null) return null;
-
-      Editor editor = e.getData(CommonDataKeys.EDITOR);
-      if (editor != null) {
-        VirtualFile editorFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-        if (Comparing.equal(editorFile, virtualFile)) return editor;
-      }
-
-      FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-      if (fileEditor instanceof TextEditor) {
-        return ((TextEditor)fileEditor).getEditor();
-      }
-      return null;
-    }
-
-    @Nullable
-    @Override
-    protected AbstractVcs getVcs(@NotNull AnActionEvent e) {
-      return VcsUtil.findVcs(e);
-    }
-
-    @Nullable
-    @Override
-    protected VirtualFile getFile(@NotNull AnActionEvent e) {
-      final Boolean nonLocal = e.getData(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION);
-      if (Boolean.TRUE.equals(nonLocal)) return null;
-
-      VirtualFile file = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);
-      if (file == null || file.isDirectory()) return null;
-
-      FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-      if (filePath == null || filePath.getFileType().isBinary()) return null;
-
-      return file;
-    }
-
-    @Nullable
-    @Override
-    protected VcsFileRevision getFileRevision(@NotNull AnActionEvent e) {
-      VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
-      if (historySession == null) return null;
-
-      VcsFileRevision revision = e.getData(VcsDataKeys.VCS_FILE_REVISION);
-      if (!historySession.isContentAvailable(revision)) return null;
-
-      return revision;
     }
   }
 
