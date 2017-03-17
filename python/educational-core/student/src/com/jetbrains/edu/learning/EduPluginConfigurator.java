@@ -3,6 +3,8 @@ package com.jetbrains.edu.learning;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -61,10 +63,10 @@ public interface EduPluginConfigurator {
    * @return parameter for CodeMirror script. Available languages: @see <@linktourl http://codemirror.net/mode/>
    */
   @NotNull
-  default String getDefaultHighlightingMode(){return "";}
+  default String getDefaultHighlightingMode() {return "";}
 
   @NotNull
-  default String getLanguageScriptUrl(){return "";}
+  default String getLanguageScriptUrl() {return "";}
 
   StudyCheckAction getCheckAction();
 
@@ -72,11 +74,15 @@ public interface EduPluginConfigurator {
   default DefaultActionGroup getTaskDescriptionActionGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(getCheckAction());
-    group.add(new StudyPreviousTaskAction());
-    group.add(new StudyNextTaskAction());
-    group.add(new StudyRefreshTaskFileAction());
-    group.add(new StudyShowHintAction());
-
+    String[] ids = new String[]{StudyPreviousTaskAction.ACTION_ID, StudyNextTaskAction.ACTION_ID, StudyRefreshTaskFileAction.ACTION_ID,
+      StudyShowHintAction.ACTION_ID};
+    for (String id : ids) {
+      AnAction action = ActionManager.getInstance().getAction(id);
+      if (action == null) {
+        continue;
+      }
+      group.add(action);
+    }
     group.add(new StudyRunAction());
     group.add(new StudyEditInputAction());
     return group;
