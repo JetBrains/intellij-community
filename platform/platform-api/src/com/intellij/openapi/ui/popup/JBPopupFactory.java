@@ -49,11 +49,11 @@ public abstract class JBPopupFactory {
     return ServiceManager.getService(JBPopupFactory.class);
   }
 
-  public abstract <T> ITypedChooserBuilder<T> createPopupChooserBuilder(List<T> list);
+  public abstract <T> IPopupChooserBuilder<T> createPopupChooserBuilder(List<T> list);
 
   @NotNull
-  public IPopupChooserBuilder createPopupChooserBuilder(@NotNull JList list) {
-    return new PopupChooserBuilder(list);
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull JList<T> list) {
+    return new PopupChooserBuilder<>(list);
   }
 
   @NotNull

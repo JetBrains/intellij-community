@@ -21,7 +21,7 @@ import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ITypedChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -107,7 +107,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
   private void chooseTargetClass(PsiClass[] classes, final Editor editor, final String superClassName) {
     PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
-    final ITypedChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
+    final IPopupChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(ContainerUtil.newArrayList(classes))
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setRenderer(renderer)

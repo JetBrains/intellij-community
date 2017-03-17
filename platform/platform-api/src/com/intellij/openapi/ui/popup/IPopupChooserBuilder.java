@@ -1,7 +1,23 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.ActiveComponent;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nls;
@@ -12,78 +28,101 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.Set;
 
-public interface IPopupChooserBuilder {
-  IPopupChooserBuilder setCancelOnClickOutside(boolean cancelOnClickOutside);
+
+public interface IPopupChooserBuilder<T> {
+
+  IPopupChooserBuilder<T> setRenderer(ListCellRenderer renderer);
+
+  @NotNull
+  IPopupChooserBuilder<T> setItemChoosenCallback(@NotNull Consumer<T> callback);
+
+  @NotNull
+  IPopupChooserBuilder<T> setItemsChoosenCallback(@NotNull Consumer<Set<T>> callback);
+
+  @NotNull
+  IPopupChooserBuilder<T> setItemChoosenCallback(@NotNull Runnable runnable);
+
+  IPopupChooserBuilder<T> setCancelOnClickOutside(boolean cancelOnClickOutside);
 
   JScrollPane getScrollPane();
 
   @NotNull
-  IPopupChooserBuilder setTitle(@NotNull @Nls String title);
+  IPopupChooserBuilder<T> setTitle(@NotNull @Nls String title);
 
   @NotNull
-  IPopupChooserBuilder addAdditionalChooseKeystroke(@Nullable KeyStroke keyStroke);
+  IPopupChooserBuilder<T> addAdditionalChooseKeystroke(@Nullable KeyStroke keyStroke);
 
   @NotNull
-  IPopupChooserBuilder setItemChoosenCallback(@NotNull Runnable runnable);
+  IPopupChooserBuilder<T> setSouthComponent(@NotNull JComponent cmp);
 
   @NotNull
-  IPopupChooserBuilder setSouthComponent(@NotNull JComponent cmp);
+  IPopupChooserBuilder<T> setCouldPin(@Nullable Processor<JBPopup> callback);
 
   @NotNull
-  IPopupChooserBuilder setCouldPin(@Nullable Processor<JBPopup> callback);
+  IPopupChooserBuilder<T> setEastComponent(@NotNull JComponent cmp);
 
-  @NotNull
-  IPopupChooserBuilder setEastComponent(@NotNull JComponent cmp);
+  IPopupChooserBuilder<T> setRequestFocus(boolean requestFocus);
 
-  IPopupChooserBuilder setRequestFocus(boolean requestFocus);
+  IPopupChooserBuilder<T> setResizable(boolean forceResizable);
 
-  IPopupChooserBuilder setResizable(boolean forceResizable);
+  IPopupChooserBuilder<T> setMovable(boolean forceMovable);
 
-  IPopupChooserBuilder setMovable(boolean forceMovable);
+  IPopupChooserBuilder<T> setDimensionServiceKey(@NonNls String key);
 
-  IPopupChooserBuilder setDimensionServiceKey(@NonNls String key);
+  IPopupChooserBuilder<T> setUseDimensionServiceForXYLocation(boolean use);
 
-  IPopupChooserBuilder setUseDimensionServiceForXYLocation(boolean use);
+  IPopupChooserBuilder<T> setCancelCallback(Computable<Boolean> callback);
 
-  IPopupChooserBuilder setCancelCallback(Computable<Boolean> callback);
+  IPopupChooserBuilder<T> setCommandButton(@NotNull ActiveComponent commandButton);
 
-  IPopupChooserBuilder setCommandButton(@NotNull ActiveComponent commandButton);
+  IPopupChooserBuilder<T> setAlpha(float alpha);
 
-  IPopupChooserBuilder setAlpha(float alpha);
+  IPopupChooserBuilder<T> setAutoselectOnMouseMove(boolean doAutoSelect);
 
-  IPopupChooserBuilder setAutoselectOnMouseMove(boolean doAutoSelect);
+  IPopupChooserBuilder<T> setFilteringEnabled(Function<Object, String> namer);
 
-  IPopupChooserBuilder setFilteringEnabled(Function<Object, String> namer);
-
-  IPopupChooserBuilder setModalContext(boolean modalContext);
+  IPopupChooserBuilder<T> setModalContext(boolean modalContext);
 
   @NotNull
   JBPopup createPopup();
 
-  IPopupChooserBuilder setMinSize(Dimension dimension);
+  IPopupChooserBuilder<T> setMinSize(Dimension dimension);
 
-  IPopupChooserBuilder registerKeyboardAction(KeyStroke keyStroke, ActionListener actionListener);
+  IPopupChooserBuilder<T> registerKeyboardAction(KeyStroke keyStroke, ActionListener actionListener);
 
-  IPopupChooserBuilder setAutoSelectIfEmpty(boolean autoselect);
+  IPopupChooserBuilder<T> setAutoSelectIfEmpty(boolean autoselect);
 
-  IPopupChooserBuilder setCancelKeyEnabled(boolean enabled);
+  IPopupChooserBuilder<T> setCancelKeyEnabled(boolean enabled);
 
-  IPopupChooserBuilder addListener(JBPopupListener listener);
+  IPopupChooserBuilder<T> addListener(JBPopupListener listener);
 
-  IPopupChooserBuilder setSettingButton(Component abutton);
+  IPopupChooserBuilder<T> setSettingButton(Component abutton);
 
-  IPopupChooserBuilder setMayBeParent(boolean mayBeParent);
+  IPopupChooserBuilder<T> setMayBeParent(boolean mayBeParent);
 
-  IPopupChooserBuilder setCloseOnEnter(boolean closeOnEnter);
-
-  @NotNull
-  IPopupChooserBuilder setFocusOwners(@NotNull Component[] focusOwners);
+  IPopupChooserBuilder<T> setCloseOnEnter(boolean closeOnEnter);
 
   @NotNull
-  IPopupChooserBuilder setAdText(String ad);
+  IPopupChooserBuilder<T> setFocusOwners(@NotNull Component[] focusOwners);
 
-  IPopupChooserBuilder setAdText(String ad, int alignment);
+  @NotNull
+  IPopupChooserBuilder<T> setAdText(String ad);
 
-  IPopupChooserBuilder setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
+  IPopupChooserBuilder<T> setAdText(String ad, int alignment);
+
+  IPopupChooserBuilder<T> setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation);
+
+  IPopupChooserBuilder<T> setSelectionMode(int selection);
+
+  IPopupChooserBuilder<T> setSelectedValue(T preselection, boolean shouldScroll);
+
+  IPopupChooserBuilder<T> setAccessibleName(String title);
+
+  IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<T> c);
+
+  IPopupChooserBuilder<T> withHintUpdateSupply();
+
+  IPopupChooserBuilder<T> setFont(Font f);
 }

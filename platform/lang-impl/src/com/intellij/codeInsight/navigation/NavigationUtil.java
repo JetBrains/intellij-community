@@ -36,7 +36,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ITypedChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -111,7 +111,7 @@ public final class NavigationUtil {
                                                                   @Nullable final String title,
                                                                   @NotNull final PsiElementProcessor<T> processor,
                                                                   @Nullable final T selection) {
-    ITypedChooserBuilder<T> builder = JBPopupFactory.getInstance()
+    IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
       .setRenderer(renderer)
       .withHintUpdateSupply();

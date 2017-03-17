@@ -261,6 +261,9 @@ public class MarkerType {
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
     PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+    JComponent component = e != null ? (e.getComponent() instanceof JComponent
+                           ? (JComponent)e.getComponent()
+                           : null) : null;
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method));
       OverridingMethodsSearch.search(method, scope,true).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
@@ -270,9 +273,7 @@ public class MarkerType {
           FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
         }
       }
-    }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), e.getComponent() instanceof JComponent
-                                                                    ? (JComponent)e.getComponent()
-                                                                    : null)) {
+    }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), component)) {
       return;
     }
 

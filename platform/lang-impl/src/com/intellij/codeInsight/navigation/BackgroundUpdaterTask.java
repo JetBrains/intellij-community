@@ -21,9 +21,9 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
@@ -42,7 +42,7 @@ import java.util.List;
  * User: anna
  */
 public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
-  protected AbstractPopup myPopup;
+  protected JBPopup myPopup;
   protected T myComponent;
   private Ref<UsageView> myUsageView;
   private final List<PsiElement> myData = new ArrayList<>();
@@ -69,11 +69,10 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     super(project, title, canBeCancelled, backgroundOption);
   }
 
-  public void init(@NotNull AbstractPopup popup, @NotNull T component, @NotNull Ref<UsageView> usageView) {
+  public void init(@NotNull JBPopup popup, @NotNull T component, @NotNull Ref<UsageView> usageView) {
     myPopup = popup;
     myComponent = component;
     myUsageView = usageView;
-
   }
 
   public abstract String getCaption(int size);
@@ -98,8 +97,10 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     }
 
     if (myCanceled) return false;
+
     final JComponent content = myPopup.getContent();
-    if (content == null || myPopup.isDisposed()) return false;
+    if (myPopup.isDisposed()) return false;
+    ModalityState modalityState = content == null ? null : ModalityState.stateForComponent(content);
 
     synchronized (lock) {
       if (myData.contains(element)) return true;
@@ -112,7 +113,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     myAlarm.addRequest(() -> {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
-    }, 200, ModalityState.stateForComponent(content));
+    }, 200, modalityState);
     return true;
   }
 

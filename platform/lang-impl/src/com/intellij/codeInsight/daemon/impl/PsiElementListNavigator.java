@@ -24,19 +24,19 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,13 +64,14 @@ public class PsiElementListNavigator {
                                  @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
     JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
     if (popup != null) {
+      RelativePoint point = new RelativePoint(e);
       if (listUpdaterTask != null) {
         Alarm alarm = new Alarm(popup);
-        alarm.addRequest(() -> popup.show(new RelativePoint(e)), 300);
+        alarm.addRequest(() -> popup.show(point), 300);
         ProgressManager.getInstance().run(listUpdaterTask);
       }
       else {
-        popup.show(new RelativePoint(e));
+        popup.show(point);
       }
     }
   }
@@ -111,7 +112,7 @@ public class PsiElementListNavigator {
       return null;
     }
     final CollectionListModel<NavigatablePsiElement> model = new CollectionListModel<>(targets);
-    final JBList list = new JBList(model);
+    final JBList<NavigatablePsiElement> list = new JBList<>(model);
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
 
     list.setTransferHandler(new TransferHandler(){
@@ -135,20 +136,17 @@ public class PsiElementListNavigator {
     list.setCellRenderer(listRenderer);
     list.setFont(EditorUtil.getEditorFont());
 
-    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
+    final IPopupChooserBuilder<NavigatablePsiElement> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     if (listRenderer instanceof PsiElementListCellRenderer) {
       ((PsiElementListCellRenderer)listRenderer).installSpeedSearch(builder);
     }
 
-    IPopupChooserBuilder popupChooserBuilder = builder.
+    IPopupChooserBuilder<NavigatablePsiElement> popupChooserBuilder = builder.
       setTitle(title).
       setMovable(true).
       setResizable(true).
-      setItemChoosenCallback(() -> {
-        int[] ids = list.getSelectedIndices();
-        if (ids == null || ids.length == 0) return;
-        Object[] selectedElements = list.getSelectedValues();
-        consumer.consume(selectedElements);
+      setItemsChoosenCallback(selectedValues -> {
+        consumer.consume(ArrayUtil.toObjectArray(selectedValues));
       }).
       setCancelCallback(() -> {
         HintUpdateSupply.hideHint(list);
@@ -173,7 +171,7 @@ public class PsiElementListNavigator {
     builder.getScrollPane().setViewportBorder(null);
 
     if (listUpdaterTask != null) {
-      listUpdaterTask.init((AbstractPopup)popup, list, usageView);
+      listUpdaterTask.init(popup, list, usageView);
     }
     return popup;
   }

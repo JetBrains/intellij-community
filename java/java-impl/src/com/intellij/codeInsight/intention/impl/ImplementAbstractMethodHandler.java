@@ -113,7 +113,7 @@ public class ImplementAbstractMethodHandler {
 
     final MyPsiElementListCellRenderer elementListCellRenderer = new MyPsiElementListCellRenderer();
     elementListCellRenderer.sort(elements);
-    final IPopupChooserBuilder builder = JBPopupFactory.getInstance()
+    final IPopupChooserBuilder<PsiElement> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(ContainerUtil.newArrayList(elements))
       .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
       .setRenderer(elementListCellRenderer)

@@ -87,7 +87,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
   private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<>();
 
   @Override
-  public <T> ITypedChooserBuilder<T> createPopupChooserBuilder(List<T> list) {
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(List<T> list) {
     return new PopupChooserBuilder<>(new JBList<>(list));
   }
 

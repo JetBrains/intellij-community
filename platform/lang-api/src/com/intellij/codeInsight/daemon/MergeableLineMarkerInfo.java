@@ -16,8 +16,8 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -131,9 +131,9 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         public void navigate(final MouseEvent e, PsiElement elt) {
           final List<LineMarkerInfo> infos = new ArrayList<>(markers);
           Collections.sort(infos, (o1, o2) -> o1.startOffset - o2.startOffset);
-          final JBList list = new JBList(infos);
+          final JBList<LineMarkerInfo> list = new JBList<>(infos);
           list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT);
-          IPopupChooserBuilder builder  = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
+          IPopupChooserBuilder<LineMarkerInfo> builder  = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
           if (!markers.get(0).configurePopupAndRenderer(builder, list, infos)) {
             list.installCellRenderer(dom -> {
               if (dom instanceof LineMarkerInfo) {

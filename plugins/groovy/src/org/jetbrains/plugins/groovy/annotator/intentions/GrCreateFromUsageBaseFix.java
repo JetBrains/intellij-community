@@ -100,7 +100,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
   private void chooseClass(List<PsiClass> classes, Editor editor) {
     final Project project = classes.get(0).getProject();
     PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
-    final IPopupChooserBuilder builder = JBPopupFactory.getInstance()
+    final IPopupChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(classes)
       .setRenderer(renderer)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)

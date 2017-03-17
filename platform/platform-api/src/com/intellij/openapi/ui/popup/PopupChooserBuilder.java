@@ -54,7 +54,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class PopupChooserBuilder<T> implements ITypedChooserBuilder<T> {
+public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private JComponent myChooserComponent;
   private String myTitle;
@@ -138,7 +138,7 @@ public class PopupChooserBuilder<T> implements ITypedChooserBuilder<T> {
   }
 
   @Override
-  public ITypedChooserBuilder<T> setRenderer(ListCellRenderer renderer) {
+  public IPopupChooserBuilder<T> setRenderer(ListCellRenderer renderer) {
     if (myChooserComponent instanceof JList) {
       ((JList)myChooserComponent).setCellRenderer(renderer);
     }
@@ -147,7 +147,7 @@ public class PopupChooserBuilder<T> implements ITypedChooserBuilder<T> {
 
   @NotNull
   @Override
-  public ITypedChooserBuilder<T> setItemChoosenCallback(@NotNull Consumer<T> callback) {
+  public IPopupChooserBuilder<T> setItemChoosenCallback(@NotNull Consumer<T> callback) {
     if (myChooserComponent instanceof JList) {
       setItemChoosenCallback(() -> {
         Object selectedValue = ((JList)myChooserComponent).getSelectedValue();
@@ -159,7 +159,7 @@ public class PopupChooserBuilder<T> implements ITypedChooserBuilder<T> {
 
   @NotNull
   @Override
-  public ITypedChooserBuilder<T> setItemsChoosenCallback(@NotNull Consumer<Set<T>> callback) {
+  public IPopupChooserBuilder<T> setItemsChoosenCallback(@NotNull Consumer<Set<T>> callback) {
     setItemChoosenCallback(() -> {
       if (myChooserComponent instanceof JList) {
         List list = ((JList)myChooserComponent).getSelectedValuesList();
@@ -651,7 +651,7 @@ public class PopupChooserBuilder<T> implements ITypedChooserBuilder<T> {
   }
 
   @Override
-  public ITypedChooserBuilder<T> setSelectionMode(int selection) {
+  public IPopupChooserBuilder<T> setSelectionMode(int selection) {
     if (myChooserComponent instanceof JList) {
       ((JList)myChooserComponent).setSelectionMode(selection);
     }
@@ -659,7 +659,7 @@ public class PopupChooserBuilder<T> implements ITypedChooserBuilder<T> {
   }
 
   @Override
-  public ITypedChooserBuilder<T> setSelectedValue(T preselection, boolean shouldScroll) {
+  public IPopupChooserBuilder<T> setSelectedValue(T preselection, boolean shouldScroll) {
     if (myChooserComponent instanceof JList) {
       ((JList)myChooserComponent).setSelectedValue(preselection, shouldScroll);
     }
@@ -667,13 +667,13 @@ public class PopupChooserBuilder<T> implements ITypedChooserBuilder<T> {
   }
 
   @Override
-  public ITypedChooserBuilder<T> setAccessibleName(String title) {
+  public IPopupChooserBuilder<T> setAccessibleName(String title) {
     AccessibleContextUtil.setName(myChooserComponent, title);
     return this;
   }
 
   @Override
-  public ITypedChooserBuilder<T> setItemSelectedCallback(Consumer<T> c) {
+  public IPopupChooserBuilder<T> setItemSelectedCallback(Consumer<T> c) {
     if (myChooserComponent instanceof JList) {
       ((JList)myChooserComponent).addListSelectionListener(e -> {
         Object selectedValue = ((JList)myChooserComponent).getSelectedValue();
@@ -684,13 +684,13 @@ public class PopupChooserBuilder<T> implements ITypedChooserBuilder<T> {
   }
 
   @Override
-  public ITypedChooserBuilder<T> withHintUpdateSupply() {
+  public IPopupChooserBuilder<T> withHintUpdateSupply() {
     HintUpdateSupply.installSimpleHintUpdateSupply(myChooserComponent);
     return this;
   }
 
   @Override
-  public ITypedChooserBuilder<T> setFont(Font f) {
+  public IPopupChooserBuilder<T> setFont(Font f) {
     myChooserComponent.setFont(f);
     return this;
   }

@@ -31,7 +31,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ITypedChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -125,7 +125,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
     final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
     PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
-    ITypedChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
+    IPopupChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(classes)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setSelectedValue(preselection, true)

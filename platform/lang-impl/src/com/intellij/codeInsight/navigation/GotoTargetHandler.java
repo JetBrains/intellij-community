@@ -33,9 +33,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.Navigatable;
@@ -123,7 +123,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     Collections.addAll(allElements, targets);
     allElements.addAll(additionalActions);
 
-    final JBList list = new JBList(new CollectionListModel<>(allElements));
+    final JBList<Object> list = new JBList(new CollectionListModel<>(allElements));
     HintUpdateSupply.installSimpleHintUpdateSupply(list);
 
     list.setFont(EditorUtil.getEditorFont());
@@ -162,7 +162,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     };
 
-    final IPopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
+    final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     builder.setFilteringEnabled(o -> {
       if (o instanceof AdditionalAction) {
         return ((AdditionalAction)o).getText();

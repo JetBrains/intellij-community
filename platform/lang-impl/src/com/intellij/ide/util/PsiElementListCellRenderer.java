@@ -300,7 +300,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   /**
-   * User {@link #installSpeedSearch(IPopupChooserBuilder)} instead
+   * Use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
    */
   @Deprecated
   public void installSpeedSearch(JList list) {

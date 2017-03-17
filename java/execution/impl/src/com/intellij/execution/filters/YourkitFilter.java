@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.ITypedChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -91,7 +91,7 @@ public class YourkitFilter implements Filter{
       DefaultPsiElementListCellRenderer renderer = new DefaultPsiElementListCellRenderer();
       final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
       if (editor != null) {
-        final ITypedChooserBuilder<PsiFile> builder = JBPopupFactory.getInstance()
+        final IPopupChooserBuilder<PsiFile> builder = JBPopupFactory.getInstance()
           .createPopupChooserBuilder(ContainerUtil.newArrayList(myPsiFiles))
           .setRenderer(renderer)
           .setTitle("Choose file")
