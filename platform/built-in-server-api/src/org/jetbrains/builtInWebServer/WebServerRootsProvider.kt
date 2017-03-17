@@ -4,7 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-data class PathQuery(val searchInLibs: Boolean = true, val searchInArtifacts: Boolean = true, val useHtaccess: Boolean = true, val useVfs: Boolean = true)
+data class PathQuery(val searchInLibs: Boolean = true, val searchInArtifacts: Boolean = true, val useHtaccess: Boolean = true, val useVfs: Boolean = false)
 
 abstract class WebServerRootsProvider {
   companion object {
