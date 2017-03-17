@@ -404,8 +404,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     init();
     updateButtons();
-    updateVcsOptionsVisibility();
-
     updateOnListSelection();
     myCommitMessageArea.requestFocusInMessage();
 
