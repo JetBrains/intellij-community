@@ -91,7 +91,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     for (String branch : myMultiRootBranchConfig.getLocalBranchNames()) {
       List<HgRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
       if (!repositories.isEmpty()) {
-        popupGroup.add(new HgCommonBranchActions(myProject, repositories, branch));
+        popupGroup.add(new HgBranchPopupActions.BranchActions(myProject, repositories, branch));
       }
     }
     popupGroup.addSeparator("Common Bookmarks");
