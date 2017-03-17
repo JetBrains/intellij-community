@@ -226,6 +226,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
       Thread thread = service.getPeriodicTasksThread();
       AWTAutoShutdown.getInstance().notifyThreadBusy(thread); // needed for EDT not to exit suddenly
+      Disposer.register(this, () -> {
+        AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
+      });
       return Thread.currentThread();
     });
     myLock = new ReadMostlyRWLock(edt);
