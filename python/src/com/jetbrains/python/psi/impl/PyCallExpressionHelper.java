@@ -689,7 +689,9 @@ public class PyCallExpressionHelper {
         final String parameterName = namedParameter.getName();
         if (namedParameter.isPositionalContainer()) {
           for (PyExpression argument : allPositionalArguments) {
-            mappedParameters.put(argument, namedParameter);
+            if (argument != null) {
+              mappedParameters.put(argument, namedParameter);
+            }
           }
           if (variadicPositionalArguments.size() == 1) {
             mappedParameters.put(variadicPositionalArguments.get(0), namedParameter);
