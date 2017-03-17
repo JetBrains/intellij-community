@@ -90,7 +90,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_ACTIONS_GROUP = "VcsHistoryActionsGroup";
 
-  @NotNull private final Project myProject;
   @NotNull private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
   @NotNull private final FileHistoryRefresherI myRefresherI;
@@ -136,7 +135,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                               final boolean isStaticEmbedded) {
     super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history",
           !isStaticEmbedded);
-    myProject = vcs.getProject();
     myIsStaticAndEmbedded = false;
     myVcs = vcs;
     myProvider = provider;
@@ -148,7 +146,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     DiffFromHistoryHandler customDiffHandler = provider.getHistoryDiffHandler();
     myDiffHandler = customDiffHandler == null ? new StandardDiffFromHistoryHandler() : customDiffHandler;
 
-    myDetails = new DetailsPanel(myProject);
+    myDetails = new DetailsPanel(vcs.getProject());
 
     refreshRevisionsOrder();
 
@@ -156,7 +154,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myAdditionalDetails = components.getDetailsComponent();
     myRevisionSelectionListener = components.getRevisionListener();
 
-    final DualViewColumnInfo[] columns = createColumnList(myProject, provider, components.getColumns());
+    final DualViewColumnInfo[] columns = createColumnList(vcs.getProject(), provider, components.getColumns());
     @NonNls String storageKey = "FileHistory." + provider.getClass().getName();
     final HistoryAsTreeProvider treeHistoryProvider = myHistorySession.getHistoryAsTreeProvider();
     if (treeHistoryProvider != null) {
@@ -227,7 +225,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
     chooseView();
 
-    Disposer.register(myProject, this);
+    Disposer.register(vcs.getProject(), this);
   }
 
   private static void makeBold(Component component) {
