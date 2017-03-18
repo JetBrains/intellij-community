@@ -178,8 +178,8 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   }
 
   private static void addAdditionalActions(DefaultActionGroup group) {
-    StudyActionsProvider[] providers = Extensions.getExtensions(StudyActionsProvider.EP_NAME);
-    for (StudyActionsProvider provider : providers) {
+    StudyTaskDescriptionAdditionalActionsProvider[] providers = Extensions.getExtensions(StudyTaskDescriptionAdditionalActionsProvider.EP_NAME);
+    for (StudyTaskDescriptionAdditionalActionsProvider provider : providers) {
       group.addAll(provider.getActions());
     }
   }

@@ -31,7 +31,7 @@
     <editorTabTitleProvider implementation="com.jetbrains.edu.coursecreator.CCTestsTabTitleProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
-    <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
+    <taskDescriptionAdditionalActionsProvider implementation="com.jetbrains.edu.coursecreator.CCTaskDescriptionActionsProvider"/>
     <hintActionsProvider implementation="com.jetbrains.edu.coursecreator.actions.CCHintActionsProvider"/>
     <checkListener implementation="com.jetbrains.edu.coursecreator.CCCheckListener"/>
     <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
