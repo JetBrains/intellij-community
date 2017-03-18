@@ -104,7 +104,6 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
       LOG.error("EduCourseConfigurator for language " + wrapper.getLanguage().getDisplayName() + " not found");
       return module;
     }
-    configurator.configureModule(module);
     configurator.createCourseModuleContent(moduleModel, project, course, getModuleFileDirectory());
     return module;
   }
