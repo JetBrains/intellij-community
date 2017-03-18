@@ -16,10 +16,8 @@
 package git4idea.history.browser;
 
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
 import git4idea.GitCommit;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
@@ -225,15 +223,6 @@ public class GitHeavyCommit {
 
   public void setOnTracked(boolean onTracked) {
     myOnTracked = onTracked;
-  }
-
-  public List<AbstractHash> getConvertedParents() {
-    return ObjectsConvertor.convert(getParentsHashes(), new Convertor<String, AbstractHash>() {
-      @Override
-      public AbstractHash convert(String o) {
-        return AbstractHash.create(o);
-      }
-    });
   }
 
   public String getSubject() {

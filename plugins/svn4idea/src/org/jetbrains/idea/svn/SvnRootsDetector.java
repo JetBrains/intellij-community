@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 /**
 * @author Konstantin Kolosovsky.
@@ -92,8 +92,7 @@ public class SvnRootsDetector {
   }
 
   private void addNestedRoots(final boolean clearState, final Runnable callback) {
-    final List<VirtualFile> basicVfRoots = ObjectsConvertor.convert(myResult.myTopRoots, real -> real.getVirtualFile());
-
+    List<VirtualFile> basicVfRoots = map(myResult.myTopRoots, RootUrlInfo::getVirtualFile);
     final ChangeListManager clManager = ChangeListManager.getInstance(myVcs.getProject());
 
     if (clearState) {

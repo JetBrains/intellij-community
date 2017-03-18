@@ -186,8 +186,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     final Map<AbstractVcs, Collection<FilePath>> result = new THashMap<>();
     for (Map.Entry<AbstractVcs, Collection<FilePath>> entry : resultPrep.entrySet()) {
-      AbstractVcs vcs = entry.getKey();
-      result.put(vcs, vcs.filterUniqueRoots(new ArrayList<>(entry.getValue()), ObjectsConvertor.FILEPATH_TO_VIRTUAL));
+      AbstractVcs<?> vcs = entry.getKey();
+      result.put(vcs, vcs.filterUniqueRoots(new ArrayList<>(entry.getValue()), FilePath::getVirtualFile));
     }
     return result;
   }

@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +33,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 public class SvnBranchConfigurationNew {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew");
@@ -65,7 +65,7 @@ public class SvnBranchConfigurationNew {
 
   public List<String> getBranchUrls() {
     final ArrayList<String> result = new ArrayList<>(myBranchMap.keySet());
-    final List<String> cutList = ObjectsConvertor.convert(result, s -> cutEndSlash(s));
+    List<String> cutList = map(result, SvnBranchConfigurationNew::cutEndSlash);
     Collections.sort(cutList);
     return cutList;
   }
