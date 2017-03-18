@@ -60,138 +60,8 @@ public abstract class SplitterWithSecondHideable {
       openIcon = AllIcons.General.ComboArrowRightPassive;
     }
 
-    myTitledSeparator = new AbstractTitledSeparatorWithIcon(icon, openIcon, separatorText) {
-      @Override
-      protected RefreshablePanel createPanel() {
-        return createDetails();
-      }
-
-      @Override
-      protected void initOnImpl() {
-        final float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
-        mySplitter.setSecondComponent(myDetailsComponent.getPanel());
-        mySuperDivider.setResizeEnabled(true);
-
-        SwingUtilities.invokeLater(() -> {
-          mySplitter.fixFirst(proportion);
-          mySplitter.invalidate();
-          mySplitter.validate();
-          mySplitter.repaint();
-        });
-      }
-
-      @Override
-      protected void onImpl() {
-        final float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
-        final int firstSize = vertical ? mySplitter.getFirstComponent().getHeight() : mySplitter.getFirstComponent().getWidth();
-        // !! order is important! first fix
-        mySplitter.fixFirst();
-        myListener.on((int)((1 - proportion) * firstSize / proportion));
-        //mySplitter.setProportion(proportion);
-        mySplitter.setSecondComponent(myDetailsComponent.getPanel());
-        mySplitter.revalidate();
-        mySplitter.repaint();
-        mySuperDivider.setResizeEnabled(true);
-      }
-
-      @Override
-      protected void offImpl() {
-        final int previousSize = vertical ? mySplitter.getSecondComponent().getHeight() : mySplitter.getSecondComponent().getWidth();
-        mySplitter.setSecondComponent(myFictivePanel);
-        myPreviousProportion = mySplitter.getProportion();
-        mySplitter.freeAll();
-        mySplitter.setProportion(1.0f);
-        mySplitter.revalidate();
-        mySplitter.repaint();
-        myListener.off(previousSize);
-        mySuperDivider.setResizeEnabled(false);
-      }
-    };
-    mySplitter = new PseudoSplitter(vertical) {
-      {
-        myTitledSeparator.mySeparator.addMouseListener(new MouseAdapter() {
-          @Override
-          public void mouseEntered(MouseEvent e) {
-            myTitledSeparator.mySeparator.setCursor(new Cursor(myTitledSeparator.myOn ? Cursor.S_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));
-            ((MyDivider)mySuperDivider).processMouseEvent(e);
-          }
-
-          @Override
-          public void mouseExited(MouseEvent e) {
-            myTitledSeparator.mySeparator.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-            ((MyDivider)mySuperDivider).processMouseEvent(e);
-          }
-
-          @Override
-          public void mouseClicked(MouseEvent e) {
-            ((MyDivider)mySuperDivider).processMouseEvent(e);
-          }
-
-          @Override
-          public void mousePressed(MouseEvent e) {
-            ((MyDivider)mySuperDivider).processMouseEvent(e);
-          }
-
-          @Override
-          public void mouseReleased(MouseEvent e) {
-            ((MyDivider)mySuperDivider).processMouseEvent(e);
-          }
-
-          @Override
-          public void mouseWheelMoved(MouseWheelEvent e) {
-            ((MyDivider)mySuperDivider).processMouseEvent(e);
-          }
-
-          @Override
-          public void mouseDragged(MouseEvent e) {
-            ((MyDivider)mySuperDivider).processMouseEvent(e);
-          }
-
-          @Override
-          public void mouseMoved(MouseEvent e) {
-            ((MyDivider)mySuperDivider).processMouseEvent(e);
-          }
-        });
-
-        myTitledSeparator.mySeparator.addMouseMotionListener(new MouseMotionListener() {
-          @Override
-          public void mouseDragged(MouseEvent e) {
-            ((MyDivider)mySuperDivider).processMouseMotionEvent(e);
-          }
-
-          @Override
-          public void mouseMoved(MouseEvent e) {
-            ((MyDivider)mySuperDivider).processMouseMotionEvent(e);
-          }
-        });
-      }
-
-      @Override
-      protected Divider createDivider() {
-        mySuperDivider = new MyDivider();
-        mySuperDivider.add(myTitledSeparator,
-                           new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                  JBUI.emptyInsets(), 0, 0));
-        return mySuperDivider;
-      }
-
-      @Override
-      public int getDividerWidth() {
-        return vertical ? myTitledSeparator.getHeight() : myTitledSeparator.getWidth();
-      }
-
-      class MyDivider extends DividerImpl {
-        @Override
-        public void processMouseMotionEvent(MouseEvent e) {
-          super.processMouseMotionEvent(e);
-        }
-
-        @Override
-        public void processMouseEvent(MouseEvent e) {
-          super.processMouseEvent(e);
-        }
-      }
-    };
+    myTitledSeparator = new MyTitledSeparator(icon, openIcon, separatorText, vertical);
+    mySplitter = new MySplitter(vertical);
     mySplitter.setDoubleBuffered(true);
     mySplitter.setFirstComponent(firstComponent);
     mySplitter.setSecondComponent(myFictivePanel);
@@ -230,5 +100,150 @@ public abstract class SplitterWithSecondHideable {
 
   public boolean isOn() {
     return myTitledSeparator.myOn;
+  }
+
+  private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
+    private final boolean myVertical;
+
+    public MyTitledSeparator(Icon icon, Icon openIcon, String separatorText, boolean vertical) {
+      super(icon, openIcon, separatorText);
+      myVertical = vertical;
+    }
+
+    @Override
+    protected RefreshablePanel createPanel() {
+      return createDetails();
+    }
+
+    @Override
+    protected void initOnImpl() {
+      final float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
+      mySplitter.setSecondComponent(myDetailsComponent.getPanel());
+      mySuperDivider.setResizeEnabled(true);
+
+      SwingUtilities.invokeLater(() -> {
+        mySplitter.fixFirst(proportion);
+        mySplitter.invalidate();
+        mySplitter.validate();
+        mySplitter.repaint();
+      });
+    }
+
+    @Override
+    protected void onImpl() {
+      final float proportion = myPreviousProportion > 0 ? myPreviousProportion : getSplitterInitialProportion();
+      final int firstSize = myVertical ? mySplitter.getFirstComponent().getHeight() : mySplitter.getFirstComponent().getWidth();
+      // !! order is important! first fix
+      mySplitter.fixFirst();
+      myListener.on((int)((1 - proportion) * firstSize / proportion));
+      //mySplitter.setProportion(proportion);
+      mySplitter.setSecondComponent(myDetailsComponent.getPanel());
+      mySplitter.revalidate();
+      mySplitter.repaint();
+      mySuperDivider.setResizeEnabled(true);
+    }
+
+    @Override
+    protected void offImpl() {
+      final int previousSize = myVertical ? mySplitter.getSecondComponent().getHeight() : mySplitter.getSecondComponent().getWidth();
+      mySplitter.setSecondComponent(myFictivePanel);
+      myPreviousProportion = mySplitter.getProportion();
+      mySplitter.freeAll();
+      mySplitter.setProportion(1.0f);
+      mySplitter.revalidate();
+      mySplitter.repaint();
+      myListener.off(previousSize);
+      mySuperDivider.setResizeEnabled(false);
+    }
+  }
+
+  private class MySplitter extends PseudoSplitter {
+    private final boolean myVertical;
+
+    public MySplitter(boolean vertical) {
+      super(vertical);
+      myVertical = vertical;
+      myTitledSeparator.mySeparator.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          myTitledSeparator.mySeparator.setCursor(new Cursor(myTitledSeparator.myOn ? Cursor.S_RESIZE_CURSOR : Cursor.DEFAULT_CURSOR));
+          ((MyDivider)mySuperDivider).processMouseEvent(e);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          myTitledSeparator.mySeparator.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+          ((MyDivider)mySuperDivider).processMouseEvent(e);
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          ((MyDivider)mySuperDivider).processMouseEvent(e);
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+          ((MyDivider)mySuperDivider).processMouseEvent(e);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          ((MyDivider)mySuperDivider).processMouseEvent(e);
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+          ((MyDivider)mySuperDivider).processMouseEvent(e);
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent e) {
+          ((MyDivider)mySuperDivider).processMouseEvent(e);
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          ((MyDivider)mySuperDivider).processMouseEvent(e);
+        }
+      });
+
+      myTitledSeparator.mySeparator.addMouseMotionListener(new MouseMotionListener() {
+        @Override
+        public void mouseDragged(MouseEvent e) {
+          ((MyDivider)mySuperDivider).processMouseMotionEvent(e);
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          ((MyDivider)mySuperDivider).processMouseMotionEvent(e);
+        }
+      });
+    }
+
+    @Override
+    protected Divider createDivider() {
+      mySuperDivider = new MyDivider();
+      mySuperDivider.add(myTitledSeparator,
+                         new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                JBUI.emptyInsets(), 0, 0));
+      return mySuperDivider;
+    }
+
+    @Override
+    public int getDividerWidth() {
+      return myVertical ? myTitledSeparator.getHeight() : myTitledSeparator.getWidth();
+    }
+
+    class MyDivider extends DividerImpl {
+      @Override
+      public void processMouseMotionEvent(MouseEvent e) {
+        super.processMouseMotionEvent(e);
+      }
+
+      @Override
+      public void processMouseEvent(MouseEvent e) {
+        super.processMouseEvent(e);
+      }
+    }
   }
 }
