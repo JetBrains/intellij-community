@@ -99,7 +99,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   @Override
   public void tearDown() throws Exception {
     RunAll runAll = new RunAll()
-      .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication, false))
+      .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
       .append(() -> {
         for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
           moduleFixtureBuilder.getFixture().tearDown();

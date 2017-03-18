@@ -454,10 +454,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       .append(this::disposeRootDisposable)
       .append(() -> {
         if (project != null) {
-          LightPlatformTestCase.doTearDown(project, ourApplication, false);
+          LightPlatformTestCase.doTearDown(project, ourApplication);
         }
       })
       .append(this::disposeProject)
+      .append(() -> UIUtil.dispatchAllInvocationEvents())
       .append(this::checkForSettingsDamage)
       .append(() -> {
         if (project != null) {
