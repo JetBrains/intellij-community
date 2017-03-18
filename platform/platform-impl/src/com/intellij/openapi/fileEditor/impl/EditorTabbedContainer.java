@@ -108,18 +108,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           if (e instanceof FocusEvent) {
             Component from = ((FocusEvent)e).getOppositeComponent();
             Component to = ((FocusEvent)e).getComponent();
-            if (isChild(from) || isChild(to)) {
+            if (SwingUtilities.isDescendingFrom(from, myTabs) || SwingUtilities.isDescendingFrom(to, myTabs)) {
               myTabs.repaint();
             }
           }
           return false;
         };
-      }
-
-      private boolean isChild(@Nullable Component c) {
-        if (c == null) return false;
-        if (c == this) return true;
-        return isChild(c.getParent());
       }
 
       @Override
