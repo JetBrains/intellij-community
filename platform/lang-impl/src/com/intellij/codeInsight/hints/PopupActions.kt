@@ -53,22 +53,14 @@ class ShowSettingsWithAddedPattern : AnAction() {
   override fun update(e: AnActionEvent) {
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
-    val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
-    
-    if (!provider.isBlackListSupported) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file) as? MethodInfo
-    if (info == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
+    val info = getHintInfoFromProvider(offset, file) ?: return
     
-    val name = info.getMethodName()
-    e.presentation.text = CodeInsightBundle.message("inlay.hints.show.settings", name)
+    e.presentation.text = when (info) {
+      is HintInfo.OptionInfo -> "Show Hints Settings..."
+      is HintInfo.MethodInfo -> CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()) 
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -79,9 +71,14 @@ class ShowSettingsWithAddedPattern : AnAction() {
     InlayParameterHintsExtension.forLanguage(language) ?: return
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
+    val info = getHintInfoFromProvider(offset, file) ?: return
     
-    val dialog = ParameterNameHintsConfigurable(language, info.toPattern())
+    val newPreselectedPattern = when (info) {
+      is HintInfo.OptionInfo -> null
+      is HintInfo.MethodInfo -> info.toPattern()
+    }
+    
+    val dialog = ParameterNameHintsConfigurable(language, newPreselectedPattern)
     dialog.show()
   }
 }
