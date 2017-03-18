@@ -165,7 +165,15 @@ class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
   
   private var lastOptionName = ""
   
-  override fun getText(): String = CodeInsightBundle.message("inlay.hints.disable.custom.option", lastOptionName)
+  override fun getText(): String = getIntentionText()
+
+  private fun getIntentionText(): String {
+    if (lastOptionName.startsWith("show", ignoreCase = true)) {
+      return "Do not ${lastOptionName.toLowerCase()}"
+    }
+    return CodeInsightBundle.message("inlay.hints.disable.custom.option", lastOptionName)
+  }
+  
   override fun getFamilyName(): String = presentableFamilyName
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
