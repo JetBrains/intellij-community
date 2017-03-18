@@ -37,7 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 
 /**
  * @author Bas Leijdekkers
@@ -146,7 +149,17 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
             StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
-          if (Character.isISOControl(d)) {
+          final int type = Character.getType(d);
+          if (type == Character.CONTROL ||
+              type == Character.FORMAT ||
+              type == Character.PRIVATE_USE ||
+              type == Character.SURROGATE ||
+              type == Character.UNASSIGNED ||
+              type == Character.LINE_SEPARATOR ||
+              type == Character.PARAGRAPH_SEPARATOR) {
+            continue;
+          }
+          if (type == Character.SPACE_SEPARATOR && d != ' ') {
             continue;
           }
           byteBuffer.clear();
