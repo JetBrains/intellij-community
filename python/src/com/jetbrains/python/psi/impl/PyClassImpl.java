@@ -1400,35 +1400,24 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     if (PyNames.TYPES_INSTANCE_TYPE.equals(getQualifiedName())) {
       return Collections.emptyList();
     }
-    final PyClassStub stub = getStub();
     final List<PyClassLikeType> result = new ArrayList<>();
 
     // In some cases stub may not provide all information, so we use stubs only if AST access id disabled
     if (!context.maySwitchToAST(this)) {
-      fillSuperClassesNoSwitchToAst(context, stub, result);
+      fillSuperClassesNoSwitchToAst(context, getStub(), result);
     }
     else {
       fillSuperClassesSwitchingToAst(context, result);
     }
 
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
     PyPsiUtils.assertValid(this);
-    if (result.isEmpty() && isValid() && !builtinCache.isBuiltin(this)) {
-      final PyClass implicitSuper;
-      if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30) && getMetaClassQName() == null) {
-        implicitSuper = as(resolveTopLevelMember(QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE),
-                                                 fromFoothold(this)), PyClass.class);
-      }
-      else {
-        implicitSuper = builtinCache.getClass(PyNames.OBJECT);
-      }
-      if (implicitSuper != null) {
-        final PyType type = context.getType(implicitSuper);
-        if (type instanceof PyClassLikeType) {
-          result.add((PyClassLikeType)type);
-        }
-      }
+    if (result.isEmpty()) {
+      return Optional
+        .ofNullable(getImplicitSuper(context))
+        .map(Collections::singletonList)
+        .orElse(Collections.emptyList());
     }
+
     return result;
   }
 
@@ -1473,6 +1462,29 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         result.add(name != null ? classTypeFromQName(name, (PyFile)file, context) : null);
       }
     }
+  }
+
+  @Nullable
+  private PyClassLikeType getImplicitSuper(@NotNull TypeEvalContext context) {
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
+    final PyClassType objectType = builtinCache.getObjectType();
+
+    if (objectType != null && this == objectType.getPyClass()) {
+      return null;
+    }
+
+    if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30) && getMetaClassQName() == null) {
+      final QualifiedName typesInstanceTypeQName = QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE);
+      final PsiElement typesInstanceType = resolveTopLevelMember(typesInstanceTypeQName, fromFoothold(this));
+
+      return Optional
+        .ofNullable(as(typesInstanceType, PyClass.class))
+        .map(context::getType)
+        .map(type -> as(type, PyClassLikeType.class))
+        .orElse(null);
+    }
+
+    return objectType;
   }
 
   @NotNull
