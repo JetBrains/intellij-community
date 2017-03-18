@@ -98,6 +98,7 @@ public class VcsRootProblemNotifier {
       }
       return;
     }
+    LOG.debug("Following errors detected: " + errors);
 
     Collection<VcsRootError> importantUnregisteredRoots = getImportantUnregisteredMappings(errors);
     Collection<VcsRootError> invalidRoots = getInvalidRoots(errors);
