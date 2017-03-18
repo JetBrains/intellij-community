@@ -309,19 +309,42 @@ class _SymbolNameSplitter(object):
 
 class _SymbolName2KSplitter(_SymbolNameSplitter):
     """
-    Based on imp which works in 2, but not 3
+    Based on imp which works in 2, but not 3.
+    It also emulates packages for folders with out of __init__.py.
+    Say, you have Python path "spam.eggs" where "spam" is plain folder.
+    It works for Py3, but not Py2.
+    find_module for "spam" raises exception which is processed then (see "_symbol_processed") 
     """
     def __init__(self):
         super(_SymbolNameSplitter, self).__init__()
         self._path = None
+        # Set to True when at least one find_module success, so we have at least one symbol
+        self._symbol_processed = False
 
     def check_is_importable(self, parts, current_step, separator):
         import imp
         module_to_import = parts[current_step]
-        (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
-        if desc[2] == imp.PKG_DIRECTORY:
-            # Package
-            self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
+        try:
+            (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
+            self._symbol_processed = True
+            if desc[2] == imp.PKG_DIRECTORY:
+                # Package
+                self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
+        except ImportError as error:
+            if not self._symbol_processed:
+                # First ImportError means there could be folder with out for __init__.py
+                # See class doc for more info
+                subdir = os.path.sep.join(parts[:current_step + 1])
+                dirs = [path for path in map( lambda p: os.path.join(p, subdir), sys.path) if os.path.isdir(path)]
+                if not dirs:
+                    raise error
+                elif len(dirs) == 1:
+                    # can be folder with out of __init__.py
+                    self._path = dirs[0]
+                    return
+                else:
+                    raise Exception("Several folders on sys.path with same name, rename folder: {0}", ",".join(dirs))
+            raise error
 
 
 class _SymbolName3KSplitter(_SymbolNameSplitter):
