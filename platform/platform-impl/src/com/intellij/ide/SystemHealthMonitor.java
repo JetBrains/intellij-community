@@ -563,7 +563,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                                          .setUiActionStats(UIActionStats.newBuilder()
                                                              .setActionClassName(actionName)
                                                              .setInvocationKind(invocationKind)
-                                                             .setInvocations(1)));
+                                                             .setInvocations(1)
+                                                             .setDirect(true)));
       }
     }
   }
