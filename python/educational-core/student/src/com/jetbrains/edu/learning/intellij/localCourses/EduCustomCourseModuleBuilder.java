@@ -11,12 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.InvalidDataException;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.intellij.EduCourseConfigurator;
-import com.jetbrains.edu.learning.intellij.generation.EduProjectGenerator;
 import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.learning.intellij.generation.EduProjectGenerator;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +39,14 @@ class EduCustomCourseModuleBuilder extends JavaModuleBuilder {
     String type = mySelectedCourse.getType();
     String languageName = type.substring("pycharm ".length());
     Language language = Language.findLanguageByID(languageName);
-    if (language != null) {
-      EduCourseConfigurator configurator = EduCourseConfigurator.INSTANCE.forLanguage(language);
-      if (configurator != null) {
-        configurator.configureModule(module);
-      }
+    if (language == null) {
+      return module;
     }
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
+    if (configurator == null) {
+      return module;
+    }
+    configurator.configureModule(module);
     return module;
   }
 
@@ -99,17 +101,17 @@ class EduCustomCourseModuleBuilder extends JavaModuleBuilder {
       String languageName = type.substring("pycharm ".length());
       Language language = Language.findLanguageByID(languageName);
       if (language != null) {
-        EduCourseConfigurator configurator = EduCourseConfigurator.INSTANCE.forLanguage(language);
+        EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
         if (configurator != null) {
           myGenerator.setSelectedCourse(mySelectedCourse);
           Project project = baseModule.getProject();
-          myGenerator.generateProject(baseModule.getProject(), baseModule.getProject().getBaseDir());
-          Course course = StudyTaskManager.getInstance(baseModule.getProject()).getCourse();
+          myGenerator.generateProject(project, project.getBaseDir());
+          Course course = StudyTaskManager.getInstance(project).getCourse();
           if (course == null) {
             LOG.info("failed to generate course");
             return baseModule;
           }
-          configurator.createCourseModuleContent(moduleModel, baseModule.getProject(), course, getModuleFileDirectory());
+          configurator.createCourseModuleContent(moduleModel, project, course, getModuleFileDirectory());
         }
       }
     }

@@ -19,12 +19,12 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.intellij.EduCourseConfigurator;
 import com.jetbrains.edu.learning.intellij.generation.EduCourseModuleBuilder;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -51,14 +51,14 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
     getWizardInputField("ccname", "", "Name:", myPanel.getNameField(), getValue).addToSettings(settingsStep);
     getWizardInputField("ccauthor", "", "Author:", myPanel.getAuthorField(), getValue).addToSettings(settingsStep);
 
-    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(EduCourseConfigurator.EP_NAME).getExtensions();
-
+    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(EduPluginConfigurator.EP_NAME).getExtensions();
     myLanguageComboBox.removeAllItems();
     for (LanguageExtensionPoint extension : extensions) {
       String languageId = extension.getKey();
       Language language = Language.findLanguageByID(languageId);
       if (language == null) {
         LOG.info("Language with id " + languageId + " not found");
+        continue;
       }
       myLanguageComboBox.addItem(new LanguageWrapper(language));
     }
@@ -87,7 +87,8 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
     course.setAuthorsAsString(myPanel.getAuthors());
     course.setDescription(myPanel.getDescription());
     LanguageWrapper wrapper = (LanguageWrapper)myLanguageComboBox.getSelectedItem();
-    course.setLanguage(wrapper.getLanguage().getID());
+    Language language = wrapper.getLanguage();
+    course.setLanguage(language.getID());
     course.setCourseMode(CCUtils.COURSE_MODE);
     File courseDir = new File(StudyProjectGenerator.OUR_COURSES_DIR, myPanel.getName() + "-" + project.getName());
     course.setCourseDirectory(courseDir.getPath());
@@ -99,9 +100,10 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
     course.addLesson(lesson);
     course.initCourse(false);
     StudyTaskManager.getInstance(project).setCourse(course);
-    EduCourseConfigurator configurator = EduCourseConfigurator.INSTANCE.forLanguage(wrapper.getLanguage());
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
+    String languageName = language.getDisplayName();
     if (configurator == null) {
-      LOG.error("EduCourseConfigurator for language " + wrapper.getLanguage().getDisplayName() + " not found");
+      LOG.error("EduPluginConfigurator for language " + languageName + " not found");
       return module;
     }
     configurator.createCourseModuleContent(moduleModel, project, course, getModuleFileDirectory());

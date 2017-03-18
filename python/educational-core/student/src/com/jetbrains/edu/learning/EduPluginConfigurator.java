@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -21,7 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public interface EduPluginConfigurator {
-  LanguageExtension<EduPluginConfigurator> INSTANCE = new LanguageExtension<>("Edu.pluginConfigurator");
+  String EP_NAME = "Edu.pluginConfigurator";
+  LanguageExtension<EduPluginConfigurator> INSTANCE = new LanguageExtension<>(EP_NAME);
 
   @NotNull
   String getTestFileName();
@@ -87,4 +90,14 @@ public interface EduPluginConfigurator {
     group.add(new StudyEditInputAction());
     return group;
   }
+
+  default void configureModule(@NotNull Module module) {
+  }
+
+  default void createCourseModuleContent(@NotNull ModifiableModuleModel moduleModel,
+                                         @NotNull Project project,
+                                         @NotNull Course course,
+                                         @Nullable String moduleDir) {
+  }
+
 }
