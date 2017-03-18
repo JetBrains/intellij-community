@@ -67,13 +67,7 @@ public class UpdateAction extends BaseUpdateAction {
       } else {
         OutputStream out = new BufferedOutputStream(new FileOutputStream(updated));
         try {
-          InputStream oldFileIn = null;
-          try {
-            applyDiff(in, oldFileIn, out);
-          }
-          finally {
-            oldFileIn.close();
-          }
+          applyDiff(in, source, out);
         }
         finally {
           out.close();
