@@ -175,7 +175,7 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
   }
 
   @Override
-  public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
+  public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
     if (id.getType() == ExternalSystemTaskType.RESOLVE_PROJECT) {
       final ProjectSystemId systemId = id.getProjectSystemId();
       for (String filePath : ContainerUtil.newArrayList(myKnownAffectedFiles.get(workingDir))) {

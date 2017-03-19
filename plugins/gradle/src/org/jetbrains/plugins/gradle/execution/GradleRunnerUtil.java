@@ -135,7 +135,7 @@ public class GradleRunnerUtil {
       }
 
       @Override
-      public void onQueued(@NotNull ExternalSystemTaskId id, final String workingDir) {
+      public void onStart(@NotNull ExternalSystemTaskId id, final String workingDir) {
         UIUtil.invokeLaterIfNeeded(() -> gradleExecutionConsole.setWorkingDir(workingDir));
       }
 
