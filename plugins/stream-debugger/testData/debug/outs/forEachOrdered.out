@@ -1,0 +1,10 @@
+LineBreakpoint created at ForEachOrdered.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ForEachOrdered
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+ForEachOrdered.java:5
+
+Process finished with exit code 0
+1
+2
+3
+4

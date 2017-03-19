@@ -1,0 +1,11 @@
+LineBreakpoint created at DistinctPrimitive.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! DistinctPrimitive
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+DistinctPrimitive.java:5
+Exception catched: junit.framework.AssertionFailedError: Expected: <null> but was: Compilation failed:
+incomparable types: java.lang.Object and long
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+ANY DATA NEED
+
+Process finished with exit code 0

@@ -1,0 +1,22 @@
+LineBreakpoint created at Sorted.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! Sorted
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Sorted.java:5
+Stream.of(3, 1, 2)
+.sorted()
+.toArray()
+Stream.of
+    before: nothing
+    after: 1,2,3
+sorted
+    before: 1,2,3
+    after: 4,5,6
+toArray
+    before: 4,5,6
+    after: nothing
+
+NEED IDENTITY MAPPING!
+
+Exception catched: junit.framework.AssertionFailedErrorDisconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

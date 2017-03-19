@@ -1,0 +1,23 @@
+LineBreakpoint created at Limit.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! Limit
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Limit.java:5
+Stream.of(1, 2, 3)
+.limit(1)
+.count()
+Stream.of
+    before: nothing
+    after: 1
+limit
+    before: 1
+    after: 2
+count
+    before: 2
+    after: nothing
+mappings for limit
+    nothing -> 1 -> 2
+mappings for count
+    1 -> 2 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

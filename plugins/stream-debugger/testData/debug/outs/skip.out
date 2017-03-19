@@ -1,0 +1,25 @@
+LineBreakpoint created at Skip.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! Skip
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Skip.java:5
+Stream.of(1, 2, 3)
+.skip(2)
+.count()
+Stream.of
+    before: nothing
+    after: 1,2,3
+skip
+    before: 1,2,3
+    after: 4
+count
+    before: 4
+    after: nothing
+mappings for skip
+    nothing -> 1 -> nothing
+    nothing -> 2 -> nothing
+    nothing -> 3 -> 4
+mappings for count
+    3 -> 4 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
