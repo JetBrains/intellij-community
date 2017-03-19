@@ -23,7 +23,7 @@ public class StreamChainBuilder {
   private static final Set<String> SUPPORTED_PRODUCERS = StreamEx.of("stream", "iterate", "generate", "range", "rangeClosed",
                                                                      "of", "concat", "empty").toSet();
   private static final Set<String> SUPPORTED_INTERMEDIATE =
-    StreamEx.of("limit", "flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble", "distinct", "map",
+    StreamEx.of("limit", "flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble", "distinct", "map", "skip",
                 "filter", "mapToInt", "mapToLong", "mapToDouble", "mapToObj", "sorted", "boxed", "peek", "onClose").toSet();
 
   // TODO: termination - is any method which returns regular object (not subclass of Stream)
