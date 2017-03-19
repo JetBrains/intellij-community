@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
@@ -27,6 +29,7 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -46,6 +49,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -251,8 +255,43 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         pluginTable.repaint();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+    registerCopyProvider(pluginTable);
     pluginTable.setExpandableItemsEnabled(false);
     return installedScrollPane;
+  }
+
+  private static void registerCopyProvider(PluginTable table) {
+    CopyProvider copyProvider = new CopyProvider() {
+      @Override
+      public void performCopy(@NotNull DataContext dataContext) {
+        StringBuilder sb = new StringBuilder();
+        for (IdeaPluginDescriptor pluginDescriptor : table.getSelectedObjects()) {
+          sb.append(pluginDescriptor.getName()).append(" (").append(pluginDescriptor.getVersion()).append(")\n");
+        }
+        CopyPasteManager.getInstance().setContents(new TextTransferable(sb.substring(0, sb.length() - 1)));
+      }
+
+      @Override
+      public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+        return table.getSelectedRowCount() > 0;
+      }
+
+      @Override
+      public boolean isCopyVisible(@NotNull DataContext dataContext) {
+        return true;
+      }
+    };
+
+    DataManager.registerDataProvider(table, new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(String dataId) {
+        if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+          return copyProvider;
+        }
+        return null;
+      }
+    });
   }
 
   @Override
