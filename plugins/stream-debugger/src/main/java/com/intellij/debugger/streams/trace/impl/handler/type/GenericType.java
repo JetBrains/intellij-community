@@ -16,4 +16,5 @@ public interface GenericType {
   GenericType DOUBLE = new GenericTypeImpl("double", "java.lang.Double");
   GenericType LONG = new GenericTypeImpl("long", "java.lang.Long");
   GenericType OBJECT = new ClassTypeImpl("java.lang.Object");
+  GenericType VOID = new GenericTypeImpl("void", "java.lang.Void");
 }

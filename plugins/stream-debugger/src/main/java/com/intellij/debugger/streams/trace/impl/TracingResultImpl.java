@@ -25,7 +25,7 @@ public class TracingResultImpl implements TracingResult {
   private final Value myStreamResult;
   private final List<TraceInfo> myTrace;
 
-  TracingResultImpl(@NotNull Value streamResult, @NotNull List<TraceInfo> trace) {
+  TracingResultImpl(@Nullable Value streamResult, @NotNull List<TraceInfo> trace) {
     myStreamResult = streamResult;
     myTrace = trace;
   }

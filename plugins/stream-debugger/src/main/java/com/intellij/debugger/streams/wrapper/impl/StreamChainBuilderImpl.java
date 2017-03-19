@@ -84,15 +84,16 @@ public class StreamChainBuilderImpl implements com.intellij.debugger.streams.wra
           final String callArgs = resolveArguments(methodCall);
           if (callName == null) return null;
           final StreamCallType type = getType(callName);
+          final GenericType currentType = resolveType(methodCall);
+          if (currentType == null) return null;
           if (StreamCallType.INTERMEDIATE.equals(type)) {
-            final GenericType currentType = resolveType(methodCall);
-            if (currentType == null) return null;
             final IntermediateStreamCall streamCall = new IntermediateStreamCallImpl(callName, callArgs, prevCallType, currentType);
             intermediateStreamCalls.add(streamCall);
             prevCallType = currentType;
           }
           else if (StreamCallType.TERMINATOR.equals(type)) {
-            final TerminatorStreamCallImpl terminator = new TerminatorStreamCallImpl(callName, callArgs, prevCallType);
+            final TerminatorStreamCallImpl terminator =
+              new TerminatorStreamCallImpl(callName, callArgs, prevCallType, currentType.equals(GenericType.VOID));
             return new StreamChainImpl(producer, intermediateStreamCalls, terminator);
           }
           else {
@@ -122,6 +123,10 @@ public class StreamChainBuilderImpl implements com.intellij.debugger.streams.wra
           }
           if (InheritanceUtil.isInheritor(returnType, CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM)) {
             return GenericType.DOUBLE;
+          }
+
+          if (returnType.equals(PsiType.VOID)) {
+            return GenericType.VOID;
           }
 
           return GenericType.OBJECT;

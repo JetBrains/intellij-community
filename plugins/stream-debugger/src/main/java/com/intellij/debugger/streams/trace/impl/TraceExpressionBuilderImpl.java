@@ -38,7 +38,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
     final String fillingInfoArray = buildFillInfo(producerHandler, intermediateHandlers, terminatorHandler);
 
-    final String tracingCall = "final Object streamResult = " + traceChain.getText() + ";" + LINE_SEPARATOR;
+    final String tracingCall = buildStreamExpression(traceChain);
 
     final String result = declarations + tracingCall + fillingInfoArray;
     LOG.info("stream expression to trace:" + LINE_SEPARATOR + result);
@@ -96,6 +96,17 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     builder.append(terminatorHandler.additionalVariablesDeclaration());
 
     return builder.toString();
+  }
+
+  @NotNull
+  private static String buildStreamExpression(@NotNull StreamChain chain) {
+    if (chain.getTerminationCall().isVoid()) {
+      final String resultInitialization = "final Object streamResult = null;" + LINE_SEPARATOR;
+      return resultInitialization + chain.getText() + ";" + LINE_SEPARATOR;
+    }
+    else {
+      return "final Object streamResult = " + chain.getText() + ";" + LINE_SEPARATOR;
+    }
   }
 
   @NotNull
