@@ -95,7 +95,11 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
                             @Nullable String evaluationError) {
         try {
           handleResults(chain, result, evaluationError, isResultNull);
-        } finally {
+        }
+        catch (Throwable t) {
+          print("Exception catched: " + t, ProcessOutputTypes.SYSTEM);
+        }
+        finally {
           resume();
         }
       }
@@ -141,11 +145,11 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
       final String name = info.getCall().getName();
       println(name, ProcessOutputTypes.SYSTEM);
 
-      print("before: ", ProcessOutputTypes.SYSTEM);
+      print("    before: ", ProcessOutputTypes.SYSTEM);
       final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
       println(valuesOrderToString(before), ProcessOutputTypes.SYSTEM);
 
-      print("after: ", ProcessOutputTypes.SYSTEM);
+      print("    after: ", ProcessOutputTypes.SYSTEM);
       final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
       println(valuesOrderToString(after), ProcessOutputTypes.SYSTEM);
     }
@@ -174,7 +178,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private static String evalTimesRepresentation(@NotNull String before, int elementTime, @NotNull String after) {
     before = replaceIfEmpty(before);
     after = replaceIfEmpty(after);
-    return String.format("\t %s -> %d -> %s", before, elementTime, after);
+    return String.format("    %s -> %d -> %s", before, elementTime, after);
   }
 
   private static void checkTracesIsCorrectInBothDirections(@NotNull List<ResolvedTrace> resolvedTraces) {
@@ -208,7 +212,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   @NotNull
   private static String valuesOrderToString(@NotNull Map<Integer, TraceElement> values) {
-    return replaceIfEmpty(StreamEx.of(values.keySet()).sorted().joining(","));
+    final String res = replaceIfEmpty(StreamEx.of(values.keySet()).sorted().joining(","));
+    return res;
   }
 
   @NotNull
