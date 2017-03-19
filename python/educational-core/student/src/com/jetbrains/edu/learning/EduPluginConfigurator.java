@@ -50,10 +50,6 @@ public interface EduPluginConfigurator {
                           @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
                           @NotNull final Course course);
 
-  void createTaskContent(@NotNull Project project,
-                         @Nullable IdeView view,
-                         PsiDirectory taskDirectory);
-
   boolean excludeFromArchive(File pathname);
 
   default boolean isTestFile(VirtualFile file) {

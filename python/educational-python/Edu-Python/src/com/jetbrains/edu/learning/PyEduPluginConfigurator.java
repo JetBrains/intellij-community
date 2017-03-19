@@ -54,10 +54,9 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
     return taskDirectory.get();
   }
 
-  @Override
-  public void createTaskContent(@NotNull Project project,
+  private static void createTaskContent(@NotNull Project project,
                                 @Nullable IdeView view,
-                                PsiDirectory taskDirectory) {
+                                @NotNull PsiDirectory taskDirectory) {
     StudyUtils.createFromTemplate(project, taskDirectory, "task.py", view, false);
     StudyUtils.createFromTemplate(project, taskDirectory, TESTS_PY, view, false);
     StudyUtils.createFromTemplate(project, taskDirectory,

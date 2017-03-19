@@ -6,6 +6,7 @@ import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -14,16 +15,19 @@ import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
+import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.intellij.generation.EduCourseModuleBuilder;
 import org.jdom.JDOMException;
@@ -62,7 +66,7 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
       }
       myLanguageComboBox.addItem(new LanguageWrapper(language));
     }
-    getWizardInputField("cclang", "", "Language:", myLanguageComboBox, comboBox -> (String)comboBox.getSelectedItem())
+    getWizardInputField("cclang", "", "Language:", myLanguageComboBox, comboBox -> (String) comboBox.getSelectedItem())
       .addToSettings(settingsStep);
     getWizardInputField("ccdescr", "", "Description:", myPanel.getDescriptionField(), JTextArea::getText).addToSettings(settingsStep);
     return javaSettingsStep;
@@ -92,13 +96,6 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
     course.setCourseMode(CCUtils.COURSE_MODE);
     File courseDir = new File(StudyProjectGenerator.OUR_COURSES_DIR, myPanel.getName() + "-" + project.getName());
     course.setCourseDirectory(courseDir.getPath());
-    Lesson lesson = new Lesson();
-    Task task = new Task();
-    task.setName("task1");
-    lesson.addTask(task);
-    lesson.setName("lesson1");
-    course.addLesson(lesson);
-    course.initCourse(false);
     StudyTaskManager.getInstance(project).setCourse(course);
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     String languageName = language.getDisplayName();
@@ -107,6 +104,26 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
       return module;
     }
     configurator.createCourseModuleContent(moduleModel, project, course, getModuleFileDirectory());
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+        new WriteCommandAction.Simple(project) {
+          @Override
+          protected void run() throws Throwable {
+            PsiDirectory baseDir = PsiManager.getInstance(project).findDirectory(project.getBaseDir());
+            if (baseDir == null) {
+              return;
+            }
+            PsiDirectory lessonDir = new CCCreateLesson().createItem(null, project, baseDir, course);
+            if (lessonDir == null) {
+              LOG.error("Failed to create lesson");
+              return;
+            }
+            new CCCreateTask().createItem(null, project, lessonDir, course);
+          }
+        }.execute();
+      }
+    });
     return module;
   }
 
