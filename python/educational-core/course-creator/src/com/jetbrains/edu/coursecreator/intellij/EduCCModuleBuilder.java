@@ -104,26 +104,21 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
       return module;
     }
     configurator.createCourseModuleContent(moduleModel, project, course, getModuleFileDirectory());
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> new WriteCommandAction.Simple(project) {
       @Override
-      public void run() {
-        new WriteCommandAction.Simple(project) {
-          @Override
-          protected void run() throws Throwable {
-            PsiDirectory baseDir = PsiManager.getInstance(project).findDirectory(project.getBaseDir());
-            if (baseDir == null) {
-              return;
-            }
-            PsiDirectory lessonDir = new CCCreateLesson().createItem(null, project, baseDir, course);
-            if (lessonDir == null) {
-              LOG.error("Failed to create lesson");
-              return;
-            }
-            new CCCreateTask().createItem(null, project, lessonDir, course);
-          }
-        }.execute();
+      protected void run() throws Throwable {
+        PsiDirectory baseDir = PsiManager.getInstance(project).findDirectory(project.getBaseDir());
+        if (baseDir == null) {
+          return;
+        }
+        PsiDirectory lessonDir = new CCCreateLesson().createItem(null, project, baseDir, course);
+        if (lessonDir == null) {
+          LOG.error("Failed to create lesson");
+          return;
+        }
+        new CCCreateTask().createItem(null, project, lessonDir, course);
       }
-    });
+    }.execute());
     return module;
   }
 
