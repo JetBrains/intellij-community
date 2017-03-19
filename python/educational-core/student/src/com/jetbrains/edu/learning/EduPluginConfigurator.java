@@ -60,7 +60,7 @@ public interface EduPluginConfigurator {
                                  @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
                                  @NotNull final Course course);
 
-  boolean excludeFromArchive(File pathname);
+  boolean excludeFromArchive(@NotNull File pathname);
 
   default boolean isTestFile(VirtualFile file) {
     return false;

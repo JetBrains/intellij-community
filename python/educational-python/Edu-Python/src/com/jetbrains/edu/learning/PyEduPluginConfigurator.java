@@ -64,7 +64,7 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   }
 
   @Override
-  public boolean excludeFromArchive(File pathname) {
+  public boolean excludeFromArchive(@NotNull File pathname) {
     String name = pathname.getName();
     return name.contains("__pycache__") || name.contains(".pyc");
   }
