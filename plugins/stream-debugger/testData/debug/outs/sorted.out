@@ -2,21 +2,48 @@ LineBreakpoint created at Sorted.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! Sorted
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 Sorted.java:5
-Stream.of(3, 1, 2)
+Stream.of(3, 1, 2, 3, 3, 3, 3, 1, 2, 2, 3, 4, 5, 2)
 .sorted()
 .toArray()
 Stream.of
     before: nothing
-    after: 1,2,3
+    after: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
 sorted
-    before: 1,2,3
-    after: 4,5,6
+    before: 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+    after: 15,16,17,18,19,20,21,22,23,24,25,26,27,28
 toArray
-    before: 4,5,6
+    before: 15,16,17,18,19,20,21,22,23,24,25,26,27,28
     after: nothing
-
-NEED IDENTITY MAPPING!
-
-Exception catched: junit.framework.AssertionFailedErrorDisconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+mappings for sorted
+    nothing -> 1 -> 21
+    nothing -> 2 -> 15
+    nothing -> 3 -> 17
+    nothing -> 4 -> 22
+    nothing -> 5 -> 23
+    nothing -> 6 -> 24
+    nothing -> 7 -> 25
+    nothing -> 8 -> 16
+    nothing -> 9 -> 18
+    nothing -> 10 -> 19
+    nothing -> 11 -> 26
+    nothing -> 12 -> 27
+    nothing -> 13 -> 28
+    nothing -> 14 -> 20
+mappings for toArray
+    2 -> 15 -> nothing
+    8 -> 16 -> nothing
+    3 -> 17 -> nothing
+    9 -> 18 -> nothing
+    10 -> 19 -> nothing
+    14 -> 20 -> nothing
+    1 -> 21 -> nothing
+    4 -> 22 -> nothing
+    5 -> 23 -> nothing
+    6 -> 24 -> nothing
+    7 -> 25 -> nothing
+    11 -> 26 -> nothing
+    12 -> 27 -> nothing
+    13 -> 28 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

@@ -20,7 +20,6 @@ import com.intellij.debugger.streams.trace.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,7 +29,6 @@ import java.util.stream.Collectors;
  */
 public class ResolverFactoryImpl implements ResolverFactory {
   private static final ValuesOrderResolver EMPTY_RESOLVER = new MyEmptyResolver();
-  private static final ValuesOrderResolver IDENTITY_RESOLVER = new MyIdentityResolver();
 
   private static class Holder {
     private static final ResolverFactoryImpl INSTANCE = new ResolverFactoryImpl();
@@ -48,6 +46,7 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "limit":
       case "skip":
       case "peek":
+      case "onClose":
         return new FilterResolver();
       case "flatMap":
       case "flatMapToInt":
@@ -61,7 +60,7 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "boxed":
         return new MapResolver();
       case "sorted":
-        return IDENTITY_RESOLVER;
+        return new IdentityResolver();
       case "distinct":
         return new DistinctResolver();
       default:
@@ -82,24 +81,6 @@ public class ResolverFactoryImpl implements ResolverFactory {
     @NotNull
     private static Map<TraceElement, List<TraceElement>> toEmptyMap(@NotNull Map<Integer, TraceElement> order) {
       return order.keySet().stream().sorted().collect(Collectors.toMap(order::get, x -> Collections.emptyList()));
-    }
-  }
-
-  // TODO: totally wrong. time changed => TraceElement changed too
-  private static class MyIdentityResolver implements ValuesOrderResolver {
-    @NotNull
-    @Override
-    public Result resolve(@NotNull TraceInfo info) {
-      final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
-      final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
-      assert before.size() == after.size();
-      return Result.of(buildIdentityMapping(before), buildIdentityMapping(after));
-    }
-
-    private static Map<TraceElement, List<TraceElement>> buildIdentityMapping(@NotNull Map<Integer, TraceElement> previousCalls) {
-      final LinkedHashMap<TraceElement, List<TraceElement>> result = new LinkedHashMap<>();
-      previousCalls.values().stream().distinct().forEach(x -> result.put(x, Collections.singletonList(x)));
-      return result;
     }
   }
 }
