@@ -9,7 +9,8 @@ import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilder;
+import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
+import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilderImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,19 +33,20 @@ public class TraceStreamAction extends AnAction {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final TraceExpressionBuilder myExpressionBuilder = new TraceExpressionBuilderImpl();
   private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
+  private final StreamChainBuilder myChainBuilder = new StreamChainBuilderImpl();
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
-    e.getPresentation().setEnabled(element != null && StreamChainBuilder.checkStreamExists(element));
+    e.getPresentation().setEnabled(element != null && myChainBuilder.isChainExists(element));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
-    final StreamChain chain = element == null ? null : StreamChainBuilder.tryBuildChain(element);
+    final StreamChain chain = element == null ? null : myChainBuilder.build(element);
 
     if (chain != null) {
       final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session.getProject(), chain);

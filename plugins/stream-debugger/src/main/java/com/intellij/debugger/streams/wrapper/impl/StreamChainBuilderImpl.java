@@ -18,7 +18,8 @@ import java.util.Set;
 /**
  * @author Vitaliy.Bibaev
  */
-public class StreamChainBuilder {
+@SuppressWarnings("Duplicates")
+public class StreamChainBuilderImpl implements com.intellij.debugger.streams.wrapper.StreamChainBuilder {
   // TODO: producer - any method, which returns Stream object. Pay attention - need to be sure, that this method is repeatable
   private static final Set<String> SUPPORTED_PRODUCERS = StreamEx.of("stream", "iterate", "generate", "range", "rangeClosed",
                                                                      "of", "concat", "empty").toSet();
@@ -59,8 +60,14 @@ public class StreamChainBuilder {
     }
   };
 
+  @Override
+  public boolean isChainExists(@NotNull PsiElement startElement) {
+    return tryFindStreamCall(startElement) != null;
+  }
+
   @Nullable
-  public static StreamChain tryBuildChain(@NotNull PsiElement startElement) {
+  @Override
+  public StreamChain build(@NotNull PsiElement startElement) {
     final PsiMethodCallExpression call = tryFindStreamCall(startElement);
     if (call != null) {
       final List<IntermediateStreamCall> intermediateStreamCalls = new ArrayList<>();
@@ -122,10 +129,6 @@ public class StreamChainBuilder {
       }
       return null;
     });
-  }
-
-  public static boolean checkStreamExists(@NotNull PsiElement elementAtCursor) {
-    return tryFindStreamCall(elementAtCursor) != null;
   }
 
   @Nullable

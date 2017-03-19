@@ -2,7 +2,6 @@ package com.intellij.debugger.streams.chain.negative;
 
 import com.intellij.debugger.streams.chain.StreamChainBuilderTestCase;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilder;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +41,7 @@ public class StreamChainBuilderNegativeTest extends StreamChainBuilderTestCase {
   private void doTest() {
     final PsiElement element = configureAndGetElementAtCaret();
     assertNotNull(element);
-    final StreamChain chain = StreamChainBuilder.tryBuildChain(element);
+    final StreamChain chain = getChainBuilder().build(element);
     assertNull(chain);
   }
 

@@ -10,7 +10,8 @@ import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilder;
+import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
+import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilderImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +40,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final TraceExpressionBuilder myExpressionBuilder = new TraceExpressionBuilderImpl();
   private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
+  private final StreamChainBuilder myChainBuilder = new StreamChainBuilderImpl();
 
   @Override
   protected OutputChecker initOutputChecker() {
@@ -69,7 +71,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
         printContext(getDebugProcess().getDebuggerContext());
         final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
           final PsiElement elementAtBreakpoint = myPositionResolver.getNearestElementToBreakpoint(session);
-          return elementAtBreakpoint == null ? null : StreamChainBuilder.tryBuildChain(elementAtBreakpoint);
+          return elementAtBreakpoint == null ? null : myChainBuilder.build(elementAtBreakpoint);
         });
 
         if (chain == null) {

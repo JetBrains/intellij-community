@@ -2,6 +2,8 @@ package com.intellij.debugger.streams.chain;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.streams.JdkManager;
+import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
+import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilderImpl;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -16,6 +18,7 @@ import java.io.File;
  * @author Vitaliy.Bibaev
  */
 public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCase {
+  private final StreamChainBuilder myChainBuilder = new StreamChainBuilderImpl();
 
   @NotNull
   @Override
@@ -43,6 +46,11 @@ public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCas
     final PsiElement elementAtCaret = DebuggerUtilsEx.findElementAt(file, offset);
     assertNotNull(elementAtCaret);
     return elementAtCaret;
+  }
+
+  @NotNull
+  protected StreamChainBuilder getChainBuilder() {
+    return myChainBuilder;
   }
 
   @NotNull
