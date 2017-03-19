@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,17 +42,12 @@ public class CopyRevisionNumberAction extends DumbAwareAction {
   private static List<VcsRevisionNumber> getRevisionNumbersFromContext(@NotNull AnActionEvent e) {
     VcsRevisionNumber[] revisionNumbers = e.getData(VcsDataKeys.VCS_REVISION_NUMBERS);
 
-    return revisionNumbers != null ? Arrays.asList(revisionNumbers) : Collections.<VcsRevisionNumber>emptyList();
+    return revisionNumbers != null ? Arrays.asList(revisionNumbers) : Collections.emptyList();
   }
 
   @NotNull
   private static String getHashesAsString(@NotNull List<VcsRevisionNumber> revisions) {
-    return StringUtil.join(revisions, new Function<VcsRevisionNumber, String>() {
-      @Override
-      public String fun(VcsRevisionNumber revision) {
-        return revision.asString();
-      }
-    }, " ");
+    return StringUtil.join(revisions, VcsRevisionNumber::asString, " ");
   }
 
   @Override
