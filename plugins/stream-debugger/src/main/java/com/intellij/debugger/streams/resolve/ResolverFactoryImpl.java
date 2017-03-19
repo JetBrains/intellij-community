@@ -50,6 +50,9 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "peek":
         return new FilterResolver();
       case "flatMap":
+      case "flatMapToInt":
+      case "flatMapToLong":
+      case "flatMapToDouble":
         return new FlatMapResolver();
       case "map":
       case "mapToInt":
