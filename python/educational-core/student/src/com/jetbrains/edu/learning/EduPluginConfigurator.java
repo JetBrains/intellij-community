@@ -15,7 +15,7 @@ import com.intellij.psi.PsiDirectory;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyItem;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,13 +29,19 @@ public interface EduPluginConfigurator {
   @NotNull
   String getTestFileName();
 
-  default PsiDirectory createLesson(@NotNull Project project,
-                                    @NotNull StudyItem item,
-                                    @Nullable IdeView view,
-                                    @NotNull PsiDirectory parentDirectory) {
+  /**
+   * Creates content (including its directory or module) of new lesson in project
+   * @param project Parameter is used in Java and Kotlin plugins
+   * @param lesson Lesson to create content for. It's already properly initialized and added to course.
+   * @return PsiDirectory of created lesson
+   */
+  default PsiDirectory createLessonContent(@NotNull Project project,
+                                           @NotNull Lesson lesson,
+                                           @Nullable IdeView view,
+                                           @NotNull PsiDirectory parentDirectory) {
     final PsiDirectory[] lessonDirectory = new PsiDirectory[1];
     ApplicationManager.getApplication().runWriteAction(() -> {
-      lessonDirectory[0] = DirectoryUtil.createSubdirectories(EduNames.LESSON + item.getIndex(), parentDirectory, "\\/");
+      lessonDirectory[0] = DirectoryUtil.createSubdirectories(EduNames.LESSON + lesson.getIndex(), parentDirectory, "\\/");
     });
     if (lessonDirectory[0] != null) {
       if (view != null) {
@@ -45,10 +51,14 @@ public interface EduPluginConfigurator {
     return lessonDirectory[0];
   }
 
-
-  PsiDirectory createTask(@NotNull final Project project, @NotNull final StudyItem item,
-                          @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
-                          @NotNull final Course course);
+  /**
+   * Creates content (including its directory or module) of new task in project
+   * @param task Task to create content for. It's already properly initialized and added to corresponding lesson.
+   * @return PsiDirectory of created task
+   */
+  PsiDirectory createTaskContent(@NotNull final Project project, @NotNull final Task task,
+                                 @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
+                                 @NotNull final Course course);
 
   boolean excludeFromArchive(File pathname);
 

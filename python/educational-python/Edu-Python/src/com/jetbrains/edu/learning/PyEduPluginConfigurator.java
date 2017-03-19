@@ -18,7 +18,6 @@ import com.jetbrains.edu.coursecreator.settings.CCSettings;
 import com.jetbrains.edu.learning.actions.StudyCheckAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,25 +37,25 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   }
 
   @Override
-  public PsiDirectory createTask(@NotNull Project project,
-                                 @NotNull StudyItem item,
-                                 @Nullable IdeView view,
-                                 @NotNull PsiDirectory parentDirectory,
-                                 @NotNull Course course) {
+  public PsiDirectory createTaskContent(@NotNull Project project,
+                                        @NotNull Task task,
+                                        @Nullable IdeView view,
+                                        @NotNull PsiDirectory parentDirectory,
+                                        @NotNull Course course) {
     final Ref<PsiDirectory> taskDirectory = new Ref<>();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      String taskDirName = EduNames.TASK + item.getIndex();
+      String taskDirName = EduNames.TASK + task.getIndex();
       taskDirectory.set(DirectoryUtil.createSubdirectories(taskDirName, parentDirectory, "\\/"));
       if (taskDirectory.get() != null) {
-        createTaskContent(project, view, taskDirectory.get());
+        createFilesFromTemplates(project, view, taskDirectory.get());
       }
     });
     return taskDirectory.get();
   }
 
-  private static void createTaskContent(@NotNull Project project,
-                                @Nullable IdeView view,
-                                @NotNull PsiDirectory taskDirectory) {
+  private static void createFilesFromTemplates(@NotNull Project project,
+                                               @Nullable IdeView view,
+                                               @NotNull PsiDirectory taskDirectory) {
     StudyUtils.createFromTemplate(project, taskDirectory, "task.py", view, false);
     StudyUtils.createFromTemplate(project, taskDirectory, TESTS_PY, view, false);
     StudyUtils.createFromTemplate(project, taskDirectory,

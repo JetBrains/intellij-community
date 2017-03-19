@@ -63,7 +63,7 @@ public class CCCreateTask extends CCCreateStudyItemActionBase {
                                      @NotNull final Course course) {
     EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById());
     if (configurator != null) {
-      return configurator.createTask(project, item, view, parentDirectory, course);
+      return configurator.createTaskContent(project, (Task)item, view, parentDirectory, course);
     }
     return null;
   }
