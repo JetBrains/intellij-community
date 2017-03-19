@@ -60,8 +60,14 @@ public interface EduPluginConfigurator {
                                  @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
                                  @NotNull final Course course);
 
+  /**
+   * Used in educator plugin to filter files to be packed into course archive
+   */
   boolean excludeFromArchive(@NotNull File pathname);
 
+  /**
+   * @return true for all the test files including tests for subtasks
+   */
   default boolean isTestFile(VirtualFile file) {
     return false;
   }
@@ -69,11 +75,16 @@ public interface EduPluginConfigurator {
   default void createTestsForNewSubtask(@NotNull Project project, @NotNull Task task) {}
 
   /**
+   * Used for code highlighting in Task Description tool window
    * @return parameter for CodeMirror script. Available languages: @see <@linktourl http://codemirror.net/mode/>
    */
   @NotNull
   default String getDefaultHighlightingMode() {return "";}
 
+  /**
+   * Used for code highlighting in Task Description tool window
+   * Example in <a href="https://github.com/JetBrains/intellij-community/tree/master/python/educational-python/Edu-Python">Edu Python</a> plugin
+   */
   @NotNull
   default String getLanguageScriptUrl() {return "";}
 
@@ -97,9 +108,19 @@ public interface EduPluginConfigurator {
     return group;
   }
 
+  /**
+   * Configures (adds libraries for example) task module for languages that require modules
+   * <br>
+   * Example in <a href="https://github.com/JetBrains/educational-plugins/tree/master/Edu-Utils/Edu-Kotlin">Edu Kotlin</a> plugin
+   */
   default void configureModule(@NotNull Module module) {
   }
 
+  /**
+   * Creates module structure for given course
+   * <br>
+   * Example in <a href="https://github.com/JetBrains/educational-plugins/tree/master/Edu-Utils/Edu-Kotlin">Edu Kotlin</a> plugin
+   */
   default void createCourseModuleContent(@NotNull ModifiableModuleModel moduleModel,
                                          @NotNull Project project,
                                          @NotNull Course course,
