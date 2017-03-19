@@ -9,10 +9,10 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class TerminalOperationTest extends TraceExecutionTestCase {
   public void testForEach() throws InterruptedException, ExecutionException, InvocationTargetException {
-    doTest(false);
+    doTest(true);
   }
 
   public void testForEachOrdered() throws InterruptedException, ExecutionException, InvocationTargetException {
-    doTest(false);
+    doTest(true);
   }
 }

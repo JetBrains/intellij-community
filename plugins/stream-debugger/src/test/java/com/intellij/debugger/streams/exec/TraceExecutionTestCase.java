@@ -99,7 +99,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
           handleResults(chain, result, evaluationError, isResultNull);
         }
         catch (Throwable t) {
-          print("Exception catched: " + t, ProcessOutputTypes.SYSTEM);
+          println("Exception caught: " + t, ProcessOutputTypes.SYSTEM);
         }
         finally {
           resume();
