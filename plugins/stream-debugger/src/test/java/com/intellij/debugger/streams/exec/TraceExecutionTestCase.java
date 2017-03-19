@@ -35,23 +35,10 @@ import java.util.function.Function;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TraceExecutionTestCase extends DebuggerTestCase {
+public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final TraceExpressionBuilder myExpressionBuilder = new TraceExpressionBuilderImpl();
   private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
-
-  public void testFilter() throws InterruptedException, ExecutionException, InvocationTargetException {
-    doTest(false);
-  }
-
-  public void testMap() throws InterruptedException, ExecutionException, InvocationTargetException {
-    doTest(false);
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
 
   @Override
   protected OutputChecker initOutputChecker() {
@@ -60,13 +47,13 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
 
   @Override
   protected String getTestAppPath() {
-    return new File("testData/" + getRelativeTestPath()).getAbsolutePath();
+    return new File("testData/debug/").getAbsolutePath();
   }
 
   protected void doTest(boolean isResultNull) throws InterruptedException, ExecutionException, InvocationTargetException {
-    final String name = getTestName(false);
+    final String className = getTestName(false);
 
-    createLocalProcess(name);
+    createLocalProcess(className);
     final XDebugSession session = getDebuggerSession().getXDebugSession();
     assertNotNull(session);
 
@@ -106,8 +93,11 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
       private void complete(@Nullable StreamChain chain,
                             @Nullable TracingResult result,
                             @Nullable String evaluationError) {
-        handleResults(chain, result, evaluationError, isResultNull);
-        resume();
+        try {
+          handleResults(chain, result, evaluationError, isResultNull);
+        } finally {
+          resume();
+        }
       }
 
       private void resume() {
@@ -224,10 +214,5 @@ public class TraceExecutionTestCase extends DebuggerTestCase {
   @NotNull
   private static String replaceIfEmpty(@NotNull String str) {
     return str.isEmpty() ? "nothing" : str;
-  }
-
-  @NotNull
-  protected String getRelativeTestPath() {
-    return "debug";
   }
 }
