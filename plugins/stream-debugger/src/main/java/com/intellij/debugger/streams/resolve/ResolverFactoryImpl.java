@@ -47,6 +47,7 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "filter":
       case "limit":
       case "skip":
+      case "peek":
         return new FilterResolver();
       case "flatMap":
         return new FlatMapResolver();
@@ -57,7 +58,6 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "boxed":
         return new MapResolver();
       case "sorted":
-      case "peek":
         return IDENTITY_RESOLVER;
       case "distinct":
         return new DistinctResolver();
