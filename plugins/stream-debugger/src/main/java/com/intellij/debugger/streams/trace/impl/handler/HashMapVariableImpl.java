@@ -18,6 +18,17 @@ class HashMapVariableImpl extends VariableImpl {
     myValueType = to;
   }
 
+  @NotNull
+  GenericType getKeyType() {
+    return myKeyType;
+  }
+
+  @NotNull
+  GenericType getValueType() {
+    return myValueType;
+  }
+
+  @NotNull
   String convertToArray(@NotNull String arrayName) {
     final String newLine = TraceExpressionBuilderImpl.LINE_SEPARATOR;
 

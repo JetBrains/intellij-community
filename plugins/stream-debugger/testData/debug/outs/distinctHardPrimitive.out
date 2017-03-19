@@ -2,10 +2,25 @@ LineBreakpoint created at DistinctHardPrimitive.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! DistinctHardPrimitive
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 DistinctHardPrimitive.java:5
-Exception catched: junit.framework.AssertionFailedError: Expected: <null> but was: Compilation failed:
-incomparable types: java.lang.Object and int
+IntStream.of(1, 2, 1)
+.distinct()
+.count()
+IntStream.of
+    before: nothing
+    after: 1,3,5
+distinct
+    before: 1,3,5
+    after: 2,4
+count
+    before: 2,4
+    after: nothing
+mappings for distinct
+    nothing -> 1 -> 2
+    nothing -> 3 -> 4
+    nothing -> 5 -> 2
+mappings for count
+    1, 5 -> 2 -> nothing
+    3 -> 4 -> nothing
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-
-ANY DATA NEED
 
 Process finished with exit code 0
