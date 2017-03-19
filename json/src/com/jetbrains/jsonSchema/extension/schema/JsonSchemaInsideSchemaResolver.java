@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,20 +51,45 @@ public class JsonSchemaInsideSchemaResolver {
 
   public PsiElement resolveInSchemaRecursively() {
     final Ref<PsiElement> ref = new Ref<>();
-    JsonSchemaService.Impl.getEx(myProject).visitSchemaObject(mySchemaFile,
-                                                              object -> {
-      JsonSchemaWalker.extractSchemaVariants(myProject, (isName, schema, schemaFile, steps) -> {
+    final JsonSchemaWalker.CompletionSchemesConsumer consumer = new JsonSchemaWalker.CompletionSchemesConsumer() {
+      @Override
+      public void consume(boolean isName,
+                          @NotNull JsonSchemaObject schema,
+                          @NotNull VirtualFile schemaFile,
+                          @NotNull List<JsonSchemaWalker.Step> steps) {
         if (!ref.isNull()) return;
         final PsiFile file = PsiManager.getInstance(myProject).findFile(mySchemaFile);
         if (file == null) return;
         final JsonObject jsonObject = schema.getPeerPointer().getElement();
         if (jsonObject != null && jsonObject.isValid()) {
-          if (jsonObject.getParent() instanceof JsonProperty) ref.set(((JsonProperty)jsonObject.getParent()).getNameElement());
+          if (jsonObject.getParent() instanceof JsonProperty)
+            ref.set(((JsonProperty)jsonObject.getParent()).getNameElement());
           else ref.set(jsonObject);
         }
-      }, mySchemaFile, object, true, mySteps, false);
-      return true;
-    });
+      }
+
+      @Override
+      public void oneOf(boolean isName,
+                        @NotNull List<JsonSchemaObject> list,
+                        @NotNull VirtualFile schemaFile,
+                        @NotNull List<JsonSchemaWalker.Step> steps) {
+        list.stream().findFirst().ifPresent(object -> consume(isName, object, schemaFile, steps));
+      }
+
+      @Override
+      public void anyOf(boolean isName,
+                        @NotNull List<JsonSchemaObject> list,
+                        @NotNull VirtualFile schemaFile,
+                        @NotNull List<JsonSchemaWalker.Step> steps) {
+        list.stream().findFirst().ifPresent(object -> consume(isName, object, schemaFile, steps));
+      }
+    };
+    JsonSchemaService.Impl.getEx(myProject).visitSchemaObject(mySchemaFile,
+                                                              object -> {
+                                                                JsonSchemaWalker.extractSchemaVariants(
+                                                                  myProject, consumer, mySchemaFile, object, true, mySteps, false);
+                                                                return true;
+                                                              });
     return ref.get();
   }
 }

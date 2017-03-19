@@ -26,32 +26,25 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.patterns.PsiJavaPatterns.psiLiteral;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.patterns.StandardPatterns.or;
-import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
-import static com.intellij.psi.impl.source.resolve.reference.impl.JavaLangInvokeHandleReference.*;
+import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class JavaReflectionReferenceContributor extends PsiReferenceContributor {
   public static final PsiJavaElementPattern.Capture<PsiLiteral> PATTERN =
-    psiLiteral().methodCallParameter(psiMethod().withName(string().oneOf("getDeclaredField",
-                                                                         "getField",
-                                                                         "getMethod",
-                                                                         "getDeclaredMethod"))
-                                                     .definedInClass(JAVA_LANG_CLASS));
+    psiLiteral().methodCallParameter(psiMethod().withName(GET_FIELD, GET_DECLARED_FIELD, GET_METHOD, GET_DECLARED_METHOD)
+                                       .definedInClass(JAVA_LANG_CLASS));
 
   public static final PsiJavaElementPattern.Capture<PsiLiteral> CLASS_PATTERN =
     psiLiteral().methodCallParameter(or(
-      psiMethod().withName(string().equalTo("forName")).definedInClass(JAVA_LANG_CLASS),
-      psiMethod().withName(string().equalTo("loadClass")).definedInClass("java.lang.ClassLoader")));
+      psiMethod().withName(FOR_NAME).definedInClass(JAVA_LANG_CLASS),
+      psiMethod().withName(LOAD_CLASS).definedInClass(JAVA_LANG_CLASS_LOADER)));
 
   private static final ElementPattern<? extends PsiElement> METHOD_HANDLE_PATTERN = psiLiteral()
     .methodCallParameter(1, psiMethod()
-      .withName(FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,
-                FIND_GETTER, FIND_SETTER,
-                FIND_STATIC_GETTER, FIND_STATIC_SETTER,
-                FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE)
+      .withName(HANDLE_FACTORY_METHOD_NAMES)
       .definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP));
 
   @Override
@@ -63,7 +56,7 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
                                                      @NotNull PsiReferenceExpression methodReference,
                                                      @NotNull ProcessingContext context) {
 
-        PsiExpression qualifier = methodReference.getQualifierExpression();
+        final PsiExpression qualifier = methodReference.getQualifierExpression();
         return qualifier != null ? new PsiReference[]{new JavaLangClassMemberReference(literalArgument, qualifier)} : null;
       }
     });
@@ -75,14 +68,14 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
                                                      @NotNull PsiReferenceExpression methodReference,
                                                      @NotNull ProcessingContext context) {
 
-        String referenceName = methodReference.getReferenceName();
-        if ("forName".equals(referenceName) || "loadClass".equals(referenceName)) {
+        final String referenceName = methodReference.getReferenceName();
+        if (FOR_NAME.equals(referenceName) || LOAD_CLASS.equals(referenceName)) {
           return new JavaClassReferenceProvider().getReferencesByElement(literalArgument, context);
         }
         return null;
       }
     });
 
-    registrar.registerReferenceProvider(METHOD_HANDLE_PATTERN, new JavaLangInvokeHandleReferenceProvider());
+    registrar.registerReferenceProvider(METHOD_HANDLE_PATTERN, new JavaLangInvokeHandleReference.JavaLangInvokeHandleReferenceProvider());
   }
 }

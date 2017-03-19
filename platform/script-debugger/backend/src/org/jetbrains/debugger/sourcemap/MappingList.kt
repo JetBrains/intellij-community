@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,20 @@ abstract class MappingList(private val mappings: List<MappingEntry>) : Mappings 
 
   fun getNext(index: Int) = mappings.getOrNull(index + 1)
 
-  override fun getNext(mapping: MappingEntry) = getNext(mappings.binarySearch(mapping, comparator))
+  override fun getNext(mapping: MappingEntry): MappingEntry? {
+    var index = mappings.binarySearch(mapping, comparator)
+    if (index < 0) {
+      return null
+    }
+    index++
+
+    var result: MappingEntry?
+    do {
+      result = mappings.getOrNull(index++)
+    }
+    while (mapping === result)
+    return result
+  }
 
   override fun getNextOnTheSameLine(index: Int, skipIfColumnEquals: Boolean): MappingEntry? {
     var nextMapping = getNext(index) ?: return null

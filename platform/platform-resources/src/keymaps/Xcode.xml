@@ -560,4 +560,15 @@
   </action>
 
   <action id="Vcs.Push"/>
+
+  <action id="XPathView.Actions.Evaluate">
+    <keyboard-shortcut first-keystroke="control alt X" second-keystroke="E" />
+  </action>
+  <action id="XPathView.Actions.ShowPath">
+    <keyboard-shortcut first-keystroke="control alt X" second-keystroke="P" />
+  </action>
+  <action id="XPathView.Actions.FindByExpression">
+    <keyboard-shortcut first-keystroke="control alt X" second-keystroke="F" />
+  </action>
+
 </keymap>

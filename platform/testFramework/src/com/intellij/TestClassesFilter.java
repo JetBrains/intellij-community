@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +32,9 @@ public abstract class TestClassesFilter {
     }
   };
 
-  public abstract boolean matches(String className, String moduleName);
+  public abstract boolean matches(String className, @Nullable String moduleName);
+  
+  public boolean matches(String className) { return matches(className, null); }
 
   protected static ArrayList<Pattern> compilePatterns(Collection<String> filterList) {
     ArrayList<Pattern> patterns = new ArrayList<>();

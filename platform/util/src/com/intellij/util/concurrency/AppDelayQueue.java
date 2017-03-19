@@ -16,7 +16,6 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
-import sun.awt.AWTAutoShutdown;
 
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.ExecutorService;
@@ -68,8 +67,8 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
         LOG.debug("scheduledToPooledTransferer Stopped");
       }
     }, "Periodic tasks thread");
+    scheduledToPooledTransferer.setDaemon(true); // mark as daemon to not prevent JVM to exit (needed for Kotlin CLI compiler)
     scheduledToPooledTransferer.start();
-    AWTAutoShutdown.getInstance().notifyThreadBusy(scheduledToPooledTransferer); // needed for EDT not to exit suddenly
   }
 
   void shutdown() {
@@ -84,6 +83,9 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
     catch (Exception e) {
       throw new RuntimeException(e);
     }
-    AWTAutoShutdown.getInstance().notifyThreadFree(scheduledToPooledTransferer);
+  }
+
+  Thread getThread() {
+    return scheduledToPooledTransferer;
   }
 }

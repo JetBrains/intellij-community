@@ -90,13 +90,16 @@ public class JsonSchemaReader {
   }
 
   private void processReferences(JsonSchemaObject root, Set<JsonSchemaObject> objects) {
+    final Set<String> queuedDefinitions = new HashSet<>();
     final ArrayDeque<JsonSchemaObject> queue = new ArrayDeque<>();
     queue.add(root);
     queue.addAll(objects);
     int control = 10000;
 
     while (!queue.isEmpty()) {
-      if (--control == 0) throw new RuntimeException("cyclic definitions search");
+      if (--control == 0) {
+        throw new RuntimeException("cyclic definitions search");
+      }
 
       final JsonSchemaObject current = queue.removeFirst();
       if ("#".equals(current.getRef())) continue;
@@ -108,7 +111,8 @@ public class JsonSchemaReader {
           current.setRef(null);
           continue;
         }
-        if (definition.getRef() != null && !"#".equals(definition.getRef())) {
+        if (definition.getRef() != null && !"#".equals(definition.getRef()) && !queuedDefinitions.contains(definition.getRef())) {
+          queuedDefinitions.add(definition.getRef());
           queue.addFirst(current);
           queue.addFirst(definition);
           continue;

@@ -222,10 +222,19 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     blacklistPanel.setLayout(layout);
     blacklistPanel.setBorder(IdeBorderFactory.createTitledBorder("Blacklist"));
     
-    blacklistPanel.add(new JBLabel(CodeInsightBundle.message("inlay.hints.blacklist.pattern.explanation")));
+    blacklistPanel.add(new JBLabel(getBlacklistExplanationHTML(language)));
     blacklistPanel.add(editorTextField);
 
     return blacklistPanel;
+  }
+
+  @NotNull
+  private String getBlacklistExplanationHTML(Language language) {
+    InlayParameterHintsProvider hintsProvider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    if (hintsProvider == null) {
+      return CodeInsightBundle.message("inlay.hints.blacklist.pattern.explanation");
+    }
+    return hintsProvider.getBlacklistExplanationHTML();
   }
 
   @Nullable

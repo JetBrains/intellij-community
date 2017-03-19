@@ -16,5 +16,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>

@@ -16,6 +16,7 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.util.ui.UIUtil;
@@ -59,11 +60,12 @@ public abstract class JBEditorTabsPainter {
     final JBTabsPosition position = myTabs.getPosition();
     final boolean horizontalTabs = myTabs.isHorizontalTabs();
 
-    if (myTabs.hasUnderlineSelection() && myTabs.getTabCount() > 1) {
+    if (myTabs.hasUnderlineSelection() /*&& myTabs.getTabCount() > 1*/) {
       fillSelectionAndBorder(g2d, selectedShape, tabColor, _x, _y, _height);
 
       //todo[kb] move to editor scheme
-      g2d.setColor(Registry.getColor("ide.new.editor.tabs.selection.color", Gray._0));
+      Color underlineColor = Registry.getColor("ide.new.editor.tabs.selection.color", Gray._0);
+      g2d.setColor(hasFocus(myTabs) ? underlineColor : ColorUtil.withAlpha(underlineColor, 0.5));
       int thickness = 3;
       if (position == JBTabsPosition.bottom) {
         g2d.fillRect(rect.x, rect.y - 1, rect.width, thickness);
@@ -119,6 +121,25 @@ public abstract class JBEditorTabsPainter {
     g2d.draw(selectedShape.labelPath.transformLine(i.left, selectedShape.labelPath.getMaxY(),
                                                    selectedShape.path.getMaxX(),
                                                    selectedShape.labelPath.getMaxY()));
+  }
+
+  public static boolean hasFocus(Component component) {
+    Component focusOwner = findFocusOwner(component);
+    return focusOwner != null;
+  }
+
+  private static Component findFocusOwner(Component c) {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+
+    // verify focusOwner is a descendant of c
+    for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent())
+    {
+      if (temp == c) {
+        return focusOwner;
+      }
+    }
+
+    return null;
   }
 
   public abstract Color getBackgroundColor();

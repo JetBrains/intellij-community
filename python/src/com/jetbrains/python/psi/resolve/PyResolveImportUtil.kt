@@ -68,8 +68,8 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
       relativeResults.any { isRelativeImportResult(name, relativeDirectory, it, context) }
 
   val cache = findCache(context)
-  val mayCache = cache != null && !context.withoutRoots && !context.withoutForeign && !foundRelativeImport
-  val key = if (context.withoutStubs) QualifiedName.fromDottedString("without-stubs.$name") else name
+  val mayCache = cache != null && !foundRelativeImport
+  val key = cachePrefix(context).append(name)
 
   if (mayCache) {
     val cachedResults = cache?.get(key)
@@ -78,11 +78,12 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
     }
   }
 
-  val allResults = listOf(relativeResults,
-                          resultsFromRoots(name, context),
-                          relativeResultsFromSkeletons(name, context),
-                          foreignResults(name, context)).flatten()
-  val results = if (name.componentCount > 0) findFirstResults(allResults) else allResults
+  val foreignResults = foreignResults(name, context)
+  val pythonResults = listOf(relativeResults,
+                             resultsFromRoots(name, context),
+                             relativeResultsFromSkeletons(name, context)).flatten().distinct()
+  val allResults = foreignResults + pythonResults
+  val results = if (name.componentCount > 0) foreignResults + findFirstResults(pythonResults) else allResults
 
   if (mayCache) {
     cache?.put(key, results)
@@ -143,6 +144,20 @@ fun fromModule(module: Module): PyQualifiedNameResolveContext =
  */
 fun fromSdk(project: Project, sdk: Sdk): PyQualifiedNameResolveContext =
     PyQualifiedNameResolveContextImpl(PsiManager.getInstance(project), module = null, foothold = null, sdk = sdk)
+
+private fun cachePrefix(context: PyQualifiedNameResolveContext): QualifiedName {
+  val results = mutableListOf<String>()
+  if (context.withoutStubs) {
+    results.add("without-stubs")
+  }
+  if (context.withoutForeign) {
+    results.add("without-foreign")
+  }
+  if (context.withoutRoots) {
+    results.add("without-roots")
+  }
+  return QualifiedName.fromComponents(results)
+}
 
 private fun foreignResults(name: QualifiedName, context: PyQualifiedNameResolveContext) =
     if (context.withoutForeign)

@@ -238,7 +238,8 @@ def can_not_skip(plugin, pydb, pydb_frame, frame):
 
 
 def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
-    pydb, filename, info, thread = args
+    info = args[2]
+    thread = args[3]
     plugin_stop = False
     stop_info['jinja2_stop'] = False
     if _is_jinja2_suspended(thread):
@@ -271,7 +272,8 @@ def cmd_step_into(plugin, pydb, frame, event, args, stop_info, stop):
 
 
 def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
-    pydb, filename, info, thread = args
+    info = args[2]
+    thread = args[3]
     plugin_stop = False
     stop_info['jinja2_stop'] = False
     if _is_jinja2_suspended(thread):
@@ -311,7 +313,8 @@ def cmd_step_over(plugin, pydb, frame, event, args, stop_info, stop):
 
 
 def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
-    pydb, filename, info, thread = args
+    pydb = args[0]
+    thread = args[3]
     if dict_contains(stop_info, 'jinja2_stop') and stop_info['jinja2_stop']:
         frame = _suspend_jinja2(pydb, thread, frame, step_cmd)
         if frame:
@@ -321,7 +324,9 @@ def stop(plugin, pydb, frame, event, args, stop_info, arg, step_cmd):
 
 
 def get_breakpoint(plugin, pydb, pydb_frame, frame, event, args):
-    pydb, filename, info, thread = args
+    pydb= args[0]
+    filename = args[1]
+    info = args[2]
     new_frame = None
     jinja2_breakpoint = None
     flag = False
@@ -357,7 +362,8 @@ def suspend(plugin, pydb, thread, frame, bp_type):
 
 
 def exception_break(plugin, pydb, pydb_frame, frame, args, arg):
-    pydb, filename, info, thread = args
+    pydb = args[0]
+    thread = args[3]
     exception, value, trace = arg
     if pydb.jinja2_exception_break:
         exception_type = dict_keys(pydb.jinja2_exception_break)[0]

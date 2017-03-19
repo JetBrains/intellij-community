@@ -16,19 +16,30 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.PlatformIcons;
+import com.intellij.util.Producer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 
 public abstract class ListItemsDialogWrapper extends DialogWrapper {
   protected final JPanel myPanel;
-  protected final JList myList = new JBList(new DefaultListModel());
-  protected ArrayList<String> myData;
+  protected final JList<String> myList = new JBList<>(new DefaultListModel());
+  protected List<String> myData;
 
   public ListItemsDialogWrapper(String title) {
     super(true);
@@ -68,8 +79,8 @@ public abstract class ListItemsDialogWrapper extends DialogWrapper {
 
   protected abstract String createAddItemDialog();
 
-  public void setData(ArrayList<String> data) {
-    myData = data;
+  public void setData(List<String> data) {
+    myData = newArrayList(data);
     updateData();
     if (!myData.isEmpty()) {
       myList.setSelectedIndex(0);
@@ -77,14 +88,15 @@ public abstract class ListItemsDialogWrapper extends DialogWrapper {
   }
 
   protected void updateData() {
-    final DefaultListModel model = ((DefaultListModel)myList.getModel());
+    final DefaultListModel<String> model = ((DefaultListModel<String>)myList.getModel());
     model.clear();
     for (String data : myData) {
       model.addElement(data);
     }
   }
 
-  public ArrayList<String> getData() {
+  @Nullable
+  public List<String> getData() {
     return myData;
   }
 
@@ -96,5 +108,34 @@ public abstract class ListItemsDialogWrapper extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myList;
+  }
+
+  @NotNull
+  public static String createStringPresentation(@Nullable List<String> data) {
+    return data == null ? "" : StringUtil.join(data, ",");
+  }
+
+  @NotNull
+  public static List<String> createListPresentation(@Nullable String data) {
+    if (data == null || data.trim().isEmpty()) {
+      return emptyList();
+    }
+    return newArrayList(data.split(","));
+  }
+
+  public static void installListItemsDialogForTextField(@NotNull TextFieldWithBrowseButton uiField,
+                                                        @NotNull Producer<ListItemsDialogWrapper> createDialog) {
+    uiField.getTextField().setEditable(false);
+    uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
+    uiField.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final ListItemsDialogWrapper tagListDialog = createDialog.produce();
+        tagListDialog.setData(createListPresentation(uiField.getText()));
+        if (tagListDialog.showAndGet()) {
+          uiField.setText(createStringPresentation(tagListDialog.getData()));
+        }
+      }
+    });
   }
 }

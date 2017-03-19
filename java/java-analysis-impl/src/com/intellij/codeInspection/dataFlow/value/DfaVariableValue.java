@@ -39,6 +39,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -270,6 +271,7 @@ public class DfaVariableValue extends DfaValue {
     if (myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL)) {
       return myQualifier != null && myQualifier.isFlushableByCalls();
     }
+    if (myVariable instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)myVariable)) return false;
     return true;
   }
 

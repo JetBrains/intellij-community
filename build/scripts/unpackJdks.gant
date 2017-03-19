@@ -1,7 +1,6 @@
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-
-import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtilRt
+import org.apache.tools.ant.BuildException
 
 /*
  * Copyright 2000-2016 JetBrains s.r.o.
@@ -19,14 +18,13 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
  * limitations under the License.
  */
 
-includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
-
 target(default: "Unpack JDKs") {
   unpackJdks()
 }
 
 def unpackJdks() {
-  def osDirName = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux"
+  String home = guessHome(this)
+  def osDirName = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux"
   String basePath
   if (new File(home).getName().equals("community")) {
     basePath = new File(home).getParent()
@@ -38,7 +36,7 @@ def unpackJdks() {
   def jdkDir = new File(basePath, "build/jdk")
   def osDir = new File(jdkDir, osDirName)
   if (!osDir.isDirectory()) {
-    projectBuilder.info("Cannot unpack JDK: $osDir not found")
+    ant.project.log("Cannot unpack JDK: $osDir not found")
     return
   }
 
@@ -48,28 +46,28 @@ def unpackJdks() {
 
 private void unpackJdk(File osDir, File jdkDir, String archiveFileNamePrefix, String targetDirectoryName) {
   def jdkFiles = osDir.listFiles().findAll { it.name.startsWith(archiveFileNamePrefix) }
-  if (SystemInfo.isWindows) {
+  if (SystemInfoRt.isWindows) {
     def arch = System.getenv("ProgramFiles(x86)") != null ? "x64" : "x86"
     jdkFiles = jdkFiles.findAll { it.name.endsWith("_${arch}.tar.gz") }
   }
-  if (SystemInfo.isLinux) {
+  if (SystemInfoRt.isLinux) {
     jdkFiles = jdkFiles.findAll { it.name.endsWith("64.tar.gz") }
   }
   if (jdkFiles.empty) {
-    projectBuilder.error("Cannot unpack JDK: $archiveFileNamePrefix not found in $osDir")
+    throw new BuildException("Cannot unpack JDK: $archiveFileNamePrefix not found in $osDir")
   }
   if (jdkFiles.size() > 1) {
-    projectBuilder.error("Cannot unpack JDK: several matching files are found ($jdkFiles)")
+    throw new BuildException("Cannot unpack JDK: several matching files are found ($jdkFiles)")
   }
 
   File jdkFile = jdkFiles.first()
   def destDir = new File(jdkDir, targetDirectoryName)
-  FileUtil.delete(destDir)
-  projectBuilder.info("Extracting $jdkFile to $destDir")
+  FileUtilRt.delete(destDir)
+  ant.project.log("Extracting $jdkFile to $destDir")
   ant.mkdir(dir: destDir)
 
   if (jdkFile.name.endsWith(".tar.gz")) {
-    if (SystemInfo.isWindows) {
+    if (SystemInfoRt.isWindows) {
       ant.untar(src: jdkFile, dest: destDir, compression: 'gzip')
     }
     else {
@@ -81,7 +79,7 @@ private void unpackJdk(File osDir, File jdkDir, String archiveFileNamePrefix, St
         arg(value: destDir)
       }
       def jdkContents = new File(destDir, "jdk/Contents")
-      if (SystemInfo.isMac && jdkContents.exists()) {
+      if (SystemInfoRt.isMac && jdkContents.exists()) {
         jdkContents.listFiles().each { file ->
           ant.exec(executable: "mv", dir: destDir) {
             arg(value: file.absolutePath)
@@ -92,6 +90,20 @@ private void unpackJdk(File osDir, File jdkDir, String archiveFileNamePrefix, St
     }
   }
   else {
-    projectBuilder.error("Cannot unpack JDK: unknown extension of file '${jdkFile.name}'")
+    throw new BuildException("Cannot unpack JDK: unknown extension of file '${jdkFile.name}'")
   }
+}
+
+static String guessHome(Script script) {
+  File home = new File(script["gant.file"].substring("file:".length()))
+
+  while (home != null) {
+    if (home.isDirectory()) {
+      if (new File(home, ".idea").exists()) return home.getCanonicalPath()
+    }
+
+    home = home.getParentFile()
+  }
+
+  return null
 }

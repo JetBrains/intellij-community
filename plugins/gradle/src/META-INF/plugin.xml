@@ -199,6 +199,9 @@
             icon="GradleIcons.OfflineMode"/>
     <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"
             text="Composite Build Configuration"/>
+
+    <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"
+            text="Refresh dependencies" description="Refresh dependencies in the Gradle cache using --refresh-dependencies argument"/>
     
     <group id="Gradle.GenerateGroup">
       <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
@@ -219,6 +222,11 @@
     <group>
       <reference id="Gradle.OpenProjectCompositeConfiguration"/>
       <add-to-group group-id="ExternalSystemView.ProjectMenu"/>
+    </group>
+
+    <group>
+      <reference id="Gradle.RefreshDependencies"/>
+      <add-to-group group-id="ExternalSystemView.BaseProjectMenu" relative-to-action="ExternalSystem.RefreshProject" anchor="after"/>
     </group>
 
   </actions>

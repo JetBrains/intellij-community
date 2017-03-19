@@ -42,21 +42,21 @@ public class BinaryLightVirtualFile extends LightVirtualFileBase {
     this(name, ArrayUtil.EMPTY_BYTE_ARRAY);
   }
 
-  public BinaryLightVirtualFile(@NonNls String name, byte[] content) {
+  public BinaryLightVirtualFile(@NonNls String name, @NotNull byte[] content) {
     this(name, null, content, LocalTimeCounter.currentTime());
   }
 
-  public BinaryLightVirtualFile(final String name, final FileType fileType, final byte[] content) {
+  public BinaryLightVirtualFile(final String name, final FileType fileType, @NotNull byte[] content) {
     this(name, fileType, content, LocalTimeCounter.currentTime());
   }
 
-  public BinaryLightVirtualFile(VirtualFile original, final byte[] content, long modificationStamp) {
+  public BinaryLightVirtualFile(VirtualFile original, @NotNull byte[] content, long modificationStamp) {
     this(original.getName(), original.getFileType(), content, modificationStamp);
   }
 
   public BinaryLightVirtualFile(final String name,
                                 final FileType fileType,
-                                final byte[] content,
+                                @NotNull byte[] content,
                                 final long modificationStamp) {
     super(name, fileType, modificationStamp);
     setContent(content);
@@ -87,16 +87,17 @@ public class BinaryLightVirtualFile extends LightVirtualFileBase {
     return myContent;
   }
 
-  public void setContent(Object requestor, byte[] content, boolean fireEvent) {
+  public void setContent(Object requestor, @NotNull byte[] content, boolean fireEvent) {
     setContent(content);
     setModificationStamp(LocalTimeCounter.currentTime());
   }
 
-  private void setContent(byte[] content) {
+  private void setContent(@NotNull byte[] content) {
     //StringUtil.assertValidSeparators(content);
     myContent = content;
   }
 
+  @NotNull
   public byte[] getContent() {
     return myContent;
   }

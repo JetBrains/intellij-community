@@ -21,6 +21,7 @@ import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -561,6 +562,24 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     waitTenSecondsForCommit(document);
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
+  }
+
+  public void testBackgroundCommitInDialogInTransaction() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
+
+    TransactionGuard.submitTransaction(myProject, () -> {
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        document.insertString(0, "x");
+        LaterInvocator.enterModal(new Object());
+        assertFalse(getPsiDocumentManager().isCommitted(document));
+      });
+
+      waitTenSecondsForCommit(document);
+      assertTrue(getPsiDocumentManager().isCommitted(document));
+    });
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {

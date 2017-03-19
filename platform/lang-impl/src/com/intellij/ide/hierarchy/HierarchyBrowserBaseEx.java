@@ -531,7 +531,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       changeView(currentViewType);
       final HierarchyTreeBuilder builder = getCurrentBuilder();
       builder.restoreExpandedAndSelectedInfo(storedInfo.get());
-    }, __->!myAlarm.isDisposed());
+    }, __-> isDisposed());
   }
 
   protected String getCurrentScopeType() {

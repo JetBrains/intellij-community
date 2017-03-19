@@ -32,6 +32,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
   private final XmlElementDescriptor myParentDescriptor;
@@ -71,6 +72,7 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
   public void init(PsiElement element){
   }
 
+  @NotNull
   @Override
   public Object[] getDependences(){
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

@@ -179,6 +179,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
     public void init(PsiElement element) {
     }
 
+    @NotNull
     @Override
     public Object[] getDependences() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;

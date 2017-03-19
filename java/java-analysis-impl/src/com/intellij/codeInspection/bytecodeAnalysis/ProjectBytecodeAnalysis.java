@@ -151,6 +151,7 @@ public class ProjectBytecodeAnalysis {
    * @param methodAnnotations inferred annotations
    * @return Psi annotations
    */
+  @NotNull
   private PsiAnnotation[] toPsi(HKey primaryKey, MethodAnnotations methodAnnotations) {
     boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
@@ -201,6 +202,7 @@ public class ProjectBytecodeAnalysis {
    * @param parameterAnnotations inferred parameter annotations
    * @return Psi annotations
    */
+  @NotNull
   private PsiAnnotation[] toPsi(ParameterAnnotations parameterAnnotations) {
     if (parameterAnnotations.notNull) {
       return new PsiAnnotation[]{

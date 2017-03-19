@@ -22,6 +22,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -34,6 +35,7 @@ import java.util.Set;
  */
 public class ExpectedTypesGetter {
 
+  @NotNull
   public static PsiType[] getExpectedTypes(final PsiElement context, boolean defaultTypes) {
     PsiExpression expression = PsiTreeUtil.getContextOfType(context, PsiExpression.class, true);
     if(expression == null) return PsiType.EMPTY_ARRAY;
@@ -41,6 +43,7 @@ public class ExpectedTypesGetter {
     return extractTypes(ExpectedTypesProvider.getExpectedTypes(expression, true), defaultTypes);
   }
 
+  @NotNull
   public static PsiType[] extractTypes(ExpectedTypeInfo[] infos, boolean defaultTypes) {
     Set<PsiType> result = new THashSet<>(infos.length);
     for (ExpectedTypeInfo info : infos) {

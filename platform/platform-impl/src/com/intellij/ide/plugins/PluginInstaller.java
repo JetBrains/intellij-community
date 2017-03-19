@@ -40,6 +40,7 @@ import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +59,7 @@ public class PluginInstaller {
   private PluginInstaller() { }
 
   public static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                         List<PluginId> allPlugins,
+                                         List<IdeaPluginDescriptor> allPlugins,
                                          PluginManagerMain.PluginEnabler pluginEnabler,
                                          @NotNull ProgressIndicator indicator) {
     updateUrls(pluginsToInstall, indicator);
@@ -111,7 +112,7 @@ public class PluginInstaller {
   }
 
   private static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                          List<PluginId> allPlugins,
+                                          List<IdeaPluginDescriptor> allPlugins,
                                           Set<PluginNode> installedDependant,
                                           PluginManagerMain.PluginEnabler pluginEnabler,
                                           @NotNull ProgressIndicator indicator) {
@@ -138,7 +139,7 @@ public class PluginInstaller {
 
   private static boolean prepareToInstall(PluginNode pluginNode,
                                           List<PluginId> pluginIds,
-                                          List<PluginId> allPlugins,
+                                          List<IdeaPluginDescriptor> allPlugins,
                                           Set<PluginNode> installedDependant,
                                           PluginManagerMain.PluginEnabler pluginEnabler,
                                           @NotNull ProgressIndicator indicator) throws IOException {
@@ -159,11 +160,15 @@ public class PluginInstaller {
           continue;
         }
 
-        PluginNode depPlugin = new PluginNode(depPluginId);
-        depPlugin.setSize("-1");
-        depPlugin.setName(depPluginId.getIdString()); //prevent from exceptions
+        IdeaPluginDescriptor depPluginDescriptor = findPluginInRepo(depPluginId, allPlugins);
+        PluginNode depPlugin;
+        if (depPluginDescriptor instanceof PluginNode) {
+          depPlugin = (PluginNode) depPluginDescriptor;
+        } else {
+          depPlugin = new PluginNode(depPluginId, depPluginId.getIdString(), "-1");
+        }
 
-        if (isPluginInRepo(depPluginId, allPlugins)) {
+        if (depPluginDescriptor != null) {
           if (ArrayUtil.indexOf(optionalDependentPluginIds, depPluginId) != -1) {
             optionalDeps.add(depPlugin);
           }
@@ -248,8 +253,9 @@ public class PluginInstaller {
     return true;
   }
 
-  private static boolean isPluginInRepo(PluginId depPluginId, List<PluginId> allPlugins) {
-    return allPlugins.contains(depPluginId);
+  @Nullable
+  private static IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId, List<IdeaPluginDescriptor> allPlugins) {
+    return allPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
   }
 
   public static void prepareToUninstall(PluginId pluginId) throws IOException {

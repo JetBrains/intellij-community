@@ -144,6 +144,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
     throw new UnsupportedOperationException("Method init not implemented in " + getClass());
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     throw new UnsupportedOperationException("Method getDependences not implemented in " + getClass());

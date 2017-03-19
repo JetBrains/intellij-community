@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -187,6 +188,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   private void collectSubPackages(List<AbstractTreeNode> children, final PsiPackage rootPackage) {
     final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(rootPackage.getProject());
     final PsiPackage[] subPackages = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage[]>() {
+      @NotNull
       public PsiPackage[] compute() {
         return rootPackage.getSubPackages(searchScope); 
       }
@@ -229,6 +231,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
           }
         })) {
           final PsiPackage[] subPackages = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage[]>() {
+            @NotNull
             public PsiPackage[] compute() {
               return psiPackage.isValid()
                      ? psiPackage.getSubPackages(mySuitesBundle.getSearchScope(node.getProject()))
@@ -240,6 +243,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
           }
 
           final PsiFile[] childFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
+            @NotNull
             public PsiFile[] compute() {
               return psiPackage.isValid()
                      ? psiPackage.getFiles(mySuitesBundle.getSearchScope(node.getProject()))
@@ -272,6 +276,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   protected void collectFileChildren(final PsiFile file, AbstractTreeNode node, List<AbstractTreeNode> children) {
     if (file instanceof PsiClassOwner) {
       PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+        @NotNull
         public PsiClass[] compute() {
           return file.isValid() ? ((PsiClassOwner) file).getClasses() : PsiClass.EMPTY_ARRAY;
         }

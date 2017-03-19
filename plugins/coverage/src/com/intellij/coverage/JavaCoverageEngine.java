@@ -302,6 +302,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile) {
     final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+      @NotNull
       public PsiClass[] compute() {
         return ((PsiClassOwner)sourceFile).getClasses();
       }
@@ -367,6 +368,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
 
     final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+      @NotNull
       public PsiClass[] compute() {
         return ((PsiClassOwner)srcFile).getClasses();
       }

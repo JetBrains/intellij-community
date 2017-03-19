@@ -100,11 +100,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           assertFalse(application.isReadAccessAllowed());
           int ratioPercent = (int)((l1 - l2) * 100.0 / l1);
           String msg = "acquireReadActionLock(" + l2 + "ms) vs runReadAction(" + l1 + "ms). Ratio: " + ratioPercent + "% (in "+(ratioPercent<0 ? "my" : "Maxim's") +" favor)";
-          System.out.println(msg +
-                             "\n gc(run): " + dataRun.getGcStats() +
-                             "\n gc(acq): " + dataAcq.getGcStats() +
-                             "\n threads(run): " + dataRun.getThreadStats() +
-                             "\n threads(acq): " + dataAcq.getThreadStats());
+          System.out.println(msg + "\nAcquire:\n" + dataAcq.getSummary(" ") + "\nRun:\n" + dataRun.getSummary(" "));
           if (Math.abs(ratioPercent) > 40) {
             return "Suspiciously different times for " + msg;
           }
@@ -118,6 +114,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       err = application.executeOnPooledThread(runnable).get();
       if (err == null) break;
       System.err.println("Still trying, attempt "+i+": "+err);
+      System.gc();
     }
 
     assertNull(err);

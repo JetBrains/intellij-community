@@ -454,14 +454,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ file.renameTo(newFile) }, mapOf(newFile to 'P'))
   }
 
-  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
+  // tests the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
   @Test fun testPartialRefresh() = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
-
-  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
   @Test fun testInterruptedRefresh() = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
-
-  // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
   @Test fun testRefreshAndFindFile() = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
+  @Test fun testRefreshEquality() = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
 
   @Test fun testUnicodePaths() {
     val root = tempDir.newFolder(UNICODE_NAME_1)

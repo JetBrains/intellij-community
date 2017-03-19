@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import java.util.regex.Matcher;
 
 public class JavaSuppressionUtil {
   public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
-  public static boolean alreadyHas14Suppressions(@NotNull PsiDocCommentOwner commentOwner) {
+  public static boolean alreadyHas14Suppressions(@NotNull PsiJavaDocumentedElement commentOwner) {
     final PsiDocComment docComment = commentOwner.getDocComment();
     return docComment != null && docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME) != null;
   }
@@ -117,12 +117,12 @@ public class JavaSuppressionUtil {
     return result;
   }
 
-  public static PsiElement getElementMemberSuppressedIn(@NotNull PsiDocCommentOwner owner, @NotNull String inspectionToolID) {
+  public static PsiElement getElementMemberSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {
     PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
     if (element != null) return element;
     element = getAnnotationMemberSuppressedIn(owner, inspectionToolID);
     if (element != null) return element;
-    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiDocCommentOwner.class);
+    PsiJavaDocumentedElement classContainer = PsiTreeUtil.getParentOfType(owner, PsiJavaDocumentedElement.class);
     while (classContainer != null) {
       element = getDocCommentToolSuppressedIn(classContainer, inspectionToolID);
       if (element != null) return element;
@@ -130,7 +130,7 @@ public class JavaSuppressionUtil {
       element = getAnnotationMemberSuppressedIn(classContainer, inspectionToolID);
       if (element != null) return element;
 
-      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiDocCommentOwner.class);
+      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiJavaDocumentedElement.class);
     }
 
     final PsiJavaFile file = PsiTreeUtil.getParentOfType(owner, PsiJavaFile.class);
@@ -158,7 +158,7 @@ public class JavaSuppressionUtil {
     return AnnotationUtil.findAnnotation(owner, Generated.class.getName());
   }
 
-  static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiDocCommentOwner owner, @NotNull String inspectionToolID) {
+  static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {
     PsiDocComment docComment = owner.getDocComment();
     if (docComment == null && owner.getParent() instanceof PsiDeclarationStatement) {
       final PsiElement el = PsiTreeUtil.skipSiblingsBackward(owner.getParent(), PsiWhiteSpace.class);
@@ -195,8 +195,8 @@ public class JavaSuppressionUtil {
         return matcher.group(1).trim();
       }
     }
-    if (element instanceof PsiDocCommentOwner) {
-      PsiDocComment docComment = ((PsiDocCommentOwner)element).getDocComment();
+    if (element instanceof PsiJavaDocumentedElement) {
+      PsiDocComment docComment = ((PsiJavaDocumentedElement)element).getDocComment();
       if (docComment != null) {
         PsiDocTag inspectionTag = docComment.findTagByName(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME);
         if (inspectionTag != null) {
@@ -226,9 +226,9 @@ public class JavaSuppressionUtil {
           return statement;
         }
 
-        PsiModifierListOwner up = PsiTreeUtil.getNonStrictParentOfType(place, PsiVariable.class, PsiDocCommentOwner.class);
-        if (up instanceof PsiDocCommentOwner && up.getModifierList() == null) {
-          up = PsiTreeUtil.getParentOfType(up, PsiVariable.class, PsiDocCommentOwner.class);
+        PsiModifierListOwner up = PsiTreeUtil.getNonStrictParentOfType(place, PsiVariable.class, PsiJavaDocumentedElement.class);
+        if (up instanceof PsiJavaDocumentedElement && up.getModifierList() == null) {
+          up = PsiTreeUtil.getParentOfType(up, PsiVariable.class, PsiJavaDocumentedElement.class);
         }
         if (up instanceof PsiVariable) {
           PsiVariable local = (PsiVariable)up;
@@ -238,18 +238,18 @@ public class JavaSuppressionUtil {
           }
         }
 
-        PsiDocCommentOwner container = up == null || up instanceof PsiDocCommentOwner
-                                       ? (PsiDocCommentOwner)up : PsiTreeUtil.getNonStrictParentOfType(up, PsiDocCommentOwner.class);
+        PsiJavaDocumentedElement container = up == null || up instanceof PsiJavaDocumentedElement
+                                       ? (PsiJavaDocumentedElement)up : PsiTreeUtil.getNonStrictParentOfType(up, PsiJavaDocumentedElement.class);
         while (true) {
           if (!(container instanceof PsiTypeParameter)) break;
-          container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
+          container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
         }
 
         if (container != null) {
           PsiElement element = getElementMemberSuppressedIn(container, toolId);
           if (element != null) return element;
         }
-        PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, true);
+        PsiJavaDocumentedElement classContainer = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class, true);
         if (classContainer != null) {
           PsiElement element = getElementMemberSuppressedIn(classContainer, toolId);
           if (element != null) return element;

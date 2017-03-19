@@ -772,6 +772,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
          () -> DocumentUtil.executeInBulk(document, true,
          ()->document.deleteString(0, documentTextLength)), null, DocCommandGroupId.noneGroupId(document));
     }
+    MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), getProject(), true);
+    model.removeAllHighlighters(); // remove all empty highlighters leftovers if any
   }
 
   private boolean isStickingToEnd() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -218,7 +219,7 @@ public class QueueProcessor<T> {
     return true;
   }
 
-  public static void runSafely(@NotNull Runnable run) {
+  public static void runSafely(@Debugger.Insert(group = "com.intellij.util.Alarm._addRequest") @NotNull Runnable run) {
     try {
       run.run();
     }

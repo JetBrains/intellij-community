@@ -16,8 +16,8 @@
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogTabsProperties"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsUserRegistry"
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
-    <projectService serviceInterface="com.intellij.vcs.log.ui.history.FileHistoryUiProperties"
-                    serviceImplementation="com.intellij.vcs.log.ui.history.FileHistoryUiProperties"/>
+    <projectService serviceInterface="com.intellij.vcs.log.history.FileHistoryUiProperties"
+                    serviceImplementation="com.intellij.vcs.log.history.FileHistoryUiProperties"/>
 
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.usagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
@@ -32,10 +32,10 @@
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
-                        serviceImplementation="com.intellij.vcs.log.ui.history.VcsLogFileHistoryProviderImpl"/>
+                        serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
-    <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.ui.history.FileHistoryUiDataRule"/>
+    <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
   </extensions>
 
   <actions>

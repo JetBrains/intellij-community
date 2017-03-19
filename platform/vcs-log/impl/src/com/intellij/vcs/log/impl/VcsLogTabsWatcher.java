@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
@@ -92,6 +94,14 @@ public class VcsLogTabsWatcher implements Disposable {
         }
       }
     }
+  }
+
+  @NotNull
+  public Set<String> getTabNames() {
+    return myRefresher.getLogWindows().stream()
+      .filter(VcsLogTab.class::isInstance)
+      .map(w -> ((VcsLogTab)w).myTabName)
+      .collect(Collectors.toSet());
   }
 
   public class VcsLogTab extends PostponableLogRefresher.VcsLogWindow {

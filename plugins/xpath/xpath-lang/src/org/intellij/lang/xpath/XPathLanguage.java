@@ -53,6 +53,7 @@ public final class XPathLanguage extends Language {
   public static class XPathPairedBraceMatcher implements PairedBraceMatcher {
         private BracePair[] myBracePairs;
 
+        @NotNull
         @Override
         public BracePair[] getPairs() {
             if (myBracePairs == null) {

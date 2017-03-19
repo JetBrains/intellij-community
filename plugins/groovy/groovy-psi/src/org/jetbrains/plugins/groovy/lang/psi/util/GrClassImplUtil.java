@@ -179,6 +179,7 @@ public class GrClassImplUtil {
   }
 
 
+  @NotNull
   public static PsiClass[] getInterfaces(GrTypeDefinition grType) {
     final PsiClassType[] implementsListTypes = grType.getImplementsListTypes();
     List<PsiClass> result = new ArrayList<>(implementsListTypes.length);

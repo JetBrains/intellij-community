@@ -96,10 +96,16 @@ class BuiltInWebServer : HttpRequestHandler() {
       if (urlDecoder.path().length < 2) {
         return false
       }
+      
       projectName = null
     }
     else {
-      projectName = host
+      if (host.endsWith(".localhost")) {
+        projectName = host.substring(0, host.lastIndexOf('.'))
+      }
+      else {
+        projectName = host
+      }
     }
     return doProcess(urlDecoder, request, context, projectName)
   }
@@ -238,7 +244,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   return false
 }
 
-internal fun HttpRequest.isSignedRequest(): Boolean {
+fun HttpRequest.isSignedRequest(): Boolean {
   if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
     return true
   }
@@ -252,7 +258,7 @@ internal fun HttpRequest.isSignedRequest(): Boolean {
   return token != null && tokens.getIfPresent(token) != null
 }
 
-internal fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
+fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
   if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
     return EmptyHttpHeaders.INSTANCE
   }

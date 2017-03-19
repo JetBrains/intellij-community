@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -96,6 +97,7 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
     delegate.init(element);
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

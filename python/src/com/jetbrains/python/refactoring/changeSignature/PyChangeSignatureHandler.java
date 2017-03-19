@@ -126,7 +126,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   private static void showCannotRefactorErrorHint(@NotNull Project project, @Nullable Editor editor, @NotNull String details) {
     final String message = RefactoringBundle.getCannotRefactorMessage(details);
-    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, REFACTORING_NAME);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.renameRefactorings");
   }
 
   private static boolean isNotUnderSourceRoot(@NotNull final Project project, @Nullable final PsiFile psiFile) {

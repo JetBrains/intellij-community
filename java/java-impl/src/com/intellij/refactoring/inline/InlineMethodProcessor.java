@@ -55,6 +55,7 @@ import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -656,7 +657,24 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (enumConstant != null) {
         PsiExpression returnExpr = getSimpleReturnedExpression(myMethod);
         if (returnExpr != null) {
-          methodCall.replace(returnExpr);
+          PsiElement copy = returnExpr.copy();
+          copy.accept(new JavaRecursiveElementVisitor() {
+            @Override
+            public void visitReferenceExpression(PsiReferenceExpression expression) {
+              super.visitReferenceExpression(expression);
+              PsiElement resolve = expression.resolve();
+              if (resolve instanceof PsiParameter) {
+                int paramIdx = ArrayUtil.find(myMethod.getParameterList().getParameters(), resolve);
+                if (paramIdx >= 0) {
+                  PsiExpression initializer = blockData.parmVars[paramIdx].getInitializer();
+                  if (initializer != null) {
+                    inlineInitializer((PsiVariable)resolve, initializer, expression);
+                  }
+                }
+              }
+            }
+          });
+          methodCall.replace(copy);
         }
       }
       return;
@@ -1037,37 +1055,41 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         declareUsedLocalsFinal(initializer, strictlyFinal);
       }
       for (PsiReference ref : refs) {
-        final PsiJavaCodeReferenceElement javaRef = (PsiJavaCodeReferenceElement)ref;
-        if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
-          final PsiClass varThisClass = RefactoringChangeUtil.getThisClass(variable);
-          if (RefactoringChangeUtil.getThisClass(javaRef) != varThisClass) {
-            initializer = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
-          }
-        }
-
-        PsiExpression expr = InlineUtil.inlineVariable(variable, initializer, javaRef);
-
-        InlineUtil.tryToInlineArrayCreationForVarargs(expr);
-
-        //Q: move the following code to some util? (addition to inline?)
-        if (expr instanceof PsiThisExpression) {
-          if (expr.getParent() instanceof PsiReferenceExpression) {
-            PsiReferenceExpression refExpr = (PsiReferenceExpression)expr.getParent();
-            PsiElement refElement = refExpr.resolve();
-            PsiExpression exprCopy = (PsiExpression)refExpr.copy();
-            refExpr = (PsiReferenceExpression)refExpr.replace(myFactory.createExpressionFromText(refExpr.getReferenceName(), null));
-            if (refElement != null) {
-              PsiElement newRefElement = refExpr.resolve();
-              if (!refElement.equals(newRefElement)) {
-                // change back
-                refExpr.replace(exprCopy);
-              }
-            }
-          }
-        }
+        initializer = inlineInitializer(variable, initializer, (PsiJavaCodeReferenceElement)ref);
       }
       variable.getParent().delete();
     }
+  }
+
+  private PsiExpression inlineInitializer(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) {
+    if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
+      final PsiClass varThisClass = RefactoringChangeUtil.getThisClass(variable);
+      if (RefactoringChangeUtil.getThisClass(ref) != varThisClass) {
+        initializer = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
+      }
+    }
+
+    PsiExpression expr = InlineUtil.inlineVariable(variable, initializer, ref);
+
+    InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+
+    //Q: move the following code to some util? (addition to inline?)
+    if (expr instanceof PsiThisExpression) {
+      if (expr.getParent() instanceof PsiReferenceExpression) {
+        PsiReferenceExpression refExpr = (PsiReferenceExpression)expr.getParent();
+        PsiElement refElement = refExpr.resolve();
+        PsiExpression exprCopy = (PsiExpression)refExpr.copy();
+        refExpr = (PsiReferenceExpression)refExpr.replace(myFactory.createExpressionFromText(refExpr.getReferenceName(), null));
+        if (refElement != null) {
+          PsiElement newRefElement = refExpr.resolve();
+          if (!refElement.equals(newRefElement)) {
+            // change back
+            refExpr.replace(exprCopy);
+          }
+        }
+      }
+    }
+    return initializer;
   }
 
   private boolean canInlineParmOrThisVariable(PsiExpression initializer,

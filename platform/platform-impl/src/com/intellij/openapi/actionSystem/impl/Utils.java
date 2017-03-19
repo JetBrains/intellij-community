@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -376,6 +377,14 @@ public class Utils{
               if (myMenu != null) {
                 myMenu.paint(g);
               } else {
+                if (SystemInfo.isMac) {
+                  Graphics2D g2 = (Graphics2D)g.create();
+                  g2.setStroke(new BasicStroke(2));
+                  g2.setColor(UIUtil.AQUA_SEPARATOR_FOREGROUND_COLOR);
+                  double y = (double)getHeight() / 2;
+                  g2.draw(new Line2D.Double(0, y, getWidth(), y));
+                  return;
+                }
                 super.paintComponent(g);
               }
             }

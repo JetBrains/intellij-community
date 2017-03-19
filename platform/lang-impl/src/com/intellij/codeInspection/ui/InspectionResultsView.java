@@ -967,17 +967,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (psiElement == null) return null;
 
       final CommonProblemDescriptor problem = refElementNode.getDescriptor();
-      if (problem != null) {
-        if (problem instanceof ProblemDescriptor) {
-          PsiElement elementFromDescriptor = ((ProblemDescriptor)problem).getPsiElement();
-          if (elementFromDescriptor == null) {
-            final InspectionTreeNode node = (InspectionTreeNode)refElementNode.getChildAt(0);
-            if (node.isValid()) {
-              return InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
-            }
-          } else {
-            psiElement = elementFromDescriptor;
+      if (problem instanceof ProblemDescriptor) {
+        PsiElement elementFromDescriptor = ((ProblemDescriptor)problem).getPsiElement();
+        if (elementFromDescriptor == null && CommonDataKeys.NAVIGATABLE.is(dataId)) {
+          final InspectionTreeNode node = (InspectionTreeNode)refElementNode.getChildAt(0);
+          if (node.isValid()) {
+            return InspectionResultsViewUtil.getNavigatableForInvalidNode((ProblemDescriptionNode)node);
           }
+        }
+        else {
+          psiElement = elementFromDescriptor;
         }
       }
 
@@ -985,7 +984,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         return getSelectedNavigatable(problem, psiElement);
       }
       else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        return psiElement.isValid() ? psiElement : null;
+        return psiElement != null && psiElement.isValid() ? psiElement : null;
       }
     }
     else if (selectedNode instanceof ProblemDescriptionNode && CommonDataKeys.NAVIGATABLE.is(dataId)) {
@@ -1043,6 +1042,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return null;
   }
 
+  @NotNull
   private PsiElement[] collectPsiElements() {
     RefEntity[] refElements = myTree.getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<>();

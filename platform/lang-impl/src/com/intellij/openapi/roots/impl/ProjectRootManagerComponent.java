@@ -34,13 +34,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
@@ -91,7 +91,9 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     }, project);
 
-    startupManager.registerStartupActivity(() -> myStartupActivityPerformed = true);
+    if (!myProject.isDefault()) {
+      startupManager.registerStartupActivity(() -> myStartupActivityPerformed = true);
+    }
 
     myHandler = new BatchUpdateListener() {
       @Override
@@ -219,8 +221,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private Pair<Set<String>, Set<String>> getAllRoots(boolean includeSourceRoots) {
     if (myProject.isDefault()) return null;
 
-    final Set<String> recursive = new HashSet<>();
-    final Set<String> flat = new HashSet<>();
+    final Set<String> recursive = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> flat = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
     final String projectFilePath = myProject.getProjectFilePath();
     final File projectDirFile = projectFilePath == null ? null : new File(projectFilePath).getParentFile();

@@ -104,6 +104,7 @@ args = dict(
         'pydevconsole',
         'pydevd_file_utils',
         'pydevd',
+        'pydevd_tracing',
         # 'runfiles', -- Not needed for debugger
         # 'setup_cython', -- Should not be included as a module
         # 'setup', -- Should not be included as a module

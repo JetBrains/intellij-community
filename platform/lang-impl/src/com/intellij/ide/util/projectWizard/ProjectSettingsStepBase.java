@@ -309,5 +309,9 @@ public class ProjectSettingsStepBase extends AbstractActionWithPanel implements 
   }
 
   @Override
-  public void dispose() {}
+  public void dispose() {
+    if (myProjectGenerator instanceof WebProjectTemplate) {
+      ((WebProjectTemplate)myProjectGenerator).reset();
+    }
+  }
 }

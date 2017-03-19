@@ -211,6 +211,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return child;
   }
 
+  @NotNull
   private VirtualFileSystemEntry[] getArraySafely() {
     synchronized (myData) {
       return myData.getFileChildren(myId, this);
@@ -429,7 +430,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myData.removeAdoptedName(childName);
       if (indexInReal < 0) {
         insertChildAt(child, indexInReal);
-        ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
       }
       // else already stored
       assertConsistency(ignoreCase, child);
@@ -445,6 +445,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     assert appended[i] > 0 : file;
     System.arraycopy(array, i, appended, i + 1, array.length - i);
     myData.myChildrenIds = appended;
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public void removeChild(@NotNull VirtualFile file) {

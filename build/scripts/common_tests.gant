@@ -36,7 +36,6 @@ target(compile: "Compile project") {
   }
 
   if (!isDefined("avoid.project.rebuild")) {
-    clearBuildCaches()
     projectBuilder.cleanOutput()
     projectBuilder.buildAll()
   }

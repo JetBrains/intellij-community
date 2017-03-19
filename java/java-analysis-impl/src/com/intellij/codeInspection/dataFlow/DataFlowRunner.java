@@ -26,7 +26,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -54,17 +53,15 @@ public class DataFlowRunner {
   private final List<DfaMemoryState> myStackTopClosures = new ArrayList<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
-  private final boolean myShouldCheckLimitTime;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
 
   protected DataFlowRunner() {
-    this(false, true, false);
+    this(false, true);
   }
 
-  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers, boolean shouldCheckLimitTime) {
-    myShouldCheckLimitTime = shouldCheckLimitTime;
+  protected DataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
     myValueFactory = new DfaValueFactory(honorFieldInitializers, unknownMembersAreNullable);
   }
 
@@ -153,14 +150,13 @@ public class DataFlowRunner {
       MultiMap<BranchingInstruction, DfaMemoryState> processedStates = MultiMap.createSet();
       MultiMap<BranchingInstruction, DfaMemoryState> incomingStates = MultiMap.createSet();
 
-      long msLimit = Registry.intValue(shouldCheckTimeLimit() ? "ide.dfa.time.limit.online" : "ide.dfa.time.limit.offline");
-      WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(msLimit * 1000 * 1000);
+      int stateLimit = Registry.intValue("ide.dfa.state.limit");
       int count = 0;
       while (!queue.isEmpty()) {
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
         for (DfaInstructionState instructionState : states) {
-          if (count++ % 1024 == 0 && measurer.isTimeOver()) {
-            LOG.trace("Too complex because the analysis took too long");
+          if (count++ > stateLimit) {
+            LOG.trace("Too complex data flow: too many instruction states processed");
             psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
             return RunnerResult.TOO_COMPLEX;
           }
@@ -177,7 +173,7 @@ public class DataFlowRunner {
           if (instruction instanceof BranchingInstruction) {
             BranchingInstruction branching = (BranchingInstruction)instruction;
             Collection<DfaMemoryState> processed = processedStates.get(branching);
-            if (processed.contains(instructionState.getMemoryState())) {
+            if (containsState(processed, instructionState)) {
               continue;
             }
             if (processed.size() > MAX_STATES_PER_BRANCH) {
@@ -198,8 +194,8 @@ public class DataFlowRunner {
             handleStepOutOfLoop(instruction, nextInstruction, loopNumber, processedStates, incomingStates, states, after, queue);
             if (nextInstruction instanceof BranchingInstruction) {
               BranchingInstruction branching = (BranchingInstruction)nextInstruction;
-              if (processedStates.get(branching).contains(state.getMemoryState()) ||
-                  incomingStates.get(branching).contains(state.getMemoryState())) {
+              if (containsState(processedStates.get(branching), state) ||
+                  containsState(incomingStates.get(branching), state)) {
                 continue;
               }
               if (loopNumber[branching.getIndex()] != 0) {
@@ -219,6 +215,19 @@ public class DataFlowRunner {
       LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }
+  }
+
+  private static boolean containsState(Collection<DfaMemoryState> processed,
+                                       DfaInstructionState instructionState) {
+    if (processed.contains(instructionState.getMemoryState())) {
+      return true;
+    }
+    for (DfaMemoryState state : processed) {
+      if (((DfaMemoryStateImpl)state).isSuperStateOf((DfaMemoryStateImpl)instructionState.getMemoryState())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void handleStepOutOfLoop(@NotNull final Instruction prevInstruction,
@@ -269,10 +278,6 @@ public class DataFlowRunner {
 
   private static boolean inSameLoop(@NotNull Instruction prevInstruction, @NotNull Instruction nextInstruction, @NotNull int[] loopNumber) {
     return loopNumber[nextInstruction.getIndex()] == loopNumber[prevInstruction.getIndex()];
-  }
-
-  protected boolean shouldCheckTimeLimit() {
-    return myShouldCheckLimitTime && !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @NotNull

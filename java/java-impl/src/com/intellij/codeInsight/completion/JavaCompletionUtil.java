@@ -481,7 +481,7 @@ public class JavaCompletionUtil {
 
   private static boolean shouldMarkRed(@NotNull Object object, @NotNull PsiElement place) {
     if (!(object instanceof PsiMember)) return false;
-    if (Java15APIUsageInspectionBase.isForbiddenApiUsage((PsiMember)object, PsiUtil.getLanguageLevel(place))) return true;
+    if (Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel((PsiMember)object, PsiUtil.getLanguageLevel(place)) != null) return true;
 
     if (object instanceof PsiEnumConstant) {
       return findConstantsUsedInSwitch(place).contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));
@@ -806,12 +806,16 @@ public class JavaCompletionUtil {
         PsiElement composite = leaf == null ? null : leaf.getParent();
         if (composite instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil.insertSemicolon(composite.getParent())) {
           insertAdditionalSemicolon = false;
-        } else if (composite instanceof PsiReferenceExpression) {
+        }
+        else if (composite instanceof PsiReferenceExpression) {
           PsiElement parent = composite.getParent();
           if (parent instanceof PsiMethodCallExpression) {
             parent = parent.getParent();
           }
           if (parent instanceof PsiLambdaExpression && !LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
+            insertAdditionalSemicolon = false;
+          }
+          if (parent instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil.insertSemicolon(parent.getParent())) {
             insertAdditionalSemicolon = false;
           }
         }

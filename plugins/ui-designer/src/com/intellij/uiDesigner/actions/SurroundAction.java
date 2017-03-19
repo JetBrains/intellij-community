@@ -61,7 +61,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
 
     final Palette palette = Palette.getInstance(editor.getProject());
     final ComponentItem cItem = palette.getItem(myComponentClass);
-    assert cItem != null;
+    assert cItem != null : myComponentClass;
     CommandProcessor.getInstance().executeCommand(
       editor.getProject(),
       () -> {
@@ -176,10 +176,12 @@ public class SurroundAction extends AbstractGuiEditorAction {
   protected void update(@NotNull final GuiEditor editor, final ArrayList<RadComponent> selection, final AnActionEvent e) {
     FormEditingUtil.remapToActionTargets(selection);
     RadContainer selectionParent = FormEditingUtil.getSelectionParent(selection);
-    e.getPresentation().setEnabled(selectionParent != null &&
+    Palette palette = Palette.getInstance(editor.getProject());
+    e.getPresentation().setEnabled(palette.getItem(myComponentClass) != null &&
+                                   (selectionParent != null &&
                                    ((!selectionParent.getLayoutManager().isGrid() && selection.size() == 1) ||
                                      isSelectionContiguous(selectionParent, selection)) &&
-                                   canWrapSelection(selection));
+                                   canWrapSelection(selection)));
   }
 
   private boolean canWrapSelection(final ArrayList<RadComponent> selection) {

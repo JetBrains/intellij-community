@@ -1508,7 +1508,7 @@ public class StringUtil extends StringUtilRt {
                                 @NotNull Function<? super T, String> f,
                                 @NotNull @NonNls String separator) {
     if (items.isEmpty()) return "";
-    if (items.size() == 1) return f.fun(items.iterator().next());
+    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
     return join((Iterable<? extends T>)items, f, separator);
   }
 

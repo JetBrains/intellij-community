@@ -249,7 +249,7 @@ class SliceLeafAnalyzer {
           ApplicationManager.getApplication().runReadAction(() -> {
             final SliceUsage sliceUsage = element.getValue();
 
-            Collection<? extends AbstractTreeNode> children = element.getChildren();
+            Collection<SliceNode> children = element.getChildren();
             if (children.isEmpty() && sliceUsage instanceof JavaSliceUsage) {
               PsiElement value = ((JavaSliceUsage)sliceUsage).indexNesting == 0 ? sliceUsage.getElement() : null;
               if (value != null) {

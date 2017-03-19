@@ -23,6 +23,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -317,9 +318,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
 
   public GlobalSearchScope patchResolveScopeInner(@Nullable Module module, @NotNull GlobalSearchScope baseScope) {
     if (module == null) return GlobalSearchScope.EMPTY_SCOPE;
-    final String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-    if (!GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) return baseScope;
-
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return baseScope;
     GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Project project = module.getProject();
     for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
@@ -329,7 +328,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
       }
     }
 
-    String modulePath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+    String modulePath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (modulePath == null) return result;
 
     final Collection<VirtualFile> files = GradleBuildClasspathManager.getInstance(project).getModuleClasspathEntries(modulePath);

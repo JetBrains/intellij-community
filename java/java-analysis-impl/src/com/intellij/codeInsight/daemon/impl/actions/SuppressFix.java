@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
 
   @Override
   @Nullable
-  public PsiDocCommentOwner getContainer(final PsiElement context) {
+  public PsiJavaDocumentedElement getContainer(final PsiElement context) {
     if (context == null || !context.getManager().isInProject(context)) {
       return null;
     }
@@ -72,23 +72,32 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       return null;
     }
     PsiElement container = context;
-    while (container instanceof PsiAnonymousClass || !(container instanceof PsiDocCommentOwner) || container instanceof PsiTypeParameter) {
-      container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
+    while (container instanceof PsiAnonymousClass || !(container instanceof PsiJavaDocumentedElement) || container instanceof PsiTypeParameter) {
+      container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
       if (container == null) return null;
     }
-    return (PsiDocCommentOwner)container;
+    return (PsiJavaDocumentedElement)container;
   }
 
   @Override
   public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
-    PsiDocCommentOwner container = getContainer(context);
+    PsiJavaDocumentedElement container = getContainer(context);
     boolean isValid = container != null && !(container instanceof PsiMethod && container instanceof SyntheticElement);
     if (!isValid) {
       return false;
     }
-    setText(container instanceof PsiClass
-            ? InspectionsBundle.message("suppress.inspection.class")
-            : container instanceof PsiMethod ? InspectionsBundle.message("suppress.inspection.method") : InspectionsBundle.message("suppress.inspection.field"));
+    if (container instanceof PsiJavaModule) {
+      setText(InspectionsBundle.message("suppress.inspection.module"));
+    }
+    else if (container instanceof PsiClass) {
+      setText(InspectionsBundle.message("suppress.inspection.class"));
+    }
+    else if (container instanceof PsiMethod) {
+      setText(InspectionsBundle.message("suppress.inspection.method"));
+    }
+    else {
+      setText(InspectionsBundle.message("suppress.inspection.field"));
+    }
     return true;
   }
 
@@ -111,7 +120,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     return InspectionsBundle.message("suppress.inspection.member");
   }
 
-  private boolean doSuppress(@NotNull Project project, PsiDocCommentOwner container) {
+  private boolean doSuppress(@NotNull Project project, PsiJavaDocumentedElement container) {
     assert container != null;
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
@@ -125,7 +134,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     return false;
   }
 
-  private void suppressByDocComment(@NotNull Project project, PsiDocCommentOwner container) {
+  private void suppressByDocComment(@NotNull Project project, PsiJavaDocumentedElement container) {
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = PsiManager.getInstance(project);
     if (docComment == null) {
@@ -147,7 +156,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     }
   }
 
-  protected boolean use15Suppressions(@NotNull PsiDocCommentOwner container) {
+  protected boolean use15Suppressions(@NotNull PsiJavaDocumentedElement container) {
     return JavaSuppressionUtil.canHave15Suppressions(container) &&
            !JavaSuppressionUtil.alreadyHas14Suppressions(container);
   }

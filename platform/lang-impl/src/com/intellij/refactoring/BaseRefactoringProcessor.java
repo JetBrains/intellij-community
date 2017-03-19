@@ -272,6 +272,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
             processUsages(processor, myProject);
           }
 
+          @NotNull
           @Override
           protected UsageInfo[] findUsages() {
             return BaseRefactoringProcessor.this.findUsages();

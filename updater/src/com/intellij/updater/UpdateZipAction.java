@@ -91,7 +91,7 @@ public class UpdateZipAction extends BaseUpdateAction {
     processZipFile(olderFile, (entry, in) -> oldCheckSums.put(entry.getName(), Digester.digestStream(in)));
     processZipFile(newerFile, (entry, in) -> newCheckSums.put(entry.getName(), Digester.digestStream(in)));
 
-    DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums, Collections.emptyList(), false);
+    DiffCalculator.Result diff = DiffCalculator.calculate(oldCheckSums, newCheckSums);
     myFilesToCreate = diff.filesToCreate.keySet();
     myFilesToUpdate = diff.filesToUpdate.keySet();
     myFilesToDelete = diff.filesToDelete.keySet();

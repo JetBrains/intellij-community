@@ -101,7 +101,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       myDebuggerSession = null;
     }
 
-    if (getChecker().contains("JVMTI_ERROR_WRONG_PHASE(112)")) {
+    // disabled, see JRE-253
+    if (false && getChecker().contains("JVMTI_ERROR_WRONG_PHASE(112)")) {
       myRestart.incrementAndGet();
       if (needsRestart()) {
         return;

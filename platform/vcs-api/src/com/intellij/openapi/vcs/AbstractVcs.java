@@ -613,5 +613,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   public CheckoutProvider getCheckoutProvider() {
     return null;
   }
+
+  @Override
+  public String toString() {
+    return getName();
+  }
 }
 

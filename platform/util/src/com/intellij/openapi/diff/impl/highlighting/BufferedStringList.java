@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -39,6 +40,7 @@ class BufferedStringList {
     }
   }
 
+  @NotNull
   public String[] toArray() {
     flushLast();
     return ArrayUtil.toStringArray(myStrings);

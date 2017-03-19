@@ -102,7 +102,7 @@ public class RootsChangedTest extends ModuleTestCase {
     assertNotNull(vSubdir);
 
     move(vDir2, vSubdir);
-    assertEventsCount(0);
+    assertEventsCount(1);
     assertSameElements(ModuleRootManager.getInstance(moduleA).getContentRoots(), vDir2);
   }
 

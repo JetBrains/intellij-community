@@ -23,7 +23,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -33,7 +32,6 @@ import java.util.Set;
 public class ProjectCategoryUsagesCollector extends UsagesCollector {
 
   private final FactoryMap<String, UsageDescriptor> myUsageDescriptors = new FactoryMap<String, UsageDescriptor>() {
-    @Nullable
     @Override
     protected UsageDescriptor create(String key) {
       return new UsageDescriptor(key, 0);

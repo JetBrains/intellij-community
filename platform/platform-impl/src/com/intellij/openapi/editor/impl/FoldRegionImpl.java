@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
@@ -141,17 +142,25 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
       if (changeStart < oldEnd && changeEnd > oldStart) myDocumentRegionWasChanged = true;
     }
     super.changedUpdateImpl(e);
-    if (isValid() && (DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart()) ||
-                      DocumentUtil.isInsideSurrogatePair(getDocument(), intervalEnd()))) {
-      invalidate(e);
+    if (isValid()) {
+      alignToSurrogateBoundaries();
     }
   }
 
   @Override
   protected void onReTarget(int startOffset, int endOffset, int destOffset) {
-    if (DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart()) ||
-        DocumentUtil.isInsideSurrogatePair(getDocument(), intervalEnd())) {
-      invalidate("border moved inside surrogate pair on retarget");
+    alignToSurrogateBoundaries();
+  }
+
+  private void alignToSurrogateBoundaries() {
+    Document document = getDocument();
+    int start = intervalStart();
+    int end = intervalEnd();
+    if (DocumentUtil.isInsideSurrogatePair(document, start)) {
+      setIntervalStart(start - 1);
+    }
+    if (DocumentUtil.isInsideSurrogatePair(document, end)) {
+      setIntervalEnd(end - 1);
     }
   }
 

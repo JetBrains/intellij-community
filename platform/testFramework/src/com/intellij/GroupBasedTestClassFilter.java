@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package com.intellij;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Encapsulates logic of filtering test classes (classes that contain test-cases).
@@ -40,7 +44,7 @@ import java.util.regex.Pattern;
  *     {@link PatternListTestClassFilter#PatternListTestClassFilter(List) PatternListTestClassFilter};
  *   </li>
  *   <li>
- *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(java.io.Reader, java.util.List)};
+ *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(Reader, List)};
  *   </li>
  * </ul>
  */
@@ -52,26 +56,22 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
-  private final MultiMap<String, Pattern> myPatterns = MultiMap.create();
-  private final List<Pattern> myAllPatterns = new ArrayList<>();
-  private final List<Pattern> myTestGroupPatterns;
-  private boolean myContainsAllExcludeDefinedGroup;
+  private final List<Group> myGroups = ContainerUtil.newSmartList();
+  private final Set<String> myTestGroupNames;
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
-    myContainsAllExcludeDefinedGroup = containsAllExcludeDefinedGroup(testGroupNames);
+    myTestGroupNames = ContainerUtil.newTroveSet(testGroupNames);
 
     for (String groupName : filters.keySet()) {
-      addPatterns(groupName, filters.get(groupName));
+      Collection<String> groupFilters = filters.get(groupName);
+      List<Pattern> includePatterns = compilePatterns(ContainerUtil.filter(groupFilters, s -> !s.startsWith("-")));
+      List<Pattern> excludedPatterns = compilePatterns(groupFilters.stream()
+                                                         .filter(s -> s.startsWith("-") && s.length() > 1)
+                                                         .map(s -> s.substring(1))
+                                                         .collect(Collectors.toList()));
+      myGroups.add(new Group(groupName, includePatterns, excludedPatterns));
     }
-
-    myTestGroupPatterns = collectPatternsFor(testGroupNames);
-  }
-
-  private void addPatterns(String groupName, Collection<String> filterList) {
-    List<Pattern> patterns = compilePatterns(filterList);
-    myPatterns.putValues(groupName, patterns);
-    myAllPatterns.addAll(patterns);
   }
 
   /**
@@ -159,24 +159,27 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   @Override
   public boolean matches(String className, String moduleName) {
-    if (matchesAnyPattern(myTestGroupPatterns, className)) {
-      return true;
-    }
-    if (myContainsAllExcludeDefinedGroup && !matchesAnyPattern(myAllPatterns, className)) {
-      return true;
-    }
-    return false;
+    if (myGroups.stream().filter(g -> myTestGroupNames.contains(g.name)).anyMatch(g -> g.matches(className))) return true;
+    return containsAllExcludeDefinedGroup(myTestGroupNames) && myGroups.stream().noneMatch(g -> g.matches(className));
   }
 
-  private static boolean containsAllExcludeDefinedGroup(List<String> groupNames) {
+  private static boolean containsAllExcludeDefinedGroup(Set<String> groupNames) {
     return groupNames.isEmpty() || groupNames.contains(ALL_EXCLUDE_DEFINED);
   }
 
-  private List<Pattern> collectPatternsFor(List<String> groupNames) {
-    List<Pattern> patterns = new ArrayList<>();
-    for (String groupName : groupNames) {
-      patterns.addAll(myPatterns.get(groupName));
+  private static class Group {
+    private final String name;
+    private final List<Pattern> included;
+    private final List<Pattern> excluded;
+
+    private Group(String name, List<Pattern> included, List<Pattern> excluded) {
+      this.name = name;
+      this.excluded = excluded;
+      this.included = included;
     }
-    return patterns;
+    
+    private boolean matches(String className) {
+      return !matchesAnyPattern(excluded, className) && matchesAnyPattern(included, className);
+    }
   }
 }

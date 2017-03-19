@@ -303,10 +303,8 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
-    final Semaphore freezeSemaphore = new Semaphore();
-    freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
-                                                                                  parameters, this, freezeSemaphore,
+                                                                                  parameters, this,
                                                                                   initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
     Disposer.register(indicator, hostCopyOffsets.getOffsets());
     Disposer.register(indicator, context.getOffsetMap());
@@ -320,20 +318,18 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
-    if (freezeSemaphore.waitFor(ourAutoInsertItemTimeout)) {
-      if (!indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
-        try {
-          indicator.getLookup().refreshUi(true, false);
-        }
-        catch (Exception e) {
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-          LOG.error(e);
-          return;
-        }
-
-        completionFinished(indicator, hasModifiers);
+    if (indicator.blockingWaitForFinish(ourAutoInsertItemTimeout)) {
+      try {
+        indicator.getLookup().refreshUi(true, false);
+      }
+      catch (Exception e) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        LOG.error(e);
         return;
       }
+
+      completionFinished(indicator, hasModifiers);
+      return;
     }
 
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));

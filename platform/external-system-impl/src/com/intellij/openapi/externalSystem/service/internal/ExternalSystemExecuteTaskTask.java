@@ -44,20 +44,20 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
   @Nullable private final String myVmOptions;
-  @Nullable private String myScriptParameters;
-  @Nullable private final String myDebuggerSetup;
+  @Nullable private String myArguments;
+  @Nullable private final String myJvmAgentSetup;
 
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
-                                       @Nullable String scriptParameters,
-                                       @Nullable String debuggerSetup) throws IllegalArgumentException {
+                                       @Nullable String arguments,
+                                       @Nullable String jvmAgentSetup) throws IllegalArgumentException {
     super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
     myTasksToExecute = tasksToExecute;
     myVmOptions = vmOptions;
-    myScriptParameters = scriptParameters;
-    myDebuggerSetup = debuggerSetup;
+    myArguments = arguments;
+    myJvmAgentSetup = jvmAgentSetup;
   }
 
   @NotNull
@@ -71,12 +71,12 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   }
 
   @Nullable
-  public String getScriptParameters() {
-    return myScriptParameters;
+  public String getArguments() {
+    return myArguments;
   }
 
-  public void appendScriptParameters(@NotNull String scriptParameters) {
-    myScriptParameters = myScriptParameters == null ? scriptParameters : myScriptParameters + ' ' + scriptParameters;
+  public void appendArguments(@NotNull String arguments) {
+    myArguments = myArguments == null ? arguments : myArguments + ' ' + arguments;
   }
 
   @NotNull
@@ -121,9 +121,10 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, ExternalTaskPojo::getName);
 
     final List<String> vmOptions = parseCmdParameters(myVmOptions);
-    final List<String> scriptParametersList = parseCmdParameters(myScriptParameters);
+    final List<String> arguments = parseCmdParameters(myArguments);
+    settings.withVmOptions(vmOptions).withArguments(arguments);
 
-    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, vmOptions, scriptParametersList, myDebuggerSetup);
+    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myJvmAgentSetup);
   }
 
   @Override

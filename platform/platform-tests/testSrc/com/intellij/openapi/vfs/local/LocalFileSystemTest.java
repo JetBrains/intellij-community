@@ -177,6 +177,38 @@ public class LocalFileSystemTest extends PlatformTestCase {
     assertNotNull(lfs.refreshAndFindFileByPath(file3.getPath()));
   }
 
+  public void testRefreshEquality() throws IOException {
+    doTestRefreshEquality(createTempDirectory());
+  }
+
+  public static void doTestRefreshEquality(@NotNull File tempDir) throws IOException {
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile tempVDir = lfs.refreshAndFindFileByPath(tempDir.getPath());
+    assertNotNull(tempVDir);
+    assertEquals(0, tempVDir.getChildren().length);
+
+    FileUtil.writeToFile(new File(tempDir, "file1.txt"), "hello");
+    tempVDir.refresh(false, false);
+    assertEquals(1, tempVDir.getChildren().length);
+    FileUtil.writeToFile(new File(tempDir, "file2.txt"), "hello");
+    tempVDir.refresh(false, true);
+    assertEquals(2, tempVDir.getChildren().length);
+
+    File tempDir1 = IoTestUtil.createTestDir(tempDir, "sub1");
+    VirtualFile tempVDir1 = lfs.refreshAndFindFileByIoFile(tempDir1);
+    assertNotNull(tempVDir1);
+    FileUtil.writeToFile(new File(tempDir1, "file.txt"), "hello");
+    tempVDir1.refresh(false, false);
+    assertEquals(1, tempVDir1.getChildren().length);
+
+    File tempDir2 = IoTestUtil.createTestDir(tempDir, "sub2");
+    VirtualFile tempVDir2 = lfs.refreshAndFindFileByIoFile(tempDir2);
+    assertNotNull(tempVDir2);
+    FileUtil.writeToFile(new File(tempDir2, "file.txt"), "hello");
+    tempVDir2.refresh(false, true);
+    assertEquals(1, tempVDir2.getChildren().length);
+  }
+
   public void testCopyFile() throws Exception {
     File fromDir = createTempDirectory();
     File toDir = createTempDirectory();
@@ -522,7 +554,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
     Set<VirtualFile> processed = ContainerUtil.newHashSet();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         events.forEach(e -> processed.add(e.getFile()));
@@ -615,7 +647,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
     Set<VirtualFile> processed = ContainerUtil.newHashSet();
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         events.forEach(e -> processed.add(e.getFile()));
@@ -705,7 +737,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
 
     int[] updated = {0};
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable());
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {

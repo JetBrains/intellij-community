@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,55 +15,38 @@
  */
 package com.intellij.refactoring.actions;
 
-import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.typeCook.TypeCookHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class TypeCookAction extends BaseRefactoringAction {
+import java.util.Arrays;
 
+public class TypeCookAction extends BaseRefactoringAction {
+  @Override
   protected boolean isAvailableInEditorOnly() {
-    return false; 
+    return false;
   }
 
+  @Override
   public boolean isAvailableForLanguage(Language language) {
     return language.equals(JavaLanguage.INSTANCE);
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-
-    if (project == null) {
-      return false;
-    }
-
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-
-      if (
-        !(element instanceof PsiClass ||
-          element instanceof PsiJavaFile ||
-          element instanceof PsiDirectory ||
-          element instanceof PsiPackage
-         )
-      ) {
-        return false;
-      }
-    }
-
-    return true;
+    return elements.length > 0 && Arrays.stream(elements).allMatch(
+      e -> e instanceof PsiClass || e instanceof PsiJavaFile || e instanceof PsiDirectory || e instanceof PsiPackage);
   }
 
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return getHandler();
   }
+
   public RefactoringActionHandler getHandler() {
     return new TypeCookHandler();
   }

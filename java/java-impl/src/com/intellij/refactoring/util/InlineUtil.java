@@ -27,7 +27,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
@@ -297,6 +296,7 @@ public class InlineUtil {
 
   public static TailCallType getTailCallType(@NotNull final PsiReference psiReference) {
     PsiElement element = psiReference.getElement();
+    if (element instanceof PsiMethodReferenceExpression) return TailCallType.None;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
     if (methodCall.getParent() instanceof PsiReturnStatement) return TailCallType.Return;

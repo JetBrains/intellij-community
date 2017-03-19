@@ -49,6 +49,7 @@ public class ReturnInstruction extends GoToInstruction {
     }
   }
 
+  @NotNull
   public int[] getPossibleReturnOffsets() {
     return offset == 0 ?
         new int[]{

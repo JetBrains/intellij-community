@@ -156,6 +156,10 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testStaticMethodReference() { doTest(false); }
+  public void testStaticMethodReferenceInContextWithTypeArgs() {
+    configureByTestName();
+    checkResultByFile("/" + getTestName(false) + "-out.java");
+  }
 
   public void testOuterMethodReference() { doTest(true); }
   public void testNoAnonymousOuterMethodReference() { doAntiTest(); }
@@ -227,6 +231,11 @@ public void testConvertToObjectStream() {
   public void testOnlyCompatibleTypes() {
     configureByTestName();
     assertOrderedEquals(myFixture.getLookupElementStrings(), "get2");
+  }
+
+  public void testInferredObjects() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "M", "HM");
   }
 
   public void testSuggestMapInheritors() { doTest(); }

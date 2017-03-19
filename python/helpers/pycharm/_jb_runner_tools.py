@@ -4,7 +4,6 @@ Tools to implement runners (https://confluence.jetbrains.com/display/~link/PyCha
 """
 import atexit
 import _jb_utils
-import imp
 import os
 import re
 import sys
@@ -23,7 +22,7 @@ def _parse_parametrized(part):
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
     with parentheses
     """
-    match = re.match("^(.+)(\(.+\))$", part)
+    match = re.match("^(.+)(\\(.+\\))$", part)
     if not match:
         return [part]
     else:
@@ -291,6 +290,73 @@ messages.TeamcityServiceMessages = NewTeamcityServiceMessages
 # Monkeypatched
 
 
+class _SymbolNameSplitter(object):
+    """
+    Strategy to split symbol name to package/module part and symbols part.
+        
+    """
+    def check_is_importable(self, parts, current_step, separator):
+        """
+        
+        Run this method for each name part. Method throws ImportError when name is not importable. 
+        That means previous name is where module name ends.
+        :param parts: list of module name parts
+        :param current_step: from 0 to len(parts)
+        :param separator: module name separator (".")
+        """
+        raise NotImplementedError()
+
+
+class _SymbolName2KSplitter(_SymbolNameSplitter):
+    """
+    Based on imp which works in 2, but not 3.
+    It also emulates packages for folders with out of __init__.py.
+    Say, you have Python path "spam.eggs" where "spam" is plain folder.
+    It works for Py3, but not Py2.
+    find_module for "spam" raises exception which is processed then (see "_symbol_processed") 
+    """
+    def __init__(self):
+        super(_SymbolNameSplitter, self).__init__()
+        self._path = None
+        # Set to True when at least one find_module success, so we have at least one symbol
+        self._symbol_processed = False
+
+    def check_is_importable(self, parts, current_step, separator):
+        import imp
+        module_to_import = parts[current_step]
+        try:
+            (fil, self._path, desc) = imp.find_module(module_to_import, [self._path] if self._path else None)
+            self._symbol_processed = True
+            if desc[2] == imp.PKG_DIRECTORY:
+                # Package
+                self._path = imp.load_module(module_to_import, fil, self._path, desc).__path__[0]
+        except ImportError as error:
+            if not self._symbol_processed:
+                # First ImportError means there could be folder with out for __init__.py
+                # See class doc for more info
+                subdir = os.path.sep.join(parts[:current_step + 1])
+                dirs = [path for path in map( lambda p: os.path.join(p, subdir), sys.path) if os.path.isdir(path)]
+                if not dirs:
+                    raise error
+                elif len(dirs) == 1:
+                    # can be folder with out of __init__.py
+                    self._path = dirs[0]
+                    return
+                else:
+                    raise Exception("Several folders on sys.path with same name, rename folder: {0}", ",".join(dirs))
+            raise error
+
+
+class _SymbolName3KSplitter(_SymbolNameSplitter):
+    """
+    Based on importlib which works in 3, but not 2
+    """
+    def check_is_importable(self, parts, current_step, separator):
+        import importlib
+        module_to_import = separator.join(parts[:current_step + 1])
+        importlib.import_module(module_to_import)
+
+
 def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
     """
     Targets are always dot separated according to manual.
@@ -307,19 +373,18 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
         return []
 
     def _patch_target(target):
-        path = None
-        parts = target.split(".")
+        _jb_utils.VersionAgnosticUtils.is_py3k()
+        splitter = _SymbolName3KSplitter() if _jb_utils.VersionAgnosticUtils.is_py3k() else _SymbolName2KSplitter()
+
+        separator = "."
+        parts = target.split(separator)
         for i in range(0, len(parts)):
-            m = parts[i]
             try:
-                (fil, path, desc) = imp.find_module(m, [path] if path else None)
+                splitter.check_is_importable(parts, i, separator)
             except ImportError:
                 fs_part = fs_glue.join(parts[:i])
                 python_path = python_glue.join(parts[i:])
                 return fs_part + fs_to_python_glue + python_path if python_path else fs_part
-            if desc[2] == imp.PKG_DIRECTORY:
-                # Package
-                path = imp.load_module(m, fil, path, desc).__path__[0]
         return target
 
     return map(_patch_target, targets)

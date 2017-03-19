@@ -125,6 +125,7 @@ public class AddReturnFix implements IntentionAction {
     return null;
   }
 
+  @NotNull
   private static PsiVariable[] getDeclaredVariables(PsiMethod method) {
     List<PsiVariable> variables = new ArrayList<>();
     PsiStatement[] statements = method.getBody().getStatements();

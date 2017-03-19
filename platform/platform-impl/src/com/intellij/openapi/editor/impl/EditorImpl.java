@@ -150,7 +150,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final DocumentEx myDocument;
 
   private final JPanel myPanel;
-  @NotNull private final JScrollPane myScrollPane = new MyScrollPane();
+  @NotNull private final JScrollPane myScrollPane;
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
@@ -332,6 +332,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myProject = project;
     myDocument = (DocumentEx)document;
     myScheme = createBoundColorSchemeDelegate(null);
+    myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myIsViewer = viewer;
     mySettings = new SettingsImpl(this, project);
     if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
@@ -3872,7 +3873,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void mouseDragged(@NotNull MouseEvent e) {
       if (myDraggedRange != null || myGutterComponent.myDnDInProgress) return; // on Mac we receive events even if drag-n-drop is in progress
       validateMousePointer(e);
-      runMouseDraggedCommand(e);
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myGutterComponent.mouseDragged(e);
@@ -4196,7 +4197,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   }
 
-  static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t) {
+  static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t, int dropAction) {
     final EditorDropHandler dropHandler = editor.getDropHandler();
 
     if (Registry.is("debugger.click.disable.breakpoints")) {
@@ -4231,7 +4232,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
-      dropHandler.handleDrop(t, editor.getProject(), null);
+      dropHandler.handleDrop(t, editor.getProject(), null, dropAction);
       return true;
     }
 
@@ -4288,8 +4289,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public boolean importData(@NotNull final JComponent comp, @NotNull final Transferable t) {
-      return handleDrop(getEditor(comp), t);
+    public boolean importData(TransferSupport support) {
+      Component comp = support.getComponent();
+      if (!(comp instanceof JComponent)) return false;
+      return handleDrop(getEditor((JComponent)comp), support.getTransferable(), support.getDropAction());
     }
     
     @Override

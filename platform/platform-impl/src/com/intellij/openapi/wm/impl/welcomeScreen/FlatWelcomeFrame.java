@@ -79,6 +79,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -113,19 +115,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     getRootPane().setPreferredSize(JBUI.size(width, DEFAULT_HEIGHT));
     setResizable(false);
 
-    addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentShown(ComponentEvent e) {
-        pack();
-        Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
-        Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
-        setLocation(new Point(
-          screenBounds.x + (screenBounds.width - getWidth()) / 2,
-          screenBounds.y + (screenBounds.height - getHeight()) / 3
-        ));
-      }
-    });
-    //setLocation(x, y);
+    Dimension size = getPreferredSize();
+    Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
+    Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
+    setBounds(
+      screenBounds.x + (screenBounds.width - size.width) / 2,
+      screenBounds.y + (screenBounds.height - size.height) / 3,
+      size.width,
+      size.height
+    );
+    // at this point a window insets may be unavailable,
+    // so we need resize window when it is shown
+    doWhenFirstShown(this, this::pack);
+
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       @Override
       public void projectOpened(Project project) {
@@ -160,7 +162,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static void saveLocation(Rectangle location) {
-    Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
+    Point middle = new Point(location.x + location.width / 2, location.y + location.height / 2);
     DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
   }
 

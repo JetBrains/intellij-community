@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonBundle;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
@@ -92,6 +93,10 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
         appliedModificationCount == PsiManager.getInstance(myProject).getModificationTracker().getModificationCount()) {
       return null; //optimization
     }
+
+     if (!ProblemHighlightFilter.shouldHighlightFile(file)) {
+      return null;
+     }
 
     if (myFileToolsCache.containsKey(file) && !myFileToolsCache.get(file)) {
       return null;

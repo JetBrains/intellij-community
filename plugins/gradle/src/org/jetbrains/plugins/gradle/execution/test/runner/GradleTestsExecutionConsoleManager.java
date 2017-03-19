@@ -107,8 +107,8 @@ public class GradleTestsExecutionConsoleManager
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
       final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
-      if (executeTask.getScriptParameters() == null || !StringUtil.contains(executeTask.getScriptParameters(), "--tests")) {
-        executeTask.appendScriptParameters("--tests *");
+      if (executeTask.getArguments() == null || !StringUtil.contains(executeTask.getArguments(), "--tests")) {
+        executeTask.appendArguments("--tests *");
       }
     }
 

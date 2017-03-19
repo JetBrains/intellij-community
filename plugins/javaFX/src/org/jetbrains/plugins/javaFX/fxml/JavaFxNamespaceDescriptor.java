@@ -86,6 +86,7 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
     myFile = ((XmlFile)document.getContainingFile());
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

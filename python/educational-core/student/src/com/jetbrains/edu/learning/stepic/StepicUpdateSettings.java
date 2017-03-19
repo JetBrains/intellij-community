@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class StepicUpdateSettings implements PersistentStateComponent<StepicUpdateSettings> {
   private StepicUser myUser;
   public long LAST_TIME_CHECKED = 0;
+  private boolean myEnableTestingFromSamples = false;
 
   public StepicUpdateSettings() {
   }
@@ -50,4 +51,11 @@ public class StepicUpdateSettings implements PersistentStateComponent<StepicUpda
     myUser = user;
   }
 
+  public boolean isEnableTestingFromSamples() {
+    return myEnableTestingFromSamples;
+  }
+
+  public void setEnableTestingFromSamples(boolean enableTestingFromSamples) {
+    myEnableTestingFromSamples = enableTestingFromSamples;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.internationalization;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -36,7 +37,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 
 /**
  * @author Bas Leijdekkers
@@ -59,15 +63,17 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new UnnecessaryUnicodeEscapeFix(((Character) infos[0]).charValue());
+    return new UnnecessaryUnicodeEscapeFix(((Character) infos[0]).charValue(), (RangeMarker)infos[1]);
   }
 
   private static class UnnecessaryUnicodeEscapeFix extends InspectionGadgetsFix {
 
     private final char c;
+    private final RangeMarker myRangeMarker;
 
-    public UnnecessaryUnicodeEscapeFix(char c) {
+    public UnnecessaryUnicodeEscapeFix(char c, RangeMarker rangeMarker) {
       this.c = c;
+      myRangeMarker = rangeMarker;
     }
 
     @NotNull
@@ -84,17 +90,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final TextRange textRange = descriptor.getTextRangeInElement();
-      final PsiElement element = descriptor.getPsiElement();
-      if (!(element instanceof PsiFile)) {
-        return;
-      }
-      final PsiFile file = (PsiFile)element;
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      if (document == null) {
-        return;
-      }
-      document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), String.valueOf(c));
+      myRangeMarker.getDocument().replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), String.valueOf(c));
     }
   }
 
@@ -109,6 +105,10 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     public void visitFile(PsiFile file) {
       super.visitFile(file);
       if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file) || !file.isPhysical()) {
+        return;
+      }
+      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document == null) {
         return;
       }
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -139,7 +139,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
             break;
           }
         }
-        while (text.charAt(nextChar) == 'u'); // \uuuu0061 is a legal unicode escape
+        while (text.charAt(nextChar) == 'u'); // \\uuuu0061 is a legal unicode escape
         if (nextChar == i + 1 || nextChar + 3 >= length) {
           continue;
         }
@@ -149,7 +149,17 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
             StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
-          if (Character.isISOControl(d)) {
+          final int type = Character.getType(d);
+          if (type == Character.CONTROL ||
+              type == Character.FORMAT ||
+              type == Character.PRIVATE_USE ||
+              type == Character.SURROGATE ||
+              type == Character.UNASSIGNED ||
+              type == Character.LINE_SEPARATOR ||
+              type == Character.PARAGRAPH_SEPARATOR) {
+            continue;
+          }
+          if (type == Character.SPACE_SEPARATOR && d != ' ') {
             continue;
           }
           byteBuffer.clear();
@@ -163,7 +173,8 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           if (element != null && isSuppressedFor(element)) {
             return;
           }
-          registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d));
+          final RangeMarker rangeMarker = document.createRangeMarker(new TextRange(i, escapeEnd));
+          registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d), rangeMarker);
         }
       }
     }

@@ -245,7 +245,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiType parmType = parm.getType();
       PsiType argType = arg.getType();
       if (argType == null) continue;
-      if (parmType instanceof PsiEllipsisType && parmType.getArrayDimensions() == argType.getArrayDimensions() + 1) {
+      if (parmType instanceof PsiEllipsisType ) {
         parmType = ((PsiEllipsisType)parmType).getComponentType();
       }
       parmType = substitutor.substitute(parmType);

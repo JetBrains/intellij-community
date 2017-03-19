@@ -81,6 +81,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return scopes.toArray(new NamedScope[scopes.size()]);
   }
 
+  @NotNull
   public NamedScope[] getEditableScopes(){
     return myScopes.toArray(new NamedScope[myScopes.size()]);
   }

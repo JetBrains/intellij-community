@@ -94,7 +94,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     if (modulePath.getParentFile() != null) {
       prefix = modulePath.getParentFile().getName();
     }
-    char delimiter = ModuleGrouperKt.isQualifiedModuleNamesEnabled() ? '.' : '_';
+    char delimiter = ModuleGrouperKt.isQualifiedModuleNamesEnabled() ? '.' : '-';
     return new String[]{
       module.getInternalName(),
       prefix + delimiter + module.getInternalName(),

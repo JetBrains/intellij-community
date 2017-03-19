@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -219,6 +220,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
           }
 
           Runnable performRunnable = () -> {
+            if (DumbService.isDumb(myProject)) {
+              DumbService.getInstance(myProject).showDumbModeNotification("Refactorings cannot be performed while indexing is in progress");
+              return;
+            }
+
             final String commandName = RefactoringBundle.message("renaming.0.1.to.2",
                                                                  UsageViewUtil.getType(variable),
                                                                  DescriptiveNameUtil.getDescriptiveName(variable), newName);

@@ -63,7 +63,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Disposable
   public FileTreeModel(@NotNull FileChooserDescriptor descriptor, FileRefresher refresher, boolean sortDirectories, boolean sortArchives) {
     if (refresher != null) register(this, refresher);
     state = new State(descriptor, refresher, sortDirectories, sortArchives);
-    getApplication().getMessageBus().connect(this).subscribe(VFS_CHANGES, new BulkFileListener.Adapter() {
+    getApplication().getMessageBus().connect(this).subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         invoker.invokeLaterIfNeeded(() -> process(events));

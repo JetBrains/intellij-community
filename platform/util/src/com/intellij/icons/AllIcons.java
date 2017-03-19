@@ -513,7 +513,7 @@ public class AllIcons {
     public static final Icon ProjectTab = IconLoader.getIcon("/general/projectTab.png"); // 16x16
     public static final Icon QuestionDialog = IconLoader.getIcon("/general/questionDialog.png"); // 32x32
     public static final Icon ReadHelp = IconLoader.getIcon("/general/readHelp.png"); // 32x32
-    public static final Icon Recursive = IconLoader.getIcon("/general/recursive.png"); // 12x12
+    public static final Icon Recursive = IconLoader.getIcon("/general/recursive.png"); // 16x16
     public static final Icon Remove = IconLoader.getIcon("/general/remove.png"); // 16x16
     public static final Icon Reset = IconLoader.getIcon("/general/reset.png"); // 16x16
     public static final Icon Run = IconLoader.getIcon("/general/run.png"); // 7x10
@@ -821,13 +821,7 @@ public class AllIcons {
     public static final Icon TestSourceFolder = IconLoader.getIcon("/modules/testSourceFolder.png"); // 16x16
     
     public static class Types {
-      public static final Icon EjbModule = IconLoader.getIcon("/modules/types/ejbModule.png"); // 24x24
-      public static final Icon EmptyProjectType = IconLoader.getIcon("/modules/types/emptyProjectType.png"); // 24x24
-      public static final Icon JavaeeAppModule = IconLoader.getIcon("/modules/types/JavaeeAppModule.png"); // 24x24
-      public static final Icon JavaModule = IconLoader.getIcon("/modules/types/javaModule.png"); // 24x24
-      public static final Icon PluginModule = IconLoader.getIcon("/modules/types/pluginModule.png"); // 24x24
       public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.png"); // 16x16
-      public static final Icon WebModule = IconLoader.getIcon("/modules/types/webModule.png"); // 24x24
 
     }
     public static final Icon UnmarkWebroot = IconLoader.getIcon("/modules/unmarkWebroot.png"); // 16x16

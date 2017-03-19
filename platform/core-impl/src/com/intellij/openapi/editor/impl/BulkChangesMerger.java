@@ -59,6 +59,7 @@ public class BulkChangesMerger {
    *                      are sorted by offsets in ascending order 
    * @return              merge result
    */
+  @NotNull
   public char[] mergeToCharArray(@NotNull char[] text, int textLength, @NotNull List<? extends TextChange> changes) {
     int newLength = textLength;
     for (TextChange change : changes) {

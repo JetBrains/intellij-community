@@ -54,10 +54,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.impl.StartupManagerImpl");
@@ -80,20 +77,27 @@ public class StartupManagerImpl extends StartupManagerEx {
     myProject = project;
   }
 
+  private void checkNonDefaultProject() {
+    LOG.assertTrue(!myProject.isDefault(), "Please don't register startup activities for the default project: they won't ever be run");
+  }
+
   @Override
   public void registerPreStartupActivity(@NotNull Runnable runnable) {
+    checkNonDefaultProject();
     LOG.assertTrue(!myPreStartupActivitiesPassed, "Registering pre startup activity that will never be run");
     myPreStartupActivities.add(runnable);
   }
 
   @Override
   public void registerStartupActivity(@NotNull Runnable runnable) {
+    checkNonDefaultProject();
     LOG.assertTrue(!myStartupActivitiesPassed, "Registering startup activity that will never be run");
     myStartupActivities.add(runnable);
   }
 
   @Override
   public synchronized void registerPostStartupActivity(@NotNull Runnable runnable) {
+    checkNonDefaultProject();
     LOG.assertTrue(!myPostStartupActivitiesPassed, "Registering post-startup activity that will never be run:" +
                                                    " disposed=" + myProject.isDisposed() + "; open=" + myProject.isOpen() + "; passed=" + myStartupActivitiesPassed);
     (DumbService.isDumbAware(runnable) ? myDumbAwarePostStartupActivities : myNotDumbAwarePostStartupActivities).add(runnable);
@@ -181,7 +185,8 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     runActivities(myDumbAwarePostStartupActivities);
 
-    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+    DumbService dumbService = DumbService.getInstance(myProject);
+    dumbService.runWhenSmart(new Runnable() {
       @Override
       public void run() {
         app.assertIsDispatchThread();
@@ -189,22 +194,28 @@ public class StartupManagerImpl extends StartupManagerEx {
         // myDumbAwarePostStartupActivities might be non-empty if new activities were registered during dumb mode
         runActivities(myDumbAwarePostStartupActivities);
 
-        //noinspection SynchronizeOnThis
-        synchronized (StartupManagerImpl.this) {
-          if (!myNotDumbAwarePostStartupActivities.isEmpty()) {
-            while (!myNotDumbAwarePostStartupActivities.isEmpty()) {
-              queueSmartModeActivity(myNotDumbAwarePostStartupActivities.remove(0));
-            }
+        while (true) {
+          List<Runnable> dumbUnaware = takeDumbUnawareStartupActivities();
+          if (dumbUnaware.isEmpty()) break;
 
-            // return here later to set myPostStartupActivitiesPassed
-            DumbService.getInstance(myProject).runWhenSmart(this);
-          }
-          else {
-            myPostStartupActivitiesPassed = true;
-          }
+          dumbUnaware.forEach(StartupManagerImpl.this::queueSmartModeActivity);
+        }
+
+        if (dumbService.isDumb()) {
+          // return here later to process newly submitted activities (if any) and set myPostStartupActivitiesPassed
+          dumbService.runWhenSmart(this);
+        }
+        else {
+          myPostStartupActivitiesPassed = true;
         }
       }
     });
+  }
+
+  private synchronized List<Runnable> takeDumbUnawareStartupActivities() {
+    List<Runnable> result = new ArrayList<>(myNotDumbAwarePostStartupActivities);
+    myNotDumbAwarePostStartupActivities.clear();
+    return result;
   }
 
   public void scheduleInitialVfsRefresh() {
@@ -368,7 +379,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     synchronized (this) {
       // in tests which simulate project opening, post-startup activities could have been run already.
       // Then we should act as if the project was initialized
-      boolean initialized = myProject.isInitialized() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
+      boolean initialized = myProject.isInitialized() || myProject.isDefault() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
       if (!initialized) {
         registerPostStartupActivity(action);
         return;

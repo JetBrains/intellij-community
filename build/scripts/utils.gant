@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,14 +204,6 @@ binding.setVariable("prepareOutputFolder", {
   }
 })
 
-binding.setVariable("clearBuildCaches", {
-  //todo[nik] this is temporary solution until we update bootstrap jps-builders jars to the new version where cleaning is performed in JpsGantProjectBuilder#cleanOutput
-  def storageRoot = projectBuilder.dataStorageRoot
-  if (storageRoot != null) {
-    FileUtil.delete(storageRoot)
-  }
-})
-
 binding.setVariable("findModule", {String name ->
   project.modules.find { it.name == name }
 })
@@ -349,46 +341,8 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
   def modulesToBuild = []
   def modulesNames = modules.contains(javaRT) ? modules : [*modules, javaRT]
   def usedJars = collectUsedJars(modulesNames, approvedJars, forbiddenJars, modulesToBuild)
-  clearBuildCaches()
   projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
 
   return usedJars
 })
-
-// modules used in Upsource and in Kotlin as an API to IDEA
-binding.setVariable("analysisApiModules", [
-    "analysis-api",
-    "boot",
-    "core-api",
-    "duplicates-analysis",
-    "editor-ui-api",
-    "editor-ui-ex",
-    "extensions",
-    "indexing-api",
-    "java-analysis-api",
-    "java-indexing-api",
-    "java-psi-api",
-    "java-structure-view",
-    "jps-model-api",
-    "jps-model-serialization",
-    "projectModel-api",
-    "util",
-    "util-rt",
-    "xml-analysis-api",
-    "xml-psi-api",
-    "xml-structure-view-api",
-])
-binding.setVariable("analysisImplModules", [
-    "analysis-impl",
-    "core-impl",
-    "indexing-impl",
-    "java-analysis-impl",
-    "java-indexing-impl",
-    "java-psi-impl",
-    "projectModel-impl",
-    "structure-view-impl",
-    "xml-analysis-impl",
-    "xml-psi-impl",
-    "xml-structure-view-impl",
-])

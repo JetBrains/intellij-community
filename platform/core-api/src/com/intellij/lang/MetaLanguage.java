@@ -32,6 +32,7 @@ public abstract class MetaLanguage extends Language {
     super(ID);
   }
 
+  @NotNull
   public static MetaLanguage[] all() {
     return Extensions.getExtensions(EP_NAME);
   }

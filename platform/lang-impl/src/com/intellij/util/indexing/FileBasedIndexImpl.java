@@ -1636,24 +1636,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (updateWithBufferingEnabled(update)) {
       myReadLock.lock();
       try {
-        indexedStampUpdate(indexId, file, inputId, hasContent);
+        UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+        if (hasContent) {
+          index.setIndexedStateForFile(inputId, file);
+        }
+        else {
+          index.resetIndexedStateForFile(inputId);
+        }
       }
       finally {
         myReadLock.unlock();
       }
     }
-  }
-
-  private void indexedStampUpdate(@NotNull ID<?, ?> indexId, @Nullable VirtualFile file, int fileId, boolean hasContent) {
-    UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-    if (hasContent) {
-      index.setIndexedStateForFile(fileId, file);
-    }
-    else {
-      index.resetIndexedStateForFile(fileId);
-    }
-
-    if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(fileId);
   }
 
   private boolean updateWithBufferingEnabled(@NotNull final Computable<Boolean> update) {
@@ -1684,7 +1678,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     waitUntilIndicesAreInitialized();
     cleanProcessedFlag(file);
 
-    IndexingStamp.flushCache(fileId);
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
 
     if (!contentChanged) {
@@ -1719,8 +1712,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     else if (!fileIndexedStatesToUpdate.isEmpty()) { // file was removed, its data should be (lazily) wiped for every index
       myChangedFilesCollector.scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
     }
-
-    IndexingStamp.flushCache(fileId);
   }
 
   private void scheduleFileForIndexing(int fileId, final VirtualFile file, boolean contentChange) {
@@ -1801,7 +1792,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
       super.buildIndicesForFileRecursively(file, contentChange);
 
-      IndexingStamp.flushCaches();
       if (!contentChange) {
         if (myUpdatingFiles.decrementAndGet() == 0) {
           ++myFilesModCount;
@@ -1938,6 +1928,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             });
           }
           finally {
+            IndexingStamp.flushCache(info.getFileId());
             myWriteLock.unlock();
           }
           return true;

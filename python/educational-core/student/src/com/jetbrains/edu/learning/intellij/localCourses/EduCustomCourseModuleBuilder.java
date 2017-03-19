@@ -13,7 +13,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.intellij.EduCourseConfigurator;
 import com.jetbrains.edu.learning.intellij.generation.EduProjectGenerator;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
+import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

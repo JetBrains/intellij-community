@@ -27,6 +27,8 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.importing.ImportSpec;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
@@ -212,9 +214,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
           settings.linkProject(gradleProjectSettings);
         }
 
-        ExternalSystemUtil.refreshProject(
-          project, GradleConstants.SYSTEM_ID, rootProjectPath, false,
-          ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+        ImportSpec importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
+          .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+          .createDirectoriesForEmptyContentRoots()
+          .useDefaultCallback()
+          .build();
+        ExternalSystemUtil.refreshProject(rootProjectPath, importSpec);
 
         final PsiFile psiFile;
         if (finalBuildScriptFile != null) {

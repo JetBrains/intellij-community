@@ -118,7 +118,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         Process process = new ProcessBuilder(javaExe, "-version").redirectErrorStream(true).start();
         VersionOutputReader reader = new VersionOutputReader(process.getInputStream(), runner);
         try {
-          process.waitFor();
+          reader.waitFor();
         }
         catch (InterruptedException e) {
           LOG.info(e);
@@ -161,6 +161,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     @Override
     protected void onTextAvailable(@NotNull String text) {
       myLines.add(text);
+      LOG.debug("text: " + text);
     }
 
     @Nullable
@@ -179,6 +180,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         }
       }
 
+      LOG.debug("Returning " + version + " " + arch);
       return version != null ? new JdkVersionInfo(version, arch) : null;
     }
   }

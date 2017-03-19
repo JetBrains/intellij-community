@@ -86,9 +86,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   private final PsiFile myHostPsiFile;
   private ReferenceInjector myReferenceInjector;
 
-  MultiHostRegistrarImpl(@NotNull Project project,
-                         @NotNull PsiFile hostPsiFile,
-                         @NotNull PsiElement contextElement) {
+  public MultiHostRegistrarImpl(@NotNull Project project,
+                                @NotNull PsiFile hostPsiFile,
+                                @NotNull PsiElement contextElement) {
     myProject = project;
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
@@ -388,7 +388,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     PsiDocumentManagerBase.checkConsistency(psiFile, frozenWindow);
   }
 
-  void addToResults(Place place, PsiFile psiFile, MultiHostRegistrarImpl from) {
+  public void addToResults(Place place, PsiFile psiFile, MultiHostRegistrarImpl from) {
     addToResults(place, psiFile);
     myReferenceInjector = from.myReferenceInjector;
   }

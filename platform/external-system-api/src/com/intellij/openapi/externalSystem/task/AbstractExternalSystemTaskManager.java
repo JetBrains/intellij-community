@@ -28,6 +28,7 @@ import java.util.List;
  * @author Vladislav.Soroka
  * @since 12/19/13
  */
+@Deprecated
 public abstract class AbstractExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> implements ExternalSystemTaskManager<S> {
 
   public abstract void executeTasks(@NotNull ExternalSystemTaskId id,
@@ -36,6 +37,6 @@ public abstract class AbstractExternalSystemTaskManager<S extends ExternalSystem
                                     @Nullable S settings,
                                     @NotNull final List<String> vmOptions,
                                     @NotNull List<String> scriptParameters,
-                                    @Nullable String debuggerSetup,
+                                    @Nullable String jvmAgentSetup,
                                     @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException;
 }

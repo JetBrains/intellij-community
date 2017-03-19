@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -78,8 +79,10 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     private ValuableDfaVariableState(Set<DfaPsiType> instanceofValues,
                                      Set<DfaPsiType> notInstanceofValues,
                                      Nullness nullability, DfaValue value,
-                                     @NotNull FList<PsiExpression> concatenation, ThreeState optionalPresence) {
-      super(instanceofValues, notInstanceofValues, nullability, optionalPresence);
+                                     @NotNull FList<PsiExpression> concatenation,
+                                     ThreeState optionalPresence,
+                                     LongRangeSet range) {
+      super(instanceofValues, notInstanceofValues, nullability, optionalPresence, range);
       myValue = value;
       myConcatenation = concatenation;
     }
@@ -89,8 +92,10 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     protected DfaVariableState createCopy(@NotNull Set<DfaPsiType> instanceofValues,
                                           @NotNull Set<DfaPsiType> notInstanceofValues,
                                           @NotNull Nullness nullability,
-                                          ThreeState optionalPresence) {
-      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation, optionalPresence);
+                                          ThreeState optionalPresence,
+                                          LongRangeSet range) {
+      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation, optionalPresence,
+                                          range);
     }
 
     @NotNull
@@ -98,13 +103,13 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     public DfaVariableState withValue(@Nullable final DfaValue value) {
       if (value == myValue) return this;
       return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myConcatenation,
-                                          myOptionalPresence);
+                                          myOptionalPresence, myRange);
     }
 
     ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
       if (concatenation == myConcatenation) return this;
       return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, concatenation,
-                                          myOptionalPresence);
+                                          myOptionalPresence, myRange);
     }
 
     @Override

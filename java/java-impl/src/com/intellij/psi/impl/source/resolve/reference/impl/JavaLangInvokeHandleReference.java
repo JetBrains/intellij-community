@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
@@ -33,10 +32,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
@@ -44,20 +42,6 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  * @author Pavel.Dolgov
  */
 public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralExpression> implements InsertHandler<LookupElement> {
-  static final String JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP = "java.lang.invoke.MethodHandles.Lookup";
-  static final String JAVA_LANG_INVOKE_METHOD_TYPE = "java.lang.invoke.MethodType";
-
-  static final String FIND_VIRTUAL = "findVirtual";
-  static final String FIND_STATIC = "findStatic";
-  static final String FIND_SPECIAL = "findSpecial";
-
-  static final String FIND_GETTER = "findGetter";
-  static final String FIND_SETTER = "findSetter";
-  static final String FIND_STATIC_GETTER = "findStaticGetter";
-  static final String FIND_STATIC_SETTER = "findStaticSetter";
-
-  static final String FIND_VAR_HANDLE = "findVarHandle";
-  static final String FIND_STATIC_VAR_HANDLE = "findStaticVarHandle";
 
   private final PsiExpression myContext;
 
@@ -197,27 +181,19 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     final Object object = item.getObject();
 
     if (object instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)object;
-      final Stream<PsiType> returnType = Stream.of(method.getReturnType())
-        .map(type -> type != null ? type : PsiType.VOID);
-      final Stream<PsiType> parametersTypes = Arrays.stream(method.getParameterList().getParameters())
-        .map(parameter -> parameter.getType());
-
-      final String types = Stream.concat(returnType, parametersTypes)
-        .map(type -> TypeConversionUtil.erasure(type))
-        .map(type -> (type instanceof PsiEllipsisType) ? new PsiArrayType(((PsiEllipsisType)type).getComponentType()) : type)
-        .map(type -> type.getPresentableText() + ".class")
-        .collect(Collectors.joining(", "));
-      final String text = ", " + JAVA_LANG_INVOKE_METHOD_TYPE + ".methodType(" + types + ")";
-
-      replaceText(context, text);
+      final List<String> signature = getMethodSignature((PsiMethod)object);
+      if (signature != null) {
+        final String text = ", " + getMethodTypeExpressionText(signature);
+        replaceText(context, text);
+      }
     }
     else if (object instanceof PsiField) {
       final PsiField field = (PsiField)object;
-      final PsiType type = TypeConversionUtil.erasure(field.getType());
-      final String text = ", " + type.getCanonicalText() + ".class";
-
-      replaceText(context, text);
+      final String typeText = getTypeText(field.getType(), field);
+      if (typeText != null) {
+        final String text = ", " + typeText + ".class";
+        replaceText(context, text);
+      }
     }
   }
 

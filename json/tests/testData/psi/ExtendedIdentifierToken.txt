@@ -17,6 +17,60 @@ JsonFile: ExtendedIdentifierToken.json
           PsiWhiteSpace(' ')
           JsonNumberLiteral
             PsiElement(NUMBER)('42')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"pkg1"')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonReferenceExpression
+            PsiElement(IDENTIFIER)('^4.15.0')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"pkg2"')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonReferenceExpression
+            PsiElement(IDENTIFIER)('~4.15.0')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"pkg3"')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonReferenceExpression
+            PsiElement(IDENTIFIER)('>4.15.0')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"pkg4"')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonReferenceExpression
+            PsiElement(IDENTIFIER)('>=4.15.0')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"pkg5"')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonReferenceExpression
+            PsiElement(IDENTIFIER)('<4.15.0')
+        PsiElement(,)(',')
+        PsiWhiteSpace('\n    ')
+        JsonProperty
+          JsonStringLiteral
+            PsiElement(DOUBLE_QUOTED_STRING)('"pkg6"')
+          PsiElement(:)(':')
+          PsiWhiteSpace(' ')
+          JsonReferenceExpression
+            PsiElement(IDENTIFIER)('<=4.15.0')
         PsiWhiteSpace('\n  ')
         PsiElement(})('}')
     PsiWhiteSpace('\n')

@@ -20,7 +20,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,6 +41,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -227,7 +227,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       .setHideOnAction(false)
       .setFillColor(UIUtil.getControlColor())
       .createBalloon();
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         balloon.hide();

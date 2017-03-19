@@ -445,8 +445,8 @@ public class ImportHelper{
           !mySettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND.contains(packageName)) {
         useOnDemand = false;
       }
-      // name of class we try to import is the same as of the class defined in this file
-      if (containsInCurrentFile(file, curRefClass)) {
+      // name of class we try to import is the same as of the class defined in this package
+      if (containsInCurrentPackage(file, curRefClass)) {
         useOnDemand = true;
       }
       // check conflicts
@@ -464,8 +464,17 @@ public class ImportHelper{
     if (useOnDemand &&
         refClass.getContainingClass() != null &&
         mySettings.INSERT_INNER_CLASS_IMPORTS &&
-        containsInCurrentFile(file, curRefClass)) {
+        containsInCurrentPackage(file, curRefClass)) {
       return false;
+    }
+
+    if (curRefClass != null) {
+      if (!classesToReimport.isEmpty()) {
+        return false;
+      }
+      else {
+        useOnDemand = false;
+      }
     }
 
     try {
@@ -499,7 +508,7 @@ public class ImportHelper{
     return true;
   }
 
-  private static boolean containsInCurrentFile(@NotNull PsiJavaFile file, PsiClass curRefClass) {
+  private static boolean containsInCurrentPackage(@NotNull PsiJavaFile file, PsiClass curRefClass) {
     if (curRefClass != null) {
       final String curRefClassQualifiedName = curRefClass.getQualifiedName();
       if (curRefClassQualifiedName != null && 

@@ -91,6 +91,7 @@ public abstract class WindowManager {
     return null;
   }
 
+  @Nullable // the frame could be null in test environment
   public abstract JFrame getFrame(@Nullable Project project);
 
   public abstract IdeFrame getIdeFrame(@Nullable Project project);

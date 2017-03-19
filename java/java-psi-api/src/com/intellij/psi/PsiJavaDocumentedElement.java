@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @since 2016.3
  */
-public interface PsiJavaDocumentedElement extends PsiElement {
+public interface PsiJavaDocumentedElement extends PsiModifierListOwner, NavigatablePsiElement, PsiNameIdentifierOwner {
   /**
    * Returns the JavaDoc comment for the element, or {@code null} when the element has no JavaDoc comment.
    */

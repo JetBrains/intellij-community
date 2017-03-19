@@ -17,7 +17,6 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
@@ -80,9 +79,9 @@ public class SliceTreeTest extends SliceTestCase {
     node.update();
     node.calculateDupNode();
     to.add(node);
-    Collection<? extends AbstractTreeNode> nodes = node.getChildren();
-    for (AbstractTreeNode child : nodes) {
-      expandNodesTo((SliceNode)child, to);
+    Collection<SliceNode> nodes = node.getChildren();
+    for (SliceNode child : nodes) {
+      expandNodesTo(child, to);
     }
   }
 
@@ -172,39 +171,34 @@ public class SliceTreeTest extends SliceTestCase {
     assertEquals("\"oo\"", leaf.getText());
 
     SliceRootNode newRoot = SliceLeafAnalyzer.createTreeGroupedByValues(leaves, root, map);
-    Collection<? extends AbstractTreeNode> children = newRoot.getChildren();
+    Collection<SliceNode> children = newRoot.getChildren();
     assertEquals(1, children.size());
-    SliceNode child = (SliceNode)children.iterator().next();
+    SliceNode child = children.iterator().next();
     assertTrue(child instanceof SliceLeafValueRootNode);
 
     children = child.getChildren();
     assertEquals(1, children.size());
-    child = (SliceNode)children.iterator().next();
+    child = children.iterator().next();
     assertTrue(child.getValue().getElement() instanceof PsiField);
 
     children = child.getChildren();
-    assertEquals(1, children.size());
-    child = (SliceNode)children.iterator().next();
+    child = assertOneElement(children);
     assertTrue(child.getValue().getElement() instanceof PsiReferenceExpression);
 
     children = child.getChildren();
-    assertEquals(1, children.size());
-    child = (SliceNode)children.iterator().next();
+    child = assertOneElement(children);
     assertTrue(child.getValue().getElement() instanceof PsiParameter);
 
     children = child.getChildren();
-    assertEquals(1, children.size());
-    child = (SliceNode)children.iterator().next();
+    child = assertOneElement(children);
     assertTrue(child.getValue().getElement() instanceof PsiReferenceExpression);
 
     children = child.getChildren();
-    assertEquals(1, children.size());
-    child = (SliceNode)children.iterator().next();
+    child = assertOneElement(children);
     assertTrue(child.getValue().getElement() instanceof PsiParameter);
 
     children = child.getChildren();
-    assertEquals(1, children.size());
-    child = (SliceNode)children.iterator().next();
+    child = assertOneElement(children);
     assertTrue(child.getValue().getElement() instanceof PsiLiteralExpression);
     assertEquals(child.getValue().getElement(), leaf);
   }
@@ -298,7 +292,7 @@ public class SliceTreeTest extends SliceTestCase {
   }
 
   private static void checkStructure(final SliceNode root, @NonNls String dataExpected) {
-    List<SliceNode> actualNodes = new ArrayList<>((Collection)root.getChildren());
+    List<SliceNode> actualNodes = new ArrayList<>(root.getChildren());
     Collections.sort(actualNodes, SliceTreeBuilder.SLICE_NODE_COMPARATOR);
 
     Object[] actualStrings = ContainerUtil.map2Array(actualNodes, SliceNode::toString);

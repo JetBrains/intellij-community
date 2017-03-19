@@ -438,21 +438,21 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
       keyAttributeName = "path", entryTagName = "projectState")
-    public Map<String, ProjectState> map = ContainerUtil.newConcurrentMap();
+    public final Map<String, ProjectState> map = ContainerUtil.newConcurrentMap();
   }
 
   static class ProjectState {
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
       keyAttributeName = "path", entryTagName = "dataType")
-    public Map<String, ModuleState> map = ContainerUtil.newConcurrentMap();
+    public final Map<String, ModuleState> map = ContainerUtil.newConcurrentMap();
     public boolean isInclusion;
   }
 
   static class ModuleState {
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false, elementTag = "id")
-    public Set<String> set = ContainerUtil.newConcurrentSet();
+    public final Set<String> set = ContainerUtil.newConcurrentSet();
 
     public ModuleState() {
     }

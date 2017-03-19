@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
@@ -56,9 +58,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -375,6 +379,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           Application application = ApplicationManager.getApplication();
           if (!(application.isHeadlessEnvironment() || application.isUnitTestMode())) {
             StorageUtilKt.checkUnknownMacros(project, true);
+          }
+        }
+        if (ApplicationManager.getApplication().isActive()) {
+          JFrame projectFrame = WindowManager.getInstance().getFrame(project);
+          if (projectFrame != null) {
+            IdeFocusManager.getInstance(project).requestFocus(projectFrame, true);
           }
         }
       }, ModalityState.NON_MODAL);

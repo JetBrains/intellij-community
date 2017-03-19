@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
+import io.netty.resolver.ResolvedAddressTypes
 import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -191,7 +192,7 @@ private fun connectNio(bootstrap: Bootstrap,
   }
 }
 
-private fun sleep(promise: AsyncPromise<*>?, time: Int): Boolean {
+fun sleep(promise: AsyncPromise<*>?, time: Int): Boolean {
   try {
     //noinspection BusyWait
     Thread.sleep(time.toLong())
@@ -253,7 +254,7 @@ fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = f
     // be aware - on windows hosts file doesn't contain localhost
     // hosts can contain remote addresses, so, we check it
     if (hostsOnly && !InetAddresses.isInetAddress(host)) {
-      return io.netty.resolver.HostsFileEntriesResolver.DEFAULT.address(host).let { it != null && it.isLocal() }
+      return io.netty.resolver.HostsFileEntriesResolver.DEFAULT.address(host, ResolvedAddressTypes.IPV4_PREFERRED).let { it != null && it.isLocal() }
     }
     else {
       return true

@@ -114,11 +114,11 @@ public class StreamApiUtil {
   public static String getShortcutMappingMethod(PsiVariable variable, @Nullable PsiType outType, PsiElement mapper) {
     if (!(mapper instanceof PsiExpression)) return null;
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(((PsiExpression)mapper));
-    if (expression instanceof PsiTypeCastExpression && Objects.equals(expression.getType(), outType)) {
+    PsiType inType = variable.getType();
+    if (expression instanceof PsiTypeCastExpression && inType instanceof PsiPrimitiveType && Objects.equals(expression.getType(), outType)) {
       expression = ((PsiTypeCastExpression)expression).getOperand();
     }
     if (ExpressionUtils.isReferenceTo(expression, variable)) {
-      PsiType inType = variable.getType();
       if (!(outType instanceof PsiPrimitiveType)) {
         return inType instanceof PsiPrimitiveType ? "boxed" : "";
       }

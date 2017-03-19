@@ -142,6 +142,7 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     return null;
   }
 
+  @NotNull
   PsiImportStatementBase[] getUnusedImportStatements() {
     if (importStatements.isEmpty()) {
       return PsiImportStatementBase.EMPTY_ARRAY;

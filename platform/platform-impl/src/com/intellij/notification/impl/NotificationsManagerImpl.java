@@ -271,9 +271,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
         return null;
       }
 
-      ((BalloonImpl)balloon).traceDispose(true);
-
       layout.add(balloon, layoutDataRef.get());
+      if (balloon.isDisposed()) {
+        return null;
+      }
+
       if (layoutDataRef.get() != null) {
         layoutDataRef.get().project = project;
       }

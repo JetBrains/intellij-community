@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
+import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
@@ -28,7 +30,7 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new RedundantCastInspection());
+    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new RedundantCastInspection(), new JavaDocReferenceInspection());
     setLanguageLevel(LanguageLevel.JDK_1_9);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_9, getModule(), getTestRootDisposable());
   }
@@ -50,4 +52,13 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondsWithAnonymousDiamond() { doTest(false, false);}
   
   public void testValueTypes() { setLanguageLevel(LanguageLevel.JDK_X); doTest(false, false); }
+
+  public void testModuleInfoSuppression() {
+    doTest(BASE_PATH + "/module-info.java", true, false);
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk9();
+  }
 }

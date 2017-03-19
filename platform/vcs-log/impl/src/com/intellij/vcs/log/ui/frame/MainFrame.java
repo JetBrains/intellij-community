@@ -199,7 +199,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
   @NotNull
   private ActionToolbar createActionsToolbar(@NotNull DefaultActionGroup mainGroup) {
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, mainGroup, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
     toolbar.setTargetComponent(this);
     return toolbar;
   }

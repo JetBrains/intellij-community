@@ -136,6 +136,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
             qClassName, staticMemberName));
   }
 
+  @NotNull
   protected abstract TRef[] findReferencesToRestore(PsiFile file,
                                                                            RangeMarker bounds,
                                                                            ReferenceData[] referenceData);
@@ -154,7 +155,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
   protected abstract void restoreReferences(ReferenceData[] referenceData,
                                             TRef[] refs);
 
-  private static void askReferencesToRestore(Project project, PsiElement[] refs,
+  private static void askReferencesToRestore(Project project, @NotNull PsiElement[] refs,
                                       ReferenceData[] referenceData) {
     PsiManager manager = PsiManager.getInstance(project);
 

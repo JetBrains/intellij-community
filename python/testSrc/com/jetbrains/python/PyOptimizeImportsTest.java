@@ -242,6 +242,42 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19837
+  public void testCommentsHandling() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doTest();
+  }
+
+  // PY-19837
+  public void testKeepLicenseComment() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
+  // PY-23035
+  public void testCommentsInsideParenthesesInCombinedFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
+  // PY-23086
+  public void testTrailingCommentsInCombinedFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
+  // PY-23104
+  public void testMultilineImportElementsInCombinedFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+  
+  // PY-23125
+  public void testStackDanglingCommentsAtEnd() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(true) + ".py");
     OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));

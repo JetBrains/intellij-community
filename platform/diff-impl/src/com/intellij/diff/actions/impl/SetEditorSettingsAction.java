@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.toObjectArray;
+
 public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettings myTextSettings;
   @NotNull private final List<? extends Editor> myEditors;
@@ -167,7 +169,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     ContainerUtil.addAll(result, myActions);
     result.add(Separator.getInstance());
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP));
-    return ContainerUtil.toArray(result, new AnAction[result.size()]);
+    return toObjectArray(result, AnAction.class);
   }
 
   private abstract class EditorSettingToggleAction extends ToggleAction implements DumbAware, EditorSettingAction {

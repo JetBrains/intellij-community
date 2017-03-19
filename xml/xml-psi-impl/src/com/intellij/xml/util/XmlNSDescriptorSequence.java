@@ -118,6 +118,7 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
     }
   }
 
+  @NotNull
   @Override
   public Object[] getDependences(){
     final List<Object> ret = new ArrayList<>();

@@ -15,11 +15,14 @@
  */
 package com.intellij.util;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,23 +45,62 @@ public class Restarter {
   private Restarter() { }
 
   public static boolean isSupported() {
-    if (SystemInfo.isWindows) {
-      return JnaLoader.isLoaded() &&
-             new File(PathManager.getBinPath(), "restarter.exe").exists();
-    }
+    return ourRestartSupported.getValue();
+  }
 
-    if (SystemInfo.isMac) {
-      return getMacOsAppDir() != null &&
-             new File(PathManager.getBinPath(), "restarter").canExecute();
-    }
+  private static final NotNullLazyValue<Boolean> ourRestartSupported = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      String problem;
 
-    if (SystemInfo.isUnix) {
-      return UnixProcessManager.getCurrentProcessId() > 0 &&
-             CreateDesktopEntryAction.getLauncherScript() != null &&
-             new File(PathManager.getBinPath(), "restart.py").canExecute();
-    }
+      if (SystemInfo.isWindows) {
+        if (!JnaLoader.isLoaded()) {
+          problem = "JNA not loaded";
+        }
+        else {
+          problem = checkRestarter("restarter.exe");
+        }
+      }
+      else if (SystemInfo.isMac) {
+        if (getMacOsAppDir() == null) {
+          problem = "not a bundle: " + PathManager.getHomePath();
+        }
+        else {
+          problem = checkRestarter("restarter");
+        }
+      }
+      else if (SystemInfo.isUnix) {
+        if (UnixProcessManager.getCurrentProcessId() <= 0) {
+          problem = "cannot detect process ID";
+        }
+        else if (CreateDesktopEntryAction.getLauncherScript() == null) {
+          problem = "cannot find launcher script in " + PathManager.getBinPath();
+        }
+        else if (PathEnvironmentVariableUtil.findInPath("python") == null) {
+          problem = "cannot find 'python' in PATH";
+        }
+        else {
+          problem = checkRestarter("restart.py");
+        }
+      }
+      else {
+        problem = "unknown platform: " + SystemInfo.OS_NAME;
+      }
 
-    return false;
+      if (problem == null) {
+        return true;
+      }
+      else {
+        Logger.getInstance(Restarter.class).info("not supported: " + problem);
+        return false;
+      }
+    }
+  };
+
+  private static String checkRestarter(String restarterName) {
+    File restarter = new File(PathManager.getBinPath(), restarterName);
+    return restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
   }
 
   public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
@@ -115,10 +157,11 @@ public class Restarter {
   }
 
   private static String[] getRestartArgv(String[] argv) {
+    String mainClass = System.getProperty("idea.main.class.name", "com.intellij.idea.Main");
+
     int countArgs = argv.length;
     for (int i = argv.length-1; i >=0; i--) {
-      if (argv[i].endsWith("com.intellij.idea.Main") ||
-          argv[i].endsWith(".exe")) {
+      if (argv[i].equals(mainClass) || argv[i].endsWith(".exe")) {
         countArgs = i + 1;
         if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separatorChar) < 0) {
           //absolute path
@@ -127,6 +170,7 @@ public class Restarter {
         break;
       }
     }
+
     String[] restartArg = new String[countArgs];
     System.arraycopy(argv, 0, restartArg, 0, countArgs);
     return restartArg;

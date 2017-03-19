@@ -116,6 +116,7 @@ public class PsiEquivalenceUtil {
     return areElementsEquivalent(element1, element2, null, false);
   }
 
+  @NotNull
   public static PsiElement[] getFilteredChildren(@NotNull final PsiElement element,
                                                  @Nullable Condition<PsiElement> isElementSignificantCondition,
                                                  boolean areCommentsSignificant) {

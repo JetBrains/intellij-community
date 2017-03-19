@@ -10,10 +10,11 @@ class BrokenAlignment {
 
   private static class WatchRequestImpl {
     private final boolean myToWatchRecursively;
-    private final String myRootPath = "";
+    private final String myRootPath;
 
     private WatchRequestImpl(boolean toWatchRecursively) {
       myToWatchRecursively = toWatchRecursively;
+      myRootPath = toWatchRecursively ? "one" : "two";
     }
 
   }

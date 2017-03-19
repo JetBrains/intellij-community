@@ -4,7 +4,7 @@ import java.util.*;
 public class Test {
   public void test2() {
     Set<String> set;
-      set = Set.<String>of("foo", "bar", "xyz");
+      set = Set.of("foo", "bar", "xyz");
     System.out.println(set);
   }
 }

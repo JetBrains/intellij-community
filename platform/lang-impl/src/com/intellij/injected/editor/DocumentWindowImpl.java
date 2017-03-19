@@ -818,6 +818,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   // result[i] == null means no change
   // result[i] == "" means delete
   // result[i] == string means replace
+  @NotNull
   public String[] calculateMinEditSequence(String newText) {
     synchronized (myLock) {
       String[] result = new String[myShreds.size()];

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.project.rootManager
+import com.intellij.util.PathUtilRt
 import gnu.trove.THashSet
 
 /**
@@ -36,7 +37,7 @@ import gnu.trove.THashSet
  *
  * If module file is foo/bar/hello.iml and directory foo is renamed to oof then we must update module path. And StorageVirtualFileTracker doesn't help us here (and is not going to help by intention).
  */
-internal class ModuleFileListener(private val moduleManager: ModuleManagerComponent) : BulkFileListener.Adapter() {
+internal class ModuleFileListener(private val moduleManager: ModuleManagerComponent) : BulkFileListener {
   override fun after(events: List<VFileEvent>) {
     for (event in events) {
       when (event) {
@@ -68,7 +69,10 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
         someModulePathIsChanged = true
       }
 
-      checkRootModification(module, newAncestorPath, roots)
+      // if ancestor path is a direct parent of module file - root will be serialized as $MODULE_DIR$ and, so, we don't need to mark it as changed to save
+      if (PathUtilRt.getParentPath(moduleFilePath) != ancestorPath) {
+        checkRootModification(module, newAncestorPath, roots)
+      }
     }
 
     if (someModulePathIsChanged) {

@@ -92,6 +92,7 @@ public class JavaCompletionSorting {
     return result.withRelevanceSorter(sorter);
   }
 
+  @NotNull
   private static ExpectedTypeInfo[] getExpectedTypesWithDfa(CompletionParameters parameters, PsiElement position) {
     if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(position)) {
       return ExpectedTypeInfo.EMPTY_ARRAY;

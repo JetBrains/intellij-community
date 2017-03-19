@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.impl.ShadowBorderPainter;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -962,23 +961,12 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     hideAndDispose(false);
   }
 
-  private boolean myTraceDispose;
-
-  public void traceDispose(boolean value) {
-    assert !isDisposed() : "Balloon is already disposed";
-    myTraceDispose = value;
-  }
-
   private void hideAndDispose(final boolean ok) {
     if (myDisposed) return;
 
     if (mySmartFadeoutPaused) {
       mySmartFadeoutPaused = false;
       return;
-    }
-
-    if (myTraceDispose) {
-      Logger.getInstance("#com.intellij.ui.BalloonImpl").error("Dispose balloon before showing", new Throwable());
     }
 
     myDisposed = true;

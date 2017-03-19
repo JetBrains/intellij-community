@@ -144,7 +144,7 @@ public class FunctionalInterfaceSuggester {
     final Project project = element.getProject();
     final Set<PsiType> types = new HashSet<>();
     final Processor<PsiMember> consumer = member -> {
-      if (member instanceof PsiClass && !Java15APIUsageInspectionBase.isForbiddenApiUsage(member, PsiUtil.getLanguageLevel(element))) {
+      if (member instanceof PsiClass && Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel(member, PsiUtil.getLanguageLevel(element)) == null) {
         if (!JavaResolveUtil.isAccessible(member, null, member.getModifierList(), element, null, null)) {
           return true;
         }

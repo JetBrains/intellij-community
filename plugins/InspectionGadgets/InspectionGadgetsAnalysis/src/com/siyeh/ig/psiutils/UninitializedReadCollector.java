@@ -33,6 +33,7 @@ public class UninitializedReadCollector {
     uninitializedReads = new HashSet<>();
   }
 
+  @NotNull
   public PsiExpression[] getUninitializedReads() {
     return uninitializedReads.toArray(new PsiExpression[uninitializedReads.size()]);
   }

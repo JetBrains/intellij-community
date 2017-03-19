@@ -6,6 +6,6 @@ public class Test {
 
   static {
     Set<String> set;
-      MY_SET = Set.<String>of("foo", "bar", "xyz");
+      MY_SET = Set.of("foo", "bar", "xyz");
   }
 }

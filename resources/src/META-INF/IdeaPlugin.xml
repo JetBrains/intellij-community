@@ -102,13 +102,6 @@
     <extensionPoint name="junitRecognizer"
                     interface="com.intellij.execution.JUnitRecognizer"/>
 
-    <extensionPoint name="i18nInspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-    <extensionPoint name="invalidPropertyKeyInspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-    <extensionPoint name="java15InspectionTool"
-                    interface="com.intellij.codeInspection.FileCheckingInspection"/>
-
     <extensionPoint name="deadCode"
                     interface="com.intellij.codeInspection.reference.EntryPoint"/>
     <extensionPoint name="predefinedMigrationMapProvider"
@@ -923,6 +916,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.naming.conventions"
                      bundle="messages.InspectionsBundle" key="inspection.java.module.naming"
                      implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
+    <localInspection language="JAVA" shortName="JavaLangInvokeHandleSignature" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
+                     bundle="messages.InspectionsBundle" key="inspection.handle.signature.name"
+                     implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
