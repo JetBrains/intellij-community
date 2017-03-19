@@ -453,6 +453,8 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     List<AnAction> scopeActions = new LinkedList<>();
 
     myScopeDetailsPanel = new JPanel(new CardLayout());
+    myScopeDetailsPanel.setBorder(JBUI.Borders.emptyBottom(UIUtil.isUnderDefaultMacTheme() ? 0 : 3));
+
     for (Pair<FindPopupScopeUI.ScopeType, JComponent> scopeComponent : scopeComponents) {
       FindPopupScopeUI.ScopeType scopeType = scopeComponent.first;
       scopeActions.add(new MySelectScopeToggleAction(scopeType));
