@@ -8,7 +8,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
@@ -55,9 +55,8 @@ class EduCCModuleBuilder extends EduCourseModuleBuilder {
     getWizardInputField("ccname", "", "Name:", myPanel.getNameField(), getValue).addToSettings(settingsStep);
     getWizardInputField("ccauthor", "", "Author:", myPanel.getAuthorField(), getValue).addToSettings(settingsStep);
 
-    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(EduPluginConfigurator.EP_NAME).getExtensions();
     myLanguageComboBox.removeAllItems();
-    for (LanguageExtensionPoint extension : extensions) {
+    for (LanguageExtensionPoint extension : Extensions.<LanguageExtensionPoint>getExtensions(EduPluginConfigurator.EP_NAME, null)) {
       String languageId = extension.getKey();
       Language language = Language.findLanguageByID(languageId);
       if (language == null) {
