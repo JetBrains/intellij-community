@@ -18,6 +18,8 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +44,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class LightJavaModule extends LightElement implements PsiJavaModule {
   private final LightJavaModuleReferenceElement myRefElement;
   private final VirtualFile myJarRoot;
-  private List<PsiPackageAccessibilityStatement> myExports = null;
+  private final NotNullLazyValue<List<PsiPackageAccessibilityStatement>> myExports = AtomicNotNullLazyValue.createValue(() -> findExports());
 
   private LightJavaModule(@NotNull PsiManager manager, @NotNull VirtualFile jarRoot) {
     super(manager, JavaLanguage.INSTANCE);
@@ -70,34 +72,34 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   @NotNull
   @Override
   public Iterable<PsiPackageAccessibilityStatement> getExports() {
-    if (myExports == null) {
-      List<PsiPackageAccessibilityStatement> exports = ContainerUtil.newArrayList();
+    return myExports.getValue();
+  }
 
-      VfsUtilCore.visitChildrenRecursively(myJarRoot, new VirtualFileVisitor() {
-        private JavaDirectoryService service = JavaDirectoryService.getInstance();
+  private List<PsiPackageAccessibilityStatement> findExports() {
+    List<PsiPackageAccessibilityStatement> exports = ContainerUtil.newArrayList();
 
-        @Override
-        public boolean visitFile(@NotNull VirtualFile file) {
-          if (file.isDirectory() && !myJarRoot.equals(file)) {
-            PsiDirectory directory = myManager.findDirectory(file);
-            if (directory != null) {
-              PsiPackage pkg = service.getPackage(directory);
-              if (pkg != null) {
-                String packageName = pkg.getQualifiedName();
-                if (!packageName.isEmpty() && !PsiUtil.isPackageEmpty(new PsiDirectory[]{directory}, packageName)) {
-                  exports.add(new LightPackageAccessibilityStatement(myManager, packageName));
-                }
+    VfsUtilCore.visitChildrenRecursively(myJarRoot, new VirtualFileVisitor() {
+      private JavaDirectoryService service = JavaDirectoryService.getInstance();
+
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.isDirectory() && !myJarRoot.equals(file)) {
+          PsiDirectory directory = myManager.findDirectory(file);
+          if (directory != null) {
+            PsiPackage pkg = service.getPackage(directory);
+            if (pkg != null) {
+              String packageName = pkg.getQualifiedName();
+              if (!packageName.isEmpty() && !PsiUtil.isPackageEmpty(new PsiDirectory[]{directory}, packageName)) {
+                exports.add(new LightPackageAccessibilityStatement(myManager, packageName));
               }
             }
           }
-          return true;
         }
-      });
+        return true;
+      }
+    });
 
-      myExports = exports;
-    }
-
-    return myExports;
+    return exports;
   }
 
   @NotNull
