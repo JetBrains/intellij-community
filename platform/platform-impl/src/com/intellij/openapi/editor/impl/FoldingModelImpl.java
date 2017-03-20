@@ -61,6 +61,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   private boolean myIsFoldingEnabled;
   private final EditorImpl myEditor;
+  final RangeMarkerTree<FoldRegionImpl> myRegionTree;
   private final FoldRegionsTree myFoldTree;
   private TextAttributes myFoldTextAttributes;
   private boolean myIsBatchFoldingProcessing;
@@ -77,6 +78,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
+    myRegionTree = new RangeMarkerTree<>(editor.getDocument());
     myFoldTree = new FoldRegionsTree() {
       @Override
       protected boolean isFoldingEnabled() {
@@ -312,8 +314,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     region.dispose();
   }
 
+  void removeRegionFromTree(@NotNull FoldRegionImpl region) {
+    if (region.isValid()) myRegionTree.removeInterval(region);
+  }
+
   public void dispose() {
     doClearFoldRegions();
+    myRegionTree.dispose();
   }
 
   @Override
@@ -580,6 +587,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
                                      @Nullable FoldingGroup group,
                                      boolean neverExpands) {
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
+    myRegionTree.addInterval(region, startOffset, endOffset, false, false, 0);
     LOG.assertTrue(region.isValid());
     return region;
   }

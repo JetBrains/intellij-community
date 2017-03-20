@@ -29,26 +29,25 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private boolean myIsExpanded;
-  private final Editor myEditor;
+  private final EditorImpl myEditor;
   private final String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
 
-  FoldRegionImpl(@NotNull Editor editor,
+  FoldRegionImpl(@NotNull EditorImpl editor,
                  int startOffset,
                  int endOffset,
                  @NotNull String placeholder,
                  @Nullable FoldingGroup group,
                  boolean shouldNeverExpand) {
-    super((DocumentEx)editor.getDocument(), startOffset, endOffset,true);
+    super(editor.getDocument(), startOffset, endOffset,false);
     myGroup = group;
     myShouldNeverExpand = shouldNeverExpand;
     myIsExpanded = true;
@@ -63,7 +62,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   @Override
   public void setExpanded(boolean expanded) {
-    FoldingModelImpl foldingModel = (FoldingModelImpl)myEditor.getFoldingModel();
+    FoldingModelImpl foldingModel = myEditor.getFoldingModel();
     if (myGroup == null) {
       doSetExpanded(expanded, foldingModel, this);
     } else {
@@ -162,6 +161,11 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     if (DocumentUtil.isInsideSurrogatePair(document, end)) {
       setIntervalEnd(end - 1);
     }
+  }
+
+  @Override
+  public void dispose() {
+    myEditor.getFoldingModel().removeRegionFromTree(this);
   }
 
   @Override
