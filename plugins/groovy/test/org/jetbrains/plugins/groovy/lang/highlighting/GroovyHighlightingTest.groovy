@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2011,6 +2011,8 @@ def foo = new <error descr="Cannot resolve symbol 'Rrrrrrrr'">Rrrrrrrr</error>()
   void testLocalVariableModifiers() { doTest() }
 
   void testFieldModifiers() { doTest() }
+
+  void testScriptFieldModifiers() { doTest() }
 
   void "test allow and do not highlight 'trait', 'as', 'def', 'in' within package"() {
     myFixture.addClass '''\
