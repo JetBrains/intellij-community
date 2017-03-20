@@ -249,17 +249,17 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
       for (PsiElement suppressedScope : suppressedScopes.keySet()) {
         Collection<String> suppressedIds = suppressedScopes.get(suppressedScope);
         for (String toolId : suppressedIds) {
-          PsiJavaDocumentedElement psiMember;
+          PsiJavaDocumentedElement documentedElement;
           String problemLine = null;
           if (suppressedScope instanceof PsiJavaDocumentedElement) {
-            psiMember = (PsiJavaDocumentedElement)suppressedScope;
+            documentedElement = (PsiJavaDocumentedElement)suppressedScope;
           }
           else {
-            psiMember = PsiTreeUtil.getParentOfType(suppressedScope, PsiJavaDocumentedElement.class);
+            documentedElement = PsiTreeUtil.getParentOfType(suppressedScope, PsiJavaDocumentedElement.class);
             final PsiStatement statement = PsiTreeUtil.getNextSiblingOfType(suppressedScope, PsiStatement.class);
             problemLine = statement != null ? statement.getText() : null;
           }
-          if (psiMember != null && psiMember.isValid()) {
+          if (documentedElement != null && documentedElement.isValid()) {
             String description = InspectionsBundle.message("inspection.redundant.suppression.description");
             if (myQuickFixes == null) myQuickFixes = new BidirectionalMap<>();
             final String key = toolId + (problemLine != null ? ";" + problemLine : "");
@@ -269,14 +269,14 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
               myQuickFixes.put(key, fix);
             }
             PsiElement identifier;
-            if (!(suppressedScope instanceof PsiJavaDocumentedElement)) {
-              identifier = suppressedScope;
+            if ((suppressedScope instanceof PsiNameIdentifierOwner)) {
+              identifier = ((PsiNameIdentifierOwner)documentedElement).getNameIdentifier();
             }
             else {
-              identifier = psiMember.getNameIdentifier();
+              identifier = suppressedScope;
             }
             if (identifier == null) {
-              identifier = psiMember;
+              identifier = documentedElement;
             }
             result.add(
               manager.createProblemDescriptor(identifier, description, (LocalQuickFix)fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,

@@ -74,8 +74,8 @@ public class SuppressAllForClassFix extends SuppressFix {
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
     final PsiJavaDocumentedElement container = getContainer(element);
     LOG.assertTrue(container != null);
-    if (use15Suppressions(container)) {
-      final PsiModifierList modifierList = container.getModifierList();
+    if (container instanceof PsiModifierListOwner && use15Suppressions(container)) {
+      final PsiModifierList modifierList = ((PsiModifierListOwner)container).getModifierList();
       if (modifierList != null) {
         final PsiAnnotation annotation = modifierList.findAnnotation(JavaSuppressionUtil.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         if (annotation != null) {
