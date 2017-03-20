@@ -25,9 +25,9 @@ public class CCSwitchSubtask extends DumbAwareAction {
     if (project == null) {
       return;
     }
-    Task task = getTask(e);
-    if (task instanceof TaskWithSubtasks) {
-      CCSubtaskEditorNotificationProvider.createPopup((TaskWithSubtasks)task, project).showCenteredInCurrentWindow(project);
+    TaskWithSubtasks task = getTask(e);
+    if (task != null) {
+      CCSubtaskEditorNotificationProvider.createPopup(task, project).showCenteredInCurrentWindow(project);
     }
   }
 
@@ -36,12 +36,12 @@ public class CCSwitchSubtask extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
     Task task = getTask(e);
-    if (task instanceof TaskWithSubtasks) {
+    if (task != null) {
       presentation.setEnabledAndVisible(true);
     }
   }
 
-  private static Task getTask(@NotNull AnActionEvent e) {
+  private static TaskWithSubtasks getTask(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || !CCUtils.isCourseCreator(project)) {
       return null;
@@ -56,6 +56,7 @@ public class CCSwitchSubtask extends DumbAwareAction {
         virtualFile = parent;
       }
     }
-    return StudyUtils.getTask(project, virtualFile);
+    final Task task = StudyUtils.getTask(project, virtualFile);
+    return task instanceof TaskWithSubtasks ? (TaskWithSubtasks)task : null;
   }
 }
