@@ -111,9 +111,9 @@ abstract class StandaloneDocument : UserDataHolderBase(), Document {
 
   override fun removeGuardedBlock(block: RangeMarker) {}
 
-  override fun getOffsetGuard(offset: Int): RangeMarker = throw UnsupportedOperationException("Not implemented")
+  override fun getOffsetGuard(offset: Int): RangeMarker? = null
 
-  override fun getRangeGuard(start: Int, end: Int): RangeMarker = throw UnsupportedOperationException("Not implemented")
+  override fun getRangeGuard(start: Int, end: Int): RangeMarker? = null
 
   override final fun setCyclicBufferSize(bufferSize: Int) {
   }
