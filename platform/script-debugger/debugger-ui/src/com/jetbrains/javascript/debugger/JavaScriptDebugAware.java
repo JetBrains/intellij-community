@@ -13,88 +13,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.javascript.debugger;
+package com.jetbrains.javascript.debugger
 
-import com.intellij.javascript.debugger.ExpressionInfoFactory;
-import com.intellij.javascript.debugger.NameMapper;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
-import com.intellij.xdebugger.evaluation.ExpressionInfo;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.debugger.MemberFilter;
+import com.intellij.javascript.debugger.ExpressionInfoFactory
+import com.intellij.javascript.debugger.NameMapper
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.xdebugger.evaluation.ExpressionInfo
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.debugger.MemberFilter
 
-public abstract class JavaScriptDebugAware {
-  public static final ExtensionPointName<JavaScriptDebugAware> EP_NAME = ExtensionPointName.create("com.jetbrains.javaScriptDebugAware");
+/**
+ * @see com.intellij.javascript.debugger.JavaScriptDebugAwareBase
+ */
+abstract class JavaScriptDebugAware {
+  companion object {
+    val EP_NAME = ExtensionPointName.create<JavaScriptDebugAware>("com.jetbrains.javaScriptDebugAware")
 
-  @Nullable
-  protected LanguageFileType getFileType() {
-    return null;
+    @JvmStatic
+    fun isBreakpointAware(fileType: FileType): Boolean {
+      val aware = getBreakpointAware(fileType)
+      return aware != null && aware.breakpointTypeClass == null
+    }
+
+    fun getBreakpointAware(fileType: FileType): JavaScriptDebugAware? {
+      for (debugAware in EP_NAME.extensions) {
+        if (fileType == debugAware.fileType) {
+          return debugAware
+        }
+      }
+      return null
+    }
   }
 
-  @Nullable
-  public Class<? extends XLineBreakpointType<?>> getBreakpointTypeClass() {
-    return null;
-  }
+  protected open val fileType: LanguageFileType?
+    get() = null
+
+  open val breakpointTypeClass: Class<out XLineBreakpointType<*>>?
+    get() = null
 
   /**
    * Return false if you language could be natively executed in the VM
    * You must not specify it and it doesn't matter if you use not own breakpoint type - (Kotlin or GWT use java breakpoint type, for example)
    */
-  public boolean isOnlySourceMappedBreakpoints() {
-    return true;
-  }
+  open val isOnlySourceMappedBreakpoints: Boolean
+    get() = true
 
-  public final boolean canGetEvaluationInfo(@NotNull PsiFile file) {
-    return file.getFileType().equals(getFileType());
-  }
+  fun canGetEvaluationInfo(file: PsiFile) = file.fileType == fileType
 
-  @Nullable
-  public final ExpressionInfo getEvaluationInfo(@NotNull PsiFile file, int offset, @NotNull Document document, @NotNull ExpressionInfoFactory expressionInfoFactory) {
-    PsiElement element = file.findElementAt(offset);
-    return element == null ? null : getEvaluationInfo(element, document, expressionInfoFactory);
-  }
+  abstract fun getEvaluationInfo(element: PsiElement, document: Document, expressionInfoFactory: ExpressionInfoFactory): Promise<ExpressionInfo?>
 
-  @Nullable
-  protected ExpressionInfo getEvaluationInfo(@NotNull PsiElement elementAtOffset, @NotNull Document document, @NotNull ExpressionInfoFactory expressionInfoFactory) {
-    return null;
-  }
+  open fun createMemberFilter(nameMapper: NameMapper?, element: PsiElement, end: Int): MemberFilter? = null
 
-  public static boolean isBreakpointAware(@NotNull FileType fileType) {
-    JavaScriptDebugAware aware = getBreakpointAware(fileType);
-    return aware != null && aware.getBreakpointTypeClass() == null;
-  }
+  open fun getNavigationElementForSourcemapInspector(file: PsiFile): PsiElement? = null
 
-  @Nullable
-  public static JavaScriptDebugAware getBreakpointAware(@NotNull FileType fileType) {
-    for (JavaScriptDebugAware debugAware : EP_NAME.getExtensions()) {
-      if (fileType.equals(debugAware.getFileType())) {
-        return debugAware;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public MemberFilter createMemberFilter(@Nullable NameMapper nameMapper, @NotNull PsiElement element, int end) {
-    return null;
-  }
-
-  @Nullable
-  public PsiElement getNavigationElementForSourcemapInspector(@NotNull PsiFile file) {
-    return null;
-  }
-
-  @Nullable
   // return null if unsupported
   // cannot be in MemberFilter because creation of MemberFilter could be async
   // the problem - GWT mangles name (https://code.google.com/p/google-web-toolkit/issues/detail?id=9106 https://github.com/sdbg/sdbg/issues/6 https://youtrack.jetbrains.com/issue/IDEA-135356), but doesn't add name mappings
-  public String normalizeMemberName(@NotNull String name) {
-    return null;
-  }
+  open fun normalizeMemberName(name: String): String? = null
 }

@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.javascript.debugger;
+package com.intellij.javascript.debugger
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.xdebugger.evaluation.ExpressionInfo;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.xdebugger.evaluation.ExpressionInfo
+import org.jetbrains.concurrency.Promise
 
-public interface ExpressionInfoFactory {
-  @NotNull
-  ExpressionInfo create(@NotNull PsiElement element, @NotNull Document document);
+interface ExpressionInfoFactory {
+  fun create(element: PsiElement, document: Document): Promise<ExpressionInfo>
 
-  @Nullable
-  NameMapper createNameMapper(@NotNull VirtualFile file, @NotNull Document document);
+  fun createNameMapper(file: VirtualFile, document: Document): NameMapper?
 }
