@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package org.jetbrains.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.values.ObjectValue
 
-public interface Scope {
-  enum Type {
+interface Scope {
+  enum class Type {
     GLOBAL,
     LOCAL,
     WITH,
@@ -33,17 +32,24 @@ public interface Scope {
     UNKNOWN
   }
 
-  @NotNull
-  Type getType();
+  val type: Type
 
   /**
    * Class or function or file name
    */
-  @Nullable
-  String getDescription();
+  val description: String?
 
-  @NotNull
-  VariablesHost<?> getVariablesHost();
+  val variablesHost: VariablesHost<*>
 
-  boolean isGlobal();
+  val isGlobal: Boolean
+}
+
+abstract class ScopeBase(override val type: Scope.Type, override val description: String?) : Scope {
+  override val isGlobal: Boolean
+    get() = type === Scope.Type.GLOBAL || type === Scope.Type.LIBRARY
+}
+
+class ObjectScope(type: Scope.Type, private val value: ObjectValue) : ScopeBase(type, value.valueString), Scope {
+  override val variablesHost: VariablesHost<*>
+    get() = value.variablesHost
 }
