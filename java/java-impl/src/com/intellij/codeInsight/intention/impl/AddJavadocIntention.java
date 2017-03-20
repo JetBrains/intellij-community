@@ -50,12 +50,14 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
   @NotNull
   @Override
   public String getFamilyName() {
+    //noinspection DialogTitleCapitalization
     return "Add Javadoc";
   }
 
   @NotNull
   @Override
   public String getText() {
+    //noinspection DialogTitleCapitalization
     return getFamilyName();
   }
 }
