@@ -809,6 +809,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         Ref<VirtualFile> lastUsageFileRef = new Ref<>();
 
         FindInProjectUtil.findUsages(myHelper.getModel().clone(), myProject, info -> {
+          if(isCancelled()) {
+            return false;
+          }
           final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
           usage.getPresentation().getIcon(); // cache icon
 
@@ -820,6 +823,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
           }
 
           ApplicationManager.getApplication().invokeLater(() -> {
+            if(isCancelled()) {
+              return;
+            }
             model.addRow(new Object[]{usage});
             myCodePreviewComponent.setVisible(true);
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
@@ -832,7 +838,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
         if (succeeded) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
+            if (!isCancelled()) {
               int occurrences = resultsCount.get();
               int filesWithOccurrences = resultsFilesCount.get();
               if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -856,6 +862,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             }
           }, state);
         }
+      }
+
+      boolean isCancelled() {
+        return progressIndicatorWhenSearchStarted != myResultsPreviewSearchProgress || progressIndicatorWhenSearchStarted.isCanceled();
       }
 
       @Override
