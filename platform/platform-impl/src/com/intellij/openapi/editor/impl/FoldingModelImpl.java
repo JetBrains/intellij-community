@@ -315,7 +315,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   }
 
   void removeRegionFromTree(@NotNull FoldRegionImpl region) {
-    if (region.isValid()) myRegionTree.removeInterval(region);
+    myRegionTree.removeInterval(region);
   }
 
   public void dispose() {
