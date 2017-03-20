@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 public class StudySerializationUtils {
+  private static final Logger LOG = Logger.getInstance(StudySerializationUtils.class);
 
   public static final String PLACEHOLDERS = "placeholders";
   public static final String LINE = "line";
@@ -613,8 +615,13 @@ public class StudySerializationUtils {
             case "code": return gson.fromJson(json, CodeTask.class);
             case "pycharm": return gson.fromJson(json, Task.class);
             case "subtasks": return gson.fromJson(json, TaskWithSubtasks.class);
+            default: {
+              LOG.warn("Unsupported task type " + taskType);
+              return null;
+            }
           }
         }
+        LOG.warn("No task type found in json " + json.getAsString());
         return null;
       }
     }
