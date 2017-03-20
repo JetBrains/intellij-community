@@ -200,6 +200,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       panelSize.height *= 2;
       if (prev != null && prev.height < panelSize.height) prev.height = panelSize.height;
       myBalloon.setMinimumSize(panelSize);
+      if (prev == null) {
+        panelSize.height *= 1.5;
+        panelSize.width *= 1.15;
+      }
       myBalloon.setSize(prev != null ? prev : panelSize);
 
       if (showPoint != null && showPoint.getComponent() != null) {
@@ -779,6 +783,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
     myCodePreviewComponent.setVisible(false);
 
+    mySearchTextArea.setInfoText(null);
     myResultsPreviewTable.setModel(model);
 
     if (result != null) {
