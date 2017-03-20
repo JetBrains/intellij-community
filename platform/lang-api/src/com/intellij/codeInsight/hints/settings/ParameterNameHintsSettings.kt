@@ -61,7 +61,7 @@ class Diff(val added: Set<String>, val removed: Set<String>) {
 class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val removedPatterns = hashMapOf<String, Set<String>>()
   private val addedPatterns = hashMapOf<String, Set<String>>()
-  private val myOptions = hashMapOf<String, Boolean>()
+  private val options = hashMapOf<String, Boolean>()
   
   fun addIgnorePattern(language: Language, pattern: String) {
     val patternsBefore = getAddedPatterns(language)
@@ -103,7 +103,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
       }
     }
     
-    myOptions.forEach { id, value ->
+    options.forEach { id, value ->
       val element = Element("option")
       element.setAttribute("id", id)
       element.setAttribute("value", value.toString())
@@ -116,7 +116,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   override fun loadState(state: Element) {
     addedPatterns.clear()
     removedPatterns.clear()
-    myOptions.clear()
+    options.clear()
     
     val allBlacklistElements = state.getChild(XmlTagHelper.BLACKLISTS)
                           ?.getChildren(XmlTagHelper.LANGUAGE_LIST) ?: emptyList()
@@ -134,7 +134,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     state.getChildren("option").forEach { 
       val id = it.getAttributeValue("id")
       val value = it.getAttributeValue("value").toBoolean()
-      myOptions[id] = value
+      options[id] = value
     }
   }
   
@@ -144,15 +144,15 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   }
 
   fun getOption(optionId: String): Boolean? {
-    return myOptions[optionId]
+    return options[optionId]
   }
 
   fun setOption(optionId: String, value: Boolean?) {
     if (value == null) {
-      myOptions.remove(optionId)
+      options.remove(optionId)
     }
     else {
-      myOptions[optionId] = value 
+      options[optionId] = value 
     }
   }
 
