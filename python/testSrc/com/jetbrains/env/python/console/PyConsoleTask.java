@@ -17,7 +17,6 @@ package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -120,7 +119,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     disposeConsoleProcess();
 
-    ExecutionManager.getInstance(getProject()).getContentManager().getAllDescriptors().forEach((Disposer::dispose));
+    if (!myContentDescriptorRef.isNull()) {
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> Disposer.dispose(myContentDescriptorRef.get()));
+    }
 
     if (myConsoleView != null) {
       new WriteAction() {
@@ -144,7 +145,14 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     PydevConsoleRunner consoleRunner =
       new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
                                  PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
-                                 (s) -> {});
+                                 (s) -> {
+                                 }) {
+        protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
+          myContentDescriptorRef.set(contentDescriptor);
+          super.showContentDescriptor(contentDescriptor);
+        }
+      };
+
     before();
 
     myConsoleInitSemaphore = new Semaphore(0);
