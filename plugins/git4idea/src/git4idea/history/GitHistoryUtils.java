@@ -628,6 +628,17 @@ public class GitHistoryUtils {
     });
   }
 
+  @NotNull
+  public static String[] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
+    List<String> parameters = ContainerUtil.newArrayList();
+
+    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    parameters.add(noWalk);
+    parameters.addAll(hashes);
+
+    return ArrayUtil.toStringArray(parameters);
+  }
+
   private static class MyTokenAccumulator {
     @NotNull private final StringBuilder myBuffer = new StringBuilder();
     @NotNull private final GitLogParser myParser;
