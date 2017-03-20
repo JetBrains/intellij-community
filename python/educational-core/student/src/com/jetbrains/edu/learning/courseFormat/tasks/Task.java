@@ -267,9 +267,17 @@ public class Task implements StudyItem {
     return !date.after(myUpdateDate);
   }
 
-  public void copyParametersOf(@NotNull Task task) {
-    myLesson = task.getLesson();
-    myIndex = task.getIndex();
+  public void copyTaskParameters(Task task) {
+    setName(task.getName());
+    setIndex(task.getIndex());
+    setStatus(task.getStatus());
+    setStepId(task.getStepId());
+    taskFiles = task.getTaskFiles();
+    setText(task.getText());
+    testsText = task.getTestsText();
+    taskTexts = task.getTaskTexts();
+    setLesson(task.getLesson());
+    setUpdateDate(task.getUpdateDate());
   }
 
   // used in json serialization/deserialization
