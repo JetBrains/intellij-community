@@ -16,7 +16,6 @@
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,12 +35,14 @@ import java.util.List;
 
 
 public class DiffSplitter extends Splitter {
+  public static final int DIVIDER_WIDTH = JBUI.scale(20);
+
   @Nullable private Painter myPainter;
   @Nullable private AnAction myTopAction;
   @Nullable private AnAction myBottomAction;
 
   public DiffSplitter() {
-    setDividerWidth(JBUI.scale(30));
+    setDividerWidth(DIVIDER_WIDTH);
   }
 
   @Override
@@ -58,17 +59,27 @@ public class DiffSplitter extends Splitter {
 
 
         GridBag bag = new GridBag();
+        JComponent button1 = syncComponents.get(0);
+        JComponent button2 = syncComponents.get(1);
 
-        if (syncComponents.get(0) != null) {
-          add(syncComponents.get(0), bag.nextLine());
-          add(Box.createVerticalStrut(JBUI.scale(20)), bag.nextLine());
+        if (button1 != null) {
+          int width = button1.getPreferredSize().width;
+          if (getDividerWidth() < width) setDividerWidth(width);
+        }
+        if (button2 != null) {
+          int width = button2.getPreferredSize().width;
+          if (getDividerWidth() < width) setDividerWidth(width);
         }
 
-        add(new JLabel(AllIcons.General.SplitGlueH), bag.nextLine());
 
-        if (syncComponents.get(1) != null) {
+        if (button1 != null) {
+          add(button1, bag.nextLine());
+        }
+        if (button1 != null && button2 != null) {
           add(Box.createVerticalStrut(JBUI.scale(20)), bag.nextLine());
-          add(syncComponents.get(1), bag.nextLine());
+        }
+        if (button2 != null) {
+          add(button2, bag.nextLine());
         }
 
 
@@ -112,6 +123,7 @@ public class DiffSplitter extends Splitter {
     if (action == null) return null;
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DiffSplitter", new DefaultActionGroup(action), true);
+    toolbar.updateActionsImmediately();
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setCursor(Cursor.getDefaultCursor());
     return toolbar.getComponent();
