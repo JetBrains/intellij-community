@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class AddImportQuickFixTest extends PyQuickFixTestCase {
+public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   // PY-19773
   public void testReexportedName() throws Exception {

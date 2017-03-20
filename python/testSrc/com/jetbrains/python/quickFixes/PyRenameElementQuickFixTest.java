@@ -27,7 +27,7 @@ import com.jetbrains.python.inspections.PyShadowingBuiltinsInspection;
  * User: ktisha
  */
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/RenameElementQuickFixTest/")
-public class RenameElementQuickFixTest extends PyQuickFixTestCase {
+public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
 
   public void testProtectedMember() {
     doQuickFixTest(PyProtectedMemberInspection.class, PyBundle.message("QFIX.NAME.rename.element"));

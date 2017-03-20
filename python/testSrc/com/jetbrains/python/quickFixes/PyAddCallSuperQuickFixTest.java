@@ -21,7 +21,7 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyMissingConstructorInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/AddCallSuperQuickFixTest/")
-public class AddCallSuperQuickFixTest extends PyQuickFixTestCase {
+public class PyAddCallSuperQuickFixTest extends PyQuickFixTestCase {
 
   public void testOldStyle() {
     doQuickFixTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"));

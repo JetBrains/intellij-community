@@ -25,7 +25,7 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
  * User: ktisha
  */
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/AddFieldQuickFixTest/")
-public class AddFieldQuickFixTest extends PyQuickFixTestCase {
+public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddClassField() {
     doQuickFixTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "FIELD", "A"));
