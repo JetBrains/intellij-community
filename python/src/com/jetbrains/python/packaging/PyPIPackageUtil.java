@@ -487,27 +487,27 @@ public class PyPIPackageUtil {
       
       @NotNull
       public String getVersion() {
-        return version;
+        return StringUtil.notNullize(version);
       }
 
       @NotNull
       public String getAuthor() {
-        return author;
+        return StringUtil.notNullize(author);
       }
 
       @NotNull
       public String getAuthorEmail() {
-        return authorEmail;
+        return StringUtil.notNullize(authorEmail);
       }
 
       @NotNull
       public String getHomePage() {
-        return homePage;
+        return StringUtil.notNullize(homePage);
       }
 
       @NotNull
       public String getSummary() {
-        return summary;
+        return StringUtil.notNullize(summary);
       }
     }
 
