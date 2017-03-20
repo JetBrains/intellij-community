@@ -136,8 +136,9 @@ public class VfsRootAccess {
     allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
     allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
 
-    allowed.add("/etc"); // After recent update of Oracle JDK 1.8 under Ubuntu Certain files in the JDK installation are symlinked to /etc
     // see IDEA-167037 The assertion "File accessed outside allowed root" is triggered by files symlinked from the the JDK installation folder
+    allowed.add("/etc"); // After recent update of Oracle JDK 1.8 under Ubuntu Certain files in the JDK installation are symlinked to /etc
+    allowed.add("/private/etc");
 
     for (final Project project : openProjects) {
       if (!project.isInitialized()) {
