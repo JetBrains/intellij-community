@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,22 @@ package org.jetbrains.debugger
 
 import org.jetbrains.debugger.values.ObjectValue
 
-interface Scope {
-  enum class Type {
-    GLOBAL,
-    LOCAL,
-    WITH,
-    CLOSURE,
-    CATCH,
-    LIBRARY,
-    CLASS,
-    INSTANCE,
-    BLOCK,
-    SCRIPT,
-    UNKNOWN
-  }
+enum class ScopeType {
+  GLOBAL,
+  LOCAL,
+  WITH,
+  CLOSURE,
+  CATCH,
+  LIBRARY,
+  CLASS,
+  INSTANCE,
+  BLOCK,
+  SCRIPT,
+  UNKNOWN
+}
 
-  val type: Type
+interface Scope {
+  val type: ScopeType
 
   /**
    * Class or function or file name
@@ -44,12 +44,12 @@ interface Scope {
   val isGlobal: Boolean
 }
 
-abstract class ScopeBase(override val type: Scope.Type, override val description: String?) : Scope {
+abstract class ScopeBase(override val type: ScopeType, override val description: String?) : Scope {
   override val isGlobal: Boolean
-    get() = type === Scope.Type.GLOBAL || type === Scope.Type.LIBRARY
+    get() = type === ScopeType.GLOBAL || type === ScopeType.LIBRARY
 }
 
-class ObjectScope(type: Scope.Type, private val value: ObjectValue) : ScopeBase(type, value.valueString), Scope {
+class ObjectScope(type: ScopeType, private val value: ObjectValue) : ScopeBase(type, value.valueString), Scope {
   override val variablesHost: VariablesHost<*>
     get() = value.variablesHost
 }
