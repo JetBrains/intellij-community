@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -88,7 +89,7 @@ public class JBCardLayout extends CardLayout {
     mySwipeFrom = findVisible(parent);
     mySwipeTo = myMap.get(name);
     if (mySwipeTo == null) return;
-    if (mySwipeFrom == null || mySwipeFrom == mySwipeTo) {
+    if (mySwipeFrom == null || mySwipeFrom == mySwipeTo || ApplicationManager.getApplication().isUnitTestMode()) {
       super.show(parent, name);
       if (onDone != null) {
         onDone.run();
