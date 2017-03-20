@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -25,18 +26,15 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 public class CCUtils {
   public static final String ANSWER_EXTENSION_DOTTED = ".answer.";
@@ -269,5 +267,44 @@ public class CCUtils {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     presentation.setEnabledAndVisible(project != null && isCourseCreator(project));
+  }
+
+  public static void renameFiles(VirtualFile taskDir, Project project, int fromIndex) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      Map<VirtualFile, String> newNames = new HashMap<>();
+      for (VirtualFile virtualFile : taskDir.getChildren()) {
+        int subtaskIndex = getSubtaskIndex(project, virtualFile);
+        if (subtaskIndex == -1) {
+          continue;
+        }
+        if (subtaskIndex > fromIndex) {
+          String index;
+          if (fromIndex == -1) { // add new subtask
+            index = "0";
+          }
+          else { // remove subtask
+            index = subtaskIndex == 1 ? "" : Integer.toString(subtaskIndex - 1);
+          }
+          String fileName = virtualFile.getName();
+          String nameWithoutExtension = FileUtil.getNameWithoutExtension(fileName);
+          String extension = FileUtilRt.getExtension(fileName);
+          int subtaskMarkerIndex = nameWithoutExtension.indexOf(EduNames.SUBTASK_MARKER);
+          String newName = subtaskMarkerIndex == -1
+                           ? nameWithoutExtension
+                           : nameWithoutExtension.substring(0, subtaskMarkerIndex);
+          newName += index.isEmpty() ? "" : EduNames.SUBTASK_MARKER;
+          newName += index + "." + extension;
+          newNames.put(virtualFile, newName);
+        }
+      }
+      for (Map.Entry<VirtualFile, String> entry : newNames.entrySet()) {
+        try {
+          entry.getKey().rename(project, entry.getValue());
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+      }
+    });
   }
 }

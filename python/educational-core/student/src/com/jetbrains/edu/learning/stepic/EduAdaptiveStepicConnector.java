@@ -309,7 +309,8 @@ public class EduAdaptiveStepicConnector {
           final Task unsolvedTask = adaptive.getTaskList().get(adaptive.getTaskList().size() - 1);
           final String lessonName = EduNames.LESSON + String.valueOf(adaptive.getIndex());
           if (reaction == TOO_HARD_RECOMMENDATION_REACTION || reaction == TOO_BORING_RECOMMENDATION_REACTION) {
-            task.copyParametersOf(unsolvedTask);
+            task.setLesson(unsolvedTask.getLesson());
+            task.setIndex(unsolvedTask.getIndex());
             adaptive.getTaskList().set(adaptive.getTaskList().size() - 1, task);
             ApplicationManager.getApplication().invokeLater(()->StudyNavigator.navigateToTask(project, task));
 

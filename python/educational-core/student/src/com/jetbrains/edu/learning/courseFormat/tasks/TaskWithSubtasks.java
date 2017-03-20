@@ -17,16 +17,7 @@ public class TaskWithSubtasks extends Task {
   }
 
   public TaskWithSubtasks(Task task) {
-    setName(task.getName());
-    setIndex(task.getIndex());
-    setStatus(task.getStatus());
-    setStepId(task.getStepId());
-    taskFiles = task.getTaskFiles();
-    setText(task.getText());
-    testsText = task.getTestsText();
-    taskTexts = task.getTaskTexts();
-    setLesson(task.getLesson());
-    setUpdateDate(task.getUpdateDate());
+    copyTaskParameters(task);
   }
 
   public int getActiveSubtaskIndex() {

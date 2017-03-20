@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.jetbrains.edu.coursecreator.CCUtils.renameFiles;
+
 
 public class CCNewSubtaskAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CCNewSubtaskAction.class);
@@ -53,13 +55,13 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     Task task = StudyUtils.getTaskForFile(project, virtualFile);
     if (task == null) return;
     if (!(task instanceof TaskWithSubtasks)) {
-      task = replaceTaskWithSubtasks(task);
+      task = convertToTaskWithSubtasks(task, project);
     }
     addSubtask((TaskWithSubtasks)task, project);
   }
 
   @NotNull
-  private Task replaceTaskWithSubtasks(Task task) {
+  private static Task convertToTaskWithSubtasks(Task task, Project project) {
     final Lesson lesson = task.getLesson();
     final List<Task> list = lesson.getTaskList();
     final int i = list.indexOf(task);
@@ -68,6 +70,8 @@ public class CCNewSubtaskAction extends DumbAwareAction {
       taskFile.setTask(task);
     }
     list.set(i, task);
+    final VirtualFile taskDir = task.getTaskDir(project);
+    renameFiles(taskDir, project, -1);
     return task;
   }
 
