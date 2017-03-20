@@ -82,7 +82,7 @@ public class ProgressIndicatorUtils {
   }
 
   /**
-   * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicatorUtils}
+   * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicator}
    * instance, which can be used to cancel action externally.
    */
   public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, 
@@ -161,7 +161,6 @@ public class ProgressIndicatorUtils {
   public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator,
                                                                      @NotNull final Executor executor,
                                                                      @NotNull final ReadTask readTask) {
-    final Application application = ApplicationManager.getApplication();
     // invoke later even if on EDT
     // to avoid tasks eagerly restarting immediately, allocating many pooled threads
     // which get cancelled too soon when a next write action arrives in the same EDT batch
@@ -171,8 +170,8 @@ public class ProgressIndicatorUtils {
     // to tolerate any immediate modality changes (e.g. https://youtrack.jetbrains.com/issue/IDEA-135180)
 
     CompletableFuture<?> future = new CompletableFuture<>();
-    //noinspection SSBasedInspection
     EdtInvocationManager.getInstance().invokeLater(() -> {
+      final Application application = ApplicationManager.getApplication();
       if (application.isDisposed() || progressIndicator.isCanceled()) {
         future.complete(null);
         return;
@@ -207,6 +206,7 @@ public class ProgressIndicatorUtils {
               application.invokeLater(new Runnable() {
                 @Override
                 public void run() {
+                  application.removeApplicationListener(listener); // remove listener early to prevent firing it during continuation execution
                   try {
                     if (!progressIndicator.isCanceled()) {
                       continuation.getAction().run();
@@ -232,7 +232,6 @@ public class ProgressIndicatorUtils {
         });
       }
       catch (RuntimeException | Error e) {
-        application.removeApplicationListener(listener);
         future.completeExceptionally(e);
         throw e;
       }
