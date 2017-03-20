@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Implementation of task which contains task files, tests, input file for tests
- */
 public class ChoiceTask extends Task {
 
   @SuppressWarnings("unused") //used for deserialization
