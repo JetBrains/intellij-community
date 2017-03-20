@@ -497,6 +497,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
               myResultsPreviewTable);
     ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
     ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceComponent);
+    ScrollingUtil.installActions(myResultsPreviewTable, false, myFileMaskField);
     UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, NEW_LINE);
     UIUtil.redirectKeystrokes(myDisposable, myReplaceComponent, myResultsPreviewTable, NEW_LINE);
     ActionListener helpAction = new ActionListener() {
