@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -172,15 +171,12 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     int height = getHeight(lineHeight);
     if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
+    g.setColor(getBackgroundColor(scheme));
+
     Graphics2D gg = ((Graphics2D)g);
     AffineTransform oldTransform = gg.getTransform();
 
     for (int i = 0; i < height; i++) {
-      Color color = getTopBorderColor(i, lineHeight, scheme);
-      if (color == null) color = getBottomBorderColor(i, lineHeight, scheme);
-      if (color == null) color = getBackgroundColor(scheme);
-
-      gg.setColor(color);
       gg.drawPolyline(xPoints, yPoints, xPoints.length);
       gg.translate(0, 1);
     }
@@ -192,8 +188,6 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   //
 
   public static final ColorKey BACKGROUND = ColorKey.createColorKey("DIFF_SEPARATORS_BACKGROUND");
-  public static final ColorKey TOP_BORDER = ColorKey.createColorKey("DIFF_SEPARATORS_TOP_BORDER");
-  public static final ColorKey BOTTOM_BORDER = ColorKey.createColorKey("DIFF_SEPARATORS_BOTTOM_BORDER");
 
   private static int getStepSize(int lineHeight) {
     return Math.max(lineHeight / 3, 1);
@@ -207,34 +201,5 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   private static Color getBackgroundColor(@NotNull EditorColorsScheme scheme) {
     Color color = scheme.getColor(BACKGROUND);
     return color != null ? color : Gray._128;
-  }
-
-  @Nullable
-  private static Color getTopBorderColor(int i, int lineHeight, @NotNull EditorColorsScheme scheme) {
-    int border = Math.max(lineHeight / 4, 1);
-    double ratio = (double)i / border;
-    if (ratio > 1) return null;
-
-    Color top = scheme.getColor(TOP_BORDER);
-    if (top == null) return null;
-
-    Color background = getBackgroundColor(scheme);
-    return ColorUtil.mix(top, background, ratio);
-  }
-
-  @Nullable
-  private static Color getBottomBorderColor(int i, int lineHeight, @NotNull EditorColorsScheme scheme) {
-    int height = getHeight(lineHeight);
-    int border = Math.max(lineHeight / 12, 1);
-
-    int index = (height - i - 1);
-    double ratio = (double)index / border;
-    if (ratio > 1) return null;
-
-    Color bottom = scheme.getColor(BOTTOM_BORDER);
-    if (bottom == null) return null;
-
-    Color background = getBackgroundColor(scheme);
-    return ColorUtil.mix(bottom, background, ratio);
   }
 }
