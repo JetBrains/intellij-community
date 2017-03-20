@@ -54,6 +54,14 @@ public class HgCommonBranchActions extends BranchActionGroup {
     getTemplatePresentation().setText(myBranchName, false); // no mnemonics
     myBranchType = branchType;
     setFavorite(myBranchManager.isFavorite(myBranchType, chooseRepository(myRepositories), myBranchName));
+    hideIconForUnnamedHeads();
+  }
+
+  private void hideIconForUnnamedHeads() {
+    if (myBranchType == null) {
+      getTemplatePresentation().setIcon(null);
+      getTemplatePresentation().setHoveredIcon(null);
+    }
   }
 
   @Nullable
