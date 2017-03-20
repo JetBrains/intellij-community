@@ -156,7 +156,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       VcsLogManager logManager = myProjectLog.getLogManager();
       if (logManager != null) {
         for (String tabName : logManager.getTabNames()) {
-          if (tabName != TAB_NAME) { // main tab is closed by the ChangesViewContentManager
+          if (!TAB_NAME.equals(tabName)) { // main tab is closed by the ChangesViewContentManager
             Content content = toolWindow.getContentManager().findContent(tabName);
             ContentsUtil.closeContentTab(toolWindow.getContentManager(), content);
           }
