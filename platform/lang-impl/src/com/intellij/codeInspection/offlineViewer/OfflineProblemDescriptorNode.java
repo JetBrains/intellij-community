@@ -21,6 +21,7 @@
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
@@ -65,7 +66,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   protected String calculatePresentableName() {
     String presentableName = super.calculatePresentableName();
     return presentableName.isEmpty() && getUserObject() instanceof OfflineProblemDescriptor
-           ? StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription())
+           ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription()))
            : presentableName;
   }
 

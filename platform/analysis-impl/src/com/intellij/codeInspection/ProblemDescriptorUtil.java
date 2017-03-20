@@ -81,8 +81,7 @@ public class ProblemDescriptorUtil {
         message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
       }
     }
-    message = StringUtil.replace(message, "<code>", "'");
-    message = StringUtil.replace(message, "</code>", "'");
+    message = unescapeTags(message);
     message = StringUtil.replace(message, "#loc ", "");
     message = StringUtil.replace(message, " #loc", "");
     message = StringUtil.replace(message, "#loc", "");
@@ -99,6 +98,12 @@ public class ProblemDescriptorUtil {
     message = StringUtil.replace(message, "#end", "");
     message = StringUtil.replace(message, "#treeend", "");
 
+    return message;
+  }
+
+  public static String unescapeTags(String message) {
+    message = StringUtil.replace(message, "<code>", "'");
+    message = StringUtil.replace(message, "</code>", "'");
     if (message.contains(XML_CODE_MARKER.first)) {
       message = unescapeXmlCode(message);
     }
