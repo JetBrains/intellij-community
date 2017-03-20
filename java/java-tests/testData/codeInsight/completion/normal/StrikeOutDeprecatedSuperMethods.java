@@ -1,7 +1,7 @@
 class Super {
   void foo1() {}
   @Deprecated
-  void foo2() {}
+  void foo2(int x) {}
 }
 
 class Sub extends Super {
