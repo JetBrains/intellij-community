@@ -1,3 +1,6 @@
+// Object method(Object)
+// Object method(Object, Object[])
+// Object method(Object, String)
 import java.lang.invoke.*;
 
 class Main {

@@ -20,24 +20,30 @@ import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformIcons;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
+import javax.swing.*;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Pavel.Dolgov
@@ -281,7 +287,7 @@ public class JavaReflectionReferenceUtil {
 
   @Contract("null -> null")
   @Nullable
-  public static List<String> getMethodSignature(@Nullable PsiMethod method) {
+  public static ReflectiveSignature getMethodSignature(@Nullable PsiMethod method) {
     if (method != null) {
       final List<String> types = new ArrayList<>();
       final PsiType returnType = !method.isConstructor() ? method.getReturnType() : PsiType.VOID;
@@ -290,15 +296,14 @@ public class JavaReflectionReferenceUtil {
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
         types.add(getTypeText(parameter.getType(), method));
       }
-      if (!types.contains(null)) {
-        return types;
-      }
+      final Icon icon = method.getIcon(Iconable.ICON_FLAG_VISIBILITY);
+      return ReflectiveSignature.create(icon, types);
     }
     return null;
   }
 
   @NotNull
-  public static String getMethodTypeExpressionText(@NotNull List<String> signature) {
+  public static String getMethodTypeExpressionText(@NotNull ReflectiveSignature signature) {
     final String types = signature.stream()
       .map(text -> text + ".class")
       .collect(Collectors.joining(", "));
@@ -386,6 +391,93 @@ public class JavaReflectionReferenceUtil {
     @Nullable
     public static ReflectiveType create(@Nullable PsiClass psiClass) {
       return psiClass != null ? new ReflectiveType(psiClass, null, 0) : null;
+    }
+  }
+
+  public static class ReflectiveSignature implements Comparable<ReflectiveSignature> {
+    public static final ReflectiveSignature NO_ARGUMENT_CONSTRUCTOR_SIGNATURE =
+      new ReflectiveSignature(null, PsiKeyword.VOID, ArrayUtil.EMPTY_STRING_ARRAY);
+
+    private final Icon myIcon;
+    @NotNull private final String myReturnType;
+    @NotNull private final String[] myArgumentTypes;
+
+    @Nullable
+    public static ReflectiveSignature create(@NotNull List<String> typeTexts) {
+      return create(null, typeTexts);
+    }
+
+    @Nullable
+    public static ReflectiveSignature create(@Nullable Icon icon, @NotNull List<String> typeTexts) {
+      if (!typeTexts.isEmpty() && !typeTexts.contains(null)) {
+        final String[] argumentTypes = ArrayUtil.toStringArray(typeTexts.subList(1, typeTexts.size()));
+        return new ReflectiveSignature(icon, typeTexts.get(0), argumentTypes);
+      }
+      return null;
+    }
+
+    private ReflectiveSignature(@Nullable Icon icon, @NotNull String returnType, @NotNull String[] argumentTypes) {
+      myIcon = icon;
+      myReturnType = returnType;
+      myArgumentTypes = argumentTypes;
+    }
+
+    @NotNull
+    public Stream<String> stream() {
+      return Stream.concat(Stream.of(myReturnType), Arrays.stream(myArgumentTypes));
+    }
+
+    @NotNull
+    public String getShortReturnType() {
+      return getShortTypeText(myReturnType);
+    }
+
+    @NotNull
+    public String getShortArgumentTypes() {
+      final StringJoiner joiner = new StringJoiner(", ", "(", ")");
+      for (String argumentType : myArgumentTypes) {
+        joiner.add(getShortTypeText(argumentType));
+      }
+      return joiner.toString();
+    }
+
+    @NotNull
+    private static String getShortTypeText(String text) {
+      final int pos = text.lastIndexOf('.');
+      return pos < 0 ? text : text.substring(pos + 1);
+    }
+
+    @Nullable
+    public Icon getIcon() {
+      return myIcon != null ? myIcon : PlatformIcons.METHOD_ICON;
+    }
+
+    @Override
+    public int compareTo(@NotNull ReflectiveSignature other) {
+      int c = myArgumentTypes.length - other.myArgumentTypes.length;
+      if (c != 0) return c;
+      c = ArrayUtil.lexicographicCompare(myArgumentTypes, other.myArgumentTypes);
+      if (c != 0) return c;
+      return myReturnType.compareTo(other.myReturnType);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ReflectiveSignature)) return false;
+      final ReflectiveSignature other = (ReflectiveSignature)o;
+      return Objects.equals(myReturnType, other.myReturnType) &&
+             Arrays.equals(myArgumentTypes, other.myArgumentTypes);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myReturnType, myArgumentTypes);
+    }
+
+    @Override
+    public String toString() {
+      return myReturnType + " " + Arrays.toString(myArgumentTypes);
     }
   }
 }

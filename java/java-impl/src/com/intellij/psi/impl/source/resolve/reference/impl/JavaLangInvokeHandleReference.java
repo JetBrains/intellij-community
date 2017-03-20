@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -181,7 +180,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     final Object object = item.getObject();
 
     if (object instanceof PsiMethod) {
-      final List<String> signature = getMethodSignature((PsiMethod)object);
+      final ReflectiveSignature signature = getMethodSignature((PsiMethod)object);
       if (signature != null) {
         final String text = ", " + getMethodTypeExpressionText(signature);
         replaceText(context, text);

@@ -1,3 +1,5 @@
+// Test()
+// Test(int)
 import java.lang.invoke.*;
 
 class Main {
@@ -8,6 +10,6 @@ class Main {
 }
 
 class Test {
-  public Test() {}
   public Test(int a) {}
+  public Test() {}
 }

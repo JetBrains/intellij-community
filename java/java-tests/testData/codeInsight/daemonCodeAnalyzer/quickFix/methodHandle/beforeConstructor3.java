@@ -1,3 +1,4 @@
+// Test()
 import java.lang.invoke.*;
 
 class Main {
