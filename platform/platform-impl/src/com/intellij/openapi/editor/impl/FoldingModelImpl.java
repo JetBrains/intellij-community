@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   private boolean myIsFoldingEnabled;
   private final EditorImpl myEditor;
+  private final RangeMarkerTree<FoldRegionImpl> myRegionTree;
   private final FoldRegionsTree myFoldTree;
   private TextAttributes myFoldTextAttributes;
   private boolean myIsBatchFoldingProcessing;
@@ -77,6 +78,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
+    myRegionTree = new RangeMarkerTree<>(editor.getDocument());
     myFoldTree = new FoldRegionsTree() {
       @Override
       protected boolean isFoldingEnabled() {
@@ -314,6 +316,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   public void dispose() {
     doClearFoldRegions();
+    myRegionTree.dispose();
   }
 
   @Override
@@ -580,6 +583,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
                                      @Nullable FoldingGroup group,
                                      boolean neverExpands) {
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
+    myRegionTree.addInterval(region, startOffset, endOffset, false, false, 0);
     LOG.assertTrue(region.isValid());
     return region;
   }
