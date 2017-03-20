@@ -188,6 +188,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                         continue;
                       }
                       if (!DebuggerSession.enableBreakpointsDuringEvaluation()) {
+                        notifySkippedBreakpoints(locatableEvent);
                         eventSet.resume();
                         return;
                       }
@@ -459,6 +460,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         SuspendContextImpl evaluatingContext = SuspendManagerUtil.getEvaluatingContext(suspendManager, suspendContext.getThread());
 
         if (evaluatingContext != null && !DebuggerSession.enableBreakpointsDuringEvaluation()) {
+          notifySkippedBreakpoints(event);
           // is inside evaluation, so ignore any breakpoints
           suspendManager.voteResume(suspendContext);
           return;
@@ -517,6 +519,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
       }
     });
+  }
+
+  private void notifySkippedBreakpoints(LocatableEvent event) {
+    XDebugSessionImpl.NOTIFICATION_GROUP
+      .createNotification(DebuggerBundle.message("message.breakpoint.skipped", event.location()), MessageType.INFO)
+      .notify(getProject());
   }
 
   @Nullable
