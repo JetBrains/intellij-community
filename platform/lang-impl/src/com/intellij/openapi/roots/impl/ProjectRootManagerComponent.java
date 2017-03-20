@@ -174,7 +174,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (roots == null) return false;
 
     for (VirtualFilePointer pointer : pointers) {
-      final String path = url2path(pointer.getUrl());
+      String path = extractLocalPath(pointer.getUrl());
       if (roots.first.contains(path) || roots.second.contains(path)) return true;
     }
 
@@ -205,14 +205,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     finally {
       isFiringEvent = false;
     }
-  }
-
-  private static String url2path(String url) {
-    String path = VfsUtilCore.urlToPath(url);
-
-    int separatorIndex = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-    if (separatorIndex < 0) return path;
-    return path.substring(0, separatorIndex);
   }
 
   @Nullable
