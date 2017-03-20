@@ -247,6 +247,53 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""module M { requires <warning descr="'M2' is deprecated">M2</warning>; }""")
   }
 
+  fun testPackageConflicts() {
+    addFile("pkg/collision2/C2.java", "package pkg.collision2;\npublic class C2 { }", M2)
+    addFile("pkg/collision4/C4.java", "package pkg.collision4;\npublic class C4 { }", M4)
+    addFile("pkg/collision7/C7.java", "package pkg.collision7;\npublic class C7 { }", M7)
+    addFile("module-info.java", "module M2 { exports pkg.collision2; }", M2)
+    addFile("module-info.java", "module M4 { exports pkg.collision4 to M88; }", M4)
+    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
+    addFile("module-info.java", "module M7 { exports pkg.collision7 to M6; }", M7)
+    addFile("module-info.java", "module M { requires M2; requires M4; requires M6; requires lib.auto; }")
+    highlight("test1.java", """<error descr="Package 'pkg.collision2' exists in another module: M2">package pkg.collision2;</error>""")
+    highlight("test2.java", """package pkg.collision4;""")
+    highlight("test3.java", """package pkg.collision7;""")
+    highlight("test4.java", """<error descr="Package 'java.util' exists in another module: java.base">package java.util;</error>""")
+    highlight("test5.java", """<error descr="Package 'pkg.lib2' exists in another module: lib.auto">package pkg.lib2;</error>""")
+  }
+
+  fun testClashingReads1() {
+    addFile("pkg/collision/C2.java", "package pkg.collision;\npublic class C2 { }", M2)
+    addFile("pkg/collision/C7.java", "package pkg.collision;\npublic class C7 { }", M7)
+    addFile("module-info.java", "module M2 { exports pkg.collision; }", M2)
+    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
+    addFile("module-info.java", "module M7 { exports pkg.collision; }", M7)
+    highlight("""
+        <error descr="Module 'M' reads package 'pkg.collision' from both 'M2' and 'M7'">module M</error> {
+          requires M2;
+          requires M6;
+        }""".trimIndent())
+  }
+
+  fun testClashingReads2() {
+    addFile("pkg/collision/C2.java", "package pkg.collision;\npublic class C2 { }", M2)
+    addFile("pkg/collision/C4.java", "package pkg.collision;\npublic class C4 { }", M4)
+    addFile("module-info.java", "module M2 { exports pkg.collision; }", M2)
+    addFile("module-info.java", "module M4 { exports pkg.collision to somewhere; }", M4)
+    highlight("module M { requires M2; requires M4; }")
+  }
+
+  fun testClashingReads3() {
+    addFile("pkg/lib2/C2.java", "package pkg.lib2;\npublic class C2 { }", M2)
+    addFile("module-info.java", "module M2 { exports pkg.lib2; }", M2)
+    highlight("""
+        <error descr="Module 'M' reads package 'pkg.lib2' from both 'M2' and 'lib.auto'">module M</error> {
+          requires M2;
+          requires <warning descr="Ambiguous module reference: lib.auto">lib.auto</warning>;
+        }""".trimIndent())
+  }
+
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
