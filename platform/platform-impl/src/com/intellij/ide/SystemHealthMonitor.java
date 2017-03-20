@@ -22,12 +22,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.io.Files;
-import com.google.wireless.android.sdk.stats.AndroidStudioEvent;
+import com.google.wireless.android.sdk.stats.*;
 import com.google.wireless.android.sdk.stats.AndroidStudioEvent.EventCategory;
 import com.google.wireless.android.sdk.stats.AndroidStudioEvent.EventKind;
-import com.google.wireless.android.sdk.stats.StudioCrash;
-import com.google.wireless.android.sdk.stats.StudioPerformanceStats;
-import com.google.wireless.android.sdk.stats.UIActionStats;
 import com.google.wireless.android.sdk.stats.UIActionStats.InvocationKind;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.IdeErrorsDialog;
@@ -78,6 +75,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +85,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
@@ -295,19 +294,27 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
 
     reportCrashes(descriptions);
-    trackExceptionsAndActivity(0, 0, 0, 0, descriptions.size());
+    trackExceptionsAndActivity(0, 0, 0, 0, descriptions.size(), Collections.emptyList());
   }
 
   public static void trackExceptionsAndActivity(final long activityCount,
                                                 final long exceptionCount,
                                                 final long bundledPluginExceptionCount,
                                                 final long nonBundledPluginExceptionCount,
-                                                final long fatalExceptionCount) {
+                                                final long fatalExceptionCount,
+                                                @NotNull List<StackTrace> stackTraces) {
     if (!StatisticsUploadAssistant.isSendAllowed()) {
       return;
     }
 
     if (!ApplicationManager.getApplication().isInternal()) {
+      List<StudioExceptionDetails> allDetails = stackTraces.stream()
+        .map(t -> StudioExceptionDetails.newBuilder()
+          .setHash(t.md5string())
+          .setCount(t.count())
+          .setSummary(t.summarize(20))
+          .build())
+        .collect(Collectors.toList());
       UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
                                        .setCategory(EventCategory.PING)
                                        .setKind(EventKind.STUDIO_CRASH)
@@ -316,7 +323,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
                                                          .setExceptions(exceptionCount)
                                                          .setBundledPluginExceptions(bundledPluginExceptionCount)
                                                          .setNonBundledPluginExceptions(nonBundledPluginExceptionCount)
-                                                         .setCrashes(fatalExceptionCount)));
+                                                         .setCrashes(fatalExceptionCount)
+                                                         .addAllDetails(allDetails)));
     }
   }
 
@@ -468,26 +476,25 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final int INTERVAL_IN_MINUTES = 30;
 
   private static void startActivityMonitoring() {
-    JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        long activityCount = ourStudioActionCount.getAndSet(0);
-        long exceptionCount = ourStudioExceptionCount.getAndSet(0);
-        long bundledPluginExceptionCount = ourBundledPluginsExceptionCount.getAndSet(0);
-        long nonBundledPluginExceptionCount = ourNonBundledPluginsExceptionCount.getAndSet(0);
-        persistExceptionCount(0, STUDIO_EXCEPTION_COUNT_FILE);
-        persistExceptionCount(0, BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE);
-        persistExceptionCount(0, NON_BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE);
-        if (ApplicationManager.getApplication().isInternal()) {
-          // should be 0, but accounting for possible crashes in other threads..
-          assert getPersistedExceptionCount(STUDIO_EXCEPTION_COUNT_FILE) < 5;
-        }
-
-        if (activityCount > 0 || exceptionCount > 0) {
-          trackExceptionsAndActivity(activityCount, exceptionCount, bundledPluginExceptionCount, nonBundledPluginExceptionCount, 0);
-        }
-        reportActionInvocations();
+    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+      long activityCount = ourStudioActionCount.getAndSet(0);
+      long exceptionCount = ourStudioExceptionCount.getAndSet(0);
+      long bundledPluginExceptionCount = ourBundledPluginsExceptionCount.getAndSet(0);
+      long nonBundledPluginExceptionCount = ourNonBundledPluginsExceptionCount.getAndSet(0);
+      persistExceptionCount(0, STUDIO_EXCEPTION_COUNT_FILE);
+      persistExceptionCount(0, BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE);
+      persistExceptionCount(0, NON_BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE);
+      if (ApplicationManager.getApplication().isInternal()) {
+        // should be 0, but accounting for possible crashes in other threads..
+        assert getPersistedExceptionCount(STUDIO_EXCEPTION_COUNT_FILE) < 5;
       }
+
+      if (activityCount > 0 || exceptionCount > 0) {
+        List<StackTrace> traces = ExceptionRegistry.INSTANCE.getStackTraces(0);
+        ExceptionRegistry.INSTANCE.clear();
+        trackExceptionsAndActivity(activityCount, exceptionCount, bundledPluginExceptionCount, nonBundledPluginExceptionCount, 0, traces);
+      }
+      reportActionInvocations();
     }, INITIAL_DELAY_MINUTES, INTERVAL_IN_MINUTES, TimeUnit.MINUTES);
   }
 
@@ -642,14 +649,14 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     return currentClass.getCanonicalName();
   }
 
-  public static void reportException(Throwable t) {
+  public static void reportException(@NotNull Throwable t, @NotNull StackTrace stackTrace) {
     if (!UsageTracker.getInstance().getAnalyticsSettings().hasOptedIn()) {
       return;
     }
 
     ErrorReportSubmitter reporter = IdeErrorsDialog.getAndroidErrorReporter();
     if (reporter != null) {
-      IdeaLoggingEvent e = new AndroidStudioExceptionEvent(t.getMessage(), t);
+      IdeaLoggingEvent e = new AndroidStudioExceptionEvent(t.getMessage(), t, stackTrace);
       reporter.submit(new IdeaLoggingEvent[]{e}, null, null, info -> {
       });
     }
@@ -682,14 +689,19 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   }
 
   private static class AndroidStudioExceptionEvent extends IdeaLoggingEvent {
-    public AndroidStudioExceptionEvent(String message, Throwable throwable) {
+    private final StackTrace myStackTrace;
+
+    public AndroidStudioExceptionEvent(String message, Throwable throwable, @NotNull StackTrace stackTrace) {
       super(message, throwable);
+      myStackTrace = stackTrace;
     }
 
     @Nullable
     @Override
     public Object getData() {
-      return "Exception"; // keep consistent with the error reporter in android plugin
+      return ImmutableMap.of("Type", "Exception", // keep consistent with the error reporter in android plugin
+                             "md5", myStackTrace.md5string(),
+                             "summary", myStackTrace.summarize(50));
     }
   }
 

@@ -17,6 +17,8 @@ package com.intellij.diagnostic;
 
 import com.android.tools.analytics.UsageTracker;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.ide.ExceptionRegistry;
+import com.intellij.ide.StackTrace;
 import com.intellij.ide.SystemHealthMonitor;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -88,8 +90,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       Throwable t = event.getThrowable();
       if (t != null) {
         if (isReportableCrash(t)) {
+          StackTrace stackTrace = ExceptionRegistry.INSTANCE.register(t);
           incrementAndSaveExceptionCount(t);
-          SystemHealthMonitor.reportException(t);
+          SystemHealthMonitor.reportException(t, stackTrace);
         }
       }
     }
@@ -136,7 +139,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     return !(t instanceof Logger.EmptyThrowable);
   }
 
-  private static void incrementAndSaveExceptionCount(Throwable t) {
+  private static void incrementAndSaveExceptionCount(@NotNull Throwable t) {
     SystemHealthMonitor.incrementAndSaveExceptionCount();
     PluginId pluginId = IdeErrorsDialog.findPluginId(t);
     if (pluginId != null) {
