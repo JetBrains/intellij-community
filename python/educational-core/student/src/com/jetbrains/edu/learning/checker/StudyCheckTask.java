@@ -109,7 +109,8 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       runAfterTaskCheckedActions();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
-        if (StepicUpdateSettings.getInstance().getUser().getAccessToken() != null) {
+        StepicUser user = StepicUpdateSettings.getInstance().getUser();
+        if (user != null) {
           EduStepicConnector.postSolution(myTask, testsOutput.isSuccess(), myProject);
         }
       }
@@ -155,9 +156,18 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     else if (myTask instanceof TheoryTask) {
       final int lessonId = myTask.getLesson().getId();
       final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-      final boolean reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
-                                                                              String.valueOf(user.getId()),
-                                                                              EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+
+      final boolean reactionPosted;
+      if (user == null) {
+        LOG.warn("User is null");
+        reactionPosted = false;
+      }
+      else {
+        reactionPosted = EduAdaptiveStepicConnector.postRecommendationReaction(String.valueOf(lessonId),
+                                                                               String.valueOf(user.getId()),
+                                                                               EduAdaptiveStepicConnector.NEXT_RECOMMENDATION_REACTION);
+      }
+
       if (reactionPosted) {
         if (myStatusBeforeCheck != StudyStatus.Solved) {
           myTask.setStatus(StudyStatus.Solved);

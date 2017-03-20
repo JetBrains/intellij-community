@@ -18,6 +18,7 @@ import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,7 @@ import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 
 public class EduStepicClient {
@@ -101,5 +103,29 @@ public class EduStepicClient {
       LOG.error(e.getMessage());
     }
     return builder;
+  }
+
+  static boolean isTokenUpToDate(@NotNull String token) {
+    if (token.isEmpty()) return false;
+
+    final List<BasicHeader> headers = new ArrayList<>();
+    headers.add(new BasicHeader("Authorization", "Bearer " + token));
+    headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APP_JSON));
+    CloseableHttpClient httpClient = getBuilder().setDefaultHeaders(headers).build();
+
+    try {
+      final StepicWrappers.AuthorWrapper wrapper = getFromStepic(EduStepicNames.CURRENT_USER, StepicWrappers.AuthorWrapper.class, httpClient);
+      if (wrapper != null && !wrapper.users.isEmpty()) {
+        StepicUser user = wrapper.users.get(0);
+        return user != null && !user.isGuest();
+      }
+      else {
+        throw new IOException(wrapper == null ? "Got a null current user" : "Got an empty wrapper");
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+      return false;
+    }
   }
 }

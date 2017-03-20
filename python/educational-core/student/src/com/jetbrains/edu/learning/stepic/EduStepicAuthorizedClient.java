@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import org.apache.http.*;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -36,27 +35,37 @@ public class EduStepicAuthorizedClient {
     if (ourClient != null) {
       return ourClient;
     }
-    else {
-      final StepicUser stepicUser = StepicUpdateSettings.getInstance().getUser();
-      ourClient = initializeClient(stepicUser);
-      if (ourClient == null || !isTokenUpToDate(ourClient, stepicUser.getId())) {
-        ourClient = loginAndInitializeClient(stepicUser);
+
+    StepicUpdateSettings stepicUpdateSettings = StepicUpdateSettings.getInstance();
+
+
+    if (stepicUpdateSettings.getUser() == null) {
+      final StepicUser user = showLoginDialog();
+      if (user != null) {
+        stepicUpdateSettings.setUser(user);
+      }
+      else {
+        LOG.warn("Unable to login");
+        return null;
       }
     }
-    return ourClient;
-  }
 
-  @Nullable
-  private static CloseableHttpClient loginAndInitializeClient(@NotNull StepicUser stepicUser) {
-    final StepicUser user = login(stepicUser);
-    if (user != null) {
-      StepicUpdateSettings.getInstance().setUser(user);
-      return initializeClient(stepicUser);
+    StepicUser stepicUser = stepicUpdateSettings.getUser();
+    assert stepicUser != null;
+
+    if (!EduStepicClient.isTokenUpToDate(stepicUser.getAccessToken())) {
+      StepicWrappers.TokenInfo tokens = getUpdatedTokens(stepicUser.getRefreshToken());
+      if (tokens != null) {
+        stepicUser.setTokenInfo(tokens);
+      }
+      else {
+        return null;
+      }
     }
-    else {
-      LOG.warn("Couldn't initialize client: user is null");
-      return null;
-    }
+
+    ourClient = createInitializedClient(stepicUser.getAccessToken());
+
+    return ourClient;
   }
 
   @Nullable
@@ -74,17 +83,19 @@ public class EduStepicAuthorizedClient {
     if (ourClient != null) {
       return ourClient;
     }
-    ourClient = initializeClient(stepicUser);
-    if (ourClient == null || !isTokenUpToDate(ourClient, stepicUser.getId())) {
-      final StepicUser user = login(stepicUser);
-      if (user != null) {
-        StepicUpdateSettings.getInstance().setUser(user);
-        ourClient = initializeClient(stepicUser);
+
+    if (!EduStepicClient.isTokenUpToDate(stepicUser.getAccessToken())) {
+      StepicWrappers.TokenInfo tokenInfo = getUpdatedTokens(stepicUser.getRefreshToken());
+      if (tokenInfo != null) {
+        stepicUser.setTokenInfo(tokenInfo);
+      }
+      else {
+        return EduStepicClient.getHttpClient();
       }
     }
-    if (ourClient == null) {
-      ourClient = EduStepicClient.getHttpClient();
-    }
+
+    ourClient = createInitializedClient(stepicUser.getAccessToken());
+
     return ourClient;
   }
 
@@ -96,36 +107,12 @@ public class EduStepicAuthorizedClient {
     return EduStepicClient.getFromStepic(link, container, getHttpClient(stepicUser));
   }
 
-  @Nullable
-  private static CloseableHttpClient initializeClient(@NotNull final StepicUser stepicUser) {
+  @NotNull
+  private static CloseableHttpClient createInitializedClient(@NotNull String accessToken) {
     final List<BasicHeader> headers = new ArrayList<>();
-    final String accessToken = stepicUser.getAccessToken();
-    if (accessToken != null && !accessToken.isEmpty()) {
-      headers.add(new BasicHeader("Authorization", "Bearer " + accessToken));
-      headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APP_JSON));
-      return getBuilder().setDefaultHeaders(headers).build();
-    }
-    return null;
-  }
-
-  private static StepicUser login(@NotNull final StepicUser user) {
-    final String login = user.getEmail();
-    final String refreshToken = user.getRefreshToken();
-    if (StringUtil.isEmptyOrSpaces(login)) {
-      return showLoginDialog();
-    }
-    else if (StringUtil.isNotEmpty(refreshToken)) {
-      final StepicWrappers.TokenInfo tokenInfo = login(refreshToken);
-      if (tokenInfo != null) {
-        user.setupTokenInfo(tokenInfo);
-        final StepicUser currentUser = getCurrentUser(getHttpClient());
-        if (currentUser != null) {
-          user.setId(currentUser.getId());
-        }
-        return user;
-      }
-    }
-    return null;
+    headers.add(new BasicHeader("Authorization", "Bearer " + accessToken));
+    headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APP_JSON));
+    return getBuilder().setDefaultHeaders(headers).build();
   }
 
   private static StepicUser showLoginDialog() {
@@ -148,28 +135,28 @@ public class EduStepicAuthorizedClient {
     parameters.add(new BasicNameValuePair("username", email));
     parameters.add(new BasicNameValuePair("password", password));
 
-    final StepicUser user = new StepicUser(email, password);
     final StepicWrappers.TokenInfo tokenInfo = getTokens(parameters);
     if (tokenInfo != null) {
-      user.setupTokenInfo(tokenInfo);
-      final CloseableHttpClient client = getHttpClient(user);
-      final StepicUser currentUser = getCurrentUser(client);
+      final StepicUser user = new StepicUser(email, password, tokenInfo);
+      final StepicUser currentUser = getCurrentUser();
       if (currentUser != null) {
         user.setId(currentUser.getId());
       }
+      ourClient = createInitializedClient(user.getAccessToken());
+
+      return user;
     }
-    ourClient = initializeClient(user);
-    return user;
+
+    return null;
   }
 
   public static void invalidateClient() {
     ourClient = null;
   }
 
-  private static StepicWrappers.TokenInfo login(@NotNull final String refreshToken) {
+  @Nullable
+  private static StepicWrappers.TokenInfo getUpdatedTokens(@NotNull final String refreshToken) {
     final List<NameValuePair> parameters = new ArrayList<>();
-
-    if (refreshToken.isEmpty()) return null;
     parameters.add(new BasicNameValuePair("client_id", ourClientId));
     parameters.add(new BasicNameValuePair("content-type", "application/json"));
     parameters.add(new BasicNameValuePair("grant_type", "refresh_token"));
@@ -179,17 +166,20 @@ public class EduStepicAuthorizedClient {
   }
 
   @Nullable
-  public static StepicUser getCurrentUser(CloseableHttpClient client) {
-    try {
-      final StepicWrappers.AuthorWrapper wrapper = EduStepicClient.getFromStepic(EduStepicNames.CURRENT_USER, 
-                                                                                 StepicWrappers.AuthorWrapper.class, 
-                                                                                 client);
-      if (wrapper != null && !wrapper.users.isEmpty()) {
-        return wrapper.users.get(0);
+  public static StepicUser getCurrentUser() {
+    CloseableHttpClient client = getHttpClient();
+    if (client != null) {
+      try {
+        final StepicWrappers.AuthorWrapper wrapper = EduStepicClient.getFromStepic(EduStepicNames.CURRENT_USER,
+                                                                                   StepicWrappers.AuthorWrapper.class,
+                                                                                   client);
+        if (wrapper != null && !wrapper.users.isEmpty()) {
+          return wrapper.users.get(0);
+        }
       }
-    }
-    catch (IOException e) {
-      LOG.warn("Couldn't get author info");
+      catch (IOException e) {
+        LOG.warn("Couldn't get a current user");
+      }
     }
     return null;
   }
@@ -212,17 +202,12 @@ public class EduStepicAuthorizedClient {
         return gson.fromJson(responseString, StepicWrappers.TokenInfo.class);
       }
       else {
-        LOG.warn("Failed to Login: " + statusLine.getStatusCode() + statusLine.getReasonPhrase());
+        LOG.warn("Failed to get tokens: " + statusLine.getStatusCode() + statusLine.getReasonPhrase());
       }
     }
     catch (IOException e) {
       LOG.warn(e.getMessage());
     }
     return null;
-  }
-  
-  private static boolean isTokenUpToDate(@NotNull CloseableHttpClient client, int userId) {
-    final StepicUser user = getCurrentUser(client);
-    return user != null && userId == user.getId() && userId != -1;
   }
 }

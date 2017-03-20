@@ -358,7 +358,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
 
         final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(myLoginPanel.getLogin(),
                                                                                                       myLoginPanel.getPassword()));
-        if (stepicUser != null && stepicUser.getAccessToken() != null) {
+        if (stepicUser != null) {
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
           StepicUpdateSettings.getInstance().setUser(stepicUser);

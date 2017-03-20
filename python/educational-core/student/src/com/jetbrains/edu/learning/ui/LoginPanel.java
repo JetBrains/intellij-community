@@ -50,8 +50,10 @@ public class LoginPanel {
       }
     });
     final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-    myLoginField.setText(user.getEmail());
-    myPasswordField.setText(user.getPassword());
+    if (user != null) {
+      myLoginField.setText(user.getEmail());
+      myPasswordField.setText(user.getPassword());
+    }
   }
 
   public JPanel getContentPanel() {

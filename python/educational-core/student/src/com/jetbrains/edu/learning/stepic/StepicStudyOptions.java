@@ -82,8 +82,10 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     final StepicUpdateSettings stepikSettings = StepicUpdateSettings.getInstance();
     myEnableTestingFromSamples.setSelected(stepikSettings.isEnableTestingFromSamples());
     final StepicUser user = stepikSettings.getUser();
-    setLogin(user.getEmail());
-    setPassword(user.getPassword());
+    if (user != null) {
+      setLogin(user.getEmail());
+      setPassword(user.getPassword());
+    }
   }
 
   @Override
@@ -99,7 +101,9 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     }
 
     final StepicUser user = stepikSettings.getUser();
-    final boolean isCredentialsModified = !getLogin().equals(user.getEmail()) || !getPassword().equals(user.getPassword());
+    String savedEmail = user == null ? "" : user.getEmail();
+    String savedPassword = user == null ? "" : user.getPassword();
+    final boolean isCredentialsModified = !getLogin().equals(savedEmail) || !getPassword().equals(savedPassword);
     if (isCredentialsModified) {
       final String login = getLogin();
       final String password = getPassword();
@@ -113,7 +117,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
           }, "Logging In", true,
           null);
 
-        if (stepicUser[0] != null && stepicUser[0].getAccessToken() != null) {
+        if (stepicUser[0] != null) {
           stepikSettings.setUser(stepicUser[0]);
         }
         else {
@@ -127,7 +131,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   }
 
   private static void removeCredentials() {
-    StepicUpdateSettings.getInstance().setUser(new StepicUser());
+    StepicUpdateSettings.getInstance().setUser(null);
     EduStepicAuthorizedClient.invalidateClient();
   }
 
@@ -142,8 +146,11 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     boolean isTestOptionModified = !isTestingFromSamplesEnabled() == stepikSettings.isEnableTestingFromSamples();
     final StepicUser user = stepikSettings.getUser();
 
-    return !getLogin().equals(user.getEmail())
-           || !getPassword().equals(user.getPassword())
+    String email = user == null ? "" : user.getEmail();
+    String password = user == null ? "" : user.getPassword();
+
+    return !getLogin().equals(email)
+           || !getPassword().equals(password)
            || isTestOptionModified;
   }
 

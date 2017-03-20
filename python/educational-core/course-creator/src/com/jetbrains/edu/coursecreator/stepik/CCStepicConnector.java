@@ -73,7 +73,7 @@ public class CCStepicConnector {
       LOG.warn("Http client is null");
       return;
     }
-    final StepicUser currentUser = EduStepicAuthorizedClient.getCurrentUser(client);
+    final StepicUser currentUser = EduStepicAuthorizedClient.getCurrentUser();
     if (currentUser != null) {
       final List<StepicUser> courseAuthors = course.getAuthors();
       for (int i = 0; i < courseAuthors.size(); i++) {

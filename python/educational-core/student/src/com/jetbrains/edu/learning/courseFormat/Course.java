@@ -100,7 +100,7 @@ public class Course {
     for (String name : authors) {
       final List<String> firstLast = StringUtil.split(name, " ");
       if (!firstLast.isEmpty()) {
-        final StepicUser stepicUser = new StepicUser();
+        final StepicUser stepicUser = StepicUser.createEmptyUser();
         stepicUser.setFirstName(firstLast.remove(0));
         if (firstLast.size() > 0) {
           stepicUser.setLastName(StringUtil.join(firstLast, " "));

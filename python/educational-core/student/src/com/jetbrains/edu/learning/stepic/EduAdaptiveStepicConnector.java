@@ -207,6 +207,7 @@ public class EduAdaptiveStepicConnector {
   @Nullable
   private static StepicWrappers.AdaptiveAttemptWrapper.Attempt getAttemptForStep(int id) {
     final StepicUser user = StepicUpdateSettings.getInstance().getUser();
+    if (user == null) return null;
     try {
       final List<StepicWrappers.AdaptiveAttemptWrapper.Attempt> attempts = getAttempts(user, id);
       if (attempts != null && attempts.size() > 0) {
@@ -296,7 +297,10 @@ public class EduAdaptiveStepicConnector {
     if (course != null && editor != null && editor.getTaskFile() != null) {
       indicator.checkCanceled();
       final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-
+      if (user == null) {
+        LOG.warn("Can't get next recommendation: user is null");
+        return;
+      }
       final boolean recommendationReaction = postRecommendationReaction(String.valueOf(editor.getTaskFile().getTask().getLesson().getId()),
                                                                         String.valueOf(user.getId()), reaction);
       if (recommendationReaction) {
@@ -553,7 +557,7 @@ public class EduAdaptiveStepicConnector {
     if (client != null) {
       final StepicUser user = StepicUpdateSettings.getInstance().getUser();
       StepicWrappers.ResultSubmissionWrapper wrapper = postResultsForCheck(client, submission);
-      if (wrapper != null) {
+      if (wrapper != null && user != null) {
         wrapper = getCheckResults(client, wrapper, attemptId, user.getId());
         if (wrapper.submissions.length > 0) {
           final String status = wrapper.submissions[0].status;
@@ -564,6 +568,9 @@ public class EduAdaptiveStepicConnector {
         else {
           LOG.warn("Got a submission wrapper with incorrect submissions number: " + wrapper.submissions.length);
         }
+      }
+      else {
+        LOG.warn("Can't do adaptive check: " + (wrapper == null ? "wrapper is null" : "user is null"));
       }
     }
 

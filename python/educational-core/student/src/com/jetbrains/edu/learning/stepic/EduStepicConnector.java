@@ -42,8 +42,8 @@ public class EduStepicConnector {
   private EduStepicConnector() {
   }
 
-  public static boolean enrollToCourse(final int courseId, final StepicUser stepicUser) {
-    if (stepicUser == null || stepicUser.getAccessToken() == null) return false;
+  public static boolean enrollToCourse(final int courseId, @Nullable final StepicUser stepicUser) {
+    if (stepicUser == null) return false;
     HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ENROLLMENTS);
     try {
       final StepicWrappers.EnrollmentWrapper enrollment = new StepicWrappers.EnrollmentWrapper(String.valueOf(courseId));
@@ -131,7 +131,7 @@ public class EduStepicConnector {
       return false;
     }
     final StepicWrappers.CoursesContainer coursesContainer;
-    if (user != null && user.getAccessToken() != null) {
+    if (user != null) {
       coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
     }
     else {
@@ -256,7 +256,7 @@ public class EduStepicConnector {
 
   private static <T> T getFromStepic(String link, final Class<T> container) throws IOException{
     final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-    final boolean isAuthorized = user.getAccessToken() != null;
+    final boolean isAuthorized = user != null;
     if (isAuthorized) {
       return EduStepicAuthorizedClient.getFromStepic(link, container, user);
     }
@@ -351,7 +351,7 @@ public class EduStepicConnector {
 
   public static String postAttempt(int id) throws IOException {
     final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient();
-    if (client == null || StepicUpdateSettings.getInstance().getUser().getAccessToken() == null) return "";
+    if (client == null || StepicUpdateSettings.getInstance().getUser() == null) return "";
     final HttpPost attemptRequest = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ATTEMPTS);
     String attemptRequestBody = new Gson().toJson(new StepicWrappers.AttemptWrapper(id));
     attemptRequest.setEntity(new StringEntity(attemptRequestBody, ContentType.APPLICATION_JSON));

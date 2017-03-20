@@ -14,16 +14,24 @@ public class StepicUser {
   private String myEmail;
   private String myAccessToken;
   private String myRefreshToken;
+  private boolean isGuest;
 
-  public StepicUser() {
+  private StepicUser() {
     myFirstName = "";
     myLastName = "";
     myEmail = "";
+    myAccessToken = "";
+    myRefreshToken = "";
+  }
+
+  public static StepicUser createEmptyUser() {
+    return new StepicUser();
   }
   
-  public StepicUser(@NotNull final String email, @NotNull final String password) {
+  public StepicUser(@NotNull final String email, @NotNull final String password, @NotNull StepicWrappers.TokenInfo tokenInfo) {
     this.myEmail = email;
     setPassword(password);
+    setTokenInfo(tokenInfo);
   }
 
   public int getId() {
@@ -77,6 +85,7 @@ public class StepicUser {
     return StringUtil.join(new String[]{myFirstName, myLastName}, " ");
   }
 
+  @NotNull
   public String getAccessToken() {
     return myAccessToken;
   }
@@ -85,6 +94,7 @@ public class StepicUser {
     this.myAccessToken = accessToken;
   }
 
+  @NotNull
   public String getRefreshToken() {
     return myRefreshToken;
   }
@@ -93,8 +103,16 @@ public class StepicUser {
     this.myRefreshToken = refreshToken;
   }
 
-  public void setupTokenInfo(@NotNull final StepicWrappers.TokenInfo tokenInfo) {
+  public void setTokenInfo(@NotNull final StepicWrappers.TokenInfo tokenInfo) {
     myAccessToken = tokenInfo.getAccessToken();
     myRefreshToken = tokenInfo.getRefreshToken();
+  }
+
+  public boolean isGuest() {
+    return isGuest;
+  }
+
+  public void setGuest(boolean guest) {
+    isGuest = guest;
   }
 }

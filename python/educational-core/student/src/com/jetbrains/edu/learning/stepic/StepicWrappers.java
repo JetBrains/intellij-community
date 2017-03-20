@@ -423,14 +423,6 @@ public class StepicWrappers {
     }
   }
 
-  static class UserWrapper {
-    StepicUser user;
-
-    public UserWrapper(String user, String password) {
-      this.user = new StepicUser(user, password);
-    }
-  }
-
   static class RecommendationReaction {
     int reaction;
     String user;

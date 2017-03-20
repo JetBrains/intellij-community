@@ -66,7 +66,7 @@ public class StudyProjectGenerator {
 
   public boolean isLoggedIn() {
     final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-    return user.getAccessToken() != null;
+    return user != null;
   }
 
   public void setEnrolledCoursesIds(@NotNull final List<Integer> coursesIds) {
@@ -122,7 +122,7 @@ public class StudyProjectGenerator {
     }
     else {
       final StepicUser user = StepicUpdateSettings.getInstance().getUser();
-      if (user.getAccessToken() != null) {
+      if (user != null) {
         final File adaptiveCourseFile = new File(new File(OUR_COURSES_DIR, ADAPTIVE_COURSE_PREFIX +
                                                                            mySelectedCourseInfo.getName() + "_" +
                                                                            user.getEmail()), EduNames.COURSE_META_FILE);
@@ -617,7 +617,7 @@ public class StudyProjectGenerator {
         final ArrayList<StepicUser> authors = new ArrayList<>();
         for (JsonElement author : courseAuthors) {
           final JsonObject authorAsJsonObject = author.getAsJsonObject();
-          final StepicUser stepicUser = new StepicUser();
+          final StepicUser stepicUser = StepicUser.createEmptyUser();
           stepicUser.setFirstName(authorAsJsonObject.get("first_name").getAsString());
           stepicUser.setLastName(authorAsJsonObject.get("last_name").getAsString());
           authors.add(stepicUser);
