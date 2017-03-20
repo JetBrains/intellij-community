@@ -14,7 +14,9 @@ import com.jetbrains.edu.learning.checker.StudyCheckTask;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.checker.StudyTestRunner;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
@@ -104,12 +106,12 @@ public class PyStudyCheckAction extends StudyCheckAction {
               if (course.isAdaptive()) {
                 if (myTask instanceof ChoiceTask) {
                   StudyCheckUtils.showTestResultPopUp("Wrong answer", MessageType.ERROR.getPopupBackground(), project);
+                  repaintChoicePanel(project, (ChoiceTask)myTask);
                 }
                 else {
                   StudyCheckUtils.showTestResultPopUp("Wrong answer", MessageType.ERROR.getPopupBackground(), project);
                   StudyCheckUtils.showTestResultsToolWindow(project, message, false);
                 }
-                repaintChoicePanel(project, myTask);
               }
               else {
                 StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), project);
@@ -122,12 +124,10 @@ public class PyStudyCheckAction extends StudyCheckAction {
     };
   }
 
-  private static void repaintChoicePanel(@NotNull Project project, @NotNull Task task) {
+  private static void repaintChoicePanel(@NotNull Project project, @NotNull ChoiceTask task) {
     final StudyToolWindow toolWindow = StudyUtils.getStudyToolWindow(project);
     if (toolWindow != null) {
-      if (task instanceof ChoiceTask) {
-        toolWindow.setBottomComponent(new StudyChoiceVariantsPanel((ChoiceTask)task));
-      }
+      toolWindow.setBottomComponent(new StudyChoiceVariantsPanel(task));
     }
   }
 
