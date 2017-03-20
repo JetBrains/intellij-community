@@ -35,7 +35,8 @@ import gnu.trove.THashSet
  * Why this class is required if we have StorageVirtualFileTracker?
  * Because StorageVirtualFileTracker doesn't detect (intentionally) parent file changes —
  *
- * If module file is foo/bar/hello.iml and directory foo is renamed to oof then we must update module path. And StorageVirtualFileTracker doesn't help us here (and is not going to help by intention).
+ * If module file is foo/bar/hello.iml and directory foo is renamed to oof then we must update module path.
+ * And StorageVirtualFileTracker doesn't help us here (and is not going to help by intention).
  */
 internal class ModuleFileListener(private val moduleManager: ModuleManagerComponent) : BulkFileListener {
   override fun after(events: List<VFileEvent>) {
