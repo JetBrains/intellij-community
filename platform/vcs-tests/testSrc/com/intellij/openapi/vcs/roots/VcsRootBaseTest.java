@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ import java.util.HashSet;
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
 
-public abstract class VcsRootPlatformTest extends UsefulTestCase {
+public abstract class VcsRootBaseTest extends UsefulTestCase {
 
   public static final String DOT_MOCK = ".mock";
 

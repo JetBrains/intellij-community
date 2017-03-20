@@ -31,7 +31,7 @@ import java.util.Collection;
 /**
  * @author Nadya Zabrodina
  */
-public class VcsRootErrorsFinderTest extends VcsRootPlatformTest {
+public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
 
   static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT;
 

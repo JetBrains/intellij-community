@@ -36,7 +36,7 @@ import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
-import com.intellij.openapi.vcs.roots.VcsRootPlatformTest.DOT_MOCK
+import com.intellij.openapi.vcs.roots.VcsRootBaseTest.DOT_MOCK
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcsUtil.VcsUtil.getFilePath
