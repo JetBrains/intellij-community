@@ -20,6 +20,7 @@ import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import org.jdom.Attribute;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
@@ -95,6 +96,14 @@ public class StudySerializationUtils {
     public static final String SELECTED = "selected";
     public static final String TASK_TEXT = "taskText";
     public static final String PLACEHOLDER_TEXT = "placeholderText";
+    private static String LAST_SUBTASK_INDEX = "lastSubtaskIndex";
+    private static String THEORY_TAG = "theoryTask";
+    private static String ADAPTIVE_TASK_PARAMETERS = "adaptiveTaskParameters";
+    private static String ADAPTIVE = "adaptive";
+    private static String TASK_WITH_SUBTASKS = "TaskWithSubtasks";
+    private static String THEORY_TASK = "TheoryTask";
+    private static String CHOICE_TASK = "ChoiceTask";
+    private static String CODE_TASK = "CodeTask";
 
     private Xml() {
     }
@@ -243,6 +252,43 @@ public class StudySerializationUtils {
         }
       }
 
+      return state;
+    }
+
+    public static Element convertToFifthVersion(Element state) throws StudyUnrecognizedFormatException {
+      Element taskManagerElement = state.getChild(MAIN_ELEMENT);
+      Element courseElement = getChildWithName(taskManagerElement, COURSE).getChild(COURSE_TITLED);
+      final Element adaptive = getChildWithName(courseElement, ADAPTIVE);
+      for (Element lesson : getChildList(courseElement, LESSONS)) {
+        for (Element task : getChildList(lesson, TASK_LIST)) {
+          final Element lastSubtaskIndex = getChildWithName(task, LAST_SUBTASK_INDEX);
+          final Element theoryTask = getChildWithName(task, THEORY_TAG);
+          final Element adaptiveParams = getChildWithName(task, ADAPTIVE_TASK_PARAMETERS);
+          final boolean hasAdaptiveParams = !adaptiveParams.getChildren().isEmpty();
+          if (Integer.valueOf(lastSubtaskIndex.getAttributeValue(VALUE)) != 0) {
+            task.setName(TASK_WITH_SUBTASKS);
+          }
+          else if (Boolean.valueOf(theoryTask.getAttributeValue(VALUE))) {
+            task.setName(THEORY_TASK);
+          }
+          else if (hasAdaptiveParams) {
+            task.setName(CHOICE_TASK);
+            final Element adaptiveParameters = adaptiveParams.getChildren().get(0);
+            for (Element element : adaptiveParameters.getChildren()) {
+              final Attribute name = element.getAttribute(NAME);
+              if (name != null && !THEORY_TAG.equals(name.getValue())) {
+                final Content elementCopy = element.clone();
+                task.addContent(elementCopy);
+              }
+            }
+          }
+          else if (Boolean.valueOf(adaptive.getAttributeValue(VALUE))) {
+            task.setName(CODE_TASK);
+          }
+          task.removeContent(adaptiveParams);
+          task.removeContent(theoryTask);
+        }
+      }
       return state;
     }
 

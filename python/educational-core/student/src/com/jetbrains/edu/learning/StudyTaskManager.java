@@ -34,9 +34,9 @@ import java.util.Map;
 @State(name = "StudySettings", storages = @Storage("study_project.xml"))
 public class StudyTaskManager implements PersistentStateComponent<Element>, DumbAware {
   private static final Logger LOG = Logger.getInstance(StudyTaskManager.class);
-  public static final int CURRENT_VERSION = 4;
+  public static final int CURRENT_VERSION = 5;
   private Course myCourse;
-  public int VERSION = 4;
+  public int VERSION = 5;
 
   public Map<Task, List<UserTest>> myUserTests = new HashMap<>();
   public List<String> myInvisibleFiles = new ArrayList<>();
@@ -140,9 +140,11 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
           state = StudySerializationUtils.Xml.convertToThirdVersion(state, myProject);
         case 3:
           state = StudySerializationUtils.Xml.convertToForthVersion(state);
-          //uncomment for future versions
-          //case 4:
-          //state = StudySerializationUtils.Xml.convertToForthVersion(state, myProject);
+        case 4:
+          state = StudySerializationUtils.Xml.convertToFifthVersion(state);
+        //uncomment for future versions
+        //case 5:
+        //  state = StudySerializationUtils.Xml.convertToSixthVersion(state, myProject);
       }
       XmlSerializer.deserializeInto(this, state.getChild(StudySerializationUtils.Xml.MAIN_ELEMENT));
       VERSION = CURRENT_VERSION;
