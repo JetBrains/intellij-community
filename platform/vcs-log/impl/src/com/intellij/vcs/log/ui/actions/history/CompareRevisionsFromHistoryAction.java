@@ -109,7 +109,12 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
     VcsLogUtil.triggerUsage(e);
 
     List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
-    if (commits.size() != 1 && commits.size() != 2) return;
+    if (filePath.isDirectory()) {
+      if (commits.size() != 1) return;
+    }
+    else {
+      if (commits.size() != 1 && commits.size() != 2) return;
+    }
 
     List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
     ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIds, details -> {
