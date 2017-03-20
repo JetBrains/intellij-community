@@ -2,7 +2,9 @@ package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 public class TaskWithSubtasks extends Task {
@@ -37,7 +39,11 @@ public class TaskWithSubtasks extends Task {
   }
 
   public void setStatus(StudyStatus status) {
-    super.setStatus(status);
+    for (TaskFile taskFile : taskFiles.values()) {
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
+        placeholder.setStatus(status);
+      }
+    }
     if (status == StudyStatus.Solved && activeSubtaskNotLast()) {
       if (myStatus == StudyStatus.Failed) {
         myStatus = StudyStatus.Unchecked;
