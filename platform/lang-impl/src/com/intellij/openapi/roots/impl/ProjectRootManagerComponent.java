@@ -176,7 +176,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (roots == null) return false;
 
     for (VirtualFilePointer pointer : pointers) {
-      final String path = url2path(pointer.getUrl());
+      String path = extractLocalPath(pointer.getUrl());
       if (roots.first.contains(path) || roots.second.contains(path)) return true;
     }
 
@@ -207,14 +207,6 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     finally {
       isFiringEvent = false;
     }
-  }
-
-  private static String url2path(String url) {
-    String path = VfsUtilCore.urlToPath(url);
-
-    int separatorIndex = path.indexOf(JarFileSystem.JAR_SEPARATOR);
-    if (separatorIndex < 0) return path;
-    return path.substring(0, separatorIndex);
   }
 
   @Nullable
@@ -265,7 +257,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     return Pair.create(recursive, flat);
   }
 
-  public static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {
+  private static void addRootsToTrack(final String[] urls, final Collection<String> recursive, final Collection<String> flat) {
     for (String url : urls) {
       if (url != null) {
         final String protocol = VirtualFileManager.extractProtocol(url);

@@ -19,9 +19,9 @@ import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
-import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -35,7 +35,8 @@ import gnu.trove.THashSet
  * Why this class is required if we have StorageVirtualFileTracker?
  * Because StorageVirtualFileTracker doesn't detect (intentionally) parent file changes —
  *
- * If module file is foo/bar/hello.iml and directory foo is renamed to oof then we must update module path. And StorageVirtualFileTracker doesn't help us here (and is not going to help by intention).
+ * If module file is foo/bar/hello.iml and directory foo is renamed to oof then we must update module path.
+ * And StorageVirtualFileTracker doesn't help us here (and is not going to help by intention).
  */
 internal class ModuleFileListener(private val moduleManager: ModuleManagerComponent) : BulkFileListener {
   override fun after(events: List<VFileEvent>) {
@@ -51,8 +52,6 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
     if (!event.file.isDirectory || event.requestor is StateStorage || event.propertyName != VirtualFile.PROP_NAME) {
       return
     }
-
-    val roots = THashSet<String>()
 
     val parentPath = event.file.parent?.path ?: return
     var someModulePathIsChanged = false
@@ -71,7 +70,7 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
 
       // if ancestor path is a direct parent of module file - root will be serialized as $MODULE_DIR$ and, so, we don't need to mark it as changed to save
       if (PathUtilRt.getParentPath(moduleFilePath) != ancestorPath) {
-        checkRootModification(module, newAncestorPath, roots)
+        checkRootModification(module, newAncestorPath)
       }
     }
 
@@ -84,8 +83,6 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
     if (!event.file.isDirectory) {
       return
     }
-
-    val roots = THashSet<String>()
 
     val dirName = event.file.nameSequence
     val ancestorPath = "${event.oldParent.path}/$dirName"
@@ -100,18 +97,17 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
         setModuleFilePath(module, "${event.newParent.path}/$dirName/${FileUtil.getRelativePath(ancestorPath, moduleFilePath, '/')}")
       }
 
-      checkRootModification(module, newAncestorPath, roots)
+      checkRootModification(module, newAncestorPath)
     }
   }
 
   // https://youtrack.jetbrains.com/issue/IDEA-168933
-  private fun checkRootModification(module: Module, newAncestorPath: String, roots: THashSet<String>) {
-    roots.clear()
-
+  private fun checkRootModification(module: Module, newAncestorPath: String) {
     val moduleRootManager = module.rootManager as? ModuleRootManagerImpl ?: return
-    ProjectRootManagerComponent.addRootsToTrack(moduleRootManager.contentRootUrls, roots, roots)
-    ProjectRootManagerComponent.addRootsToTrack(moduleRootManager.sourceRootUrls, roots, roots)
 
+    val roots = THashSet<String>()
+    moduleRootManager.contentRootUrls.forEach { roots.add(VfsUtilCore.urlToPath(it)) }
+    moduleRootManager.sourceRootUrls.forEach { roots.add(VfsUtilCore.urlToPath(it)) }
     if (roots.contains(newAncestorPath)) {
       moduleRootManager.stateChanged()
     }
