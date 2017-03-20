@@ -1259,8 +1259,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   static class OccurrencesInfo {
-    static final boolean CHAIN_ALLOWED = Registry.is("java.extract.variable.chaining.method");
-
     List<PsiExpression> myOccurrences;
     List<PsiExpression> myNonWrite;
     boolean myCantReplaceAll;
@@ -1284,7 +1282,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
       }
       myHasWriteAccess = myOccurrences.size() > myNonWrite.size() && myOccurrences.size() > 1;
-      myChainMethodName = CHAIN_ALLOWED ? getChainCallExtractor() : null;
+      myChainMethodName = getChainCallExtractor();
     }
 
     private String getChainCallExtractor() {
