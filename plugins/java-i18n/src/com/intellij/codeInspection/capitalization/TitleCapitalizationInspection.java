@@ -43,25 +43,6 @@ import java.util.Set;
  * @author yole
  */
 public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return "Plugin DevKit";
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Incorrect dialog title capitalization";
-  }
-
   @NotNull
   @Override
   public String getShortName() {
