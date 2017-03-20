@@ -87,7 +87,7 @@ public class OfflineProblemDescriptor {
 
   @Nullable
   public RefEntity getRefElement(final RefManager refManager) {
-    return ReadAction.compute(() -> refManager.getReference(myType, myFQName));
+    return ReadAction.compute(() -> refManager.getProject().isDisposed() ? null : refManager.getReference(myType, myFQName));
   }
 
   public boolean equals(final Object o) {
