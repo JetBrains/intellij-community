@@ -157,7 +157,7 @@ public class FindPopupDirectoryChooser extends JPanel {
 
   private class MyRecursiveDirectoryAction extends ToggleAction {
     MyRecursiveDirectoryAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), null, AllIcons.General.Recursive);
+      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.General.Recursive);
     }
 
     @Override
