@@ -57,12 +57,13 @@ public class CpuTimings {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static CpuTimings calcStableCpuTiming() {
+    int maxIterations = UsefulTestCase.IS_UNDER_TEAMCITY ? 100 : 10;
     for (int i = 0;; i++) {
       CpuTimings timings = calcCpuTiming(20, CpuTimings::addBigIntegers);
       if (timings.myStandardDeviation < 1.8) {
         return timings;
       }
-      if (i == 100) {
+      if (i == maxIterations) {
         System.out.println("Cannot calculate timings that are stable enough, giving up");
         return timings;
       }
