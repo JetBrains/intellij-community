@@ -1130,7 +1130,7 @@ public class ExpectedTypesProvider {
                                          psiClass -> getTypeParameterValue(psiClass, containingClass, substitutor, 0));
         if (type != null) return type;
       }
-      if ("containsKey".equals(name) || "remove".equals(name) || "get".equals(name) || "containsValue".equals(name)) {
+      if ("containsKey".equals(name) || "remove".equals(name) || "get".equals(name) || "getOrDefault".equals(name) || "containsValue".equals(name)) {
         final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_MAP,
                                          psiClass -> getTypeParameterValue(psiClass, containingClass, substitutor, name.equals("containsValue") ? 1 : 0));
         if (type != null) return type;

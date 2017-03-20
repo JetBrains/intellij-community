@@ -162,7 +162,9 @@ public class JavaGenerateMemberCompletionContributor {
     PsiType type = substitutor.substitute(prototype.getReturnType());
     String signature = modifiers + (type == null ? "" : type.getPresentableText() + " ") + methodName;
 
-    String parameters = PsiFormatUtil.formatMethod(prototype, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_NAME);
+    String parameters = PsiFormatUtil.formatMethod(prototype, substitutor,
+                                                   PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                   PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_RAW_TYPE | PsiFormatUtilBase.SHOW_TYPE);
 
     String overrideSignature = " @Override " + signature; // leading space to make it a middle match, under all annotation suggestions
     LookupElementBuilder element = LookupElementBuilder.create(prototype, signature).withLookupString(methodName).

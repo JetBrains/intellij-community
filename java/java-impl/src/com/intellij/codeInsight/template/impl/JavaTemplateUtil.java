@@ -110,7 +110,15 @@ public class JavaTemplateUtil {
     if (item instanceof PsiClassType) {
       PsiType[] parameters = ((PsiClassType)item).getParameters();
       for (PsiType parameter : parameters) {
-        collectClassParams(parameter, classes);
+        if (parameter instanceof PsiWildcardType) {
+          PsiType bound = ((PsiWildcardType)parameter).getBound();
+          if (bound != null) {
+            collectClassParams(bound, classes);
+          }
+        }
+        else {
+          collectClassParams(parameter, classes);
+        }
       }
     }
   }

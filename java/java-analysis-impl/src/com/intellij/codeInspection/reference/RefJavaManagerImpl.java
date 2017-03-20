@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -133,8 +134,24 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   private UnusedDeclarationInspectionBase getDeadCodeTool(PsiFile file) {
-    Tools tools = ((GlobalInspectionContextBase)myRefManager.getContext()).getTools().get(UnusedDeclarationInspectionBase.SHORT_NAME);
-    InspectionToolWrapper toolWrapper = tools == null ? null : tools.getEnabledTool(file);
+    GlobalInspectionContextBase contextBase = (GlobalInspectionContextBase)myRefManager.getContext();
+    InspectionProfileImpl profile = contextBase.getCurrentProfile();
+    String singleTool = profile.getSingleTool();
+    Tools tools = contextBase.getTools().get(UnusedDeclarationInspectionBase.SHORT_NAME);
+    InspectionToolWrapper toolWrapper;
+    if (tools != null) {
+      toolWrapper = tools.getEnabledTool(file);
+    }
+    else  {
+      if (singleTool != null && !UnusedDeclarationInspectionBase.SHORT_NAME.equals(singleTool)) {
+        InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myRefManager.getProject()).getCurrentProfile();
+        tools = currentProfile.getTools(UnusedDeclarationInspectionBase.SHORT_NAME, myRefManager.getProject());
+        toolWrapper = tools.getEnabledTool(file);
+      }
+      else {
+        return null;
+      }
+    }
     InspectionProfileEntry tool = toolWrapper == null ? null : toolWrapper.getTool();
     return tool instanceof UnusedDeclarationInspectionBase ? (UnusedDeclarationInspectionBase)tool : null;
   }

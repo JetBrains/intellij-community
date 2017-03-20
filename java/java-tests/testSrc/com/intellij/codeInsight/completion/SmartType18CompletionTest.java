@@ -243,4 +243,9 @@ public void testConvertToObjectStream() {
   public void testUnboundTypeArgs() { doTest(); }
 
   public void testCallBeforeLambda() { doTest(false); }
+
+  public void testMapGetOrDefault() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "TimeUnit.DAYS");
+  }
 }

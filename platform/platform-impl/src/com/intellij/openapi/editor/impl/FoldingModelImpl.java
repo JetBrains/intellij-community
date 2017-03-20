@@ -61,7 +61,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
   private boolean myIsFoldingEnabled;
   private final EditorImpl myEditor;
-  private final RangeMarkerTree<FoldRegionImpl> myRegionTree;
+  final RangeMarkerTree<FoldRegionImpl> myRegionTree;
   private final FoldRegionsTree myFoldTree;
   private TextAttributes myFoldTextAttributes;
   private boolean myIsBatchFoldingProcessing;
@@ -312,6 +312,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myFoldTree.removeRegion(region);
     myFoldRegionsProcessed = true;
     region.dispose();
+  }
+
+  void removeRegionFromTree(@NotNull FoldRegionImpl region) {
+    myRegionTree.removeInterval(region);
   }
 
   public void dispose() {
