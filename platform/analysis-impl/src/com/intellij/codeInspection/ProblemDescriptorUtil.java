@@ -98,7 +98,7 @@ public class ProblemDescriptorUtil {
     message = StringUtil.replace(message, "#end", "");
     message = StringUtil.replace(message, "#treeend", "");
 
-    return message;
+    return message.trim();
   }
 
   public static String unescapeTags(String message) {
@@ -108,7 +108,7 @@ public class ProblemDescriptorUtil {
       message = unescapeXmlCode(message);
     }
     else {
-      message = StringUtil.unescapeXml(message).trim();
+      message = StringUtil.unescapeXml(message);
     }
     return message;
   }

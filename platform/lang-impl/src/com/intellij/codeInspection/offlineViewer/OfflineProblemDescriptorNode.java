@@ -66,7 +66,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   protected String calculatePresentableName() {
     String presentableName = super.calculatePresentableName();
     return presentableName.isEmpty() && getUserObject() instanceof OfflineProblemDescriptor
-           ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription()))
+           ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription())).trim()
            : presentableName;
   }
 
