@@ -18,36 +18,26 @@ package git4idea.update
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
-import git4idea.config.GitVcsSettings.UpdateChangesPolicy
-import git4idea.config.GitVcsSettings.UpdateChangesPolicy.STASH
 import git4idea.config.UpdateMethod
+import git4idea.repo.GitRepository
 import git4idea.test.*
 import java.io.File
 
-class GitUpdateTest : GitSingleRepoTest() {
+class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
 
+  private lateinit var repo: GitRepository
   private lateinit var broRepo : File
-  private lateinit var originalPreservingPolicy : UpdateChangesPolicy
 
   override fun setUp() {
     super.setUp()
 
-    originalPreservingPolicy = myGitSettings.updateChangesPolicy()
-    myGitSettings.setUpdateChangesPolicy(STASH)
+    repo = createRepository(myProject, myProjectPath, true)
+    cd(myProjectPath)
 
-    val parent = prepareRemoteRepo(myRepo)
+    val parent = prepareRemoteRepo(repo)
     git("push -u origin master")
     broRepo = createBroRepo("bro", parent)
-    myRepo.update()
-  }
-
-  override fun tearDown() {
-    try {
-      myGitSettings.setUpdateChangesPolicy(originalPreservingPolicy)
-    }
-    finally {
-      super.tearDown()
-    }
+    repo.update()
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#git4idea.update")
@@ -66,7 +56,7 @@ class GitUpdateTest : GitSingleRepoTest() {
     val result = updateWithRebase()
     assertSuccessfulUpdate(result)
     assertTrue("Stash should have been called for dirty working tree", stashCalled)
-    myRepo.assertStatus(localFile, 'M')
+    repo.assertStatus(localFile, 'M')
   }
 
   // "Fast-forward merge" optimization
@@ -83,7 +73,7 @@ class GitUpdateTest : GitSingleRepoTest() {
     val result = updateWithRebase()
     assertSuccessfulUpdate(result)
     assertFalse("Stash shouldn't be called, because of fast-forward merge optimization", stashCalled)
-    myRepo.assertStatus(localFile, 'A')
+    repo.assertStatus(localFile, 'A')
   }
 
   // IDEA-167688
@@ -106,14 +96,14 @@ class GitUpdateTest : GitSingleRepoTest() {
   }
 
   private fun updateWithRebase(): GitUpdateResult {
-    return GitUpdateProcess(myProject, EmptyProgressIndicator(), listOf(myRepo), UpdatedFiles.create(), false).update(UpdateMethod.REBASE)
+    return GitUpdateProcess(myProject, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false).update(UpdateMethod.REBASE)
   }
 
   private fun File.commitAndPush() {
     cd(this)
     tac("f.txt")
     git("push -u origin master")
-    cd(myRepo)
+    cd(repo)
   }
 
   private fun assertSuccessfulUpdate(result: GitUpdateResult) {
