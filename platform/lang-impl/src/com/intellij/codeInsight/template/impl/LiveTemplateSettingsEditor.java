@@ -487,7 +487,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private void validateEditVariablesButton() {
-    myEditVariablesButton.setEnabled(!parseVariables().isEmpty());
+    boolean hasVariables = !parseVariables().isEmpty();
+    myEditVariablesButton.setEnabled(hasVariables);
+    myEditVariablesButton.setToolTipText(hasVariables ? null : "Disabled because the template has no variables (surrounded with $ signs)");
   }
 
   void resetUi() {
