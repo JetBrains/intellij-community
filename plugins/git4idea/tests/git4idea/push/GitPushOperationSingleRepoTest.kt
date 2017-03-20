@@ -32,7 +32,6 @@ import git4idea.config.UpdateMethod
 import git4idea.push.GitPushRepoResult.Type.*
 import git4idea.repo.GitRepository
 import git4idea.test.*
-import git4idea.test.makeCommit
 import git4idea.update.GitRebaseOverMergeProblem
 import git4idea.update.GitUpdateResult
 import java.io.File
@@ -52,9 +51,9 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     super.setUp()
 
     val trinity = setupRepositories(myProjectPath, "parent", "bro")
-    myParentRepo = trinity.second
-    myBroRepo = trinity.third
-    myRepository = trinity.first
+    myParentRepo = trinity.parent
+    myBroRepo = trinity.bro
+    myRepository = trinity.projectRepo
 
     Executor.cd(myProjectPath)
     refresh()

@@ -38,15 +38,15 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     super.setUp()
 
     val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
-    myRepository = mainRepo.first
-    myBro = mainRepo.third
+    myRepository = mainRepo.projectRepo
+    myBro = mainRepo.bro
 
     val community = File(myProjectPath, "community")
     assertTrue(community.mkdir())
     val enclosingRepo = setupRepositories(community.path,
         "community_parent", "community_bro")
-    myCommunity = enclosingRepo.first
-    myBroCommunity = enclosingRepo.third
+    myCommunity = enclosingRepo.projectRepo
+    myBroCommunity = enclosingRepo.bro
 
     Executor.cd(myProjectPath)
     refresh()

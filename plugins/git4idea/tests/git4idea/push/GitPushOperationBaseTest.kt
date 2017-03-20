@@ -16,13 +16,10 @@
 package git4idea.push
 
 import com.intellij.dvcs.DvcsUtil.getPushSupport
-import com.intellij.openapi.util.Trinity
-import com.intellij.openapi.vcs.Executor
 import git4idea.GitBranch
-import git4idea.repo.GitRepository
-import git4idea.test.*
+import git4idea.test.GitPlatformTest
+import git4idea.test.TestDialogHandler
 import git4idea.update.GitUpdateResult
-import java.io.File
 
 abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
@@ -39,33 +36,6 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
   protected fun updateRepositories() {
     myGitRepositoryManager.updateAllRepositories()
-  }
-
-  protected fun setupRepositories(repoRoot: String, parentName: String, broName: String): Trinity<GitRepository, File, File> {
-    val parentRepo = createParentRepo(parentName)
-    val broRepo = createBroRepo(broName, parentRepo)
-
-    val repository = createRepository(myProject, repoRoot)
-    cd(repository)
-    git("remote add origin " + parentRepo.path)
-    git("push --set-upstream origin master:master")
-
-    Executor.cd(broRepo.path)
-    git("pull")
-
-    return Trinity.create(repository, parentRepo, broRepo)
-  }
-
-  private fun createParentRepo(parentName: String): File {
-    Executor.cd(myTestRoot)
-    git("init --bare $parentName.git")
-    return File(myTestRoot, parentName + ".git")
-  }
-
-  private fun createBroRepo(broName: String, parentRepo: File): File {
-    Executor.cd(myTestRoot)
-    git("clone " + parentRepo.name + " " + broName)
-    return File(myTestRoot, broName)
   }
 
   protected fun agreeToUpdate(exitCode: Int) {
