@@ -35,7 +35,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -524,17 +523,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   }
 
   private int readFontSize(Element element, boolean isDefault, Float fontScale) {
+    if (isDefault) {
+      return (int)(UISettings.getNormalizingScale() * DEFAULT_FONT_SIZE.getSize());
+    }
     Integer intSize = myValueReader.read(Integer.class, element);
     if (intSize == null) {
       return -1;
     }
-    Float size = (float)intSize;
-    if (!isDefault) {
-      size = (fontScale != null) ? size / fontScale : DEFAULT_FONT_SIZE.getSize();
-    }
-    return (int)JBUI.scale(size);
+    return UISettings.restoreFontSize(intSize, fontScale);
   }
-
+  
   private FontPreferencesImpl readFontSettings(@NotNull Element element,
                                                boolean isDefaultScheme,
                                                @Nullable Float fontScale) {
@@ -574,7 +572,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
      * will be able to restore the font size according to its scale and the IDE HiDPI mode. The default
      * FONT_SCALE value should also be written by that reason.
      */
-    JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(JBUI.scale(1f))); // must precede font options
+    JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getNormalizingScale())); // must precede font options
 
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
