@@ -179,7 +179,7 @@ public class PyTypeChecker {
         else if (superTupleType.isHomogeneous() && !subTupleType.isHomogeneous()) {
           final PyType expectedElementType = superTupleType.getIteratedItemType();
           for (int i = 0; i < subTupleType.getElementCount(); i++) {
-            if (!match(expectedElementType, subTupleType.getElementType(i), context)) {
+            if (!match(expectedElementType, subTupleType.getElementType(i), context, substitutions, recursive)) {
               return false;
             }
           }
@@ -189,7 +189,7 @@ public class PyTypeChecker {
           return false;
         }
         else {
-          return match(superTupleType.getIteratedItemType(), subTupleType.getIteratedItemType(), context);
+          return match(superTupleType.getIteratedItemType(), subTupleType.getIteratedItemType(), context, substitutions, recursive);
         }
       }
       else if (expected instanceof PyCollectionType && actual instanceof PyTupleType) {
