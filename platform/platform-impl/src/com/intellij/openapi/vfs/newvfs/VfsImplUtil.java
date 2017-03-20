@@ -151,8 +151,8 @@ public class VfsImplUtil {
     }
 
     String basePath = vfs.extractRootPath(normalizedPath);
-    if (basePath.length() > normalizedPath.length()) {
-      LOG.error(vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
+    if (basePath.length() > normalizedPath.length() || basePath.isEmpty()) {
+      LOG.warn(vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
     }
 
