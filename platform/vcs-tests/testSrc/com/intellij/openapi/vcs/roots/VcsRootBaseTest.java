@@ -15,74 +15,54 @@
  */
 package com.intellij.openapi.vcs.roots;
 
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
 
-public abstract class VcsRootBaseTest extends UsefulTestCase {
+public abstract class VcsRootBaseTest extends VcsPlatformTest {
 
-  public static final String DOT_MOCK = ".mock";
+  static final String DOT_MOCK = ".mock";
+
+  protected MockAbstractVcs myVcs;
+  protected String myVcsName;
+  protected VirtualFile myRepository;
 
   private VcsRootChecker myExtension;
-  @NotNull protected ProjectLevelVcsManagerImpl myVcsManager;
-  @NotNull protected MockAbstractVcs myVcs;
-  @NotNull protected String myVcsName;
-  protected Project myProject;
-  protected VirtualFile myProjectRoot;
-  protected VirtualFile myRepository;
-  public static final String myRepositoryFolderName = "repository";
   private RootModelImpl myRootModel;
-  protected static final Collection<File> myFilesToDelete = new HashSet<>();
-  protected IdeaProjectTestFixture myProjectFixture;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
-    myProjectFixture.setUp();
 
-    myProject = myProjectFixture.getProject();
-    myProjectRoot = myProject.getBaseDir();
     cd(myProjectRoot);
-    Module module = doCreateRealModuleIn("foo", myProject, EmptyModuleType
-      .getInstance());
+    Module module = doCreateRealModuleIn("foo", myProject, EmptyModuleType.getInstance());
     myRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getRootModel();
-    mkdir(myRepositoryFolderName);
+    mkdir("repository");
     myProjectRoot.refresh(false, true);
-    myRepository = myProjectRoot.findChild(myRepositoryFolderName);
+    myRepository = myProjectRoot.findChild("repository");
+
     myVcs = new MockAbstractVcs(myProject);
-    myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
     myExtension = new VcsRootChecker() {
       @NotNull
@@ -102,7 +82,7 @@ public abstract class VcsRootBaseTest extends UsefulTestCase {
       }
     };
     point.registerExtension(myExtension);
-    myVcsManager.registerVcs(myVcs);
+    vcsManager.registerVcs(myVcs);
     myVcsName = myVcs.getName();
     myRepository.refresh(false, true);
   }
@@ -115,22 +95,10 @@ public abstract class VcsRootBaseTest extends UsefulTestCase {
   protected void tearDown() throws Exception {
     try {
       getExtensionPoint().unregisterExtension(myExtension);
-      myVcsManager.unregisterVcs(myVcs);
-      for (File file : myFilesToDelete) {
-        delete(file);
-      }
-      myProjectFixture.tearDown();
-      clearFields(this);
+      vcsManager.unregisterVcs(myVcs);
     }
     finally {
       super.tearDown();
-    }
-  }
-
-  private static void delete(File file) {
-    boolean b = FileUtil.delete(file);
-    if (!b && file.exists()) {
-      fail("Can't delete " + file.getAbsolutePath());
     }
   }
 
@@ -165,31 +133,6 @@ public abstract class VcsRootBaseTest extends UsefulTestCase {
     }
   }
 
-  @NotNull
-  public static Module doCreateRealModuleIn(@NotNull String moduleName,
-                                            @NotNull final Project project,
-                                            @NotNull final ModuleType moduleType) {
-    final VirtualFile baseDir = project.getBaseDir();
-    assertNotNull(baseDir);
-    final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar),
-                                     moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    FileUtil.createIfDoesntExist(moduleFile);
-    myFilesToDelete.add(moduleFile);
-    return new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-        assert virtualFile != null;
-        Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
-        module.getModuleFile();
-        result.setResult(module);
-      }
-    }.execute().getResultObject();
-  }
-
-  /**
-   * @return path to the project
-   */
   private void createDirs(@NotNull Collection<String> mockRoots) throws IOException {
     File baseDir;
     if (mockRoots.isEmpty()) {

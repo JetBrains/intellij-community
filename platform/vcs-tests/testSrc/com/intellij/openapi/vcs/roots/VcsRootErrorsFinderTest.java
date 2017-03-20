@@ -191,11 +191,11 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
   void addVcsRoots(@NotNull Collection<String> relativeRoots) {
     for (String root : relativeRoots) {
       if (root.equals(PROJECT)) {
-        myVcsManager.setDirectoryMapping("", myVcsName);
+        vcsManager.setDirectoryMapping("", myVcsName);
       }
       else {
         String absoluteRoot = VcsTestUtil.toAbsolute(root, myProject);
-        myVcsManager.setDirectoryMapping(absoluteRoot, myVcsName);
+        vcsManager.setDirectoryMapping(absoluteRoot, myVcsName);
       }
     }
   }
