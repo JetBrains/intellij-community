@@ -13,37 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.debugger;
+package com.intellij.javascript.debugger
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.xdebugger.evaluation.ExpressionInfo
+import org.jetbrains.concurrency.Promise
 
-public interface Scope {
-  enum Type {
-    GLOBAL,
-    LOCAL,
-    WITH,
-    CLOSURE,
-    CATCH,
-    LIBRARY,
-    CLASS,
-    INSTANCE,
-    BLOCK,
-    SCRIPT,
-    UNKNOWN
-  }
+interface ExpressionInfoFactory {
+  fun create(element: PsiElement, document: Document): Promise<ExpressionInfo>
 
-  @NotNull
-  Type getType();
-
-  /**
-   * Class or function or file name
-   */
-  @Nullable
-  String getDescription();
-
-  @NotNull
-  VariablesHost<?> getVariablesHost();
-
-  boolean isGlobal();
+  fun createNameMapper(file: VirtualFile, document: Document): NameMapper?
 }

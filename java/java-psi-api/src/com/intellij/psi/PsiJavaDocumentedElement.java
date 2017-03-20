@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @since 2016.3
  */
-public interface PsiJavaDocumentedElement extends PsiModifierListOwner, NavigatablePsiElement, PsiNameIdentifierOwner {
+public interface PsiJavaDocumentedElement extends PsiElement {
   /**
    * Returns the JavaDoc comment for the element, or {@code null} when the element has no JavaDoc comment.
    */

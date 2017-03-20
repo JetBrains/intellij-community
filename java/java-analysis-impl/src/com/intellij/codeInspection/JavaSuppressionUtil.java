@@ -120,17 +120,21 @@ public class JavaSuppressionUtil {
   public static PsiElement getElementMemberSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {
     PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
     if (element != null) return element;
-    element = getAnnotationMemberSuppressedIn(owner, inspectionToolID);
-    if (element != null) return element;
-    PsiJavaDocumentedElement classContainer = PsiTreeUtil.getParentOfType(owner, PsiJavaDocumentedElement.class);
-    while (classContainer != null) {
-      element = getDocCommentToolSuppressedIn(classContainer, inspectionToolID);
+    if (owner instanceof PsiModifierListOwner) {
+      element = getAnnotationMemberSuppressedIn((PsiModifierListOwner)owner, inspectionToolID);
+      if (element != null) return element;
+    }
+    PsiJavaDocumentedElement container = PsiTreeUtil.getParentOfType(owner, PsiJavaDocumentedElement.class);
+    while (container != null) {
+      element = getDocCommentToolSuppressedIn(container, inspectionToolID);
       if (element != null) return element;
 
-      element = getAnnotationMemberSuppressedIn(classContainer, inspectionToolID);
-      if (element != null) return element;
+      if (container instanceof PsiModifierListOwner) {
+        element = getAnnotationMemberSuppressedIn((PsiModifierListOwner)container, inspectionToolID);
+        if (element != null) return element;
+      }
 
-      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiJavaDocumentedElement.class);
+      container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
     }
 
     final PsiJavaFile file = PsiTreeUtil.getParentOfType(owner, PsiJavaFile.class);
@@ -226,8 +230,8 @@ public class JavaSuppressionUtil {
           return statement;
         }
 
-        PsiModifierListOwner up = PsiTreeUtil.getNonStrictParentOfType(place, PsiVariable.class, PsiJavaDocumentedElement.class);
-        if (up instanceof PsiJavaDocumentedElement && up.getModifierList() == null) {
+        PsiElement up = PsiTreeUtil.getNonStrictParentOfType(place, PsiVariable.class, PsiJavaDocumentedElement.class);
+        if (up instanceof PsiModifierListOwner && ((PsiModifierListOwner)up).getModifierList() == null) {
           up = PsiTreeUtil.getParentOfType(up, PsiVariable.class, PsiJavaDocumentedElement.class);
         }
         if (up instanceof PsiVariable) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.DocumentUtil;
@@ -460,5 +461,21 @@ public class EditorImplTest extends AbstractEditorTest {
     runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(2, 3, 1));
     FoldRegion[] foldRegions = myEditor.getFoldingModel().getAllFoldRegions();
     assertFalse(foldRegions.length > 0 && DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), foldRegions[0].getStartOffset()));
+  }
+
+  public void testRemovalOfNonExpandingFoldingRegion() throws Exception {
+    initText("a\nb");
+    FoldingModelEx model = (FoldingModelEx)myEditor.getFoldingModel();
+    Ref<FoldRegion> regionRef = new Ref<>();
+    runFoldingOperation(() -> {
+      FoldRegion region = model.createFoldRegion(0, 3, "...", null, true);
+      assertNotNull(region);
+      assertTrue(region.isValid());
+      assertTrue(model.addFoldRegion(region));
+      region.setExpanded(false);
+      regionRef.set(region);
+    });
+    runFoldingOperation(() -> model.removeFoldRegion(regionRef.get()));
+    assertEquals(new VisualPosition(1, 1), myEditor.offsetToVisualPosition(3));
   }
 }

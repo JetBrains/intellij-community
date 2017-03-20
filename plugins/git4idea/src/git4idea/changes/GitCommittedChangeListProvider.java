@@ -35,13 +35,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitHeavyCommit;
-import git4idea.history.browser.SymbolicRefs;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,21 +188,31 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   }
 
   @Override
-  public Pair<CommittedChangeList, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+  public Pair<CommittedChangeList, FilePath> getOneList(@NotNull VirtualFile file, @NotNull VcsRevisionNumber number)
+    throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
 
-    final List<GitHeavyCommit> gitCommits =
-      GitHistoryUtils.commitsDetails(myProject, filePath, new SymbolicRefs(), Collections.singletonList(number.asString()));
+    GitRepository repository =
+      GitRepositoryManager.getInstance(myProject).getRepositoryForFile(GitHistoryUtils.getLastCommitName(myProject, filePath));
+    if (repository == null) {
+      return null;
+    }
+    VirtualFile root = repository.getRoot();
+
+    List<VcsFullCommitDetails> gitCommits = ContainerUtil.newArrayList();
+    GitHistoryUtils.loadDetails(myProject, root, gitCommits::add,
+                                GitHistoryUtils.formHashParameters(repository.getVcs(), Collections.singleton(number.asString())));
     if (gitCommits.size() != 1) {
       return null;
     }
-    final GitHeavyCommit gitCommit = gitCommits.get(0);
-    CommittedChangeList commit = new GitCommittedChangeList(gitCommit.getDescription() + " (" + gitCommit.getShortHash().getString() + ")",
-                                                            gitCommit.getDescription(), gitCommit.getAuthor(), (GitRevisionNumber)number,
+    VcsFullCommitDetails gitCommit = gitCommits.get(0);
+    CommittedChangeList commit = new GitCommittedChangeList(gitCommit.getFullMessage() + " (" + gitCommit.getId().toShortString() + ")",
+                                                            gitCommit.getFullMessage(), VcsUserUtil.toExactString(gitCommit.getAuthor()),
+                                                            (GitRevisionNumber)number,
                                                             new Date(gitCommit.getAuthorTime()), gitCommit.getChanges(),
                                                             assertNotNull(GitVcs.getInstance(myProject)), true);
 
-    final Collection<Change> changes = commit.getChanges();
+    Collection<Change> changes = commit.getChanges();
     if (changes.size() == 1) {
       Change change = changes.iterator().next();
       return Pair.create(commit, ChangesUtil.getFilePath(change));
@@ -210,8 +222,8 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
         return Pair.create(commit, filePath);
       }
     }
-    final String afterTime = "--after=" + GitUtil.gitTime(gitCommit.getDate());
-    final List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, (VirtualFile)null, afterTime);
+    String afterTime = "--after=" + GitUtil.gitTime(new Date(gitCommit.getCommitTime()));
+    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, (VirtualFile)null, afterTime);
     if (history.isEmpty()) {
       return Pair.create(commit, filePath);
     }

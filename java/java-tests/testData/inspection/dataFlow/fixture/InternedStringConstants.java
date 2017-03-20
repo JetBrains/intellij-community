@@ -5,6 +5,6 @@ class Example {
   public static final String THIRD = FIRST + SECOND;
 
   public static void main(String[] args) {
-    System.out.println(THIRD == "fd");
+    System.out.println(<warning descr="Condition 'THIRD == \"fd\"' is always 'true'">THIRD == "fd"</warning>);
   }
 }

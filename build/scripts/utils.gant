@@ -255,6 +255,7 @@ if (debugSuspend == 'y') {
 }
 
 binding.setVariable("commonJvmArgsForTests", {
+  def tempDir = p("teamcity.build.tempDir", p("java.io.tmpdir"))
   def vmOptions = [
     "-ea",
     "-Dfile.encoding=UTF-8",
@@ -264,8 +265,8 @@ binding.setVariable("commonJvmArgsForTests", {
     "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-Didea.home.path=$home",
-    "-Didea.config.path=${p("teamcity.build.tempDir")}/config",
-    "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
+    "-Didea.config.path=$tempDir/config",
+    "-Didea.system.path=$tempDir/system",
     "-XX:ReservedCodeCacheSize=300m",
     "-XX:SoftRefLRUPolicyMSPerMB=50",
     "-XX:+UseConcMarkSweepGC",

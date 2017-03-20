@@ -55,6 +55,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.intellij.lang.annotations.Flow;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -908,6 +909,8 @@ public class JavaDocInfoGenerator {
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       if (nameReferenceElement == null) continue;
       final PsiElement resolved = nameReferenceElement.resolve();
+      if (isNonDocumentedAnnotation(annotation, resolved)) continue;
+
       boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
       String qualifiedName = annotation.getQualifiedName();
       if (!(shownAnnotations.add(qualifiedName) || isRepeatableAnnotationType(resolved))) {
@@ -917,50 +920,18 @@ public class JavaDocInfoGenerator {
       if (resolved instanceof PsiClass && 
           qualifiedName != null && JavaDocUtil.findReferenceTarget(owner.getManager(), qualifiedName, owner) != null) {
         final PsiClass annotationType = (PsiClass)resolved;
-        if (isDocumentedAnnotationType(annotationType)) {
-          if (inferred) buffer.append("<i>");
-          final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
-          buffer.append("@");
-          if (inferred && !generateLink) {
-            buffer.append(type.getPresentableText());
-          }
-          else {
-            generateType(buffer, type, owner, generateLink, useShortNames && !external);
-          }
-          final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-          if (attributes.length > 0) {
-            buffer.append("(");
-            boolean first = true;
-            for (PsiNameValuePair pair : attributes) {
-              if (!first) buffer.append(",&nbsp;");
-              first = false;
-              final String name = pair.getName();
-              if (name != null) {
-                buffer.append(name);
-                buffer.append(" = ");
-              }
-              final PsiAnnotationMemberValue value = pair.getValue();
-              if (value != null) {
-                if (value instanceof PsiArrayInitializerMemberValue) {
-                  buffer.append("{");
-                  boolean firstMember = true;
-                  for(PsiAnnotationMemberValue memberValue:((PsiArrayInitializerMemberValue)value).getInitializers()) {
-                    if (!firstMember) buffer.append(",");
-                    firstMember = false;
-                    appendLinkOrText(buffer, memberValue, generateLink);
-                  }
-                  buffer.append("}");
-                }
-                else {
-                  appendLinkOrText(buffer, value, generateLink);
-                }
-              }
-            }
-            buffer.append(")");
-          }
-          if (inferred) buffer.append("</i>");
-          buffer.append("&nbsp;");
+        if (inferred) buffer.append("<i>");
+        final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
+        buffer.append("@");
+        if (inferred && !generateLink) {
+          buffer.append(type.getPresentableText());
         }
+        else {
+          generateType(buffer, type, owner, generateLink, useShortNames && !external);
+        }
+        generateAnnotationAttributes(buffer, generateLink, annotation);
+        if (inferred) buffer.append("</i>");
+        buffer.append("&nbsp;");
       }
       else if (external) {
         if (inferred) buffer.append("<i>");
@@ -979,6 +950,45 @@ public class JavaDocInfoGenerator {
       if (splitAnnotations) buffer.append("\n");
     }
   }
+
+  private static void generateAnnotationAttributes(StringBuilder buffer, boolean generateLink, PsiAnnotation annotation) {
+    final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
+    if (attributes.length > 0) {
+      buffer.append("(");
+      boolean first = true;
+      for (PsiNameValuePair pair : attributes) {
+        if (!first) buffer.append(",&nbsp;");
+        first = false;
+        generateAnnotationAttribute(buffer, generateLink, pair);
+      }
+      buffer.append(")");
+    }
+  }
+
+  private static void generateAnnotationAttribute(StringBuilder buffer, boolean generateLink, PsiNameValuePair pair) {
+    final String name = pair.getName();
+    if (name != null) {
+      buffer.append(name);
+      buffer.append(" = ");
+    }
+    final PsiAnnotationMemberValue value = pair.getValue();
+    if (value != null) {
+      if (value instanceof PsiArrayInitializerMemberValue) {
+        buffer.append("{");
+        boolean firstMember = true;
+        for(PsiAnnotationMemberValue memberValue:((PsiArrayInitializerMemberValue)value).getInitializers()) {
+          if (!firstMember) buffer.append(",");
+          firstMember = false;
+          appendLinkOrText(buffer, memberValue, generateLink);
+        }
+        buffer.append("}");
+      }
+      else {
+        appendLinkOrText(buffer, value, generateLink);
+      }
+    }
+  }
+
 
   private static void appendLinkOrText(StringBuilder buffer,
                                        PsiAnnotationMemberValue memberValue,
@@ -1006,8 +1016,18 @@ public class JavaDocInfoGenerator {
     buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
   }
 
-  public static boolean isDocumentedAnnotationType(@Nullable PsiElement annotationType) {
-    return annotationType instanceof PsiClass && AnnotationUtil.isAnnotated((PsiClass)annotationType, "java.lang.annotation.Documented", false);
+  private static boolean isNonDocumentedAnnotation(@NotNull PsiAnnotation annotation, @Nullable PsiElement resolved) {
+    return resolved instanceof PsiClass
+           ? !isDocumentedAnnotationType((PsiClass)resolved)
+           : isKnownNonDocumented(annotation.getQualifiedName());
+  }
+
+  private static boolean isKnownNonDocumented(String annoQName) {
+    return Flow.class.getName().equals(annoQName);
+  }
+
+  public static boolean isDocumentedAnnotationType(@NotNull PsiClass resolved) {
+    return AnnotationUtil.isAnnotated(resolved, "java.lang.annotation.Documented", false);
   }
 
   public static boolean isRepeatableAnnotationType(@Nullable PsiElement annotationType) {

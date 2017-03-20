@@ -164,6 +164,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     ApplicationManager.getApplication().assertReadAccessAllowed();
   }
 
+  private static void assertOurRegion(FoldRegion region) {
+    if (!(region instanceof FoldRegionImpl)) {
+      throw new IllegalArgumentException("Only regions created by this instance of FoldingModel are accepted");
+    }
+  }
+
   @Override
   public void setFoldingEnabled(boolean isEnabled) {
     assertIsDispatchThreadForEditor();
@@ -185,6 +191,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public boolean addFoldRegion(@NotNull final FoldRegion region) {
     assertIsDispatchThreadForEditor();
+    assertOurRegion(region);
     if (!isFoldingEnabled()) {
       return false;
     }
@@ -203,9 +210,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       if (group != null) {
         myGroups.putValue(group, region);
       }
-      for (FoldingListener listener : myListeners) {
-        listener.onFoldRegionStateChange(region);
-      }
+      notifyListenersOnFoldRegionStateChange(region);
       return true;
     }
 
@@ -298,12 +303,15 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public void removeFoldRegion(@NotNull final FoldRegion region) {
     assertIsDispatchThreadForEditor();
+    assertOurRegion(region);
 
     if (!myIsBatchFoldingProcessing) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
     }
 
-    region.setExpanded(true);
+    ((FoldRegionImpl)region).setExpanded(true, false);
+    notifyListenersOnFoldRegionStateChange(region);
+
     final FoldingGroup group = region.getGroup();
     if (group != null) {
       myGroups.remove(group, region);
@@ -344,7 +352,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myFoldTree.clear();
   }
 
-  void expandFoldRegion(@NotNull FoldRegion region) {
+  void expandFoldRegion(@NotNull FoldRegion region, boolean notify) {
     assertIsDispatchThreadForEditor();
     if (region.isExpanded() || region.shouldNeverExpand()) return;
 
@@ -367,10 +375,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
     myFoldRegionsProcessed = true;
     myExpansionCounter.incrementAndGet();
     ((FoldRegionImpl) region).setExpandedInternal(true);
-    notifyListenersOnFoldRegionStateChange(region);
+    if (notify) notifyListenersOnFoldRegionStateChange(region);
   }
 
-  void collapseFoldRegion(@NotNull FoldRegion region) {
+  void collapseFoldRegion(@NotNull FoldRegion region, boolean notify) {
     assertIsDispatchThreadForEditor();
     if (!region.isExpanded()) return;
 
@@ -399,7 +407,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
 
     myFoldRegionsProcessed = true;
     ((FoldRegionImpl) region).setExpandedInternal(false);
-    notifyListenersOnFoldRegionStateChange(region);
+    if (notify) notifyListenersOnFoldRegionStateChange(region);
   }
 
   private void notifyBatchFoldingProcessingDone(final boolean moveCaretFromCollapsedRegion) {

@@ -62,12 +62,16 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   @Override
   public void setExpanded(boolean expanded) {
+    setExpanded(expanded, true);
+  }
+
+  void setExpanded(boolean expanded, boolean notify) {
     FoldingModelImpl foldingModel = myEditor.getFoldingModel();
     if (myGroup == null) {
-      doSetExpanded(expanded, foldingModel, this);
+      doSetExpanded(expanded, foldingModel, this, notify);
     } else {
       for (final FoldRegion region : foldingModel.getGroupedRegions(myGroup)) {
-        doSetExpanded(expanded, foldingModel, region);
+        doSetExpanded(expanded, foldingModel, region, notify || region != this);
         // There is a possible case that we can't change expanded status of particular fold region (e.g. we can't collapse
         // if it contains caret). So, we revert all changes for the fold regions from the same group then.
         if (region.isExpanded() != expanded) {
@@ -75,7 +79,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
             if (regionToRevert == region) {
               break;
             }
-            doSetExpanded(!expanded, foldingModel, regionToRevert);
+            doSetExpanded(!expanded, foldingModel, regionToRevert, notify || region != this);
           }
           return;
         }
@@ -83,12 +87,12 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     }
   }
 
-  private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region) {
+  private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region, boolean notify) {
     if (expanded) {
-      foldingModel.expandFoldRegion(region);
+      foldingModel.expandFoldRegion(region, notify);
     }
     else{
-      foldingModel.collapseFoldRegion(region);
+      foldingModel.collapseFoldRegion(region, notify);
     }
   }
 

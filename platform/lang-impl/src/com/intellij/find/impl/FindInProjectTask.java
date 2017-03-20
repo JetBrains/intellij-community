@@ -317,7 +317,7 @@ class FindInProjectTask {
       }
     }
     else if (myDirectory != null) {
-      final boolean checkExcluded = !ProjectFileIndex.SERVICE.getInstance(myProject).isExcluded(myDirectory);
+      boolean checkExcluded = !ProjectFileIndex.SERVICE.getInstance(myProject).isExcluded(myDirectory) && !Registry.is("find.search.in.excluded.dirs");
       VirtualFileVisitor.Option limit = VirtualFileVisitor.limit(myFindModel.isWithSubdirectories() ? -1 : 1);
       VfsUtilCore.visitChildrenRecursively(myDirectory, new VirtualFileVisitor(limit) {
         @Override

@@ -1540,12 +1540,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
     if (methodBody.getStatements().length > 1) {
-      PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class);
+      PsiMethodCallExpression expr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, true, PsiStatement.class);
       while (expr != null) {
-        if (RefactoringChangeUtil.isSuperOrThisMethodCall(expr)) {
+        if (RefactoringChangeUtil.isSuperOrThisMethodCall(expr) && expr.getMethodExpression() != element) {
           return "Inline cannot be applied to multiline method in constructor call";
         }
-        expr = PsiTreeUtil.getParentOfType(expr, PsiExpression.class, true);
+        expr = PsiTreeUtil.getParentOfType(expr, PsiMethodCallExpression.class, true, PsiStatement.class);
       }
     }
     return null;
