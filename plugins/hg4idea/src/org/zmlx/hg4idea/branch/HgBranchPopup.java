@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,14 +69,7 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     HgProjectSettings hgProjectSettings = ServiceManager.getService(project, HgProjectSettings.class);
     HgMultiRootBranchConfig hgMultiRootBranchConfig = new HgMultiRootBranchConfig(manager.getRepositories());
 
-    Condition<AnAction> preselectActionCondition = new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
-        return false;
-      }
-    };
-    return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings,
-                             preselectActionCondition);
+    return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings, Conditions.alwaysFalse());
   }
 
   private HgBranchPopup(@NotNull HgRepository currentRepository,
