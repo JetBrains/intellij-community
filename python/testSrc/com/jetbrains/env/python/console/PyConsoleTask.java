@@ -84,36 +84,30 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (myConsoleView != null) {
-            disposeConsole();
-            myCommunication.waitForTerminate();
-          }
-          PyConsoleTask.super.tearDown();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        if (myConsoleView != null) {
+          disposeConsole();
+          myCommunication.waitForTerminate();
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
   private void disposeConsole() throws InterruptedException {
     if (myCommunication != null) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myCommunication.close();
-          }
-          catch (Exception e) {
-            e.printStackTrace();
-          }
-          myCommunication = null;
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          myCommunication.close();
         }
+        catch (Exception e) {
+          e.printStackTrace();
+        }
+        myCommunication = null;
       });
     }
 
@@ -324,12 +318,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   protected void exec(final String command) throws InterruptedException {
     waitForReady();
     myCommandSemaphore.acquire(1);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleView.executeInConsole(command);
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> myConsoleView.executeInConsole(command));
     Assert.assertTrue(String.format("Command execution wasn't finished: `%s` \n" +
                                     "Output: %s", command, output()), waitFor(myCommandSemaphore));
     myCommandSemaphore.release();
@@ -388,12 +377,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
 
   public void addTextToEditor(final String text) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                                   @Override
-                                   public void run() {
-                                     getConsoleView().setInputText(text);
-                                     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-                                   }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+                                   getConsoleView().setInputText(text);
+                                   PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
                                  }
     );
   }
