@@ -272,6 +272,7 @@ public class Task implements StudyItem {
     myIndex = task.getIndex();
   }
 
+  // used in json serialization/deserialization
   public String getTaskType() {
     return "pycharm";
   }
