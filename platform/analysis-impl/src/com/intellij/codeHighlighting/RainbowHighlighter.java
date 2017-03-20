@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.Pair;
@@ -233,16 +234,10 @@ public class RainbowHighlighter {
                                                                          ? minDistanceWithOrdinal
                                                                          : minDistanceWithDiagnostic)));
       rainbowColors = ContainerUtil.map(rainbowColors, rainbowColor -> resolveConflict(colorCircles, rainbowColor, 0));
-      
-
-      final Map<TextAttributesKey, TextAttributes> cache = getGeneratedTextAttributesCache(colorsScheme);
-      if (cache != null) {
-        cache.entrySet().removeIf(entry -> isRainbowTempKey(entry.getKey()));
-        int i = 0;
-        for (Color rainbowColor : rainbowColors) {
-          TextAttributesKey key = createRainbowKey(i++, rainbowColor);
-          cache.put(key, key.getDefaultAttributes());
-        }
+      int i = 0;
+      for (Color rainbowColor : rainbowColors) {
+        TextAttributesKey key = createRainbowKey(i++, rainbowColor);
+        ((EditorColorsScheme)colorsScheme).setAttributes(key, key.getDefaultAttributes());
       }
     }
     return rainbowColors.toArray(new Color[rainbowColors.size()]);
@@ -259,9 +254,9 @@ public class RainbowHighlighter {
         final float[] rgb = rgbDiffColor(sampleColor, paletteColor);
         final double factor = 256 * circle.second / getLength(rgb);
         final int mod = nestLevel % 4; 
-        final int r = noramalize(sampleColor.getRed() + rgb[0] * factor * (mod == 3 ? 2 : 1));          
-        final int g = noramalize(sampleColor.getGreen() + rgb[1] * factor * (mod == 1 ? 2 : 1));
-        final int b = noramalize(sampleColor.getBlue() + rgb[2] * factor * (mod == 2 ? 2 : 1));
+        final int r = normalize(sampleColor.getRed() + rgb[0] * factor * (mod == 3 ? 2 : 1));          
+        final int g = normalize(sampleColor.getGreen() + rgb[1] * factor * (mod == 1 ? 2 : 1));
+        final int b = normalize(sampleColor.getBlue() + rgb[2] * factor * (mod == 2 ? 2 : 1));
         final float[] hsbNew = Color.RGBtoHSB(r, g, b, null);
         final float[] hsbOrig = Color.RGBtoHSB(sampleColor.getRed(), sampleColor.getGreen(), sampleColor.getBlue(), null);
         
@@ -274,7 +269,7 @@ public class RainbowHighlighter {
     return sampleColor;
   }
 
-  private static int noramalize(double b) {
+  private static int normalize(double b) {
     return Math.min(Math.max(1, (int)b), 254);
   }
 
@@ -308,14 +303,10 @@ public class RainbowHighlighter {
 
   @Nullable
   private static Color[] getColorsFromCache(@NotNull TextAttributesScheme colorsScheme) {
-    final Map<TextAttributesKey, TextAttributes> cache = getGeneratedTextAttributesCache(colorsScheme);
-    if (cache == null) {
-      return null;
-    }
     List<Color> colors = new ArrayList<>();
     boolean invalidCache = false;
     for (TextAttributesKey tempKey : RAINBOW_TEMP_KEYS) {
-      final TextAttributes attributes = cache.get(tempKey);
+      final TextAttributes attributes = colorsScheme.getAttributes(tempKey);
       if (attributes == null) {
         invalidCache = true;
         break;
@@ -326,13 +317,6 @@ public class RainbowHighlighter {
       return null;
     }
     return colors.toArray(new Color[colors.size()]);
-  }
-
-  @Nullable
-  private static Map<TextAttributesKey, TextAttributes> getGeneratedTextAttributesCache(@NotNull TextAttributesScheme colorsScheme) {
-    return (colorsScheme instanceof EditorGeneratedTextAttributesCache)
-           ? ((EditorGeneratedTextAttributesCache)colorsScheme).getGeneratedTextAttributesCache()
-           : null;
   }
 
   @Nullable
@@ -347,7 +331,9 @@ public class RainbowHighlighter {
   @NotNull
   private static TextAttributesKey createRainbowKey(int i, Color rainbowColor) {
     //noinspection deprecation
-    TextAttributesKey key = TextAttributesKey.createTextAttributesKey(RAINBOW_TEMP_PREF + i, new TextAttributes());
+    TextAttributesKey key = TextAttributesKey.createTextAttributesKey(
+      EditorColorsSchemeImpl.createMutableTextAttributesKeyExternalName(RAINBOW_TEMP_PREF + i), 
+      new TextAttributes());
     key.getDefaultAttributes().setForegroundColor(rainbowColor);
     return key;
   }

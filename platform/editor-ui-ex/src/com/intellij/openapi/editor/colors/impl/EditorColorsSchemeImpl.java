@@ -21,25 +21,52 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
 
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
+  public static final String MUTABLE_PREFIX = "mutable::";
+
+  @NotNull
+  @Contract(pure = true)
+  public static String createMutableTextAttributesKeyExternalName(@NotNull String origExternalName) {
+    return MUTABLE_PREFIX + origExternalName;
+  }
+  
+  public static boolean isMutable(@NotNull TextAttributesKey key) {
+    return key.getExternalName().startsWith(MUTABLE_PREFIX);
+  }
+
+  private volatile Map<TextAttributesKey, TextAttributes> myAttributesTempMap;
+  
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
   }
 
   @Override
   public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
+    if (isMutable(key)) {
+      Map<TextAttributesKey, TextAttributes> local = myAttributesTempMap;
+      if (local == null) {
+        local = ContainerUtil.newConcurrentMap();
+      }
+      local.put(key, attributes);
+      myAttributesTempMap = local; 
+    }
+    
     if (attributes == USE_INHERITED_MARKER || attributes != getAttributes(key)) {
       myAttributesMap.put(key, attributes);
+      myAttributesTempMap = null;
     }
   }
 
@@ -53,6 +80,11 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   @Override
   public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
     if (key != null) {
+      if (isMutable(key)) {
+        Map<TextAttributesKey, TextAttributes> local = myAttributesTempMap;
+        return local == null ? null : local.get(key);
+      }
+      
       TextAttributes attributes = getDirectlyDefinedAttributes(key);
       if (attributes != null && attributes != USE_INHERITED_MARKER) {
         return attributes;

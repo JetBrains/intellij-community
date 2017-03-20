@@ -1011,22 +1011,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     myParentScheme = newParent;
   }
 
-  private volatile Map<TextAttributesKey, TextAttributes> myAttributesCacheMap;
-
-  @NotNull
-  @Override
-  public Map<TextAttributesKey, TextAttributes> getGeneratedTextAttributesCache() {
-    if (myAttributesCacheMap == null) {
-      myAttributesCacheMap = ContainerUtil.newConcurrentMap();
-    }
-    return myAttributesCacheMap;
-  }
-
-  @Override
-  public void dropGeneratedTextAttributesCache() {
-    myAttributesCacheMap = null;
-  }
-
   void resolveParent(@NotNull Function<String,EditorColorsScheme> nameResolver) {
     if (myParentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)myParentScheme).getParentName();
