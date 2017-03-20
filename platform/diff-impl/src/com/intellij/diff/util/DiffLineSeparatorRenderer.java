@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.util.Arrays;
 
 public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer {
   @NotNull private final Editor myEditor;
@@ -55,33 +54,15 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                                        @Nullable EditorColorsScheme scheme) {
     int step = getStepSize(lineHeight);
     int height = getHeight(lineHeight);
-    int dx = getDeltaX(lineHeight);
-    int dy = getDeltaY(lineHeight);
+    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     int start1 = y1 + (lineHeight - height - step) / 2 + step / 2;
     int start2 = y2 + (lineHeight - height - step) / 2 + step / 2;
     int end1 = start1 + height - 1;
     int end2 = start2 + height - 1;
 
-    int[] xPoints;
-    int[] yPoints;
-
-    if (Math.abs(x2 - x1) < Math.abs(y2 - y1)) {
-      if (y2 < y1) {
-        xPoints = new int[]{x1, x2 - dx, x2, x2, x1 + dx, x1};
-        yPoints = new int[]{start1, start2 + dy, start2, end2, end1 - dy, end1};
-      }
-      else {
-        xPoints = new int[]{x1, x1 + dx, x2, x2, x2 - dx, x1};
-        yPoints = new int[]{start1, start1 + dy, start2, end2, end2 - dy, end1};
-      }
-    }
-    else {
-      xPoints = new int[]{x1, x2, x2, x1};
-      yPoints = new int[]{start1, start2, end2, end1};
-    }
-
-    paintConnectorLine(g, xPoints, yPoints, lineHeight, scheme);
+    Color color = getBackgroundColor(scheme);
+    DiffDrawUtil.drawCurveTrapezium(g, x1, x2, start1, end1, start2, end2, color, null);
   }
 
   /*
@@ -206,49 +187,6 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     gg.setTransform(oldTransform);
   }
 
-  private static void paintConnectorLine(@NotNull Graphics g,
-                                         @NotNull int[] xPoints, @NotNull int[] yPoints,
-                                         int lineHeight,
-                                         @Nullable EditorColorsScheme scheme) {
-    // TODO: shadow looks bad with big lineHeight and slope
-    int height = getHeight(lineHeight);
-    if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
-
-    Graphics2D gg = ((Graphics2D)g);
-    AffineTransform oldTransform = gg.getTransform();
-
-    // background
-    gg.setColor(getBackgroundColor(scheme));
-    gg.fillPolygon(xPoints, yPoints, xPoints.length);
-
-    if (scheme.getColor(TOP_BORDER) != null) {
-      for (int i = 0; i < height; i++) {
-        Color color = getTopBorderColor(i, lineHeight, scheme);
-        if (color == null) break;
-
-        gg.setColor(color);
-        gg.drawPolyline(xPoints, yPoints, xPoints.length / 2);
-        gg.translate(0, 1);
-      }
-      gg.setTransform(oldTransform);
-    }
-
-    if (scheme.getColor(BOTTOM_BORDER) != null) {
-      int[] xBottomPoints = Arrays.copyOfRange(xPoints, xPoints.length / 2, xPoints.length);
-      int[] yBottomPoints = Arrays.copyOfRange(yPoints, xPoints.length / 2, xPoints.length);
-
-      for (int i = height - 1; i >= 0; i--) {
-        Color color = getBottomBorderColor(i, lineHeight, scheme);
-        if (color == null) break;
-
-        gg.setColor(color);
-        gg.drawPolyline(xBottomPoints, yBottomPoints, xPoints.length / 2);
-        gg.translate(0, -1);
-      }
-      gg.setTransform(oldTransform);
-    }
-  }
-
   //
   // Parameters
   //
@@ -263,14 +201,6 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
 
   private static int getHeight(int lineHeight) {
     return Math.max(lineHeight / 2, 1);
-  }
-
-  private static int getDeltaX(int lineHeight) {
-    return Math.max(lineHeight / 4, 1);
-  }
-
-  private static int getDeltaY(int lineHeight) {
-    return Math.max(lineHeight / 6, 1);
   }
 
   @NotNull
