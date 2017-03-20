@@ -199,9 +199,12 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       }
       return id;
     }
-    return myEp.instanceClass != null
-           ? myEp.instanceClass
-           : myEp.providerClass;
+    // order from #ConfigurableEP(PicoContainer, Project)
+    return myEp.providerClass != null
+           ? myEp.providerClass
+           : myEp.instanceClass != null
+             ? myEp.instanceClass
+             : myEp.implementationClass;
   }
 
   @NotNull

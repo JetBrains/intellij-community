@@ -242,7 +242,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       protected ObjectProducer compute() {
         try {
           if (providerClass != null) {
-            return new ProviderProducer((ConfigurableProvider)instantiate(providerClass, myPicoContainer));
+            return new ProviderProducer(instantiate(providerClass, myPicoContainer));
           }
           if (instanceClass != null) {
             return new ClassProducer(myPicoContainer, findClass(instanceClass));
