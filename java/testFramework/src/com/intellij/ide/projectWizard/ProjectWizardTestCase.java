@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,26 +173,23 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   @Override
   public void tearDown() throws Exception {
-    if (myWizard != null) {
-      Disposer.dispose(myWizard.getDisposable());
-      myWizard = null;
-    }
-    if (myCreatedProject != null) {
-      myProjectManager.closeProject(myCreatedProject);
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myCreatedProject));
-      myCreatedProject = null;
-    }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
-      for (Sdk sdk : mySdks) {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-      }
-    });
-    SelectTemplateSettings.getInstance().setLastTemplate(null, null);
     try {
-      UIUtil.dispatchAllInvocationEvents();
-      Thread.sleep(2000); //wait for JBCardLayout release timers
-      UIUtil.dispatchAllInvocationEvents();
+      if (myWizard != null) {
+        Disposer.dispose(myWizard.getDisposable());
+        myWizard = null;
+      }
+      if (myCreatedProject != null) {
+        myProjectManager.closeProject(myCreatedProject);
+        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myCreatedProject));
+        myCreatedProject = null;
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+        for (Sdk sdk : mySdks) {
+          ProjectJdkTable.getInstance().removeJdk(sdk);
+        }
+      });
+      SelectTemplateSettings.getInstance().setLastTemplate(null, null);
     }
     finally {
       super.tearDown();
