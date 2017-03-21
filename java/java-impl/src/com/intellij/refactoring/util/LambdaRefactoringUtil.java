@@ -58,7 +58,7 @@ public class LambdaRefactoringUtil {
   public static PsiLambdaExpression convertMethodReferenceToLambda(final PsiMethodReferenceExpression referenceExpression,
                                                                    final boolean ignoreCast, 
                                                                    final boolean simplifyToExpressionLambda) {
-    PsiLambdaExpression lambdaExpression = convertToLambda(referenceExpression, ignoreCast);
+    PsiLambdaExpression lambdaExpression = createLambda(referenceExpression, ignoreCast);
     if (lambdaExpression == null) return null;
     lambdaExpression = (PsiLambdaExpression)referenceExpression.replace(lambdaExpression);
 
@@ -70,17 +70,24 @@ public class LambdaRefactoringUtil {
   }
 
   public static boolean canConvertToLambda(PsiMethodReferenceExpression referenceExpression) {
-    return convertToLambda(referenceExpression, false) != null;
+    return createLambda(referenceExpression, false) != null;
   }
 
-  private static PsiLambdaExpression convertToLambda(PsiMethodReferenceExpression referenceExpression, boolean ignoreCast) {
+  /**
+   * Convert method reference to lambda if possible and return the created lambda without replacing original method reference.
+   *
+   * @param referenceExpression a method reference to convert
+   * @param doNotAddParameterTypes if false, parameter types could be added to the lambda to resolve ambiguity
+   * @return a created lambda or null if conversion fails
+   */
+  public static PsiLambdaExpression createLambda(PsiMethodReferenceExpression referenceExpression, boolean doNotAddParameterTypes) {
     String lambda = createLambdaWithoutFormalParameters(referenceExpression);
     if (lambda == null) return null;
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(referenceExpression.getProject());
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)elementFactory.createExpressionFromText(lambda, referenceExpression);
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
-    boolean needToSpecifyFormalTypes = !ignoreCast && !isInferredSameTypeAfterConversion(lambdaExpression, referenceExpression, functionalInterfaceType);
+    boolean needToSpecifyFormalTypes = !doNotAddParameterTypes && !isInferredSameTypeAfterConversion(lambdaExpression, referenceExpression, functionalInterfaceType);
     if (needToSpecifyFormalTypes) {
       PsiParameterList typedParamList = specifyLambdaParameterTypes(functionalInterfaceType, lambdaExpression);
       if (typedParamList == null) {

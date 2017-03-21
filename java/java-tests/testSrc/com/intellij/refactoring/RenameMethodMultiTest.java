@@ -61,6 +61,10 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     doTest("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
   }
 
+  public void testStaticImport5() throws Exception {
+    doAutomaticRenameMethod("pack1.A", "void staticMethod(int i)", "renamedStaticMethod");
+  }
+
   public void testDefaultAnnotationMethod() throws Exception {
     doTest("pack1.A", "int value()", "intValue");
   }

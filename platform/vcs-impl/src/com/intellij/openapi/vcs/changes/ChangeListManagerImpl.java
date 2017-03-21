@@ -1293,8 +1293,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private boolean doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     FileDocumentManager.getInstance().saveAllDocuments();
     return new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                            StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(),
-                            new ArrayList<>(), false, synchronously, FunctionUtil.nullConstant(), null).doCommit();
+                            StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
+                            false, synchronously, FunctionUtil.nullConstant(), null, false, null).doCommit();
   }
 
   @Override

@@ -639,12 +639,13 @@ public abstract class ChangesTreeList<T> extends Tree implements TypeSafeDataPro
     }
   }
 
-  public void select(final List<T> changes) {
+  public void select(@NotNull Collection<T> changes) {
+    HashSet<T> changesSet = new HashSet<>(changes);
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
     TreeUtil.traverse(getRoot(), node -> {
       @SuppressWarnings("unchecked")
       final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
-      if (changes.contains(change)) {
+      if (changesSet.contains(change)) {
         treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
       }
       return true;

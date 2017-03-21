@@ -16,10 +16,8 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +30,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
+  private static final Icon DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("spinnerRight"));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -40,58 +39,36 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    JComponent editor = spinner.getEditor();
-    boolean hasFocus = c.hasFocus();
-    if (!hasFocus && editor != null) {
-      hasFocus = editor.hasFocus();
-      if (!hasFocus) {
-        for (JComponent child : UIUtil.findComponentsOfType(editor, JComponent.class)) {
-          hasFocus = child.hasFocus();
-          if (hasFocus) break;
-        }
-      }
-    }
-
     Container parent = c.getParent();
     if (c.isOpaque() && parent != null) {
       g.setColor(parent.getBackground());
       g.fillRect(0,0,c.getWidth(),c.getHeight());
     }
-    Insets clip = c.getInsets();
-    int stop = c.getWidth() - MacIntelliJIconCache.getIcon("spinnerRight").getIconWidth() - clip.right;
-    //int y = (c.getHeight() - 26) / 2;
-    Graphics gg = g.create(clip.left, clip.top, stop - clip.left, MacIntelliJIconCache.getIcon("spinnerRight").getIconHeight());
-    boolean enabled = c.isEnabled();
-    Icon icon = MacIntelliJIconCache.getIcon("comboLeft", false, hasFocus, enabled);
-    icon.paintIcon(c,gg,clip.left,clip.top);
-    int x = icon.getIconWidth();
-    icon = MacIntelliJIconCache.getIcon("comboMiddle", false, hasFocus, enabled);
-    while (x < stop) {
-      icon.paintIcon(c, gg, x, clip.top);
-      x+=icon.getIconWidth();
-    }
-    gg.dispose();
-    icon = MacIntelliJIconCache.getIcon("spinnerRight", false, hasFocus, enabled);
-    icon.paintIcon(c, g, stop, clip.top);
+
+    Insets i = c.getInsets();
+
+    int x = c.getWidth() - DEFAULT_ICON.getIconWidth() - i.right;
+    Icon icon = MacIntelliJIconCache.getIcon("spinnerRight", false, false, c.isEnabled());
+    icon.paintIcon(c, g, x, i.top);
   }
 
-  @Override
-  protected void paintArrowButton(Graphics g,
-                                  BasicArrowButton button,
-                                  @MagicConstant(intValues = {SwingConstants.NORTH, SwingConstants.SOUTH}) int direction) {
-  }
+  @Override protected void paintArrowButton(Graphics g, BasicArrowButton button, int direction) {}
 
   @Override
   protected LayoutManager createLayout() {
     return new LayoutManagerDelegate(super.createLayout()) {
       @Override
       public Dimension preferredLayoutSize(Container parent) {
-        return toConstantHeight(super.preferredLayoutSize(parent), 26);
+        Insets i = parent.getInsets();
+        return new Dimension(DEFAULT_ICON.getIconWidth() + JBUI.scale(20) + i.left + i.right,
+                             DEFAULT_ICON.getIconHeight() + i.top + i.bottom);
       }
 
       @Override
       public Dimension minimumLayoutSize(Container parent) {
-        return toConstantHeight(super.minimumLayoutSize(parent), 26);
+        Insets i = parent.getInsets();
+        return new Dimension(DEFAULT_ICON.getIconWidth() + JBUI.scale(10) + i.left + i.right,
+                             DEFAULT_ICON.getIconHeight() + i.top + i.bottom);
       }
     };
   }
@@ -100,26 +77,18 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
   protected void layoutEditor(@NotNull JComponent editor) {
     int w = spinner.getWidth();
     int h = spinner.getHeight();
-    JBInsets insets = JBUI.insets(spinner.getInsets());
-    editor.setBounds(insets.left + 5, insets.top + 5, w - 5 - 26 - insets.width(), h - insets.height() - 10);
+    Insets i = spinner.getInsets();
+    editor.setBounds(JBUI.scale(1) + i.left,
+                     JBUI.scale(1) + i.top,
+                     w - (i.left + i.right + DEFAULT_ICON.getIconWidth() + JBUI.scale(1)),
+                     h - (i.top + i.bottom + + JBUI.scale(2)));
   }
 
-  private static Dimension toConstantHeight(@Nullable Dimension size, int height) {
-    return size == null ? null : new Dimension(size.width, height);
-  }
-
-  @Override
-  public Dimension getPreferredSize(JComponent c) {
-    return toConstantHeight(super.getPreferredSize(c), 26);
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    return toConstantHeight(super.getMinimumSize(c), 26);
-  }
-
-  @Override
-  public Dimension getMaximumSize(JComponent c) {
-    return toConstantHeight(super.getMaximumSize(c), 26);
+  @Nullable Rectangle getArrowButtonBounds() {
+    Insets i = spinner.getInsets();
+    return new Rectangle(spinner.getWidth() - DEFAULT_ICON.getIconWidth() - i.right,
+                         i.top,
+                         DEFAULT_ICON.getIconWidth(),
+                         DEFAULT_ICON.getIconHeight());
   }
 }

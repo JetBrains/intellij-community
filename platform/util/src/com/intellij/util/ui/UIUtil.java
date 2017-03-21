@@ -61,6 +61,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
@@ -3963,5 +3964,41 @@ public class UIUtil {
         source.removeKeyListener(keyAdapter);
       }
     });
+  }
+
+  /**
+   * Stroke for painting outer borders.
+   */
+  public static class OuterStroke implements Stroke {
+    private final BasicStroke stroke;
+
+    public OuterStroke(float width) {
+      stroke = new BasicStroke(width);
+    }
+
+    public Shape createStrokedShape(Shape s) {
+      float lw = stroke.getLineWidth();
+      float delta = lw / 2f;
+
+      if (s instanceof Rectangle2D) {
+        Rectangle2D rs = (Rectangle2D) s;
+        return stroke.createStrokedShape(
+          new Rectangle2D.Double(rs.getX() - delta,
+                                 rs.getY() - delta,
+                                 rs.getWidth() + lw,
+                                 rs.getHeight() + lw));
+      } else if (s instanceof RoundRectangle2D) {
+        RoundRectangle2D rrs = (RoundRectangle2D) s;
+        return stroke.createStrokedShape(
+          new RoundRectangle2D.Double(rrs.getX() - delta,
+                                      rrs.getY() - delta,
+                                      rrs.getWidth() + lw,
+                                      rrs.getHeight() + lw,
+                                      rrs.getArcWidth() + lw,
+                                      rrs.getArcHeight() + lw));
+      } else {
+        throw new UnsupportedOperationException("Shape is not supported");
+      }
+    }
   }
 }

@@ -25,6 +25,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -362,8 +363,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    */
   protected void deleteScheme(@NotNull T scheme) {
     if (Messages.showOkCancelDialog(
-      "Do you want to delete \"" + scheme.getName() + "\" scheme?",
-      "Delete Scheme",
+      "Do you want to delete \"" + scheme.getName() + "\" " + StringUtil.toLowerCase(mySchemesPanel.getSchemeTypeName()) + "?",
+      "Delete " + mySchemesPanel.getSchemeTypeName(),
       Messages.getQuestionIcon()) == Messages.OK) {
       mySchemesPanel.getModel().removeScheme(scheme);
     }

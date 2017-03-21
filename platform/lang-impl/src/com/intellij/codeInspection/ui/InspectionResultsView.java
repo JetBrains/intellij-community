@@ -64,6 +64,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -109,6 +110,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
   private volatile InspectionProfileImpl myInspectionProfile;
+  private final boolean mySettingsEnabled;
   @NotNull
   private final AnalysisScope myScope;
   @NonNls
@@ -262,6 +264,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
         }
       }
     }, this);
+
+    if (!isSingleInspectionRun()) {
+      mySettingsEnabled = true;
+    } else {
+      InspectionProfileImpl profile = getCurrentProfile();
+      String toolId = ObjectUtils.notNull(profile.getSingleTool());
+      InspectionToolWrapper tool = ObjectUtils.notNull(profile.getInspectionTool(toolId, getProject()));
+      JComponent toolPanel = tool.getTool().createOptionsPanel();
+      mySettingsEnabled = toolPanel != null;
+    }
   }
 
   public void profileChanged() {
@@ -1079,6 +1091,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     boolean rerun = myRerun;
     myRerun = false;
     return rerun;
+  }
+
+  public boolean areSettingsEnabled() {
+    return mySettingsEnabled;
   }
 
   public boolean isSingleInspectionRun() {

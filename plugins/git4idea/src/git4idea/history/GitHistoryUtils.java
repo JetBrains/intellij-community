@@ -612,6 +612,7 @@ public class GitHistoryUtils {
                                               @NotNull VcsLogObjectsFactory factory,
                                               @NotNull VirtualFile root) {
     return ContainerUtil.mapNotNull(refs, refName -> {
+      if (refName.equals(GitUtil.GRAFTED) || refName.equals(GitUtil.REPLACED)) return null;
       VcsRefType type = GitRefManager.getRefType(refName);
       refName = GitBranchUtil.stripRefsPrefix(refName);
       return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
@@ -626,6 +627,17 @@ public class GitHistoryUtils {
       }
       return null;
     });
+  }
+
+  @NotNull
+  public static String[] formHashParameters(@NotNull GitVcs vcs, @NotNull Collection<String> hashes) {
+    List<String> parameters = ContainerUtil.newArrayList();
+
+    String noWalk = GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+    parameters.add(noWalk);
+    parameters.addAll(hashes);
+
+    return ArrayUtil.toStringArray(parameters);
   }
 
   private static class MyTokenAccumulator {

@@ -103,7 +103,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
     }
   }
 
-  fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"$name\"")
+  fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"${this.name}\"")
 
   abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
 

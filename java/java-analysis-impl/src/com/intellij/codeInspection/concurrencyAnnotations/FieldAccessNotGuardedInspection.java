@@ -91,11 +91,19 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
         if (JCiPUtil.isGuardedBy(containingMethod, guard) || containingMethod.isConstructor()) {
           return;
         }
-        if (containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED) && guardExpression instanceof PsiThisExpression) {
-          final PsiThisExpression thisExpression = (PsiThisExpression)guardExpression;
-          final PsiClass aClass = getClassFromThisExpression(thisExpression, field);
-          if (aClass == null || aClass.equals(containingMethod.getContainingClass())) {
-            return;
+        if (containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+          if (guardExpression instanceof PsiThisExpression) {
+            final PsiThisExpression thisExpression = (PsiThisExpression)guardExpression;
+            final PsiClass aClass = getClassFromThisExpression(thisExpression, field);
+            if (aClass == null || aClass.equals(containingMethod.getContainingClass())) {
+              return;
+            }
+          }
+          else if (containingMethod.hasModifierProperty(PsiModifier.STATIC) && guardExpression instanceof PsiClassObjectAccessExpression) {
+            PsiClass psiClass = PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)guardExpression).getOperand().getType());
+            if (psiClass == null || psiClass.equals(containingMethod.getContainingClass())) {
+              return;
+            }
           }
         }
       }

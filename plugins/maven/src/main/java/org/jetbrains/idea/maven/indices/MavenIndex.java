@@ -200,6 +200,9 @@ public class MavenIndex {
         dataDir = new File(myDir, myDataDirName);
         dataDir.mkdirs();
       }
+      if (myData != null) {
+        myData.close(true);
+      }
       myData = new IndexData(dataDir);
     }
     catch (Exception e) {
@@ -369,6 +372,13 @@ public class MavenIndex {
   }
 
   private void updateData(MavenProgressIndicator progress, File newDataDir, boolean fullUpdate) throws MavenIndexException {
+    synchronized (this) {
+      IndexData oldData = myData;
+
+      if(oldData != null) {
+        oldData.close(true);
+      }
+    }
 
     IndexData newData = new IndexData(newDataDir);
     try {
@@ -385,17 +395,11 @@ public class MavenIndex {
     }
 
     synchronized (this) {
-      IndexData oldData = myData;
-
       myData = newData;
       myDataDirName = newDataDir.getName();
 
       if (fullUpdate) {
         myUpdateTimestamp = System.currentTimeMillis();
-      }
-
-      if(oldData != null) {
-        oldData.close(true);
       }
 
       for (File each : FileUtil.notNullize(myDir.listFiles())) {

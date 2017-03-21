@@ -39,7 +39,7 @@ public class Main {
   public static boolean testIsPresent(List<List<String>> list) {
       for (List<String> strings : list) {
           if (strings != null) {
-              for (String s : strings) {
+              for (String string : strings) {
                   return true;
               }
           }

@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
@@ -40,6 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public class NewMappings {
 
@@ -364,16 +368,13 @@ public class NewMappings {
       final String vcsName = iterator.next();
       final Collection<VcsDirectoryMapping> mappings = myVcsToPaths.get(vcsName);
 
-      final List<Pair<VirtualFile, VcsDirectoryMapping>> objects = ObjectsConvertor.convert(mappings,
-        new Convertor<VcsDirectoryMapping, Pair<VirtualFile, VcsDirectoryMapping>>() {
-        public Pair<VirtualFile, VcsDirectoryMapping> convert(final VcsDirectoryMapping dm) {
-          VirtualFile vf = lfs.findFileByPath(dm.getDirectory());
-          if (vf == null) {
-            vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
-          }
-          return vf == null ? null : Pair.create(vf, dm);
+      List<Pair<VirtualFile, VcsDirectoryMapping>> objects = mapNotNull(mappings, dm -> {
+        VirtualFile vf = lfs.findFileByPath(dm.getDirectory());
+        if (vf == null) {
+          vf = lfs.refreshAndFindFileByPath(dm.getDirectory());
         }
-      }, ObjectsConvertor.NOT_NULL);
+        return vf == null ? null : Pair.create(vf, dm);
+      });
 
       final List<Pair<VirtualFile, VcsDirectoryMapping>> filteredFiles;
       // todo static
@@ -395,13 +396,7 @@ public class NewMappings {
         filteredFiles = vcs.filterUniqueRoots(objects, fileConvertor);
       }
 
-      final List<VcsDirectoryMapping> filteredMappings =
-        ObjectsConvertor.convert(filteredFiles, new Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VcsDirectoryMapping>() {
-          public VcsDirectoryMapping convert(final Pair<VirtualFile, VcsDirectoryMapping> o) {
-            return o.getSecond();
-          }
-        });
-
+      List<VcsDirectoryMapping> filteredMappings = map(filteredFiles, Functions.pairSecond());
       // to calculate what had been removed
       mappings.removeAll(filteredMappings);
 

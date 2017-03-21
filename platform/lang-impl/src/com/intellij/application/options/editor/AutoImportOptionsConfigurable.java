@@ -51,7 +51,7 @@ public class AutoImportOptionsConfigurable
     return ContainerUtil.mapNotNull(AutoImportOptionsProviderEP.EP_NAME.getExtensions(myProject), new NullableFunction<ConfigurableEP<AutoImportOptionsProvider>, AutoImportOptionsProvider>() {
       @Override
       public AutoImportOptionsProvider fun(ConfigurableEP<AutoImportOptionsProvider> ep) {
-        return ConfigurableWrapper.wrapConfigurable(ep);
+        return ep.createConfigurable();
       }
     });
   }

@@ -47,7 +47,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -82,6 +81,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
@@ -567,7 +567,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     protected List<AbstractFilePatchInProgress.PatchChange> getSelectedObjects(ChangesBrowserNode<AbstractFilePatchInProgress.PatchChange> node) {
       final List<Change> under = node.getAllChangesUnder();
-      return ObjectsConvertor.convert(under, o -> (AbstractFilePatchInProgress.PatchChange)o);
+      return map(under, AbstractFilePatchInProgress.PatchChange.class::cast);
     }
 
     @Override
@@ -689,8 +689,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private List<AbstractFilePatchInProgress.PatchChange> getAllChanges() {
-    return ObjectsConvertor.convert(myPatches,
-                                    AbstractFilePatchInProgress::getChange);
+    return map(myPatches, AbstractFilePatchInProgress::getChange);
   }
 
   private static void acceptChange(final NamedLegendStatuses nameStatuses, final AbstractFilePatchInProgress.PatchChange change) {
@@ -790,7 +789,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private static List<AbstractFilePatchInProgress> changes2patches(final List<AbstractFilePatchInProgress.PatchChange> selectedChanges) {
-    return ObjectsConvertor.convert(selectedChanges, AbstractFilePatchInProgress.PatchChange::getPatchInProgress);
+    return map(selectedChanges, AbstractFilePatchInProgress.PatchChange::getPatchInProgress);
   }
 
   private class MapPopup extends BaseListPopupStep<VirtualFile> {
@@ -980,8 +979,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   }
 
   private Collection<AbstractFilePatchInProgress> getIncluded() {
-    return ObjectsConvertor.convert(myChangesTreeList.getIncludedChanges(),
-                                    AbstractFilePatchInProgress.PatchChange::getPatchInProgress);
+    return map(myChangesTreeList.getIncludedChanges(), AbstractFilePatchInProgress.PatchChange::getPatchInProgress);
   }
 
   @Nullable

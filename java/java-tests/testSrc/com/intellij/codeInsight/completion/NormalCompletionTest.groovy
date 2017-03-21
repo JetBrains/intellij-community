@@ -1514,7 +1514,7 @@ class XInternalError {}
 
     def p = LookupElementPresentation.renderElement(item)
     assert p.itemText == 'public void run'
-    assert p.tailText == '(t, myInt) {...}'
+    assert p.tailText == '(String t, int myInt) {...}'
     assert p.typeText == 'Foo'
 
     lookup.currentItem = item
@@ -1552,7 +1552,7 @@ class XInternalError {}
 
     p = LookupElementPresentation.renderElement(setter)
     assert p.itemText == setter.lookupString
-    assert p.tailText == '(field) {...}'
+    assert p.tailText == '(int field) {...}'
     assert !p.typeText
 
     lookup.currentItem = getter

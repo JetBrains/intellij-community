@@ -15,28 +15,35 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.util.ui.JBUI;
-
-import javax.swing.border.Border;
-import javax.swing.plaf.UIResource;
+import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJSpinnerBorder implements Border, UIResource {
-  @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+public class MacIntelliJSpinnerBorder extends MacComboBoxBorder {
+  boolean isFocused(Component c) {
+    if (c.hasFocus()) return true;
 
-  }
-
-  @Override
-  public Insets getBorderInsets(Component c) {
-    return JBUI.insets(0).asUIResource();
-  }
-
-  @Override
-  public boolean isBorderOpaque() {
+    if (c instanceof JSpinner) {
+      JSpinner spinner = (JSpinner)c;
+      if (spinner.getEditor() != null) {
+        synchronized (spinner.getEditor().getTreeLock()) {
+          return  spinner.getEditor().getComponent(0).hasFocus();
+        }
+      }
+    }
     return false;
   }
+
+  Area getButtonBounds(Component c) {
+    Rectangle bounds = null;
+    if (c instanceof JSpinner && ((JSpinner)c).getUI() instanceof MacIntelliJSpinnerUI) {
+      MacIntelliJSpinnerUI ui = (MacIntelliJSpinnerUI)((JSpinner)c).getUI();
+      bounds = ui.getArrowButtonBounds();
+    }
+    return bounds != null ? new Area(bounds) : new Area();
+  }
+
 }

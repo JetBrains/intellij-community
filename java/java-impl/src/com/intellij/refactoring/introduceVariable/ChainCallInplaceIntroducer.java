@@ -35,7 +35,7 @@ import java.util.Objects;
  */
 public class ChainCallInplaceIntroducer extends JavaVariableInplaceIntroducer {
   private PsiParameter myParameter;
-  private PsiMethodCallExpression myCall;
+  private PsiElement myBlock;
 
   public ChainCallInplaceIntroducer(Project project,
                                     IntroduceVariableSettings settings,
@@ -60,7 +60,7 @@ public class ChainCallInplaceIntroducer extends JavaVariableInplaceIntroducer {
   @Nullable
   @Override
   protected PsiElement checkLocalScope() {
-    return myCall;
+    return myBlock;
   }
 
   @Override
@@ -72,7 +72,7 @@ public class ChainCallInplaceIntroducer extends JavaVariableInplaceIntroducer {
       if (lambda != null) {
         PsiParameter parameter = Objects.requireNonNull(ArrayUtil.getFirstElement(lambda.getParameterList().getParameters()));
         myParameter = parameter;
-        myCall = PsiTreeUtil.getParentOfType(lambda, PsiMethodCallExpression.class);
+        myBlock = PsiTreeUtil.getParentOfType(lambda, PsiCodeBlock.class, PsiLambdaExpression.class, PsiMember.class);
         myExprMarker = null;
         myExpr = null;
         myOccurrences = StreamEx.of(ReferencesSearch.search(parameter).findAll()).map(PsiReference::getElement).select(PsiExpression.class)

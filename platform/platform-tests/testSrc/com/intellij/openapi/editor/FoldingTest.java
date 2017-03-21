@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,16 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.TestFileType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -192,6 +198,31 @@ public class FoldingTest extends AbstractEditorTest {
 
 
     assertNumberOfValidFoldRegions(1);
+  }
+
+  public void testNotificationIsSentOnRemovalOfNonExpandingRegion() {
+    Ref<FoldRegion> regionRef = new Ref<>();
+    runFoldingOperation(() -> {
+      FoldRegion region = myModel.createFoldRegion(0, 1, "...", null, true);
+      assertNotNull(region);
+      assertTrue(region.isValid());
+      assertTrue(myModel.addFoldRegion(region));
+      region.setExpanded(false);
+      regionRef.set(region);
+    });
+    List<FoldRegion> notifications = new ArrayList<>();
+    myModel.addListener(new FoldingListener() {
+      @Override
+      public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+        notifications.add(region);
+      }
+
+      @Override
+      public void onFoldProcessingEnd() {}
+    }, getTestRootDisposable());
+    runFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
+    assertSize(1, notifications);
+    assertEquals(regionRef.get(), notifications.get(0));
   }
 
   public void testTopLevelRegionRemainsTopLevelAfterMergingIdenticalRegions() {

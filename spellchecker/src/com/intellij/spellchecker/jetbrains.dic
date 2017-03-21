@@ -257,6 +257,7 @@ inline
 innodb
 inout
 instantiable
+instantiatable
 insteadof
 intellij
 interpolator
@@ -415,6 +416,7 @@ noresetlogs
 noreverse
 norowdependencies
 nosort
+notificator
 notnull
 novalidate
 nowait

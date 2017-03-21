@@ -25,7 +25,6 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -35,22 +34,15 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
-import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.intellij.openapi.util.io.FileUtil.sanitizeFileName;
 
 public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchemesPanel<InspectionProfileModifiableModel> {
   private final static Logger LOG = Logger.getInstance(InspectionProfileSchemesPanel.class);
@@ -178,30 +170,6 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         addProfile(newProfile);
         myConfigurable.selectProfile(newProfile);
         selectScheme(newProfile);
-      }
-
-      @Override
-      protected void exportScheme(@NotNull InspectionProfileModifiableModel scheme, @NotNull String exporterName) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        descriptor.setDescription("Choose directory to store profile file");
-        FileChooser.chooseFile(descriptor, myProject, null, dir -> {
-          try {
-            LOG.assertTrue(true);
-            Element element = scheme.writeScheme(false);
-            Path file = Paths.get(dir.getPath(), sanitizeFileName(scheme.getName()) + ".xml");
-            if (Files.isRegularFile(file.toAbsolutePath()) &&
-                Messages.showOkCancelDialog(myProject, "File \'" + file + "\' already exist. Do you want to overwrite it?", "Warning",
-                                            Messages.getQuestionIcon()) != Messages.OK) {
-              return;
-            }
-
-            JdomKt.write(element, file);
-          }
-          catch (IOException e1) {
-            LOG.error(e1);
-          }
-        });
-
       }
 
       @Override

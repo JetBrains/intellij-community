@@ -17,9 +17,15 @@ package com.intellij.codeInsight.daemon.quickFix
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.InspectionsBundle.message
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.DEFAULT_SIGNATURE
+import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.POSSIBLE_SIGNATURES
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
@@ -64,12 +70,13 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightCodeInsightFixtureTestCa
 
   fun doTest(actionPrefix: String, vararg withSignature: String) {
     val testName = getTestName(false)
-    myFixture.configureByFile("before$testName.java")
+    val file = myFixture.configureByFile("before$testName.java")
 
     val action = findAction(actionPrefix)
-    val signature = listOf(*withSignature)
+    val signature = ReflectiveSignature.create(listOf(*withSignature)) ?: ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE
 
-    launchAction(action, signature)
+    val lookupElements = launchAction(action, signature)
+    checkLookupElements(file, lookupElements)
     myFixture.checkResultByFile("after$testName.java")
   }
 
@@ -93,14 +100,31 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightCodeInsightFixtureTestCa
     return familyActions[0]
   }
 
-  private fun launchAction(action: IntentionAction, signature: List<String>) {
+  private fun launchAction(action: IntentionAction, signature: ReflectiveSignature): List<LookupElement>? {
     myFixture.editor.putUserData(DEFAULT_SIGNATURE, signature)
     try {
       myFixture.launchAction(action)
+      return myFixture.editor.getUserData(POSSIBLE_SIGNATURES)
     }
     finally {
       myFixture.editor.putUserData(DEFAULT_SIGNATURE, null)
+      myFixture.editor.putUserData(POSSIBLE_SIGNATURES, null)
     }
+  }
+
+  private fun checkLookupElements(file: PsiFile?, lookupElements: List<LookupElement>?) {
+    val expected = (file?.children ?: arrayOf())
+      .filter { it is PsiComment }
+      .map { it.text.removePrefix("//").trim() }
+
+    val actual = (lookupElements ?: listOf())
+      .map {
+        val presentation = LookupElementPresentation()
+        it.renderElement(presentation)
+        val typeText = presentation.typeText
+        if (typeText != null) "${typeText} ${presentation.itemText}" else presentation.itemText
+      }
+    assertEquals("Popup menu", expected, actual)
   }
 
   private val VOID = "void"

@@ -27,7 +27,7 @@ class TestInsertCode(unittest.TestCase):
     def check_insert_to_line(self, func_to_modify, func_to_insert, line_number):
         code_orig = func_to_modify.__code__
         code_to_insert = func_to_insert.__code__
-        result = insert_code(code_orig, code_to_insert, line_number)
+        success, result = insert_code(code_orig, code_to_insert, line_number)
         exec(result)
         output = sys.stdout.getvalue().strip().split(self.lines_separator)[-1]
         self.assertTrue(TRACE_MESSAGE in output)

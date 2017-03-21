@@ -97,6 +97,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.emptyList;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
@@ -799,7 +800,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       infos.add(new MyPair<>(vf, url.toString(), s));
     }
     final List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
-    final List<S> converted = ObjectsConvertor.convert(filtered, o -> o.getSrc());
+    List<S> converted = map(filtered, MyPair::getSrc);
     if (!notMatched.isEmpty()) {
       // potential bug is here: order is not kept. but seems it only occurs for cases where result is sorted after filtering so ok
       converted.addAll(notMatched);

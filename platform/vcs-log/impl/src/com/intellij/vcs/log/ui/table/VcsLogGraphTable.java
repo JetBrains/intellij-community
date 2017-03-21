@@ -939,6 +939,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   // this class redirects events from the table to BasicTableHeaderUI.MouseInputHandler
   private static class MyBasicTableHeaderUI extends BasicTableHeaderUI implements MouseInputListener {
+    private int myStartXCoordinate = 0;
+    private int myStartYCoordinate = 0;
+
     public MyBasicTableHeaderUI(@NotNull JTableHeader tableHeader) {
       header = tableHeader;
       mouseInputListener = createMouseInputListener();
@@ -958,6 +961,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
       if (isOnBorder(e) || isOnRootColumn(e)) return;
+      myStartXCoordinate = e.getX();
+      myStartYCoordinate = e.getY();
       mouseInputListener.mousePressed(convertMouseEvent(e));
     }
 
@@ -981,11 +986,19 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
       if (isOnBorder(e) || isOnRootColumn(e)) return;
-      mouseInputListener.mouseDragged(convertMouseEvent(e));
-      // if I change cursor on mouse pressed, it will change on double-click as well
-      // and I do not want that
-      if (header.getDraggedColumn() != null && header.getCursor() == Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)) {
-        header.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+      int deltaX = Math.abs(e.getX() - myStartXCoordinate);
+      int deltaY = Math.abs(e.getY() - myStartYCoordinate);
+      boolean sameColumn = (header.getTable().getColumnModel().getColumn(header.getTable().columnAtPoint(e.getPoint())) ==
+                            header.getDraggedColumn());
+      // start dragging only if mouse moved horizontally
+      // or if dragging was already started earlier (it looks weird to stop mid-dragging)
+      if ((deltaX >= 3 * deltaY && sameColumn) || header.getCursor() == Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)) {
+        mouseInputListener.mouseDragged(convertMouseEvent(e));
+        // if I change cursor on mouse pressed, it will change on double-click as well
+        // and I do not want that
+        if (header.getDraggedColumn() != null && header.getCursor() == Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)) {
+          header.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+        }
       }
     }
 

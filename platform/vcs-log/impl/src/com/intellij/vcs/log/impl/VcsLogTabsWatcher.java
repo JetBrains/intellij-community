@@ -29,13 +29,13 @@ import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class VcsLogTabsWatcher implements Disposable {
   private static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
@@ -98,10 +98,10 @@ public class VcsLogTabsWatcher implements Disposable {
 
   @NotNull
   public Set<String> getTabNames() {
-    return myRefresher.getLogWindows().stream()
-      .filter(VcsLogTab.class::isInstance)
-      .map(w -> ((VcsLogTab)w).myTabName)
-      .collect(Collectors.toSet());
+    return StreamEx.of(myRefresher.getLogWindows())
+      .select(VcsLogTab.class)
+      .map(VcsLogTab::getTabName)
+      .toSet();
   }
 
   public class VcsLogTab extends PostponableLogRefresher.VcsLogWindow {
@@ -116,6 +116,11 @@ public class VcsLogTabsWatcher implements Disposable {
     public boolean isVisible() {
       String selectedTab = getSelectedTabName();
       return selectedTab != null && myTabName.equals(selectedTab);
+    }
+
+    @NotNull
+    public String getTabName() {
+      return myTabName;
     }
   }
 

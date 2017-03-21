@@ -122,10 +122,11 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
 
   private boolean doSuppress(@NotNull Project project, PsiJavaDocumentedElement container) {
     assert container != null;
-    if (use15Suppressions(container)) {
-      final PsiModifierList modifierList = container.getModifierList();
+    if (container instanceof PsiModifierListOwner && use15Suppressions(container)) {
+      final PsiModifierListOwner modifierOwner = (PsiModifierListOwner)container;
+      final PsiModifierList modifierList = modifierOwner.getModifierList();
       if (modifierList != null) {
-        JavaSuppressionUtil.addSuppressAnnotation(project, container, container, getID(container));
+        JavaSuppressionUtil.addSuppressAnnotation(project, container, modifierOwner, getID(container));
       }
     }
     else {

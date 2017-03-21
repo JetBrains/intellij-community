@@ -920,6 +920,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
                      bundle="messages.InspectionsBundle" key="inspection.handle.signature.name"
                      implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection"/>
+    <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     displayName="Move field assignment to initializer"
+                     implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
@@ -1066,10 +1070,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.intention.MoveInitializerToSetUpMethodAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.MoveFieldAssignmentToInitializerAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
@@ -1900,6 +1900,7 @@
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CollectionChainCallExtractor"/>
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CompletionStageChainCallExtractor"/>
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.GuavaFluentIterableChainCallExtractor"/>
+    <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.OptionalChainCallExtractor"/>
 
     <diff.lang.DiffIgnoredRangeProvider implementation="com.intellij.diff.lang.JavaDiffIgnoredRangeProvider"/>
 

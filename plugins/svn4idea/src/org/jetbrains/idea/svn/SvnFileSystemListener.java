@@ -40,8 +40,8 @@ import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.Functions;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -63,6 +63,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 public class SvnFileSystemListener extends CommandAdapter implements LocalFileOperationsHandler, Disposable {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnFileSystemListener");
@@ -897,7 +898,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
         if (!filesToProcess.isEmpty()) {
           runInBackground(project, "Deleting files from Subversion", createDeleteRunnable(project, vcs, filesToProcess, exceptions));
         }
-        final List<FilePath> deletedFilesFiles = ObjectsConvertor.convert(deletedFiles, o -> o.getFirst());
+        List<FilePath> deletedFilesFiles = map(deletedFiles, Functions.pairFirst());
         for (FilePath file : deletedFilesFiles) {
           final FilePath parent = file.getParentPath();
           if (parent != null) {
@@ -946,10 +947,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
                                                    SvnVcs vcs,
                                                    VcsShowConfirmationOption.Value value,
                                                    AbstractVcsHelper vcsHelper) {
-    final Convertor<Pair<FilePath, WorkingCopyFormat>, FilePath> convertor = o -> o.getFirst();
     Collection<FilePath> filesToProcess;
     if (value == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
-      filesToProcess = ObjectsConvertor.convert(deletedFiles, convertor);
+      filesToProcess = map(deletedFiles, Functions.pairFirst());
     } else {
 
       final String singleFilePrompt;
@@ -961,9 +961,9 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       else {
         singleFilePrompt = SvnBundle.getString("confirmation.text.delete.file");
       }
-      final Collection<FilePath> files = vcsHelper
-        .selectFilePathsToProcess(ObjectsConvertor.convert(deletedFiles, convertor), SvnBundle.message("confirmation.title.delete.multiple.files"), null,
-                                  SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt, vcs.getDeleteConfirmation());
+      Collection<FilePath> files = vcsHelper
+        .selectFilePathsToProcess(map(deletedFiles, Functions.pairFirst()), SvnBundle.message("confirmation.title.delete.multiple.files"),
+                                  null, SvnBundle.message("confirmation.title.delete.file"), singleFilePrompt, vcs.getDeleteConfirmation());
       filesToProcess = files == null ? null : new ArrayList<>(files);
     }
     return filesToProcess;

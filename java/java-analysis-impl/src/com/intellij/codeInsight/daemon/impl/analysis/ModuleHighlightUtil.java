@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.impl.light.LightJavaModule;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
@@ -424,24 +425,26 @@ public class ModuleHighlightUtil {
   static HighlightInfo checkPackageAccessibility(@NotNull PsiJavaCodeReferenceElement ref,
                                                  @NotNull PsiElement target,
                                                  @NotNull PsiJavaModule refModule) {
-    Module module = findModule(refModule);
-    if (module != null) {
-      if (target instanceof PsiClass) {
-        PsiElement targetFile = target.getParent();
-        if (targetFile instanceof PsiClassOwner) {
-          PsiJavaModule targetModule = getModuleDescriptor((PsiFileSystemItem)targetFile);
-          String packageName = ((PsiClassOwner)targetFile).getPackageName();
-          return checkPackageAccessibility(ref, refModule, targetModule, packageName);
-        }
-      }
-      else if (target instanceof PsiPackage) {
-        PsiElement refImport = ref.getParent();
-        if (refImport instanceof PsiImportStatementBase && ((PsiImportStatementBase)refImport).isOnDemand()) {
-          PsiDirectory[] dirs = ((PsiPackage)target).getDirectories(module.getModuleWithDependenciesAndLibrariesScope(false));
-          if (dirs.length == 1) {
-            PsiJavaModule targetModule = getModuleDescriptor(dirs[0]);
-            String packageName = ((PsiPackage)target).getQualifiedName();
+    if (PsiTreeUtil.getParentOfType(ref, PsiDocComment.class) == null) {
+      Module module = findModule(refModule);
+      if (module != null) {
+        if (target instanceof PsiClass) {
+          PsiElement targetFile = target.getParent();
+          if (targetFile instanceof PsiClassOwner) {
+            PsiJavaModule targetModule = getModuleDescriptor((PsiFileSystemItem)targetFile);
+            String packageName = ((PsiClassOwner)targetFile).getPackageName();
             return checkPackageAccessibility(ref, refModule, targetModule, packageName);
+          }
+        }
+        else if (target instanceof PsiPackage) {
+          PsiElement refImport = ref.getParent();
+          if (refImport instanceof PsiImportStatementBase && ((PsiImportStatementBase)refImport).isOnDemand()) {
+            PsiDirectory[] dirs = ((PsiPackage)target).getDirectories(module.getModuleWithDependenciesAndLibrariesScope(false));
+            if (dirs.length == 1) {
+              PsiJavaModule targetModule = getModuleDescriptor(dirs[0]);
+              String packageName = ((PsiPackage)target).getQualifiedName();
+              return checkPackageAccessibility(ref, refModule, targetModule, packageName);
+            }
           }
         }
       }

@@ -84,6 +84,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       // this will cache classes inside JDI and enable faster search of classes later
       virtualMachine.allClasses();
     }
+    catch (VMDisconnectedException e) {
+      throw e;
+    }
     catch (Throwable e) {
       // catch all exceptions in order not to break vm attach process
       // Example:

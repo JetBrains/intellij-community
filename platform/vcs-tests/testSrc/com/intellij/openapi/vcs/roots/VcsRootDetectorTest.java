@@ -41,7 +41,7 @@ import static com.intellij.openapi.vcs.Executor.mkdir;
  * @author Nadya Zabrodina
  */
 
-public class VcsRootDetectorTest extends VcsRootPlatformTest {
+public class VcsRootDetectorTest extends VcsRootBaseTest {
 
   public void testNoRootsInProject() throws IOException {
     doTest(new VcsRootConfiguration(), null);

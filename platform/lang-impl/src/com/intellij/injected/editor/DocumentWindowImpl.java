@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -204,12 +203,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   @Override
   public String getText(@NotNull TextRange range) {
     return range.substring(getText());
-  }
-
-  @Override
-  @NotNull
-  public CharSequence getCharsSequence() {
-    return getText();
   }
 
   @NotNull
@@ -613,10 +606,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
-  public void clearLineModificationFlags() {
-  }
-
-  @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     return myDelegate.removeRangeMarker(((RangeMarkerWindow)rangeMarker).getDelegate()); 
   }
@@ -971,12 +960,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     synchronized (myLock) {
       return myShreds;
     }
-  }
-
-  @Override
-  @NotNull
-  public List<RangeMarker> getGuardedBlocks() {
-    return Collections.emptyList();
   }
 
   //todo convert injected RMs to host

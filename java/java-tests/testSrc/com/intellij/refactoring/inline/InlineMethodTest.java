@@ -361,6 +361,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testChainedConstructorWithMultipleStatements() throws Exception {
+    doTestInlineThisOnly();
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return getTestName(false).contains("Src") ? IdeaTestUtil.getMockJdk17() : super.getProjectJDK();

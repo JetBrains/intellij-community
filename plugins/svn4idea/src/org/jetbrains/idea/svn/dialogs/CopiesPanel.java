@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,6 +72,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
 
 public class CopiesPanel {
@@ -110,9 +110,8 @@ public class CopiesPanel {
       final List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
       Runnable runnable = () -> {
         if (myCurrentInfoList != null) {
-          final List<OverrideEqualsWrapper<WCInfo>> newList =
-            ObjectsConvertor
-              .convert(infoList, o -> new OverrideEqualsWrapper<>(InfoEqualityPolicy.getInstance(), o), ObjectsConvertor.NOT_NULL);
+          List<OverrideEqualsWrapper<WCInfo>> newList =
+            map(infoList, info -> new OverrideEqualsWrapper<>(InfoEqualityPolicy.getInstance(), info));
 
           if (Comparing.haveEqualElements(newList, myCurrentInfoList)) {
             myRefreshLabel.setEnabled(true);

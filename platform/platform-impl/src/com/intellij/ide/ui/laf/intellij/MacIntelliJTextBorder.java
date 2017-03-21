@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
@@ -25,6 +24,8 @@ import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Area;
+import java.awt.geom.Rectangle2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -41,28 +42,51 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
   }
 
   @Override
-  public void paintBorder(Component c, Graphics g2d, int x, int y, int width, int height) {
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
       return;
     }
-    Graphics2D g = (Graphics2D)g2d;
-    //todo[kb]: make a better solution
-    if (c.getParent() instanceof JComboBox) return;
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setColor(Gray.xBC);
+
+      g2.setStroke(new BasicStroke(1));
+      Shape rect = new Rectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
+                                          c.getWidth() - JBUI.scale(7),
+                                          c.getHeight() - JBUI.scale(7));
+      g2.draw(rect);
+
+      if (c.getParent() instanceof JComboBox) return;
+
+      Area area = new Area(new Rectangle2D.Double(x, y, width, height));
+      area.subtract(new Area(new Rectangle2D.Double(x + JBUI.scale(4), y + JBUI.scale(4),
+                                                    width - JBUI.scale(8), height - JBUI.scale(8))));
+
+      g2.setClip(area);
+      paint(c, g2, x, y, width, height);
+    } finally {
+      g2.dispose();
+    }
+  }
+
+  public void paint(Component c, Graphics2D g2, int x, int y, int width, int height) {
+    Area area = new Area(new Rectangle2D.Double(x, y, width, height));
+    area.subtract(new Area(new Rectangle2D.Double(x + JBUI.scale(4), y + JBUI.scale(4),
+                                                  width - JBUI.scale(8), height - JBUI.scale(8))));
+    g2.setClip(area);
+
     Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
     if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-      Graphics2D g2 = (Graphics2D)g.create();
-      try {
-        g2.translate(x, y);
-        DarculaUIUtil.paintErrorBorder(g2, width, height, c.hasFocus());
-      } finally {
-        g2.dispose();
-      }
-    } else if (c.hasFocus()) {
-      MacIntelliJBorderPainter.paintBorder(c, g, 0, 0, c.getWidth(), c.getHeight());
+      g2.translate(x, y);
+      DarculaUIUtil.paintErrorBorder(g2, width, height, isFocused(c));
+    } else if (isFocused(c)) {
+      g2.translate(x, y);
+      DarculaUIUtil.paintFocusBorder(g2, width, height);
     }
-    if (!IntelliJLaf.isGraphite() || !c.hasFocus()) {
-      g.setColor(Gray.xB4);
-      g.drawRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
-    }
+  }
+
+  boolean isFocused(Component c) {
+    return c.hasFocus();
   }
 }

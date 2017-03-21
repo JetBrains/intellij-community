@@ -200,7 +200,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       panelSize.height *= 2;
       if (prev != null && prev.height < panelSize.height) prev.height = panelSize.height;
       myBalloon.setMinimumSize(panelSize);
-      if (prev == null) panelSize.height = panelSize.height * 3 / 2;
+      if (prev == null) {
+        panelSize.height *= 1.5;
+        panelSize.width *= 1.15;
+      }
       myBalloon.setSize(prev != null ? prev : panelSize);
 
       if (showPoint != null && showPoint.getComponent() != null) {
@@ -454,6 +457,8 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     List<AnAction> scopeActions = new LinkedList<>();
 
     myScopeDetailsPanel = new JPanel(new CardLayout());
+    myScopeDetailsPanel.setBorder(JBUI.Borders.emptyBottom(UIUtil.isUnderDefaultMacTheme() ? 0 : 3));
+
     for (Pair<FindPopupScopeUI.ScopeType, JComponent> scopeComponent : scopeComponents) {
       FindPopupScopeUI.ScopeType scopeType = scopeComponent.first;
       scopeActions.add(new MySelectScopeToggleAction(scopeType));
@@ -492,6 +497,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
               myResultsPreviewTable);
     ScrollingUtil.installActions(myResultsPreviewTable, false, mySearchComponent);
     ScrollingUtil.installActions(myResultsPreviewTable, false, myReplaceComponent);
+    ScrollingUtil.installActions(myResultsPreviewTable, false, myFileMaskField);
     UIUtil.redirectKeystrokes(myDisposable, mySearchComponent, myResultsPreviewTable, NEW_LINE);
     UIUtil.redirectKeystrokes(myDisposable, myReplaceComponent, myResultsPreviewTable, NEW_LINE);
     ActionListener helpAction = new ActionListener() {
@@ -526,7 +532,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
                    relativePath
                      .replace(file.getName(), "<b>" + file.getName() + "</b>") + "</body></html>";
           }
-          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(path, false, new JBInsets(8, 0, -14, 0)));
+          myUsagePreviewPanel.setBorder(IdeBorderFactory.createTitledBorder(path, false, new JBInsets(8, 0, -14, 0)).setShowLine(false));
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
@@ -804,6 +810,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         Ref<VirtualFile> lastUsageFileRef = new Ref<>();
 
         FindInProjectUtil.findUsages(myHelper.getModel().clone(), myProject, info -> {
+          if(isCancelled()) {
+            return false;
+          }
           final Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
           usage.getPresentation().getIcon(); // cache icon
 
@@ -815,6 +824,9 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
           }
 
           ApplicationManager.getApplication().invokeLater(() -> {
+            if(isCancelled()) {
+              return;
+            }
             model.addRow(new Object[]{usage});
             myCodePreviewComponent.setVisible(true);
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
@@ -827,7 +839,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
         if (succeeded) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            if (progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress && !myResultsPreviewSearchProgress.isCanceled()) {
+            if (!isCancelled()) {
               int occurrences = resultsCount.get();
               int filesWithOccurrences = resultsFilesCount.get();
               if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -851,6 +863,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             }
           }, state);
         }
+      }
+
+      boolean isCancelled() {
+        return progressIndicatorWhenSearchStarted != myResultsPreviewSearchProgress || progressIndicatorWhenSearchStarted.isCanceled();
       }
 
       @Override

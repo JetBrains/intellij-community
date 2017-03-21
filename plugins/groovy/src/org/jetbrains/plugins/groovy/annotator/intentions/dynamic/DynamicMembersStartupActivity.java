@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ public class DynamicMembersStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     DynamicManager manager = DynamicManager.getInstance(project);
     if (!manager.getRootElement().getContainingClasses().isEmpty()) {
       DynamicToolWindowWrapper.getInstance(project).getToolWindow(); //initialize toolWindow

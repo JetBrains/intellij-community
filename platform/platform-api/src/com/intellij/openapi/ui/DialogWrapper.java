@@ -1958,13 +1958,14 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.cancelAllRequests();
     SwingUtilities.invokeLater(() -> myErrorText.clearError());
 
+    List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
     if (Registry.is("ide.inplace.errors.outline")) {
-      myInfo.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
+      corrected.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
             forEach(vi -> vi.component.putClientProperty("JComponent.error.outline", false));
     }
 
     if (Registry.is("ide.inplace.errors.balloon")) {
-      myInfo.stream().filter(vi -> vi.component != null).forEach(vi -> {
+      corrected.stream().filter(vi -> vi.component != null).forEach(vi -> {
         vi.component.putClientProperty("JComponent.error.balloon.builder", null);
 
         Balloon balloon = (Balloon)vi.component.getClientProperty("JComponent.error.balloon");
@@ -1994,33 +1995,35 @@ public abstract class DialogWrapper {
       for (ValidationInfo vi : myInfo) {
         Component fc = getFocusable(vi.component);
         if (fc != null && fc.isFocusable()) {
-          JLabel label = new JLabel();
-          label.setHorizontalAlignment(SwingConstants.LEADING);
-          setErrorTipText(vi.component, label, vi.message);
+          if (vi.component.getClientProperty("JComponent.error.balloon.builder") == null) {
+            JLabel label = new JLabel();
+            label.setHorizontalAlignment(SwingConstants.LEADING);
+            setErrorTipText(vi.component, label, vi.message);
 
-          BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(label)
-            .setDisposable(getDisposable())
-            .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
-            .setPointerSize(new JBDimension(17, 6))
-            .setCornerToPointerDistance(JBUI.scale(30))
-            .setHideOnKeyOutside(false)
-            .setHideOnAction(false)
-            .setBorderColor(BALLOON_BORDER)
-            .setFillColor(BALLOON_BACKGROUND)
-            .setHideOnFrameResize(false)
-            .setRequestFocus(false)
-            .setAnimationCycle(100)
-            .setShadow(true);
+            BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(label)
+              .setDisposable(getDisposable())
+              .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
+              .setPointerSize(new JBDimension(17, 6))
+              .setCornerToPointerDistance(JBUI.scale(30))
+              .setHideOnKeyOutside(false)
+              .setHideOnAction(false)
+              .setBorderColor(BALLOON_BORDER)
+              .setFillColor(BALLOON_BACKGROUND)
+              .setHideOnFrameResize(false)
+              .setRequestFocus(false)
+              .setAnimationCycle(100)
+              .setShadow(true);
 
-          vi.component.putClientProperty("JComponent.error.balloon.builder", balloonBuilder);
+            vi.component.putClientProperty("JComponent.error.balloon.builder", balloonBuilder);
 
-          ErrorFocusListener fl = new ErrorFocusListener(label, vi.message, vi.component);
-          if (fc.hasFocus()) {
-            showErrorTip(balloonBuilder, vi.component, label, vi.message);
+            ErrorFocusListener fl = new ErrorFocusListener(label, vi.message, vi.component);
+            if (fc.hasFocus()) {
+              SwingUtilities.invokeLater(() -> showErrorTip(balloonBuilder, vi.component, label, vi.message));
+            }
+
+            fc.addFocusListener(fl);
+            Disposer.register(getDisposable(), () -> fc.removeFocusListener(fl));
           }
-
-          fc.addFocusListener(fl);
-          Disposer.register(getDisposable(), () -> fc.removeFocusListener(fl));
         } else {
           SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
         }
@@ -2089,7 +2092,14 @@ public abstract class DialogWrapper {
       return null;
     } else if (source instanceof JScrollPane) {
       return ((JScrollPane)source).getViewport().getView();
-    } else if (source instanceof Container){
+    } else if (source instanceof JComboBox && ((JComboBox)source).isEditable()) {
+      return ((JComboBox)source).getEditor().getEditorComponent();
+    } else if (source instanceof JSpinner) {
+      Container c = ((JSpinner)source).getEditor();
+      synchronized (c.getTreeLock()) {
+        return c.getComponent(0);
+      }
+    } else if (source instanceof Container) {
       Container container = (Container)source;
       List<Component> cl;
       synchronized (container.getTreeLock()) {
@@ -2162,7 +2172,7 @@ public abstract class DialogWrapper {
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
-      myLabel.setBorder(JBUI.Borders.empty(4, 10, 0, 2));
+      myLabel.setBorder(JBUI.Borders.empty(16, 13, 16, 13));
       myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

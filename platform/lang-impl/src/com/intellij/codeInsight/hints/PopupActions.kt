@@ -53,17 +53,14 @@ class ShowSettingsWithAddedPattern : AnAction() {
   override fun update(e: AnActionEvent) {
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
-    val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
-    
-    if (!provider.isBlackListSupported) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
-    val name = info.getMethodName()
-    e.presentation.text = CodeInsightBundle.message("inlay.hints.show.settings", name)
+    val info = getHintInfoFromProvider(offset, file) ?: return
+    
+    e.presentation.text = when (info) {
+      is HintInfo.OptionInfo -> "Show Hints Settings..."
+      is HintInfo.MethodInfo -> CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()) 
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -74,9 +71,14 @@ class ShowSettingsWithAddedPattern : AnAction() {
     InlayParameterHintsExtension.forLanguage(language) ?: return
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file) as? MethodInfo ?: return
+    val info = getHintInfoFromProvider(offset, file) ?: return
     
-    val dialog = ParameterNameHintsConfigurable(language, info.toPattern())
+    val newPreselectedPattern = when (info) {
+      is HintInfo.OptionInfo -> null
+      is HintInfo.MethodInfo -> info.toPattern()
+    }
+    
+    val dialog = ParameterNameHintsConfigurable(language, newPreselectedPattern)
     dialog.show()
   }
 }
@@ -160,7 +162,15 @@ class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
   
   private var lastOptionName = ""
   
-  override fun getText(): String = CodeInsightBundle.message("inlay.hints.disable.custom.option", lastOptionName)
+  override fun getText(): String = getIntentionText()
+
+  private fun getIntentionText(): String {
+    if (lastOptionName.startsWith("show", ignoreCase = true)) {
+      return "Do not ${lastOptionName.toLowerCase()}"
+    }
+    return CodeInsightBundle.message("inlay.hints.disable.custom.option", lastOptionName)
+  }
+  
   override fun getFamilyName(): String = presentableFamilyName
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {

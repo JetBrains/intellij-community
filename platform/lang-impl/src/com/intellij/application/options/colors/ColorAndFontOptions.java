@@ -249,6 +249,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   public void addImportedScheme(@NotNull EditorColorsScheme imported) {
+    if (imported instanceof AbstractColorsScheme) ((AbstractColorsScheme)imported).setSaveNeeded(true);
     MyColorScheme newScheme = new MyColorScheme(imported);
     initScheme(newScheme);
 
@@ -1094,6 +1095,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       myRainbowState = new RainbowColorsInSchemeState(this, parentScheme);
 
       initFonts();
+    }
+
+    @Nullable
+    @Override
+    public AbstractColorsScheme getOriginal() {
+      return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getOriginal() : null;
     }
 
     @NotNull

@@ -31,8 +31,7 @@ inline fun <T> runUndoTransparentWriteAction(crossinline runnable: () -> T): T {
   return result as T
 }
 
-inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(
-  Computable { runnable() })
+inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable() })
 
 /**
  * @exclude Internal use only

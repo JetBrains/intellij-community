@@ -18,49 +18,96 @@ package git4idea.ui.branch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.panels.HorizontalLayout;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import git4idea.config.GitVcsSettings;
 import git4idea.util.GitCommitCompareInfo;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 /**
  * @author Kirill Likhodedov
  */
 class GitCompareBranchesDiffPanel extends JPanel {
 
-  private final Project myProject;
   private final String myBranchName;
   private final String myCurrentBranchName;
   private final GitCommitCompareInfo myCompareInfo;
+  private final GitVcsSettings myVcsSettings;
+
+  private final JBLabel myLabel;
+  private final MyChangesBrowser myChangesBrowser;
 
   public GitCompareBranchesDiffPanel(Project project, String branchName, String currentBranchName, GitCommitCompareInfo compareInfo) {
-    super();
-
-    myProject = project;
     myCurrentBranchName = currentBranchName;
     myCompareInfo = compareInfo;
     myBranchName = branchName;
+    myVcsSettings = GitVcsSettings.getInstance(project);
+
+    myLabel = new JBLabel();
+    myChangesBrowser = new MyChangesBrowser(project, emptyList());
+
+    HyperlinkLabel swapSidesLabel = new HyperlinkLabel("Swap branches");
+    swapSidesLabel.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
+        myVcsSettings.setSwapSidesInCompareBranches(!swapSides);
+        refreshView();
+      }
+    });
+
+    JPanel topPanel = new JPanel(new HorizontalLayout(JBUI.scale(10)));
+    topPanel.add(myLabel);
+    topPanel.add(swapSidesLabel);
 
     setLayout(new BorderLayout(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
-    add(createNorthPanel(),  BorderLayout.NORTH);
-    add(createCenterPanel());
+    add(topPanel, BorderLayout.NORTH);
+    add(myChangesBrowser);
+
+    refreshView();
   }
 
-  private JComponent createNorthPanel() {
-    return new JBLabel(String.format("<html>Difference between current working tree on <b><code>%s</code></b> " +
-                                     "and files in <b><code>%s</code></b>:</html>", myCurrentBranchName, myBranchName),
-                       UIUtil.ComponentStyle.REGULAR);
-  }
+  private void refreshView() {
+    boolean swapSides = myVcsSettings.shouldSwapSidesInCompareBranches();
 
-  private JComponent createCenterPanel() {
+    String currentBranchText = String.format("current working tree on <b><code>%s</code></b>", myCurrentBranchName);
+    String otherBranchText = String.format("files in <b><code>%s</code></b>", myBranchName);
+    myLabel.setText(String.format("<html>Difference between %s and %s:</html>",
+                                  swapSides ? otherBranchText : currentBranchText,
+                                  swapSides ? currentBranchText : otherBranchText));
+
     List<Change> diff = myCompareInfo.getTotalDiff();
-    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, diff, null, false, true,
-                                                             null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
-    changesBrowser.setChangesToDisplay(diff);
-    return changesBrowser;
+    if (swapSides) diff = swapRevisions(diff);
+    myChangesBrowser.setChangesToDisplay(diff);
   }
 
+  @NotNull
+  private static List<Change> swapRevisions(@NotNull List<Change> changes) {
+    return ContainerUtil.map(changes, change -> new Change(change.getAfterRevision(), change.getBeforeRevision()));
+  }
+
+  private static class MyChangesBrowser extends ChangesBrowser {
+    public MyChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
+      super(project, null, changes, null, false, true, null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
+    }
+
+    @Override
+    public void setChangesToDisplay(final List<Change> changes) {
+      List<Change> oldSelection = myViewer.getSelectedChanges();
+      super.setChangesToDisplay(changes);
+      myViewer.select(swapRevisions(oldSelection));
+    }
+  }
 }

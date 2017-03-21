@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1130,7 +1130,7 @@ public class ExpectedTypesProvider {
                                          psiClass -> getTypeParameterValue(psiClass, containingClass, substitutor, 0));
         if (type != null) return type;
       }
-      if ("containsKey".equals(name) || "remove".equals(name) || "get".equals(name) || "containsValue".equals(name)) {
+      if ("containsKey".equals(name) || "remove".equals(name) || "get".equals(name) || "getOrDefault".equals(name) || "containsValue".equals(name)) {
         final PsiType type = checkMethod(method, CommonClassNames.JAVA_UTIL_MAP,
                                          psiClass -> getTypeParameterValue(psiClass, containingClass, substitutor, name.equals("containsValue") ? 1 : 0));
         if (type != null) return type;
@@ -1207,7 +1207,7 @@ public class ExpectedTypesProvider {
       return parameterType;
     }
 
-    @Nullable
+    @NotNull
     private static NullableComputable<String> getPropertyName(@NotNull final PsiVariable variable) {
       return () -> {
         final String name = variable.getName();

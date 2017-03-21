@@ -901,6 +901,9 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public void pumpEventsForHierarchy(Component modalComponent, @NotNull Condition<AWTEvent> exitCondition) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
+    }
     AWTEvent event;
     do {
       try {
@@ -914,6 +917,9 @@ public class IdeEventQueue extends EventQueue {
             while (c != null && c != modalWindow) c = c.getParent();
             if (c == null) {
               eventOk = false;
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("pumpEventsForHierarchy.consumed: "+event);
+              }
               ((InputEvent)event).consume();
             }
           }
@@ -929,6 +935,9 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     while (!exitCondition.value(event));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
+    }
   }
 
   @FunctionalInterface

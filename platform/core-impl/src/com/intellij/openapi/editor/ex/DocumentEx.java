@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public interface DocumentEx extends Document {
@@ -55,7 +56,8 @@ public interface DocumentEx extends Document {
 
   boolean isInEventsHandling();
 
-  void clearLineModificationFlags();
+  default void clearLineModificationFlags() {
+  }
 
   boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker);
 
@@ -80,8 +82,9 @@ public interface DocumentEx extends Document {
   void setInBulkUpdate(boolean value);
 
   @NotNull
-  List<RangeMarker> getGuardedBlocks();
-
+  default List<RangeMarker> getGuardedBlocks() {
+    return Collections.emptyList();
+  }
 
   /**
    * Get all range markers

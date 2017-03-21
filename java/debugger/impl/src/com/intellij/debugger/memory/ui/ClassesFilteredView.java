@@ -17,18 +17,15 @@ package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.SuspendContextImpl;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.InstancesTracker;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.component.MemoryViewManager;
 import com.intellij.debugger.memory.component.MemoryViewManagerState;
 import com.intellij.debugger.memory.event.InstancesTrackerListener;
 import com.intellij.debugger.memory.event.MemoryViewManagerListener;
-import com.intellij.debugger.memory.tracking.ClassPreparedListener;
 import com.intellij.debugger.memory.tracking.ConstructorInstancesTracker;
 import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
 import com.intellij.debugger.memory.tracking.TrackingType;
@@ -36,6 +33,7 @@ import com.intellij.debugger.memory.utils.AndroidUtil;
 import com.intellij.debugger.memory.utils.KeyboardUtils;
 import com.intellij.debugger.memory.utils.LowestPriorityCommand;
 import com.intellij.debugger.memory.utils.SingleAlarmWithMutableDelay;
+import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -44,20 +42,20 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -75,9 +73,9 @@ import static com.intellij.debugger.memory.ui.ClassesTable.DiffViewTableModel.DI
 
 public class ClassesFilteredView extends BorderLayoutPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClassesFilteredView.class);
-  private final static double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
-  private final static double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
-  private final static int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
+  private static final double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
+  private static final double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
+  private static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
   private static final String EMPTY_TABLE_CONTENT_WHEN_RUNNING = "The application is running";
   private static final String EMPTY_TABLE_CONTENT_WHEN_SUSPENDED = "Nothing to show";
   private static final String EMPTY_TABLE_CONTENT_WHEN_STOPPED = "Classes are not available";
@@ -121,14 +119,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         ReferenceType ref = myTable.getClassByName(name);
         if (ref != null) {
           final boolean activated = myIsTrackersActivated.get();
-          managerThread.schedule(new LowestPriorityCommand(getSuspendContext()) {
+          managerThread.schedule(new DebuggerCommandImpl() {
             @Override
-            public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-              final XDebugProcess process = suspendContext.getDebugProcess().getXdebugProcess();
-              if (process != null) {
-                final XDebugSession session = process.getSession();
-                trackClass(session, ref, type, activated);
-              }
+            protected void action() throws Exception {
+              trackClass(debugSession, ref, type, activated);
             }
           });
         }
@@ -146,33 +140,51 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
     };
 
-    managerThread.schedule(new DebuggerCommandImpl() {
+    debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
-      public Priority getPriority() {
-        return Priority.LOWEST;
-      }
-
-      @Override
-      protected void action() throws Exception {
-        final boolean activated = myIsTrackersActivated.get();
-        tracker.getTrackedClasses().forEach((className, type) -> {
-          List<ReferenceType> classes = debugProcess.getVirtualMachineProxy().classesByName(className);
-          if (classes.isEmpty()) {
-            new ClassPreparedListener(className, debugSession) {
-              @Override
-              public void onClassPrepared(@NotNull ReferenceType referenceType, @NotNull XDebugSession session) {
-                trackClass(session, referenceType, type, myIsTrackersActivated.get());
+      public void processAttached(DebugProcess process) {
+        managerThread.invoke(new DebuggerCommandImpl() {
+          @Override
+          protected void action() throws Exception {
+            final boolean activated = myIsTrackersActivated.get();
+            final VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+            tracker.getTrackedClasses().forEach((className, type) -> {
+              List<ReferenceType> classes = proxy.classesByName(className);
+              if (classes.isEmpty()) {
+                trackWhenPrepared(className, debugSession, debugProcess, type);
               }
-            };
-          }
-          else {
-            for (ReferenceType ref : classes) {
-              trackClass(debugSession, ref, type, activated);
-            }
+              else {
+                for (ReferenceType ref : classes) {
+                  trackClass(debugSession, ref, type, activated);
+                }
+              }
+            });
+
+            tracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
           }
         });
+      }
 
-        tracker.addTrackerListener(instancesTrackerListener, ClassesFilteredView.this);
+      private void trackWhenPrepared(@NotNull String className,
+                                     @NotNull XDebugSession session,
+                                     @NotNull DebugProcessImpl process,
+                                     @NotNull TrackingType type) {
+        final ClassPrepareRequestor request = new ClassPrepareRequestor() {
+          @Override
+          public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
+            process.getRequestsManager().deleteRequest(this);
+            trackClass(session, referenceType, type, myIsTrackersActivated.get());
+          }
+        };
+
+        final ClassPrepareRequest classPrepareRequest = process.getRequestsManager()
+          .createClassPrepareRequest(request, className);
+        if (classPrepareRequest != null) {
+          classPrepareRequest.enable();
+        }
+        else {
+          LOG.warn("Cannot create a 'class prepare' request. Class " + className + " not tracked.");
+        }
       }
     });
 
@@ -200,7 +212,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
                                  ? text.substring(0, text.length() - 1)
                                  : text + e.getKeyChar();
           myFilterTextField.setText(newText);
-          FocusManager.getCurrentManager().focusNextComponent(myFilterTextField);
+          IdeFocusManager.getInstance(myProject).requestFocus(myFilterTextField, false);
         }
       }
     });
@@ -445,7 +457,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
         final int waitTime = (int)Math.min(DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT * delay, MAX_DELAY_MILLIS);
         mySingleAlarm.setDelay(waitTime);
-        LOG.info(String.format("Instances query time = %d ms. Count of classes = %d", delay, batch.size()));
+        LOG.debug(String.format("Instances query time = %d ms. Count of classes = %d", delay, batch.size()));
       }
 
       return result;

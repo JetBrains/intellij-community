@@ -136,7 +136,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
                                                   int index,
                                                   boolean selected,
                                                   boolean hasFocus) {
-      if (value.isSeparator()) {
+      if (value != null && value.isSeparator()) {
         Component c = myWrapper.getListCellRendererComponent(list, value, index, selected, hasFocus);
         if (c instanceof TitledSeparator) {
           ((TitledSeparator)c).getLabel().setForeground(JBColor.GRAY);
