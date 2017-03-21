@@ -2,6 +2,8 @@ import dis
 from types import CodeType
 from opcode import opmap
 
+MAX_BYTE = 255
+
 
 def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_code_obj, attribute_name, op_list):
     """
@@ -23,6 +25,8 @@ def _add_attr_values_from_insert_to_original(original_code, insert_code, insert_
     code_with_new_values = list(insert_code_obj)
     for offset, op, arg in dis._unpack_opargs(insert_code_obj):
         if op in op_list:
+            if code_with_new_values[offset + 1] + orig_names_len > MAX_BYTE:
+                raise ValueError("Bad number of arguments")
             code_with_new_values[offset + 1] += orig_names_len
     new_values = orig_value + insert_value
     return bytes(code_with_new_values), new_values
@@ -41,6 +45,8 @@ def _modify_new_lines(code_to_modify, code_insert, offset_of_inserted_code):
     for i in range(0, len(new_list), 2):
         abs_offset += new_list[i]
         if abs_offset == offset_of_inserted_code and (i + 2) < len(new_list):
+            if new_list[i + 2] + len(code_insert) > MAX_BYTE:
+                raise ValueError("Bad number of arguments")
             new_list[i + 2] += len(code_insert)
     return bytes(new_list)
 
@@ -70,6 +76,8 @@ def _update_label_offsets(code_obj, offset_of_inserted_code, size_of_inserted_co
     for i in range(0, len(code_obj), 2):
         op = code_list[i]
         if i in offsets_for_modification and op >= dis.HAVE_ARGUMENT:
+            if code_list[i + 1] + size_of_inserted_code > MAX_BYTE:
+                raise ValueError("Bad jump argument")
             code_list[i + 1] += size_of_inserted_code
     return bytes(code_list)
 
@@ -98,16 +106,19 @@ def insert_code(code_to_modify, code_to_insert, before_line):
 
     return_none_size = len(_return_none_fun.__code__.co_code)
     code_to_insert_obj = code_to_insert.co_code[:-return_none_size]
-    code_to_insert_obj, new_names = \
-        _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_names', dis.hasname)
-    code_to_insert_obj, new_consts = \
-        _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_consts', [opmap['LOAD_CONST']])
-    code_to_insert_obj, new_vars = \
-        _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_varnames', dis.haslocal)
-    modified_code = _update_label_offsets(code_to_modify.co_code, offset, len(code_to_insert_obj))
-    new_bytes = modified_code[:offset] + code_to_insert_obj + modified_code[offset:]
+    try:
+        code_to_insert_obj, new_names = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_names', dis.hasname)
+        code_to_insert_obj, new_consts = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_consts', [opmap['LOAD_CONST']])
+        code_to_insert_obj, new_vars = \
+            _add_attr_values_from_insert_to_original(code_to_modify, code_to_insert, code_to_insert_obj, 'co_varnames', dis.haslocal)
+        modified_code = _update_label_offsets(code_to_modify.co_code, offset, len(code_to_insert_obj))
+        new_bytes = modified_code[:offset] + code_to_insert_obj + modified_code[offset:]
 
-    new_lnotab = _modify_new_lines(code_to_modify, code_to_insert_obj, offset)
+        new_lnotab = _modify_new_lines(code_to_modify, code_to_insert_obj, offset)
+    except ValueError:
+        return False, code_to_modify
 
     new_code = CodeType(
         code_to_modify.co_argcount,  # integer
@@ -126,4 +137,4 @@ def insert_code(code_to_modify, code_to_insert, before_line):
         code_to_modify.co_freevars,  # tuple
         code_to_modify.co_cellvars  # tuple
     )
-    return new_code
+    return True, new_code
