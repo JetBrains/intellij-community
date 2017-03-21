@@ -63,18 +63,18 @@ fun invokeRefactoring(processor: BaseRefactoringProcessor, isPreview: Boolean, c
 
 fun validate(project: Project, psiElement: PsiElement, newName: String): ValidationResult =
   if (!RenameUtil.isValidName(project, psiElement, newName)) {
-    ValidationResult(false, "\'$newName\' is not a valid name")
+    ValidationResult.failed("\'$newName\' is not a valid name")
   }
   else {
     val inputValidator = RenameInputValidatorRegistry.getInputErrorValidator(psiElement)
     if (inputValidator != null) {
       val errorText = inputValidator.`fun`(newName)
       if (errorText != null) {
-        ValidationResult(false, errorText)
+        ValidationResult.failed(errorText)
       }
-      else ValidationResult(true, null)
+      else ValidationResult.ok
     }
-    else ValidationResult(true, null)
+    else ValidationResult.ok
   }
 
 fun createRenameDialog2(psiElement: PsiElement,
@@ -161,7 +161,12 @@ data class PerformRenameRequest(val newName: String,
                                 val callback: Runnable)
 
 data class ValidationResult(val ok: Boolean,
-                            val error: String?)
+                            val error: String?) {
+  companion object {
+    val ok = ValidationResult(true, null)
+    fun failed(s: String) = ValidationResult(false, s)
+  }
+}
 
 data class RenameDialog2(var project: Project,
                          var psiElement: PsiElement,
