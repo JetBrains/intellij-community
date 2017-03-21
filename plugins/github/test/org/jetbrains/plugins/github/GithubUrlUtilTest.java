@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.Convertor;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubFullPath;
@@ -30,7 +30,7 @@ import static org.jetbrains.plugins.github.util.GithubUrlUtil.*;
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubUrlUtilTest extends UsefulTestCase {
+public class GithubUrlUtilTest extends TestCase {
   private static class TestCase<T> {
     @NotNull final public List<Pair<String, T>> tests = new ArrayList<>();
 
