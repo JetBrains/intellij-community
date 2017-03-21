@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
       final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
-      final LinkedList<PsiElement> places = new LinkedList<>();
+      final ArrayList<PsiElement> places = new ArrayList<>(5);
       places.add(firstOperand);
       class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
         public boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression) {
@@ -167,11 +167,16 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           else {
             methodName = null;
           }
-          if (methodName != null && areThereInjectionsWithName(methodName, false)) {
+          if (methodName != null && index >= 0 && areThereInjectionsWithName(methodName, false)) {
             final PsiMethod method = psiCallExpression.resolveMethod();
-            final PsiParameter[] parameters = method == null ? PsiParameter.EMPTY_ARRAY : method.getParameterList().getParameters();
-            if (index >= 0 && index < parameters.length && method != null) {
-              process(parameters[index], method, index);
+            if (method != null) {
+              final PsiParameter[] parameters = method.getParameterList().getParameters();
+              if (index < parameters.length) {
+                process(parameters[index], method, index);
+              }
+              else if (method.isVarArgs()) {
+                process(parameters[parameters.length - 1], method, parameters.length - 1);
+              }
             }
           }
           return false;
@@ -266,7 +271,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         return;
       }
       while (!places.isEmpty() && !myShouldStop) {
-        final PsiElement curPlace = places.removeFirst();
+        final PsiElement curPlace = places.remove(0);
         AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor);
       }
     }
