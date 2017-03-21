@@ -23,13 +23,13 @@ import git4idea.update.GitUpdateResult
 
 abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
-  protected lateinit var myPushSupport: GitPushSupport
+  protected lateinit var pushSupport: GitPushSupport
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
-    myPushSupport = getPushSupport(myVcs) as GitPushSupport
+    pushSupport = getPushSupport(myVcs) as GitPushSupport
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)
@@ -39,11 +39,8 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
   }
 
   protected fun agreeToUpdate(exitCode: Int) {
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java, object : TestDialogHandler<GitRejectedPushUpdateDialog> {
-      override fun handleDialog(dialog: GitRejectedPushUpdateDialog): Int {
-        return exitCode
-      }
-    })
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java,
+                                          TestDialogHandler<GitRejectedPushUpdateDialog> { exitCode })
   }
 
   internal fun assertResult(type: GitPushRepoResult.Type, pushedCommits: Int, from: String, to: String,
