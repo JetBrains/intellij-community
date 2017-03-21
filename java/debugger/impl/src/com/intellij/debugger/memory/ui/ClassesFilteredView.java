@@ -46,7 +46,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -119,14 +118,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         ReferenceType ref = myTable.getClassByName(name);
         if (ref != null) {
           final boolean activated = myIsTrackersActivated.get();
-          managerThread.schedule(new LowestPriorityCommand(getSuspendContext()) {
+          managerThread.schedule(new DebuggerCommandImpl() {
             @Override
-            public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-              final XDebugProcess process = suspendContext.getDebugProcess().getXdebugProcess();
-              if (process != null) {
-                final XDebugSession session = process.getSession();
-                trackClass(session, ref, type, activated);
-              }
+            protected void action() throws Exception {
+              trackClass(debugSession, ref, type, activated);
             }
           });
         }
