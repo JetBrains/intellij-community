@@ -123,7 +123,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     else {
       if (c.getBorder() instanceof MacIntelliJTextBorder) {
         g.setColor(c.getBackground());
-        g.fillRect(3, 3, c.getWidth() - 6, c.getHeight() - 6);
+        g.fillRect(JBUI.scale(3), JBUI.scale(3), c.getWidth() - JBUI.scale(6), c.getHeight() - JBUI.scale(6));
       }
       else {
         super.paintBackground(g);
@@ -228,6 +228,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     super.paintSafely(g);
   }
 
+  @SuppressWarnings("UseJBColor")
   public static void paintAquaSearchFocusRing(Graphics2D g, Rectangle r, Component c) {
     g = (Graphics2D)g.create(0, 0, r.width, r.height);
     GraphicsUtil.setupAAPainting(g);
