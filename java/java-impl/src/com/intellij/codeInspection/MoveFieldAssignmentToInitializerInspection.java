@@ -21,6 +21,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -66,16 +67,17 @@ public class MoveFieldAssignmentToInitializerInspection extends BaseJavaBatchLoc
         if (!isInitializedWithSameExpression(field, assignment, new ArrayList<>())) return;
 
         boolean shouldWarn = shouldWarn(ctrOrInitializer, field, assignment);
-        if (shouldWarn) {
+        if (!shouldWarn && !isOnTheFly) return;
+        TextRange range;
+        if (shouldWarn && !InspectionProjectProfileManager.isInformationLevel(getShortName(), assignment)) {
           PsiExpression lValue = assignment.getLExpression();
-          TextRange range = new TextRange(0, lValue.getTextLength()).shiftRight(lValue.getStartOffsetInParent());
-          holder.registerProblem(assignment, CodeInsightBundle.message("intention.move.field.assignment.to.declaration"),
-                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, range, new MoveFieldAssignmentToInitializerFix());
+          range = new TextRange(0, lValue.getTextLength()).shiftRight(lValue.getStartOffsetInParent());
         } else {
-          if(!isOnTheFly) return;
-          holder.registerProblem(assignment, CodeInsightBundle.message("intention.move.field.assignment.to.declaration"),
-                                 ProblemHighlightType.INFORMATION, new MoveFieldAssignmentToInitializerFix());
+          range = new TextRange(0, assignment.getTextLength());
         }
+        holder.registerProblem(assignment, CodeInsightBundle.message("intention.move.field.assignment.to.declaration"),
+                               shouldWarn ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION,
+                               range, new MoveFieldAssignmentToInitializerFix());
       }
     };
   }
