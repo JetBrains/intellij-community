@@ -78,6 +78,7 @@ public class CharsetToolkit {
   public static final Charset UTF_32BE_CHARSET = Charset.forName("UTF-32BE");
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
   public static final Charset UTF_16_CHARSET = Charset.forName("UTF-16");
+  public static final Charset US_ASCII_CHARSET = Charset.forName("US-ASCII");
   private static final byte FF = (byte)0xff;
   private static final byte FE = (byte)0xfe;
   private static final byte EF = (byte)0xef;
