@@ -37,12 +37,8 @@ import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerAdapter;
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -237,45 +233,43 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       recursive.addAll(extension.getRootsToWatch());
     }
 
-    for (VirtualFile root : getRootsFromModules(includeSourceRoots)) {
-      (root.isDirectory() ? recursive : flat).add(root.getPath());
-    }
+    addRootsFromModules(includeSourceRoots, recursive, flat);
 
     return Pair.create(recursive, flat);
   }
 
-  private Set<VirtualFile> getRootsFromModules(boolean includeSourceRoots) {
-    Set<VirtualFile> roots = ContainerUtil.newHashSet();
+  private void addRootsFromModules(boolean includeSourceRoots, Set<String> recursive, Set<String> flat) {
+    Set<String> urls = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
 
-      ContainerUtil.addAll(roots, rootManager.getContentRoots());
+      ContainerUtil.addAll(urls, rootManager.getContentRootUrls());
 
       if (includeSourceRoots) {
-        ContainerUtil.addAll(roots, rootManager.getSourceRoots());
+        ContainerUtil.addAll(urls, rootManager.getSourceRootUrls());
       }
 
       rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach(entry -> {
         for (OrderRootType type : OrderRootType.getAllTypes()) {
-          for (VirtualFile root : entry.getFiles(type)) {
-            VirtualFileSystem fs = root.getFileSystem();
-            if (fs instanceof LocalFileSystem) {
-              roots.add(root);
-            }
-            else if (fs instanceof ArchiveFileSystem) {
-              VirtualFile local = ((ArchiveFileSystem)fs).getLocalByEntry(root);
-              if (local != null) {
-                roots.add(local);
-              }
-            }
-          }
+          ContainerUtil.addAll(urls, entry.getUrls(type));
         }
         return true;
       });
     }
 
-    return roots;
+    for (String url : urls) {
+      String protocol = VirtualFileManager.extractProtocol(url);
+      if (protocol == null || StandardFileSystems.FILE_PROTOCOL.equals(protocol)) {
+        recursive.add(extractLocalPath(url));
+      }
+      else if (StandardFileSystems.JAR_PROTOCOL.equals(protocol)) {
+        flat.add(extractLocalPath(url));
+      }
+      else if (StandardFileSystems.JRT_PROTOCOL.equals(protocol)) {
+        recursive.add(extractLocalPath(url));
+      }
+    }
   }
 
   @Override
@@ -308,7 +302,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   @Override
   public void markRootsForRefresh() {
-    for (VirtualFile root : getRootsFromModules(false)) {
+    Set<String> paths = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
+    addRootsFromModules(false, paths, paths);
+
+    LocalFileSystem fs = LocalFileSystem.getInstance();
+    for (String path : paths) {
+      VirtualFile root = fs.findFileByPath(path);
       if (root instanceof NewVirtualFile) {
         ((NewVirtualFile)root).markDirtyRecursively();
       }
