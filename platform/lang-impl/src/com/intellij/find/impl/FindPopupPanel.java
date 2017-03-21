@@ -99,19 +99,16 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
   private static final String SERVICE_KEY = "find.popup";
   private static final String SPLITTER_SERVICE_KEY = "find.popup.splitter";
-
+  @NotNull private final FindUIHelper myHelper;
+  @NotNull private final Project myProject;
+  @NotNull private final Disposable myDisposable;
+  @NotNull private final FindPopupScopeUI myScopeUI;
   private JComponent myCodePreviewComponent;
   private SearchTextArea mySearchTextArea;
   private SearchTextArea myReplaceTextArea;
   private ActionListener myOkActionListener;
   private AtomicBoolean myCanClose = new AtomicBoolean(true);
   private JBLabel myOKHintLabel;
-
-  @NotNull private final FindUIHelper myHelper;
-  @NotNull private final Project myProject;
-  @NotNull private final Disposable myDisposable;
-  @NotNull private final FindPopupScopeUI myScopeUI;
-
   private Alarm mySearchRescheduleOnCancellationsAlarm;
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
@@ -136,6 +133,27 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
   private JBTable myResultsPreviewTable;
   private UsagePreviewPanel myUsagePreviewPanel;
   private JBPopup myBalloon;
+
+  FindPopupPanel(@NotNull FindUIHelper helper) {
+    myHelper = helper;
+    myProject = myHelper.getProject();
+    myDisposable = Disposer.newDisposable();
+    myScopeUI = FindPopupScopeUIProvider.getInstance().create(this);
+
+    Disposer.register(myDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        FindPopupPanel.this.finishPreviousPreviewSearch();
+        if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
+        if (myUsagePreviewPanel != null) Disposer.dispose(myUsagePreviewPanel);
+      }
+    });
+
+    initComponents();
+    initByModel();
+
+    ApplicationManager.getApplication().invokeLater(() -> this.scheduleResultsUpdate(), ModalityState.any());
+  }
 
   public void showUI() {
     if (myBalloon != null && myBalloon.isVisible()) {
@@ -212,27 +230,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         myBalloon.showCenteredInCurrentWindow(myProject);
       }
     }
-  }
-
-  FindPopupPanel(@NotNull FindUIHelper helper) {
-    myHelper = helper;
-    myProject = myHelper.getProject();
-    myDisposable = Disposer.newDisposable();
-    myScopeUI = FindPopupScopeUIProvider.getInstance().create(this);
-
-    Disposer.register(myDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        FindPopupPanel.this.finishPreviousPreviewSearch();
-        if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
-        if (myUsagePreviewPanel != null) Disposer.dispose(myUsagePreviewPanel);
-      }
-    });
-
-    initComponents();
-    initByModel();
-
-    ApplicationManager.getApplication().invokeLater(() -> this.scheduleResultsUpdate(), ModalityState.any());
   }
 
   @NotNull
@@ -421,13 +418,20 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         myOkActionListener.actionPerformed(e);
       }
     }, NEW_LINE, WHEN_IN_FOCUSED_WINDOW);
-    registerKeyboardAction(new ActionListener() {
+    ActionListener okActionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myHelper.isReplaceState()) return;
         myOkActionListener.actionPerformed(e);
       }
-    }, OK_FIND, WHEN_IN_FOCUSED_WINDOW);
+    };
+    registerKeyboardAction(okActionListener, OK_FIND, WHEN_IN_FOCUSED_WINDOW);
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        okActionListener.actionPerformed(null);
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getViewSource(), this);
     mySearchComponent = new JTextArea();
     mySearchComponent.setColumns(25);
     mySearchComponent.setRows(1);
@@ -598,14 +602,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     });
   }
 
-  public static ActionToolbarImpl createToolbar(AnAction... actions) {
-    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
-      .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true);
-    toolbar.setForceMinimumSize(true);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    return toolbar;
-  }
-
   private void registerCloseAction(JBPopup popup) {
     final AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction closeAction = new DumbAwareAction() {
@@ -707,13 +703,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     myReplaceTextArea.setVisible(isReplaceState);
     myCbPreserveCase.setVisible(isReplaceState);
     myOKHintLabel.setVisible(!isReplaceState);
-    myOKButton.setText(isReplaceState ? FindBundle.message("find.popup.replace.button") : FindBundle.message("find.popup.find.button"));
-  }
-
-  private static void applyFont(JBFont font, Component... components) {
-    for (Component component : components) {
-      component.setFont(font);
-    }
+    myOKButton.setText(FindBundle.message(isReplaceState ? "find.popup.replace.button" : "find.popup.find.button"));
   }
 
   private void updateScopeDetailsPanel() {
@@ -987,6 +977,55 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     model.setFileFilter(mask);
   }
 
+  private void navigateToSelectedUsage() {
+    Usage[] usages = getSelectedUsages();
+    if (usages != null) {
+      applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
+      myBalloon.cancel();
+
+      usages[0].navigate(true);
+      for (int i = 1; i < usages.length; ++i) usages[i].highlightInEditor();
+    }
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return getSelectedUsages();
+    }
+    return null;
+  }
+
+  @Nullable
+  private Usage[] getSelectedUsages() {
+    int[] rows = myResultsPreviewTable.getSelectedRows();
+    List<Usage> usages = null;
+    for (int row : rows) {
+      Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
+      if (valueAt instanceof Usage) {
+        if (usages == null) usages = new SmartList<>();
+        Usage at = (Usage)valueAt;
+        usages.add(at);
+      }
+    }
+    return usages != null ? ContainerUtil.toArray(usages, Usage.EMPTY_ARRAY) : null;
+  }
+
+  public static ActionToolbarImpl createToolbar(AnAction... actions) {
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, new DefaultActionGroup(actions), true);
+    toolbar.setForceMinimumSize(true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    return toolbar;
+  }
+
+  private static void applyFont(JBFont font, Component... components) {
+    for (Component component : components) {
+      component.setFont(font);
+    }
+  }
+
   private class MySwitchContextToggleAction extends ToggleAction {
     public MySwitchContextToggleAction(FindModel.SearchContext context) {
       super(FindDialog.getPresentableName(context));
@@ -1010,7 +1049,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       }
     }
   }
-
 
   private class MySelectScopeToggleAction extends ToggleAction implements CustomComponentAction {
     private final FindPopupScopeUI.ScopeType myScope;
@@ -1046,40 +1084,5 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         scheduleResultsUpdate();
       }
     }
-  }
-
-  private void navigateToSelectedUsage() {
-    Usage[] usages = getSelectedUsages();
-    if (usages != null) {
-      applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
-      myBalloon.cancel();
-
-      usages[0].navigate(true);
-      for (int i = 1; i < usages.length; ++i) usages[i].highlightInEditor();
-    }
-  }
-
-  @Nullable
-  @Override
-  public Object getData(String dataId) {
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getSelectedUsages();
-    }
-    return null;
-  }
-
-  @Nullable
-  private Usage[] getSelectedUsages() {
-    int[] rows = myResultsPreviewTable.getSelectedRows();
-    List<Usage> usages = null;
-    for (int row : rows) {
-      Object valueAt = myResultsPreviewTable.getModel().getValueAt(row, 0);
-      if (valueAt instanceof Usage) {
-        if (usages == null) usages = new SmartList<>();
-        Usage at = (Usage)valueAt;
-        usages.add(at);
-      }
-    }
-    return usages != null ? ContainerUtil.toArray(usages, Usage.EMPTY_ARRAY) : null;
   }
 }
