@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -113,11 +114,10 @@ public class ExternalSystemJdkUtil {
       }
     }
 
-    final String javaHome = System.getenv("JAVA_HOME");
-    if (!StringUtil.isEmptyOrSpaces(javaHome) && (JdkUtil.checkForJdk(new File(javaHome)) || JdkUtil.checkForJre(javaHome))) {
-      final Sdk sdk = JavaSdk.getInstance().createJdk("", javaHome);
-      if (sdk != null) {
-        return Pair.create(USE_JAVA_HOME, sdk);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      final String javaHome = System.getenv("JAVA_HOME");
+      if (!StringUtil.isEmptyOrSpaces(javaHome) && (JdkUtil.checkForJdk(new File(javaHome)) || JdkUtil.checkForJre(javaHome))) {
+        return Pair.create(USE_JAVA_HOME, JavaSdk.getInstance().createJdk("", javaHome));
       }
     }
 
