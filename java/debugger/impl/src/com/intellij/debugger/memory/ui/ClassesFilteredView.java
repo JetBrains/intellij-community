@@ -42,6 +42,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -55,7 +56,6 @@ import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -199,7 +199,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
                                  ? text.substring(0, text.length() - 1)
                                  : text + e.getKeyChar();
           myFilterTextField.setText(newText);
-          FocusManager.getCurrentManager().focusNextComponent(myFilterTextField);
+          IdeFocusManager.getInstance(myProject).requestFocus(myFilterTextField, false);
         }
       }
     });
