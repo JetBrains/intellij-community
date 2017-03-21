@@ -43,7 +43,7 @@ public class MissingMnemonicInspection extends BaseFormInspection {
   }
 
   @Override
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     String value = FormInspectionUtil.getText(module, component);
     if (value == null) {
       return;
@@ -68,8 +68,9 @@ public class MissingMnemonicInspection extends BaseFormInspection {
   }
 
   private static class MyEditorQuickFixProvider implements EditorQuickFixProvider {
+    @NotNull
     @Override
-    public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+    public QuickFix createQuickFix(GuiEditor editor, @NotNull RadComponent component) {
       return new AssignMnemonicFix(editor, component,
                                    UIDesignerBundle.message("inspections.missing.mnemonic.quickfix"));
     }

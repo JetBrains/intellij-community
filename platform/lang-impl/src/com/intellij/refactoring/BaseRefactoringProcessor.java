@@ -69,7 +69,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -289,7 +288,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   private boolean ensureElementsWritable(@NotNull final UsageInfo[] usages, @NotNull UsageViewDescriptor descriptor) {
-    Set<PsiElement> elements = new THashSet<>(ContainerUtil.<PsiElement>identityStrategy()); // protect against poorly implemented equality
+    Set<PsiElement> elements = ContainerUtil.newIdentityTroveSet(); // protect against poorly implemented equality
     for (UsageInfo usage : usages) {
       assert usage != null: "Found null element in usages array";
       if (skipNonCodeUsages() && usage.isNonCodeUsage()) continue;
