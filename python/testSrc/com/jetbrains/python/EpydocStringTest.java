@@ -15,17 +15,19 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.documentation.docstrings.EpydocString;
 import com.jetbrains.python.toolbox.Substring;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
+
 /**
  * @author yole
  */
-public class EpydocStringTest extends UsefulTestCase {
+public class EpydocStringTest extends TestCase {
   public void testTagValue() {
     EpydocString docString = createEpydocDocString("@rtype: C{str}");
     Substring s = docString.getTagValue("rtype");
