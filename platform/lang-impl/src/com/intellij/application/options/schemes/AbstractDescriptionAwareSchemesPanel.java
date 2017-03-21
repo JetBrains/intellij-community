@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -145,6 +146,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
 
     public DescriptionLabel() {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, this);
+      setForeground(JBColor.GRAY);
       setVerticalAlignment(CENTER);
       setHorizontalAlignment(LEFT);
     }
