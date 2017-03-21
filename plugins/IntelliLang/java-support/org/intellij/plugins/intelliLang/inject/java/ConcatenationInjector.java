@@ -140,7 +140,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       final LinkedList<PsiElement> places = new LinkedList<>();
       places.add(firstOperand);
       class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
-        public boolean visitMethodParameter(PsiExpression expression, PsiCallExpression psiCallExpression) {
+        public boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression) {
           final PsiExpressionList list = psiCallExpression.getArgumentList();
           assert list != null;
           final int index = ArrayUtil.indexOf(list.getExpressions(), expression);
@@ -159,6 +159,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           else if (psiCallExpression instanceof PsiNewExpression) {
             final PsiJavaCodeReferenceElement classRef = ((PsiNewExpression)psiCallExpression).getClassOrAnonymousClassReference();
             methodName = classRef == null ? null : classRef.getReferenceName();
+          }
+          else if (psiCallExpression instanceof PsiEnumConstant) {
+            PsiMethod method = psiCallExpression.resolveMethod();
+            methodName = method != null ? method.getName() : null;
           }
           else {
             methodName = null;
