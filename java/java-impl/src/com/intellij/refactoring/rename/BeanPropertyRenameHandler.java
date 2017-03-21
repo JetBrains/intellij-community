@@ -71,7 +71,7 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
         doRename(property, request.getNewName(), d.getSearchInComments().getValue(), request.isPreview());
         request.getCallback().run();
       });
-      RenameDialog2Kt.show(d);
+      RenameDialog2Kt.showTestAware(d, dataContext);
     }
   }
 

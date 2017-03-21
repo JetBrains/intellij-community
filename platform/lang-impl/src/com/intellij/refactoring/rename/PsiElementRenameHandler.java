@@ -41,6 +41,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.noria.Cell;
+import com.intellij.ui.noria.NoriaKt;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,19 +184,12 @@ public class PsiElementRenameHandler implements RenameHandler {
       defaultName = strings.isEmpty() ? "undefined" : strings.get(0);
     }
 
-    //if (defaultName != null) {
-    //  try {
-    //    dialog.performRename(defaultName);
-    //  }
-    //  finally {
-    //    dialog.close(DialogWrapper.CANCEL_EXIT_CODE); // to avoid dialog leak
-    //  }
-    //}
-    //else {
-    //  dialog.show();
-    //}
-
-    RenameDialog2Kt.show(dialog);
+    if (defaultName != null) {
+      dialog.getPerformRename().accept(new PerformRenameRequest(defaultName, false, () -> {}, dialog));
+    }
+    else {
+      RenameDialog2Kt.show(dialog);
+    }
   }
 
   @Override

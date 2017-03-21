@@ -364,7 +364,7 @@ internal class VarCellImpl<T>(initial: T) : CellBase(), VarCell<T> {
 }
 
 fun <T : Any?> cell(f: () -> T): Cell<T> = DerivedCell(f)
-fun <T : Any?> cell(f: Supplier<T>): Cell<T> = DerivedCell { f.get() }
+fun <T : Any?> derivedCell(f: Supplier<T>): Cell<T> = DerivedCell { f.get() }
 fun <T : Any?> cell(t: T): VarCell<T> = VarCellImpl(t)
 
 fun track(d: Disposable, f: () -> Unit): Unit {

@@ -1041,6 +1041,10 @@
                              order="before moveFileOrDir"/>
 
     <openapi.ui.noria.BasicUIComponentTypeEP implementation="com.intellij.refactoring.ui.NameSuggesterComponentType"/>
+
+    <applicationService serviceInterface="com.intellij.ide.actions.FileFromTemplateService"
+                        serviceImplementation="com.intellij.ide.actions.CreateFileFromTemplateDialog$FileFromTemplateServiceImpl"/>
+
   </extensions>
 </idea-plugin>
 

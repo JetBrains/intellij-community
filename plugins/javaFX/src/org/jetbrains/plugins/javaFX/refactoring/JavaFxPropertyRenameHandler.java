@@ -22,7 +22,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
@@ -85,10 +84,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
       }
       final PsiElement psiElement = JavaFxPropertyElement.fromReference(propertyReference);
       if (psiElement != null) {
-        RenameDialog2Kt.showRenameDialogSimple(psiElement, editor, null, (newName, isPreview, d) -> {
-          doRename(propertyReference, newName, d.getSearchInComments().getValue(), isPreview);
-          return Unit.INSTANCE;
-        });
+        RenameDialog2Kt.showRenameDialogSimple(psiElement, editor, null, (request) ->
+          doRename(propertyReference, request.getNewName(), request.getDialog().getSearchInComments().getValue(), request.isPreview()));
       }
     }
     if (reference instanceof JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef) {
@@ -111,9 +108,8 @@ public class JavaFxPropertyRenameHandler implements RenameHandler {
         doRenameFxId(fxIdValueElement, newName, false, false);
       }
       else {
-        RenameDialog2Kt.showRenameDialogSimple(fxIdValueElement, editor, null, (newName, isPreview, d) -> {
-          doRenameFxId(fxIdValueElement, newName, d.getSearchInComments().getValue(), isPreview);
-          return Unit.INSTANCE;
+        RenameDialog2Kt.showRenameDialogSimple(fxIdValueElement, editor, null, (request) -> {
+          doRenameFxId(fxIdValueElement, request.getNewName(), request.getDialog().getSearchInComments().getValue(), request.isPreview());
         });
       }
     }

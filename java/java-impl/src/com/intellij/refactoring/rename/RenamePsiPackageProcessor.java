@@ -72,7 +72,8 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
       if (Comparing.strEqual(StringUtil.getPackageName(oldName), StringUtil.getPackageName(request.getNewName()))) {
         superPerformRename.accept(new PerformRenameRequest(StringUtil.getShortName(request.getNewName()),
                                                            request.isPreview(),
-                                                           request.getCallback()));
+                                                           request.getCallback(),
+                                                           request.getDialog()));
       }
       else {
         RenameDialog2Kt.invokeRefactoring(createRenameMoveProcessor(request.getNewName(),

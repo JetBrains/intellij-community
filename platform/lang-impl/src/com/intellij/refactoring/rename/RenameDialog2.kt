@@ -17,6 +17,8 @@ package com.intellij.refactoring.rename
 
 import com.intellij.CommonBundle
 import com.intellij.lang.findUsages.DescriptiveNameUtil
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileTypes.FileTypes
@@ -145,12 +147,12 @@ fun createRenameDialog2(psiElement: PsiElement,
 fun showRenameDialogSimple(psiElement: PsiElement,
                            editor: Editor?,
                            nameSuggestionContext: PsiElement?,
-                           performRename: (String, Boolean, RenameDialog2) -> Unit) {
+                           performRename: Consumer<PerformRenameRequest>) {
   val d = createRenameDialog2(psiElement,
                               editor,
                               nameSuggestionContext)
   d.performRename = Consumer { it ->
-    performRename(it.newName, it.isPreview, d)
+    performRename.accept(it)
     it.callback.run()
   }
   d.show()
@@ -158,7 +160,8 @@ fun showRenameDialogSimple(psiElement: PsiElement,
 
 data class PerformRenameRequest(val newName: String,
                                 val isPreview: Boolean,
-                                val callback: Runnable)
+                                val callback: Runnable,
+                                val dialog: RenameDialog2)
 
 data class ValidationResult(val ok: Boolean,
                             val error: String?) {
@@ -317,18 +320,27 @@ fun RenameDialog2.show() {
                   enabled = isEnabled,
                   lambda = Consumer {
                     saveSettings.accept(newName.value)
-                    performRename.accept(PerformRenameRequest(newName.value, false, Runnable { it.close(DialogWrapper.OK_EXIT_CODE) }))
+                    performRename.accept(PerformRenameRequest(newName.value, false, Runnable { it.close(DialogWrapper.OK_EXIT_CODE) }, this))
                   }),
       NoriaAction(name = RefactoringBundle.message("preview.button"),
                   enabled = isEnabled,
                   lambda = Consumer {
                     saveSettings.accept(newName.value)
-                    performRename.accept(PerformRenameRequest(newName.value, true, Runnable { it.close(DialogWrapper.OK_EXIT_CODE) }))
+                    performRename.accept(PerformRenameRequest(newName.value, true, Runnable { it.close(DialogWrapper.OK_EXIT_CODE) }, this))
                   }),
       NoriaAction(name = CommonBundle.getCancelButtonText(),
                   role = ActionRole.Cancel,
                   enabled = cell { true },
                   lambda = Consumer { it.close(DialogWrapper.CANCEL_EXIT_CODE) }))))
+}
+
+fun RenameDialog2.showTestAware(c: DataContext) {
+  if (ApplicationManager.getApplication().isUnitTestMode) {
+    val name = PsiElementRenameHandler.DEFAULT_NAME.getData(c)!!
+    performRename.accept(PerformRenameRequest(name, false, Runnable {  }, this))
+  } else {
+    show()
+  }
 }
 
 
