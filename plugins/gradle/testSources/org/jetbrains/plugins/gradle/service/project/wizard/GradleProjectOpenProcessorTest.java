@@ -100,7 +100,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
       assertEquals("myInspections", currentProfile.getName());
       ScopeToolState toolState = currentProfile.getToolDefaultState("MultipleRepositoryUrls", fooProject);
       assertEquals(HighlightDisplayLevel.ERROR, toolState.getLevel());
-      System.out.println();
+      assertModules(fooProject, "foo", "foo_main", "foo_test");
     }
     finally {
       edt(() -> closeProject(fooProject));
